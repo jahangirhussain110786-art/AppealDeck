@@ -1,0 +1,29 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "skills": {
+    "paths": [".agents/skills"]
+  },
+  "mcp": {
+    "paddle-sandbox": {
+      "type": "remote",
+      "url": "https://sandbox-mcp.paddle.com/mcp",
+      "enabled": true
+    },
+    "paddle-live": {
+      "type": "remote",
+      "url": "https://mcp.paddle.com/mcp",
+      "enabled": true
+    },
+    "paddle-docs": {
+      "type": "remote",
+      "url": "https://paddlehq.mcp.kapa.ai",
+      "enabled": true
+    }
+  },
+  "permission": {
+    "read": {
+      "07-REFERENCE/**": "ask",
+      "*": "allow"
+    }
+  }
+}
