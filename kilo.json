@@ -3,6 +3,11 @@
   "skills": {
     "paths": [".agents/skills"]
   },
+  "indexing": {
+    "enabled": false
+  },
+  "formatter": true,
+  "lsp": true,
   "mcp": {
     "paddle-sandbox": {
       "type": "remote",
@@ -18,10 +23,51 @@
       "type": "remote",
       "url": "https://paddlehq.mcp.kapa.ai",
       "enabled": true
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "V:\\AppealDeck"],
+      "enabled": true
+    },
+    "fetch": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "enabled": true
+    },
+    "memory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "enabled": true
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "enabled": true
+    },
+    "time": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-time"],
+      "enabled": true
+    },
+    "duckduckgo": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-duckduckgo"],
+      "enabled": true
     }
   },
   "permission": {
     "read": {
+      "07-REFERENCE/**": "ask",
+      "*": "allow"
+    },
+    "bash": "allow",
+    "edit": {
       "07-REFERENCE/**": "ask",
       "*": "allow"
     }
