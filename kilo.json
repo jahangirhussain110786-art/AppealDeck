@@ -8,6 +8,14 @@
   },
   "formatter": true,
   "lsp": true,
+  "compaction": {
+    "auto": true,
+    "threshold_percent": 90,
+    "prune": true,
+    "tail_turns": 2,
+    "preserve_recent_tokens": 8000,
+    "reserved": 10000
+  },
   "mcp": {
     "paddle-sandbox": {
       "type": "remote",

@@ -171,7 +171,7 @@
 2. **Disclosure coherence:** privacy policy (live on the domain), CWS data-disclosure form, and in-product consent copy all describe the same flows — notice text processed locally, transmitted only under explicit cloud consent; telemetry opt-in, event names + numeric props only, never notice content (M13).
 3. **Reviewer kit:** one-sentence justification per permission in the review notes; a **paste-mode demo video** proving core functionality without page access; single-purpose statement; honest paid-functionality disclosure for the external MoR checkout.
 4. **Unlisted fallback:** the extension ships to design partners as an unlisted build regardless of review state; the web surface (live since M-W) is the revenue bridge while any review or appeal runs. A rejection is a process step, not a launch blocker.
-5. Submission mechanics, listing copy rules, and EU-DSA trader verification are owned by `../04-PHASE-3-LAUNCH/02-CHROME-WEB-STORE-SUBMISSION.md` — this control owns the technical preconditions.
+5. Submission mechanics, listing copy rules, and trader verification are owned by `../04-PHASE-3-LAUNCH/02-CHROME-WEB-STORE-SUBMISSION.md` — this control owns the technical preconditions.
 
 **Acceptance test.** Pre-submission CI checklist passes: permission-vs-callsite diff clean; grep for banned tokens (`guarantee` user-facing, `aiLanguageModelOriginTrial`, `lemonsqueezy`) = 0; data-disclosure form content matches the privacy policy section-by-section (manual sign-off recorded); demo video linked in the submission; unlisted channel verified installable by a design partner.
 

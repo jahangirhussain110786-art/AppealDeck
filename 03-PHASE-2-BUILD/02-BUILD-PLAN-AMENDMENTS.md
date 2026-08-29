@@ -2,7 +2,7 @@
 
 **Why this file exists / when to use it.** The verbatim technical spec at `reference/APPEALDECK_BUILD_PLAN_v1.0.md` (dated 24 Aug 2026) is the module-level source of truth, but fifteen of its facts and decisions are stale or corrected by later research (The Second Opinion, 25 Aug 2026) and by independent web verification (25 Aug 2026). **A team following the v1.0 spec MUST apply every amendment in this file; where this file and the spec conflict, this file wins.** Where this file is silent, the v1.0 spec stands unchanged. The week-by-week order that assumes these amendments is `01-BUILD-SEQUENCE.md`.
 
-**Glossary (first use):** POA = Plan of Action. MoR = Merchant of Record. CWS = Chrome Web Store. MV3 = Manifest V3. BSA = Amazon Business Solutions Agreement. AHA = Account Health Assurance (Amazon's free program: for Professional-plan sellers with Account Health Rating (AHR) ≥250, a specialist calls with a 72-hour window before deactivation). SP-API = Amazon's Selling Partner API. EU-DSA = EU Digital Services Act. Dexie = the IndexedDB wrapper used for the local case vault.
+**Glossary (first use):** POA = Plan of Action. MoR = Merchant of Record. CWS = Chrome Web Store. MV3 = Manifest V3. BSA = Amazon Business Solutions Agreement. AHA = Account Health Assurance (Amazon's free program: for Professional-plan sellers with Account Health Rating (AHR) ≥250, a specialist calls with a 72-hour window before deactivation). SP-API = Amazon's Selling Partner API. DSA = Digital Services Act (trader verification requirements for marketplaces). Dexie = the IndexedDB wrapper used for the local case vault.
 
 ---
 
@@ -10,11 +10,11 @@
 
 | ID | Title | v1.0 sections affected | Nature | Source |
 |---|---|---|---|---|
-| AM-01 | Payments: Lemon Squeezy → Paddle/Polar; self-issued license keys | §2.2 A-2, §2.5, §3 diagram, §4, §9.2, §10-M11, §10-M12, §15 M-5 | REPLACE | The Second Opinion.md; VERIFICATIONS.md (verifier 4) |
+| AM-01 | Payments: Lemon Squeezy → Paddle primary; self-issued license keys | §2.2 A-2, §2.5, §3 diagram, §4, §9.2, §10-M11, §10-M12, §15 M-5 | REPLACE | The Second Opinion.md; VERIFICATIONS.md (verifier 4) |
 | AM-02 | Compliance spine: BSA §19 / Agent Policy / Code of Conduct | §1.3, §3, §7.4, §10-M8, §12.4 | REWRITE + GATE | The Second Opinion.md |
 | AM-03 | Deadline engine corrections | §7.3, §9.1, §10-M7, Appendix D | REPLACE | The Second Opinion.md |
 | AM-04 | A-6 test account: active-access ladder | §2.2 A-6, §13.2 | REPLACE | The Second Opinion.md |
-| AM-05 | Store & legal: EU-DSA trader verification + refund redesign | §10-M14, §14 | REPLACE + ADD | The Second Opinion.md; APPEALDECK — R&D MASTER REPORT.md |
+| AM-05 | Store & legal: trader verification + refund redesign | §10-M14, §14 | REPLACE + ADD | The Second Opinion.md; APPEALDECK — R&D MASTER REPORT.md |
 | AM-06 | Marketing hygiene | §1.2, §10-M14, Appendix E | REWRITE | The Second Opinion.md; SYNTHESIS BRIEF corrections |
 | AM-07 | LLM inversion: cloud paid tier is the primary quality path | §3 principle 2, §11 | REWRITE EMPHASIS | VERIFICATIONS.md (verifier 3) |
 | AM-08 | Gemini free tier NEVER for user data | §2.2 A-5, §11.2 | ADD CONSTRAINT | VERIFICATIONS.md (verifier 3); APPEALDECK_STREAM3_LLM_AI_RESOURCES.md |
@@ -30,21 +30,21 @@
 
 ## 2. The six Second Opinion amendments (in full)
 
-### AM-01 — Payments: Lemon Squeezy → Paddle primary / Polar fallback; license keys self-issued
+### AM-01 — Payments: Lemon Squeezy → Paddle primary; license keys self-issued
 
 **v1.0 says (§2.2 A-2):** Lemon Squeezy is the recommended MoR with its built-in license-key API; Stripe Checkout is the alternative.
 
-**Corrected reality (verified 25 Aug 2026):** Lemon Squeezy is sunsetting in slow motion — still signing merchants, but its CEO steers everyone to Stripe Managed Payments (invite-gated, ~6.4% effective, the most expensive MoR). Do NOT build on it. **Paddle** (flat 5% + $0.50, deepest tax coverage) is primary; **Polar.sh** (free tier 5% + 50¢; Pro $20/mo 3.8% + 40¢ — cheapest at low volume) is the warm fallback. Both onboard Finnish sole traders. Two Paddle caveats: onboarding rejects pre-revenue founders unpredictably (apply Week 1 behind a live site + legal pages), and Paddle's Acceptable Use Policy prohibits human services — plus a 2025 FTC settlement makes its risk team wary of "account recovery"-flavored products, so expect extra scrutiny and keep Polar warm. MoR rules constrain the product: the $199 Appeal Pass must be **automated software output** (it is); the human Expert Review tier is NOT MoR-eligible and stays deferred (D7) or routes via Stripe direct later.
+**Corrected reality (verified 25 Aug 2026):** Lemon Squeezy is sunsetting in slow motion — still signing merchants, but its CEO steers everyone to Stripe Managed Payments (invite-gated, ~6.4% effective, the most expensive MoR). Do NOT build on it. **Paddle** (flat 5% + $0.50, deepest tax coverage) is the individual seller's primary rail. Two Paddle caveats: onboarding rejects pre-revenue founders unpredictably (apply Week 1 behind a live site + legal pages), and Paddle's Acceptable Use Policy prohibits human services — plus a 2025 FTC settlement makes its risk team wary of "account recovery"-flavored products, so expect extra scrutiny. MoR rules constrain the product: the $199 Appeal Pass must be **automated software output** (it is); the human Expert Review tier is NOT MoR-eligible and stays deferred (D7) or routes via separate rails only post-approval from a healthy account.
 
 **Replace in the spec:**
-- §2.2 A-2 → "Apply to BOTH Paddle and Polar in Week 1 behind a live site + legal pages. Paddle primary if approved; Polar Pro fallback. Stripe direct reserved for a future human-service line only."
-- §2.5 env vars → drop `LEMONSQUEEZY_*`; add `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_PRICE_APPEAL_PASS`, `PADDLE_PRICE_GUARDIAN_SUB` (and Polar equivalents behind a `PAYMENTS_PROVIDER` switch).
+- §2.2 A-2 → "Apply to Paddle in Week 1 behind a live site + legal pages. Paddle primary if approved; Polar is the warm fallback (its Pakistan payout runs via Stripe Connect cross-border — verify at signup); Dodo Payments (MoR, 4% + 40¢) is plan-C, application-ready but no account opened. No Stripe direct application (Stripe direct is unavailable to Pakistan sellers)."
+- §2.5 env vars → drop `LEMONSQUEEZY_*`; add `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_PRICE_APPEAL_PASS`, `PADDLE_PRICE_GUARDIAN_SUB` (and fallback equivalents behind a `PAYMENTS_PROVIDER` switch).
 - **License keys are self-issued, not MoR-issued:** the Supabase `licenses` table (§9.2) is driven by MoR webhooks (`transaction.completed` etc. → upsert license, email key). The v1.0 `ls_customer_id`/`ls_order_id` columns become provider-agnostic `mor_provider`, `mor_customer_id`, `mor_order_id`. `verify-license` and entitlement flow in M11 are unchanged in shape.
 - §10-M11 purchase flow → checkout URL is Paddle (or Polar) hosted checkout; webhook handling per `03-TECHNICAL-RISK-CONTROLS.md` TRC-05 (raw-body signature verification, 5-second response budget, idempotency by event id).
 - §15 M-5 gate → "Paddle sandbox purchase → unlocked case" replaces "LS test mode".
 
 - [ ] **AA-01** Apply the §2.2/§2.5/§9.2/M11 payment substitutions above throughout the codebase and docs; grep `lemonsqueezy|LEMONSQUEEZY|ls_` → 0 hits. — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 1 (spec), Week 4–5 (code) · **Blocks:** M-W, M-5.
-- [ ] **AA-02** Submit both MoR applications behind the live site. — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** M-W checkout.
+- [ ] **AA-02** Submit the Paddle application behind the live site. — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** M-W checkout.
 
 ### AM-02 — Compliance spine: BSA §19 / Agent Policy / Seller Code of Conduct
 
@@ -53,11 +53,11 @@
 **Corrected reality:** Amazon's BSA §19 "Agent Policy" (announced 17 Feb 2026, effective 4 Mar 2026) — per third-party analyses — prohibits browser automation and Seller Central screen-scraping outside registered SP-API apps; Amazon's Conditions of Use separately ban scraping tools; Helium 10 killed its Seller Central automation extension in Jun 2026. The primary policy text sits behind seller login and is STILL UNREAD. Countervailing facts: Helium 10/Jungle Scout content scripts still run, SellerForge ships its Forge Companion extension anyway, analysts acknowledge the text is ambiguous, and the Ninth Circuit's Perplexity ruling (Aug 2026) puts "access" on the user, not the developer. The old "only the account owner can submit a POA" TOS quote is fabricated — never cite it; the real instruments are BSA §19 + the Seller Code of Conduct.
 
 **Replace in the spec:**
-- Compliance hierarchy (this is the architecture, not just posture): **(a)** web decoder + paste-mode = PRIMARY path and compliance spine — zero page access, full functionality; **(b)** extension DOM-harvest = convenience layer, merged ONLY after the full §19 text is retrieved (Jhangir, before M-3) and read; de-scope to a paste-only extension if the read is bad; **(c)** the POA-textarea injector = riskiest single feature, built last behind a default-OFF flag, ships only if the read supports it, or never; **(d)** NEVER any automation or auto-submit — unchanged and now near-mandatory.
+- Compliance hierarchy (this is the architecture, not just posture): **(a)** web decoder + paste-mode = PRIMARY path and compliance spine — zero page access, full functionality; **(b)** extension DOM-harvest = convenience layer, merged ONLY after the full §19 text is retrieved (by the founder, before M-3 — see AA-03) and read; de-scope to a paste-only extension if the read is bad; **(c)** the POA-textarea injector = riskiest single feature, built last behind a default-OFF flag, ships only if the read supports it, or never; **(d)** NEVER any automation or auto-submit — unchanged and now near-mandatory.
 - §12.4 rationale → cite BSA §19 + Agent Policy + Code of Conduct; delete the fictional owner-only-POA rationale; assess §19's self-identification duty for automated tools during the read.
 - §7.4 precedent note → keep, but demote from "norm exists" to "contested precedent; paste-mode is the safety floor".
 
-- [ ] **AA-03** Retrieve full §19/Agent Policy text (seller login) and file it in `../07-REFERENCE/`. — **Owner:** Jhangir · **Cost:** $0 · **Deadline:** before M-3 · **Blocks:** DOM-harvest merge, injector, M-6 scope.
+- [ ] **AA-03** Retrieve full §19/Agent Policy text (seller login — via the founder's own fresh Amazon Individual seller account, ~1–2 weeks and free, or a design partner's read-only secondary-user invite with written consent) and file it in `../07-REFERENCE/`. — **Owner:** Founder · **Cost:** $0 · **Deadline:** before M-3 · **Blocks:** DOM-harvest merge, injector, M-6 scope.
 - [ ] **AA-04** Record the DOM-harvest + injector ruling in `docs/DECISIONS.md` after the read (see `01-BUILD-SEQUENCE.md` B-15, a flagged founder decision). — **Owner:** Founder · **Cost:** $0 · **Deadline:** end Week 3 · **Blocks:** extension scope freeze.
 
 ### AM-03 — Appendix D deadline engine corrections
@@ -83,17 +83,17 @@
 
 **v1.0 says (§2.2 A-6):** "Any seller account (even inactive) gives access to Account Health / Performance Notifications page structure."
 
-**Corrected reality:** wrong — dormant accounts are walled behind re-verification and show nothing useful. Live-page access requires an ACTIVE account, acquired in this order: **(1)** Jhangir's account under **written read-only consent** (the partnership agreement in `../08-TEAM/` must be signed first); **(2)** design partners — ask Week 4, access by Week 6; **(3)** fresh Individual-plan registration (~1–2 weeks; shows a clean page only — useful for page structure, not violations). Fixtures (§13.1) cover milestones M-1→M-5 without ANY live account; live access blocks only the M-6 gate.
+**Corrected reality:** wrong — dormant accounts are walled behind re-verification and show nothing useful. Live-page access requires an ACTIVE account, acquired in this order: **(1)** design partners under **written read-only consent** (secondary-user invite) — ask Week 4, access by Week 6; **(2)** the founder's own fresh Individual-plan registration (~1–2 weeks; shows a clean page only — useful for page structure, not violations). Fixtures (§13.1) cover milestones M-1→M-5 without ANY live account; live access blocks only the M-6 gate.
 
-- [ ] **AA-06** Execute the ladder; document which rung provided M-6 QA access. — **Owner:** Founder + Jhangir · **Cost:** $0–40 · **Deadline:** access by Week 6 · **Blocks:** M-6 gate only.
+- [ ] **AA-06** Execute the ladder; document which rung provided M-6 QA access. — **Owner:** Founder · **Cost:** $0–40 · **Deadline:** access by Week 6 · **Blocks:** M-6 gate only.
 
-### AM-05 — Store & legal: EU-DSA trader verification from Week 1 + refund redesign
+### AM-05 — Store & legal: CWS contact-details verification from Week 1 + refund redesign
 
 **v1.0 says (§14, M14):** prepare listing during Milestone 6; terms recommend "7-day refund if no POA was generated; no refund after generation."
 
-**Corrected reality:** (a) the EU Digital Services Act requires **trader verification** (verified public contact details) on the CWS listing — the process starts with the $5 developer registration in Week 1, not at submission, because verification can take weeks; (b) "no refund after generation" is effectively unenforceable for EU consumers — the 14-day withdrawal right for digital content (Directive 2011/83/EU; Finnish KKV guidance) requires **explicit prior consent + confirmation in permanent form** that delivery starts during the withdrawal period. Settled policy (D8): **7-day no-questions voluntary refund**, EU-withdrawal-compliant checkout consent, fast refunds preferred over disputes — chargeback thresholds are existential for an MoR relationship (Stripe monitoring at 0.75%, VAMP at 1.5%, Polar review at 0.4%).
+**Corrected reality:** (a) CWS requires verified contact details (name/business name, address, email, phone) on the listing — the process starts with the $5 developer registration in Week 1, not at submission, because verification can take weeks; (b) "no refund after generation" is effectively unenforceable for consumers — the withdrawal right for digital content (applicable consumer-protection law) requires explicit prior consent + permanent-form confirmation for digital delivery. Settled policy (D8): **7-day no-questions voluntary refund**, compliant checkout consent, fast refunds preferred over disputes — chargeback thresholds are existential for a MoR relationship.
 
-- [ ] **AA-07** Start CWS registration + EU-DSA trader verification. — **Owner:** Founder · **Cost:** $5 · **Deadline:** Week 1 · **Blocks:** M-7.
+- [ ] **AA-07** Start CWS registration + contact-details verification. — **Owner:** Founder · **Cost:** $5 · **Deadline:** Week 1 · **Blocks:** M-7.
 - [ ] **AA-08** Implement checkout consent flow (explicit prior consent + permanent-form confirmation) and the 7-day voluntary refund policy in terms + refund handling SOP; delete every "no refund after generation" phrase from spec-derived copy. — **Owner:** AI assistant (implementation), Founder (policy sign-off) · **Cost:** $0 · **Deadline:** before M-W goes live · **Blocks:** M-W, MoR compliance.
 
 ### AM-06 — Marketing hygiene

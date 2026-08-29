@@ -23,14 +23,14 @@ Any ONE of these activates the 24-hour protocol (§2) immediately:
 
 | Hour | Step | Owner | Detail |
 |---|---|---|---|
-| **0** | **Detect** | Founder / Jhangir | Monitoring fires: Reddit (r/FulfillmentByAmazon, r/AmazonSeller), X mentions, Facebook groups, CWS reviews, support inbox, analytics anomaly. |
+| **0** | **Detect** | Founder | Monitoring fires: Reddit (r/FulfillmentByAmazon, r/AmazonSeller), X mentions, Facebook groups, CWS reviews, support inbox, analytics anomaly. |
 | **0–1** | **Triage** | Founder | Screenshot everything (post text, comments, timestamps, usernames). Classify severity 1–5 (1 = single unhappy user, 3 = spreading thread or multi-user bug, 5 = existential: MoR freeze, mass ban attribution, policy kill). Determine: bug, misuse, coordinated attack, or platform change. |
-| **1–2** | **Assemble** | Founder + Jhangir | Short call/chat. Review the specific cases named. Pick the scenario (§4) and the matching template (A–E). If Jhangir is unavailable, the founder proceeds alone — the templates carry the load. |
+| **1–2** | **Assemble** | Founder (+ AI assistant) | Review the specific cases named, with the AI assistant on technical diagnosis. Pick the scenario (§4) and the matching template (A–E). The founder runs this step alone — the pre-built templates carry the load. |
 | **2–4** | **Draft** | Founder | Write ONE public response (single message, single venue — never per-comment replies). Draft internal notes and the support canned-response variant so every channel says the same thing. Nothing publishes yet. |
 | **4–6** | **Pause & alert** | Founder | If the public narrative is negative: pause ALL paid acquisition immediately. Proactively alert the MoR (Paddle/Polar dashboard message) that elevated refunds/disputes may follow — MoRs punish surprises, not incidents. |
 | **6–12** | **Respond** | Founder | Post the ONE calm public reply (in the thread if permitted, otherwise on our own channels). Email affected users directly and personally. Message the original poster privately offering a direct conversation. |
 | **12–18** | **Fix** | AI assistant (founder approves anything public-facing) | If a bug: deploy the hotfix — remote-settings/taxonomy config first (instant, no review), CWS update second (staged rollout where available). Update the status page / "What's new". |
-| **18–24** | **Follow up** | Founder + Jhangir | Personal replies to escalated threads; community update if the fix shipped; begin the post-mortem (§7) while memory is fresh. |
+| **18–24** | **Follow up** | Founder | Personal replies to escalated threads; community update if the fix shipped; begin the post-mortem (§7) while memory is fresh. |
 
 **Rules that hold at every hour:** one voice (the founder's), no arguing, no speculation about Amazon's internal decisions, no admission of legal fault, never the banned word (see D6 in `../00-DECISION/02-DECISION-LOG.md`), always route severe account situations to the professional-help screen rather than debating case merits in public.
 
@@ -40,13 +40,12 @@ Any ONE of these activates the 24-hour protocol (§2) immediately:
 
 | Role | Person | Does | Does NOT |
 |---|---|---|---|
-| **Crisis lead** | Founder | Final authority on every public statement; approves refunds above the standing policy; pauses/resumes marketing; owns MoR communication | Go offline mid-crisis without handing a monitoring window to Jhangir |
-| **Community triage** | Jhangir — *reliability unverified; treat as best-effort until the trial in `./01-SUPPORT-OPERATIONS.md` §4 passes* | Monitors forums/DMs, flags high-risk posts to founder within 30 min, sends approved canned responses only | Make public statements for the company; improvise wording; promise anything |
-| **Jhangir-unavailable fallback** | Founder | Founder covers monitoring at reduced cadence (every 2–3h during waking hours); the support auto-reply and pre-drafted templates absorb the gap; no crisis step is skipped, steps just run on founder hours | — |
+| **Crisis lead** | Founder | Final authority on every public statement; approves refunds above the standing policy; pauses/resumes marketing; owns MoR communication | Go offline mid-crisis without a scheduled next monitoring check (set alarms — the cadence runs on founder hours) |
+| **Community triage** | Founder | Monitors forums/DMs at a sustainable cadence (every 2–3h during waking hours); the support auto-reply and pre-drafted templates absorb the overnight gap; no crisis step is skipped — steps just run on founder hours; sends approved canned responses only | Improvise wording; promise anything; argue in threads |
 | **Technical fix** | AI assistant | Diagnoses, writes hotfixes, prepares remote-settings changes and CWS updates | Ship anything user-visible without founder approval |
-| **Legal/PR (as needed)** | External | Reviews public statements in Scenario 1 or 5 when stakes justify it (~€500–2,000 (estimate)) | — |
+| **Legal/PR (as needed)** | External | Reviews public statements in Scenario 1 or 5 when stakes justify it (~$500–2,000 (estimate)) | — |
 
-- [ ] **1. ⚠ FOUNDER-DECISION — pre-authorize the external-counsel spend ceiling for crises.** Decide NOW (calmly) the maximum the founder may spend on emergency legal/PR review without a second thought (suggested €1,000); write it here. Deciding mid-crisis wastes the hours that matter. — **Owner:** Founder · **Cost:** $0 now · **Deadline:** before M-7 · **Blocks:** hour-2–6 execution speed in Scenarios 1 and 5
+- [ ] **1. ⚠ FOUNDER-DECISION — pre-authorize the external-counsel spend ceiling for crises.** Decide NOW (calmly) the maximum the founder may spend on emergency legal/PR review without a second thought (suggested $1,000); write it here. Deciding mid-crisis wastes the hours that matter. — **Owner:** Founder · **Cost:** $0 now · **Deadline:** before M-7 · **Blocks:** hour-2–6 execution speed in Scenarios 1 and 5
 
 ---
 
@@ -104,10 +103,10 @@ Any ONE of these activates the 24-hour protocol (§2) immediately:
 ### Scenario 5 — Amazon policy change mid-flight
 
 - **Trigger threshold:** Amazon announces any BSA §19 / Agent Policy expansion, CWS adds Seller-Central-extension restrictions, or enforcement signals appear in seller forums — at any time, but especially between M-3 and M-8. (Precedent: the Mar 2026 policy was announced with ~2 weeks' effective notice, and Helium 10 killed its automation extension at the June 2026 enforcement deadline.)
-- **Standing monitoring (cheap, continuous):** Seller Central announcement board + BSA help page bookmarked; Google Alerts on "Amazon BSA update", "Amazon Agent Policy", "Chrome Web Store Seller Central"; Jhangir watches seller forums for enforcement chatter.
+- **Standing monitoring (cheap, continuous):** Seller Central announcement board + BSA help page bookmarked; Google Alerts on "Amazon BSA update", "Amazon Agent Policy", "Chrome Web Store Seller Central"; the founder checks seller forums for enforcement chatter on a fixed daily pass.
 - **Response steps:**
   1. Immediately: halt development/rollout of any affected feature (the injector first — it is by design the last-or-never feature; DOM-harvest second; paste-mode and the web decoder are the architecture's safe spine and survive every plausible reading — D3).
-  2. Within days: obtain and read the ACTUAL policy text (Jhangir retrieves from behind seller login — third-party summaries do not count, per Gate-2 check 17). Scoped counsel read if ambiguous (§3 spend ceiling).
+  2. Within days: obtain and read the ACTUAL policy text from behind a seller login — via the founder's own Amazon Individual seller account, or a design partner's read-only secondary-user invite with written consent (third-party summaries do not count, per Gate-2 check 17). Scoped counsel read if ambiguous (§3 spend ceiling).
   3. Update the build plan and decision log: feature de-scoped, deferred, or cleared — in writing.
   4. If the CWS listing or store description no longer matches reality: pause the CWS submission rather than submit under stale assumptions; resubmit after revision. The web decoder keeps earning meanwhile — that is exactly why it ships first.
   5. Communicate to users only once the assessment is done (Template E) — a wrong early statement is worse than a day of silence here.
@@ -134,9 +133,9 @@ Any ONE of these activates the 24-hour protocol (§2) immediately:
 
 ## 6. Rehearsal requirement (Gate-2 item)
 
-- [ ] **2. Rehearse the protocol before M-7: the founder recites the hour-by-hour sequence, the five scenario triggers, and the location of the five templates — from memory, without this file open.** Then run one 30-minute tabletop: pick Scenario 1, walk hours 0–24 against a fabricated thread, actually draft the Template-A adaptation. This is Gate-2 check 26 in `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`. — **Owner:** Founder (+ Jhangir for his steps) · **Cost:** $0 · **Deadline:** before M-7 · **Blocks:** Gate 2
+- [ ] **2. Rehearse the protocol before M-7: the founder recites the hour-by-hour sequence, the five scenario triggers, and the location of the five templates — from memory, without this file open.** Then run one 30-minute tabletop: pick Scenario 1, walk hours 0–24 against a fabricated thread, actually draft the Template-A adaptation. This is Gate-2 check 26 in `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`. — **Owner:** Founder · **Cost:** $0 · **Deadline:** before M-7 · **Blocks:** Gate 2
 - [ ] **3. Pre-load Templates A–E and the activation criteria into the support Notion space and the founder's phone (offline copy).** A playbook that lives only on a machine you're not at during hour 0 is not a playbook. — **Owner:** Founder · **Cost:** $0 · **Deadline:** before M-7 · **Blocks:** hour-0 execution
-- [ ] **4. Set up the standing monitors:** Google Alerts (three queries above), Reddit/X watch cadence (every 2h during business hours; Jhangir overnight best-effort), CWS review-notification email verified working. — **Owner:** Founder + Jhangir · **Cost:** $0 · **Deadline:** Week 7 · **Blocks:** detection (hour 0)
+- [ ] **4. Set up the standing monitors:** Google Alerts (three queries above), Reddit/X watch cadence (every 2h during founder waking hours; the overnight gap is absorbed by the support auto-reply — no overnight watch is promised), CWS review-notification email verified working. — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 7 · **Blocks:** detection (hour 0)
 - [ ] **5. After every incident or near-miss: update this playbook within 7 days (post-mortem §7 action items land here).** Quarterly, even with zero incidents: re-run the tabletop. — **Owner:** Founder · **Cost:** $0 · **Deadline:** ongoing · **Blocks:** playbook staying alive
 
 ---
@@ -168,7 +167,7 @@ ACTION ITEMS (each with owner + deadline; playbook edits land in this file):
 DETECTION IMPROVEMENT: would we catch it faster next time? How?
 ```
 
-Rules: blameless, written by the founder, shared with Jhangir, and the action items go into the weekly decision review (`../00-DECISION/03-GATES-AND-KILL-CRITERIA.md` §5) until closed.
+Rules: blameless, written by the founder, and the action items go into the weekly decision review (`../00-DECISION/03-GATES-AND-KILL-CRITERIA.md` §5) until closed.
 
 ---
 

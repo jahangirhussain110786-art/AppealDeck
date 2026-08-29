@@ -1,6 +1,6 @@
 # Credential Rotation — Leaked Supabase/Postgres Secrets (Day 1, blocks everything)
 
-**Why this file exists / when to use it:** The predecessor project at `V:\Extension 2.3` contains live database credentials in plaintext — including inside a build output folder (`dist\`) that may have been zipped and shared. Until those credentials are rotated (replaced with new ones so the leaked values stop working), nothing in the AppealDeck project may touch the affected Supabase project, and no new infrastructure may be created that reuses any of these secrets. Execute this file first, before the partnership agreement, before business registration, before any code. It takes under an hour.
+**Why this file exists / when to use it:** The predecessor project at `V:\Extension 2.3` contains live database credentials in plaintext — including inside a build output folder (`dist\`) that may have been zipped and shared. Until those credentials are rotated (replaced with new ones so the leaked values stop working), nothing in the AppealDeck project may touch the affected Supabase project, and no new infrastructure may be created that reuses any of these secrets. Execute this file first — before the collaborator policy, before the individual-seller setup, before any code. It takes under an hour.
 
 **Owner of the whole file:** Founder. **Cost:** $0. **Deadline:** Day 1. **Blocks:** everything else in this playbook.
 
@@ -85,7 +85,7 @@ Compromised Supabase project ref: **`fogvzjtxbqgfppdrxqra`**.
 - [ ] **Rule 3 — Use a FRESH Supabase project for AppealDeck.** Do not reuse `fogvzjtxbqgfppdrxqra` even after rotation. A new project costs nothing, guarantees a clean credential history, and severs every link to the contaminated codebase (the build plan itself marks fresh-project as the recommended option). After anything worth keeping is exported, pause or delete the old project entirely.
   **Owner:** Founder (creates project), AI assistant (integrates) · **Cost:** $0 (free tier for dev; Supabase Pro $25/mo at launch per the hosting decision) · **Deadline:** Week 1, when backend work starts (see `../02-PHASE-1-FOUNDATION/`) · **Blocks:** backend setup
 
-- [ ] **Rule 4 — No credential ever goes to any partner or contractor as a shared password.** Access is granted through per-person invites with the minimum role, and only after the partnership agreement is signed — see `./02-PARTNERSHIP-AGREEMENT.md`.
+- [ ] **Rule 4 — No credential ever goes to any contractor or collaborator as a shared password.** Access is granted through per-person invites with the minimum role, and only to people bound by the collaborator policy — see `./02-COLLABORATOR-POLICY.md`.
   **Owner:** Founder · **Cost:** $0 · **Deadline:** standing rule · **Blocks:** any credential sharing
 
 ---

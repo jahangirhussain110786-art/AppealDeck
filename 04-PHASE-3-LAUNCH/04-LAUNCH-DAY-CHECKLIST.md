@@ -10,7 +10,7 @@
 
 ## 1. T-1 day — verification pass (nothing new ships today; we only verify)
 
-Pick the day: launch Tuesday–Thursday, early US-morning / Finnish afternoon, never a Friday — the founder must not face the first public weekend alone hours after going live (estimate — operational judgment, not a verified rule).
+Pick the day: launch Tuesday–Thursday, early US-morning / afternoon, never a Friday — the founder must not face the first public weekend alone hours after going live (estimate — operational judgment, not a verified rule).
 
 - [ ] **1. Gate-3 verification pass.** Walk `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md` §3, checks 28–39, in a dedicated session with the file open — live MoR checkout, license revocation, cost ceiling + circuit breaker, anti-piracy device limits, support response time, severity gating + honest-expectations card in the purchase path, Guardian SKU still deferred. Any red = launch slips; a gate is never passed inside a hurry. — **Owner:** Founder + AI assistant · **Cost:** $0 · **Deadline:** T-1 · **Blocks:** everything below
 - [ ] **2. Support canned responses armed.** The top-20 canned responses (Gate 2 check 20) plus the top-5 crisis responses are loaded into the support tool and re-read; knowledge-base stub links verified; support email signature carries the honest-expectations tone. See the support setup in `../06-OPERATIONS/`. — **Owner:** Founder · **Cost:** $0 · **Deadline:** T-1 · **Blocks:** first-48h response speed
@@ -49,7 +49,7 @@ Pick the day: launch Tuesday–Thursday, early US-morning / Finnish afternoon, n
 
 ## 3. First 48 hours — watch rotation
 
-**Rotation:** Founder owns support inbox, MoR dashboard, and error alerts during Finnish waking hours; Jhangir takes community-thread and review triage, extending coverage into the Finnish night (he flags, drafts nothing public — one voice only, the founder's). Check cadence: **every 2h for hours 0–12, then every 4h during waking hours to T+48h.** Every check is logged (item 11).
+**Rotation:** the founder runs the watch solo — support inbox, MoR dashboard, error alerts, and community-thread/review triage during waking hours. Off-hours are covered by an honest auto-reply stating the response window, with a founder morning batch first thing; never a fake 24/7 promise. (A future vetted VA restricted to approved canned responses may extend coverage later, per the Collaborator & Contractor Policy — `../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md`.) Check cadence: **every 2h for hours 0–12, then every 4h during waking hours to T+48h.** Every check is logged (item 11).
 
 Thresholds below mirror the kill criteria in `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md` §3–§4 and the dashboard definitions in `../06-OPERATIONS/03-ANALYTICS-AND-METRICS.md`. A tripped threshold executes its pre-agreed response **the same day** — no re-deliberation.
 
@@ -58,14 +58,14 @@ Thresholds below mirror the kill criteria in `../00-DECISION/03-GATES-AND-KILL-C
 | W1 | Refund requests | MoR dashboard + support inbox | 0–2, each with a noted reason | >15% of the first 10 sales → **K4**: pause all marketing, diagnose by refund reason before scaling |
 | W2 | Chargeback signals | MoR dashboard | zero | Any chargeback → same-day case review + proactive MoR contact. Ratio ladder: 0.4% (Polar review) / 0.5% (internal alarm — pause paid acquisition, refund faster) / 0.75% (Stripe monitoring) / 1.5% (Visa VAMP) → **K6**. An MoR termination is existential |
 | W3 | Review sentiment | CWS listing + launch threads | neutral-to-positive, real questions | Rating drop >0.3 stars in 24h with >3x review volume, or a "tool got me banned" thread >100 upvotes → **K11** / crisis scenario 1: do not reply immediately; triage; ONE calm factual public reply; never argue, never incentivize reviews |
-| W4 | Error rates | Vercel + Supabase alerts, backend logs | no new error classes vs. the T-1 baseline | Any 5xx spike or decode-failure spike → hotfix path; if release-linked, halt the staged rollout and fire the kill switch (item 5 rehearsed this) |
+| W4 | Error rates | Cloudflare + Supabase alerts, backend logs | no new error classes vs. the T-1 baseline | Any 5xx spike or decode-failure spike → hotfix path; if release-linked, halt the staged rollout and fire the kill switch (item 5 rehearsed this) |
 | W5 | Decoder → purchase funnel | Plausible/Umami + backend events | every D10 stage shows events; conversion within the ranges the web weeks established | Any stage flat at zero while traffic flows → instrumentation or UX breakage; diagnose same day. (Zero *purchases* in 48h is a signal to investigate, not a kill — the review trigger is zero paid Passes by week 6, which triggers the pricing/positioning review per `./01-WEB-DECODER-LAUNCH.md` §12, already behind us if the web launch converted) |
-| W6 | Community reactions | Launch threads, ASGTG, r/FBA — Jhangir's watch list | questions, feature asks, skepticism (normal — this market is scam-scarred) | Hostile-but-factual criticism → answer once, honestly. Misinformation spreading or pile-on forming → crisis playbook, one voice |
-| W7 | Traffic level | Plausible/Umami vs. T-1 baseline | growth | >3x baseline in 24h → **K10** (mass-suspension wave or viral spike): confirm circuit breaker is holding the cloud-spend cap, decoder degrades to rules-only honestly, canned responses out, triage via Jhangir — founder does not answer individually |
-| W8 | Cloud cost per decode | Backend dashboard | ≤ €0.10 | Above → **K5**: tighten rate limits before scaling; a 5x overrun on the ~$0.02/case expectation is an architecture bug, not a pricing problem |
-| W9 | Support load + response time | Inbox | <10 tickets/day, <4h response in business hours | >20 tickets/day trending → **K7** path: canned responses, Jhangir community triage, pause marketing spend, hard work-hour boundaries — burnout is a named existential risk |
+| W6 | Community reactions | Launch threads, ASGTG, r/FBA — the founder's watch list | questions, feature asks, skepticism (normal — this market is scam-scarred) | Hostile-but-factual criticism → answer once, honestly. Misinformation spreading or pile-on forming → crisis playbook, one voice |
+| W7 | Traffic level | Plausible/Umami vs. T-1 baseline | growth | >3x baseline in 24h → **K10** (mass-suspension wave or viral spike): confirm circuit breaker is holding the cloud-spend cap, decoder degrades to rules-only honestly, canned responses out, support worked in triaged batches — the founder does not answer individually |
+| W8 | Cloud cost per decode | Backend dashboard | ≤ $0.10 | Above → **K5**: tighten rate limits before scaling; a 5x overrun on the ~$0.02/case expectation is an architecture bug, not a pricing problem |
+| W9 | Support load + response time | Inbox | <10 tickets/day, <4h response in business hours | >20 tickets/day trending → **K7** path: canned responses, auto-reply + batched triage windows (consider a vetted VA limited to approved canned responses, per the collaborator policy), pause marketing spend, hard work-hour boundaries — burnout is a named existential risk |
 
-- [ ] **12. Run the 48h watch to schedule; log every check; execute any tripped response same-day.** — **Owner:** Founder + Jhangir · **Cost:** $0 · **Deadline:** T-0 → T+48h · **Blocks:** catching week-one failure modes while they are still small
+- [ ] **12. Run the 48h watch to schedule; log every check; execute any tripped response same-day.** — **Owner:** Founder · **Cost:** $0 · **Deadline:** T-0 → T+48h · **Blocks:** catching week-one failure modes while they are still small
 
 ## 4. First-week review (T+7 days)
 
@@ -79,7 +79,7 @@ One extended session (60 minutes, replaces that week's 30-minute review — same
 4. **Price-test readout (15 min).** ⚠ FOUNDER-DECISION — With the first-sales data from the price experiment (the $99/$149/$199 design chosen before composer go-live, `./01-WEB-DECODER-LAUNCH.md` action 11): lock the price, continue the test to ~20 sales, or adjust. Inputs: conversion per price point, refund behavior per price point, and the verified anchor logic ($199 defended by $600–5,000 consultant fees; squeezed from below by subscription tools and an $11 one-shot drafter). Nobody but the founder makes this call; the decision and its rationale go in the decision log the same day.
 5. **Next-week priorities (10 min).** P1 queue check (rejection-reason parser is first in queue), next SEO pages, community cadence, any Gate/K-criterion needing attention, and — if launch week went well — the schedule for the staged rollout reaching 100%.
 
-- [ ] **13. Hold the first-week review to this agenda; append all outcomes and the price decision to the decision log.** — **Owner:** Founder (Jhangir optional) · **Cost:** $0 · **Deadline:** T+7d · **Blocks:** week-2 priorities, price configuration going forward
+- [ ] **13. Hold the first-week review to this agenda; append all outcomes and the price decision to the decision log.** — **Owner:** Founder · **Cost:** $0 · **Deadline:** T+7d · **Blocks:** week-2 priorities, price configuration going forward
 - [ ] **14. Resume the standing 30-minute weekly review cadence from week 2 post-launch onward** (`../00-DECISION/03-GATES-AND-KILL-CRITERIA.md` §5) — launch week does not suspend the system, it feeds it. — **Owner:** Founder · **Cost:** $0 · **Deadline:** weekly, ongoing · **Blocks:** kill-criteria enforcement
 
 ## Definition of done

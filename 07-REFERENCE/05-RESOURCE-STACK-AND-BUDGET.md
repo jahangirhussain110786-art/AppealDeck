@@ -1,8 +1,8 @@
 # 05-RESOURCE-STACK-AND-BUDGET — The chosen tool stack, what it costs, and the money plan
 
-**Why this file exists / when to use it:** Five research streams produced dozens of tool options per domain; this file collapses them into one decided stack — the chosen option per domain, its cost, the hard limits of its free tier, and the specific trigger that justifies upgrading. It then puts the full one-time and monthly costs against the founder's actual cash so nobody discovers mid-build that the plan was never affordable. Consult it before opening any new account, paying for any tool, or approving any spend >€50. If a tool is not in this file, either add it here first (with the upgrade trigger) or don't adopt it.
+**Why this file exists / when to use it:** Five research streams produced dozens of tool options per domain; this file collapses them into one decided stack — the chosen option per domain, its cost, the hard limits of its free tier, and the specific trigger that justifies upgrading. It then puts the full one-time and monthly costs against the founder's actual cash so nobody discovers mid-build that the plan was never affordable. Consult it before opening any new account, paying for any tool, or approving any spend >$50. If a tool is not in this file, either add it here first (with the upgrade trigger) or don't adopt it.
 
-**Terms used below:** MoR = Merchant of Record, a payment provider (Paddle, Polar) that legally resells the product and handles customer-country VAT/sales tax. CWS = Chrome Web Store. LLM = large language model. E&O = errors & omissions (professional indemnity) insurance. Toiminimi = Finnish sole-trader registration; y-tunnus = the Finnish business ID it grants. UPL = unauthorized practice of law. POA = Plan of Action, the appeal document Amazon requires. SCA/SAST = software-composition analysis / static application security testing (dependency and code security scanning). M-1…M-8 = the build milestones defined in `../03-PHASE-2-BUILD/01-BUILD-SEQUENCE.md`.
+**Terms used below:** MoR = Merchant of Record, a payment provider (Paddle) that legally resells the product and handles customer-country VAT/sales tax. CWS = Chrome Web Store. LLM = large language model. E&O = errors & omissions (professional indemnity) insurance. UPL = unauthorized practice of law. POA = Plan of Action, the appeal document Amazon requires. SCA/SAST = software-composition analysis / static application security testing (dependency and code security scanning). M-1…M-8 = the build milestones defined in `../03-PHASE-2-BUILD/01-BUILD-SEQUENCE.md`.
 
 **Confidence discipline:** every price below is tagged **(verified)** — confirmed against a live vendor page or primary source on 25 Aug 2026 by this playbook's authors or by a stream report whose figure matched independent knowledge — or **(estimate)** / **(unverified)** where it is a stream-report figure that still needs one live check before money moves. Stream reports contained fabricated citation domains; a price being in a stream file is NOT verification by itself.
 
@@ -40,11 +40,10 @@ Cheaper third-party fallback models (DeepSeek, Groq, Together) were researched, 
 | Item | Chosen option | Cost | Free-tier hard limits | Upgrade trigger |
 |---|---|---|---|---|
 | Primary MoR | **Paddle** — apply Week 1 behind a live site + legal pages (decision D2) | 5% + $0.50/transaction, no monthly fee (verified) | Onboarding rejects pre-revenue founders unpredictably; AUP prohibits human services (blocks Expert Review); monthly payout, €100 minimum; effective fee on the $29 Guardian ≈ 6.7% (verified arithmetic) | N/A — usage-priced. |
-| Warm fallback MoR | **Polar** (27 May 2026 pricing) | Free plan 5% + 50¢; **Pro $20/mo, 3.8% + 40¢** — cheapest at low volume (+1.5% international cards, $15 chargeback fee) (verified) | Free plan: manual payouts, €13 minimum, 7-day settlement, 14-day first-payout review, no dunning; 0.4% chargeback termination threshold; the old 4% + 40¢ Early Member rate is closed to orgs created after 27 May 2026 (verified) | Move to Pro $20/mo when Polar becomes primary OR monthly volume makes the 1.2-point fee gap > $20. |
-| Human-service rail (deferred) | Stripe direct (Finland) — Expert Review only | 1.5% + €0.25 EEA cards (verified) | Not an MoR — founder owns VAT. Only used if/when Expert Review revives (`07-ROADMAP-AND-EXPANSION.md` §3). | Deferred with the SKU. |
+| Human-service rail (deferred) | Separate rail TBD (details depend on jurisdiction and product structure at revival time) | TBD | Only used if/when Expert Review revives (`07-ROADMAP-AND-EXPANSION.md` §3). | Deferred with the SKU. |
 | License keys | Self-issued: Supabase `licenses` table driven by MoR webhooks | $0 (in build scope, M11) | — | Never buy a license SaaS (Keygen $99/mo etc.) at this scale. |
 | Webhook dev tooling | Paddle sandbox + webhook.site / ngrok free | $0 (verified) | Paddle Retain dunning **cannot be tested in sandbox** — first real dunning cycle runs in production (estimate) | None. |
-| Accounting | MyTax (vero.fi) + a Finnish accountant call pre-M-7 | $0 tooling; accountant fee (estimate €100–300 one-off) | Finnish VAT threshold €20,000/12mo; standard rate 25.5%; records kept 6 years (verified) | Accountant engagement grows only with revenue. |
+| Accounting | Pakistan accountant consultation | $0 tooling; accountant fee (estimate PKR 10,000–30,000 one-off) | Pakistan tax obligations on business income; NTN registration if needed | Accountant engagement grows only with revenue. |
 
 Lemon Squeezy is dead as an option (sunsetting; verified 25 Aug 2026). Any older document naming it as the MoR is superseded — see `../00-DECISION/02-DECISION-LOG.md` §3 row 1.
 
@@ -54,7 +53,7 @@ Lemon Squeezy is dead as an option (sunsetting; verified 25 Aug 2026). Any older
 |---|---|---|---|---|
 | Helpdesk | Dedicated support Gmail + labels + templates | $0 (verified) | Founder-bound; no automation/CSAT; capacity ceiling per support-ops: warning at >2h/day support time; crisis at >20 tickets/day for 3 days — see `../06-OPERATIONS/01-SUPPORT-OPERATIONS.md` | Tooling upgrade at ~1,000 active users (per support-ops) → evaluate Crisp Mini $45/mo (verified) or Zendesk Suite Team $55/agent/mo (verified — **Zendesk has NO free tier**; the old build-plan assumption was wrong). |
 | Live chat | Tawk.to free on the web decoder | $0 (verified — unlimited agents/chats) | Visible "Powered by tawk.to" branding — removal is $29/mo (verified) | Branding removal at public launch if cash allows; it reads amateur on a trust-critical product (estimate of impact). |
-| Knowledge base | Notion free (founder solo) + Docsify self-hosted for the public site | $0 (verified) | Notion: unlimited blocks ONLY at 1 member — adding Jhangir as a *member* (not guest) triggers a 1,000-block cap (verified) | None foreseen; add collaborators as guests. |
+| Knowledge base | Notion free (founder solo) + Docsify self-hosted for the public site | $0 (verified) | Notion: unlimited blocks ONLY at 1 member — adding any collaborator as a *member* (not guest) triggers a 1,000-block cap (verified) | None foreseen; add collaborators as guests. |
 | Support metrics | Google Sheets dashboard (tickets, response time, refund rate, chargeback ratio) | $0 (verified) | Manual | ~1,000 active users (estimate). |
 | AI deflection | **None at launch.** Free chatbot tiers (Chatbase, Botpress, Tidio) are dev sandboxes with deletion/credit traps (verified) | $0 | — | Re-evaluate ~$14–45/mo options only when ticket volume is measured, post-M-7. |
 
@@ -81,7 +80,7 @@ GA4 is rejected: consent-banner overhead + EU transfer risk is a poor fit for a 
 | Dependency scanning | Dependabot + `npm audit` in CI | $0 (verified) | No reachability analysis | Snyk free adds value but its 200 tests/mo deplete fast on active CI (verified) — optional. |
 | SAST | `eslint-plugin-security` + Semgrep OSS; CodeQL only if the repo is public | $0 (verified) | CodeQL license bars private-repo use without paid Code Security (verified) | Paid SAST only on external requirement (investor/enterprise). |
 | Pre-CWS security audit | Self-audit vs OWASP Top 10 + Chrome MV3 extension checklist | $0 | Self-audit is not an external attestation | External audit $500–2,000 (estimate) only if a partner/insurer demands it. |
-| GDPR records | EU Commission SCCs + Finnish authority templates (suomi.fi); Article 30 record self-drafted | $0 (verified — official sources) | tietosuojatyokalu.fi is trial-then-paid, not free (conflicting stream reports — verify before relying) | None. |
+| GDPR records | Pakistan data-protection requirements + standard contractual clauses; Article 30 record self-drafted | $0 (verified — official sources) | Verify local data-protection authority templates before relying | None. |
 
 ### 1.7 Design assets
 
@@ -100,23 +99,23 @@ CWS asset specs (icon sizes, 1280×800 screenshots, promo tiles, video) live in 
 
 | Item | Chosen option | Cost | Free-tier hard limits | Upgrade trigger |
 |---|---|---|---|---|
-| Business registration | Toiminimi via ytj.fi | **€75 one-time** (verified — PRH 2026 price list) | ~3–5 business days | OY (limited company) only at >€30–50k/yr retained profits (decision D4). |
-| Partnership agreement (Jhangir) | Reputable template (€200 route) + Finnish jurisdiction clause + IP assignment, per `../01-PHASE-0-BLOCKERS/02-PARTNERSHIP-AGREEMENT.md` | €200 template — €500–2,000 lawyer-drafted (verified range) | Templates are US-centric; the Finnish-law adaptations are mandatory manual work | Lawyer route if Jhangir's role expands beyond the current scope. |
-| Privacy policy / ToS | AI-drafted from free generators + the four mandatory manual clauses (EU withdrawal consent, AI disclosure, MoR clause, LLM data-flow), per `../02-PHASE-1-FOUNDATION/02-DOMAIN-AND-LEGAL-PAGES.md` | $0 (+ optional €50–150 fixed-price marketplace review (estimate)) | Free generators produce US-centric output — the manual clauses are not optional | Paid legal review of terms (€500–1,500) before US marketing spend, bundled with the scoped UPL review. |
-| Scoped UPL review | **Deferred-but-planned**: €500–1,500 scoped review before US marketing spend (verified reasoning — see superseded-decision #7, `../00-DECISION/02-DECISION-LOG.md`) | €500–1,500 (estimate) | Not a launch gate; positioning defenses are mandatory regardless | US ad spend or a first legal threat. |
-| E&O insurance | Quotes from If.fi + international brokers; bind **before public launch** | €500–2,500/yr (estimate — **no Finnish online quote exists; phone/email quotes required**) | Coverage target €500k/claim (estimate) | Public launch (M-7/M-8) is the trigger; beta behind honest-expectations consent may run without it — founder's call, see §3. |
+| Business registration | Individual seller setup (CNIC/passport + proof of address + personal payout account) | **$0 one-time** | No registration fee for individual sellers | Company incorporation only at >PKR 5–10M/yr retained profits (decision D4). |
+| Collaborator agreement (future, if/when a contractor is engaged) | Reputable template ($200 route) + Pakistan jurisdiction clause + IP assignment, per `../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md` — **$0 at Phase 0; nothing is bought until a collaborator is actually engaged** | $200 template — $500–2,000 lawyer-drafted (verified range) | Templates are US-centric; the Pakistan-law adaptations are mandatory manual work | Lawyer route if a collaborator's role expands beyond contractor scope. |
+| Privacy policy / ToS | AI-drafted from free generators + the four mandatory manual clauses (consumer withdrawal consent, AI disclosure, MoR clause, LLM data-flow), per `../02-PHASE-1-FOUNDATION/02-DOMAIN-AND-LEGAL-PAGES.md` | $0 (+ optional $50–150 fixed-price marketplace review (estimate)) | Free generators produce US-centric output — the manual clauses are not optional | Paid legal review of terms ($500–1,500) before US marketing spend, bundled with the scoped UPL review. |
+| Scoped UPL review | **Deferred-but-planned**: $500–1,500 scoped review before US marketing spend (verified reasoning — see superseded-decision #7, `../00-DECISION/02-DECISION-LOG.md`) | $500–1,500 (estimate) | Not a launch gate; positioning defenses are mandatory regardless | US ad spend or a first legal threat. |
+| E&O insurance | Quotes from a Pakistani professional-indemnity insurer (e.g., EFU or Jubilee — software-E&O availability unverified) plus at least one international broker; bind **before public launch** | $500–2,500/yr (estimate — **no local online quote exists; phone/email quotes required**) | Coverage target $500k/claim (estimate) | Public launch (M-7/M-8) is the trigger; beta behind honest-expectations consent may run without it — founder's call, see §3. |
 | Appeals consultant (template QC) | Retainer for template review, week 3–5 (decision D5) | **$1,000–2,000 one-time** (verified market range) | Paid audition first — fixture notice with 2 traps | None — one-time. |
-| Domain | appealdeck-class .app/.com via Porkbun/Namecheap/Cloudflare | ~€10–30/yr (verified) | — | None. |
-| CWS developer account | One-time registration | **$5** (verified) | EU-DSA trader verification required — start week 1 | None. |
+| Domain | appealdeck-class .app/.com via Porkbun/Namecheap/Cloudflare | ~$10–30/yr (verified) | — | None. |
+| CWS developer account | One-time registration | **$5** (verified) | CWS contact/trader verification required — start week 1 | None. |
 
 ### 1.9 Talent
 
 | Item | Chosen option | Cost | Free-tier hard limits | Upgrade trigger |
 |---|---|---|---|---|
-| Appeals-writer sourcing | Fiverr/Upwork paid gigs + Jhangir's PK network — ALL candidates through the paid fixture audition (D5) | Audition $15–50/candidate; run 5–8 candidates (estimate) | r/forhire needs ≥25 karma, 7-day account, disclosed rate | None — the audition is the mandatory filter. |
-| Appeals writer (ongoing) | Per-case or retainer | **$75–150/case or $150–400/mo retainer** (estimate — PK-market figures circularly sourced in stream docs; validate with real quotes during recruitment) | Keep engagements on-platform until a signed advisor agreement exists (platform ToS) | Volume. |
+| Appeals-writer sourcing | Direct Fiverr/Upwork paid gigs — ALL candidates through the paid fixture audition (D5) | Audition $15–50/candidate; run 5–8 candidates (estimate) | r/forhire needs ≥25 karma, 7-day account, disclosed rate | None — the audition is the mandatory filter. |
+| Appeals writer (ongoing) | Per-case or retainer | **$75–150/case or $150–400/mo retainer** (estimate — PK-market figures circularly sourced in stream docs; validate with real quotes during recruitment) | Keep engagements on-platform until a signed collaborator agreement exists (platform ToS; `../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md`) | Volume. |
 | Design partners (beta sellers) | Free Appeal Pass barter (3–5 sellers with live violations) | ~$0 cash; marginal LLM cost cents/draft (verified unit cost) | Needs a live decoder link by week 3–4 to be credible | None. |
-| FI→PK payments | Wise Business | 0.35–1% per transfer (verified) | — | None. |
+| Pakistan contractor payments | Wise Business or Payoneer | 0.35–1% per transfer (verified) | — | None. |
 | Recruitment program budget | Separate envelope | $500–1,200 (verified — founder's stated budget) | — | — |
 
 ### 1.10 Distribution / email
@@ -138,17 +137,17 @@ CWS asset specs (icon sizes, 1280×800 screenshots, promo tiles, video) live in 
 
 | # | Item | Low | High | Tag | When |
 |---|---|---|---|---|---|
-| 1 | Toiminimi registration (ytj.fi) | €75 | €75 | verified | Day 1–3 |
+| 1 | Individual seller setup | $0 | $0 | verified | Day 1–3 |
 | 2 | CWS developer account | $5 | $5 | verified | Week 1 |
-| 3 | Domain (year 1) | €10 | €30 | verified | Week 1–2 |
-| 4 | Partnership agreement | €200 (template route) | €2,000 (lawyer) | verified range | Before any credential sharing (Phase 0) |
+| 3 | Domain (year 1) | $10 | $30 | verified | Week 1–2 |
+| 4 | Collaborator agreement (future contractor) | $200 (template route) | $2,000 (lawyer) | verified range | **$0 at Phase 0** — bought only if/when a contractor is engaged (`../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md`) |
 | 5 | Appeals consultant (template QC retainer) | $1,000 | $2,000 | verified range | Week 3–5 |
-| 6 | E&O insurance (year 1) | €500 | €2,500 | estimate — quote-gated | Before public launch |
+| 6 | E&O insurance (year 1) | $500 | $2,500 | estimate — quote-gated | Before public launch |
 | 7 | Paid auditions (5–8 candidates) | $75 | $400 | estimate | Week 2–4 (recruitment envelope) |
-| 8 | Optional scoped UPL/terms legal review | €500 | €1,500 | estimate | **Deferred** — before US marketing spend, not before first sale |
-| | **Essential subtotal (1–6, low path, excl. deferred #8)** | **≈ €790 + $1,005 ≈ $1,850** | **≈ €4,605 + $2,005 ≈ $7,000** | | |
+| 8 | Optional scoped UPL/terms legal review | $500 | $1,500 | estimate | **Deferred** — before US marketing spend, not before first sale |
+| | **Essential subtotal (1–6, low path, excl. deferred #8; item 4 counts $0 at Phase 0)** | **≈ $1,515** | **≈ $4,535** | | |
 
-(Currency mixed as billed; €1 ≈ $1.08 assumed for subtotals — (estimate).)
+(Figures in USD; the few provider-quoted € prices elsewhere in this file — e.g., Hetzner — are billed as quoted.)
 
 ### 2.2 Monthly run-rate at launch (launch infrastructure: $0–25/mo; hard ceiling ≤$50/mo)
 
@@ -170,15 +169,15 @@ CWS asset specs (icon sizes, 1280×800 screenshots, promo tiles, video) live in 
 
 Available cash: **~$1,100–2,300** general + **$500–1,200** recruitment envelope (founder-stated, verified as the planning basis).
 
-- **Best case** (low-end one-time costs ≈ $1,850, minus the recruitment items covered by the recruitment envelope): the general envelope covers registration, domain, CWS, the €200 agreement template, and most of a $1,000 consultant retainer — but E&O (even at €500) pushes past the low end of the cash range. **At $1,100 cash the essential list does not fit; at $2,300 it fits with almost nothing spare.**
-- **Worst case** (~$7,000): more than 3× available cash. Not a plan.
+- **Best case** (low-end one-time costs ≈ $1,515, minus the recruitment items covered by the recruitment envelope): the general envelope covers registration, domain, CWS, and most of a $1,000 consultant retainer — but E&O (even at $500) pushes past the low end of the cash range. **At $1,100 cash the essential list does not fit; at $2,300 it fits with a few hundred dollars spare.**
+- **Worst case** (~$4,500): roughly twice the top of the cash range. Not a plan.
 - **Runway statement:** there is no salary, no ad budget, and no buffer in this plan. Monthly infra of ~$4–12 pre-revenue is survivable indefinitely; the one-time professional costs are the entire cash question. The business must reach first revenue (week 4–5 web decoder + checkout, decision D3) before the E&O + launch-tier spends land, or the founder must consciously stage them (below).
 
 ⚠ **FOUNDER-DECISION — allocation order if totals exceed cash.** Recommended priority (spend in this order, stop when the envelope is empty, revisit after first revenue):
-1. **Partnership agreement — €200 template route** (blocks all credential sharing; cheapest of the legal items; skipping it is the single most expensive possible mistake).
+1. **Collaborator & Contractor Policy — $0** (adopt the policy now, per `../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md`; it binds before any future contractor/VA/expert gets access, and the $200 agreement template is bought only if/when someone is actually engaged — nothing is purchased at Phase 0).
 2. **Appeals consultant retainer — start at $1,000** (blocks POA template quality, which is the product).
 3. **E&O insurance — cheapest adequate quote** (the certificate is required before the M-8 public listing — Gate rules in `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`; the unlisted, consented design-partner beta MAY precede coverage, but only as a **logged founder exception** — ⚠ FOUNDER-DECISION, recorded in the decision log).
-4. **Defer the scoped UPL/terms legal review** (€500–1,500) until US marketing spend or first revenue — it is optional-but-prudent, not a gate (superseded-decision #7).
+4. **Defer the scoped UPL/terms legal review** ($500–1,500) until US marketing spend or first revenue — it is optional-but-prudent, not a gate (superseded-decision #7).
 5. **Free tiers everywhere else** — every §1 domain has a $0 lane; no tool spend is approved while items 1–3 are unfunded.
 
 The founder may reorder 2 and 3, or fund E&O from first revenue — but items 1–3 must all exist before public launch (Gate rules in `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`).
@@ -199,11 +198,11 @@ The founder may reorder 2 and 3, or fund E&O from first revenue — but items 1�
 - [ ] **1.** Open Cloudflare Pages + GitHub + Supabase Free + Google AI Studio (dev project, no billing) accounts. **Owner:** Founder (AI assistant prepares configs) · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** all build work.
 - [ ] **2.** Create a SEPARATE Google Cloud project with billing + hard spend cap for production Gemini; confirm no user data ever reaches the dev/free project. **Owner:** AI assistant (Founder holds billing) · **Cost:** $0 setup · **Deadline:** before the first real user input (week 4) · **Blocks:** D9 compliance, paid composer.
 - [ ] **3.** Set up nightly `supabase db dump --data` → encrypted off-site copy via GitHub Actions; test one restore. **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 2 · **Blocks:** safe use of Supabase Free.
-- [ ] **4.** Apply to Paddle AND open Polar account, both behind the live site + legal pages. **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 (site first) · **Blocks:** week 4–5 checkout (M-5).
-- [ ] **5.** Buy domain + register toiminimi + CWS account. **Owner:** Founder · **Cost:** €75 + ~€15 + $5 (all verified) · **Deadline:** Days 1–5 · **Blocks:** Paddle application, CWS listing, invoicing.
-- [ ] **6.** Execute the §2.3 allocation decision: confirm spend order 1–5 or record an amended order in `../00-DECISION/02-DECISION-LOG.md`. **Owner:** Founder ⚠ FOUNDER-DECISION (see §2.3) · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** partnership agreement purchase, consultant retainer, E&O timing.
-- [ ] **7.** Request E&O quotes (If.fi + at least one international broker) so the real number replaces the €500–2,500 estimate. **Owner:** Founder · **Cost:** $0 to quote · **Deadline:** Week 3 · **Blocks:** public-launch gate, §2.3 item 3.
-- [ ] **8.** Verify-before-buy pass: live-check every (estimate)/(unverified) price in this file that is about to be paid (E&O, audition rates, Crisp/Zendesk if triggered, Partnero, tietosuojatyokalu.fi). **Owner:** AI assistant · **Cost:** $0 · **Deadline:** rolling, before each purchase · **Blocks:** budget accuracy.
+- [ ] **4.** Apply to Paddle AND open Polar (the warm fallback — verify at signup that Polar's Pakistan payout, which runs via Stripe Connect cross-border, actually works), both behind the live site + legal pages. Dodo Payments (MoR, 4% + 40¢) stays plan C: application-ready, no account opened. **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 (site first) · **Blocks:** week 4–5 checkout (M-5).
+- [ ] **5.** Buy domain + CWS account. **Owner:** Founder · **Cost:** ~$15 + $5 (all verified) · **Deadline:** Days 1–5 · **Blocks:** Paddle application, CWS listing, invoicing.
+- [ ] **6.** Execute the §2.3 allocation decision: confirm spend order 1–5 or record an amended order in `../00-DECISION/02-DECISION-LOG.md`. **Owner:** Founder ⚠ FOUNDER-DECISION (see §2.3) · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** consultant retainer, E&O timing (the collaborator policy itself is $0 — no agreement purchase exists at Phase 0).
+- [ ] **7.** Request E&O quotes (a Pakistani professional-indemnity insurer — e.g., EFU or Jubilee, software-E&O availability unverified — plus at least one international broker) so the real number replaces the $500–2,500 estimate. **Owner:** Founder · **Cost:** $0 to quote · **Deadline:** Week 3 · **Blocks:** public-launch gate, §2.3 item 3.
+- [ ] **8.** Verify-before-buy pass: live-check every (estimate)/(unverified) price in this file that is about to be paid (E&O, audition rates, Crisp/Zendesk if triggered, Partnero) — and confirm a free Article 30 ROPA spreadsheet template (e.g., the EU SME template) still covers the GDPR-records need at $0. **Owner:** AI assistant · **Cost:** $0 · **Deadline:** rolling, before each purchase · **Blocks:** budget accuracy.
 - [ ] **9.** M-5 backend check: confirm the Supabase Edge Functions path carries the MoR webhooks, LLM proxy, and license verification as planned. Vercel Pro ($20/mo) is provisioned ONLY if porting the donor Express backend proves necessary at M-5 — decided by the AI assistant + Founder and logged in `../00-DECISION/02-DECISION-LOG.md` (⚠ FOUNDER-DECISION only if it adds spend). Either way, confirm nothing commercial ever runs on Vercel Hobby. **Owner:** AI assistant + Founder · **Cost:** $0 default; $20/mo only if the fallback fires (verified) · **Deadline:** Week 4–5 (M-5) · **Blocks:** ToS-safe revenue.
 - [ ] **10.** Supabase Pro upgrade from first sustained sales (or earlier if backup risk is judged unacceptable). **Owner:** Founder · **Cost:** $25/mo (verified) · **Deadline:** launch week · **Blocks:** durable customer data.
 

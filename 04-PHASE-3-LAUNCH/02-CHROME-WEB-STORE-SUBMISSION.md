@@ -2,7 +2,7 @@
 
 **Why this file exists / when to use it:** The Chrome Web Store (CWS) tightened its Limited-Use and disclosure rules with enforcement from 1 Aug 2026, and AppealDeck's 16 Seller Central host permissions make a manual human review the planning assumption. This file contains every asset, form answer, justification, and fallback needed to submit the MV3 extension (MV3 = Manifest V3, Chrome's current extension platform) and survive review — without ever letting store timing block revenue, because the web decoder (`./01-WEB-DECODER-LAUNCH.md`) is already live and selling. Use it from week 6 (asset prep) through approval.
 
-**Terms:** POA = Plan of Action (the Amazon appeal document). CWS = Chrome Web Store. DSA = the EU Digital Services Act, which forces marketplaces (including CWS) to verify and display "trader" contact details for developers selling to EU users. Limited Use = Google's policy restricting what user data an extension may collect and why.
+**Terms:** POA = Plan of Action (the Amazon appeal document). CWS = Chrome Web Store. Limited Use = Google's policy restricting what user data an extension may collect and why.
 
 ---
 
@@ -10,8 +10,8 @@
 
 | Item | Status source | Notes |
 |---|---|---|
-| CWS developer account, $5 one-time fee paid | Phase 0/1 work (`../02-PHASE-1-FOUNDATION/`) | Registered under the clean business identity (Hawlton Alliance). |
-| EU-DSA trader verification **started week 1** | CWS dashboard → account | Verification (business name, address, email, phone shown publicly on the listing) can take days–weeks; an unverified trader account loses EU listing visibility. Check status now; if not complete, escalate before submitting (§8). |
+| CWS developer account, $5 one-time fee paid | Phase 0/1 work (`../02-PHASE-1-FOUNDATION/`) | Registered under the founder's individual identity. |
+| CWS contact/trader verification **started week 1** | CWS dashboard → account | Verification (business name, address, email, phone shown publicly on the listing) can take days–weeks; an unverified trader account loses listing visibility. Check status now; if not complete, escalate before submitting (§8). |
 | Privacy policy + terms live on the domain | Web launch file | Same URLs go in the listing. |
 | Extension build passes local QA | `../03-PHASE-2-BUILD/reference/APPEALDECK_BUILD_PLAN_v1.0.md` §13–§14 | `npm run zip` artifact, version from package.json. |
 | Payment disclosure readiness | — | CWS allows paid functionality via **external checkout** if: (a) we clearly identify that we, not Google, are the seller; (b) the listing discloses that payment is required for core paid functionality; (c) terms of sale are posted. All three are covered below. [source: VERIFICATIONS.md, verifier 3] |
@@ -22,7 +22,7 @@
 |---|---|---|
 | Name | ≤45 chars ideal | **AppealDeck — Amazon Appeal & POA Assistant** |
 | Summary | **132 chars max**, written to the panic queries | Draft: *"Deactivated on Amazon? Decode your notice, draft your Plan of Action, and track appeal deadlines. Local-first and read-only."* (126 chars). Verify count at submission. |
-| Description | First 2–3 lines carry the keywords buyers actually type ("account deactivated", "plan of action", "appeal", "Section 3", "performance notification") — naturally, not stuffed (keyword stuffing is a rejection cause). Then: what's free (decode, deadlines, vault) vs paid ($199 Appeal Pass per case — sold by Hawlton Alliance via external checkout, not through Google); the local-first promise; the read-only promise; paste-mode; the not-legal-advice line; no "guarantee", no win rates, no "first/only" claims (the category is occupied — never claim otherwise). |
+| Description | First 2–3 lines carry the keywords buyers actually type ("account deactivated", "plan of action", "appeal", "Section 3", "performance notification") — naturally, not stuffed (keyword stuffing is a rejection cause). Then: what's free (decode, deadlines, vault) vs paid ($199 Appeal Pass per case — sold at an external checkout via Paddle, the merchant of record for the seller Jhangir Hussain; not through Google); the local-first promise; the read-only promise; paste-mode; the not-legal-advice line; no "guarantee", no win rates, no "first/only" claims (the category is occupied — never claim otherwise). |
 | Category | Workflow & Planning |
 | Screenshots (5, 1280×800) | 1. Decode card (notice → type/severity/deadlines) · 2. POA editor with draft quality score · 3. Deadlines view with countdowns · 4. Encrypted case vault · 5. **Honest-expectations card** (yes, in the store listing — it is the trust wedge) |
 | Promo tiles | 440×280 small; 1400×560 marquee. Produced in Penpot/Figma with the free asset stack (all $0). [source: APPEALDECK_STREAM8_DESIGN_ASSETS.md] |
@@ -66,7 +66,7 @@ Also true and worth stating: **no** `tabs`, **no** `scripting`, **no** `<all_url
 > • Demo video (unlisted YouTube link) shows paste-mode first, then the in-page flow.
 > • The content script is read-only: it reads notice text on the enumerated Seller Central hosts at the user's request. It performs no page writes, no clicks, and no form submissions.
 > • All case data is stored locally (IndexedDB, encrypted). Notice text leaves the device only under an explicit, default-off consent toggle for cloud drafting, as disclosed.
-> • Paid functionality ($199 Appeal Pass) is sold by Hawlton Alliance via external checkout, disclosed in the listing; the extension never handles payment data."
+> • Paid functionality ($199 Appeal Pass) is sold at an external checkout via Paddle (merchant of record; trader identity: Jhangir Hussain), disclosed in the listing; the extension never handles payment data."
 
 (The default notes above describe the shipped build: fully read-only, no injector sentence. Add one only in a submission where the draft-insertion feature actually ships enabled — B-15 ruled it in AND the flag is on — then insert after the read-only bullet: "The single write operation — inserting the user's own drafted appeal text into the appeal form's textarea — happens only on an explicit button press and never touches any submit control." Never describe an absent or disabled feature.)
 
@@ -81,7 +81,7 @@ Also true and worth stating: **no** `tabs`, **no** `scripting`, **no** `<all_url
 
 ## 8. Actions
 
-- [ ] **1.** Verify EU-DSA trader verification status in the CWS dashboard; if incomplete, chase it now — it was started week 1 and blocks EU visibility. — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 6 · **Blocks:** listing visibility in the EU
+- [ ] **1.** Verify CWS contact/trader verification status in the CWS dashboard; if incomplete, chase it now — it was started week 1 and blocks listing visibility. — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 6 · **Blocks:** listing visibility in the EU
 - [ ] **2.** Produce the 5 screenshots + 2 promo tiles (Penpot + real product UI on fixture data — no fabricated results in screenshots). — **Owner:** Founder (AI assistant preps fixture states) · **Cost:** $0 · **Deadline:** Week 6 · **Blocks:** submission
 - [ ] **3.** Record + edit + upload the demo video (unlisted YouTube), paste-mode featured first. — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 6–7 · **Blocks:** submission
 - [ ] **4.** Write listing copy (name, 132-char summary, description) and run the banned-language check: "guarantee" = 0 hits, no win rates, no "only/first" claims. — **Owner:** AI assistant drafts, Founder approves · **Cost:** $0 · **Deadline:** Week 6 · **Blocks:** submission
@@ -99,7 +99,7 @@ Also true and worth stating: **no** `tabs`, **no** `scripting`, **no** `<all_url
 |---|---|
 | Host-permission overreach ("why 16 hosts?") | Resubmit with the §5 justification expanded; offer in reviewer notes to demonstrate per-region necessity. If still refused: ship with the top-5 revenue-region hosts only (`.com`, `-europe`, `.ca`, `.co.jp`, `.com.au`) and add the rest in later versions with individual justifications. |
 | Data-disclosure mismatch | Something in the build sends more than the form says (or the form over/under-declares). Re-run the network audit, align, resubmit with a change note. This is the most common Limited-Use trap — treat it as a build bug. |
-| "Misleading listing" / paid-functionality disclosure | Strengthen the "requires a paid Appeal Pass sold via external checkout by Hawlton Alliance" line in the first screen of the description; check screenshots don't imply free access to paid features. |
+| "Misleading listing" / paid-functionality disclosure | Strengthen the "requires a paid Appeal Pass sold via external checkout by Jhangir Hussain" line in the first screen of the description; check screenshots don't imply free access to paid features. |
 | Remote-code suspicion | We ship no remote JS (MV3 ban); remote **data** (settings JSON) is allowed. Point the reviewer at the exact fetch sites in a code-location note. |
 | Single-purpose challenge | Trim any feature the reviewer flags as out of scope; the §3 statement is the boundary. |
 | Repeated/unclear rejections (>2 rounds or template answers) | Use the CWS support one-more-review channel; simultaneously prepare the **nuclear fallback**: a paste-only build variant with **zero host permissions** (no content script at all — decode via paste, everything else identical). It loses the in-page panel but passes trivially and keeps the store presence while the full build is argued. ⚠ FOUNDER-DECISION — shipping the paste-only variant publicly (it changes the store-facing product promise) vs. staying unlisted-only until the full build clears. |

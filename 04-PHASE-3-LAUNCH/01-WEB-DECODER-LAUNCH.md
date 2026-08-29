@@ -30,7 +30,7 @@
 
 | Element | Spec |
 |---|---|
-| Flow | Decode result → "Draft my Plan of Action" → severity-gate check → honest-expectations card (§5) → MoR checkout with EU-withdrawal consent (§4) → license key → intake wizard → POA draft + critic pass → unlimited redrafts for this case → export (copy / print / PDF-via-print). |
+| Flow | Decode result → "Draft my Plan of Action" → severity-gate check → honest-expectations card (§5) → MoR checkout with consumer withdrawal consent (§4) → license key → intake wizard → POA draft + critic pass → unlimited redrafts for this case → export (copy / print / PDF-via-print). |
 | Intake wizard | Violation-specific question sets (max 12 questions, all skippable with "I don't have this"; skipped answers are honestly omitted, never fabricated). |
 | LLM | Cloud Gemini Flash, **paid tier only**, called via our own backend — the API key never reaches the browser, and paid-tier data is not used for Google training (free tier is dev-only). Cost per full case ≈ $0.02 (verified Aug 2026). |
 | Quality pass | Adversarial critic scores the draft 0–100 and lists fixes. Label it **"draft quality score"** in the UI — never "predicted approval" or any outcome prediction. |
@@ -51,12 +51,12 @@ Launch infrastructure cost: **$0–25/mo.** License keys are self-issued: MoR we
 
 ## 4. Checkout + EU-withdrawal consent flow (legally load-bearing — implement exactly)
 
-The EU 14-day right of withdrawal applies to digital content sold to consumers. Delivering the POA immediately without the consent mechanics below makes "no refund" unenforceable and invites disputes. The compliant sequence:
+The consumer 14-day right of withdrawal applies to digital content sold to consumers. Delivering the POA immediately without the consent mechanics below makes "no refund" unenforceable and invites disputes. The compliant sequence:
 
 1. Severity-gate check passes (§6) — gated classifications never reach this step.
 2. Honest-expectations card shown and acknowledged (§5).
-3. MoR checkout opens (Paddle overlay/redirect; Polar if Paddle is the fallback loser — see the Phase-1 payments setup in `../02-PHASE-1-FOUNDATION/`).
-4. **Explicit prior consent, unticked by default:** "I request that AppealDeck begin delivering the digital service immediately, and I acknowledge that I lose my 14-day EU right of withdrawal once generation begins." Purchase is impossible without ticking it.
+3. MoR checkout opens (Paddle overlay/redirect; if Paddle rejects, Polar is the warm fallback — verify its Pakistan payout via Stripe Connect cross-border at signup — and Dodo Payments is plan-C; see the Phase-1 payments setup in `../02-PHASE-1-FOUNDATION/`).
+4. **Explicit prior consent, unticked by default:** "I request that AppealDeck begin delivering the digital service immediately, and I acknowledge that I lose my 14-day right of withdrawal once generation begins." Purchase is impossible without ticking it.
 5. **Durable-medium confirmation:** the receipt/confirmation email restates the consent and the acknowledgment verbatim.
 6. Regardless of the withdrawal mechanics, we voluntarily offer a **7-day no-questions refund** on every Pass, stated at checkout and in the receipt. Fast refunds are cheaper than chargebacks, and an MoR termination over dispute rates is existential (thresholds: Stripe 0.75%, Visa VAMP 1.5%, Polar 0.4%).
 
@@ -108,7 +108,7 @@ Search volumes for these queries are **(unverified)** — no public data exists;
 | `/guides/poa-format` | "amazon plan of action format/requirements" | Show the exact three-heading structure; decoder CTA. |
 | `/guides/funds-hold` | "amazon funds hold appeal", "disbursement appeal" | Cover the Oct-2024 change: funds appeal eligible at +60 days; holds never auto-release. Most competitor content is stale here. |
 
-Rules for every page: no "guarantee", no win rates, no invented volumes, honest tone, decoder CTA above the fold, trader/contact details in footer (also needed for Paddle and EU-DSA).
+Rules for every page: no "guarantee", no win rates, no invented volumes, honest tone, decoder CTA above the fold, trader/contact details in footer (also needed for Paddle and store compliance).
 
 ## 9. Actions
 
@@ -119,7 +119,7 @@ Rules for every page: no "guarantee", no win rates, no invented volumes, honest 
 - [ ] **5.** Implement server-side severity gating on the unlock endpoint + gated-type professional-help screen. — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 4 · **Blocks:** composer go-live (hard requirement — gated types must never be sellable, day one)
 - [ ] **6.** One hour in Google Keyword Planner (or an Ahrefs trial) on the §8 query families; record volumes/CPCs in the decision log; only then finalize SEO priorities. Scheduled Week 2 — before any SEO page is written — per `../05-PHASE-4-GROWTH/03-SEO-CONTENT-PLAN.md`. — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 2 · **Blocks:** writing any SEO page; any SEO/ads spend
 - [ ] **7.** Write and publish the 4 guide pages + `/decode` on-page SEO. — **Owner:** AI assistant drafts, Founder approves/publishes · **Cost:** $0 · **Deadline:** Weeks 4–6 (decoder page first) · **Blocks:** organic funnel
-- [ ] **8.** Install Plausible/Umami + backend event counters; verify every §7 event fires; verify by network inspection that no payload contains notice text. — **Owner:** AI assistant · **Cost:** €0–50/mo · **Deadline:** Week 4 · **Blocks:** week-5 metrics review
+- [ ] **8.** Install Plausible/Umami + backend event counters; verify every §7 event fires; verify by network inspection that no payload contains notice text. — **Owner:** AI assistant · **Cost:** $0–50/mo · **Deadline:** Week 4 · **Blocks:** week-5 metrics review
 - [ ] **9.** Run the pre-launch QA checklist (§10) end to end; fix everything red. — **Owner:** AI assistant executes, Founder verifies · **Cost:** $0 · **Deadline:** Week 4–5 · **Blocks:** go-live
 - [ ] **10.** Go-live sequence (§11). — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 4 (decoder) / Week 5 (composer) · **Blocks:** first revenue
 - [ ] **11.** ⚠ FOUNDER-DECISION — Price test: run $99 / $149 / $199 across the first ~20 sales, or hold $199 fixed. The $199 anchor is defended by verified consultant prices ($600–$5,000 per case, public prices verified 25 Aug 2026 — `../07-REFERENCE/01-MARKET-EVIDENCE.md` §1.2), but the SaaS field is squeezed from below (a competitor sells $199/**month**; another sells $11 one-shot drafts). Testing is legitimate; the founder picks the experiment design and the floor price before composer go-live. — **Owner:** Founder · **Cost:** $0 (foregone revenue only) · **Deadline:** before Week 5 composer go-live · **Blocks:** checkout price configuration
@@ -160,7 +160,7 @@ All targets are goals (estimate), not forecasts — we have no verified acquisit
 | **Paid Appeal Passes/week (north star)** | MoR + events | Existing and growing by week 8 | — |
 | Refund rate | MoR | Under the Gate-3 kill line: ≤15% of first 10 sales | >15% → pause marketing, diagnose (kill criterion) |
 | Chargebacks | MoR | Zero | Any chargeback in the first weeks → immediate case review |
-| Cloud cost per decode | backend | ≤ €0.10 | Above → tighten limits before scaling (kill criterion) |
+| Cloud cost per decode | backend | ≤ $0.10 | Above → tighten limits before scaling (kill criterion) |
 
 ## Definition of done
 

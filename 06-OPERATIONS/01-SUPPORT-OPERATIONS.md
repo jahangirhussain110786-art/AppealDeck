@@ -1,8 +1,8 @@
 # Support Operations — solo-founder-survivable support
 
-**Why this file exists / when to use it:** Support is the second-biggest post-launch killer after chargebacks: a solo founder in Finland selling to panicked US sellers gets tickets at 3 a.m., and one 36-hour silence has turned a small refund into a five-figure crisis elsewhere [source: APPEALDECK_CRISIS_SCENARIO_PLANNING.md, Supp case study]. This file defines the $0 launch support stack, response targets, the 20 canned responses that must exist before beta (Gate-2 check 20 in `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`), night-triage coverage, the volume thresholds that trip the crisis playbook, and the weekly loop that turns tickets into product fixes. Use it to set up support in Weeks 6–7 (M-7 prep) and to run it every week after launch.
+**Why this file exists / when to use it:** Support is the second-biggest post-launch killer after chargebacks: a solo founder in Pakistan selling to panicked US sellers gets tickets at 3 a.m. (US time), and one 36-hour silence has turned a small refund into a five-figure crisis elsewhere [source: APPEALDECK_CRISIS_SCENARIO_PLANNING.md, Supp case study]. This file defines the $0 launch support stack, response targets, the 20 canned responses that must exist before beta (Gate-2 check 20 in `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`), night-triage coverage, the volume thresholds that trip the crisis playbook, and the weekly loop that turns tickets into product fixes. Use it to set up support in Weeks 6–7 (M-7 prep) and to run it every week after launch.
 
-**Terms:** POA = Plan of Action, the appeal document Amazon requires. MoR = Merchant of Record (Paddle or Polar — the payment provider that legally resells the product). CWS = Chrome Web Store. KB = knowledge base (public self-serve help articles). Nano = Gemini Nano, Chrome's built-in on-device AI model. Canned response = a pre-written, reusable reply template. M-1…M-8 = the build plan's weekly milestones. Guardian = the deferred $29/mo monitoring subscription (not sold until its feature ships — decision D7).
+**Terms:** POA = Plan of Action, the appeal document Amazon requires. MoR = Merchant of Record (Paddle — the payment provider that legally resells the product). CWS = Chrome Web Store. KB = knowledge base (public self-serve help articles). Nano = Gemini Nano, Chrome's built-in on-device AI model. Canned response = a pre-written, reusable reply template. M-1…M-8 = the build plan's weekly milestones. Guardian = the deferred $29/mo monitoring subscription (not sold until its feature ships — decision D7).
 
 ---
 
@@ -14,7 +14,7 @@ Support at launch is time-bound, not cash-bound: the constraint is founder hours
 |---|---|---|---|
 | Ticket channel | Support email on the product domain (e.g. `support@` via Cloudflare Email Routing, set up in `../02-PHASE-1-FOUNDATION/01-ACCOUNTS-AND-SERVICES.md` §2.2) | $0 | Labels/filters for triage (Billing, Technical, Refund, Legal-adjacent, Press). Gmail-style templates hold the canned responses. |
 | Live chat (optional) | Tawk.to free | $0 (branding removal $29/mo later) | Only genuinely unlimited free live chat. "Powered by tawk.to" branding stays until paid — acceptable pre-launch, budget the $29/mo at launch scale. Do NOT install chat before canned responses exist; chat without answers is a liability. |
-| Public KB | Docsify (open source, Markdown) published on existing hosting; drafted in Notion free (founder as the ONLY workspace member — unlimited blocks; add Jhangir as *guest*, not member, or a 1,000-block cap applies) | $0 | Structure in §7. |
+| Public KB | Docsify (open source, Markdown) published on existing hosting; drafted in Notion free (founder as the ONLY workspace member — unlimited blocks; add any future collaborator as *guest*, not member, or a 1,000-block cap applies) | $0 | Structure in §7. |
 | Ticket log / metrics | Google Sheets | $0 | One row per ticket: date, channel, topic tag (use the §3 topic numbers), severity, time-to-first-response, resolution, refund? (Y/N), product-fix candidate? (Y/N). |
 | Crisis comms | `./02-CRISIS-PLAYBOOK.md` templates pre-loaded into the same Notion space | $0 | |
 
@@ -30,10 +30,10 @@ Support at launch is time-bound, not cash-bound: the constraint is founder hours
 
 ## 2. Response targets
 
-- **<4 hours first response during Finland business hours** (approx. 09:00–17:00 Helsinki time, Mon–Fri). This is measured over a 48h beta window as Gate-3 check 32 in `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`.
-- **Async-only policy for US-night tickets.** Most customers are US sellers whose panic peaks during Finland's night. The policy is honesty, not heroics: an auto-reply states the real response window, points to the KB and the free decoder, and flags the genuinely urgent path (see §4). The founder does NOT answer tickets at 3 a.m. — burnout is a named existential risk (MR-02) and a rested founder answers better at 08:00 than a fried one at 03:00.
+- **<4 hours first response during business hours** (approx. 09:00–17:00 PK time, Mon–Fri). This is measured over a 48h beta window as Gate-3 check 32 in `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`.
+- **Async-only policy for US-night tickets.** Most customers are US sellers whose panic peaks during Pakistan's night / early US morning. The policy is honesty, not heroics: an auto-reply states the real response window, points to the KB and the free decoder, and flags the genuinely urgent path (see §4). The founder does NOT answer tickets at 3 a.m. — burnout is a named existential risk (MR-02) and a rested founder answers better at 09:00 than a fried one at 03:00.
 - **Auto-reply copy (use as-is, adjust times):**
-  > Thanks for reaching out — this is an automatic reply so you know exactly what happens next. Our support hours are 09:00–17:00 Helsinki time (that's 02:00–10:00 US Eastern), Mon–Fri, and we answer every ticket within 4 business hours. While you wait: our help articles cover the most common questions [KB link], and the free decoder [link] works 24/7. If your message is about a refund, just say so — refunds are processed no-questions-asked within the 7-day window.
+  > Thanks for reaching out — this is an automatic reply so you know exactly what happens next. Our support hours are 09:00–17:00 PK time (that's 23:00–07:00 US Eastern), Mon–Fri, and we answer every ticket within 4 business hours. While you wait: our help articles cover the most common questions [KB link], and the free decoder [link] works 24/7. If your message is about a refund, just say so — refunds are processed no-questions-asked within the 7-day window.
 
 - [ ] **4. Configure the auto-reply and verify the <4h target over a 48h beta window.** — **Owner:** Founder · **Cost:** $0 · **Deadline:** before M-8 (Gate-3 check 32) · **Blocks:** Gate 3
 
@@ -71,17 +71,14 @@ Every reply below must be honest, calm, free of the banned word "guarantee" (eve
 
 ---
 
-## 4. Night triage — Jhangir, with an honest fallback
+## 4. Night triage — honest auto-reply + founder morning batch
 
-Jhangir (partner, Pakistan — timezone covers Finland's night for US-evening tickets) is assigned first-line night triage: read incoming tickets, answer ONLY with approved canned responses (#1–#20), tag everything in the ticket log, and escalate S1/S2 (§6) to the founder immediately via the agreed channel. He makes no public statements, no policy exceptions, no refund promises beyond template #3, and never touches legal-adjacent wording.
+Night coverage is honest asynchronicity, not heroics. The default (and launch) posture: the §2 auto-reply with the real response-time expectation runs on every night ticket, and the founder batch-processes the queue every morning at 09:00–10:00 PK. This alone is a fully acceptable posture — most night tickets are S3/S4, and a rested founder at 09:00 answers them better than anyone at 03:00.
 
-**Caveat, stated plainly: Jhangir's reliability in this role is unverified** — his appeals expertise and operational consistency have no track record with us (per `../01-PHASE-0-BLOCKERS/02-PARTNERSHIP-AGREEMENT.md` and the master risk register MR-11). Therefore:
+**Future option — a vetted night VA (not engaged at launch):** if night volume later justifies it, a contractor VA may take first-line night triage under the terms of `../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md`: read incoming tickets, answer ONLY with approved canned responses (#1–#20), tag everything in the ticket log, and escalate S1/S2 (§6) to the founder immediately via the agreed channel. No public statements, no policy exceptions, no refund promises beyond template #3, and no legal-adjacent wording. VA night triage only counts as "covered" after a 2-week trial in which the VA's tag accuracy and escalation latency are spot-checked against the log.
 
-- **Fallback (active by default until he proves out):** the §2 auto-reply with the honest response-time expectation runs on every night ticket, and the founder batch-processes the queue every morning at 08:00–09:00 Helsinki. This fallback alone is a fully acceptable launch posture — honest asynchronicity beats unreliable coverage.
-- Night triage only counts as "covered" after a 2-week trial in which Jhangir's tag accuracy and escalation latency are spot-checked against the log.
-
-- [ ] **7. Run the 2-week Jhangir night-triage trial during beta; spot-check ≥20 of his ticket handlings.** — **Owner:** Founder (review) + Jhangir (triage) · **Cost:** $0 (role covered by partnership agreement) · **Deadline:** Weeks 7–8 · **Blocks:** night coverage decision
-- [ ] **8. ⚠ FOUNDER-DECISION — keep, coach, or drop Jhangir from night triage after the trial.** Only the founder can weigh the trial evidence against the partnership dynamics; the pre-agreed default on a failed trial is the auto-reply + morning-batch fallback, not a replacement hire. — **Owner:** Founder · **Cost:** $0 · **Deadline:** end of Week 8 · **Blocks:** steady-state support roster
+- [ ] **7. Test the night flow during beta: verify the auto-reply fires on every after-hours ticket and the founder morning batch clears the night queue by 10:00 PK; spot-check ≥20 handled tickets for tag accuracy.** — **Owner:** Founder · **Cost:** $0 · **Deadline:** Weeks 7–8 · **Blocks:** night coverage confidence
+- [ ] **8. ⚠ FOUNDER-DECISION — after beta, keep auto-reply + morning batch as the steady state, or engage a vetted night VA per `../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md` (canned responses only; S1/S2 escalates to the founder).** The pre-agreed default is the auto-reply + morning-batch posture — a VA is added only if night volume demands it. — **Owner:** Founder · **Cost:** $0 · **Deadline:** end of Week 8 · **Blocks:** steady-state support roster
 
 ---
 
@@ -92,7 +89,7 @@ Track daily in the ticket log. These mirror kill criterion K7 in `../00-DECISION
 | Level | Threshold | Pre-agreed response |
 |---|---|---|
 | **Warning** | Founder support time >2 hours/day (any single day) | Same day: identify the top-3 ticket topics; write/repair the canned response and KB article for each; check whether one product bug is generating the volume (if yes, it becomes the top build task). Do not add tools; add deflection. |
-| **Crisis** | >20 tickets/day for 3 consecutive days | Pause all marketing spend and outreach; deploy canned responses on everything; activate `./02-CRISIS-PLAYBOOK.md` (this volume usually means a scenario is underway — mass-suspension wave, bug, or trust incident); Jhangir takes community triage; hard work-hour boundaries enforced. |
+| **Crisis** | >20 tickets/day for 3 consecutive days | Pause all marketing spend and outreach; deploy canned responses on everything; activate `./02-CRISIS-PLAYBOOK.md` (this volume usually means a scenario is underway — mass-suspension wave, bug, or trust incident) and run community triage per its §3 roles; hard work-hour boundaries enforced. |
 
 - [ ] **9. Add both thresholds to the weekly review tripwire dashboard and set a daily 2-minute count ritual.** — **Owner:** Founder · **Cost:** $0 · **Deadline:** launch week · **Blocks:** K7 enforcement
 
@@ -100,14 +97,14 @@ Track daily in the ticket log. These mirror kill criterion K7 in `../00-DECISION
 
 ## 6. Escalation path — severity classes
 
-Every ticket gets a severity tag at first touch. First-touch handler (founder or Jhangir) applies the class; only the founder handles S1.
+Every ticket gets a severity tag at first touch. The founder applies the class at first touch (a future vetted VA may apply it per `../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md`); only the founder handles S1.
 
 | Class | Definition | Response | Who |
 |---|---|---|---|
 | **S1** | Legal threat, press inquiry gone hostile, MoR/account-security incident, data-breach suspicion, anything with "lawyer"/"chargeback"/"going public" language, or a user claiming the tool harmed their account | Founder personally, same day, even outside hours; consider crisis-playbook activation; nothing sent without founder sign-off | Founder only |
-| **S2** | Money and access: refund requests, payment failures, license/entitlement problems, chargeback follow-ups | <4 business hours; refunds executed per `./04-PAYMENT-OPERATIONS.md` §1 (refund-before-dispute doctrine) | Founder (Jhangir may send template #3/#7/#8 verbatim) |
+| **S2** | Money and access: refund requests, payment failures, license/entitlement problems, chargeback follow-ups | <4 business hours; refunds executed per `./04-PAYMENT-OPERATIONS.md` §1 (refund-before-dispute doctrine) | Founder (a vetted VA, if engaged, may send template #3/#7/#8 verbatim) |
 | **S3** | Product defects: wrong classification, parse failures, broken flows | <4 business hours acknowledgment; bug logged for the AI assistant; if ≥3 users report the same misclassification in 24h → crisis-playbook Scenario 4 | Founder + AI assistant (fix) |
-| **S4** | How-to, expectations, feature requests, general questions | <4 business hours via canned responses; KB link | Founder or Jhangir |
+| **S4** | How-to, expectations, feature requests, general questions | <4 business hours via canned responses; KB link | Founder (or a vetted VA, canned responses only) |
 
 ---
 
@@ -142,6 +139,6 @@ Support is the cheapest product-research channel this business will ever have. E
 - [ ] Support email, ticket log, and Notion/Docsify KB live; auto-reply configured; Tawk.to decision made.
 - [ ] All 20 canned responses written, founder-reviewed, banned-word/success-claim grep clean, and mirrored as KB articles in the §7 structure.
 - [ ] <4h business-hours response target verified over a 48h beta window (Gate-3 check 32).
-- [ ] Night-triage trial completed; founder decision (item 8) recorded; fallback auto-reply tested either way.
+- [ ] Night flow tested (auto-reply on every after-hours ticket + morning batch clearing the queue); founder decision (item 8) recorded.
 - [ ] Both volume thresholds on the weekly tripwire dashboard; the crisis threshold points at `./02-CRISIS-PLAYBOOK.md`.
 - [ ] Severity classes in use in the ticket log; at least one full week of the §8 feedback loop completed with actions logged.

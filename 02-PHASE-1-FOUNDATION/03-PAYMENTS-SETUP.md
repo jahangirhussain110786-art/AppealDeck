@@ -1,16 +1,16 @@
-# Payments Setup — Paddle + Polar applications, SKU configuration, webhooks, refunds
+# Payments Setup — Paddle application, SKU configuration, webhooks, refunds
 
-**Why this file exists / when to use it:** Decision D2 (see `../00-DECISION/02-DECISION-LOG.md`) is to apply to **both** Paddle and Polar in Week 1, behind the live site and legal pages from `./02-DOMAIN-AND-LEGAL-PAGES.md` — because Paddle rejects pre-revenue solo founders unpredictably, and a payment rail must exist before the Week 4–5 checkout (the first revenue surface, decision D3). This file is the execution checklist: how to apply, how to frame the product so risk teams approve it, which products to create (and which NOT to create), how the webhook → license backend must behave, how refunds are configured, and the pre-agreed decision rule if applications fail. Work it in Week 1–2; the test-mode end-to-end check (§7) closes before the first real sale.
+**Why this file exists / when to use it:** Decision D2 (see `../00-DECISION/02-DECISION-LOG.md`) is to apply to **Paddle** in Week 1, behind the live site and legal pages from `./02-DOMAIN-AND-LEGAL-PAGES.md` — because a payment rail must exist before the Week 4–5 checkout (the first revenue surface, decision D3). This file is the execution checklist: how to apply, how to frame the product so risk teams approve it, which products to create (and which NOT to create), how the webhook → license backend must behave, how refunds are configured, and the pre-agreed decision rule if the application fails. Work it in Week 1–2; the test-mode end-to-end check (§7) closes before the first real sale.
 
-Glossary: **MoR** = Merchant of Record — a payment provider (Paddle, Polar) that legally resells your product, so it handles customer-country VAT/sales tax, invoicing, and disputes; you invoice the MoR, not the customer. **AUP** = Acceptable Use Policy (what the MoR refuses to sell). **SKU** = a purchasable product entry in the MoR dashboard. **Webhook** = an HTTP call the MoR sends to our backend when something happens (purchase, refund, chargeback). **Idempotent** = safe to process the same event twice without duplicating its effect. **KYC** = know-your-customer identity verification. **Sandbox / test mode** = the MoR's fake-money environment. **POA** = Plan of Action, the appeal document Amazon requires. **SLA** = service-level agreement (here: our own promised response time). **FTC** = the US Federal Trade Commission.
+Glossary: **MoR** = Merchant of Record — a payment provider (Paddle) that legally resells your product, so it handles customer-country VAT/sales tax, invoicing, and disputes; you invoice the MoR, not the customer. **AUP** = Acceptable Use Policy (what the MoR refuses to sell). **SKU** = a purchasable product entry in the MoR dashboard. **Webhook** = an HTTP call the MoR sends to our backend when something happens (purchase, refund, chargeback). **Idempotent** = safe to process the same event twice without duplicating its effect. **KYC** = know-your-customer identity verification. **Sandbox / test mode** = the MoR's fake-money environment. **POA** = Plan of Action, the appeal document Amazon requires. **SLA** = service-level agreement (here: our own promised response time). **FTC** = the US Federal Trade Commission.
 
 ---
 
 ## 1. The category framing rule (read before touching any application form)
 
-Every MoR's AUP restricts to **automated digital products** and prohibits human services (Paddle AUP: "human services… including pure consulting or advisory services"; Stripe Managed Payments excludes anything "involving human intervention"). Separately, **Paddle settled with the FTC in 2025** over processing for deceptive tech-support schemes — its risk team is now demonstrably wary of anything that smells like "account recovery." [source: APPEALDECK_STREAM9_PAYMENT_TAX_REPORT.md; VERIFICATIONS.md verifier 4]
+Every MoR's AUP restricts to **automated digital products** and prohibits human services (Paddle AUP: "human services… including pure consulting or advisory services"). Separately, **Paddle settled with the FTC in 2025** over processing for deceptive tech-support schemes — its risk team is now demonstrably wary of anything that smells like "account recovery." [source: APPEALDECK_STREAM9_PAYMENT_TAX_REPORT.md; VERIFICATIONS.md verifier 4]
 
-Therefore, in every application field, dashboard product description, and support conversation with an MoR:
+Therefore, in every application field, dashboard product description, and support conversation with Paddle:
 
 | Always say | Never say |
 |---|---|
@@ -25,14 +25,14 @@ This is not spin — it is the accurate description of the product (decision D6:
 
 ## 2. Paddle application (primary candidate)
 
-**Facts (verified Aug 2026):** fee 5% + $0.50 per transaction, no monthly fee, global VAT handled. Onboarding runs in 3 phases: (1) domain review — a real, navigable website is required; (2) business verification — not strictly required for sole traders, but recommended; (3) identity verification — government ID + proof of address for a Finnish sole trader. Payouts are monthly, minimum €100 balance. Review typically takes 3–5 business days but can stretch to weeks for flagged categories (unverified — third-party rejection analyses). Documented rejection triggers for solo founders: incomplete/thin sites, refund-policy text that contradicts itself, and identity mismatches between the application and the website. [source: APPEALDECK_STREAM9_PAYMENT_TAX_REPORT.md §1.1; APPEALDECK_STREAM2_PAYMENT_FREE_CHEAP_REPORT.md]
+**Facts (verified Aug 2026):** fee 5% + $0.50 per transaction, no monthly fee, global VAT handled. Onboarding runs in 3 phases: (1) domain review — a real, navigable website is required; (2) business verification — not strictly required for individuals, but recommended; (3) identity verification — government ID + proof of address for the individual seller. Payouts are monthly, minimum $100 equivalent balance. Review typically takes 3–5 business days but can stretch to weeks for flagged categories (unverified — third-party rejection analyses). Documented rejection triggers for solo founders: incomplete/thin sites, refund-policy text that contradicts itself, and identity mismatches between the application and the website. [source: APPEALDECK_STREAM9_PAYMENT_TAX_REPORT.md §1.1; APPEALDECK_STREAM2_PAYMENT_FREE_CHEAP_REPORT.md]
 
 ### 2.1 Pre-application checklist (all must be true before submitting)
 
 - [ ] **1.** Live site is real and complete: home, pricing, about/contact, refund policy, privacy policy, ToS — per `./02-DOMAIN-AND-LEGAL-PAGES.md`, no placeholders, no "beta" labels. — **Owner:** Founder (verifies) · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** Paddle submission
-- [ ] **2.** Identity consistency verified: the name and business identity (Hawlton Alliance + founder's real name, Finland) on the application match the site's About page, the domain's contact email, and the CWS trader verification exactly. — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** Paddle approval (mismatch is a documented rejection trigger)
+- [ ] **2.** Identity consistency verified: the name and identity (Jhangir Hussain / Hawlton brand, Pakistan) on the application match the site's About page, the domain's contact email, and the CWS listing exactly. — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** Paddle approval (mismatch is a documented rejection trigger)
 - [ ] **3.** Refund policy on the site states the 7-day no-questions voluntary refund (decision D8) with no contradicting qualifiers anywhere (e.g. no "all sales final" leftovers). — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** Paddle domain review
-- [ ] **4.** y-tunnus (Finnish Business ID) issued — the Phase-0 blocker `../01-PHASE-0-BLOCKERS/03-BUSINESS-REGISTRATION-FINLAND.md` is done, so business verification has a registration number to point at. — **Owner:** Founder · **Cost:** €75 (already counted in Phase 0) · **Deadline:** before submission · **Blocks:** business verification phase
+- [ ] **4.** Identity documents ready: government ID + proof of address for the individual seller (Jhangir Hussain). The seller is an individual, not a company — personal payout via Payoneer or Wise personal account. — **Owner:** Founder · **Cost:** $0 · **Deadline:** before submission · **Blocks:** identity verification phase
 
 ### 2.2 Submit
 
@@ -48,8 +48,8 @@ Expect scrutiny; answer fast, factually, and consistently with the site. Keep th
 | "Is this an account-recovery / reinstatement service?" | No. It is software. It never contacts Amazon, never submits anything, and provides no human service. The user pastes their notice; the software classifies it and drafts a document the user edits and submits themselves. |
 | "Do you promise reinstatement outcomes?" | No. The ToS and every product surface state that appeal decisions are made solely by Amazon and no outcome is promised. There are no success-rate claims anywhere. |
 | "Is any human involved in the deliverable?" | No. The $199 Appeal Pass is fully automated software output. (A human-review add-on does not exist and is not on this account — see §4.3.) |
-| "What is the refund policy?" | 7-day voluntary refund, no questions asked, plus full EU withdrawal-right mechanics at checkout (explicit prior consent to immediate digital delivery + durable-medium confirmation). |
-| "Who are you?" | Finnish sole trader (Hawlton Alliance, y-tunnus on file), founder's real name published on the site's About page — identical identity across site, application, and Chrome Web Store trader verification. |
+| "What is the refund policy?" | 7-day voluntary refund, no questions asked, plus consumer withdrawal-right mechanics at checkout (explicit prior consent to immediate digital delivery + durable-medium confirmation). |
+| "Who are you?" | Individual seller (Jhangir Hussain, Pakistan), founder's real name published on the site's About page — identical identity across site, application, and CWS listing. |
 
 - [ ] **7.** If Paddle requests changes (copy edits, extra documentation), comply the same day and never argue; log the exchange in `../00-DECISION/02-DECISION-LOG.md` §4. — **Owner:** Founder · **Cost:** $0 · **Deadline:** as it happens · **Blocks:** approval timeline
 
@@ -57,10 +57,16 @@ Expect scrutiny; answer fast, factually, and consistently with the site. Keep th
 
 ## 3. Polar setup (warm fallback — configured in Week 1, activatable in 48h)
 
-**Facts (verified Aug 2026, post-27-May-2026 pricing):** free Starter tier 5% + 50¢ per transaction, no monthly fee, instant signup with no sales gate; Pro $20/mo at 3.8% + 40¢. Extras: +1.5% on international cards, $15 per chargeback, payouts are **manual** withdrawals via Stripe Connect Express (payout account must be in Finland), minimum €13, 7-day settlement delay for new organizations, first payout review up to 14 days. Chargeback review threshold 0.4%. No built-in dunning (irrelevant until the Guardian subscription ships). [source: APPEALDECK_STREAM9_PAYMENT_TAX_REPORT.md §1.2; APPEALDECK_STREAM2_PAYMENT_FREE_CHEAP_REPORT.md; VERIFICATIONS.md verifier 4]
+**Fallback ladder: Polar (warm, pre-configured) → Dodo Payments (plan-C, application-ready).** Stripe direct is not available to Pakistan-resident sellers, so any fallback must itself be a merchant of record.
 
-- [ ] **8.** Create the Polar organization on the free Starter tier under the same business identity; complete KYC (Stripe Identity: ID + selfie) and connect the Stripe Connect Express payout account (Finland). — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** Gate 1 check 6; kill-criterion K1 response readiness
-- [ ] **9.** Configure the same products as §4 in Polar (Appeal Pass live-ready but unpublished; Guardian created, hidden), and register the same backend webhook endpoint (§5) with Polar's webhook secret, so switching rails is configuration, not engineering. — **Owner:** AI assistant (Founder verifies) · **Cost:** $0 · **Deadline:** Week 2 · **Blocks:** 48-hour fallback activation
+**Polar facts (verified Aug 2026, post-27-May-2026 pricing):** free Starter tier 5% + 50¢ per transaction, no monthly fee, instant signup with no sales gate; Pro $20/mo at 3.8% + 40¢. Extras: +1.5% on international cards, $15 per chargeback, payouts are **manual** withdrawals via Stripe Connect Express, minimum €13, 7-day settlement delay for new organizations, first payout review up to 14 days. Chargeback review threshold 0.4%. No built-in dunning (irrelevant until the Guardian subscription ships). [source: APPEALDECK_STREAM9_PAYMENT_TAX_REPORT.md §1.2; APPEALDECK_STREAM2_PAYMENT_FREE_CHEAP_REPORT.md; VERIFICATIONS.md verifier 4]
+
+**⚠ Pakistan payout caveat (verify at signup, before counting this rail as warm):** Polar payouts run on Stripe Connect cross-border. Third-party reports (Aug 2026) say Pakistan payout works, but this is unverified with our own details — confirm inside the Polar onboarding flow that a Pakistan-resident individual can complete Stripe Connect Express KYC and reach a withdrawable balance. If it cannot, log the finding in the decision log and promote Dodo Payments to warm fallback.
+
+**Dodo Payments facts (plan-C; checked 29 Aug 2026 — re-verify at application time):** MoR, 4% + 40¢ per transaction, no monthly fee, explicitly markets onboarding and payouts for Pakistan-region sellers. No account is opened until the plan-C trigger fires (Paddle rejected AND Polar payout unverifiable) — keep the application details ready, nothing more.
+
+- [ ] **8.** Create the Polar organization on the free Starter tier under the same seller identity (Jhangir Hussain, individual); complete KYC (Stripe Identity: ID + selfie) and connect the Stripe Connect Express payout account — **verifying the Pakistan payout path end-to-end** per the caveat above. If Pakistan payout is unavailable, log it and prepare the Dodo Payments application instead. — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** Gate 1 check 6; kill-criterion K1 response readiness
+- [ ] **9.** Configure the same products as §4 on the warm-fallback rail (Appeal Pass live-ready but unpublished; Guardian created, hidden), and register the same backend webhook endpoint (§5) with that rail's webhook secret, so switching rails is configuration, not engineering. — **Owner:** AI assistant (Founder verifies) · **Cost:** $0 · **Deadline:** Week 2 · **Blocks:** 48-hour fallback activation
 - [ ] **10.** Polar Pro upgrade rule (mechanical, no deliberation): upgrade to Pro ($20/mo) only if Polar is the **active** rail AND it processes ≥9 Appeal Passes in a month — at $199, Pro saves ~$2.49/sale, so ~9 sales/month is break-even. Re-check monthly at the weekly review. — **Owner:** Founder · **Cost:** $20/mo when triggered · **Deadline:** monthly check · **Blocks:** nothing (pure cost optimization)
 
 ---
@@ -71,10 +77,10 @@ Expect scrutiny; answer fast, factually, and consistently with the site. Keep th
 
 - Type: one-time purchase, digital product (SaaS tax category).
 - **License keys are self-issued by our backend** (decision D2): the MoR webhook drives a Supabase `licenses` table, and our backend generates and emails the key. Do **not** use any MoR-native licensing feature — self-issued keys keep the product rail-agnostic, so a Paddle→Polar switch never touches licensing. (Schema and module spec: `../03-PHASE-2-BUILD/reference/APPEALDECK_BUILD_PLAN_v1.0.md` §9.2 and M11.)
-- Checkout copy: honest-expectations card renders **before** checkout (most first appeals fail, even with expensive professional help — decision D6); EU-withdrawal consent mechanics per §6.2. No success-rate claims; the word "guarantee" appears nowhere (grep gate = 0).
+- Checkout copy: honest-expectations card renders **before** checkout (most first appeals fail, even with expensive professional help — decision D6); consumer withdrawal consent mechanics per §6.2. No success-rate claims; the word "guarantee" appears nowhere (grep gate = 0).
 
-- [ ] **11.** Create the Appeal Pass product ($199 one-time) on Paddle (sandbox first, live on approval) and Polar, description per the §1 framing; record price/product IDs into deployment-env variables (`./04-REPO-AND-FIXTURE-CORPUS.md` §3 lists the names). — **Owner:** Founder (dashboard) + AI assistant (env wiring) · **Cost:** $0 · **Deadline:** Week 2 · **Blocks:** M-5 licensing work, Week 4–5 checkout
-- [ ] **12.** ⚠ **FOUNDER-DECISION** — price experiment: the market squeeze (SellerForge $49/mo unlimited; AppealPath $11/POA; consultants $1,495–$5,000/case) makes a $99/$149/$199 price test across the first ~20 sales a legitimate experiment. If wanted, configure the extra price points now (both rails support multiple prices). Default if undecided: launch at $199, no test. — **Owner:** Founder · **Cost:** $0 · **Deadline:** decide before checkout goes live (Week 4) · **Blocks:** nothing — checkout ships either way
+- [ ] **11.** Create the Appeal Pass product ($199 one-time) on Paddle (sandbox first, live on approval), description per the §1 framing; record price/product IDs into deployment-env variables (`./04-REPO-AND-FIXTURE-CORPUS.md` §3 lists the names). — **Owner:** Founder (dashboard) + AI assistant (env wiring) · **Cost:** $0 · **Deadline:** Week 2 · **Blocks:** M-5 licensing work, Week 4–5 checkout
+- [ ] **12.** ⚠ **FOUNDER-DECISION** — price experiment: the market squeeze (SellerForge $49/mo unlimited; AppealPath $11/POA; consultants $1,495–$5,000/case) makes a $99/$149/$199 price test across the first ~20 sales a legitimate experiment. If wanted, configure the extra price points now (Paddle supports multiple prices). Default if undecided: launch at $199, no test. — **Owner:** Founder · **Cost:** $0 · **Deadline:** decide before checkout goes live (Week 4) · **Blocks:** nothing — checkout ships either way
 
 ### 4.2 Guardian — $29/mo, created but NOT sold (decision D7)
 
@@ -82,7 +88,7 @@ Expect scrutiny; answer fast, factually, and consistently with the site. Keep th
 
 ### 4.3 Expert Review — NOT created on any MoR
 
-Human services are not MoR-eligible: Paddle's AUP prohibits them and Stripe Managed Payments excludes human-intervention services. Do not create an Expert Review SKU on Paddle or Polar, do not mention it in either application, and do not sell it anywhere in v1. If it ever ships, it runs on separate rails (Stripe direct service line) after Gate 3 check 38 resolves — see `../00-DECISION/02-DECISION-LOG.md` (D7). Putting a human-service SKU on an MoR account risks offboarding the account that carries all revenue. This supersedes the older "submit pre-clearance Week 1–3" action: Expert Review is never raised with any MoR during onboarding — a pre-clearance conversation happens only post-approval, from a healthy account, and only if the roadmap revival conditions are met.
+Human services are not MoR-eligible: Paddle's AUP prohibits them. Do not create an Expert Review SKU on Paddle, do not mention it in the application, and do not sell it anywhere in v1. If it ever ships, it runs on separate rails after Gate 3 check 38 resolves — see `../00-DECISION/02-DECISION-LOG.md` (D7). Putting a human-service SKU on an MoR account risks offboarding the account that carries all revenue. This supersedes the older "submit pre-clearance Week 1–3" action: Expert Review is never raised with any MoR during onboarding — a pre-clearance conversation happens only post-approval, from a healthy account, and only if the roadmap revival conditions are met.
 
 ---
 
@@ -119,11 +125,11 @@ The AI assistant implements this under milestone M-5; the contract is fixed here
 
 - [ ] **15.** Configure the refund path on the active rail: support inbox → founder approves → refund issued via MoR dashboard/API within 24h → webhook revocation verified. Write the 24h SLA into the support docs. — **Owner:** Founder (process) + AI assistant (revocation path) · **Cost:** $0 · **Deadline:** before checkout goes live (Week 4–5); verified at Gate 2 check 18 · **Blocks:** chargeback defense
 
-### 6.2 EU-withdrawal consent at checkout
+### 6.2 Consumer withdrawal consent at checkout
 
-EU consumers hold a 14-day withdrawal right on digital content unless delivery begins early with their explicit prior consent. The mechanics (unticked consent checkbox at checkout, durable-medium confirmation in the receipt email, and the dedicated withdrawal-function page) are specified and built under `./02-DOMAIN-AND-LEGAL-PAGES.md` §4.3 — this file's job is the MoR side:
+EU/UK consumers hold a withdrawal right on digital content unless delivery begins early with their explicit prior consent. The mechanics (unticked consent checkbox at checkout, durable-medium confirmation in the receipt email, and the dedicated withdrawal-function page) are specified and built under `./02-DOMAIN-AND-LEGAL-PAGES.md` §4.3 — this file's job is the MoR side:
 
-- [ ] **16.** Verify the chosen rail's checkout can display our custom consent text and record the acceptance; if it cannot, the consent step moves to a pre-checkout page on our domain, and the receipt email carries the confirmation text. Test both the consent record and the confirmation email in sandbox. — **Owner:** AI assistant (Founder verifies) · **Cost:** $0 · **Deadline:** before checkout goes live · **Blocks:** Gate 2 check 19 (EU legality)
+- [ ] **16.** Verify the chosen rail's checkout can display our custom consent text and record the acceptance; if it cannot, the consent step moves to a pre-checkout page on our domain, and the receipt email carries the confirmation text. Test both the consent record and the confirmation email in sandbox. — **Owner:** AI assistant (Founder verifies) · **Cost:** $0 · **Deadline:** before checkout goes live · **Blocks:** Gate 2 check 19 (consumer-law legality)
 
 ---
 
@@ -139,7 +145,7 @@ EU consumers hold a 14-day withdrawal right on digital content unless delivery b
   7. **Timeout test:** artificially slow the handler past 5s → provider retry arrives → still exactly one license row.
   8. Sandbox refund issued → revocation webhook → entitlement removed within 24h → key re-entry is rejected.
   9. Severity-gated case types cannot reach checkout (routes to the professional-help screen — Gate 3 check 39).
-  10. EU consent checkbox + confirmation email render correctly (§6.2).
+  10. Consumer withdrawal consent checkbox + confirmation email render correctly (§6.2).
 
 Repeat items 1–8 on the fallback rail's sandbox once, so a K1/K13 rail switch is proven, not assumed.
 
@@ -149,21 +155,19 @@ Repeat items 1–8 on the fallback rail's sandbox once, so a K1/K13 rail switch 
 
 | Situation | Action |
 |---|---|
-| Paddle approved (any time) | Paddle = primary rail. Polar stays configured and dormant as the warm fallback (kill criterion K13 requires a second rail activatable within 48h). |
-| Paddle still pending when the Week 4–5 checkout must go live | Launch checkout on Polar (free tier). If Paddle approves later, switching primary is a founder call at the weekly review — Polar Pro pricing may even be cheaper at low volume. |
-| Paddle rejects outright | Activate Polar as primary within 48h (it is already configured — §3). Log the rejection reason; do not resubmit to Paddle without a material change. |
-| Paddle rejects AND Polar fails (KYC/first-payout review/AUP) | Evaluate the Stripe-direct escape hatch immediately (Finland: 1.5% + €0.25 EEA cards; we would handle VAT ourselves — accountant call required). |
-| **All three fail within 48h of the Paddle rejection** | **Pause the build.** This is kill criterion K1 / NO-GO trigger 1 — see `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md` §1 and `../00-DECISION/01-VERDICT.md`. A product with no way to charge is not paused work, it is a stopped business decision — escalate to the founder the same day. |
+| Paddle approved (any time) | Paddle = primary rail. |
+| Paddle still pending when the Week 4–5 checkout must go live | Delay checkout until Paddle approves — a payment rail must exist before revenue. |
+| Paddle rejects outright | Log the rejection reason; address the stated reason and resubmit once, or evaluate alternative MoRs (Lemon Squeezy, FastSpring). |
+| **All MoR options exhausted** | **Pause the build.** This is kill criterion K1 / NO-GO trigger 1 — see `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md` §1 and `../00-DECISION/01-VERDICT.md`. A product with no way to charge is not paused work, it is a stopped business decision — escalate to the founder the same day. |
 
 ---
 
 ## Definition of done
 
 - [ ] Paddle application submitted behind the complete live site; identity consistent across site/application/CWS; sandbox account integrated.
-- [ ] Polar organization live on the free tier, KYC done, payout account connected, products mirrored, webhook registered — activatable within 48h.
-- [ ] Appeal Pass ($199 one-time) created on both rails; license keys self-issued via the Supabase `licenses` table, not MoR-native licensing.
+- [ ] Appeal Pass ($199 one-time) created on Paddle; license keys self-issued via the Supabase `licenses` table, not MoR-native licensing.
 - [ ] Guardian ($29/mo) created hidden/draft, purchasable nowhere; Expert Review created nowhere.
 - [ ] Webhook contract (§5) recorded as the M-5 acceptance spec: signature verification, idempotency by event id, sub-5s acknowledgment, async processing, revocation path.
-- [ ] Refund workflow configured: 24h approve/forward SLA, EU-withdrawal consent mechanics verified in sandbox.
-- [ ] Full sandbox E2E (§7) passed on the active rail, including replay and timeout tests; items 1–8 passed once on the fallback rail.
+- [ ] Refund workflow configured: 24h approve/forward SLA, consumer withdrawal consent mechanics verified in sandbox.
+- [ ] Full sandbox E2E (§7) passed on Paddle, including replay and timeout tests.
 - [ ] The founder can state the §8 decision rule from memory, including what triggers K1 and the pre-agreed response.

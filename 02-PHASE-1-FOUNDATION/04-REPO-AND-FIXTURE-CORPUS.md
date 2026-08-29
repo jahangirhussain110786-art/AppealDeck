@@ -10,7 +10,7 @@ Glossary: **CI** = continuous integration (automated checks on every push). **MV
 
 The playbook directories (`00-DECISION/` … `08-TEAM/`) and the code scaffold share one repository at `V:\AppealDeck`. Committing the playbook is deliberate: it contains no secrets, and it is the AI assistant's persistent memory across sessions (see §4).
 
-- [ ] **1.** `git init` in `V:\AppealDeck`; first commit = the playbook files + `LICENSE` (proprietary, © Hawlton Alliance) + `.gitignore` (§2) + `README.md` (two lines: what AppealDeck is, pointer to `00-DECISION/01-VERDICT.md`). Default branch `main`. — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 1, Day 1–2 · **Blocks:** all code work, Gate 1 check 9
+- [ ] **1.** `git init` in `V:\AppealDeck`; first commit = the playbook files + `LICENSE` (proprietary, © Jhangir Hussain) + `.gitignore` (§2) + `README.md` (two lines: what AppealDeck is, pointer to `00-DECISION/01-VERDICT.md`). Default branch `main`. — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 1, Day 1–2 · **Blocks:** all code work, Gate 1 check 9
 - [ ] **2.** Scaffold the code skeleton per build plan §5 (`../03-PHASE-2-BUILD/reference/APPEALDECK_BUILD_PLAN_v1.0.md`): `package.json` (name `appealdeck`), `vite.config.ts` + `manifest.config.ts`, `tsconfig.json` (strict), `src/` tree, `fixtures/notices/`, `backend/`, `supabase/`, `docs/` (with `DECISIONS.md`, the running decision log the AI assistant appends to). Two build order amendments apply: the core (`parse → classify → compose → critic`) lives platform-agnostic so `npm run build:web` produces the web decoder bundle and `npm run build` the MV3 extension (decision D3, see `../03-PHASE-2-BUILD/01-BUILD-SEQUENCE.md`); and the §2.5 payment env vars are replaced per §3 below (Lemon Squeezy is dead, decision D2). — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** M-1 acceptance (`npm run build` produces a loadable extension)
 - [ ] **3.** Donor-code discipline: copy donor files only from the build plan §6 approved list (never symlink, never from the §2.6 forbidden sources — `spchatgpt*`, `chunked/`, `dist/`, anything mentioning "superpower"). After **every** copied file: `grep -i superpower <file>` must return zero hits before commit. — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** continuous · **Blocks:** legal cleanliness of the codebase (the entire reason this repo exists outside `V:\Extension 2.3`)
 
@@ -28,7 +28,7 @@ The playbook directories (`00-DECISION/` … `08-TEAM/`) and the code scaffold s
 
 ## 3. Private GitHub remote, CI, and .env.example
 
-- [ ] **7.** Create a **private** GitHub repository under the founder's account (2FA on, per `./01-ACCOUNTS-AND-SERVICES.md` §3); push `main`. No collaborators are invited before the written partnership agreement is signed (`../01-PHASE-0-BLOCKERS/02-PARTNERSHIP-AGREEMENT.md`); when they are, they get scoped collaborator invitations — never shared credentials. — **Owner:** Founder (creates), AI assistant (pushes) · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** CI, off-machine backup of the codebase
+- [ ] **7.** Create a **private** GitHub repository under the founder's account (2FA on, per `./01-ACCOUNTS-AND-SERVICES.md` §3); push `main`. No collaborators exist today (solo founder); if a future contractor ever needs repo access, the collaborator policy binds them first (`../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md`) and they get a scoped collaborator invitation — never shared credentials. — **Owner:** Founder (creates), AI assistant (pushes) · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** CI, off-machine backup of the codebase
 - [ ] **8.** GitHub Actions CI on every push and pull request: **typecheck** (`tsc --noEmit`) → **unit tests** (Vitest, includes the fixture-loader test in §5) → **build** (`npm run build` and `npm run build:web`). CI must be green on the empty scaffold before feature work starts (M-1 acceptance). — **Owner:** AI assistant · **Cost:** $0 (free tier) · **Deadline:** Week 1 · **Blocks:** M-1, every later milestone's regression safety
 - [ ] **9.** Add two grep gates to CI, failing the build on any hit: (a) `guarantee` in `src/`, site copy, and store-listing text (decision D6's ethics gate, checked by machine, not memory); (b) `superpower` anywhere in the repo (forbidden-source tripwire). A free secret scanner (e.g. gitleaks) as a third CI step is recommended. — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 1–2 · **Blocks:** Gate 2 check 16 automation
 - [ ] **10.** Commit `.env.example` with empty values — build plan §2.5 amended for decision D2 (Paddle/Polar replace Lemon Squeezy):
@@ -40,16 +40,12 @@ SUPABASE_SERVICE_ROLE_KEY=
 # LLM (backend only — paid tier for production, free tier for dev fixtures only, D9)
 GEMINI_API_KEY=
 GEMINI_MODEL=                       # verify current Flash model id at build time
-# Payments (backend only) — D2: Paddle primary / Polar warm fallback
-PAYMENTS_PROVIDER=paddle            # paddle | polar — the single rail switch
+# Payments (backend only) — D2: Paddle primary
+PAYMENTS_PROVIDER=paddle            # paddle only
 PADDLE_API_KEY=
 PADDLE_WEBHOOK_SECRET=
 PADDLE_PRICE_APPEAL_PASS=
 PADDLE_PRICE_GUARDIAN_SUB=          # SKU exists but is not sold (D7)
-POLAR_ACCESS_TOKEN=
-POLAR_WEBHOOK_SECRET=
-POLAR_PRODUCT_APPEAL_PASS=
-POLAR_PRODUCT_GUARDIAN_SUB=
 ```
 
 — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** backend work, `./03-PAYMENTS-SETUP.md` §5 wiring
@@ -73,7 +69,7 @@ A lost AI session must cost minutes, not hours (Gate 1 check 10). `CLAUDE.md` at
 
 ## 5. The fixture corpus — build FIRST (blocks milestone M-3)
 
-**What it is:** `fixtures/notices/` — a corpus of enforcement-notice test cases, each a raw input (`raw.html` or `raw.txt`) plus an `expected.json` (correct classification, extracted facts, deadlines). It is the measuring stick for the parser and classifier: M-3's acceptance gate is "fixture accuracy ≥90%", and the corpus is also the audition instrument for appeals-expert vetting (`../01-PHASE-0-BLOCKERS/02-PARTNERSHIP-AGREEMENT.md`, decision D5). Because the corpus stands in for Seller Central, no live Amazon account is needed until the Week-6 live-QA gate.
+**What it is:** `fixtures/notices/` — a corpus of enforcement-notice test cases, each a raw input (`raw.html` or `raw.txt`) plus an `expected.json` (correct classification, extracted facts, deadlines). It is the measuring stick for the parser and classifier: M-3's acceptance gate is "fixture accuracy ≥90%", and the corpus is also the audition instrument for appeals-expert vetting (`../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md`, decision D5). Because the corpus stands in for Seller Central, no live Amazon account is needed until the Week-6 live-QA gate.
 
 ### 5.1 Required coverage
 
@@ -134,7 +130,7 @@ Deadline expectations must encode the **corrected deadline model** (funds appeal
 
 ## Definition of done
 
-- [ ] `V:\AppealDeck` is a git repo: playbook + code scaffold committed, `LICENSE` (© Hawlton Alliance) and `README.md` present, default branch `main`.
+- [ ] `V:\AppealDeck` is a git repo: playbook + code scaffold committed, `LICENSE` (© Jhangir Hussain) and `README.md` present, default branch `main`.
 - [ ] `.gitignore` (`.env*`, `node_modules/`, `dist/`, `*.pem`, `*.zip`, with `!.env.example`) was in the **first** commit; no secret has ever been tracked (verify: `git log --all --diff-filter=A -- "*.env*"` shows only `.env.example`).
 - [ ] Private GitHub remote live; CI green on every push: typecheck + unit + both builds + the two grep gates ("guarantee" = 0 in shipped copy, "superpower" = 0 anywhere).
 - [ ] `.env.example` committed with the D2-amended variable set; real values exist only in deployment environments and the founder's password manager.

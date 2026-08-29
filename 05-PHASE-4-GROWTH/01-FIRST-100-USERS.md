@@ -45,7 +45,7 @@ Weeks 1–3 are pure credibility building — the decoder is not live yet, so re
 | 3–5 | ~1.5 h/day, ~10 h/week | Daily reply cadence + design-partner conversations |
 | 6–8 | ~1.5–2 h/day, ~10–14 h/week | Adds ASGTG, influencer outreach, launch events |
 
-Cumulative through Week 8: roughly 70–100 hours (estimate). **Log the hours** — the reassess trigger in Section 7 depends on an honest count. Jhangir may monitor communities during Finnish night hours and flag threads for the founder to answer, but only the named founder posts (see `./02-COMMUNITY-PLAYBOOK.md` — no second accounts, ever).
+Cumulative through Week 8: roughly 70–100 hours (estimate). **Log the hours** — the reassess trigger in Section 7 depends on an honest count. There is no off-hours monitor — the founder is solo: F5Bot alerts queue overnight threads for a morning batch, and only the named founder posts (see `./02-COMMUNITY-PLAYBOOK.md` — no second accounts, ever).
 
 ---
 
@@ -111,7 +111,7 @@ Secondary checkpoints (do not wait for the 200-hour wall):
 - [ ] **5.** Configure F5Bot free alerts for "Amazon suspension", "account deactivated", "plan of action", "Seller Central appeal" — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** reply speed (2-hour window)
 - [ ] **6.** Open a free email list (Kit free tier, 10,000-subscriber ceiling, or Substack) and put a signup on the landing page — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1–2 · **Blocks:** capturing interest before the decoder is live
 - [ ] **7.** Draft 3 reply templates from the skeletons in `./02-COMMUNITY-PLAYBOOK.md` (Section 3, ODR/performance, severe-case routing) — **Owner:** Founder + AI assistant · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** reply quality and speed
-- [ ] **8.** Agree Jhangir's monitoring role in writing: flag threads during FI night hours, never post, no second accounts — **Owner:** Founder + Jhangir · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** 24h thread coverage without ban risk
+- [ ] **8.** Write down the off-hours routine: overnight threads queue via F5Bot alerts and get a founder morning batch — no rushed midnight replies, no second accounts. If a vetted VA is ever added to monitoring, they flag threads only and never post, per the Collaborator & Contractor Policy (`../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md`) — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** overnight-thread handling without ban risk
 - [ ] **9.** Execute the Week 1–8 timeline (Section 2), logging every interaction — **Owner:** Founder · **Cost:** $0 (time only) · **Deadline:** Weeks 1–8 · **Blocks:** first revenue
 - [ ] **10.** Recruit 5 design partners from community interactions to bank on 3 completions, per `../04-PHASE-3-LAUNCH/03-DESIGN-PARTNER-BETA.md` (free Pass for feedback + consented anonymized case study) — **Owner:** Founder · **Cost:** ~$0 (foregone revenue) · **Deadline:** Week 3–4 · **Blocks:** Week 7 case study, launch-gate requirement in `../04-PHASE-3-LAUNCH/`
 - [ ] **11.** Hold the Friday funnel review every week without exception; record the one decision taken — **Owner:** Founder · **Cost:** $0 · **Deadline:** weekly from Week 2 · **Blocks:** channel doubling-down, trigger detection

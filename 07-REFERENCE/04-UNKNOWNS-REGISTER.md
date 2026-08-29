@@ -2,7 +2,7 @@
 
 **Why this file exists / when to use it:** Six research rounds plus an independent verification pass (25 Aug 2026) answered most open questions — but not all. This file separates the two cleanly: §1 records what was unknown and is now settled (so nobody re-researches it), and §2 lists everything that genuinely cannot be known today, each with the concrete step that resolves it, an owner, and a deadline. The discipline that produced the banned-numbers list applies here in reverse: **an unknown stays an unknown until its de-risk step runs — it is never filled in with a plausible-sounding number.** Consult this file before making any claim or plan that depends on a §2 item.
 
-**Terms:** BSA §19 = Amazon's Business Solutions Agreement "Agent Policy" (effective 4 Mar 2026) restricting automated/AI access to Seller Central. M-1…M-8 = the build plan's weekly milestones. MoR = Merchant of Record (Paddle/Polar — the reseller handling customer-country VAT). CWS = Chrome Web Store. Nano = Gemini Nano, Chrome's on-device AI model (Prompt API). crxjs = the Vite build plugin for Chrome extensions. UPL = unauthorized practice of law. toiminimi = Finnish sole-trader registration. VAT = value-added tax; ECSL/recapitulative statement = the EU intra-community sales report some cross-border B2B supplies require.
+**Terms:** BSA §19 = Amazon's Business Solutions Agreement "Agent Policy" (effective 4 Mar 2026) restricting automated/AI access to Seller Central. M-1…M-8 = the build plan's weekly milestones. MoR = Merchant of Record (Paddle/Polar — the reseller handling customer-country VAT). CWS = Chrome Web Store. Nano = Gemini Nano, Chrome's on-device AI model (Prompt API). crxjs = the Vite build plugin for Chrome extensions. UPL = unauthorized practice of law. VAT = value-added tax. NTN = National Tax Number, Pakistan's FBR taxpayer registration.
 
 ---
 
@@ -12,11 +12,11 @@ All resolved 25 Aug 2026 by the independent verification pass [source: VERIFICAT
 
 | Former unknown | Resolution | Consequence |
 |---|---|---|
-| Is Lemon Squeezy a viable payment rail? | **Sunsetting, confirmed.** Still signs merchants, but its CEO steers everyone toward Stripe Managed Payments (invite-gated, ~6.4% effective — the most expensive MoR); documented payout freezes and support decay. | Do NOT build on Lemon Squeezy. Paddle primary / Polar warm fallback / Stripe direct for any future human-service line (decision D2, `../00-DECISION/02-DECISION-LOG.md`). |
+| Is Lemon Squeezy a viable payment rail? | **Sunsetting, confirmed.** Still signs merchants, but its CEO steers everyone toward Stripe Managed Payments (invite-gated, ~6.4% effective — the most expensive MoR); documented payout freezes and support decay. | Do NOT build on Lemon Squeezy. Paddle primary / separate rails for any future human-service line (decision D2, `../00-DECISION/02-DECISION-LOG.md`). |
 | Is @crxjs/vite-plugin dead? | **Revived.** v2.0.0 stable Jun 2025; latest v2.7.1 published 1 Jul 2026; Vite 3–8 supported; MV3-first. WXT remains the lower-bus-factor alternative for a greenfield repo. | The planned crxjs + Vite stack works today — no blocker; WXT swap is optional, not required. |
 | Is Chrome's Prompt API (Nano) shipped for extensions? | **GA in stable Chrome for extensions since Chrome 138 — no origin trial.** But the hardware gate is steep: desktop-only, 22 GB free disk (model evicted under 10 GB), >4 GB VRAM or 16 GB RAM/4-core, multi-GB first download. | Nano is an opportunistic free/private path only; cloud Flash (paid tier) is the primary quality path for the $199 deliverable (decision D9). What share of real users have Nano remains open — see UN-5. |
-| Does UPL precedent threaten the product? | **No precedent exists** of any UPL action against non-lawyer Amazon appeal consultants — a decade-old industry operating openly. Attorney-marketing sites overstate; real legal territory is IP disputes/arbitration, which we refuse and refer out. | The €2,000–8,000 pre-M-4 legal-opinion hard gate is superseded (row 7 in `../00-DECISION/02-DECISION-LOG.md` §3). A scoped review (€500–1,500) before US marketing spend is the pragmatic middle (Gate 3 check 40). Positioning defenses remain mandatory. |
-| How hard is Finnish business formation? | **Verified trivial:** toiminimi €75 via ytj.fi, ~3–5 business-day queue (PRH 2026 price list); all payment rails onboard sole proprietors; OY (limited company) has no benefit at zero revenue. | Not on the critical path. Execute per `../01-PHASE-0-BLOCKERS/03-BUSINESS-REGISTRATION-FINLAND.md`. |
+| Does UPL precedent threaten the product? | **No precedent exists** of any UPL action against non-lawyer Amazon appeal consultants — a decade-old industry operating openly. Attorney-marketing sites overstate; real legal territory is IP disputes/arbitration, which we refuse and refer out. | The $2,000–8,000 pre-M-4 legal-opinion hard gate is superseded (row 7 in `../00-DECISION/02-DECISION-LOG.md` §3). A scoped review ($500–1,500) before US marketing spend is the pragmatic middle (Gate 3 check 40). Positioning defenses remain mandatory. |
+| How hard is Pakistan individual seller setup? | **Verified trivial:** individual seller registration via CNIC/passport; personal payout account (Payoneer or Wise); all payment rails onboard individuals. No SECP incorporation needed at this stage. | Proceed with individual setup per `../01-PHASE-0-BLOCKERS/03-INDIVIDUAL-SELLER-SETUP.md`. |
 | Can hosting be $0 through launch? | **False.** Vercel's Hobby tier is contractually non-commercial. | Launch stack: Vercel Pro $20/mo + Supabase Pro $25/mo (= $45/mo), or Cloudflare Pages/Workers free for the static decoder + Hetzner CX22 €4.50/mo alternative. |
 
 ---
@@ -31,7 +31,7 @@ Numbered UN-1…UN-10, ordered by importance. Each entry: what exactly is unknow
 **Why it matters:** it decides the entire extension architecture. The web decoder + paste-mode spine is safe regardless (zero page access, full functionality) — that is why decision D3 made it primary. The DOM-harvest convenience layer and the injector live or die on this text. Getting a user's account deactivated by our compliance tool is risk R-03 in `03-RISK-REGISTER.md` — the product-killing scenario.
 **Decision rule (attached now, so no debate later):** favorable read → DOM-harvest ships as the convenience layer, injector considered last with counsel input. Ambiguous or adverse read → **de-scope to a paste-only extension** (kill criterion K8); injector cancelled; the product ships regardless on the web + paste spine.
 
-- [ ] **1. Retrieve the full §19/Agent Policy text from behind seller login; AI assistant produces a written clause-by-clause assessment against DOM-harvest and injector mechanisms; founder decides per the rule above; assessment appended to `../00-DECISION/02-DECISION-LOG.md`.** **Owner:** Jhangir (retrieve) + AI assistant (assess) + Founder (decide); External counsel optional (€0–500) · **Cost:** $0–500 · **Deadline:** **before M-3** (design freeze for DOM features); hard-verified at Gate 2 check 17 · **Blocks:** DOM-harvest, injector, CWS listing risk posture.
+- [ ] **1. Retrieve the full §19/Agent Policy text from behind seller login — via the founder's own fresh Amazon Individual seller account (~1–2 weeks, free) or a design partner's read-only secondary-user invite with written consent; AI assistant produces a written clause-by-clause assessment against DOM-harvest and injector mechanisms; founder decides per the rule above; assessment appended to `../00-DECISION/02-DECISION-LOG.md`.** **Owner:** Founder (retrieve + decide) + AI assistant (assess); External counsel optional ($0–500) · **Cost:** $0–500 · **Deadline:** **before M-3** (design freeze for DOM features); hard-verified at Gate 2 check 17 · **Blocks:** DOM-harvest, injector, CWS listing risk posture.
 
 ### UN-2 · Real search volumes for the panic queries
 
@@ -42,17 +42,17 @@ Numbered UN-1…UN-10, ordered by importance. Each entry: what exactly is unknow
 
 ### UN-3 · Paddle approval odds
 
-**Unknown:** whether Paddle approves a pre-revenue Finnish sole trader selling an appeal-drafting tool — its onboarding rejects pre-revenue founders unpredictably, and its 2025 FTC settlement makes its risk team wary of "account recovery"-flavored products (risk R-06).
+**Unknown:** whether Paddle approves a pre-revenue individual seller selling an appeal-drafting tool — its onboarding rejects pre-revenue founders unpredictably, and its 2025 FTC settlement makes its risk team wary of "account recovery"-flavored products (risk R-06).
 **Why it matters:** Paddle is the primary rail (D2); the answer cannot be researched, only obtained by applying.
 
-- [ ] **3. Apply to Paddle in Week 1 behind the live site + legal pages, framed strictly as automated software (never "account recovery services"); open Polar the same week as the warm fallback.** The application IS the de-risk step — no further research exists. **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 (Gate 1 checks 5–6); resolved by their decision, whenever it comes · **Blocks:** M-5 payments; kill criterion K1 governs a rejection.
+- [ ] **3. Apply to Paddle in Week 1 behind the live site + legal pages, framed strictly as automated software (never "account recovery services"); open Polar the same week as the warm fallback — and verify at signup that Polar's Pakistan payout (Stripe Connect cross-border) actually works before relying on it. Dodo Payments (MoR, 4% + 40¢) stays plan C: application-ready, no account opened.** The application IS the de-risk step — no further research exists. **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 (Gate 1 checks 5–6); resolved by their decision, whenever it comes · **Blocks:** M-5 payments; kill criterion K1 governs a rejection.
 
-### UN-4 · Jhangir's actual appeals expertise
+### UN-4 · Whether any hired appeals expertise is real
 
-**Unknown:** whether Jhangir (and anyone from his talent network) can actually evaluate and strengthen Amazon appeals. He is a verifiable business professional; zero public record of appeals expertise exists (confidence: LOW in the Master Report).
+**Unknown:** whether any candidate engaged to evaluate and strengthen Amazon appeals (template QC, expert review) actually has the expertise. Marketplace profiles prove marketing skill, not appeals skill; no candidate has a track record with us.
 **Why it matters:** template quality is the product's core asset; relying on unverified expertise burns users' scarcest resource — their appeal attempts.
 
-- [ ] **4. Paid fixture audition (as for any appeals expert, per decision D5): a Section 3 fixture notice with two traps — an ambiguous deadline window and a missing invoice fact. Fabricating the invoice = instant fail; asking for it = top marks. Run 5–8 candidates — Jhangir's network candidates and independent bench candidates alike; consultant retainer (~$1–2k, week 3) provides the independent quality floor either way.** **Owner:** Founder + Jhangir (candidates) · **Cost:** $15–50 per candidate × 5–8 candidates ≈ $75–400 (auditions) · **Deadline:** Week 2 · **Blocks:** template QC roles, any reliance on the PK talent network; agreement mechanics in `../01-PHASE-0-BLOCKERS/02-PARTNERSHIP-AGREEMENT.md`.
+- [ ] **4. Paid fixture audition (for every appeals expert, per decision D5): a Section 3 fixture notice with two traps — an ambiguous deadline window and a missing invoice fact. Fabricating the invoice = instant fail; asking for it = top marks. Run 5–8 candidates, sourced directly on Fiverr/Upwork (plus any inbound bench candidates); consultant retainer (~$1–2k, week 3) provides the independent quality floor either way.** **Owner:** Founder · **Cost:** $15–50 per candidate × 5–8 candidates ≈ $75–400 (auditions) · **Deadline:** Week 2 · **Blocks:** template QC roles, any reliance on hired experts; agreement mechanics in `../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md`.
 
 ### UN-5 · Nano availability in the real user base
 
@@ -82,12 +82,13 @@ Numbered UN-1…UN-10, ordered by importance. Each entry: what exactly is unknow
 
 - [ ] **8. Submit early (unlisted, straight after M-6), answer reviewer questions same-day, and let the web decoder carry revenue meanwhile — the de-risk is architectural (decision D3), not informational.** **Owner:** Founder + AI assistant (listing materials) · **Cost:** $0 · **Deadline:** submission Week 7 (Gate 2 check 27) · **Blocks:** extension distribution only; never revenue. Detail: `../04-PHASE-3-LAUNCH/02-CHROME-WEB-STORE-SUBMISSION.md`.
 
-### UN-9 · The EU-MoR-entity VAT formality
+### UN-9 · Pakistan tax obligations on MoR payouts
 
-**Unknown:** whether the founder's B2B supply TO the chosen MoR requires a Finnish VAT ID + monthly recapitulative statements even below the €20,000 domestic threshold. It depends on which legal entity contracts with us: an EU-established MoR entity triggers intra-EU reverse-charge formalities; a UK/US entity (Paddle UK, Polar US) makes it an export of services with no such filing.
-**Why it matters:** a formality, not a blocker — but an unfiled recapitulative statement is a compliance defect a tax audit would find.
+**Unknown:** whether MoR payouts from Paddle/Polar to a Pakistani individual are treated as Pakistan-source or foreign-source income; what registration (NTN) is required; and whether any withholding applies at the MoR level. This depends on the specific MoR contract and Pakistan's tax treaty network.
 
-- [ ] **9. One call with a Finnish accountant once the MoR contract is signed: confirm which entity is the counterparty and whether VAT-ID registration + recapitulative statements apply; document the answer in `../00-DECISION/02-DECISION-LOG.md`.** **Owner:** Founder + External (accountant) · **Cost:** €0–150 (single consultation) · **Deadline:** within 2 weeks of MoR approval, before first payout · **Blocks:** clean Finnish tax compliance; does not delay launch.
+**Why it matters:** incorrect treatment leads to penalties or double taxation; the accountant call in Week 1 settles this before first revenue. Customer-country VAT is the MoR's job — the founder's own obligations are FBR income tax on MoR payouts (NTN, filer status) and provincial sales-tax registration only if the accountant confirms it applies.
+
+- [ ] **9. One call with a Pakistan accountant before first revenue: confirm NTN registration, tax treatment of MoR payouts, and any withholding obligations; document the answer in `../00-DECISION/02-DECISION-LOG.md`.** **Owner:** Founder + External (accountant) · **Cost:** PKR 10,000–30,000 one-off (estimate) · **Deadline:** Week 1, before first payout · **Blocks:** clean Pakistan tax compliance; does not delay launch.
 
 ### UN-10 · Actual cloud LLM cost per draft
 
@@ -108,7 +109,7 @@ Numbered UN-1…UN-10, ordered by importance. Each entry: what exactly is unknow
 ## Definition of done
 
 - [ ] UN-1 (§19 text) is resolved and its written assessment sits in `../00-DECISION/02-DECISION-LOG.md` before any DOM-reading feature ships — this one cannot be waived.
-- [ ] UN-2 (search volumes) is resolved before the first euro or hour of SEO/ads investment.
+- [ ] UN-2 (search volumes) is resolved before the first dollar or hour of SEO/ads investment.
 - [ ] UN-3, UN-4, UN-7, UN-9, UN-10 each have their de-risk step executed by deadline, or a dated exception recorded in the decision log.
 - [ ] No planning or marketing document anywhere contains a number that substitutes for an open §2 item (spot-checked at gate reviews alongside the banned-numbers grep in `01-MARKET-EVIDENCE.md`).
 - [ ] Every resolved unknown has migrated to §1 with answer, date, and source; a newcomer can tell in one read what is known, what is not, and who is closing each gap by when.

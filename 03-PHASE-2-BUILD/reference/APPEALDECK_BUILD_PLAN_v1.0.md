@@ -1,6 +1,8 @@
 # APPEALDECK — MASTER BUILD PLAN
 
-**Version 1.0 · 24 Aug 2026 · Hawlton Alliance**
+> **SUPERSEDED:** This is the v1.0 technical spec from 24 Aug 2026. Its payments, build-order, and entity assumptions are superseded by `02-BUILD-PLAN-AMENDMENTS.md` and the current playbook. The current seller entity is **Jhangir Hussain (individual, Pakistan)** — not Hawlton Alliance or any Finland-registered business. Execute per the amendments file, not this file's original assumptions.
+
+**Version 1.0 · 24 Aug 2026 · Jhangir Hussain (individual, Pakistan)**
 **Audience: an AI coding assistant with file access to `V:\Extension 2.3` and a terminal.**
 **Product: Chrome MV3 extension that decodes Amazon seller deactivation notices, classifies the violation, drafts a policy-correct Plan of Action (POA), tracks appeal deadlines, and keeps an encrypted local case vault. Free notice decoder → $199 one-time "Appeal Pass" → $29/mo "Account Health Guardian".**
 

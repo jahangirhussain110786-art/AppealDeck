@@ -9,7 +9,7 @@
 ## 1. Universal principles (all channels)
 
 1. **Help first, always.** The tool is mentioned only when it genuinely answers the thread's question and channel rules allow it.
-2. **One identity: the named founder.** Real name, affiliation in bio, and an explicit disclosure line every time the tool comes up: *"Disclosure: I built this."* No alt accounts, no sockpuppets, no exceptions — including Jhangir (he may flag threads, never post as or for the founder).
+2. **One identity: the named founder.** Real name, affiliation in bio, and an explicit disclosure line every time the tool comes up: *"Disclosure: I built this."* No alt accounts, no sockpuppets, no exceptions — and if a collaborator or VA ever helps monitor, they flag threads only and never post as or for the founder.
 3. **Never promise outcomes.** The word "guarantee" is banned in all copy by decision D6 (grep gate = 0 hits). No success-rate claims of any kind until we have opt-in outcome data of our own — and none of the invented percentages from older documents, ever.
 4. **Honest expectations are the brand.** Most first appeals fail, even with $3,000 lawyers. Saying this out loud in threads is what separates us from the scam tier this market is scarred by.
 5. **Rules drift. Verify before posting.** Every rule cited below was verified from public sources as of 25 Aug 2026 or earlier; subreddit and group rules change without notice. Checking the live rules page takes two minutes and is mandatory before the first post in any channel.
@@ -86,7 +86,7 @@ These end channels or the business. No judgment calls, no exceptions:
 
 1. **Vendor spam** — dropping the link in threads without substantive help, or in any channel that prohibits it.
 2. **DM pitching** — unsolicited direct messages selling anything. DMs are for conversations the other party started.
-3. **Fake accounts / sockpuppets / vote manipulation** — includes Jhangir or anyone else posting "independent" praise.
+3. **Fake accounts / sockpuppets / vote manipulation** — includes any collaborator, contractor, or friend posting "independent" praise.
 4. **Incentivized reviews** — paying, discounting, or rewarding CWS reviews violates the Chrome Web Store Spam and Abuse policy and is a listing-removal risk. Same for Trustpilot/G2. Asking happy users to leave an *honest* review, with nothing offered in return, is fine.
 5. **Success-rate claims** — no percentages, no "works most of the time", no cherry-picked wins. Banned by decision D6 until opt-in outcome data exists.
 6. **The word "guarantee"** — banned in every piece of copy, including comments (D6).
@@ -145,7 +145,7 @@ Skeleton C is the trust builder: visibly turning away business is the strongest 
 - [ ] **3.** Adapt the three skeletons into personal reply templates (founder's own voice) — **Owner:** Founder + AI assistant · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** reply speed target (2h window)
 - [ ] **4.** Build the severe-case routing shortlist (2–3 reputable lawyers/consultants to name in Skeleton-C replies; candidates in `./04-COMPETITIVE-RESPONSE.md` human-firms tier) — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 2 · **Blocks:** severity gating in replies
 - [ ] **5.** Request mod approval via modmail BEFORE the Week 5 "I built this" post on r/FulfillmentByAmazon — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 4 · **Blocks:** the only planned promo post
-- [ ] **6.** Brief Jhangir on this playbook; written confirmation that he flags threads only and never posts — **Owner:** Founder + Jhangir · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** safe night-hours coverage
+- [ ] **6.** If a collaborator or VA is ever added to community monitoring: brief them on this playbook first and get written confirmation that they flag threads only and never post (per the Collaborator & Contractor Policy, `../01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md`) — **Owner:** Founder · **Cost:** $0 · **Deadline:** before any such access is granted · **Blocks:** safe delegation of thread monitoring
 - [ ] **7.** Add a "one reply max to criticism" rule card next to the crisis threshold definition from `../06-OPERATIONS/02-CRISIS-PLAYBOOK.md`; keep both visible during support hours — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 5 (before paid launch) · **Blocks:** crisis containment
 
 ---
@@ -156,5 +156,5 @@ Skeleton C is the trust builder: visibly turning away business is the strongest 
 - [ ] Disclosure line in use on 100% of tool mentions (spot-check the community log monthly)
 - [ ] Zero channel bans, zero post removals for self-promotion (removals for other reasons logged and learned from)
 - [ ] Three reply skeletons adapted and in use; severe-case routing list exists and has been used at least once
-- [ ] Jhangir briefed, role confirmed in writing
+- [ ] Any monitoring collaborator (if one is ever added) briefed and role-confirmed in writing — none exists at launch
 - [ ] Every "never-do" item still at zero incidents — this list is the definition of done, permanently

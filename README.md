@@ -1,6 +1,6 @@
 # AppealDeck — Execution Playbook
 
-**Version 1.0 · 26 Aug 2026 · Hawlton Alliance**
+**Version 1.0 · 26 Aug 2026 · Jhangir Hussain**
 **Status: ready to execute. Start at [MASTER-CHECKLIST.md](MASTER-CHECKLIST.md), item 1.**
 
 ---
@@ -40,8 +40,8 @@ A team that has never seen this project should be able to execute from these fil
 | Folder | What it holds | When |
 |---|---|---|
 | [00-DECISION/](00-DECISION/) | Verdict, decision log, gates & kill criteria | Read first; consult at every gate |
-| [01-PHASE-0-BLOCKERS/](01-PHASE-0-BLOCKERS/) | Credential rotation, partnership agreement, Finnish business registration | **Day 1–3, before anything else** |
-| [02-PHASE-1-FOUNDATION/](02-PHASE-1-FOUNDATION/) | Accounts, domain + legal pages, payments (Paddle + Polar), repo + fixture corpus, community presence | Week 1–2 |
+| [01-PHASE-0-BLOCKERS/](01-PHASE-0-BLOCKERS/) | Credential rotation, partnership agreement | **Day 1–3, before anything else** |
+| [02-PHASE-1-FOUNDATION/](02-PHASE-1-FOUNDATION/) | Accounts, domain + legal pages, payments (Paddle), repo + fixture corpus, community presence | Week 1–2 |
 | [03-PHASE-2-BUILD/](03-PHASE-2-BUILD/) | Build sequence, **amendments (authoritative over the v1.0 spec)**, technical risk controls, and the verbatim technical spec in `reference/` | Week 1–8 |
 | [04-PHASE-3-LAUNCH/](04-PHASE-3-LAUNCH/) | Web decoder launch (first revenue, week 4–5), Chrome Web Store submission, design-partner beta, launch-day runbook | Week 4–8 |
 | [05-PHASE-4-GROWTH/](05-PHASE-4-GROWTH/) | First-100-users plan, community playbook, SEO content plan, competitive response | Week 1 onward |
@@ -49,20 +49,19 @@ A team that has never seen this project should be able to execute from these fil
 | [07-REFERENCE/](07-REFERENCE/) | Market evidence (the fact-check gate for all copy), competitor dossier, risk register, unknowns register, resource stack & budget, edge personas, roadmap, source index | Consult as needed |
 | [08-TEAM/](08-TEAM/) | Roles & owners, recruitment kit, AI-session continuity protocol | Read at onboarding |
 
-## Who does what (the four owners used on every action item)
+## Who does what (the three owners used on every action item)
 
 | Owner | Means |
 |---|---|
-| **Founder** | The business owner (Finland). Accounts, spending, approvals, community voice, all external contacts. |
+| **Founder** | Jhangir Hussain (solo, Pakistan). Accounts, spending, approvals, community voice, all external contacts — plus Seller Central access, retrieval of Amazon's Agent-Policy text, and talent sourcing. |
 | **AI assistant** | The AI coding agent that executes the entire technical build from [03-PHASE-2-BUILD/](03-PHASE-2-BUILD/). It cannot open accounts, sign contracts, or post publicly. |
-| **Jhangir** | Jhangir Hussain, partner in Pakistan: Seller Central access, retrieval of Amazon's Agent-Policy text, talent sourcing, night community triage. **Nothing is shared with him before the agreement in [01-PHASE-0-BLOCKERS/02-PARTNERSHIP-AGREEMENT.md](01-PHASE-0-BLOCKERS/02-PARTNERSHIP-AGREEMENT.md) is signed.** Every dependency on him has a named fallback. |
-| **External** | Appeals-QC consultant, accountant, optional scoped counsel, E&O insurance broker. |
+| **External** | Appeals-QC consultant, accountant, optional scoped counsel, E&O insurance broker. **Nothing is shared with any collaborator before a written agreement per [01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md](01-PHASE-0-BLOCKERS/02-COLLABORATOR-POLICY.md).** |
 
 Details, decision rights, and burnout guardrails: [08-TEAM/01-ROLES-AND-OWNERS.md](08-TEAM/01-ROLES-AND-OWNERS.md).
 
 ## Money, honestly
 
-Available cash: ~$1,100–2,300 (+ ~$500–1,200 recruitment budget). One-time setup ≈ €300–500 on the lean path (business registration €75, store account $5, domain ~€15, agreement template ~€200) plus two priority spends: appeals consultant $1,000–2,000 and E&O insurance €500–2,500/yr before public launch. Target infrastructure run-rate: $0–25/mo at launch (Cloudflare Pages free + Supabase; ceiling ≤$50/mo). The only planning-grade year-1 revenue figure is the conservative **~$17k gross**; every larger number in the source research is illustrative. Full budget and allocation decision: [07-REFERENCE/05-RESOURCE-STACK-AND-BUDGET.md](07-REFERENCE/05-RESOURCE-STACK-AND-BUDGET.md).
+Available cash: ~$1,100–2,300 (+ ~$500–1,200 recruitment budget). One-time setup ≈ $20–50 on the lean path (store account $5, domain ~$15; the old $200 agreement-template line item is gone — solo founder, no partnership agreement) plus two priority spends: appeals consultant $1,000–2,000 and E&O insurance $500–2,500/yr before public launch. Target infrastructure run-rate: $0–25/mo at launch (Cloudflare Pages free + Supabase; ceiling ≤$50/mo). The only planning-grade year-1 revenue figure is the conservative **~$17k gross**; every larger number in the source research is illustrative. Full budget and allocation decision: [07-REFERENCE/05-RESOURCE-STACK-AND-BUDGET.md](07-REFERENCE/05-RESOURCE-STACK-AND-BUDGET.md).
 
 ## Provenance
 
