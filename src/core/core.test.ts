@@ -4,6 +4,7 @@ import { classifyStage1 } from "./classifier";
 import { computeDeadlines, isIndefiniteHold } from "./deadlinesModel";
 import { runDecode } from "./index";
 import { FIXTURES } from "./fixtures";
+import { KIND_GUIDANCE, guidanceFor } from "./guidance";
 
 describe("noticeParser", () => {
   it("extracts the legacy 17-day pattern and ambiguity flags", () => {
@@ -89,5 +90,21 @@ describe("decode pipeline (runDecode)", () => {
     expect(res.classification.severityGated).toBe(true);
     expect(isIndefiniteHold(res.classification.kind)).toBe(true);
     expect(res.deadlines.find((d) => d.kind === "appeal_window")?.dueAt).toBeNull();
+  });
+});
+
+describe("guidance (KIND_GUIDANCE)", () => {
+  it("provides actionable guidance for every violation kind", () => {
+    for (const kind of Object.keys(KIND_GUIDANCE) as Array<keyof typeof KIND_GUIDANCE>) {
+      const g = KIND_GUIDANCE[kind];
+      expect(g.title.length).toBeGreaterThan(0);
+      expect(g.summary.length).toBeGreaterThan(0);
+      expect(g.whatToDo.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("flags the severity-gated inauthentic class with a severity note", () => {
+    expect(guidanceFor("INAUTHENTIC_DOCUMENTS").severityNote).toBeDefined();
+    expect(guidanceFor("POLICY").severityNote).toBeUndefined();
   });
 });

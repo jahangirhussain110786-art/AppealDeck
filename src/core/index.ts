@@ -25,6 +25,8 @@ import { computeDeadlines, isIndefiniteHold } from "./deadlinesModel";
 import type { Deadline, DeadlineKind, DeadlineInput } from "./deadlinesModel";
 import { FIXTURES, FIXTURE_KINDS } from "./fixtures";
 import type { Fixture, FixtureExpected } from "./fixtures";
+import { KIND_GUIDANCE, guidanceFor } from "./guidance";
+import type { KindGuidance } from "./guidance";
 
 export { parseNotice };
 export type { ParsedNotice };
@@ -34,6 +36,8 @@ export { computeDeadlines, isIndefiniteHold };
 export type { Deadline, DeadlineKind, DeadlineInput };
 export { FIXTURES, FIXTURE_KINDS };
 export type { Fixture, FixtureExpected };
+export { KIND_GUIDANCE, guidanceFor };
+export type { KindGuidance };
 
 export interface DecodeOptions {
   noticeReceivedAt: Date;
