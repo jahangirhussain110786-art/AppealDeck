@@ -37,5 +37,8 @@ npm-debug.log*
 # Test / coverage
 coverage/
 
+# Playwright MCP browser snapshots (debug artifacts)
+.playwright-mcp/
+
 # Zips are a credential-leak vector — never commit
 *.zip
