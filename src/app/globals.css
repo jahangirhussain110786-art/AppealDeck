@@ -2,34 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 30% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 30% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 30% 10%;
+    --primary: 160 70% 30%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 16% 94%;
+    --secondary-foreground: 222 30% 12%;
+    --muted: 220 16% 96%;
+    --muted-foreground: 220 10% 38%;
+    --accent: 160 70% 34%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 16% 88%;
+    --input: 220 16% 88%;
+    --ring: 160 70% 34%;
+    --radius: 0.75rem;
+    color-scheme: light;
+  }
+
+  .dark {
+    --background: 222 30% 6%;
+    --foreground: 220 14% 90%;
+    --card: 222 24% 10%;
+    --card-foreground: 220 14% 90%;
+    --popover: 222 24% 10%;
+    --popover-foreground: 220 14% 90%;
+    --primary: 159 71% 67%;
+    --primary-foreground: 222 47% 8%;
+    --secondary: 222 18% 16%;
+    --secondary-foreground: 220 14% 92%;
+    --muted: 222 16% 14%;
+    --muted-foreground: 220 10% 68%;
+    --accent: 159 71% 67%;
+    --accent-foreground: 222 47% 8%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 222 18% 16%;
+    --input: 222 18% 16%;
+    --ring: 159 71% 67%;
+    color-scheme: dark;
+  }
 }
 
-html,
-body {
-  background-color: #0b0e14;
-  color: #e5e7eb;
-}
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
 
-body {
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
 
-::selection {
-  background-color: rgba(110, 231, 183, 0.25);
-}
+  ::selection {
+    background-color: hsl(var(--primary) / 0.25);
+  }
 
-a:focus-visible,
-button:focus-visible,
-textarea:focus-visible,
-input:focus-visible {
-  outline: 2px solid #6ee7b7;
-  outline-offset: 2px;
+  a:focus-visible,
+  button:focus-visible,
+  textarea:focus-visible,
+  input:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }

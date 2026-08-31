@@ -6,8 +6,8 @@ export default function PrivacyPage() {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16">
-        <h1 className="text-3xl font-semibold text-gray-100">Privacy</h1>
-        <div className="mt-6 space-y-4 text-sm text-gray-300">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Privacy</h1>
+        <div className="mt-6 space-y-4 text-sm text-muted-foreground">
           <p>
             AppealDeck is local-first. The notice text you paste into the decoder is processed in your browser
             and is not uploaded or stored by us.

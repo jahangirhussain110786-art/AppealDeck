@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://appealdeck.app";
 
@@ -32,8 +33,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen bg-background text-gray-200 antialiased">{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen bg-background text-foreground antialiased">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
