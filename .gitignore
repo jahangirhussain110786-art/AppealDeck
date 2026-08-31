@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# Environment / secrets — never commit (this exact gap caused the prior leak)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+credentials.json
+service-account*.json
+*service*key*.json
+
+# Supabase local dumps
+*.dump
+supabase/.temp/
+
+# Logs
+npm-debug.log*
+*.log
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Test / coverage
+coverage/
+
+# Zips are a credential-leak vector — never commit
+*.zip

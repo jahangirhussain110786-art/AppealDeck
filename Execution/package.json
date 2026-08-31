@@ -1,0 +1,18 @@
+{
+  "name": "appealdeck",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AppealDeck — Amazon suspension notice decoder + POA composer. Platform-agnostic core in src/core/.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.8"
+  }
+}
