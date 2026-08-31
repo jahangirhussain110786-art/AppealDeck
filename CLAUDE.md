@@ -34,14 +34,14 @@ Everything in the build plan §6 donor table is verified originally-authored / M
 ## 4. Current state (update every session)
 
 - **Milestone:** M-1 (prerequisites + core start). Entered only after Phase-0 blockers + Gate 1 pass.
-- **DONE this session (31 Aug 2026):** repo scaffolded — secret-safe `.gitignore`, `CLAUDE.md`, `Execution/docs/DECISIONS.md`, `Execution/.env.example`, `Execution/package.json` (TS + Vitest + @types/node), `Execution/tsconfig.json` (strict), `.github/workflows/ci.yml` (Node 20 typecheck + test, runs in `Execution/`). Legal drafts (`Execution/legal/` privacy/terms/refund/withdrawal-consent). Team/ops drafts (`Planning/08-TEAM/` advisor+NDA+audition, `Planning/06-OPERATIONS/` GDPR+canned). Repo restructured: app in `Execution/`, planning docs in `Planning/`. **M-1 core built + tested (20 tests green):** `noticeParser.ts`, `classifier.ts` (deterministic stage-1), `deadlinesModel.ts` (AM-03 six kinds + indefinite-hold for severity-gated inauthentic), `fixtures.ts` corpus (≥4 synthetic notices/type + adversarial traps, no real PII), and a `runDecode` pipeline barrel in `index.ts`. D6 ethics-spine guard test: "guarantee" greps to 0 in `src/core`.
+- **DONE this session (31 Aug 2026):** repo scaffolded — secret-safe `.gitignore`, `CLAUDE.md`, `docs/DECISIONS.md`, `.env.example`, `package.json` (TS + Vitest + @types/node), `tsconfig.json` (strict), `.github/workflows/ci.yml` (Node 20 typecheck + test, runs at repo root). Legal drafts (`legal/` privacy/terms/refund/withdrawal-consent). Team/ops drafts (`Planning/08-TEAM/` advisor+NDA+audition, `Planning/06-OPERATIONS/` GDPR+canned). **M-1 core built + tested (20 tests green):** `noticeParser.ts`, `classifier.ts` (deterministic stage-1), `deadlinesModel.ts` (AM-03 six kinds + indefinite-hold for severity-gated inauthentic), `fixtures.ts` corpus (≥4 synthetic notices/type + adversarial traps, no real PII), and a `runDecode` pipeline barrel in `index.ts`. D6 ethics-spine guard test: "guarantee" greps to 0 in `src/core`. (Note: prior `Execution/` subfolder restructure was reverted at founder's request — app lives at repo root.)
 - **IN FLIGHT:** intake wizard (M4), POA composer + critic/guardrails (M5), PoaEditor. DOM-harvest + injector blocked until BSA §19 read (founder).
 - **BLOCKERS (founder):** Phase-0 credential rotation (Supabase `fogvzjtxbqgfppdrxqra`) not yet done by founder; Paddle/Polar/Wise/Supabase/CWS/domain accounts not opened; BSA §19 text not retrieved.
 - **NEXT 3 ACTIONS:** (1) Founder rotates leaked creds + opens service accounts + applies to Paddle behind live site. (2) AI builds synthetic fixture corpus (≥4 notices/type + adversarial, `B-03`). (3) AI implements intake wizard (M4) + POA composer/critic (M5) on top of the existing `Execution/src/core/` parser/classifier/deadlines.
 
 ## 5. Key file links
 
-> Repo layout: the app lives in `Execution/` (`src/`, `package.json`, `legal/`, `docs/`); all playbook/planning docs live in `Planning/`; `.agents/` + `.claude/` skills stay at root.
+> Repo layout: the app lives at repo root (`src/`, `package.json`, `legal/`, `docs/`); all playbook/planning docs live in `Planning/`; `.agents/` + `.claude/` skills stay at root.
 
 - Build plan (canonical): `Planning/03-PHASE-2-BUILD/reference/APPEALDECK_BUILD_PLAN_v1.0.md`
 - Amendments (authoritative over v1.0): `Planning/03-PHASE-2-BUILD/02-BUILD-PLAN-AMENDMENTS.md`
@@ -49,5 +49,5 @@ Everything in the build plan §6 donor table is verified originally-authored / M
 - Risk controls: `Planning/03-PHASE-2-BUILD/03-TECHNICAL-RISK-CONTROLS.md`
 - Decisions log + gates: `Planning/00-DECISION/`
 - Team / continuity: `Planning/08-TEAM/`
-- Reasoning ledger: `Execution/docs/DECISIONS.md`
+- Reasoning ledger: `docs/DECISIONS.md`
 - Milestone handoffs: `Execution/docs/handoffs/`

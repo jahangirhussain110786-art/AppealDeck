@@ -2,8 +2,8 @@
 
 ## Current Project State
 - **Last updated:** 31 Aug 2026
-- **Repo layout:** app code lives in `Execution/` (`src/`, `package.json`, `legal/`, `docs/`); all playbook/planning docs in `Planning/`. `.agents/` + `.claude/` skills stay at root. `.github/` CI runs in `Execution/`.
-- **Recent changes:** Repo restructured into `Planning/` (planning) + `Execution/` (app). `Execution/src/core/` M-1 platform-agnostic modules built + tested (noticeParser, classifier stage-1, deadlinesModel AM-03, fixtures corpus ≥4/type + adversarial, `runDecode` pipeline barrel) — 20 Vitest tests green on Node 20, D6 "guarantee"=0 guard in place. `@types/node` added to toolchain. `Execution/legal/` drafts (privacy/terms/refund/withdrawal-consent). CI green locally via `npm` in `Execution/`. CLAUDE.md §4 tracks live milestone state.
+- **Repo layout:** app code lives at repo root (`src/`, `package.json`, `legal/`, `docs/`); all playbook/planning docs in `Planning/`. `.agents/` + `.claude/` skills stay at root. CI runs at repo root.
+- **Recent changes:** App kept at repo root (restructure into `Execution/` reverted at founder's request). `src/core/` M-1 platform-agnostic modules built + tested (noticeParser, classifier stage-1, deadlinesModel AM-03, fixtures corpus ≥4/type + adversarial, `runDecode` pipeline barrel) — 20 Vitest tests green on Node 20, D6 "guarantee"=0 guard in place. `@types/node` added to toolchain. `legal/` drafts (privacy/terms/refund/withdrawal-consent). CI green locally via `npm` at repo root. CLAUDE.md §4 tracks live milestone state.
 - **Pending (founder):** rotate leaked Supabase creds (`fogvzjtxbqgfppdrxqra`); open CWS/domain/Supabase/Cloudflare/Gemini/Wise/Paddle/Polar accounts; apply to Paddle behind live site + legal pages; retrieve BSA §19 text; engage accountant + E&O + consultant.
 - **Blocked:** (none at repo level — build M-1 waits on founder's Phase-0 account/credential actions).
 
@@ -41,12 +41,12 @@ AppealDeck is a Chrome extension + web SaaS for suspended Amazon sellers (notice
 - **Component patterns**: composable, `cn()` for conditional classes, forward refs
 
 ## Setup And Commands
-- Dependencies: `npm install` inside `Execution/` (where package.json lives)
-- Dev: `npm run dev` (from `Execution/`)
-- Build: `npm run build` (from `Execution/`)
-- Tests: `npm test` (Vitest, from `Execution/`) — 20 tests green on Node 20
-- Typecheck: `npm run typecheck` (from `Execution/`)
-- CI: `.github/workflows/ci.yml` runs typecheck + test in `Execution/` on Node 20
+- Dependencies: `npm install` at repo root (where package.json lives)
+- Dev: `npm run dev` (from repo root)
+- Build: `npm run build` (from repo root)
+- Tests: `npm test` (Vitest, from repo root) — 20 tests green on Node 20
+- Typecheck: `npm run typecheck` (from repo root)
+- CI: `.github/workflows/ci.yml` runs typecheck + test at repo root on Node 20
 - Git: repo is initialized with initial commit on `master`
 
 ## Boundaries
