@@ -38,7 +38,8 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
     out.push({
       kind: "appeal_window",
       dueAt: addDays(input.noticeReceivedAt, 17),
-      label: "Stated 17-day window (LEGACY parse pattern — verify, never presented as current policy)",
+      label:
+        "Stated 17-day window (LEGACY parse pattern — verify, never presented as current policy)",
     });
   } else if (input.parsed.statedWindowDays !== null) {
     out.push({
@@ -67,7 +68,11 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
         label: "Funds review checkpoint (~90 days) — release is NEVER automatic",
       });
     } else {
-      out.push({ kind: "funds_review", dueAt: null, label: "Funds review checkpoint — provide deactivation date to compute" });
+      out.push({
+        kind: "funds_review",
+        dueAt: null,
+        label: "Funds review checkpoint — provide deactivation date to compute",
+      });
     }
   }
 

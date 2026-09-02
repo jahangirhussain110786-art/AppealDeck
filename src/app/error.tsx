@@ -11,7 +11,9 @@ export default function Error({ reset }: { error: Error; reset: () => void }) {
         <AlertTriangle className="h-6 w-6" />
       </span>
       <p className="mt-6 text-sm font-medium text-destructive">Something went wrong</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">This page hit an error</h1>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
+        This page hit an error
+      </h1>
       <p className="mt-3 text-sm text-muted-foreground">
         An unexpected error occurred while rendering this page. You can try again.
       </p>

@@ -30,7 +30,7 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-16">
+      <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-16">
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -40,8 +40,8 @@ export default function HomePage() {
             Understand your Amazon suspension notice.
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-            AppealDeck decodes your deactivation or policy notice into plain English and drafts a Plan of Action
-            you edit and submit yourself. Local-first, read-only, no automation.
+            AppealDeck decodes your deactivation or policy notice into plain English and drafts a
+            Plan of Action you edit and submit yourself. Local-first, read-only, no automation.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg">

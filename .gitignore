@@ -42,3 +42,15 @@ coverage/
 
 # Zips are a credential-leak vector — never commit
 *.zip
+
+# MCP runtime artifacts
+.drive-mcp.pid
+.drive-mcp.log
+.*-mcp.pid
+.*-mcp.log
+.mcp-bridge-*.pid
+.mcp-bridge-*.log
+
+# Kilo auto-generated lock file (regenerated from .agents/skills/)
+skills-lock.json
+

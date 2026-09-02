@@ -37,7 +37,9 @@ describe("classifier stage-1", () => {
   });
 
   it("routes an unparseable notice to LLM-needed / UNKNOWN", () => {
-    const c = classifyStage1(parseNotice(FIXTURES.find((f) => f.id === "adversarial-2-vague")!.raw));
+    const c = classifyStage1(
+      parseNotice(FIXTURES.find((f) => f.id === "adversarial-2-vague")!.raw),
+    );
     expect(c.kind).toBe("UNKNOWN");
     expect(c.confidence).toBe("llm-needed");
   });
@@ -46,22 +48,45 @@ describe("classifier stage-1", () => {
 describe("deadlinesModel (AM-03)", () => {
   it("uses stated days for a clear window", () => {
     const p = parseNotice(FIXTURES.find((f) => f.id === "inauthentic-2-legacy")!.raw);
-    const ds = computeDeadlines({ noticeReceivedAt: new Date("2026-09-01"), parsed: p, kind: "INAUTHENTIC_DOCUMENTS" });
+    const ds = computeDeadlines({
+      noticeReceivedAt: new Date("2026-09-01"),
+      parsed: p,
+      kind: "INAUTHENTIC_DOCUMENTS",
+    });
     const aw = ds.find((d) => d.kind === "appeal_window");
     expect(aw?.dueAt?.toISOString().slice(0, 10)).toBe("2026-09-18");
   });
 
   it("flags ambiguity instead of inventing a date", () => {
     const p = parseNotice(FIXTURES.find((f) => f.id === "inauthentic-1")!.raw);
-    const ds = computeDeadlines({ noticeReceivedAt: new Date("2026-09-01"), parsed: p, kind: "INAUTHENTIC_DOCUMENTS" });
+    const ds = computeDeadlines({
+      noticeReceivedAt: new Date("2026-09-01"),
+      parsed: p,
+      kind: "INAUTHENTIC_DOCUMENTS",
+    });
     expect(ds.find((d) => d.kind === "appeal_window")?.dueAt).toBeNull();
   });
 
   it("computes the 60/90-day funds model from deactivation", () => {
     const p = parseNotice(FIXTURES.find((f) => f.id === "funds-1")!.raw);
-    const ds = computeDeadlines({ noticeReceivedAt: new Date("2026-09-01"), deactivatedAt: new Date("2026-09-01"), parsed: p, kind: "FUNDS" });
-    expect(ds.find((d) => d.kind === "funds_appeal_eligible")?.dueAt?.toISOString().slice(0, 10)).toBe("2026-10-31");
-    expect(ds.find((d) => d.kind === "funds_review")?.dueAt?.toISOString().slice(0, 10)).toBe("2026-11-30");
+    const ds = computeDeadlines({
+      noticeReceivedAt: new Date("2026-09-01"),
+      deactivatedAt: new Date("2026-09-01"),
+      parsed: p,
+      kind: "FUNDS",
+    });
+    expect(
+      ds
+        .find((d) => d.kind === "funds_appeal_eligible")
+        ?.dueAt?.toISOString()
+        .slice(0, 10),
+    ).toBe("2026-10-31");
+    expect(
+      ds
+        .find((d) => d.kind === "funds_review")
+        ?.dueAt?.toISOString()
+        .slice(0, 10),
+    ).toBe("2026-11-30");
   });
 
   it("treats the severity-gated inauthentic class as an indefinite hold (no countdown)", () => {
@@ -78,7 +103,10 @@ describe("deadlinesModel (AM-03)", () => {
 describe("decode pipeline (runDecode)", () => {
   it("composes parse -> classify -> deadlines in one call for a funds notice", () => {
     const raw = FIXTURES.find((f) => f.id === "funds-1")!.raw;
-    const res = runDecode(raw, { noticeReceivedAt: new Date("2026-09-01"), deactivatedAt: new Date("2026-09-01") });
+    const res = runDecode(raw, {
+      noticeReceivedAt: new Date("2026-09-01"),
+      deactivatedAt: new Date("2026-09-01"),
+    });
     expect(res.classification.kind).toBe("FUNDS");
     expect(res.deadlines.some((d) => d.kind === "funds_appeal_eligible")).toBe(true);
     expect(res.deadlines.some((d) => d.kind === "funds_review")).toBe(true);

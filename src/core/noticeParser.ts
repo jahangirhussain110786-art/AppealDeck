@@ -12,9 +12,15 @@ export interface ParsedNotice {
 }
 
 const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
-  ["INAUTHENTIC_DOCUMENTS", /inauthentic|not authentic|could not verify|documentation we could not verify/i],
+  [
+    "INAUTHENTIC_DOCUMENTS",
+    /inauthentic|not authentic|could not verify|documentation we could not verify/i,
+  ],
   ["RELATED_ACCOUNT", /related[\s-]?account/i],
-  ["INTELLECTUAL_PROPERTY", /intellectual property|trademark|counter[\s-]?notification|rights owner|infringement/i],
+  [
+    "INTELLECTUAL_PROPERTY",
+    /intellectual property|trademark|counter[\s-]?notification|rights owner|infringement/i,
+  ],
   ["LISTING", /listing[\s-]?(?:policy|violation|removed|closed)|detail[\s-]?page policy/i],
   ["FUNDS", /disbursement|funds? (?:is|are|under) (?:on hold|under review)|disbursement-appeals/i],
   ["POLICY", /policy (?:violation|compliance)|repeated policy violations/i],
@@ -32,7 +38,8 @@ export function parseNotice(raw: string): ParsedNotice {
   const mentionsFundsAppeal = /funds? appeal|disbursement-appeals/i.test(raw);
   const mentionsSellerChallenge = /seller challenge|account health assurance/i.test(raw);
   const windowAmbiguous =
-    /appeal window shown in your|verify in your notice|may be closed/i.test(raw) && statedWindowDays === null;
+    /appeal window shown in your|verify in your notice|may be closed/i.test(raw) &&
+    statedWindowDays === null;
   return {
     raw,
     kindHints,

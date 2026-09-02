@@ -18,7 +18,17 @@ export interface Fixture {
   expected: FixtureExpected;
 }
 
-const base = (kind: ViolationKind, severityGated: boolean): Omit<FixtureExpected, "appealWindowDays" | "fundsAppealEligibleDays" | "fundsReviewDays" | "legacySeventeenDayPattern" | "missingInvoiceTrap"> => ({
+const base = (
+  kind: ViolationKind,
+  severityGated: boolean,
+): Omit<
+  FixtureExpected,
+  | "appealWindowDays"
+  | "fundsAppealEligibleDays"
+  | "fundsReviewDays"
+  | "legacySeventeenDayPattern"
+  | "missingInvoiceTrap"
+> => ({
   kind,
   severityGated,
 });
@@ -147,7 +157,8 @@ Your account is deactivated and disbursements are on hold. You may submit a fund
       fundsReviewDays: 90,
       legacySeventeenDayPattern: false,
       missingInvoiceTrap: false,
-      notes: "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
+      notes:
+        "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
     },
   },
   {
@@ -163,7 +174,8 @@ Your account is deactivated and disbursements are on hold. You may submit a fund
       fundsReviewDays: null,
       legacySeventeenDayPattern: true,
       missingInvoiceTrap: true,
-      notes: "ADVERSARIAL: tests that a real expert does NOT fabricate the invoice and does NOT treat the stated 17 days as current policy.",
+      notes:
+        "ADVERSARIAL: tests that a real expert does NOT fabricate the invoice and does NOT treat the stated 17 days as current policy.",
     },
   },
   {
@@ -177,7 +189,8 @@ Your account is deactivated and disbursements are on hold. You may submit a fund
       fundsReviewDays: null,
       legacySeventeenDayPattern: false,
       missingInvoiceTrap: false,
-      notes: "ADVERSARIAL: tests graceful handling of an unparseable notice (kind UNKNOWN fallback, no invented facts).",
+      notes:
+        "ADVERSARIAL: tests graceful handling of an unparseable notice (kind UNKNOWN fallback, no invented facts).",
     },
   },
   {
@@ -374,7 +387,8 @@ Your disbursements are on hold following account deactivation. You may file a fu
       fundsReviewDays: 90,
       legacySeventeenDayPattern: false,
       missingInvoiceTrap: false,
-      notes: "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
+      notes:
+        "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
     },
   },
   {
@@ -390,7 +404,8 @@ We placed your funds under review after a policy deactivation. A funds appeal be
       fundsReviewDays: 90,
       legacySeventeenDayPattern: false,
       missingInvoiceTrap: false,
-      notes: "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
+      notes:
+        "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
     },
   },
   {
@@ -406,7 +421,8 @@ Your selling account is deactivated and funds are under review. Submit a funds a
       fundsReviewDays: 90,
       legacySeventeenDayPattern: false,
       missingInvoiceTrap: false,
-      notes: "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
+      notes:
+        "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
     },
   },
   {
@@ -422,7 +438,8 @@ Your selling account is deactivated and funds are under review. Submit a funds a
       fundsReviewDays: null,
       legacySeventeenDayPattern: true,
       missingInvoiceTrap: true,
-      notes: "ADVERSARIAL: legacy 17-day bait + 'no documents' trap; do NOT present 17 days as current policy, do NOT skip evidence.",
+      notes:
+        "ADVERSARIAL: legacy 17-day bait + 'no documents' trap; do NOT present 17 days as current policy, do NOT skip evidence.",
     },
   },
 ];

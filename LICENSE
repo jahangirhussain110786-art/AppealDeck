@@ -1,0 +1,29 @@
+PROPRIETARY LICENSE — All rights reserved.
+
+AppealDeck source code, product design, copy, and brand assets are the
+exclusive property of Jhangir Hussain (sole proprietor; "Hawlton" is a
+trading name, not a separate legal entity).
+
+Permission is granted to:
+- Run a local development copy of the source for the purpose of
+  contributing to this project, building the AppealDeck product, or
+  verifying the source compiles and tests pass.
+
+Permission is NOT granted to:
+- Redistribute, sublicense, sell, rent, lease, or otherwise transfer the
+  source code, build artefacts, or product to any third party.
+- Host a public or private deployment of AppealDeck, or any service that
+  competes with it, without written permission from the copyright holder.
+- Use the AppealDeck name, logo, or copy in any derivative product or
+  marketing material.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+For licensing, partnership, or commercial deployment inquiries, contact
+the copyright holder.

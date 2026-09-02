@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase/server";
 
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -32,6 +33,9 @@ async function verifyPaddleSignature(
   }
   if (!ts || !h1) return false;
 
+  const ageMs = Math.abs(Date.now() - Number(ts) * 1000);
+  if (!Number.isFinite(ageMs) || ageMs > 5 * 60 * 1000) return false;
+
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -45,6 +49,161 @@ async function verifyPaddleSignature(
     new TextEncoder().encode(`${ts}:${rawBody}`),
   );
   return timingSafeEqual(hexEncode(mac), h1);
+}
+
+function newLicenseKey(): string {
+  const rand = crypto.randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
+  return `AD-${rand.slice(0, 4)}-${rand.slice(4, 8)}-${rand.slice(8, 12)}`;
+}
+
+function isEmail(s: unknown): s is string {
+  return typeof s === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+type PaddleEvent = {
+  event_type?: string;
+  data?: Record<string, any>;
+};
+
+function extractEmail(data: Record<string, any> | undefined): string | null {
+  if (!data) return null;
+  const candidate =
+    data.customer?.email ?? data.customer_email ?? data.customerEmail ?? data.email ?? null;
+  if (!isEmail(candidate)) return null;
+  return candidate.trim().toLowerCase();
+}
+
+function planForPrice(priceId: string | undefined): string {
+  const appealPass = process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
+  const guardian = process.env.NEXT_PUBLIC_PADDLE_PRICE_GUARDIAN_SUB;
+  if (priceId && priceId === guardian) return "guardian_sub";
+  if (priceId && priceId === appealPass) return "appeal_pass";
+  return "appeal_pass";
+}
+
+function firstPriceId(items: any): string | undefined {
+  if (Array.isArray(items) && items[0]?.price?.id) return items[0].price.id as string;
+  if (Array.isArray(items) && items[0]?.price_id) return items[0].price_id as string;
+  return undefined;
+}
+
+async function ensureLicense(params: {
+  email: string;
+  providerId: string;
+  plan: string;
+  status: string;
+  provider: "paddle";
+  providerEventId: string;
+}): Promise<void> {
+  if (!supabaseAdmin) return;
+  const { email, providerId, plan, status, provider, providerEventId } = params;
+
+  if (providerEventId) {
+    const { data: seen } = await supabaseAdmin
+      .from("license_events")
+      .select("id")
+      .eq("provider_event_id", providerEventId)
+      .maybeSingle();
+    if (seen) return;
+  }
+
+  const { data: existing } = await supabaseAdmin
+    .from("licenses")
+    .select("id")
+    .eq("provider_subscription_id", providerId)
+    .maybeSingle();
+
+  const isActive = status === "active";
+
+  if (existing) {
+    await supabaseAdmin
+      .from("licenses")
+      .update({
+        status,
+        email,
+        plan,
+        activated_at: isActive ? nowIso() : null,
+        canceled_at: status === "canceled" ? nowIso() : null,
+        paused_at: status === "paused" ? nowIso() : null,
+      })
+      .eq("provider_subscription_id", providerId);
+  } else {
+    await supabaseAdmin.from("licenses").insert({
+      license_key: newLicenseKey(),
+      email,
+      plan,
+      provider,
+      provider_subscription_id: providerId,
+      status,
+      activated_at: isActive ? nowIso() : null,
+    });
+  }
+
+  if (providerEventId) {
+    await supabaseAdmin
+      .from("license_events")
+      .insert({ provider: "paddle", provider_event_id: providerEventId });
+  }
+}
+
+async function handleEvent(event: PaddleEvent): Promise<void> {
+  const type = event.event_type;
+  const data = event.data;
+
+  if (type === "transaction.completed") {
+    const email = extractEmail(data);
+    if (!email) return;
+    const priceId = firstPriceId(data?.items);
+    await ensureLicense({
+      email,
+      providerId: String(data?.subscription_id ?? data?.id ?? ""),
+      plan: planForPrice(priceId),
+      status: "active",
+      provider: "paddle",
+      providerEventId: String(data?.id ?? ""),
+    });
+    return;
+  }
+
+  if (type === "subscription.activated" || type === "subscription.created") {
+    const email = extractEmail(data);
+    if (!email) return;
+    const priceId = firstPriceId(data?.items);
+    await ensureLicense({
+      email,
+      providerId: String(data?.id ?? ""),
+      plan: planForPrice(priceId),
+      status: "active",
+      provider: "paddle",
+      providerEventId: `sub:${type}:${data?.id ?? ""}`,
+    });
+    return;
+  }
+
+  if (type === "subscription.canceled" || type === "subscription.paused") {
+    if (!supabaseAdmin) return;
+    const newStatus = type === "subscription.canceled" ? "canceled" : "paused";
+    const { data: existing } = await supabaseAdmin
+      .from("licenses")
+      .select("id")
+      .eq("provider_subscription_id", String(data?.id ?? ""))
+      .maybeSingle();
+    if (!existing) return;
+    await supabaseAdmin
+      .from("licenses")
+      .update({
+        status: newStatus,
+        activated_at: null,
+        canceled_at: newStatus === "canceled" ? nowIso() : null,
+        paused_at: newStatus === "paused" ? nowIso() : null,
+      })
+      .eq("provider_subscription_id", String(data?.id ?? ""));
+    return;
+  }
 }
 
 export async function POST(request: Request) {
@@ -62,6 +221,30 @@ export async function POST(request: Request) {
   const valid = await verifyPaddleSignature(rawBody, secret, signature);
   if (!valid) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  let event: PaddleEvent;
+  try {
+    event = JSON.parse(rawBody) as PaddleEvent;
+  } catch (e) {
+    console.error(
+      "Paddle webhook: invalid JSON after signature verification; ignoring to stop retries",
+      {
+        error: (e as Error).message,
+        bodyLength: rawBody.length,
+      },
+    );
+    return NextResponse.json({ received: true });
+  }
+
+  try {
+    await handleEvent(event);
+  } catch (e) {
+    console.error("Paddle webhook: handler error", {
+      type: event.event_type,
+      error: (e as Error).message,
+    });
+    return NextResponse.json({ error: "Handler error" }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

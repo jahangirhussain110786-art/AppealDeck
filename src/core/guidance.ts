@@ -52,8 +52,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
   },
   LISTING: {
     title: "Listing or detail-page policy violation",
-    summary:
-      "One or more listings were removed or suppressed for detail-page policy violations.",
+    summary: "One or more listings were removed or suppressed for detail-page policy violations.",
     whatToDo: [
       "Fix the specific listing issues (images, titles, claims, variant misuse).",
       "Submit corrections and a POA for the affected ASINs.",

@@ -25,48 +25,94 @@
     "paddle-live": {
       "type": "remote",
       "url": "https://mcp.paddle.com/mcp",
-      "enabled": true
+      "enabled": false,
+      "_comment": "Disabled 2 Sep 2026: needs Paddle MCP OAuth token. Re-enable when token available."
     },
     "paddle-docs": {
       "type": "remote",
       "url": "https://paddlehq.mcp.kapa.ai",
-      "enabled": true
-    },
-    "filesystem": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "V:\\AppealDeck"],
-      "enabled": true
-    },
-    "fetch": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-fetch"],
-      "enabled": true
+      "enabled": false,
+      "_comment": "Disabled 2 Sep 2026: same OAuth requirement."
     },
     "memory": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-memory"],
       "enabled": true
     },
     "sequential-thinking": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
       "enabled": true
     },
-    "time": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-time"],
+    "google-drive": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3100/mcp",
       "enabled": true
     },
-    "duckduckgo": {
+    "github": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-duckduckgo"],
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-github"],
+      "environment": {
+        "GITHUB_TOKEN": "{env:GITHUB_TOKEN}"
+      },
       "enabled": true
+    },
+    "filesystem": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3111/mcp",
+      "enabled": true,
+      "_comment": "Bridged via scripts/mcp-bridge.mjs. Lifecycle: npm run filesystem:up/down."
+    },
+    "calcom": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3112/mcp",
+      "enabled": true,
+      "_comment": "Bridged. Lifecycle: npm run calcom:up/down. Needs CAL_API_KEY env."
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@playwright/mcp"],
+      "enabled": true
+    },
+    "vercel": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3113/mcp",
+      "enabled": true,
+      "_comment": "Bridged. Lifecycle: npm run vercel:up/down. Needs VERCEL_API_KEY env. Community package."
+    },
+    "supabase": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3114/mcp",
+      "enabled": true,
+      "_comment": "Bridged. Lifecycle: npm run supabase:up/down. Needs SUPABASE_ACCESS_TOKEN env."
+    },
+    "postgres": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3115/mcp",
+      "enabled": true,
+      "_comment": "Bridged. Lifecycle: npm run postgres:up/down. Needs DATABASE_URL env."
+    },
+    "posthog": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3117/mcp",
+      "enabled": true,
+      "_comment": "Bridged via mcp-remote wrapper. Lifecycle: npm run posthog:up/down. Needs POSTHOG_API_KEY env."
+    },
+    "refactor": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3118/mcp",
+      "enabled": true,
+      "_comment": "Bridged. Lifecycle: npm run refactor:up/down. Community package (single dev)."
+    },
+    "mem0": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3119/mcp",
+      "enabled": true,
+      "_comment": "Bridged. Lifecycle: npm run mem0:up/down. Needs MEM0_API_KEY env."
     }
   },
   "permission": {
@@ -78,6 +124,38 @@
     "edit": {
       "07-REFERENCE/**": "ask",
       "*": "allow"
-    }
+    },
+    "google-drive_search": "allow",
+    "google-drive_listFolder": "allow",
+    "google-drive_listSheets": "allow",
+    "google-drive_listDocumentTabs": "allow",
+    "google-drive_getGoogleDocContent": "allow",
+    "google-drive_getGoogleDocContentPaginated": "allow",
+    "google-drive_getGoogleSheetContent": "allow",
+    "google-drive_readTextFile": "allow",
+    "google-drive_createTextFile": "allow",
+    "google-drive_createGoogleDoc": "allow",
+    "google-drive_createGoogleSheet": "allow",
+    "google-drive_createGoogleSlides": "allow",
+    "google-drive_updateGoogleDoc": "ask",
+    "google-drive_updateGoogleSheet": "ask",
+    "google-drive_updateTextFile": "ask",
+    "google-drive_deleteItem": "ask",
+    "google-drive_moveItem": "ask",
+    "google-drive_renameItem": "ask",
+    "google-drive_addPermission": "ask",
+    "google-drive_shareFile": "ask",
+    "google-drive_managePermissions": "ask",
+    "github_create_issue": "allow",
+    "github_list_issues": "allow",
+    "github_get_issue": "allow",
+    "github_create_pull_request": "ask",
+    "github_list_pull_requests": "allow",
+    "github_get_pull_request": "allow",
+    "github_create_or_update_file": "ask",
+    "github_get_file_contents": "allow",
+    "github_search_repositories": "allow",
+    "github_search_code": "allow",
+    "github_list_commits": "allow"
   }
 }
