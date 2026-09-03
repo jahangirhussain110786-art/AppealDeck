@@ -7,7 +7,7 @@ import {
 import type { NextRequest } from "next/server";
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-const DEFAULT_MODEL = "gemini-1.5-flash";
+const DEFAULT_MODEL = "gemini-2.5-flash";
 const REQUEST_TIMEOUT_MS = 8_000;
 const MAX_OUTPUT_TOKENS = 512;
 
@@ -39,8 +39,8 @@ export type GeminiCallResult =
 
 export const breakerOptions: BreakerOptions = {
   name: "gemini",
-  spendCapPerDay: 5_000,
-  perMinuteLimit: 20,
+  spendCapPerDay: 240,
+  perMinuteLimit: 9,
   errorRateThreshold: 0.5,
   minVolumePerWindow: 10,
   windowMs: 60_000,

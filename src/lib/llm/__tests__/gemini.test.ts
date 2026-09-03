@@ -9,7 +9,7 @@ describe("gemini (no env)", () => {
 
   it("getGeminiModel falls back to default when GEMINI_MODEL is unset", () => {
     delete process.env.GEMINI_MODEL;
-    expect(getGeminiModel()).toBe("gemini-1.5-flash");
+    expect(getGeminiModel()).toBe("gemini-2.5-flash");
   });
 
   it("getGeminiModel respects GEMINI_MODEL when set", () => {
