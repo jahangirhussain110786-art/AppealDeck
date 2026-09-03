@@ -184,7 +184,7 @@ export default function DecodePage() {
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                   The free decoder shows you the shape of the problem. The $199 Appeal Pass drafts a
-                  Plan of Action you edit and submit yourself — no automation, no guarantees.
+                  Plan of Action you edit and submit yourself — no automation, no outcome promises.
                 </p>
                 <Button asChild className="mt-4">
                   <Link href="/pricing">

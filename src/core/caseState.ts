@@ -156,7 +156,7 @@ export function expectationsCopy(state: CaseState): string {
   switch (state) {
     case "AWAITING":
     case "SUBMITTED":
-      return "Amazon typically responds within a variable window. There is no guaranteed response time.";
+      return "Amazon typically responds within a variable window. There is no fixed response time.";
     case "REVISION":
       return "Resubmissions must include new information or changed framing. Repeated identical submissions risk a permanent lock.";
     case "ESCALATION":

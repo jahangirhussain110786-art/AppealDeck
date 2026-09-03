@@ -58,3 +58,7 @@ skills-lock.json
 /playwright-report/
 /test-results/
 
+# Stray workspace artifacts
+.mcp-bridge-*.cmd
+appealdeck.md
+

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s · AppealDeck",
   },
   description:
-    "Paste your Amazon deactivation notice and get it decoded in plain English. Free decoder, $199 Appeal Pass for a drafted Plan of Action. No automation, no guarantees.",
+    "Paste your Amazon deactivation notice and get it decoded in plain English. Free decoder, $199 Appeal Pass for a drafted Plan of Action. No automation, no outcome promises.",
   applicationName: "AppealDeck",
   openGraph: {
     type: "website",

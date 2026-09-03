@@ -15,14 +15,14 @@ describe("core seed", () => {
 });
 
 describe("ethics spine D6 (guard)", () => {
-  it("never uses the word 'guarantee' anywhere in src/core", () => {
+  it("never uses 'guarantee' or 'guaranteed' in src/core copy", () => {
     const dir = __dirname;
     const files = readdirSync(dir).filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"));
     const hits: string[] = [];
     for (const f of files) {
       const text = readFileSync(join(dir, f), "utf8");
-      if (/\bguarantee\b/i.test(text)) hits.push(f);
+      if (/\bguarantee\b|\bguaranteed\b/i.test(text)) hits.push(f);
     }
-    expect(hits, `forbidden 'guarantee' found in: ${hits.join(", ")}`).toEqual([]);
+    expect(hits, `forbidden 'guarantee*' found in: ${hits.join(", ")}`).toEqual([]);
   });
 });

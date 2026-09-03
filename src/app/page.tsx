@@ -22,7 +22,7 @@ const FEATURES = [
   {
     icon: ShieldCheck,
     title: "You stay in control",
-    body: "We never submit to Amazon and never guarantee outcomes. Honest, local-first help.",
+    body: "We never submit to Amazon on your behalf. Local-first, read-only, no automation.",
   },
 ];
 

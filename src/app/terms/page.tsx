@@ -16,8 +16,8 @@ export default function TermsPage() {
           appeals you submit to Amazon.
         </p>
         <p>
-          We do not guarantee reinstatement or any specific outcome. Sellers remain in control of
-          every submission.
+          We make no promises about reinstatement or any specific outcome. Sellers remain in control
+          of every submission.
         </p>
         <p>
           Accounts and purchases are governed by our Merchant of Record (Paddle) terms and this

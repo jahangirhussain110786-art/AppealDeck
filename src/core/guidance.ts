@@ -66,7 +66,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
     whatToDo: [
       "Provide your deactivation date so the funds-appeal and review checkpoints can be estimated.",
       "Submit a funds appeal to disbursement-appeals@amazon.com with evidence once eligible.",
-      "Treat the 90-day checkpoint as a review, not a guaranteed release.",
+      "Treat the 90-day checkpoint as a review, not an automatic release.",
     ],
   },
   UNKNOWN: {

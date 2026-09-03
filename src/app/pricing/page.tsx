@@ -35,7 +35,8 @@ export default function PricingPage() {
             ))}
           </ul>
           <p className="mt-4 text-sm text-muted-foreground">
-            We do not guarantee reinstatement. We help you submit a stronger, honest appeal faster.
+            We make no promises about reinstatement. We help you submit a stronger, honest appeal
+            faster.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <CheckoutButton size="lg" priceId={process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS}>
