@@ -153,7 +153,7 @@ function ComposeInner() {
               <h3 className="font-medium text-foreground">Device limit reached</h3>
               <p className="mt-1 text-sm text-muted-foreground">{error}</p>
               <Button asChild variant="outline" size="sm" className="mt-3">
-                <a href="/app/billing">Manage devices in Billing</a>
+                <a href="/billing">Manage devices in Billing</a>
               </Button>
             </div>
           </div>
@@ -173,7 +173,7 @@ function ComposeInner() {
                 <h3 className="font-medium text-foreground">Unable to compose</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{error}</p>
                 <Button asChild variant="outline" size="sm" className="mt-3">
-                  <a href="/app/case">Go to case</a>
+                  <a href="/case">Go to case</a>
                 </Button>
               </div>
             </div>
@@ -272,7 +272,7 @@ function ComposeView() {
     <div className="space-y-6">
       <div>
         <Button asChild variant="ghost" className="mb-2 pl-0">
-          <a href="/app/case">
+          <a href="/case">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to case
           </a>

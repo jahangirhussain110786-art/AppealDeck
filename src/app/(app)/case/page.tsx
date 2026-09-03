@@ -108,7 +108,7 @@ export default async function CasePage() {
             <Link href="/decode">Decode a notice</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href="/app/billing">Billing</Link>
+            <Link href="/billing">Billing</Link>
           </Button>
         </CardContent>
       </Card>

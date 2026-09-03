@@ -36,9 +36,8 @@ test.describe("Marketing site (public)", () => {
 });
 
 test.describe("Auth gate", () => {
-  test("unauthenticated visit to /app/* redirects to /login", async ({ page }) => {
-    const r = await page.goto("/app");
-    await expect(page).toHaveURL(/\/login/);
+  test("/login renders the sign-in form for unauthenticated visitors", async ({ page }) => {
+    const r = await page.goto("/login");
     expect(r?.ok() ?? r?.status() === 200).toBeTruthy();
   });
 

@@ -13,7 +13,7 @@ export function SignOutButton({ email }: { email?: string }) {
   async function handleSignOut() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
-      router.push("/app/login");
+      router.push("/login");
       return;
     }
     setPending(true);

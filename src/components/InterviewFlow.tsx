@@ -256,7 +256,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                 provided.
               </p>
               <Button asChild>
-                <a href="/app/compose">Continue to composer</a>
+                <a href="/compose">Continue to composer</a>
               </Button>
             </div>
           </div>
