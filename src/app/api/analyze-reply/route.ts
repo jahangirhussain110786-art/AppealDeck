@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { analyzeReply } from "@/core";
 
 export const dynamic = "force-dynamic";
+
+const AnalyzeReplyBody = z.object({
+  reply: z
+    .string()
+    .trim()
+    .min(1, "Field 'reply' is required.")
+    .max(30_000, "Reply text exceeds 30,000 character limit."),
+});
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -11,19 +20,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const reply = (body as { reply?: unknown })?.reply;
-  if (typeof reply !== "string" || reply.trim().length === 0) {
-    return NextResponse.json({ error: "Field 'reply' is required." }, { status: 400 });
+  const parsed = AnalyzeReplyBody.safeParse(body);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]?.message ?? "Invalid body.";
+    const tooLong = parsed.error.issues.some((i) => i.code === "too_big");
+    return NextResponse.json({ error: first }, { status: tooLong ? 413 : 400 });
   }
 
-  if (reply.length > 30000) {
-    return NextResponse.json(
-      { error: "Reply text exceeds 30,000 character limit." },
-      { status: 413 },
-    );
-  }
-
-  const result = analyzeReply(reply);
+  const result = analyzeReply(parsed.data.reply);
 
   return NextResponse.json({
     category: result.category,

@@ -1,10 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { composePoa, critiquePoa, renderPoaText } from "@/core";
 import type { CaseFileData } from "@/core";
 import { requireUser } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+const CaseFile = z
+  .object({
+    kind: z.string().min(1),
+    state: z.string().optional(),
+    rootCause: z.string().optional(),
+    timelineEvents: z
+      .array(
+        z.object({
+          date: z.string(),
+          description: z.string(),
+        }),
+      )
+      .optional(),
+    priorAppealCount: z.number().int().nonnegative().optional(),
+    evidenceSlots: z.record(z.string(), z.unknown()).optional(),
+    actionItems: z.array(z.unknown()).optional(),
+    attemptCount: z.number().int().nonnegative().optional(),
+  })
+  .passthrough();
+
+const ComposeBody = z.object({
+  caseData: CaseFile,
+  attemptNumber: z.number().int().min(1).max(99).optional(),
+});
 
 export async function POST(req: NextRequest) {
   const user = await requireUser();
@@ -28,12 +54,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const data = (body as { caseData?: unknown })?.caseData as CaseFileData | undefined;
-  const attemptNumber = ((body as { attemptNumber?: unknown })?.attemptNumber as number) ?? 1;
-
-  if (!data || !data.kind) {
-    return NextResponse.json({ error: "Field 'caseData.kind' is required." }, { status: 400 });
+  const parsed = ComposeBody.safeParse(body);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]?.message ?? "Field 'caseData.kind' is required.";
+    return NextResponse.json({ error: first }, { status: 400 });
   }
+
+  const { caseData, attemptNumber = 1 } = parsed.data;
+  const data = caseData as unknown as CaseFileData;
 
   const draft = composePoa(data, attemptNumber);
   const critique = critiquePoa(draft, data);

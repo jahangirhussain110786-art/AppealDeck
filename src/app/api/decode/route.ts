@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { runDecode } from "@/core";
 import type { ViolationKind } from "@/core";
 
@@ -19,6 +20,14 @@ function looksLikeNotice(text: string): boolean {
   return hits >= 2;
 }
 
+const DecodeBody = z.object({
+  text: z
+    .string()
+    .trim()
+    .min(1, "Field 'text' is required.")
+    .max(50_000, "Notice text exceeds 50,000 character limit."),
+});
+
 export async function POST(req: NextRequest) {
   let body: unknown;
   try {
@@ -27,17 +36,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const text = (body as { text?: unknown })?.text;
-  if (typeof text !== "string" || text.trim().length === 0) {
-    return NextResponse.json({ error: "Field 'text' is required." }, { status: 400 });
+  const parsed = DecodeBody.safeParse(body);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]?.message ?? "Invalid body.";
+    const tooLong = parsed.error.issues.some((i) => i.code === "too_big");
+    return NextResponse.json({ error: first }, { status: tooLong ? 413 : 400 });
   }
 
-  if (text.length > 50000) {
-    return NextResponse.json(
-      { error: "Notice text exceeds 50,000 character limit." },
-      { status: 413 },
-    );
-  }
+  const { text } = parsed.data;
 
   if (!looksLikeNotice(text)) {
     return NextResponse.json(
@@ -49,7 +55,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const kind: ViolationKind = "UNKNOWN";
   const result = runDecode(text, { noticeReceivedAt: new Date() });
 
   return NextResponse.json({
