@@ -54,3 +54,7 @@ coverage/
 # Kilo auto-generated lock file (regenerated from .agents/skills/)
 skills-lock.json
 
+# Playwright test outputs
+/playwright-report/
+/test-results/
+
