@@ -4,6 +4,7 @@ import { composePoa, critiquePoa, renderPoaText } from "@/core";
 import type { CaseFileData } from "@/core";
 import { requireUser } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,11 @@ const ComposeBody = z.object({
 export async function POST(req: NextRequest) {
   const user = await requireUser();
   const email = (user.email ?? "").trim().toLowerCase();
+
+  const rate = await rateLimitCompose(user);
+  if (!rate.success) {
+    return tooManyRequestsResponse(rate);
+  }
 
   if (supabaseAdmin && email) {
     const { data: license } = await supabaseAdmin

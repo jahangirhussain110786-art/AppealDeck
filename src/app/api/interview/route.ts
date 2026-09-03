@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { createCaseFile, nextStep, applyAnswer, interviewProgress } from "@/core/interviewEngine";
 import type { CaseFile, StepAnswer } from "@/core/interviewEngine";
 import type { ViolationKind } from "@/core";
+import { rateLimitInterview, tooManyRequestsResponse } from "@/lib/ratelimit";
 
 const MAX_CASEFILE_BYTES = 200_000;
 
@@ -81,6 +82,11 @@ export async function POST(req: NextRequest) {
   const user = await requireUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rate = await rateLimitInterview(user);
+  if (!rate.success) {
+    return tooManyRequestsResponse(rate);
   }
 
   let body: unknown;
