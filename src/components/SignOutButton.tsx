@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function SignOutButton({ email }: { email?: string }) {
@@ -16,7 +17,13 @@ export function SignOutButton({ email }: { email?: string }) {
       return;
     }
     setPending(true);
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Sign out failed", { description: error.message });
+      setPending(false);
+      return;
+    }
+    toast.success("Signed out");
     router.refresh();
     router.push("/app/login");
   }

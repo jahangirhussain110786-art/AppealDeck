@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { AlertCircle, ArrowLeft, CheckCircle2, Copy, FileText, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +51,6 @@ function ComposeInner() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ComposeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const loadFromStorage = useCallback(() => {
     try {
@@ -111,10 +111,16 @@ function ComposeInner() {
 
   const handleCopy = useCallback(() => {
     if (!result?.rendered) return;
-    navigator.clipboard.writeText(result.rendered).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    navigator.clipboard.writeText(result.rendered).then(
+      () =>
+        toast.success("Plan of Action copied to clipboard", {
+          description: "Paste into Seller Central to edit and submit.",
+        }),
+      () =>
+        toast.error("Copy failed", {
+          description: "Your browser blocked clipboard access. Use Ctrl/Cmd+C manually.",
+        }),
+    );
   }, [result]);
 
   return (
@@ -203,7 +209,7 @@ function ComposeInner() {
               </CardTitle>
               <Button variant="outline" size="sm" onClick={handleCopy}>
                 <Copy className="mr-2 h-4 w-4" />
-                {copied ? "Copied" : "Copy"}
+                Copy
               </Button>
             </CardHeader>
             <CardContent>

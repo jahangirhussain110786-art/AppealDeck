@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://appealdeck.com";
 
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </a>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

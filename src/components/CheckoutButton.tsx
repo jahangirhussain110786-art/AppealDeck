@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button, type ButtonProps } from "@/components/ui/button";
 
 declare global {
@@ -67,7 +68,12 @@ export function CheckoutButton({
     script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
     script.async = true;
     script.onload = () => init(token);
-    script.onerror = () => setError("Could not load checkout");
+    script.onerror = () => {
+      setError("Could not load checkout");
+      toast.error("Checkout failed to load", {
+        description: "Check your network and disable ad blockers, then try again.",
+      });
+    };
     document.body.appendChild(script);
   }, []);
 
@@ -75,8 +81,12 @@ export function CheckoutButton({
     const id = priceId ?? process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
     if (!window.Paddle || !id) {
       setError("Checkout unavailable");
+      toast.error("Checkout unavailable", {
+        description: "Payment is temporarily offline. Please try again in a moment.",
+      });
       return;
     }
+    toast.info("Opening secure checkout…");
     window.Paddle.Checkout.open({ items: [{ priceId: id }] });
   }
 

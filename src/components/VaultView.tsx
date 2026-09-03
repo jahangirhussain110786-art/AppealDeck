@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import {
   Lock,
   Unlock,
@@ -42,8 +43,6 @@ function useVault(): Vault {
 export default function VaultView({ userId }: { userId: string }) {
   const vault = useVault();
   const [phase, setPhase] = React.useState<Phase>({ kind: "loading" });
-  const [error, setError] = React.useState<string | null>(null);
-  const [info, setInfo] = React.useState<string | null>(null);
   const [items, setItems] = React.useState<VaultListItem[]>([]);
   const [passphrase, setPassphrase] = React.useState("");
   const [confirm, setConfirm] = React.useState("");
@@ -76,7 +75,9 @@ export default function VaultView({ userId }: { userId: string }) {
           }
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Vault failed to open");
+        toast.error("Vault failed to open", {
+          description: e instanceof Error ? e.message : "Unknown error",
+        });
       }
     })();
     return () => {
@@ -85,13 +86,12 @@ export default function VaultView({ userId }: { userId: string }) {
   }, [vault]);
 
   const onInit = async () => {
-    setError(null);
     if (passphrase.length < 8) {
-      setError("Passphrase must be at least 8 characters");
+      toast.error("Passphrase must be at least 8 characters");
       return;
     }
     if (passphrase !== confirm) {
-      setError("Passphrases do not match");
+      toast.error("Passphrases do not match");
       return;
     }
     setBusy(true);
@@ -100,28 +100,37 @@ export default function VaultView({ userId }: { userId: string }) {
       setPassphrase("");
       setConfirm("");
       setPhase({ kind: "unlocked" });
-      setInfo("Vault initialized. Your data is encrypted on this device.");
+      toast.success("Vault initialized", {
+        description:
+          "Your data is encrypted on this device. Your passphrase never leaves the browser.",
+      });
       setItems(await vault.list());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not initialize vault");
+      toast.error("Could not initialize vault", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      });
     } finally {
       setBusy(false);
     }
   };
 
   const onUnlock = async () => {
-    setError(null);
     setBusy(true);
     try {
       await vault.unlock(passphrase);
       setPassphrase("");
       setPhase({ kind: "unlocked" });
+      toast.success("Vault unlocked");
       setItems(await vault.list());
     } catch (e) {
       if (e instanceof VaultCryptoError) {
-        setError("That passphrase didn't unlock the vault. Try again.");
+        toast.error("That passphrase didn't unlock the vault", {
+          description: "Try again, or use the same passphrase you set on another device.",
+        });
       } else {
-        setError(e instanceof Error ? e.message : "Unlock failed");
+        toast.error("Unlock failed", {
+          description: e instanceof Error ? e.message : "Unknown error",
+        });
       }
     } finally {
       setBusy(false);
@@ -135,7 +144,6 @@ export default function VaultView({ userId }: { userId: string }) {
   };
 
   const onAddFile = async (file: File) => {
-    setError(null);
     setBusy(true);
     try {
       const buf = new Uint8Array(await file.arrayBuffer());
@@ -146,33 +154,42 @@ export default function VaultView({ userId }: { userId: string }) {
         kind: "document",
       };
       await vault.add(input);
-      setInfo(`Added "${file.name}".`);
+      toast.success(`Added "${file.name}"`, {
+        description: "Encrypted on this device. Ready to attach to a case.",
+      });
       setItems(await vault.list());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Add failed");
+      toast.error("Add failed", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      });
     } finally {
       setBusy(false);
     }
   };
 
   const onView = async (id: string) => {
-    setError(null);
     try {
       const { bytes, record } = await vault.get(id);
       if (record.mimeType.startsWith("text/") || record.mimeType === "application/json") {
         const text = new TextDecoder().decode(bytes);
         const trimmed = text.length > 2000 ? `${text.slice(0, 2000)}…` : text;
-        setInfo(`Preview of ${record.name} (${record.sizeBytes} bytes):\n\n${trimmed}`);
+        toast(`Preview of ${record.name}`, {
+          description: `${record.sizeBytes} bytes —\n\n${trimmed}`,
+          duration: 10_000,
+        });
       } else {
-        setInfo(`Binary file ${record.name} (${record.sizeBytes} bytes). Click download to save.`);
+        toast.info(`${record.name}`, {
+          description: `Binary file, ${record.sizeBytes} bytes. Use download to save.`,
+        });
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not decrypt");
+      toast.error("Could not decrypt", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      });
     }
   };
 
   const onDownload = async (id: string) => {
-    setError(null);
     try {
       const { bytes, record } = await vault.get(id);
       const blob = new Blob([new Uint8Array(bytes)], { type: record.mimeType });
@@ -184,29 +201,37 @@ export default function VaultView({ userId }: { userId: string }) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+      toast.success(`Downloaded ${record.name}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Download failed");
+      toast.error("Download failed", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      });
     }
   };
 
   const onDelete = async (id: string) => {
-    setError(null);
     try {
       await vault.delete(id);
       setItems(await vault.list());
+      toast.success("Record deleted");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Delete failed");
+      toast.error("Delete failed", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      });
     }
   };
 
   const onSyncUp = async () => {
-    setError(null);
     setBusy(true);
     try {
       const r = await pushVaultToCloud(vault, userId);
-      setInfo(`Synced: ${r.uploaded} snapshot uploaded, ${r.errors} errors.`);
+      toast.success("Vault synced", {
+        description: `${r.uploaded} snapshot uploaded${r.errors ? `, ${r.errors} errors` : ""}.`,
+      });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Sync failed");
+      toast.error("Sync failed", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      });
     } finally {
       setBusy(false);
     }
@@ -245,7 +270,6 @@ export default function VaultView({ userId }: { userId: string }) {
           <Button onClick={onInit} disabled={busy}>
             <ShieldCheck className="size-4" /> Create vault
           </Button>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </div>
       </Card>
     );
@@ -273,7 +297,6 @@ export default function VaultView({ userId }: { userId: string }) {
           <Button onClick={onUnlock} disabled={busy}>
             <Unlock className="size-4" /> Unlock
           </Button>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </div>
       </Card>
     );
@@ -303,13 +326,6 @@ export default function VaultView({ userId }: { userId: string }) {
       </div>
 
       <FileDropZone onFile={onAddFile} disabled={busy} />
-
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      {info ? (
-        <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted/30 p-3 text-xs">
-          {info}
-        </pre>
-      ) : null}
 
       {items.length === 0 ? (
         <Card className="p-6 text-sm text-muted-foreground">
