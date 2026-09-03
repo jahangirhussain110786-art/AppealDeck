@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test.describe("/api routes (unauthenticated)", () => {
+test.describe("/api routes (auth + validation)", () => {
   test("POST /api/decode rejects empty text with 400", async ({ request }) => {
     const r = await request.post("/api/decode", { data: { text: "" } });
     expect(r.status()).toBe(400);
@@ -27,9 +27,12 @@ test.describe("/api routes (unauthenticated)", () => {
     expect(Array.isArray(body.deadlines)).toBe(true);
   });
 
-  test("POST /api/analyze-reply rejects non-string reply with 400", async ({ request }) => {
-    const r = await request.post("/api/analyze-reply", { data: { reply: 123 } });
-    expect(r.status()).toBe(400);
+  test("POST /api/analyze-reply requires auth (redirect or 401)", async ({ request }) => {
+    const r = await request.post("/api/analyze-reply", {
+      data: { reply: 123 },
+      maxRedirects: 0,
+    });
+    expect([302, 303, 307, 401]).toContain(r.status());
   });
 
   test("POST /api/compose requires auth (redirect or 401)", async ({ request }) => {

@@ -11,6 +11,7 @@ export type RateLimitResult = {
 
 let _compose: Ratelimit | null = null;
 let _interview: Ratelimit | null = null;
+let _analyzeReply: Ratelimit | null = null;
 let _enabled = false;
 
 function hasUpstashEnv(): boolean {
@@ -51,6 +52,23 @@ function getInterviewLimiter(): Ratelimit | null {
   return _interview;
 }
 
+function getAnalyzeReplyLimiter(): Ratelimit | null {
+  if (!hasUpstashEnv()) return null;
+  if (!_analyzeReply) {
+    const redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    });
+    _analyzeReply = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(60, "1 m"),
+      analytics: true,
+      prefix: "ratelimit:analyze-reply",
+    });
+  }
+  return _analyzeReply;
+}
+
 export function isRateLimitEnabled(): boolean {
   return hasUpstashEnv();
 }
@@ -66,6 +84,15 @@ export async function rateLimitCompose(user: AppUser): Promise<RateLimitResult> 
 
 export async function rateLimitInterview(user: AppUser): Promise<RateLimitResult> {
   const limiter = getInterviewLimiter();
+  if (!limiter) {
+    return { success: true, limit: 60, remaining: 60, reset: Date.now() + 60_000 };
+  }
+  const r = await limiter.limit(user.id);
+  return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
+}
+
+export async function rateLimitAnalyzeReply(user: AppUser): Promise<RateLimitResult> {
+  const limiter = getAnalyzeReplyLimiter();
   if (!limiter) {
     return { success: true, limit: 60, remaining: 60, reset: Date.now() + 60_000 };
   }
