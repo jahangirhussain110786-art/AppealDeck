@@ -15,6 +15,7 @@
     "analyze": "ANALYZE=true next build",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "lighthouse": "lhci autorun",
     "test": "vitest run",
     "test:watch": "vitest",
     "drive:up": "node scripts/drive-mcp-up.mjs",
@@ -57,6 +58,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@next/bundle-analyzer": "^16.3.4",
     "@playwright/test": "^1.62.1",
