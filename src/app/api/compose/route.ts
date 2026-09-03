@@ -5,6 +5,7 @@ import type { CaseFileData } from "@/core";
 import { requireUser } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
+import { recordActivation, deviceErrorResponse, fingerprintFromRequest } from "@/lib/devices";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,17 @@ export async function POST(req: NextRequest) {
     if (!license || license.status !== "active") {
       return NextResponse.json({ error: "Active Appeal Pass required." }, { status: 403 });
     }
+
+    const fingerprint = await deriveFingerprintFromRequest(req, user);
+    const result = await recordActivation(supabaseAdmin, {
+      userId: user.id,
+      email,
+      fingerprint,
+      userAgent: req.headers.get("user-agent"),
+    });
+    if (result.status === "over_cap") {
+      return deviceErrorResponse(result);
+    }
   }
 
   let body: unknown;
@@ -82,5 +94,20 @@ export async function POST(req: NextRequest) {
     },
     critique,
     rendered: renderPoaText(draft),
+  });
+}
+
+async function deriveFingerprintFromRequest(
+  req: NextRequest,
+  user: { id: string; email?: string | null },
+): Promise<string> {
+  return fingerprintFromRequest({
+    userAgent: req.headers.get("user-agent") ?? "",
+    ip:
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("x-real-ip") ??
+      "0.0.0.0",
+    acceptLanguage: req.headers.get("accept-language") ?? "",
+    userId: user.id,
   });
 }

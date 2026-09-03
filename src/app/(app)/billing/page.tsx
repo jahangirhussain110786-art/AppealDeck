@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DeviceManager } from "@/components/DeviceManager";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,8 @@ export default async function BillingPage() {
           )}
         </CardContent>
       </Card>
+
+      {active ? <DeviceManager /> : null}
     </div>
   );
 }

@@ -51,6 +51,7 @@ function ComposeInner() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ComposeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<"generic" | "device_cap" | null>(null);
 
   const loadFromStorage = useCallback(() => {
     try {
@@ -100,11 +101,30 @@ function ComposeInner() {
         body: JSON.stringify({ caseData }),
       })
         .then(async (res) => {
+          if (res.status === 403) {
+            const body = await res.json().catch(() => ({}) as any);
+            if (body?.error === "device_cap_reached") {
+              setError(`${body.message ?? "Device cap reached."} Manage devices in Billing.`);
+              setErrorKind("device_cap");
+              toast.error("Device limit reached", {
+                description: "Revoke an older device in Billing to continue.",
+              });
+              return null;
+            }
+            setError(body?.error ?? `Compose failed (${res.status})`);
+            setErrorKind("generic");
+            return null;
+          }
           if (!res.ok) throw new Error(`Compose failed (${res.status})`);
           return res.json();
         })
-        .then((data: ComposeResult) => setResult(data))
-        .catch((e) => setError(e instanceof Error ? e.message : "Failed to compose"))
+        .then((data: ComposeResult | null) => {
+          if (data) setResult(data);
+        })
+        .catch((e) => {
+          setError(e instanceof Error ? e.message : "Failed to compose");
+          setErrorKind("generic");
+        })
         .finally(() => setLoading(false));
     })();
   }, [searchParams, loadFromStorage]);
@@ -122,6 +142,25 @@ function ComposeInner() {
         }),
     );
   }, [result]);
+
+  if (error && errorKind === "device_cap") {
+    return (
+      <Card className="border-warning/40 bg-warning/5">
+        <CardContent className="pt-5">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
+            <div>
+              <h3 className="font-medium text-foreground">Device limit reached</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{error}</p>
+              <Button asChild variant="outline" size="sm" className="mt-3">
+                <a href="/app/billing">Manage devices in Billing</a>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>
