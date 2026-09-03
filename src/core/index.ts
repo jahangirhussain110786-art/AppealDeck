@@ -125,6 +125,15 @@ export type {
 } from "./interviewEngine";
 export { composePoa, critiquePoa, renderPoaText } from "./composer";
 export type { PoaSection, PoaDraft, CriticFinding, CriticResult } from "./composer";
+export type { VaultStatus, VaultListItem, AddDocumentInput } from "./vault/vault";
+export type {
+  EncryptionEnvelope,
+  KdfParams,
+  WrappedDek,
+  KeyMode,
+  VaultConfig,
+} from "./vault/envelope";
+export { VAULT_ENVELOPE_VERSION } from "./vault/envelope";
 
 export interface DecodeOptions {
   noticeReceivedAt: Date;

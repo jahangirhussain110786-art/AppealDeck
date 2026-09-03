@@ -7,6 +7,7 @@ import { AlertCircle, ArrowLeft, CheckCircle2, Copy, FileText, ShieldAlert } fro
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { getBrowserVault } from "@/lib/vault/browser";
 
 interface PoaSection {
   heading: string;
@@ -68,27 +69,44 @@ function ComposeInner() {
       return;
     }
 
-    let caseData;
+    let caseData: Record<string, unknown>;
     try {
-      caseData = typeof raw === "string" ? JSON.parse(raw) : raw;
+      caseData = typeof raw === "string" ? JSON.parse(raw) : (raw as Record<string, unknown>);
     } catch {
       setError("Invalid case file data.");
       return;
     }
 
-    setLoading(true);
-    fetch("/api/compose", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ caseData }),
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`Compose failed (${res.status})`);
-        return res.json();
+    (async () => {
+      try {
+        const vault = getBrowserVault();
+        if (vault.isUnlocked()) {
+          const records = await vault.list();
+          const slots = (caseData.evidenceSlots as Record<string, unknown>) ?? {};
+          for (const r of records) {
+            if (!r.evidenceKind) continue;
+            slots[r.evidenceKind] = { present: true, vaultRecordId: r.id };
+          }
+          caseData.evidenceSlots = slots;
+        }
+      } catch {
+        // vault not available — fall through with whatever slots were on the case
+      }
+
+      setLoading(true);
+      fetch("/api/compose", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseData }),
       })
-      .then((data: ComposeResult) => setResult(data))
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to compose"))
-      .finally(() => setLoading(false));
+        .then(async (res) => {
+          if (!res.ok) throw new Error(`Compose failed (${res.status})`);
+          return res.json();
+        })
+        .then((data: ComposeResult) => setResult(data))
+        .catch((e) => setError(e instanceof Error ? e.message : "Failed to compose"))
+        .finally(() => setLoading(false));
+    })();
   }, [searchParams, loadFromStorage]);
 
   const handleCopy = useCallback(() => {

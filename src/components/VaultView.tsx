@@ -1,0 +1,417 @@
+"use client";
+
+import * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Lock,
+  Unlock,
+  Plus,
+  Trash2,
+  Eye,
+  Download,
+  ShieldCheck,
+  RefreshCw,
+  Cloud,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  browserWebCrypto,
+  getBrowserVault,
+  pushVaultToCloud,
+  pullVaultFromCloud,
+} from "@/lib/vault/browser";
+import { VAULT_ENVELOPE_VERSION, VaultCryptoError } from "@/core/vault/envelope";
+import { asBase64 } from "@/lib/vault/browser";
+import type { AddDocumentInput, Vault, VaultListItem, VaultStatus } from "@/core/vault/vault";
+
+type Phase =
+  | { kind: "loading" }
+  | { kind: "needs_init" }
+  | { kind: "locked"; status: Extract<VaultStatus, { state: "locked" }> }
+  | { kind: "unlocked" };
+
+function useVault(): Vault {
+  const ref = React.useRef<Vault | null>(null);
+  if (ref.current === null) {
+    ref.current = getBrowserVault();
+  }
+  return ref.current;
+}
+
+export default function VaultView({ userId }: { userId: string }) {
+  const vault = useVault();
+  const [phase, setPhase] = React.useState<Phase>({ kind: "loading" });
+  const [error, setError] = React.useState<string | null>(null);
+  const [info, setInfo] = React.useState<string | null>(null);
+  const [items, setItems] = React.useState<VaultListItem[]>([]);
+  const [passphrase, setPassphrase] = React.useState("");
+  const [confirm, setConfirm] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+
+  const refresh = React.useCallback(async () => {
+    if (phase.kind !== "unlocked") return;
+    const list = await vault.list();
+    setItems(list);
+  }, [phase, vault]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await vault.open();
+        const initialized = await vault.isInitialized();
+        if (cancelled) return;
+        if (!initialized) {
+          setPhase({ kind: "needs_init" });
+        } else {
+          const s = await vault.status();
+          if (cancelled) return;
+          if (s.state === "locked") {
+            setPhase({ kind: "locked", status: s });
+          } else if (s.state === "unlocked") {
+            setPhase({ kind: "unlocked" });
+            const list = await vault.list();
+            if (!cancelled) setItems(list);
+          }
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Vault failed to open");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [vault]);
+
+  const onInit = async () => {
+    setError(null);
+    if (passphrase.length < 8) {
+      setError("Passphrase must be at least 8 characters");
+      return;
+    }
+    if (passphrase !== confirm) {
+      setError("Passphrases do not match");
+      return;
+    }
+    setBusy(true);
+    try {
+      await vault.initWithPassphrase(passphrase);
+      setPassphrase("");
+      setConfirm("");
+      setPhase({ kind: "unlocked" });
+      setInfo("Vault initialized. Your data is encrypted on this device.");
+      setItems(await vault.list());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not initialize vault");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onUnlock = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await vault.unlock(passphrase);
+      setPassphrase("");
+      setPhase({ kind: "unlocked" });
+      setItems(await vault.list());
+    } catch (e) {
+      if (e instanceof VaultCryptoError) {
+        setError("That passphrase didn't unlock the vault. Try again.");
+      } else {
+        setError(e instanceof Error ? e.message : "Unlock failed");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onLock = () => {
+    vault.lock();
+    setPhase({ kind: "locked", status: { state: "locked", mode: "passphrase", hasWrapped: true } });
+    setItems([]);
+  };
+
+  const onAddFile = async (file: File) => {
+    setError(null);
+    setBusy(true);
+    try {
+      const buf = new Uint8Array(await file.arrayBuffer());
+      const input: AddDocumentInput = {
+        name: file.name,
+        mimeType: file.type || "application/octet-stream",
+        data: buf,
+        kind: "document",
+      };
+      await vault.add(input);
+      setInfo(`Added "${file.name}".`);
+      setItems(await vault.list());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Add failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onView = async (id: string) => {
+    setError(null);
+    try {
+      const { bytes, record } = await vault.get(id);
+      if (record.mimeType.startsWith("text/") || record.mimeType === "application/json") {
+        const text = new TextDecoder().decode(bytes);
+        const trimmed = text.length > 2000 ? `${text.slice(0, 2000)}…` : text;
+        setInfo(`Preview of ${record.name} (${record.sizeBytes} bytes):\n\n${trimmed}`);
+      } else {
+        setInfo(`Binary file ${record.name} (${record.sizeBytes} bytes). Click download to save.`);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not decrypt");
+    }
+  };
+
+  const onDownload = async (id: string) => {
+    setError(null);
+    try {
+      const { bytes, record } = await vault.get(id);
+      const blob = new Blob([new Uint8Array(bytes)], { type: record.mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = record.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Download failed");
+    }
+  };
+
+  const onDelete = async (id: string) => {
+    setError(null);
+    try {
+      await vault.delete(id);
+      setItems(await vault.list());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Delete failed");
+    }
+  };
+
+  const onSyncUp = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      const r = await pushVaultToCloud(vault, userId);
+      setInfo(`Synced: ${r.uploaded} snapshot uploaded, ${r.errors} errors.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (phase.kind === "loading") {
+    return <Card className="p-6 text-sm text-muted-foreground">Loading vault…</Card>;
+  }
+
+  if (phase.kind === "needs_init") {
+    return (
+      <Card className="p-6">
+        <h2 className="mb-1 text-lg font-semibold">Set a vault passphrase</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Your evidence is encrypted on this device with a key derived from this passphrase
+          (PBKDF2-SHA-256, 310,000 iterations) plus AES-GCM. We never see the passphrase. If you
+          forget it, your data is unrecoverable.
+        </p>
+        <div className="flex flex-col gap-3">
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={passphrase}
+            onChange={(e) => setPassphrase(e.target.value)}
+            placeholder="Passphrase (min 8 chars)"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder="Confirm passphrase"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+          <Button onClick={onInit} disabled={busy}>
+            <ShieldCheck className="size-4" /> Create vault
+          </Button>
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        </div>
+      </Card>
+    );
+  }
+
+  if (phase.kind === "locked") {
+    return (
+      <Card className="p-6">
+        <h2 className="mb-1 text-lg font-semibold">Unlock your vault</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Enter your passphrase to decrypt your evidence. The key never leaves your device.
+        </p>
+        <div className="flex flex-col gap-3">
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={passphrase}
+            onChange={(e) => setPassphrase(e.target.value)}
+            placeholder="Passphrase"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void onUnlock();
+            }}
+          />
+          <Button onClick={onUnlock} disabled={busy}>
+            <Unlock className="size-4" /> Unlock
+          </Button>
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Your encrypted evidence</h2>
+          <p className="text-sm text-muted-foreground">
+            Envelope v{VAULT_ENVELOPE_VERSION}, AES-GCM, key derived from your passphrase on this
+            device.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => void refresh()} variant="outline" size="sm">
+            <RefreshCw className="size-4" /> Refresh
+          </Button>
+          <Button onClick={onSyncUp} variant="outline" size="sm" disabled={busy}>
+            <Cloud className="size-4" /> Sync to cloud
+          </Button>
+          <Button onClick={onLock} variant="outline" size="sm">
+            <Lock className="size-4" /> Lock
+          </Button>
+        </div>
+      </div>
+
+      <FileDropZone onFile={onAddFile} disabled={busy} />
+
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {info ? (
+        <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted/30 p-3 text-xs">
+          {info}
+        </pre>
+      ) : null}
+
+      {items.length === 0 ? (
+        <Card className="p-6 text-sm text-muted-foreground">
+          No evidence yet. Drop a file above to add your first encrypted record.
+        </Card>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          <AnimatePresence initial={false}>
+            {items.map((it) => (
+              <motion.li
+                key={it.id}
+                layout
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Card className="flex items-center justify-between p-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">{it.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {it.mimeType} · {it.sizeBytes} bytes ·{" "}
+                      {new Date(it.createdAt).toLocaleString()}
+                      {it.evidenceKind ? ` · ${it.evidenceKind}` : ""}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={() => void onView(it.id)}>
+                      <Eye className="size-4" /> View
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => void onDownload(it.id)}>
+                      <Download className="size-4" /> Download
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => void onDelete(it.id)}>
+                      <Trash2 className="size-4" /> Delete
+                    </Button>
+                  </div>
+                </Card>
+              </motion.li>
+            ))}
+          </AnimatePresence>
+        </ul>
+      )}
+
+      <p className="text-xs text-muted-foreground">
+        Preview fingerprint: {asBase64(new TextEncoder().encode(userId)).slice(0, 8)}… (envelope v
+        {VAULT_ENVELOPE_VERSION})
+      </p>
+    </div>
+  );
+}
+
+function FileDropZone({
+  onFile,
+  disabled,
+}: {
+  onFile: (file: File) => void | Promise<void>;
+  disabled: boolean;
+}) {
+  const [dragging, setDragging] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  return (
+    <Card
+      className={`flex flex-col items-center justify-center gap-2 border-dashed p-6 text-sm transition-colors ${
+        dragging ? "border-primary bg-accent/10" : "border-border"
+      }`}
+      onDragOver={(e) => {
+        e.preventDefault();
+        if (!disabled) setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragging(false);
+        if (disabled) return;
+        const f = e.dataTransfer.files?.[0];
+        if (f) void onFile(f);
+      }}
+    >
+      <Plus className="size-5 text-muted-foreground" />
+      <p className="text-muted-foreground">Drop a file here, or</p>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => inputRef.current?.click()}
+        disabled={disabled}
+      >
+        Choose a file
+      </Button>
+      <input
+        ref={inputRef}
+        type="file"
+        hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void onFile(f);
+          e.target.value = "";
+        }}
+      />
+      <p className="text-xs text-muted-foreground">
+        Max 10 MB per file. Encrypted on this device before upload.
+      </p>
+    </Card>
+  );
+}

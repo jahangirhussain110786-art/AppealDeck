@@ -1,13 +1,21 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export async function requireUser() {
-  let user: { email?: string | null } | null = null;
+export interface AppUser {
+  id: string;
+  email?: string | null;
+}
+
+export async function requireUser(): Promise<AppUser> {
+  let user: AppUser | null = null;
   try {
     const supabase = createSupabaseServerClient();
     if (supabase) {
       const { data } = await supabase.auth.getUser();
-      user = data.user;
+      const u = data.user;
+      if (u && u.id) {
+        user = { id: u.id, email: u.email ?? null };
+      }
     }
   } catch {
     user = null;

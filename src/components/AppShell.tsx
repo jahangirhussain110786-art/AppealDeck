@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { LayoutDashboard, FileSearch, Briefcase } from "lucide-react";
+import { LayoutDashboard, FileSearch, Briefcase, Vault } from "lucide-react";
 import { SignOutButton } from "@/components/SignOutButton";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -36,6 +36,12 @@ export function AppShell({
               className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground"
             >
               <Briefcase className="h-4 w-4" /> Case
+            </Link>
+            <Link
+              href="/app/vault"
+              className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground"
+            >
+              <Vault className="h-4 w-4" /> Vault
             </Link>
             <Link
               href="/app/billing"
