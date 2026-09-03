@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldSuggester } from "@/components/FieldSuggester";
 import { cn } from "@/lib/utils";
 
 type ViolationKind =
@@ -366,6 +367,10 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                       placeholder="Type your answer..."
                       rows={4}
                     />
+                  )}
+
+                  {step.kind === "intake_root_cause" && step.inputType === "short_text" && (
+                    <FieldSuggester stepId={step.id} text={answerValue} />
                   )}
 
                   {step.inputType === "date" && (
