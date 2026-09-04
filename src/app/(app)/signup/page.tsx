@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { FileSearch, Loader2 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -13,20 +13,10 @@ import { Input } from "@/components/ui/input";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.appealdeck.com";
 
-export default function LoginPage() {
-  return (
-    <Suspense fallback={null}>
-      <LoginPageInner />
-    </Suspense>
-  );
-}
-
-function LoginPageInner() {
+export default function SignupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"password" | "magic">("password");
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -36,15 +26,15 @@ function LoginPageInner() {
     supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
       if (data.user) router.replace("/");
     });
-    const errorParam = searchParams.get("error");
-    if (errorParam) {
-      setStatus("error");
-      setMessage(errorParam);
-    }
-  }, [router, searchParams]);
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (password.length < 8) {
+      setStatus("error");
+      setMessage("Password must be at least 8 characters.");
+      return;
+    }
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
       setStatus("error");
@@ -54,29 +44,26 @@ function LoginPageInner() {
     setStatus("loading");
     setMessage("");
 
-    if (mode === "magic") {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${APP_URL}/auth/callback` },
-      });
-      if (error) {
-        setStatus("error");
-        setMessage(error.message);
-      } else {
-        setStatus("sent");
-        setMessage("Check your email for a sign-in link.");
-      }
-      return;
-    }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${APP_URL}/auth/callback` },
+    });
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setStatus("error");
       setMessage(error.message);
       return;
     }
-    router.refresh();
-    router.replace("/");
+
+    if (data.session) {
+      router.refresh();
+      router.replace("/");
+      return;
+    }
+
+    setStatus("sent");
+    setMessage("Check your email to confirm your account.");
   }
 
   async function handleGoogle() {
@@ -122,9 +109,9 @@ function LoginPageInner() {
         >
           <Card>
             <CardContent className="pt-6">
-              <h1 className="text-xl font-semibold text-foreground">Sign in</h1>
+              <h1 className="text-xl font-semibold text-foreground">Create your account</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Access your AppealDeck seller tools.
+                Get the decoder free, or buy an Appeal Pass to draft your POA.
               </p>
 
               <Button
@@ -141,7 +128,7 @@ function LoginPageInner() {
 
               <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
                 <span className="h-px flex-1 bg-border" />
-                <span>or sign in with email</span>
+                <span>or sign up with email</span>
                 <span className="h-px flex-1 bg-border" />
               </div>
 
@@ -160,31 +147,22 @@ function LoginPageInner() {
                     className="mt-1"
                   />
                 </div>
-
-                {mode === "password" && (
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <label htmlFor="password" className="text-sm font-medium text-foreground">
-                        Password
-                      </label>
-                      <Link
-                        href="/forgot-password"
-                        className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
-                      >
-                        Forgot?
-                      </Link>
-                    </div>
-                    <Input
-                      id="password"
-                      type="password"
-                      autoComplete="current-password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                )}
+                <div>
+                  <label htmlFor="password" className="text-sm font-medium text-foreground">
+                    Password
+                  </label>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    minLength={8}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="mt-1"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">At least 8 characters.</p>
+                </div>
 
                 {message && (
                   <p
@@ -201,26 +179,14 @@ function LoginPageInner() {
 
                 <Button type="submit" size="lg" className="w-full" disabled={status === "loading"}>
                   {status === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {mode === "password" ? "Sign in" : "Email me a sign-in link"}
+                  Create account
                 </Button>
               </form>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setMode((m) => (m === "password" ? "magic" : "password"));
-                  setStatus("idle");
-                  setMessage("");
-                }}
-                className="mt-4 text-sm text-primary underline-offset-4 hover:underline"
-              >
-                {mode === "password" ? "Use a magic link instead" : "Use password instead"}
-              </button>
-
               <p className="mt-6 text-center text-sm text-muted-foreground">
-                New to AppealDeck?{" "}
-                <Link href="/signup" className="text-primary underline-offset-4 hover:underline">
-                  Create an account
+                Already have an account?{" "}
+                <Link href="/login" className="text-primary underline-offset-4 hover:underline">
+                  Sign in
                 </Link>
               </p>
             </CardContent>

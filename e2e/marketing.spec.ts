@@ -48,4 +48,35 @@ test.describe("Auth gate", () => {
     ).toBeVisible();
     await expect(page.getByLabel(/email/i)).toBeVisible();
   });
+
+  test("login page exposes Google + magic-link + forgot + create-account", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page.getByRole("button", { name: /continue with google/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /use a magic link/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /forgot/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /create an account/i })).toBeVisible();
+  });
+
+  test("/signup renders the create-account form", async ({ page }) => {
+    await page.goto("/signup");
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: /create your account|sign up|create an account/i,
+      }),
+    ).toBeVisible();
+    await expect(page.getByLabel(/email/i)).toBeVisible();
+    await expect(page.getByLabel(/password/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /continue with google/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /sign in/i })).toBeVisible();
+  });
+
+  test("/forgot-password renders the reset form", async ({ page }) => {
+    await page.goto("/forgot-password");
+    await expect(
+      page.getByRole("heading", { level: 1, name: /forgot your password/i }),
+    ).toBeVisible();
+    await expect(page.getByLabel(/email/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /send reset link/i })).toBeVisible();
+  });
 });
