@@ -148,7 +148,7 @@ export function EvidenceSlotPanel({
       </ul>
       <p className="text-xs text-muted-foreground">
         Files are encrypted on this device before being saved to the vault.{" "}
-        <a href="/app/vault" className="text-primary underline-offset-2 hover:underline">
+        <a href="/vault" className="text-primary underline-offset-2 hover:underline">
           Open the vault
         </a>
         <ExternalLink className="ml-0.5 inline size-3" />

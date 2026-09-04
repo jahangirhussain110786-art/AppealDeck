@@ -25,7 +25,7 @@ export function SignOutButton({ email }: { email?: string }) {
     }
     toast.success("Signed out");
     router.refresh();
-    router.push("/app/login");
+    router.push("/login");
   }
 
   return (
