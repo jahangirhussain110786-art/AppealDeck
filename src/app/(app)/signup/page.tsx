@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.appealdeck.com";
+import { APP_URL } from "@/lib/urls";
 
 export default function SignupPage() {
   const router = useRouter();

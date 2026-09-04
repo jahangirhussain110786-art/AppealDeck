@@ -13,9 +13,20 @@
 3. **Supabase dashboard** → already configured; copy URL + anon + service_role into Vercel env
 4. **Paddle dashboard** → create 2 products + 2 prices + live client token + webhook secret → into Vercel env
 5. **Upstash** → free database, copy `UPSTASH_REDIS_REST_URL` (https form) + `_TOKEN` into Vercel env
-6. **Vercel → Settings → Domains** → add `appealdeck.com` + `www.appealdeck.com` + `app.appealdeck.com` → add DNS at registrar
+6. **Domains — not needed for the first deploy.** Ship on the Vercel-provided URL in single-host mode (see "Domain topology" below). When the apex domain is connected, run that section's checklist. No `app.` subdomain for now.
 7. `git push origin master` → auto-deploys to production
 8. Run the 8 post-deploy smoke tests in `docs/DEPLOYMENT.md` §9
+
+## Domain topology — single host now, split later (decided 4 Sep 2026)
+
+**Now (first deploy):** marketing + auth + app on ONE origin — the Vercel `*.vercel.app` URL until the apex domain is connected. Path-based routing only. `NEXT_PUBLIC_APP_HOST` unset (or equal to `NEXT_PUBLIC_MARKETING_HOST`) → `src/middleware.ts` runs in single-host mode (no cross-host redirects). `NEXT_PUBLIC_APP_URL` unset → `src/lib/urls.ts` resolves `APP_URL` to `SITE_URL`. Supabase redirect URL = `<origin>/auth/callback`. Paddle webhook = `<origin>/api/webhooks/paddle`.
+
+**When the real domain is connected (run in this order, ~30 min, keep single host):**
+1. Vercel → Settings → Domains: add the apex + `www` (redirect `www` → apex). Set `NEXT_PUBLIC_SITE_URL=https://appealdeck.com` and `NEXT_PUBLIC_MARKETING_HOST=appealdeck.com` in all three env scopes. Leave `NEXT_PUBLIC_APP_HOST` / `NEXT_PUBLIC_APP_URL` unset.
+2. Supabase → Authentication → URL Configuration: Site URL = apex; Redirect URLs = `https://appealdeck.com/auth/callback` (+ `http://localhost:3000/auth/callback` for dev). Remove the `vercel.app` entry only after step 4 passes.
+3. Paddle → Notifications: webhook destination → apex `/api/webhooks/paddle`; replay one sandbox `transaction.completed`.
+4. Smoke: signup → magic link → callback lands on apex; Google sign-in returns to apex; checkout → `licenses` row; `/sitemap.xml`, `/robots.txt`, and the OG image URL all show the apex.
+5. **Optional later split to `app.appealdeck.com`** — only for a concrete need (cookie isolation, separate caching, a marketing CMS): set `NEXT_PUBLIC_APP_HOST=app.appealdeck.com` + `NEXT_PUBLIC_APP_URL=https://app.appealdeck.com`; add the subdomain in Vercel; add `https://app.appealdeck.com/auth/callback` to Supabase; make marketing → app links absolute via `APP_URL`; verify the middleware redirects (`/case` on apex → app host; `/pricing` on app host → apex); add e2e coverage for both redirects. `APP_PREFIXES` in the middleware now lists the real app routes (no `/app` prefix since 882ed39) — keep it in sync if routes move.
 
 ## When to leave Vercel Hobby (do NOT skip this)
 
@@ -104,7 +115,7 @@
 - **Drive skills (2, intent-driven, applied 1 Sep 2026):** `.agents/skills/drive-quick/SKILL.md` — 1-call markdown/text note creation (the common case). `.agents/skills/drive-workflow/SKILL.md` — every other Drive intent (read, structured create, share, organize, template fill, update) with 8 intent playbooks. Both are file-arg-only (rejects inline JSON). Templates folder at `Planning/templates/` (currently empty — add a `.md`/`.json` only when a real recurring need appears; do NOT add a new skill per template).
 - **MCP-Windows playbook (settled):** All new MCP servers on Windows should prefer `type: "remote"` against a long-lived local HTTP endpoint over stdio. If stdio is unavoidable, use `cmd /c npx ...` AND verify with a fresh session — silent stdio failures on Windows were the root cause of the 1-Sep issue. See `.agents/skills/google-drive/SKILL.md` and `Planning/04-BUILD/MCP-ON-WINDOWS.md` for the full decision record.
 - **Google Drive artifacts:** `Appealdeck-Budget` Google Sheet was created 1 Sep 2026 (ID `1pM6UpK_dCRVaI9XnPveWFVqcDvdglLV2wIaIduqFXG4`) but **deleted (trashed) 1 Sep 2026** at founder's request. **Google Sheets API is enabled on project 322861054648.**
-- **Hosting architecture (settled):** ONE Next.js app at repo root, host-routed via `src/middleware.ts`. Marketing at `appealdeck.com` (routes `/`, `/decode`, `/pricing`, `/privacy`, `/terms`, `/refund`); authenticated webapp at `app.appealdeck.com` (route group `src/app/(app)/` → `/app` dashboard, `/app/login`, `/app/billing`, `/auth/callback`). Middleware redirects marketing-only paths off the app host and `/app*` off the marketing host. Env hosts: `NEXT_PUBLIC_MARKETING_HOST` / `NEXT_PUBLIC_APP_HOST` (defaults `appealdeck.com` / `app.appealdeck.com`).
+- **Hosting architecture (updated 4 Sep 2026):** ONE Next.js app at repo root, **single host for the first deploy** — marketing + auth + app on one origin, path-routed (see "Domain topology" section; `src/lib/urls.ts`). The host-split mode in `src/middleware.ts` is retained behind env vars for a later `app.` subdomain; the rest of this bullet describes that split mode. Marketing at `appealdeck.com` (routes `/`, `/decode`, `/pricing`, `/privacy`, `/terms`, `/refund`); authenticated webapp at `app.appealdeck.com` (route group `src/app/(app)/` → `/app` dashboard, `/app/login`, `/app/billing`, `/auth/callback`). Middleware redirects marketing-only paths off the app host and `/app*` off the marketing host. Env hosts: `NEXT_PUBLIC_MARKETING_HOST` / `NEXT_PUBLIC_APP_HOST` (defaults `appealdeck.com` / `app.appealdeck.com`).
 - **Auth + app (built):** Supabase Auth via `@supabase/ssr` (`src/lib/supabase/{client,server}.ts` rewritten for cookies; `src/lib/auth.ts` `requireUser()`). App shell `src/components/AppShell.tsx` + `SignOutButton.tsx`. Dashboard + Billing read `public.licenses` by `auth.email()` via the `service_role` admin client and show active/plan/key. Email+password and magic-link login implemented; `/auth/callback` exchanges the code.
 - **Billing integration (built, founder creds pending):** Paddle webhook `src/app/api/webhooks/paddle/route.ts` now verifies HMAC, parses `transaction.completed` / `subscription.activated|created|canceled|paused`, and upserts a `licenses` row (generated key) via `supabaseAdmin`. Checkout is client-side Paddle.js v2 overlay via `src/components/CheckoutButton.tsx`, wired into the pricing CTA (replaces the old dead-end `/api/checkout` stub, which was deleted). Env: `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_PRICE_APPEAL_PASS`/`PADDLE_PRICE_GUARDIAN_SUB`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_ENV`.
 - **RLS (migration written, APPLIED by founder 31 Aug 2026):** `supabase/migrations/0001_licenses.sql` creates the table (RLS on, no policies). `supabase/migrations/0002_rls.sql` adds `licenses_select_own` / `licenses_update_own` policies (authenticated user matches `email = auth.email()`); inserts remain service_role-only. Webhook + dashboard use service_role so they work regardless.
@@ -147,12 +158,13 @@ AppealDeck is a Chrome extension + web SaaS for suspended Amazon sellers (notice
 ## Design & UI/UX Standards
 
 - **Aesthetic**: Clean, modern, premium feel — whitespace-driven, subtle depth
-- **Dark mode first**, light mode via system preference
+- **Theme follows the system** by default; light and dark are each tuned (06-spec §2, §5)
 - **Mobile-first responsive**: 320px → 768px → 1024px → 1440px
-- **Micro-interactions**: hover lift, card scale, button feedback
+- **Motion**: only on user-caused events, ≤ 320 ms, reduced-motion honoured in CSS *and* framer-motion; no hover-lift on non-interactive cards, no decorative or looping animation (06-spec §5)
 - **Loading/empty/error states required** on every screen
 - **Accessibility**: semantic HTML, ARIA labels, keyboard nav, focus rings, WCAG AA contrast
 - **Component patterns**: composable, `cn()` for conditional classes, forward refs
+- **Source of truth for UI/UX and copy:** `Planning/03-PHASE-2-BUILD/06-PREMIUM-UI-UX-SPEC.md` — tokens v2, primitives, patterns, state quartet, simplicity budget (§1.1), content & voice (§10). User-facing copy lives in `src/content/`; trust is shown by mechanism, never requested; banned-pattern lint (§10.5) must stay green.
 
 ## Setup And Commands
 

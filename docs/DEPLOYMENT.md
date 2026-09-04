@@ -24,10 +24,10 @@ Set these for **Production**, **Preview**, and **Development** scopes (Vercel no
 
 | Variable                                | Source                                 | Production value                                  |
 | --------------------------------------- | -------------------------------------- | ------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL`                  | this file                              | `https://appealdeck.com`                          |
-| `NEXT_PUBLIC_MARKETING_HOST`            | this file                              | `appealdeck.com`                                  |
-| `NEXT_PUBLIC_APP_HOST`                  | this file                              | `app.appealdeck.com`                              |
-| `NEXT_PUBLIC_APP_URL`                   | this file                              | `https://app.appealdeck.com`                      |
+| `NEXT_PUBLIC_SITE_URL` | this file | `https://<project>.vercel.app` now → `https://appealdeck.com` when the domain is connected |
+| `NEXT_PUBLIC_MARKETING_HOST` | this file | `<project>.vercel.app` now → `appealdeck.com` later |
+| `NEXT_PUBLIC_APP_HOST` | this file | **leave unset** (single host). Set only for a later `app.` split — AGENTS.md "Domain topology" |
+| `NEXT_PUBLIC_APP_URL` | this file | **leave unset** (resolves to `NEXT_PUBLIC_SITE_URL` via `src/lib/urls.ts`) |
 | `NEXT_PUBLIC_SUPABASE_URL`              | Supabase dashboard                     | `https://<project-ref>.supabase.co`               |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`         | Supabase dashboard                     | `eyJ...`                                          |
 | `SUPABASE_SERVICE_ROLE_KEY`             | Supabase dashboard                     | `eyJ...` (sensitive — keep "Sensitive" toggle ON) |
@@ -54,17 +54,11 @@ Set these for **Production**, **Preview**, and **Development** scopes (Vercel no
 
 See `.env.example` "NOT USED BY THE APP" section. The old plan added ~10 unused env vars (Polar, MCP, analytics, `PADDLE_API_KEY`, etc.). Setting them in Vercel is noise — do not set them.
 
-## 3. Domain setup (founder action)
+## 3. Domain setup (founder action) — single host, apex only
 
-If you own `appealdeck.com` and `app.appealdeck.com`:
+**First deploy needs no custom domain.** Ship on the Vercel-provided `https://<project>.vercel.app` URL with `NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_MARKETING_HOST` set to it and `NEXT_PUBLIC_APP_HOST` / `NEXT_PUBLIC_APP_URL` **unset** — marketing, auth, and the app all serve from that one origin (single-host mode in `src/middleware.ts`).
 
-1. Vercel → Project → Settings → Domains
-2. Add `appealdeck.com` (apex) and `www.appealdeck.com`
-3. Add `app.appealdeck.com`
-4. Vercel shows the required DNS records; add them at your registrar (Cloudflare, Namecheap, etc.)
-5. Wait for DNS to propagate (usually 5-30 min)
-
-If you don't own them yet, deploy to the Vercel-provided `*.vercel.app` URL first and set `NEXT_PUBLIC_*_HOST` env vars accordingly. Marketing won't work without the custom domain, but the app and webhook will.
+When you own `appealdeck.com`, follow `AGENTS.md` → "Domain topology" (Vercel apex + `www` → env vars → Supabase redirect URL → Paddle webhook → smoke test). Do **not** add `app.appealdeck.com` unless a concrete need appears; the split is an env-var switch documented there.
 
 ## 4. Supabase production setup (founder action)
 
@@ -72,7 +66,7 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
 
 1. Supabase dashboard → Authentication → URL Configuration
    - Site URL: `https://appealdeck.com`
-   - Redirect URLs: add `https://appealdeck.com/auth/callback`, `https://app.appealdeck.com/auth/callback`, `http://localhost:3000/auth/callback` (dev only)
+   - Redirect URLs: `<origin>/auth/callback` for the current single host (the `vercel.app` URL now, the apex later) + `http://localhost:3000/auth/callback` (dev only). No `app.` entry unless the split is switched on.
 2. Supabase dashboard → SQL Editor: confirm migrations `0001` through `0007` are applied. If not, copy each `supabase/migrations/*.sql` file and run in order.
 3. Supabase dashboard → Settings → API: copy `URL`, `anon` key, `service_role` key to Vercel env.
 

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
-const MARKETING_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://appealdeck.com";
+import { SITE_URL as MARKETING_URL } from "@/lib/urls";
 
 type LicenseRow = {
   license_key: string;
