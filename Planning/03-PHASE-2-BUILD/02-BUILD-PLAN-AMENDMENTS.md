@@ -255,6 +255,28 @@ v1.0 §14.3–14.4 mentions `minSupportedVersion` and config-driven selectors as
 
 ---
 
+### AM-18 — Premium UI/UX: design system v2 + pre-deploy UI waves (4 Sep 2026)
+
+**Provenance:** founder direction, 4 Sep 2026 — _"most things are complete; now work on true premium-feel UI/UX per modern advancements — a good, modern, supported, simple, fantastic UI/UX is what makes a product feel premium or cheap."_ Spec source: `06-PREMIUM-UI-UX-SPEC.md` (read it before implementing). An external coding agent's 22-item list was reviewed independently; verdicts sit in spec §14 (adopted, adopted-modified, rejected — confetti/tour/analytics-banner/theme-screenshots rejected; "save & exit to plaintext localStorage" replaced by encrypted-vault persistence; the agent's invented founder story is never published).
+
+**Scope guard:** presentation, interaction states, copy, accessibility, perceived performance ONLY. No engine behaviour, no LLM-calling routes, no new capabilities — the post-AM-17 feature freeze stands. Anything needing core logic becomes its own amendment first.
+
+**What changes:**
+- **Design tokens v2** (spec §2): `next/font` typeface pair, fluid type scale, tabular numerals, `--info` status, surface tiers (dark elevation by tone + border, not shadow), tinted shadows, radius/width/motion/z-index scales. Tailwind v4/OKLCH explicitly NOT now.
+- **Primitive library** (§3, shadcn/ui MIT donors): Badge, Skeleton, Alert, Progress, Tabs, Accordion, Dialog/Sheet, Tooltip, Separator, Breadcrumb, Kbd, Label; sonner wired to the resolved theme. **Patterns** (§4): HonestExpectationsCard, Severity/CaseState/EvidenceStatus badges, DeadlineChip, Stepper, EmptyState, VerifiedStamp, LocalFirstBadge, CopyButton, PoaSection, BeforeYouSubmitChecklist.
+- **Motion system** (§5): `MotionConfig reducedMotion="user"` + `LazyMotion`, shared variants, ≤ 320 ms, no decorative/looping animation, skeleton-not-spinner. **State quartet** (§6) mandatory per surface.
+- **Pages** (§7): `/` product-as-artwork hero + how-it-works + expectations strip + true founder note; `/decode` sample notice + likeness hint + staged reveal; `/pricing` Free-vs-Pass table + FAQ + trust card + D8 consent at CTA + fictional sample POA; `/faq`; legal prose/TOC; dashboard = `caseState` home; interview Stepper + resume + encrypted save-and-exit + mobile action bar; compose PoaSection + critic margin + checklist (hosts the M-4 PoaEditor); vault teaching state + icons + search/filter; auth AuthCard. `defaultTheme` → `system`; one AppHeader replaces the duplicated headers.
+- **Gates amended:** M-W gate adds "Waves A+B DoD (spec §15) green — axe 0 serious/critical on every route; Lighthouse mobile ≥ 90/100/95/95, CLS < 0.1; claims grep on UI strings (`guarantee` = 0, no percentages/hours, no countdown/scarcity/fake social proof); state quartet checklist per route; `loading.tsx`/OG image/icons/manifest present; founder sign-off on light+dark screenshots at 375/768/1280".
+
+- **Single-host topology for the first deploy (founder, 4 Sep 2026, later session):** marketing + auth + app on one origin, path-routed; `src/lib/urls.ts` + `src/middleware.ts` single-host mode shipped; the `app.` split stays behind env vars with the switch checklist in `AGENTS.md` → "Domain topology". Spec §8.
+- **Content & voice system (spec §10) + simplicity budget (§1.1):** trust is shown by mechanism and never requested (banned-pattern lint incl. "trust us / secure / privacy-first / seamless / AI-powered…"); surface grammar (headline = outcome, sub-line = boundary, button = verb + object); all user-facing copy moves to typed `src/content/*` modules; one primary action per screen, ≤ 3 cards above the fold, progressive disclosure. Screen-lovers are won by craft (type rhythm, 4 px grid, one icon family, tuned dark *and* light), not effects.
+
+- [ ] **AA-26** Wave A — foundation: tokens v2, `next/font`, §3 primitives, `src/lib/motion.ts` + MotionConfig, sonner theme fix, `defaultTheme="system"`, AppHeader unification + Sheet nav, `loading.tsx` ×2, EmptyState/CopyButton/Badge patterns, dev-only `/dev/ui` gallery. — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** before first deploy · **Blocks:** M-W gate (amended above).
+- [ ] **AA-27** Wave B — marketing conversion: `/` hero-as-product + how-it-works + expectations strip + founder note (founder supplies the true text); `/decode` sample notice + likeness hint + reveal; `/pricing` table + FAQ + trust card + D8 consent; legal prose + TOC; `/faq`; `opengraph-image`, icons, `manifest`. All copy through the claims grep. — **Owner:** AI assistant (build), Founder (founder-note text) · **Cost:** $0 · **Deadline:** before first deploy · **Blocks:** M-W gate.
+- [ ] **AA-28** Wave C — app confidence: dashboard = caseState home, interview Stepper + resume + encrypted save-and-exit + mobile action bar, compose PoaSection + critic margin + BeforeYouSubmitChecklist (hosts PoaEditor), vault teaching state + icons + search/filter, billing/device polish, AuthCard; plus founder ratifies AM-18 and signs off Waves A+B screenshots. — **Owner:** AI assistant (build), Founder (ratify + sign-off) · **Cost:** $0 · **Deadline:** with M-W closure · **Blocks:** M-W gate.
+- [ ] **AA-29** Copy audit + content modules: inventory every user-facing string in `src/`, move to `src/content/{marketing,app,auth,legal,errors}.ts`, rewrite per spec §10.1–10.3 (before/after table in the PR), wire the §10.5 banned-pattern lint into CI with an allow-list, fix the two known hits (privacy page "privacy-first" ×2, checkout "secure checkout"). — **Owner:** AI assistant (audit + rewrite), consultant (B-16 review of expectations/triage copy) · **Cost:** $0 · **Deadline:** with Wave B, before first deploy · **Blocks:** M-W gate (copy lint added to the amended gate).
+
+
 ## 4. Facts in v1.0 that are RETIRED (do not repeat anywhere)
 
 | v1.0 statement                                                  | Status                                                                        |
@@ -275,7 +297,7 @@ Also binding here: the playbook-wide banned-numbers list (invented win rates, "$
 
 ## Definition of done
 
-- [ ] All 25 action items AA-01…AA-25 checked, or descoped with a reason logged in `docs/DECISIONS.md`. — **2 Sep 2026 status:** AA-19, AA-22, AA-23, AA-24 DONE; AA-20, AA-21, AA-25 PENDING (founder/consultant gates). AA-15 (crxjs pin) and AA-18 (WXT fallback rule) still PENDING — these are M-7/M-8 extension work, not M-W.
+- [ ] All 29 action items AA-01…AA-29 checked, or descoped with a reason logged in `docs/DECISIONS.md`. — **2 Sep 2026 status:** AA-19, AA-22, AA-23, AA-24 DONE; AA-20, AA-21, AA-25 PENDING (founder/consultant gates). AA-15 (crxjs pin) and AA-18 (WXT fallback rule) still PENDING — these are M-7/M-8 extension work, not M-W. — **4 Sep 2026:** AA-26…AA-29 (AM-18 UI waves + copy audit) PENDING.
 - [ ] The working spec copy (`V:\AppealDeck\docs\BUILD_PLAN.md`, per v1.0 §5) carries every amendment inline or by explicit pointer to this file; `reference/APPEALDECK_BUILD_PLAN_v1.0.md` itself remains UNMODIFIED as the historical record.
 - [ ] Greps return 0 hits across `src/`, site, and listing: `lemonsqueezy`, `zero competition`, `no refund after generation`, `guarantee` (user-facing), any retired fact from §4 above.
 - [ ] The deadline engine implements all six deadline kinds of AM-03 with passing unit tests.
