@@ -76,6 +76,7 @@ export async function handleExtractField(
   }
 
   const result = await deps.callGemini({
+    task: "extract-field",
     messages: [
       { role: "system", text: SYSTEM_PROMPT },
       { role: "user", text: USER_PROMPT_TEMPLATE(parsed.data.text) },

@@ -113,3 +113,76 @@ describe("callGemini request shape", () => {
     expect(body.generationConfig.thinkingConfig).toEqual({ thinkingBudget: 0 });
   });
 });
+
+describe("per-task model selection", () => {
+  const savedEnv: Record<string, string | undefined> = {};
+  const KEYS = [
+    "GEMINI_MODEL",
+    "GEMINI_MODEL_EXTRACT_FIELD",
+    "GEMINI_MODEL_CRITIQUE_POA",
+    "GEMINI_MODEL_PHRASE_ENGINE_OUTPUT",
+    "GEMINI_MODEL_TRIAGE_ROUTER",
+  ];
+
+  afterEach(() => {
+    for (const k of KEYS) {
+      if (savedEnv[k] === undefined) delete process.env[k];
+      else process.env[k] = savedEnv[k];
+    }
+    vi.restoreAllMocks();
+  });
+
+  it("returns the per-task default when no env override is set", () => {
+    for (const k of KEYS) {
+      savedEnv[k] = process.env[k];
+      delete process.env[k];
+    }
+    expect(getGeminiModel("extract-field")).toBe("gemini-3.5-flash");
+    expect(getGeminiModel("critique-poa")).toBe("gemini-3.5-flash");
+    expect(getGeminiModel("phrase-engine-output")).toBe("gemini-3.5-flash-lite");
+    expect(getGeminiModel("triage-router")).toBe("gemini-flash-lite-latest");
+    expect(getGeminiModel()).toBe("gemini-3.5-flash");
+  });
+
+  it("lets GEMINI_MODEL_<TASK> override the per-task default", () => {
+    for (const k of KEYS) {
+      savedEnv[k] = process.env[k];
+      delete process.env[k];
+    }
+    process.env.GEMINI_MODEL_EXTRACT_FIELD = "gemini-3.5-flash-lite";
+    process.env.GEMINI_MODEL_PHRASE_ENGINE_OUTPUT = "gemini-3.5-flash";
+    expect(getGeminiModel("extract-field")).toBe("gemini-3.5-flash-lite");
+    expect(getGeminiModel("phrase-engine-output")).toBe("gemini-3.5-flash");
+    expect(getGeminiModel("critique-poa")).toBe("gemini-3.5-flash");
+  });
+
+  it("ignores empty-string env overrides", () => {
+    for (const k of KEYS) {
+      savedEnv[k] = process.env[k];
+      delete process.env[k];
+    }
+    process.env.GEMINI_MODEL_EXTRACT_FIELD = "   ";
+    expect(getGeminiModel("extract-field")).toBe("gemini-3.5-flash");
+  });
+
+  it("explicit model in callGemini wins over the task default", async () => {
+    for (const k of KEYS) {
+      savedEnv[k] = process.env[k];
+      delete process.env[k];
+    }
+    process.env.GEMINI_API_KEY = "test-key";
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }),
+    })) as unknown as typeof fetch;
+    globalThis.fetch = fetchMock;
+    const result = await callGemini({
+      task: "extract-field",
+      model: "gemini-3.5-flash-lite",
+      messages: [{ role: "user", text: "hi" }],
+    });
+    expect(result.ok).toBe(true);
+    const url = (fetchMock.mock.calls[0]?.[0] as string) ?? "";
+    expect(url).toContain("/models/gemini-3.5-flash-lite:");
+  });
+});

@@ -8,11 +8,36 @@ import type { NextRequest } from "next/server";
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const DEFAULT_MODEL = "gemini-3.5-flash";
-const FALLBACK_MODELS = ["gemini-flash-lite-latest", "gemini-3.5-flash-lite"] as const;
 const REQUEST_TIMEOUT_MS = 8_000;
 const MAX_OUTPUT_TOKENS = 512;
 
-export function getGeminiModel(): string {
+/**
+ * Call-site task tags. Each tag maps to a free-tier model tuned for that
+ * workload. Callers pass `task` instead of a raw model id; the resolver
+ * picks the right one. Per-task env overrides let ops swap a model without
+ * code changes. The default model covers anything not in the table.
+ */
+export type LlmTask = "extract-field" | "critique-poa" | "phrase-engine-output" | "triage-router";
+
+const TASK_MODELS: Record<LlmTask, string> = {
+  "extract-field": "gemini-3.5-flash",
+  "critique-poa": "gemini-3.5-flash",
+  "phrase-engine-output": "gemini-3.5-flash-lite",
+  "triage-router": "gemini-flash-lite-latest",
+};
+
+function envForTask(task: LlmTask): string | undefined {
+  const key = `GEMINI_MODEL_${task.toUpperCase().replace(/-/g, "_")}`;
+  const raw = process.env[key];
+  return raw && raw.trim().length > 0 ? raw.trim() : undefined;
+}
+
+export function getGeminiModel(task?: LlmTask): string {
+  if (task) {
+    const override = envForTask(task);
+    if (override) return override;
+    return TASK_MODELS[task];
+  }
   return process.env.GEMINI_MODEL || DEFAULT_MODEL;
 }
 
@@ -28,6 +53,7 @@ export type GeminiCallInput = {
   temperature?: number;
   maxOutputTokens?: number;
   model?: string;
+  task?: LlmTask;
   responseJsonSchema?: Record<string, unknown>;
   responseJson?: boolean;
 };
@@ -74,7 +100,7 @@ export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResu
   }
 
   const apiKey = getApiKey();
-  const model = input.model ?? getGeminiModel();
+  const model = input.model ?? getGeminiModel(input.task);
   const url = `${GEMINI_API_BASE}/models/${model}:generateContent?key=${apiKey}`;
 
   const system = input.messages.find((m) => m.role === "system");
@@ -192,4 +218,4 @@ export function degradedGeminiResponse(d: DegradedResponse): Response {
   });
 }
 
-export const __test = { parseGeminiResponse, breakerOptions };
+export const __test = { parseGeminiResponse, breakerOptions, TASK_MODELS, envForTask };

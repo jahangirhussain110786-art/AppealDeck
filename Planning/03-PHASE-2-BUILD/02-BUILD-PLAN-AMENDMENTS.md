@@ -8,25 +8,25 @@
 
 ## 1. Amendment index
 
-| ID | Title | v1.0 sections affected | Nature | Source |
-|---|---|---|---|---|
-| AM-01 | Payments: Lemon Squeezy → Paddle primary; self-issued license keys | §2.2 A-2, §2.5, §3 diagram, §4, §9.2, §10-M11, §10-M12, §15 M-5 | REPLACE | The Second Opinion.md; VERIFICATIONS.md (verifier 4) |
-| AM-02 | Compliance spine: BSA §19 / Agent Policy / Code of Conduct | §1.3, §3, §7.4, §10-M8, §12.4 | REWRITE + GATE | The Second Opinion.md |
-| AM-03 | Deadline engine corrections | §7.3, §9.1, §10-M7, Appendix D | REPLACE | The Second Opinion.md |
-| AM-04 | A-6 test account: active-access ladder | §2.2 A-6, §13.2 | REPLACE | The Second Opinion.md |
-| AM-05 | Store & legal: trader verification + refund redesign | §10-M14, §14 | REPLACE + ADD | The Second Opinion.md; APPEALDECK — R&D MASTER REPORT.md |
-| AM-06 | Marketing hygiene | §1.2, §10-M14, Appendix E | REWRITE | The Second Opinion.md; SYNTHESIS BRIEF corrections |
-| AM-07 | LLM inversion: cloud paid tier is the primary quality path | §3 principle 2, §11 | REWRITE EMPHASIS | VERIFICATIONS.md (verifier 3) |
-| AM-08 | Gemini free tier NEVER for user data | §2.2 A-5, §11.2 | ADD CONSTRAINT | VERIFICATIONS.md (verifier 3); APPEALDECK_STREAM3_LLM_AI_RESOURCES.md |
-| AM-09 | Hosting: Vercel Hobby is non-commercial | §2.2 A-4 | REPLACE | SYNTHESIS BRIEF correction 6 |
-| AM-10 | Competitive reality: the category is occupied | §1.2 | REPLACE | SYNTHESIS BRIEF correction 1 |
-| AM-11 | Anti-piracy: device activation limits | §9.2, §10-M11 | ADD REQUIREMENT | APPEALDECK — R&D MASTER REPORT.md (MR-09, MR-21) |
-| AM-12 | Cloud cost ceiling + circuit breaker | §10-M12, §11.2 | ADD REQUIREMENT | APPEALDECK — R&D MASTER REPORT.md (MR-30, MR-15); D9 |
-| AM-13 | Dexie migration strategy before first schema change | §9.1, §10-M6, §12.2 | ADD REQUIREMENT | APPEALDECK_STREAM6_TECHNICAL_RISK.md (TR-10, TR-11, SK-T2) |
-| AM-14 | Kill switch + staged CWS rollout as hard M12 requirements | §10-M12, §14.3–14.4 | HARDEN | APPEALDECK — R&D MASTER REPORT.md (MR-20) |
-| AM-15 | Toolchain: crxjs v2.7.x confirmed; WXT fallback | §4 | CONFIRM + FALLBACK | VERIFICATIONS.md (verifier 3) |
-| AM-16 | Evidence-first hardening: matrix, readiness, gap draft, document router | §9.1, §10-M4, §10-M5, §10-M6, §10-M11, §13.1, §16, M-4/M-W gates | ADD LAYER | `04-EVIDENCE-FIRST-HARDENING.md` (external-AI review digest, 2 Sep 2026) |
-| AM-17 | Case OS: state machine, objection-aware actions, response analyzer, guided Case Copilot | §9.1, §10-M4, §10-M5, §10-M6 (paste box → analyzer), §10-M9 routes, §10-M11, §13.1, §16, M-4/M-W gates | ADD LAYER | `05-CASE-OS-SPEC.md` (founder direction, 2 Sep 2026) |
+| ID    | Title                                                                                   | v1.0 sections affected                                                                                 | Nature             | Source                                                                   |
+| ----- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------ |
+| AM-01 | Payments: Lemon Squeezy → Paddle primary; self-issued license keys                      | §2.2 A-2, §2.5, §3 diagram, §4, §9.2, §10-M11, §10-M12, §15 M-5                                        | REPLACE            | The Second Opinion.md; VERIFICATIONS.md (verifier 4)                     |
+| AM-02 | Compliance spine: BSA §19 / Agent Policy / Code of Conduct                              | §1.3, §3, §7.4, §10-M8, §12.4                                                                          | REWRITE + GATE     | The Second Opinion.md                                                    |
+| AM-03 | Deadline engine corrections                                                             | §7.3, §9.1, §10-M7, Appendix D                                                                         | REPLACE            | The Second Opinion.md                                                    |
+| AM-04 | A-6 test account: active-access ladder                                                  | §2.2 A-6, §13.2                                                                                        | REPLACE            | The Second Opinion.md                                                    |
+| AM-05 | Store & legal: trader verification + refund redesign                                    | §10-M14, §14                                                                                           | REPLACE + ADD      | The Second Opinion.md; APPEALDECK — R&D MASTER REPORT.md                 |
+| AM-06 | Marketing hygiene                                                                       | §1.2, §10-M14, Appendix E                                                                              | REWRITE            | The Second Opinion.md; SYNTHESIS BRIEF corrections                       |
+| AM-07 | LLM inversion: cloud paid tier is the primary quality path                              | §3 principle 2, §11                                                                                    | REWRITE EMPHASIS   | VERIFICATIONS.md (verifier 3)                                            |
+| AM-08 | Gemini free tier NEVER for user data                                                    | §2.2 A-5, §11.2                                                                                        | ADD CONSTRAINT     | VERIFICATIONS.md (verifier 3); APPEALDECK_STREAM3_LLM_AI_RESOURCES.md    |
+| AM-09 | Hosting: Vercel Hobby is non-commercial                                                 | §2.2 A-4                                                                                               | REPLACE            | SYNTHESIS BRIEF correction 6                                             |
+| AM-10 | Competitive reality: the category is occupied                                           | §1.2                                                                                                   | REPLACE            | SYNTHESIS BRIEF correction 1                                             |
+| AM-11 | Anti-piracy: device activation limits                                                   | §9.2, §10-M11                                                                                          | ADD REQUIREMENT    | APPEALDECK — R&D MASTER REPORT.md (MR-09, MR-21)                         |
+| AM-12 | Cloud cost ceiling + circuit breaker                                                    | §10-M12, §11.2                                                                                         | ADD REQUIREMENT    | APPEALDECK — R&D MASTER REPORT.md (MR-30, MR-15); D9                     |
+| AM-13 | Dexie migration strategy before first schema change                                     | §9.1, §10-M6, §12.2                                                                                    | ADD REQUIREMENT    | APPEALDECK_STREAM6_TECHNICAL_RISK.md (TR-10, TR-11, SK-T2)               |
+| AM-14 | Kill switch + staged CWS rollout as hard M12 requirements                               | §10-M12, §14.3–14.4                                                                                    | HARDEN             | APPEALDECK — R&D MASTER REPORT.md (MR-20)                                |
+| AM-15 | Toolchain: crxjs v2.7.x confirmed; WXT fallback                                         | §4                                                                                                     | CONFIRM + FALLBACK | VERIFICATIONS.md (verifier 3)                                            |
+| AM-16 | Evidence-first hardening: matrix, readiness, gap draft, document router                 | §9.1, §10-M4, §10-M5, §10-M6, §10-M11, §13.1, §16, M-4/M-W gates                                       | ADD LAYER          | `04-EVIDENCE-FIRST-HARDENING.md` (external-AI review digest, 2 Sep 2026) |
+| AM-17 | Case OS: state machine, objection-aware actions, response analyzer, guided Case Copilot | §9.1, §10-M4, §10-M5, §10-M6 (paste box → analyzer), §10-M9 routes, §10-M11, §13.1, §16, M-4/M-W gates | ADD LAYER          | `05-CASE-OS-SPEC.md` (founder direction, 2 Sep 2026)                     |
 
 ---
 
@@ -39,6 +39,7 @@
 **Corrected reality (verified 25 Aug 2026):** Lemon Squeezy is sunsetting in slow motion — still signing merchants, but its CEO steers everyone to Stripe Managed Payments (invite-gated, ~6.4% effective, the most expensive MoR). Do NOT build on it. **Paddle** (flat 5% + $0.50, deepest tax coverage) is the individual seller's primary rail. Two Paddle caveats: onboarding rejects pre-revenue founders unpredictably (apply Week 1 behind a live site + legal pages), and Paddle's Acceptable Use Policy prohibits human services — plus a 2025 FTC settlement makes its risk team wary of "account recovery"-flavored products, so expect extra scrutiny. MoR rules constrain the product: the $199 Appeal Pass must be **automated software output** (it is); the human Expert Review tier is NOT MoR-eligible and stays deferred (D7) or routes via separate rails only post-approval from a healthy account.
 
 **Replace in the spec:**
+
 - §2.2 A-2 → "Apply to Paddle in Week 1 behind a live site + legal pages. Paddle primary if approved; Polar is the warm fallback (its Pakistan payout runs via Stripe Connect cross-border — verify at signup); Dodo Payments (MoR, 4% + 40¢) is plan-C, application-ready but no account opened. No Stripe direct application (Stripe direct is unavailable to Pakistan sellers)."
 - §2.5 env vars → drop `LEMONSQUEEZY_*`; add `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_PRICE_APPEAL_PASS`, `PADDLE_PRICE_GUARDIAN_SUB` (and fallback equivalents behind a `PAYMENTS_PROVIDER` switch).
 - **License keys are self-issued, not MoR-issued:** the Supabase `licenses` table (§9.2) is driven by MoR webhooks (`transaction.completed` etc. → upsert license, email key). The v1.0 `ls_customer_id`/`ls_order_id` columns become provider-agnostic `mor_provider`, `mor_customer_id`, `mor_order_id`. `verify-license` and entitlement flow in M11 are unchanged in shape.
@@ -55,6 +56,7 @@
 **Corrected reality:** Amazon's BSA §19 "Agent Policy" (announced 17 Feb 2026, effective 4 Mar 2026) — per third-party analyses — prohibits browser automation and Seller Central screen-scraping outside registered SP-API apps; Amazon's Conditions of Use separately ban scraping tools; Helium 10 killed its Seller Central automation extension in Jun 2026. The primary policy text sits behind seller login and is STILL UNREAD. Countervailing facts: Helium 10/Jungle Scout content scripts still run, SellerForge ships its Forge Companion extension anyway, analysts acknowledge the text is ambiguous, and the Ninth Circuit's Perplexity ruling (Aug 2026) puts "access" on the user, not the developer. The old "only the account owner can submit a POA" TOS quote is fabricated — never cite it; the real instruments are BSA §19 + the Seller Code of Conduct.
 
 **Replace in the spec:**
+
 - Compliance hierarchy (this is the architecture, not just posture): **(a)** web decoder + paste-mode = PRIMARY path and compliance spine — zero page access, full functionality; **(b)** extension DOM-harvest = convenience layer, merged ONLY after the full §19 text is retrieved (by the founder, before M-3 — see AA-03) and read; de-scope to a paste-only extension if the read is bad; **(c)** the POA-textarea injector = riskiest single feature, built last behind a default-OFF flag, ships only if the read supports it, or never; **(d)** NEVER any automation or auto-submit — unchanged and now near-mandatory.
 - §12.4 rationale → cite BSA §19 + Agent Policy + Code of Conduct; delete the fictional owner-only-POA rationale; assess §19's self-identification duty for automated tools during the read.
 - §7.4 precedent note → keep, but demote from "norm exists" to "contested precedent; paste-mode is the safety floor".
@@ -69,6 +71,7 @@
 **Corrected reality:** since **Oct 2024**, a funds appeal (to disbursement-appeals@amazon.com) becomes ELIGIBLE at deactivation + 60 days; the 90-day mark is a checkpoint, and holds **never release automatically** (identity + fraud evaluation always intervenes); fraud-class holds are indefinite. Amazon launched a **Seller Challenge** stage (29 Sep 2025) for listing-level violations: AHA members only, 3 uses per 180 days, ~48-hour decision, counter resets when AHA lapses or AHR drops below 250. The "~5-attempt wall" figure is retired — the verified phenomenon is that near-identical resubmissions (lack of novelty) risk a permanent "no further consideration" lock, so the warning is about repetition-novelty and fires at 3+ attempts.
 
 **Replace in the spec:**
+
 - §9.1 `deadlines` kinds → `'appeal_window' | 'funds_appeal_eligible' | 'funds_review' | 'seller_challenge' | 'aha_72h' | 'custom'`.
 - Appendix D formulas →
   - `appeal_window.dueAt = noticeReceivedAt + statedDays` (parsed; ambiguous → min(candidates) + "verify in your notice" flag; missing → 90, displayed as an assumption).
@@ -105,11 +108,12 @@
 **Corrected reality:** both stale. See AM-10 for the competitive correction. The verified consultant anchor (25 Aug 2026) is **$600–$5,000** per case (Thompson & Holt ~$600 third-party-cited at the floor; ecommerceChris $1,500/ASIN and $4,000–$5,000/account at the ceiling; The Appeal Guru $1,495/$2,495), with a real panic premium (+$1,000 for 24-hour service).
 
 **Rules for ALL copy, listings, and planning docs:**
+
 - Retire "zero competition" / "first" / "only" everywhere.
 - Anchor $199 against the verified $600–$5,000 human-service range.
 - NEVER publish win rates or success percentages without our own opt-in outcome data (there is none at launch; competitor "93–99.8%" marketing figures are unverifiable and must not be echoed).
 - The word "guarantee" appears nowhere user-facing (grep gate = 0 hits — already in v1.0 M14, now extended to marketing assets).
-- Positioning line vs SellerForge: *they hold your account's keys in their cloud — AppealDeck works in your browser, on your case, for one fee.*
+- Positioning line vs SellerForge: _they hold your account's keys in their cloud — AppealDeck works in your browser, on your case, for one fee._
 
 - [ ] **AA-09** Sweep all listing/site/launch copy against these rules before M-W and again before M-8. — **Owner:** Founder (approval), AI assistant (sweep) · **Cost:** $0 · **Deadline:** Week 4 and Week 8 · **Blocks:** M-W, M-8.
 
@@ -186,12 +190,13 @@ v1.0 §14.3–14.4 mentions `minSupportedVersion` and config-driven selectors as
 **v1.0 says:** M4 collects intake answers (skippable, honest omission); M5 composes a POA and critics it against intake/notice facts; M6 stores evidence blobs. Nothing gates composition on evidence, nothing types evidence per violation, and the composer's output contract is POA-only.
 
 **Add to the spec (full detail + seed data tables in `04-EVIDENCE-FIRST-HARDENING.md` §3):**
+
 - **EF-1 Evidence Requirements Matrix** — new core module `src/core/evidenceModel.ts`: `ViolationKind → EvidenceRequirement[]` (kind, required flag, fields the document must show, freshness, quantity rule, disqualifiers, one honest `whyAmazonWantsIt` sentence). Pure data + functions, no `chrome.*`, maintainable without an app release.
 - **EF-2 Action checklist + attestation + readiness + gap draft** — §9.1 schema: `Case` gains `actionItems[]` (with per-item attestation `{attestedAt, note}`) and typed `evidenceSlots[]`; `PoaDraft` gains `docType` and `readinessAtCompose`. M4 emits the action plan alongside answers. `readiness()` is a deterministic pure function; **UI renders it ONLY as "case-file completeness — not a prediction of Amazon's decision"** (claims gate). M5 becomes two-mode: required-evidence incomplete → **gap draft** (skeleton + action plan + obtain-list, watermarked "NOT READY TO SUBMIT"); complete → full draft. Severity gates unchanged (hard block before checkout). New critic/guardrail flags: past-tense corrective claim without an attested action item; text referencing an empty evidence slot; resubmission without material novelty (extends AM-03's repetition warning).
 - **EF-3 Document-type router** — composer contract forks: `'poa' | 'ip_dispute' | 'funds_appeal' | 'listing_appeal' | 'followup_nudge'`; §7.2 unchanged for `'poa'`; mini-contracts + tone profiles (`ownership` / `risk-removal` / `factual-rebuttal`) per `04-EVIDENCE-FIRST-HARDENING.md` §3 EF-3. v1 ships `poa` + `funds_appeal` + `ip_dispute`.
 - **EF-4 Response-cycle aids** — `src/core/letters.ts` outreach templates (supplier invoice request enumerating matrix fields; rights-owner retraction request; follow-up nudge), sent manually by the user, never by the product; `custom` deadline presets as follow-up reminders on "I submitted" events (default 7d, user-set, framed as reminder — never a promised response time).
 - **EF-5 Outcome schema + policy re-check** — opt-in outcome record `{kind, marketplace, docType, attempts, readinessAtSubmit, outcome, daysToOutcome}` (aggregate-only; the market-evidence action-4 gate on any outcome claim stands forever; no model training on user content). Quarterly policy re-check joins the ops cadence (windows, funds timing, channels, invoice freshness, §19 status → matrix + `guidance.ts` updated in one PR).
-- **M11 free-tier line (default, founder may trim):** free decode summary shows the required-evidence *kinds list* from the matrix; checklist workflow, letters, readiness, and drafts remain Pass features.
+- **M11 free-tier line (default, founder may trim):** free decode summary shows the required-evidence _kinds list_ from the matrix; checklist workflow, letters, readiness, and drafts remain Pass features.
 - **Gates amended:** M-4 gate adds "gap-draft path renders on an evidence-incomplete fixture; zero past-tense corrective claims without attested actions across the fixture suite (automated)". M-W gate adds "the pre-purchase flow shows the honest gap list for an incomplete case". §13.1 fixtures gain evidence-state variants; §16 test table gains the readiness unit tests + a seeded-bad draft with an unattested corrective claim that the critic must catch.
 - **Rejected suggestions register** (`04-EVIDENCE-FIRST-HARDENING.md` §4) is binding: SP-API ingestion, auto-submission, $299/mo pricing, approval-probability scores, model ensembles/fine-tuning, "agency results at 1/10th the cost" copy — none may be re-introduced without a founder-approved decision-log append.
 
@@ -201,11 +206,12 @@ v1.0 §14.3–14.4 mentions `minSupportedVersion` and config-driven selectors as
 
 ### AM-17 — Case OS: the product manages a living case, not a single document (2 Sep 2026)
 
-**Provenance:** founder direction, 2 Sep 2026 — *"truly an OS for sellers, not just a writing tool: ask for documents, ask for actions; when a seller won't take an action, hear the concern and offer alternatives — via a chat window or any better way."* Spec source: `05-CASE-OS-SPEC.md` (read it before implementing). AM-16 built the evidence half; AM-17 builds the lifecycle half. The chat request is adopted **as a guided interview on deterministic rails** — the engine (state machine + matrix + questionnaire) chooses every step's content; the LLM only extracts fields, phrases the engine's ask, and selects among predefined alternatives. A free-form improvising chatbot is explicitly out (it is failure modes F1/F5 with a UI). **Second-pass founder hardening (same day):** no 24/7 chat window at all — the surface is a finite step flow (ask → answer/decline-with-reason → analyze → next window), made abuse-proof **by construction**, not by rate-limit policing (spec §4.1's seven properties). Retired name: "Case Copilot".
+**Provenance:** founder direction, 2 Sep 2026 — _"truly an OS for sellers, not just a writing tool: ask for documents, ask for actions; when a seller won't take an action, hear the concern and offer alternatives — via a chat window or any better way."_ Spec source: `05-CASE-OS-SPEC.md` (read it before implementing). AM-16 built the evidence half; AM-17 builds the lifecycle half. The chat request is adopted **as a guided interview on deterministic rails** — the engine (state machine + matrix + questionnaire) chooses every step's content; the LLM only extracts fields, phrases the engine's ask, and selects among predefined alternatives. A free-form improvising chatbot is explicitly out (it is failure modes F1/F5 with a UI). **Second-pass founder hardening (same day):** no 24/7 chat window at all — the surface is a finite step flow (ask → answer/decline-with-reason → analyze → next window), made abuse-proof **by construction**, not by rate-limit policing (spec §4.1's seven properties). Retired name: "Case Copilot".
 
 **v1.0 says:** case lifecycle is implicit; M6 has an "Amazon replied" paste box with rejection analysis deferred to P1; M4 is a form wizard; refusals/skips are silent omissions.
 
 **Add to the spec (full detail in `05-CASE-OS-SPEC.md`):**
+
 - **Case state machine** — new core module `src/core/caseState.ts`: DECODED → INTAKE → REMEDIATION → READY → SUBMITTED(n) → AWAITING → {APPROVED | REJECTED → REVISION(novelty required) | NO_RESPONSE → FOLLOW_UP/ESCALATION}, with a parallel FUNDS_TRACK (locked until +60d eligibility) and GATED_PRO_HELP short-circuit for severity-gated kinds. Deterministic, event-driven transitions; every state exposes `nextBestActions`, `availableDocTypes`, and qualitative expectations copy (no time/percentage promises). §9.1: `Case` gains `state` + transition log (timeline events already exist). M9/web case view leads with current state + next best actions. REVISION structurally enforces AM-03's novelty rule ("mark as submitted" on attempt 2+ requires a readiness delta or changed framing acknowledged by the critic).
 - **Objection-aware actions** — `ActionItem` (AM-16) gains `declined {reason, at}` + predefined `alternatives[]` (each with `honestyNote`, matrix-sourced `consequence`, `readinessImpact`), including always "decline and proceed" with its honest consequence. Declined = never claimed by the composer; adopted alternative re-routes the plan (e.g., no obtainable invoice → disposal/closure + sourcing-change narrative). Fabrication-flavored "alternatives" are refused (forged-docs gate). Alternative content per kind is consultant-reviewed (extends B-16/AA-20 scope).
 - **Response analyzer** — new core module `src/core/responseAnalyzer.ts`; PROMOTES M6's P1 rejection analysis to v1. Deterministic pattern categories (`needs_more_information`, `document_request` → mapped to `EvidenceKind`s, `identity_verification`, `final_decision_negative`, `reinstated`, `funds_decision`, `unrecognized` → manual tag, never guess), LLM assist only when ambiguous (M3 two-stage pattern). §13.1 fixture corpus gains ≥2 synthetic Amazon-reply fixtures per category incl. one adversarial.
@@ -219,21 +225,49 @@ v1.0 §14.3–14.4 mentions `minSupportedVersion` and config-driven selectors as
 - [x] **AA-24** Panic-hour triage cards in `guidance.ts` + the REVISION novelty guardrail in the critic. — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** with M-4 · **Blocks:** M-4 gate. — **DONE 2 Sep 2026:** `src/core/guidance.ts` carries per-kind DO-NOW / DO-NOT content (don't burn an instant appeal attempt, don't open a new account, don't buy "guaranteed reinstatement" or hand over passwords/AnyDesk, never fabricate documents). REVISION novelty guardrail enforced in `src/core/caseState.ts` (transition `SUBMITTED → REVISION` requires readiness delta or changed framing acknowledged by the critic).
 - [ ] **AA-25** Founder ratifies AM-17 (with AM-16); consultant review (B-16) extends to objection-alternative content and response-analyzer category mappings per kind. — **Owner:** Founder (ratify/engage), consultant (review) · **Cost:** inside B-16 retainer · **Deadline:** Week 3–5 · **Blocks:** M-4 quality gate, Copilot copy freeze.
 
+#### LLM model matrix (per task) — `src/lib/llm/gemini.ts` task picker
+
+**When to use this:** every time you build or modify a route that calls `callGemini`. The matrix is the single source of truth; if a new task is added, append a row AND add a `GEMINI_MODEL_<TASK>` env key. **When NOT to use it:** for any deterministic route (`decode`, `analyze-reply`, `compose`, `interview` — those don't call the LLM at all per AM-17 §4.1).
+
+| Task tag               | Route                                                   | Free-tier model            | Why this one                                                                                              | Schema-bounded?                      |
+| ---------------------- | ------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `extract-field`        | `POST /api/extract-field`                               | `gemini-3.5-flash`         | Schema-bounded JSON, short output (≤280 chars), needs decent instruction-following                        | Yes — `RESPONSE_JSON_SCHEMA`         |
+| `critique-poa`         | `POST /api/critique` (planned, M-9)                     | `gemini-3.5-flash`         | Quality matters — the seller reads the feedback. Don't downgrade to lite                                  | Recommended — `suggestions[]` schema |
+| `phrase-engine-output` | part of `/api/interview` or new `/api/phrase` (planned) | `gemini-3.5-flash-lite`    | The interview engine already produces the content; the model only rephrases. 3× RPD headroom on free tier | Optional — `responseJson: true`      |
+| `triage-router`        | background (planned)                                    | `gemini-flash-lite-latest` | Cheap pre-classification (notice-likeness beyond regex, severity pre-screen) before any premium call      | No — free text only                  |
+
+**Override knob:** `GEMINI_MODEL_<TASK_UPPER_SNAKE>` env var wins over the default. Example: `GEMINI_MODEL_EXTRACT_FIELD=gemini-3.5-flash-lite` swaps the model without code changes. The blanket `GEMINI_MODEL` env var still applies to any task without a per-task override (and to calls with no `task` arg).
+
+**Free-tier budget at the 20-client target (verified 4 Sep 2026 against the same key):**
+
+- `gemini-3.5-flash` ≈ 10 RPM, 250K TPM, ~250-1500 RPD (Google rebalances daily)
+- `gemini-3.5-flash-lite` ≈ 15 RPM, 1M TPM, 1k RPD
+- `gemini-flash-lite-latest` ≈ 15-30 RPM, 1k+ RPD (the `latest` alias tracks the current lite)
+- Per-case RPD cost = 2× extract-field (root cause + timeline) + 1× critique = 3 RPD at the standard tier, all on `gemini-3.5-flash`. → **80+ cases/day before hitting the RPD ceiling.** Don't enable billing until 50+ active cases/day, or when a customer asks for stronger reasoning quality (then move critic → Tier 1).
+
+**Tactical rules (do not violate):**
+
+1. **Never** use a Pro model on a free key (Pro has been paid-only since April 2026 per Google's docs).
+2. **Always** pass `responseJsonSchema` for structured output — `responseJson: true` is the bare minimum, the schema is the gold standard.
+3. **Always** include `thinkingConfig: { thinkingBudget: 0 }` for JSON-bounded calls (already wired in `callGemini` — do not override).
+4. **Never** build a `/chat` route. AM-17 §4.1 forbids it; spec §4.4 makes the absence part of the abuse-proof-by-construction claim.
+5. **Always** route through `withGeminiBreaker()` (AM-12) — no direct `callGemini` from a route.
+
 ---
 
 ## 4. Facts in v1.0 that are RETIRED (do not repeat anywhere)
 
-| v1.0 statement | Status |
-|---|---|
-| "Zero dedicated appeal-drafting extensions exist" (§1.2) | Refuted — see AM-10 |
-| Consultant anchor "$500–$3,000" (§1.2) | Superseded — verified $600–$5,000 (AM-06) |
-| Lemon Squeezy as recommended MoR (§2.2) | Dead — AM-01 |
-| "Any seller account (even inactive)" for testing (§2.2 A-6) | Wrong — AM-04 |
-| "No refund after generation" recommendation (M14) | Unenforceable in the EU — AM-05 |
-| Funds appeal "after 90 days" (§7.1/§7.3/App. D) | Superseded — eligible at +60d since Oct 2024; release never automatic (AM-03) |
-| "Community-reported wall ≈ 5 attempts" (§7.3) | Retired — repetition-novelty warning at 3+ (AM-03) |
-| "On-device AI first" as the quality path (§3/§11) | Inverted for the paid deliverable — AM-07 |
-| Helium 10/Jungle Scout precedent as ToS protection (§7.4/§12.4) | Demoted — BSA §19 changed the ground (AM-02) |
+| v1.0 statement                                                  | Status                                                                        |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| "Zero dedicated appeal-drafting extensions exist" (§1.2)        | Refuted — see AM-10                                                           |
+| Consultant anchor "$500–$3,000" (§1.2)                          | Superseded — verified $600–$5,000 (AM-06)                                     |
+| Lemon Squeezy as recommended MoR (§2.2)                         | Dead — AM-01                                                                  |
+| "Any seller account (even inactive)" for testing (§2.2 A-6)     | Wrong — AM-04                                                                 |
+| "No refund after generation" recommendation (M14)               | Unenforceable in the EU — AM-05                                               |
+| Funds appeal "after 90 days" (§7.1/§7.3/App. D)                 | Superseded — eligible at +60d since Oct 2024; release never automatic (AM-03) |
+| "Community-reported wall ≈ 5 attempts" (§7.3)                   | Retired — repetition-novelty warning at 3+ (AM-03)                            |
+| "On-device AI first" as the quality path (§3/§11)               | Inverted for the paid deliverable — AM-07                                     |
+| Helium 10/Jungle Scout precedent as ToS protection (§7.4/§12.4) | Demoted — BSA §19 changed the ground (AM-02)                                  |
 
 Also binding here: the playbook-wide banned-numbers list (invented win rates, "$2.3M ARR", "2M+ active sellers", "17 days to submit", "24–48h decisions", etc.) — none may appear in any document or copy derived from the spec. See `../07-REFERENCE/01-MARKET-EVIDENCE.md` §4.
 
