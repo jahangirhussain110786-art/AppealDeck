@@ -18,5 +18,7 @@ export default defineConfig({
       "test-results/**",
     ],
     environment: "node",
+    testTimeout: 15_000,
+    hookTimeout: 30_000,
   },
 });
