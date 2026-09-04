@@ -4,7 +4,7 @@ import { PageShell } from "@/components/PageShell";
 export const metadata: Metadata = {
   title: "Privacy",
   description:
-    "How AppealDeck handles your data: local-first decoding, privacy-first analytics, and Merchant-of-Record billing.",
+    "How AppealDeck handles your data: local-first decoding, no-cookie analytics, and Merchant-of-Record billing.",
 };
 
 export default function PrivacyPage() {
@@ -16,8 +16,8 @@ export default function PrivacyPage() {
           browser and is not uploaded or stored by us.
         </p>
         <p>
-          We use privacy-first analytics (Plausible or self-hosted Umami) that do not use cookies
-          and do not identify you.
+          We use analytics (Plausible or self-hosted Umami) that do not use cookies and do not
+          identify you.
         </p>
         <p>
           If you purchase an Appeal Pass, your payment is handled by our Merchant of Record

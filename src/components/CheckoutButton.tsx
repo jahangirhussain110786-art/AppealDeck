@@ -86,7 +86,7 @@ export function CheckoutButton({
       });
       return;
     }
-    toast.info("Opening secure checkout…");
+    toast.info("Opening Paddle checkout…");
     window.Paddle.Checkout.open({ items: [{ priceId: id }] });
   }
 

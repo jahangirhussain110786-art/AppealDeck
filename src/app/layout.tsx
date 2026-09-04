@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
+import { fontSans, fontMono } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/theme-provider";
+import { MotionProviders } from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://appealdeck.com";
@@ -35,16 +37,20 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body
+        className={`${fontSans.variable} ${fontMono.variable} min-h-screen bg-background text-foreground antialiased`}
+      >
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
         >
           Skip to content
         </a>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          {children}
-          <Toaster />
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <MotionProviders>
+            {children}
+            <Toaster />
+          </MotionProviders>
         </ThemeProvider>
       </body>
     </html>

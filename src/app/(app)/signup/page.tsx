@@ -4,13 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { FileSearch, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
 import { APP_URL } from "@/lib/urls";
 
 export default function SignupPage() {
@@ -86,20 +85,6 @@ export default function SignupPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex max-w-5xl items-center px-4 py-3">
-          <Link
-            href={`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://appealdeck.com"}/`}
-            className="flex items-center gap-2 text-lg font-semibold text-foreground"
-          >
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15 text-primary">
-              <FileSearch className="h-5 w-5" />
-            </span>
-            Appeal<span className="text-primary">Deck</span>
-          </Link>
-        </div>
-      </header>
-
       <main id="main" className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 10 }}

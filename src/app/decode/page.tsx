@@ -8,7 +8,7 @@ import { runDecode } from "@/core";
 import type { DecodeResult } from "@/core";
 import { guidanceFor } from "@/core";
 import type { Confidence } from "@/core";
-import { SiteHeader } from "@/components/SiteHeader";
+import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -65,7 +65,7 @@ export default function DecodePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <AppHeader mode="marketing" />
       <main id="main" className="mx-auto w-full max-w-3xl flex-1 px-4 py-12">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Decode your notice

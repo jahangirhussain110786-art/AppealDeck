@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, FileSearch, FileText, ShieldCheck } from "lucide-react";
-import { SiteHeader } from "@/components/SiteHeader";
+import { AppHeader } from "@/components/AppHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,7 +29,7 @@ const FEATURES = [
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <AppHeader mode="marketing" />
       <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-16">
         <motion.section
           initial={{ opacity: 0, y: 10 }}

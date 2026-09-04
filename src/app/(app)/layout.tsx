@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/AppShell";
+import { AppHeader } from "@/components/AppHeader";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  let user: { email?: string | null } | null = null;
+  let user: { id: string; email?: string | null } | null = null;
   try {
     const supabase = createSupabaseServerClient();
     if (supabase) {
@@ -14,6 +15,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     user = null;
   }
 
-  if (!user) return <>{children}</>;
+  if (!user) {
+    return (
+      <>
+        <AppHeader mode="marketing" />
+        {children}
+      </>
+    );
+  }
+
   return <AppShell user={user}>{children}</AppShell>;
 }
