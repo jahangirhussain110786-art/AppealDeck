@@ -48,7 +48,7 @@ describe("handleExtractField", () => {
         suggestedSeverity: "high",
         suggestedTimelineSummary: "Account deactivated for policy violation on 2026-08-15.",
       }),
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
     });
     const res = await handleExtractField(
       makeReq({
@@ -67,7 +67,7 @@ describe("handleExtractField", () => {
     callGeminiMock.mockResolvedValue({
       ok: true,
       text: '```json\n{"suggestedSeverity":"medium"}\n```',
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
     });
     const res = await handleExtractField(
       makeReq({
@@ -84,7 +84,7 @@ describe("handleExtractField", () => {
     callGeminiMock.mockResolvedValue({
       ok: true,
       text: "not json at all",
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
     });
     const res = await handleExtractField(
       makeReq({ stepId: "intake_root_cause", text: "Some seller text." }),
@@ -98,7 +98,7 @@ describe("handleExtractField", () => {
     callGeminiMock.mockResolvedValue({
       ok: true,
       text: JSON.stringify({ suggestedKind: "BOGUS_KIND", madeUpField: 42 }),
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
     });
     const res = await handleExtractField(
       makeReq({ stepId: "intake_root_cause", text: "Some seller text." }),

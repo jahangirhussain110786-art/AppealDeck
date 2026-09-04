@@ -7,7 +7,8 @@ import {
 import type { NextRequest } from "next/server";
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-3.5-flash";
+const FALLBACK_MODELS = ["gemini-flash-lite-latest", "gemini-3.5-flash-lite"] as const;
 const REQUEST_TIMEOUT_MS = 8_000;
 const MAX_OUTPUT_TOKENS = 512;
 
@@ -27,6 +28,8 @@ export type GeminiCallInput = {
   temperature?: number;
   maxOutputTokens?: number;
   model?: string;
+  responseJsonSchema?: Record<string, unknown>;
+  responseJson?: boolean;
 };
 
 export type GeminiCallResult =
@@ -79,14 +82,25 @@ export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResu
     .filter((m) => m.role !== "system")
     .map((m) => ({ role: m.role === "model" ? "model" : "user", parts: [{ text: m.text }] }));
 
+  const generationConfig: Record<string, unknown> = {
+    temperature: input.temperature ?? 0.2,
+    maxOutputTokens: input.maxOutputTokens ?? MAX_OUTPUT_TOKENS,
+  };
+  if (input.responseJsonSchema) {
+    generationConfig.responseMimeType = "application/json";
+    generationConfig.responseSchema = input.responseJsonSchema;
+    generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  } else if (input.responseJson) {
+    generationConfig.responseMimeType = "application/json";
+    generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  } else {
+    generationConfig.responseMimeType = "text/plain";
+  }
+
   const body = {
     contents,
     systemInstruction: system ? { role: "system", parts: [{ text: system.text }] } : undefined,
-    generationConfig: {
-      temperature: input.temperature ?? 0.2,
-      maxOutputTokens: input.maxOutputTokens ?? MAX_OUTPUT_TOKENS,
-      responseMimeType: "text/plain",
-    },
+    generationConfig,
   };
 
   const controller = new AbortController();

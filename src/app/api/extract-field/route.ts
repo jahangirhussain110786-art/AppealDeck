@@ -26,7 +26,30 @@ const ExtractFieldSuggestions = z.object({
   suggestedTimelineSummary: z.string().max(280).optional(),
 });
 
-const SYSTEM_PROMPT = `You extract structured hints from a free-text description of an Amazon seller account issue. Output ONLY valid JSON matching this exact shape: {"suggestedKind"?: "INAUTHENTIC_DOCUMENTS"|"RELATED_ACCOUNT"|"POLICY"|"INTELLECTUAL_PROPERTY"|"LISTING"|"FUNDS"|"UNKNOWN", "suggestedSeverity"?: "low"|"medium"|"high"|"critical", "suggestedTimelineSummary"?: string}. Every field is optional. Keep suggestedTimelineSummary to one sentence, max 280 chars. Do not invent facts that the seller did not say. If the text does not clearly indicate a field, omit it. Never include markdown, code fences, or commentary.`;
+const RESPONSE_JSON_SCHEMA = {
+  type: "object",
+  properties: {
+    suggestedKind: {
+      type: "string",
+      enum: [
+        "INAUTHENTIC_DOCUMENTS",
+        "RELATED_ACCOUNT",
+        "POLICY",
+        "INTELLECTUAL_PROPERTY",
+        "LISTING",
+        "FUNDS",
+        "UNKNOWN",
+      ],
+    },
+    suggestedSeverity: {
+      type: "string",
+      enum: ["low", "medium", "high", "critical"],
+    },
+    suggestedTimelineSummary: { type: "string" },
+  },
+} as const;
+
+const SYSTEM_PROMPT = `You extract structured hints from a free-text description of an Amazon seller account issue. Every field is optional. Keep suggestedTimelineSummary to one sentence, max 280 chars. Do not invent facts that the seller did not say. If the text does not clearly indicate a field, omit it.`;
 
 const USER_PROMPT_TEMPLATE = (text: string) =>
   `Seller wrote:\n---\n${text}\n---\nReturn JSON only.`;
@@ -59,6 +82,7 @@ export async function handleExtractField(
     ],
     temperature: 0.1,
     maxOutputTokens: 256,
+    responseJsonSchema: RESPONSE_JSON_SCHEMA,
   });
 
   if (!result.ok) {
