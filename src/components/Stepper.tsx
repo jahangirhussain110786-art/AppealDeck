@@ -20,7 +20,6 @@ export interface StepperProps {
 export function Stepper({ steps, currentId, progress, className }: StepperProps) {
   const activeIndex = currentId ? steps.findIndex((s) => s.id === currentId) : -1;
   const doneCount = steps.filter((s) => s.state === "done").length;
-  const pct = progress && progress.total > 0 ? (progress.current / progress.total) * 100 : 0;
 
   return (
     <div
@@ -75,14 +74,10 @@ export function Stepper({ steps, currentId, progress, className }: StepperProps)
           className="inline-flex items-center gap-1 rounded-full bg-muted/40 px-2.5 py-1 font-mono text-xs tabular-nums md:hidden"
           aria-label={`Step ${progress.current} of ${progress.total}`}
         >
-          <span
-            className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary"
-            aria-hidden
-          />
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
           <span>
             {progress.current}/{progress.total}
           </span>
-          {pct > 0 && <span>({Math.round(pct)}%)</span>}
         </div>
       )}
     </div>

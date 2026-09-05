@@ -205,7 +205,7 @@ function ComposeInner() {
       {loading && (
         <Card>
           <CardContent className="flex items-center gap-3 pt-5">
-            <Loader2 className="h-5 w-5 animate-pulse rounded-full" />
+            <Loader2 className="h-5 w-5" />
             <span className="text-sm text-muted-foreground">Composing your plan of action…</span>
           </CardContent>
         </Card>
@@ -299,7 +299,7 @@ function ComposeView() {
         fallback={
           <Card>
             <CardContent className="flex items-center gap-3 pt-5">
-              <Loader2 className="h-5 w-5 animate-pulse rounded-full" />
+              <Loader2 className="h-5 w-5" />
               <span className="text-sm text-muted-foreground">Loading…</span>
             </CardContent>
           </Card>

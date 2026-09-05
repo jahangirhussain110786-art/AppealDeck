@@ -29,9 +29,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldSuggester } from "@/components/FieldSuggester";
+import { Stepper } from "@/components/Stepper";
+import type { StepperStep } from "@/components/Stepper";
+import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
 import { getBrowserVault } from "@/lib/vault/browser";
-import { saveCaseFile, loadCaseFile, deleteCaseFile } from "@/lib/caseStore";
+import {
+  saveCaseFile,
+  loadCaseFile,
+  deleteCaseFile,
+  loadCaseLog,
+  saveCaseLog,
+} from "@/lib/caseStore";
 import type { Vault } from "@/core/vault/vault";
 import type { CaseFile as CoreCaseFile } from "@/core/interviewEngine";
 import { nextStep, interviewProgress } from "@/core/interviewEngine";
@@ -132,6 +141,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
   const [answerValue, setAnswerValue] = useState("");
   const [choiceId, setChoiceId] = useState<string | undefined>();
   const [showWhy, setShowWhy] = useState(false);
+  const [whyHintDismissed, setWhyHintDismissed] = useState(false);
   const [declineMode, setDeclineMode] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
   const [declineAltId, setDeclineAltId] = useState<string | undefined>();
@@ -167,6 +177,10 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
         try {
           const existing = await loadCaseFile(v);
           if (existing) {
+            const log = await loadCaseLog(v).catch(() => null);
+            if (log?.whyHintDismissed) {
+              setWhyHintDismissed(true);
+            }
             setShowResumeDialog(true);
           }
         } catch {
@@ -364,12 +378,28 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
     router.push("/dashboard");
   }, [vaultUnlocked, caseFile, router]);
 
+  const dismissWhyHint = useCallback(async () => {
+    setWhyHintDismissed(true);
+    setShowWhy(false);
+    if (vaultRef.current && vaultUnlocked && caseFile) {
+      try {
+        const log = await loadCaseLog(vaultRef.current).catch(() => null);
+        if (log) {
+          log.whyHintDismissed = true;
+          await saveCaseLog(vaultRef.current, log);
+        }
+      } catch {
+        // non-fatal
+      }
+    }
+  }, [vaultUnlocked, caseFile]);
+
   if (!vaultReady) {
     return (
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-pulse rounded-full" />
+            <Loader2 className="h-4 w-4" />
             Preparing your vault…
           </div>
         </CardContent>
@@ -384,9 +414,9 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
           <div className="flex items-start gap-3">
             <Unlock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div className="flex-1">
-              <h2 className="font-medium text-foreground">Unlock your vault</h2>
+              <h2 className="font-medium text-foreground">{APP.interview.unlockPrompt.title}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Enter your passphrase to decrypt your case data. The key never leaves your device.
+                {APP.interview.unlockPrompt.desc}
               </p>
               <div className="mt-3 flex flex-col gap-3">
                 <Input
@@ -394,7 +424,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                   autoComplete="current-password"
                   value={passphrase}
                   onChange={(e) => setPassphrase(e.target.value)}
-                  placeholder="Passphrase"
+                  placeholder={APP.interview.unlockPrompt.placeholder}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") void handleUnlock();
                   }}
@@ -426,15 +456,15 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
       <>
         <Dialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
           <DialogContent>
-            <DialogTitle>Resume your case?</DialogTitle>
-            <DialogDescription>
-              You have a saved case file in your vault. Resume where you left off, or start fresh.
-            </DialogDescription>
+            <DialogTitle>{APP.interview.resumePrompt.title}</DialogTitle>
+            <DialogDescription>{APP.interview.resumePrompt.desc}</DialogDescription>
             <DialogFooter>
               <Button variant="outline" onClick={() => void handleStartOver()}>
-                Start over
+                {APP.interview.resumePrompt.startOver}
               </Button>
-              <Button onClick={() => void handleResume()}>Resume case</Button>
+              <Button onClick={() => void handleResume()}>
+                {APP.interview.resumePrompt.resume}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -485,26 +515,79 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
 
   if (!step) return null;
 
+  const stepperSteps: StepperStep[] = [
+    {
+      id: "intake_root_cause",
+      label: "Root cause",
+      state: !caseFile
+        ? "todo"
+        : caseFile.rootCause
+          ? "done"
+          : step.id === "intake_root_cause"
+            ? "current"
+            : "todo",
+    },
+    {
+      id: "intake_timeline",
+      label: "Timeline",
+      state: !caseFile
+        ? "todo"
+        : caseFile.timelineEvents.length > 0
+          ? "done"
+          : step.id === "intake_timeline"
+            ? "current"
+            : "todo",
+    },
+    {
+      id: "intake_prior_appeals",
+      label: "Prior appeals",
+      state:
+        !caseFile || caseFile.priorAppealCount === 0
+          ? "todo"
+          : step.id === "intake_prior_appeals"
+            ? "current"
+            : "done",
+    },
+    ...(caseFile?.actionItems.map((a, i) => {
+      const evidenceKind = a.evidenceSlots[0];
+      const isActive = step.id === `evidence_${evidenceKind}`;
+      let s: StepperStep["state"] = "todo";
+      if (a.status === "done") s = "done";
+      else if (a.declined) s = "skipped";
+      else if (isActive) s = "current";
+      return {
+        id: `evidence_${evidenceKind}`,
+        label: evidenceKind ? evidenceKind.replace(/_/g, " ") : `Evidence ${i + 1}`,
+        state: s,
+        ...(s === "skipped" ? { skippedReason: a.declined?.reason ?? "Declined" } : {}),
+      } as StepperStep;
+    }) ?? []),
+  ];
+
   return (
     <>
       <Dialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
         <DialogContent>
-          <DialogTitle>Resume your case?</DialogTitle>
-          <DialogDescription>
-            You have a saved case file in your vault. Resume where you left off, or start fresh.
-          </DialogDescription>
+          <DialogTitle>{APP.interview.resumePrompt.title}</DialogTitle>
+          <DialogDescription>{APP.interview.resumePrompt.desc}</DialogDescription>
           <DialogFooter>
             <Button variant="outline" onClick={() => void handleStartOver()}>
-              Start over
+              {APP.interview.resumePrompt.startOver}
             </Button>
-            <Button onClick={() => void handleResume()}>Resume case</Button>
+            <Button onClick={() => void handleResume()}>{APP.interview.resumePrompt.resume}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <div className="space-y-4">
         {progress && (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
+            <Stepper
+              steps={stepperSteps}
+              currentId={step?.id}
+              progress={progress}
+              className="md:max-w-xs"
+            />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>
                 Step {progress.current} of {progress.total}
@@ -513,21 +596,15 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                 <span>{progress.pendingEvidence} evidence item(s) pending</span>
               )}
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-              <motion.div
-                className="h-full rounded-full bg-primary"
-                initial={{ width: 0 }}
-                animate={{
-                  width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%`,
-                }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
           </div>
         )}
 
         <div className="lg:hidden">
-          <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur supports-backdrop-blur:bg-background/80 border-t border-border pb-[env(safe-area-inset-bottom)]">
+          <div
+            className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur supports-backdrop-blur:bg-background/80 border-t border-border pb-[env(safe-area-inset-bottom)]"
+            role="status"
+            aria-label="Step controls"
+          >
             <div className="p-4">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                 <span>
@@ -549,6 +626,11 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
               </Button>
             </div>
           </div>
+        </div>
+
+        <div aria-live="polite" aria-atomic className="sr-only">
+          Step {step.title}. {step.prompt}
+          {loading ? "Loading" : "Ready"}
         </div>
 
         <AnimatePresence mode="wait">
@@ -675,7 +757,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                         disabled={loading}
                       >
                         <Save className="mr-2 h-4 w-4" />
-                        Save & exit
+                        {APP.interview.saveAndExit}
                       </Button>
                       <Button
                         variant="ghost"
@@ -689,8 +771,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                 ) : (
                   <div className="space-y-4 rounded-lg border border-warning/40 bg-warning/5 p-4">
                     <p className="text-sm font-medium text-foreground">
-                      That&apos;s okay — the engine will adapt. Choose an alternative or proceed
-                      without it.
+                      {APP.interview.declineNote}
                     </p>
 
                     {step.declineAlternatives && step.declineAlternatives.length > 0 && (

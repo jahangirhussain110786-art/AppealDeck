@@ -14,6 +14,7 @@ export interface CaseLog {
   attemptCount: number;
   submittedAt?: string;
   lastReply?: { category: ReplyCategory; at: string };
+  whyHintDismissed?: boolean;
 }
 
 async function findRecordId(vault: Vault, name: string): Promise<string | null> {
