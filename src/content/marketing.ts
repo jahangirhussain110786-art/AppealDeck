@@ -52,6 +52,9 @@ export const DECODE = {
     title: "No notice pasted yet",
     description: "Paste your Amazon notice above and click Decode.",
   },
+  noticeLikenessTitle: "Before you decode",
+  likenessHint:
+    "This doesn't look like an Amazon notice yet. Paste the full email, including the subject line.",
 } as const;
 
 export const PRICING = {

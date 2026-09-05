@@ -26,4 +26,5 @@ export const SHARED = {
   },
   submitButton: "Submit",
   retryButton: "Retry",
+  cta: "See the Appeal Pass",
 } as const;
