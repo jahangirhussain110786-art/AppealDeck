@@ -1,15 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { fontSans, fontMono } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MotionProviders } from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://appealdeck.com";
+import { SITE_URL } from "@/lib/urls";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "AppealDeck — Amazon suspension notice decoder",
     template: "%s · AppealDeck",
@@ -23,15 +22,25 @@ export const metadata: Metadata = {
     title: "AppealDeck — Amazon suspension notice decoder",
     description:
       "Decode your Amazon deactivation or policy notice into plain English and draft a Plan of Action you edit and submit yourself.",
-    url: siteUrl,
+    url: SITE_URL,
   },
   twitter: {
     card: "summary",
     title: "AppealDeck — Amazon suspension notice decoder",
     description:
-      "Decode your Amazon deactivation or policy notice into plain English. Free decoder, $199 Appeal Pass.",
+      "Decode your Amazon deactivation or policy notice in plain English. Free decoder, $199 Appeal Pass.",
   },
   robots: { index: true, follow: true },
+  alternates: {
+    canonical: "/",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "hsl(0 0% 100%)" },
+    { media: "(prefers-color-scheme: dark)", color: "hsl(222 30% 6%)" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -46,7 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           Skip to content
         </a>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <MotionProviders>
             {children}
             <Toaster />
