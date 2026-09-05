@@ -29,4 +29,7 @@ export const SHARED = {
   retryButton: "Retry",
   cta: "See the Appeal Pass",
   navSkip: "Skip to main content",
+  tocHeading: "Contents",
+  lastUpdated: "Last updated:",
+  consentPrompt: "Select the consent to continue",
 } as const;

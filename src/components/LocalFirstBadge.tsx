@@ -3,8 +3,10 @@
 import { ShieldCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { SITE_URL } from "@/lib/urls";
 
 export function LocalFirstBadge({ className }: { className?: string }) {
+  const host = new URL(SITE_URL).hostname;
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>
@@ -21,7 +23,7 @@ export function LocalFirstBadge({ className }: { className?: string }) {
         </TooltipTrigger>
         <TooltipContent className="max-w-xs text-xs">
           How to verify: open DevTools to the Network tab while decoding. You should see zero
-          requests to appealdeck.com.
+          requests to {host}.
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

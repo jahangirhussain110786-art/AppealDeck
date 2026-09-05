@@ -1,5 +1,6 @@
 "use client";
 
+import { POLICY_CHECKED_ON } from "@/core/guidance";
 import { CircleCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,7 @@ export interface VerifiedStampProps {
   className?: string;
 }
 
-export function VerifiedStamp({ checkedOn, className }: VerifiedStampProps) {
+export function VerifiedStamp({ checkedOn = POLICY_CHECKED_ON, className }: VerifiedStampProps) {
   const label = checkedOn
     ? `Policy checked | ${new Date(checkedOn).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
     : "Policy check pending";

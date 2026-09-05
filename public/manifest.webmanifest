@@ -1,0 +1,16 @@
+{
+  "name": "AppealDeck — Amazon suspension notice decoder",
+  "short_name": "AppealDeck",
+  "description": "Decode your Amazon notice and draft a Plan of Action. Free decoder, $199 one-time Appeal Pass.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "32x32",
+      "type": "image/svg+xml"
+    }
+  ]
+}

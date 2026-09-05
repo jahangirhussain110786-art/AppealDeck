@@ -3,6 +3,19 @@
 // Legal pages render these structured sections (with TOC). Pricing D8 consent
 // pulls consent + refund wording from here. "Last updated" dates are the real change dates.
 
+export type LegalSection = {
+  id: string;
+  title: string;
+  body: string[];
+};
+
+export type LegalDocData = {
+  title: string;
+  sections: LegalSection[];
+};
+
+export type LegalDoc = "privacy" | "terms" | "refund";
+
 export const LEGAL = {
   lastUpdated: {
     privacy: "2026-08-25",
@@ -137,5 +150,16 @@ export const LEGAL = {
         "I ask AppealDeck to deliver the Appeal Pass immediately and understand that I lose my statutory 14-day right of withdrawal once delivery starts. AppealDeck's voluntary 7-day refund still applies.",
     },
     deliveryNote: "You will receive a receipt and a copy of this consent by email.",
+  },
+  meta: {
+    titlePrivacy: "Privacy — AppealDeck",
+    titleTerms: "Terms — AppealDeck",
+    titleRefund: "Refunds & withdrawal — AppealDeck",
+    descriptionPrivacy:
+      "Local-first decoding, no-cookie analytics, Paddle billing, and encrypted vault storage. No data sold.",
+    descriptionTerms:
+      "AppealDeck decodes notices and drafts POAs for you to submit yourself. No automation, no outcome promises.",
+    descriptionRefund:
+      "7-day voluntary refund on the Appeal Pass. EU/UK statutory withdrawal with explicit checkout consent.",
   },
 } as const;

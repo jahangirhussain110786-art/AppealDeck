@@ -34,6 +34,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {

@@ -116,6 +116,8 @@ export const PRICING = {
     title: "Sample Plan of Action",
   },
   cta: "Get the Appeal Pass",
+  faqTitle: "Frequently asked questions",
+  purchaseTitle: "Ready to draft your POA?",
 } as const;
 
 export const SHARED = {
@@ -124,3 +126,86 @@ export const SHARED = {
 } as const;
 
 export const FOUNDER_NOTE: { name: string; location: string; text: string } | null = null;
+
+export const FAQ = {
+  title: "Frequently asked questions",
+  description: "Questions about decoding, the Appeal Pass, data, and refunds.",
+  items: [
+    {
+      q: "Do I need an Amazon account to decode?",
+      a: "No. Paste your notice text into the decoder and it runs in your browser. No account is needed for the free decoder. The Appeal Pass requires an account to activate a license key.",
+    },
+    {
+      q: "How does the decoder work?",
+      a: "The decoder parses your notice locally, identifies the violation type, shows deadlines tied to the stated dates, and produces a do-now and do-not list grounded in Amazon policy. Nothing you paste leaves your browser during the free decode.",
+    },
+    {
+      q: "Is my POA draft accurate?",
+      a: "The draft is based on the facts in your notice and the evidence you provide. It follows the structure Amazon expects: root cause, corrective actions, and preventive measures. You must review and edit it before submitting — it is a draft, not a final appeal.",
+    },
+    {
+      q: "What are the deadlines?",
+      a: "The appeal window is parsed from your notice (defaulting to the standard 90 days when not stated). Funds appeals open around 60 days after deactivation; the 90-day review checkpoint is never an automatic release. The decoder shows every date it finds, with a flag when a window is ambiguous.",
+    },
+    {
+      q: "What is the encrypted vault for?",
+      a: "Store and organise your evidence — invoices, photos, notes — in an encrypted local vault. Encryption uses AES-256-GCM with a passphrase you choose; the key never leaves your device. Ciphertext syncs to Supabase so you can access it across devices, but we cannot read it.",
+    },
+    {
+      q: "What is your refund policy?",
+      a: "We offer a 7-day voluntary refund with no questions asked, as long as you have not redeemed your Appeal Pass license. After 7 days the purchase is final. See the Refund page for full details.",
+    },
+    {
+      q: "Do you submit my appeal to Amazon?",
+      a: "No. AppealDeck drafts the Plan of Action for you to review and submit yourself. We never log in to your Seller Central account and never submit on your behalf.",
+    },
+  ] as const,
+  cta: {
+    title: "Still have questions?",
+    desc: "Paste your notice to get an answer for your specific case.",
+    link: "Decode my notice — free",
+  },
+  groups: [
+    {
+      name: "Pricing",
+      items: ["Do I need an Amazon account to decode?", "What is your refund policy?"],
+    },
+    { name: "Decoding", items: ["How does the decoder work?", "Is my POA draft accurate?"] },
+    { name: "Deadlines", items: ["What are the deadlines?"] },
+    { name: "Vault", items: ["What is the encrypted vault for?"] },
+    { name: "Submitting", items: ["Do you submit my appeal to Amazon?"] },
+  ] as const,
+} as const;
+
+export type FaqItem = (typeof FAQ.items)[number];
+
+export function faqByGroup(): { name: string; items: FaqItem[] }[] {
+  const byQ = new Map(FAQ.items.map((i) => [i.q, i]));
+  return FAQ.groups.map((g) => ({
+    name: g.name,
+    items: g.items.map((q) => byQ.get(q)).filter((i): i is FaqItem => i !== undefined),
+  }));
+}
+
+export const SAMPLE_POA = {
+  watermark: "ILLUSTRATIVE — not a real appeal",
+  copyDisabled: "Sample only",
+  title: "Sample Plan of Action",
+  body: `Appeal Plan of Action — Illustrative Example
+
+Seller: [Redacted] · Notice date: 15 Aug 2026 · Violation: detail-page policy compliance
+
+Root cause:
+The listing for ASIN B0EXAMPLE was missing an accurate country-of-manufacture attribute and contained a product image with a copyrighted watermark from a third-party supplier. These were discovered during an automated scan and corrected on 18 Aug.
+
+Corrective actions taken:
+- Removed the third-party-watermarked image and uploaded a seller-owned photo showing the product label clearly.
+- Added the country-of-manufacture attribute (CN) to the detail page.
+- Submitted inventory updates via the bulk fix tool for all affected SKUs.
+
+Preventive measures:
+- New listing checklist added to the team workflow: every upload is checked for third-party images and required attributes before publishing.
+- A weekly listing audit runs each Friday to catch missing attributes before Amazon flags them.
+
+Note: this is a fictional sample. Every case differs. With the Appeal Pass, the draft is based on your actual notice and evidence and you submit it yourself in Seller Central.`,
+} as const;
