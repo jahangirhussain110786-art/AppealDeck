@@ -95,6 +95,35 @@ export const APP = {
     copyAll: "Copy full POA",
     openSellerCentral: "Open Seller Central",
   },
+  vault: {
+    title: "Encrypted evidence vault",
+    subtitle:
+      "Files you upload here are encrypted on your device with a key derived from your passphrase. Cloud sync uploads only ciphertext.",
+    noPassTitle: "Encrypted evidence vault",
+    noPassDesc:
+      "The encrypted evidence vault is included with the Appeal Pass. It stores your supplier invoices, brand authorizations, and other case documents encrypted on your device (AES-GCM, key derived from a passphrase you set — we never see it).",
+    noPassCta: "Get the Appeal Pass",
+    noPassBack: "Back to your case",
+    teachingEmpty: {
+      title: "No evidence yet",
+      description:
+        "Add supplier invoices, brand authorizations, and other documents. Evidence grounds your Plan of Action and must be attached before submission.",
+      action: "Choose a file",
+    },
+    recordCount: "{count} record(s)",
+    totalSize: "Total: {size}",
+    encryptedBadge: "Encrypted",
+    caseRecordsHidden:
+      "Case file and logs are stored separately. Unlock your case on the dashboard.",
+    deleteConfirm: {
+      title: "Delete {name}?",
+      description:
+        "This permanently deletes the encrypted record from your device and the cloud. This action cannot be undone.",
+      confirm: "Delete permanently",
+      cancel: "Cancel",
+    },
+    searchPlaceholder: "Search files…",
+  },
   interview: {
     saveAndExit: "Save & exit",
     saveAndExitToast: "Your case has been saved to the vault. You can resume from the dashboard.",

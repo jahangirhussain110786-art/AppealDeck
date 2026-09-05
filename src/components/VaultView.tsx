@@ -13,9 +13,23 @@ import {
   ShieldCheck,
   RefreshCw,
   Cloud,
+  FileText,
+  FileImage,
+  FileSpreadsheet,
+  FileBox,
+  Search,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   browserWebCrypto,
   getBrowserVault,
@@ -25,6 +39,11 @@ import {
 import { VAULT_ENVELOPE_VERSION, VaultCryptoError } from "@/core/vault/envelope";
 import { asBase64 } from "@/lib/vault/browser";
 import type { AddDocumentInput, Vault, VaultListItem, VaultStatus } from "@/core/vault/vault";
+import { EvidenceStatusBadge } from "@/components/EvidenceStatusBadge";
+import { EmptyState } from "@/components/EmptyState";
+import { APP } from "@/content/app";
+import type { EvidenceKind } from "@/core/evidenceModel";
+import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 
 type Phase =
   | { kind: "loading" }
@@ -40,6 +59,38 @@ function useVault(): Vault {
   return ref.current;
 }
 
+function mimeTypeToIcon(mimeType: string): React.ReactNode {
+  if (mimeType.startsWith("image/")) return <FileImage className="h-5 w-5 text-muted-foreground" />;
+  if (mimeType.includes("pdf")) return <FileText className="h-5 w-5 text-muted-foreground" />;
+  if (mimeType.includes("spreadsheet") || mimeType.includes("excel") || mimeType.includes("csv"))
+    return <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />;
+  return <FileBox className="h-5 w-5 text-muted-foreground" />;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1_048_576).toFixed(1)} MB`;
+}
+
+const EVIDENCE_KINDS: EvidenceKind[] = [
+  "supplier_invoice",
+  "brand_authorization",
+  "rights_owner_retraction",
+  "identity_doc",
+  "financial_instrument_doc",
+  "sourcing_doc",
+  "listing_fix_proof",
+  "disposal_or_recall_proof",
+  "metric_export",
+  "sop_document",
+  "other",
+];
+
+function evidenceKindLabel(kind: EvidenceKind): string {
+  return kind.replace(/_/g, " ");
+}
+
 export default function VaultView({ userId }: { userId: string }) {
   const vault = useVault();
   const [phase, setPhase] = React.useState<Phase>({ kind: "loading" });
@@ -47,12 +98,15 @@ export default function VaultView({ userId }: { userId: string }) {
   const [passphrase, setPassphrase] = React.useState("");
   const [confirm, setConfirm] = React.useState("");
   const [busy, setBusy] = React.useState(false);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [filterKind, setFilterKind] = React.useState<EvidenceKind | "all">("all");
+  const [deleteTarget, setDeleteTarget] = React.useState<VaultListItem | null>(null);
 
   const refresh = React.useCallback(async () => {
     if (phase.kind !== "unlocked") return;
-    const list = await vault.list();
+    const list = await vault.list(filterKind !== "all" ? { evidenceKind: filterKind } : undefined);
     setItems(list);
-  }, [phase, vault]);
+  }, [phase, vault, filterKind]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -209,15 +263,18 @@ export default function VaultView({ userId }: { userId: string }) {
     }
   };
 
-  const onDelete = async (id: string) => {
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await vault.delete(id);
-      setItems(await vault.list());
+      await vault.delete(deleteTarget.id);
+      await refresh();
       toast.success("Record deleted");
     } catch (e) {
       toast.error("Delete failed", {
         description: e instanceof Error ? e.message : "Unknown error",
       });
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -302,6 +359,17 @@ export default function VaultView({ userId }: { userId: string }) {
     );
   }
 
+  const displayItems = items.filter((it) => it.kind !== "case");
+
+  const filteredItems = displayItems.filter(
+    (it) =>
+      (it.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (it.evidenceKind ?? "").toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (filterKind === "all" || it.evidenceKind === filterKind),
+  );
+
+  const totalBytes = displayItems.reduce((sum, it) => sum + it.sizeBytes, 0);
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -312,29 +380,80 @@ export default function VaultView({ userId }: { userId: string }) {
             device.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => void refresh()} variant="outline" size="sm">
-            <RefreshCw className="size-4" /> Refresh
+        <LocalFirstBadge />
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder={APP.vault.searchPlaceholder}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8"
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={filterKind}
+            onChange={(e) => setFilterKind(e.target.value as typeof filterKind)}
+            className="text-sm rounded-md border border-border bg-background px-2 py-1"
+            aria-label="Filter by evidence kind"
+          >
+            <option value="all">All evidence</option>
+            {EVIDENCE_KINDS.map((k) => (
+              <option key={k} value={k}>
+                {evidenceKindLabel(k)}
+              </option>
+            ))}
+          </select>
+          <Button onClick={() => void refresh()} variant="outline" size="sm" disabled={busy}>
+            <RefreshCw className="size-4" />
           </Button>
           <Button onClick={onSyncUp} variant="outline" size="sm" disabled={busy}>
-            <Cloud className="size-4" /> Sync to cloud
+            <Cloud className="size-4" />
           </Button>
           <Button onClick={onLock} variant="outline" size="sm">
-            <Lock className="size-4" /> Lock
+            <Lock className="size-4" />
           </Button>
         </div>
       </div>
 
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>
+          {filteredItems.length} {filteredItems.length === 1 ? "record" : "records"}
+        </span>
+        <span className="tabular-nums">{formatBytes(totalBytes)} total</span>
+      </div>
+
       <FileDropZone onFile={onAddFile} disabled={busy} />
 
-      {items.length === 0 ? (
-        <Card className="p-6 text-sm text-muted-foreground">
-          No evidence yet. Drop a file above to add your first encrypted record.
+      {filteredItems.length === 0 ? (
+        <Card className="p-6">
+          <CardContent className="pt-0">
+            <EmptyState
+              icon={FileText}
+              title={APP.vault.teachingEmpty.title}
+              description={APP.vault.teachingEmpty.description}
+            />
+          </CardContent>
         </Card>
       ) : (
         <ul className="flex flex-col gap-2">
           <AnimatePresence initial={false}>
-            {items.map((it) => (
+            {filteredItems.map((it) => (
               <motion.li
                 key={it.id}
                 layout
@@ -344,23 +463,37 @@ export default function VaultView({ userId }: { userId: string }) {
                 transition={{ duration: 0.15 }}
               >
                 <Card className="flex items-center justify-between p-3">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">{it.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {it.mimeType} · {it.sizeBytes} bytes ·{" "}
-                      {new Date(it.createdAt).toLocaleString()}
-                      {it.evidenceKind ? ` · ${it.evidenceKind}` : ""}
+                  <div className="flex items-center gap-3 min-w-0">
+                    {mimeTypeToIcon(it.mimeType)}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 truncate text-sm font-medium">
+                        <span>{it.name}</span>
+                        <EvidenceStatusBadge status="present" />
+                        <span className="text-xs text-muted-foreground font-mono">
+                          [{APP.vault.encryptedBadge}]
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {it.mimeType} · {formatBytes(it.sizeBytes)} ·{" "}
+                        {new Date(it.createdAt).toLocaleString()}
+                        {it.evidenceKind
+                          ? ` · ${evidenceKindLabel(it.evidenceKind as EvidenceKind)}`
+                          : ""}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant="outline" onClick={() => void onView(it.id)}>
-                      <Eye className="size-4" /> View
+                      <Eye className="size-4" />
+                      <span className="sr-only">View</span>
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => void onDownload(it.id)}>
-                      <Download className="size-4" /> Download
+                      <Download className="size-4" />
+                      <span className="sr-only">Download</span>
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => void onDelete(it.id)}>
-                      <Trash2 className="size-4" /> Delete
+                    <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(it)}>
+                      <Trash2 className="size-4" />
+                      <span className="sr-only">Delete</span>
                     </Button>
                   </div>
                 </Card>
@@ -374,6 +507,31 @@ export default function VaultView({ userId }: { userId: string }) {
         Preview fingerprint: {asBase64(new TextEncoder().encode(userId)).slice(0, 8)}… (envelope v
         {VAULT_ENVELOPE_VERSION})
       </p>
+
+      {APP.vault.caseRecordsHidden && (
+        <p className="text-xs text-muted-foreground">{APP.vault.caseRecordsHidden}</p>
+      )}
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent>
+          {deleteTarget && (
+            <>
+              <DialogTitle>
+                {APP.vault.deleteConfirm.title.replace("{name}", deleteTarget.name)}
+              </DialogTitle>
+              <DialogDescription>{APP.vault.deleteConfirm.description}</DialogDescription>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                  {APP.vault.deleteConfirm.cancel}
+                </Button>
+                <Button variant="destructive" onClick={() => void confirmDelete()}>
+                  {APP.vault.deleteConfirm.confirm}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

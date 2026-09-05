@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import VaultView from "@/components/VaultView";
+import { APP } from "@/content/app";
 
 export const dynamic = "force-dynamic";
 
@@ -14,19 +15,17 @@ export default async function VaultPage() {
   if (!active) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 py-10">
-        <h1 className="text-2xl font-semibold tracking-tight">Encrypted evidence vault</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          {APP.vault.noPassTitle}
+        </h1>
         <Card className="p-6">
-          <p className="text-sm">
-            The encrypted evidence vault is included with the Appeal Pass. It stores your supplier
-            invoices, brand authorizations, and other case documents encrypted on your device
-            (AES-GCM, key derived from a passphrase you set — we never see it).
-          </p>
+          <p className="text-sm text-muted-foreground">{APP.vault.noPassDesc}</p>
           <div className="mt-4 flex gap-2">
             <Button asChild>
-              <Link href="/pricing">Get the Appeal Pass</Link>
+              <Link href="/pricing">{APP.vault.noPassCta}</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/case">Back to your case</Link>
+              <Link href="/case">{APP.vault.noPassBack}</Link>
             </Button>
           </div>
         </Card>
@@ -36,15 +35,8 @@ export default async function VaultPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">Encrypted evidence vault</h1>
-      <p className="text-sm text-muted-foreground">
-        Files you upload here are encrypted on your device with a key derived from your passphrase.
-        Cloud sync uploads only ciphertext. Per the data architecture:{" "}
-        <Link href="/privacy" className="text-primary underline-offset-2 hover:underline">
-          read the privacy posture
-        </Link>
-        .
-      </p>
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground">{APP.vault.title}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">{APP.vault.subtitle}</p>
       <VaultView userId={user.id} />
     </div>
   );
