@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { composePoa, critiquePoa, renderPoaText } from "@/core";
 import type { CaseFileData } from "@/core";
-import { requireUser } from "@/lib/auth";
+import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
+import { isLicenseActive } from "@/lib/license";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { recordActivation, deviceErrorResponse, fingerprintFromRequest } from "@/lib/devices";
@@ -35,7 +36,10 @@ const ComposeBody = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const user = await requireUser();
+  const user = await getApiUser();
+  if (!user) {
+    return unauthorizedJsonResponse();
+  }
   const email = (user.email ?? "").trim().toLowerCase();
 
   const rate = await rateLimitCompose(user);
@@ -43,16 +47,11 @@ export async function POST(req: NextRequest) {
     return tooManyRequestsResponse(rate);
   }
 
-  if (supabaseAdmin && email) {
-    const { data: license } = await supabaseAdmin
-      .from("licenses")
-      .select("status")
-      .eq("email", email)
-      .maybeSingle();
-    if (!license || license.status !== "active") {
-      return NextResponse.json({ error: "Active Appeal Pass required." }, { status: 403 });
-    }
+  if (!(await isLicenseActive(email))) {
+    return NextResponse.json({ error: "Appeal Pass required." }, { status: 403 });
+  }
 
+  if (supabaseAdmin && email) {
     const fingerprint = await deriveFingerprintFromRequest(req, user);
     const result = await recordActivation(supabaseAdmin, {
       userId: user.id,

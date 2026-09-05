@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { listDevices, revokeDevice } from "@/lib/devices";
 
@@ -9,7 +9,10 @@ export const dynamic = "force-dynamic";
 const RevokeBody = z.object({ deviceId: z.string().uuid() });
 
 export async function GET() {
-  const user = await requireUser();
+  const user = await getApiUser();
+  if (!user) {
+    return unauthorizedJsonResponse();
+  }
   const email = (user.email ?? "").trim().toLowerCase();
   if (!supabaseAdmin || !email) {
     return NextResponse.json({ devices: [], cap: 5 });
@@ -19,7 +22,10 @@ export async function GET() {
 }
 
 export async function DELETE(req: NextRequest) {
-  const user = await requireUser();
+  const user = await getApiUser();
+  if (!user) {
+    return unauthorizedJsonResponse();
+  }
   const email = (user.email ?? "").trim().toLowerCase();
   if (!supabaseAdmin || !email) {
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });

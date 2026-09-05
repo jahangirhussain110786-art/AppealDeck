@@ -1,36 +1,19 @@
 import Link from "next/link";
 import { CheckCircle2, CreditCard } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { isLicenseActive, fetchLicenseByEmail } from "@/lib/license";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DeviceManager } from "@/components/DeviceManager";
 
 export const dynamic = "force-dynamic";
 
-import { SITE_URL as MARKETING_URL } from "@/lib/urls";
-
-type LicenseRow = {
-  plan: string;
-  status: string;
-  created_at: string;
-};
-
 export default async function BillingPage() {
   const user = await requireUser();
   const email = (user.email ?? "").trim().toLowerCase();
 
-  let license: LicenseRow | null = null;
-  if (supabaseAdmin && email) {
-    const { data } = await supabaseAdmin
-      .from("licenses")
-      .select("plan, status, created_at")
-      .eq("email", email)
-      .maybeSingle();
-    license = (data as LicenseRow) ?? null;
-  }
-
-  const active = !!license && license.status === "active";
+  const active = await isLicenseActive(email);
+  const license = await fetchLicenseByEmail(email);
 
   return (
     <div className="space-y-6">
@@ -49,8 +32,8 @@ export default async function BillingPage() {
               <div>
                 <h2 className="font-medium text-foreground">Appeal Pass — active</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Plan: {license?.plan} · Purchased{" "}
-                  {license ? new Date(license.created_at).toLocaleDateString() : ""}
+                  Plan: {license.plan} · Purchased{" "}
+                  {license.createdAt ? new Date(license.createdAt).toLocaleDateString() : ""}
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Receipts and subscription management are handled by Paddle, our merchant of
@@ -65,7 +48,7 @@ export default async function BillingPage() {
                 You have not purchased the Appeal Pass yet.
               </p>
               <Button asChild className="mt-4">
-                <Link href={`${MARKETING_URL}/pricing`}>
+                <Link href="/pricing">
                   <CreditCard className="h-4 w-4" /> Buy the Appeal Pass
                 </Link>
               </Button>

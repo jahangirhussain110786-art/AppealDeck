@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertCircle, CheckCircle2, ShieldAlert } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { isLicenseActive, fetchLicenseByEmail } from "@/lib/license";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InterviewFlow } from "@/components/InterviewFlow";
@@ -18,17 +18,10 @@ export default async function CasePage() {
   const user = await requireUser();
   const email = (user.email ?? "").trim().toLowerCase();
 
-  let license: LicenseRow | null = null;
-  if (supabaseAdmin && email) {
-    const { data } = await supabaseAdmin
-      .from("licenses")
-      .select("license_key, plan, status")
-      .eq("email", email)
-      .maybeSingle();
-    license = (data as LicenseRow) ?? null;
-  }
-
-  const hasPass = license?.status === "active";
+  const hasPass = await isLicenseActive(email);
+  const license = hasPass
+    ? await fetchLicenseByEmail(email)
+    : { status: "none", plan: null, licenseKey: null };
 
   return (
     <div className="space-y-6">

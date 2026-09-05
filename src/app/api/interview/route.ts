@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
+import { isLicenseActive } from "@/lib/license";
 import { createCaseFile, nextStep, applyAnswer, interviewProgress } from "@/core/interviewEngine";
 import type { CaseFile, StepAnswer } from "@/core/interviewEngine";
 import type { ViolationKind } from "@/core";
@@ -79,9 +80,13 @@ const AnswerBody = z.object({
 const InterviewBody = z.discriminatedUnion("action", [StartBody, AnswerBody]);
 
 export async function POST(req: NextRequest) {
-  const user = await requireUser();
+  const user = await getApiUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return unauthorizedJsonResponse();
+  }
+
+  if (!(await isLicenseActive(user.email))) {
+    return NextResponse.json({ error: "Appeal Pass required." }, { status: 403 });
   }
 
   const rate = await rateLimitInterview(user);

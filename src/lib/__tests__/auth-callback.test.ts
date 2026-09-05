@@ -20,10 +20,10 @@ beforeEach(() => {
 });
 
 describe("/auth/callback route", () => {
-  it("redirects to / when no code and no type", async () => {
+  it("redirects to /dashboard when no code and no type", async () => {
     const res = await GET(makeReq("http://localhost/auth/callback") as unknown as Request);
     expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe("http://localhost/");
+    expect(res.headers.get("location")).toBe("http://localhost/dashboard");
   });
 
   it("redirects to /reset-password when type=recovery", async () => {
@@ -64,5 +64,42 @@ describe("/auth/callback route", () => {
       ) as unknown as Request,
     );
     expect(res.headers.get("location")).toBe("http://localhost/reset-password");
+  });
+
+  it("blocks protocol-relative //evil.com redirect", async () => {
+    const res = await GET(
+      makeReq("http://localhost/auth/callback?code=abc&next=//evil.com") as unknown as Request,
+    );
+    expect(res.headers.get("location")).toBe("http://localhost/dashboard");
+  });
+
+  it("blocks absolute external URL redirect", async () => {
+    const res = await GET(
+      makeReq(
+        "http://localhost/auth/callback?code=abc&next=https://evil.com",
+      ) as unknown as Request,
+    );
+    expect(res.headers.get("location")).toBe("http://localhost/dashboard");
+  });
+
+  it("blocks @-prefixed redirect", async () => {
+    const res = await GET(
+      makeReq("http://localhost/auth/callback?code=abc&next=@evil.com") as unknown as Request,
+    );
+    expect(res.headers.get("location")).toBe("http://localhost/dashboard");
+  });
+
+  it("blocks dot-prefixed redirect", async () => {
+    const res = await GET(
+      makeReq("http://localhost/auth/callback?code=abc&next=.evil.com") as unknown as Request,
+    );
+    expect(res.headers.get("location")).toBe("http://localhost/dashboard");
+  });
+
+  it("allows same-origin /vault redirect", async () => {
+    const res = await GET(
+      makeReq("http://localhost/auth/callback?code=abc&next=/vault") as unknown as Request,
+    );
+    expect(res.headers.get("location")).toBe("http://localhost/vault");
   });
 });

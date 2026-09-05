@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { analyzeReply } from "@/core";
-import { requireUser } from "@/lib/auth";
+import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { rateLimitAnalyzeReply, tooManyRequestsResponse } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,10 @@ const AnalyzeReplyBody = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const user = await requireUser();
+  const user = await getApiUser();
+  if (!user) {
+    return unauthorizedJsonResponse();
+  }
 
   const rate = await rateLimitAnalyzeReply(user);
   if (!rate.success) {

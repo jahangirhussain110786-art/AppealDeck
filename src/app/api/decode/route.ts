@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { runDecode } from "@/core";
+import { runDecode, isSeverityGated } from "@/core";
 import type { ViolationKind } from "@/core";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +61,6 @@ export async function POST(req: NextRequest) {
     kind: result.classification.kind,
     confidence: result.classification.confidence,
     deadlines: result.deadlines,
-    severityGated: result.classification.kind === "INAUTHENTIC_DOCUMENTS",
+    severityGated: isSeverityGated(result.classification.kind),
   });
 }

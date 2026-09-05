@@ -27,27 +27,27 @@ test.describe("/api routes (auth + validation)", () => {
     expect(Array.isArray(body.deadlines)).toBe(true);
   });
 
-  test("POST /api/analyze-reply requires auth (redirect or 401)", async ({ request }) => {
+  test("POST /api/analyze-reply requires auth (401 JSON)", async ({ request }) => {
     const r = await request.post("/api/analyze-reply", {
       data: { reply: 123 },
       maxRedirects: 0,
     });
-    expect([302, 303, 307, 401]).toContain(r.status());
+    expect(r.status()).toBe(401);
   });
 
-  test("POST /api/compose requires auth (redirect or 401)", async ({ request }) => {
+  test("POST /api/compose requires auth (401 JSON)", async ({ request }) => {
     const r = await request.post("/api/compose", {
       data: { caseData: { kind: "POLICY" }, attemptNumber: 1 },
       maxRedirects: 0,
     });
-    expect([302, 303, 307, 401]).toContain(r.status());
+    expect(r.status()).toBe(401);
   });
 
-  test("POST /api/interview requires auth (redirect or 401)", async ({ request }) => {
+  test("POST /api/interview requires auth (401 JSON)", async ({ request }) => {
     const r = await request.post("/api/interview", {
       data: { action: "start", kind: "POLICY" },
       maxRedirects: 0,
     });
-    expect([302, 303, 307, 401]).toContain(r.status());
+    expect(r.status()).toBe(401);
   });
 });

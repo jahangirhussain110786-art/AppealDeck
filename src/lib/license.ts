@@ -6,6 +6,7 @@ export interface LicenseSummary {
   status: LicenseStatus;
   plan: string | null;
   licenseKey: string | null;
+  createdAt?: string | null;
 }
 
 export async function fetchLicenseByEmail(
@@ -17,7 +18,7 @@ export async function fetchLicenseByEmail(
   const normalized = email.trim().toLowerCase();
   const { data } = await supabaseAdmin
     .from("licenses")
-    .select("status, plan, license_key")
+    .select("status, plan, license_key, created_at")
     .eq("email", normalized)
     .maybeSingle();
   if (!data) {
@@ -27,6 +28,7 @@ export async function fetchLicenseByEmail(
     status: (data.status as LicenseStatus) ?? "none",
     plan: (data.plan as string | null) ?? null,
     licenseKey: (data.license_key as string | null) ?? null,
+    createdAt: (data.created_at as string | null | undefined) ?? null,
   };
 }
 

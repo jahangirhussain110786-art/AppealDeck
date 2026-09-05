@@ -120,11 +120,6 @@ export const PRICING = {
   purchaseTitle: "Ready to draft your POA?",
 } as const;
 
-export const SHARED = {
-  signinLink: "Sign in",
-  signupLink: "Create an account",
-} as const;
-
 export const FOUNDER_NOTE: { name: string; location: string; text: string } | null = null;
 
 export const FAQ = {
