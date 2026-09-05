@@ -11,14 +11,108 @@ export const APP = {
       desc: "Buy the $199 one-time Appeal Pass to unlock your drafted Plan of Action and tools.",
       cta: "Get the Appeal Pass",
     },
+    noPassCard: {
+      summary: "Your case tools are locked until you have an active Appeal Pass.",
+      whatToDo: [
+        "Review the pricing page to choose your plan.",
+        "Buy the Appeal Pass to unlock the guided interview and POA drafting.",
+      ],
+      cta: "Get the Appeal Pass",
+    },
     active: {
       heading: "Appeal Pass active",
       planLabel: "Plan",
       grantedLabel: "Granted",
       licenseLabel: "License",
     },
+    caseSummary: {
+      title: "Your case",
+      noCase: {
+        title: "No active case",
+        description:
+          "Start by decoding your notice on the free decoder, then begin the guided interview to build your case file.",
+        cta: "Start your case",
+      },
+    },
+    stateLabels: {
+      DECODED: "Notice decoded",
+      GATED_PRO_HELP: "Requires professional help",
+      INTAKE: "Intake in progress",
+      REMEDIATION: "Evidence gathering",
+      READY: "Ready to submit",
+      SUBMITTED: "Submitted",
+      AWAITING: "Awaiting response",
+      APPROVED: "Approved",
+      REJECTED: "Rejected",
+      REVISION: "Needs revision",
+      NO_RESPONSE: "No response yet",
+      FOLLOW_UP: "Follow-up",
+      ESCALATION: "Escalation",
+      CLOSED: "Closed",
+    },
+    replyCard: {
+      title: "Amazon replied?",
+      description:
+        "Paste Amazon's reply (e.g. a Performance Notifications email) to update your case state.",
+      label: "Amazon's reply",
+      placeholder: "Paste the full reply here…",
+      submit: "Analyze reply",
+      analyzing: "Analyzing…",
+      resultsTitle: "Category: {category}",
+      noReplyYet: "No reply received yet",
+    },
+    submitCard: {
+      title: "You submitted this in Seller Central",
+      description:
+        "Mark your POA as submitted to start tracking deadlines and set a reminder for a follow-up.",
+      button: "I submitted this",
+      confirmed: "Submission recorded",
+    },
+  },
+  compose: {
+    title: "Your POA",
+    subtitle: "Generated from your case file. Review, copy, and submit through Seller Central.",
+    backButton: "Back to case",
+    gapDraft: {
+      title: "Gap draft",
+      description:
+        "Some required evidence is missing. The composer has named what's missing below. Obtain these items before submitting.",
+    },
+    fullDraft: {
+      title: "Full draft",
+      description: "All required evidence is present. This is a complete Plan of Action.",
+    },
+    sections: {
+      rootCause: "Root Cause",
+      correctiveActions: "Corrective Actions",
+      preventiveMeasures: "Preventive Measures",
+      evidenceGaps: "Evidence Gaps (Action Required)",
+    },
+    checklist: {
+      title: "Before you submit",
+      submitYourself: "You submit this yourself in Seller Central.",
+    },
+    copyAll: "Copy full POA",
+    openSellerCentral: "Open Seller Central",
+  },
+  interview: {
+    saveAndExit: "Save & exit",
+    saveAndExitToast: "Your case has been saved to the vault. You can resume from the dashboard.",
+    unlockPrompt: {
+      title: "Unlock your vault",
+      desc: "Enter your passphrase to decrypt your case data. The key never leaves your device.",
+      placeholder: "Passphrase",
+    },
+    resumePrompt: {
+      title: "Resume your case?",
+      desc: "You have a saved case file in your vault. Resume where you left off, or start fresh.",
+      resume: "Resume case",
+      startOver: "Start over",
+    },
+    declineNote: "Declined — not claimed. The engine will adapt; you can still proceed.",
   },
   breadcrumb: {
     home: "Home",
+    dashboard: "Dashboard",
   },
 } as const;

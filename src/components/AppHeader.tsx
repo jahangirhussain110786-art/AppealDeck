@@ -16,14 +16,15 @@ const MARKETING_NAV = [
 ];
 
 const APP_NAV = [
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/case", label: "Case" },
   { href: "/vault", label: "Vault" },
   { href: "/billing", label: "Billing" },
 ];
 
-function Logo() {
+function Logo({ href = "/" }: { href?: string }) {
   return (
-    <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-foreground">
+    <Link href={href} className="flex items-center gap-2 text-lg font-semibold text-foreground">
       <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15 text-primary">
         <FileSearch className="h-5 w-5" />
       </span>
@@ -60,7 +61,7 @@ export function AppHeader({ mode = "marketing", user }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Logo />
+        <Logo href={mode === "app" ? "/dashboard" : "/"} />
 
         <div className="flex items-center gap-1">
           <nav className="hidden items-center gap-2 sm:flex" aria-label="Primary">

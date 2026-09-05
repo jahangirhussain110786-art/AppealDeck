@@ -33,7 +33,7 @@ function LoginPageInner() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
     supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
-      if (data.user) router.replace("/");
+      if (data.user) router.replace("/dashboard");
     });
     const errorParam = searchParams.get("error");
     if (errorParam) {
@@ -75,7 +75,7 @@ function LoginPageInner() {
       return;
     }
     router.refresh();
-    router.replace("/");
+    router.replace("/dashboard");
   }
 
   async function handleGoogle() {

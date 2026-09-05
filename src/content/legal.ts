@@ -48,7 +48,7 @@ export const LEGAL = {
         title: "Cookies and local storage",
         body: [
           "We use one essential cookie for your session and one to remember your colour-theme choice. You can delete both at any time.",
-          "The case file is kept in sessionStorage for your current browser tab only and is discarded when you close it.",
+          "The case file is stored encrypted in your browser's IndexedDB vault, keyed by a passphrase you set. We cannot read it.",
         ],
       },
       {

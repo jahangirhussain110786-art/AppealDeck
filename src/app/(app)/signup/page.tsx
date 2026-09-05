@@ -23,7 +23,7 @@ export default function SignupPage() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
     supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
-      if (data.user) router.replace("/");
+      if (data.user) router.replace("/dashboard");
     });
   }, [router]);
 
@@ -57,7 +57,7 @@ export default function SignupPage() {
 
     if (data.session) {
       router.refresh();
-      router.replace("/");
+      router.replace("/dashboard");
       return;
     }
 

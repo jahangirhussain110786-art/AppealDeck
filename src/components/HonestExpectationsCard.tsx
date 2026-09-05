@@ -9,7 +9,7 @@ export function HonestExpectationsCard({
   className,
 }: {
   summary: string;
-  whatToDo: string[];
+  whatToDo: readonly string[];
   severityNote?: string;
   className?: string;
 }) {

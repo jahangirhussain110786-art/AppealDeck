@@ -4,11 +4,25 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { AlertCircle, ArrowLeft, CheckCircle2, Copy, FileText, ShieldAlert } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  Copy,
+  FileText,
+  Loader2,
+  ShieldAlert,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { getBrowserVault } from "@/lib/vault/browser";
+import { loadCaseFile } from "@/lib/caseStore";
+import { PoaSection, PoaFindingsList } from "@/components/PoaSection";
+import { BeforeYouSubmitChecklist } from "@/components/BeforeYouSubmitChecklist";
+import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
+import { CopyButton } from "@/components/CopyButton";
+import { APP } from "@/content/app";
 
 interface PoaSection {
   heading: string;
@@ -52,11 +66,15 @@ function ComposeInner() {
   const [result, setResult] = useState<ComposeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [errorKind, setErrorKind] = useState<"generic" | "device_cap" | null>(null);
+  const [editedSections, setEditedSections] = useState<Record<number, string>>({});
 
-  const loadFromStorage = useCallback(() => {
+  const loadFromVault = useCallback(async (): Promise<unknown> => {
     try {
-      const raw = sessionStorage.getItem("appealdeck:caseFile");
-      if (raw) return JSON.parse(raw);
+      const vault = getBrowserVault();
+      if (vault.isUnlocked()) {
+        const existing = await loadCaseFile(vault);
+        return existing;
+      }
     } catch {
       // ignore
     }
@@ -64,21 +82,22 @@ function ComposeInner() {
   }, []);
 
   useEffect(() => {
-    const raw = searchParams?.get("caseFile") ?? loadFromStorage();
-    if (!raw) {
-      setError("No case file found. Please complete the guided interview first.");
-      return;
-    }
+    const run = async () => {
+      const sp = searchParams?.get("caseFile");
+      const raw = sp ?? (await loadFromVault());
+      if (!raw) {
+        setError("No case file found. Please complete the guided interview first.");
+        return;
+      }
 
-    let caseData: Record<string, unknown>;
-    try {
-      caseData = typeof raw === "string" ? JSON.parse(raw) : (raw as Record<string, unknown>);
-    } catch {
-      setError("Invalid case file data.");
-      return;
-    }
+      let caseData: Record<string, unknown>;
+      try {
+        caseData = typeof raw === "string" ? JSON.parse(raw) : (raw as Record<string, unknown>);
+      } catch {
+        setError("Invalid case file data.");
+        return;
+      }
 
-    (async () => {
       try {
         const vault = getBrowserVault();
         if (vault.isUnlocked()) {
@@ -126,8 +145,10 @@ function ComposeInner() {
           setErrorKind("generic");
         })
         .finally(() => setLoading(false));
-    })();
-  }, [searchParams, loadFromStorage]);
+    };
+
+    void run();
+  }, [searchParams, loadFromVault]);
 
   const handleCopy = useCallback(() => {
     if (!result?.rendered) return;
@@ -184,7 +205,7 @@ function ComposeInner() {
       {loading && (
         <Card>
           <CardContent className="flex items-center gap-3 pt-5">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <Loader2 className="h-5 w-5 animate-pulse rounded-full" />
             <span className="text-sm text-muted-foreground">Composing your plan of action…</span>
           </CardContent>
         </Card>
@@ -198,9 +219,9 @@ function ComposeInner() {
                 <div className="flex items-start gap-3">
                   <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
                   <div>
-                    <h3 className="font-medium text-foreground">Gap draft</h3>
+                    <h3 className="font-medium text-foreground">{APP.compose.gapDraft.title}</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {result.draft.mode.reason} The missing items are named below.
+                      {result.draft.mode.reason} {APP.compose.gapDraft.description}
                     </p>
                   </div>
                 </div>
@@ -208,59 +229,50 @@ function ComposeInner() {
             </Card>
           )}
 
-          {result.critique.findings.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Critic review</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {result.critique.findings.map((f, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "flex items-start gap-2 rounded-lg border p-3 text-sm",
-                      f.severity === "error" &&
-                        "border-destructive/40 bg-destructive/5 text-destructive",
-                      f.severity === "warning" && "border-warning/40 bg-warning/5 text-warning",
-                      f.severity === "info" && "border-border bg-muted/30 text-muted-foreground",
-                    )}
-                  >
-                    {f.severity === "error" ? (
-                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                    ) : (
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-                    )}
-                    <div>
-                      <span className="font-mono text-xs uppercase">{f.code}</span>
-                      <p>{f.message}</p>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
+          <PoaFindingsList findings={result.critique.findings} />
 
-          <Card>
-            <CardHeader className="flex-row items-center justify-between space-y-0">
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-primary" />
-                Plan of Action
-              </CardTitle>
-              <Button variant="outline" size="sm" onClick={handleCopy}>
-                <Copy className="mr-2 h-4 w-4" />
-                Copy
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="whitespace-pre-wrap rounded-lg border border-border bg-muted/20 p-4 font-mono text-sm text-foreground leading-relaxed"
-              >
-                {result.rendered}
-              </motion.div>
-            </CardContent>
-          </Card>
+          {result.draft.sections.map((section, i) => {
+            const edited = editedSections[i] ?? section.body;
+            return (
+              <PoaSection
+                key={i}
+                section={section}
+                index={i}
+                findings={result.critique.findings}
+                draftText={edited}
+                onEdit={(idx, text) => setEditedSections((prev) => ({ ...prev, [idx]: text }))}
+              />
+            );
+          })}
+
+          <div className="flex items-center justify-between">
+            <CopyButton text={result.rendered} label={APP.compose.copyAll} className="gap-2" />
+          </div>
+
+          <BeforeYouSubmitChecklist
+            caseFile={{
+              kind: result.draft.metadata.kind as any,
+              evidenceSlots: {},
+              actionItems: [],
+            }}
+            attemptCount={result.draft.metadata.attemptNumber - 1}
+            draftText={Object.values(editedSections).join("\n\n")}
+            allChecked={result.critique.passed}
+          />
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="border-t border-border pt-4 text-center text-sm text-muted-foreground"
+          >
+            {APP.compose.checklist.submitYourself}
+          </motion.div>
+
+          <HonestExpectationsCard
+            summary={APP.dashboard.noPassCard.summary}
+            whatToDo={APP.dashboard.noPassCard.whatToDo}
+          />
         </div>
       )}
     </>
@@ -287,7 +299,7 @@ function ComposeView() {
         fallback={
           <Card>
             <CardContent className="flex items-center gap-3 pt-5">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <Loader2 className="h-5 w-5 animate-pulse rounded-full" />
               <span className="text-sm text-muted-foreground">Loading…</span>
             </CardContent>
           </Card>

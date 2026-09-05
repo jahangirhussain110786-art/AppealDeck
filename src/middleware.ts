@@ -11,6 +11,7 @@ const SINGLE_HOST = APP_HOST === MARKETING_HOST;
 const APP_PREFIXES = [
   "/app",
   "/auth",
+  "/dashboard",
   "/case",
   "/compose",
   "/vault",

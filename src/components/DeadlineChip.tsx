@@ -86,7 +86,7 @@ function DeadlineChipContent({ deadline, now }: { deadline: Deadline; now: Date 
 
 function caveatFor(kind: Deadline["kind"]): string | null {
   if (kind === "funds_review") {
-    return "Typical, not guaranteed. The 90-day checkpoint is a review, not an automatic release.";
+    return "Typical, not automatic. The 90-day checkpoint is a review, not an automatic release.";
   }
   if (kind === "funds_appeal_eligible") {
     return "Funds appeal becomes available at this point. Submit when you can include evidence.";

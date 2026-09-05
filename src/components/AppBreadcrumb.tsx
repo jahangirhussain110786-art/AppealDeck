@@ -6,6 +6,7 @@ import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const BREADCRUMB_MAP: Record<string, string> = {
+  "/dashboard": "Dashboard",
   "/case": "Case",
   "/compose": "Compose",
   "/vault": "Vault",

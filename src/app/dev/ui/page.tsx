@@ -24,6 +24,7 @@ import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { DeadlineChipList } from "@/components/DeadlineChip";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { VerifiedStamp } from "@/components/VerifiedStamp";
+import { Stepper } from "@/components/Stepper";
 import { Kbd } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -294,6 +295,22 @@ export default function DevUiGallery() {
                   <FileText className="h-4 w-4" /> Add evidence
                 </Button>
               }
+            />
+          </CardContent>
+        </Card>
+      </Section>
+
+      <Section title="Patterns - Stepper">
+        <Card>
+          <CardContent className="pt-5">
+            <Stepper
+              steps={[
+                { id: "root", label: "Root cause", state: "done" },
+                { id: "timeline", label: "Timeline", state: "current" },
+                { id: "evidence", label: "Evidence", state: "todo", skippedReason: undefined },
+                { id: "review", label: "Review", state: "todo" },
+              ]}
+              progress={{ current: 2, total: 4, pendingEvidence: 1 }}
             />
           </CardContent>
         </Card>
