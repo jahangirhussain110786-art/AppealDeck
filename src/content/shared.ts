@@ -10,6 +10,7 @@ export const SHARED = {
       refund: "Refund",
       faq: "FAQ",
     },
+    neverSubmits: "AppealDeck never submits to Amazon on your behalf.",
   },
   metadata: {
     titleDefault: "AppealDeck — Amazon suspension notice decoder",
@@ -27,4 +28,5 @@ export const SHARED = {
   submitButton: "Submit",
   retryButton: "Retry",
   cta: "See the Appeal Pass",
+  navSkip: "Skip to main content",
 } as const;

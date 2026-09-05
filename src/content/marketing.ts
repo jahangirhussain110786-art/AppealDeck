@@ -28,6 +28,9 @@ export const HOME = {
       desc: "With the Appeal Pass, a Plan of Action you review and submit yourself.",
     },
   },
+  howItWorksTitle: "How it works",
+  howItWorksSub: "Three steps, then you decide.",
+  expectationsTitle: "What we do and do not do",
 } as const;
 
 export const DECODE = {
