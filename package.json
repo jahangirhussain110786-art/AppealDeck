@@ -18,6 +18,7 @@
     "lighthouse": "lhci autorun",
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint:copy": "node scripts/lint-copy.mjs",
     "drive:up": "node scripts/drive-mcp-up.mjs",
     "drive:down": "node scripts/drive-mcp-down.mjs",
     "filesystem:up": "node scripts/mcp-bridge-up.mjs --name filesystem --port 3111 --package @modelcontextprotocol/server-filesystem --args V:\\AppealDeck",

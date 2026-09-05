@@ -23,8 +23,14 @@ import { computeDeadlines, isIndefiniteHold } from "./deadlinesModel";
 import type { Deadline, DeadlineKind, DeadlineInput } from "./deadlinesModel";
 import { FIXTURES, FIXTURE_KINDS } from "./fixtures";
 import type { Fixture, FixtureExpected } from "./fixtures";
-import { KIND_GUIDANCE, guidanceFor } from "./guidance";
-import type { KindGuidance } from "./guidance";
+import {
+  KIND_GUIDANCE,
+  guidanceFor,
+  allGuidanceStrings,
+  GLOBAL_EXPECTATIONS,
+  POLICY_CHECKED_ON,
+} from "./guidance";
+import type { KindGuidance, TriagedActions, GlobalExpectations } from "./guidance";
 import { EVIDENCE_MATRIX, requirementsFor, requiredKinds, allKinds } from "./evidenceModel";
 import {
   nextState,
@@ -66,8 +72,8 @@ export { computeDeadlines, isIndefiniteHold };
 export type { Deadline, DeadlineKind, DeadlineInput } from "./deadlinesModel";
 export { FIXTURES, FIXTURE_KINDS };
 export type { Fixture, FixtureExpected } from "./fixtures";
-export { KIND_GUIDANCE, guidanceFor };
-export type { KindGuidance } from "./guidance";
+export { KIND_GUIDANCE, guidanceFor, allGuidanceStrings, GLOBAL_EXPECTATIONS, POLICY_CHECKED_ON };
+export type { KindGuidance, TriagedActions, GlobalExpectations };
 export { EVIDENCE_MATRIX, requirementsFor, requiredKinds, allKinds };
 export type { EvidenceKind, EvidenceRequirement } from "./evidenceModel";
 export {

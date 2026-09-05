@@ -174,7 +174,7 @@ const POLICY: EvidenceRequirement[] = [
     fields: ["updated SOP or process document", "the changed step"],
     disqualifiers: ["vague commitment to 'follow policy'"],
     whyAmazonWantsIt:
-      "A concrete process change shows the root cause is controlled, not just acknowledged.",
+      "A concrete process change shows the root cause is controlled, not merely acknowledged.",
   },
 ];
 

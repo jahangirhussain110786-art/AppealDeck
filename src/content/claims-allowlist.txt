@@ -1,0 +1,6 @@
+# Allow-listed phrases for scripts/lint-copy.mjs — one exact phrase per line.
+# Lines starting with # are comments. An allow-listed phrase must appear verbatim
+# in full (case-sensitive) to bypass the banned-pattern / banned-number regexes.
+# Review every entry: it exists only to permit an Amazon term that a real
+# policy text legitimately contains.
+# (Empty for now — add only when a genuine case arises.)

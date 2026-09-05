@@ -4,7 +4,7 @@ import { classifyStage1 } from "./classifier";
 import { computeDeadlines, isIndefiniteHold } from "./deadlinesModel";
 import { runDecode } from "./index";
 import { FIXTURES } from "./fixtures";
-import { KIND_GUIDANCE, guidanceFor } from "./guidance";
+import { KIND_GUIDANCE, guidanceFor, GLOBAL_EXPECTATIONS } from "./guidance";
 
 describe("noticeParser", () => {
   it("extracts the legacy 17-day pattern and ambiguity flags", () => {
@@ -134,5 +134,34 @@ describe("guidance (KIND_GUIDANCE)", () => {
   it("flags the severity-gated inauthentic class with a severity note", () => {
     expect(guidanceFor("INAUTHENTIC_DOCUMENTS").severityNote).toBeDefined();
     expect(guidanceFor("POLICY").severityNote).toBeUndefined();
+  });
+
+  it("provides do-now and do-not triage for every kind", () => {
+    for (const kind of Object.keys(KIND_GUIDANCE) as Array<keyof typeof KIND_GUIDANCE>) {
+      const g = KIND_GUIDANCE[kind];
+      expect(g.triage).toBeDefined();
+      expect(g.triage.doNow.length).toBeGreaterThan(1);
+      expect(g.triage.doNot.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("passes the banned-string gate across all guidance strings", () => {
+    const banned =
+      /guarantee|trusted by|bank-grade|military-grade|privacy-first|peace of mind|rest assured|hassle|seamless|effortless|revolutionary|ai-powered|instantly/i;
+    const numbers = /\d+ ?%|win rate|success rate|\d+ ?(hours?|hrs)/i;
+    for (const kind of Object.keys(KIND_GUIDANCE) as Array<keyof typeof KIND_GUIDANCE>) {
+      const g = KIND_GUIDANCE[kind];
+      const blob = [
+        g.title,
+        g.summary,
+        ...g.whatToDo,
+        g.severityNote ?? "",
+        ...g.triage.doNow,
+        ...g.triage.doNot,
+        GLOBAL_EXPECTATIONS.typicalNote,
+      ].join("\n");
+      expect(banned.test(blob), `${kind}: banned string in guidance`).toBe(false);
+      expect(numbers.test(blob), `${kind}: banned number in guidance`).toBe(false);
+    }
   });
 });
