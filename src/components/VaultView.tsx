@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -44,6 +45,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { APP } from "@/content/app";
 import type { EvidenceKind } from "@/core/evidenceModel";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
+import { VaultGate } from "@/components/VaultGate";
 
 type Phase =
   | { kind: "loading" }
@@ -93,40 +95,26 @@ function evidenceKindLabel(kind: EvidenceKind): string {
 
 export default function VaultView({ userId }: { userId: string }) {
   const vault = useVault();
-  const [phase, setPhase] = React.useState<Phase>({ kind: "loading" });
   const [items, setItems] = React.useState<VaultListItem[]>([]);
-  const [passphrase, setPassphrase] = React.useState("");
-  const [confirm, setConfirm] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [filterKind, setFilterKind] = React.useState<EvidenceKind | "all">("all");
   const [deleteTarget, setDeleteTarget] = React.useState<VaultListItem | null>(null);
 
   const refresh = React.useCallback(async () => {
-    if (phase.kind !== "unlocked") return;
     const list = await vault.list(filterKind !== "all" ? { evidenceKind: filterKind } : undefined);
     setItems(list);
-  }, [phase, vault, filterKind]);
+  }, [vault, filterKind]);
 
   React.useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         await vault.open();
         const initialized = await vault.isInitialized();
-        if (cancelled) return;
-        if (!initialized) {
-          setPhase({ kind: "needs_init" });
-        } else {
-          const s = await vault.status();
-          if (cancelled) return;
-          if (s.state === "locked") {
-            setPhase({ kind: "locked", status: s });
-          } else if (s.state === "unlocked") {
-            setPhase({ kind: "unlocked" });
-            const list = await vault.list();
-            if (!cancelled) setItems(list);
-          }
+        if (!cancelled && initialized) {
+          const list = await vault.list();
+          if (!cancelled) setItems(list);
         }
       } catch (e) {
         toast.error("Vault failed to open", {
@@ -139,61 +127,8 @@ export default function VaultView({ userId }: { userId: string }) {
     };
   }, [vault]);
 
-  const onInit = async () => {
-    if (passphrase.length < 8) {
-      toast.error("Passphrase must be at least 8 characters");
-      return;
-    }
-    if (passphrase !== confirm) {
-      toast.error("Passphrases do not match");
-      return;
-    }
-    setBusy(true);
-    try {
-      await vault.initWithPassphrase(passphrase);
-      setPassphrase("");
-      setConfirm("");
-      setPhase({ kind: "unlocked" });
-      toast.success("Vault initialized", {
-        description:
-          "Your data is encrypted on this device. Your passphrase never leaves the browser.",
-      });
-      setItems(await vault.list());
-    } catch (e) {
-      toast.error("Could not initialize vault", {
-        description: e instanceof Error ? e.message : "Unknown error",
-      });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const onUnlock = async () => {
-    setBusy(true);
-    try {
-      await vault.unlock(passphrase);
-      setPassphrase("");
-      setPhase({ kind: "unlocked" });
-      toast.success("Vault unlocked");
-      setItems(await vault.list());
-    } catch (e) {
-      if (e instanceof VaultCryptoError) {
-        toast.error("That passphrase didn't unlock the vault", {
-          description: "Try again, or use the same passphrase you set on another device.",
-        });
-      } else {
-        toast.error("Unlock failed", {
-          description: e instanceof Error ? e.message : "Unknown error",
-        });
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const onLock = () => {
     vault.lock();
-    setPhase({ kind: "locked", status: { state: "locked", mode: "passphrase", hasWrapped: true } });
     setItems([]);
   };
 
@@ -294,71 +229,6 @@ export default function VaultView({ userId }: { userId: string }) {
     }
   };
 
-  if (phase.kind === "loading") {
-    return <Card className="p-6 text-sm text-muted-foreground">Loading vault…</Card>;
-  }
-
-  if (phase.kind === "needs_init") {
-    return (
-      <Card className="p-6">
-        <h2 className="mb-1 text-lg font-semibold">Set a vault passphrase</h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Your evidence is encrypted on this device with a key derived from this passphrase
-          (PBKDF2-SHA-256, 310,000 iterations) plus AES-GCM. We never see the passphrase. If you
-          forget it, your data is unrecoverable.
-        </p>
-        <div className="flex flex-col gap-3">
-          <input
-            type="password"
-            autoComplete="new-password"
-            value={passphrase}
-            onChange={(e) => setPassphrase(e.target.value)}
-            placeholder="Passphrase (min 8 chars)"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          />
-          <input
-            type="password"
-            autoComplete="new-password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            placeholder="Confirm passphrase"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          />
-          <Button onClick={onInit} disabled={busy}>
-            <ShieldCheck className="size-4" /> Create vault
-          </Button>
-        </div>
-      </Card>
-    );
-  }
-
-  if (phase.kind === "locked") {
-    return (
-      <Card className="p-6">
-        <h2 className="mb-1 text-lg font-semibold">Unlock your vault</h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Enter your passphrase to decrypt your evidence. The key never leaves your device.
-        </p>
-        <div className="flex flex-col gap-3">
-          <input
-            type="password"
-            autoComplete="current-password"
-            value={passphrase}
-            onChange={(e) => setPassphrase(e.target.value)}
-            placeholder="Passphrase"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") void onUnlock();
-            }}
-          />
-          <Button onClick={onUnlock} disabled={busy}>
-            <Unlock className="size-4" /> Unlock
-          </Button>
-        </div>
-      </Card>
-    );
-  }
-
   const displayItems = items.filter((it) => it.kind !== "case");
 
   const filteredItems = displayItems.filter(
@@ -368,171 +238,218 @@ export default function VaultView({ userId }: { userId: string }) {
       (filterKind === "all" || it.evidenceKind === filterKind),
   );
 
-  const totalBytes = displayItems.reduce((sum, it) => sum + it.sizeBytes, 0);
+  const totalBytes = filteredItems.reduce((sum, it) => sum + it.sizeBytes, 0);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Your encrypted evidence</h2>
-          <p className="text-sm text-muted-foreground">
-            Envelope v{VAULT_ENVELOPE_VERSION}, AES-GCM, key derived from your passphrase on this
-            device.
-          </p>
-        </div>
-        <LocalFirstBadge />
-      </div>
+    <VaultGate
+      vault={vault}
+      onUnlocked={() => {
+        void refresh();
+      }}
+    >
+      {() => (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">Your encrypted evidence</h2>
+              <p className="text-sm text-muted-foreground">
+                Envelope v{VAULT_ENVELOPE_VERSION}, AES-GCM, key derived from your passphrase on
+                this device.
+              </p>
+            </div>
+            <LocalFirstBadge />
+          </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder={APP.vault.searchPlaceholder}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
-          {searchTerm && (
-            <button
-              type="button"
-              onClick={() => setSearchTerm("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
-              aria-label="Clear search"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
-        </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder={APP.vault.searchPlaceholder}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={filterKind}
-            onChange={(e) => setFilterKind(e.target.value as typeof filterKind)}
-            className="text-sm rounded-md border border-border bg-background px-2 py-1"
-            aria-label="Filter by evidence kind"
-          >
-            <option value="all">All evidence</option>
-            {EVIDENCE_KINDS.map((k) => (
-              <option key={k} value={k}>
-                {evidenceKindLabel(k)}
-              </option>
-            ))}
-          </select>
-          <Button onClick={() => void refresh()} variant="outline" size="sm" disabled={busy}>
-            <RefreshCw className="size-4" />
-          </Button>
-          <Button onClick={onSyncUp} variant="outline" size="sm" disabled={busy}>
-            <Cloud className="size-4" />
-          </Button>
-          <Button onClick={onLock} variant="outline" size="sm">
-            <Lock className="size-4" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          {filteredItems.length} {filteredItems.length === 1 ? "record" : "records"}
-        </span>
-        <span className="tabular-nums">{formatBytes(totalBytes)} total</span>
-      </div>
-
-      <FileDropZone onFile={onAddFile} disabled={busy} />
-
-      {filteredItems.length === 0 ? (
-        <Card className="p-6">
-          <CardContent className="pt-0">
-            <EmptyState
-              icon={FileText}
-              title={APP.vault.teachingEmpty.title}
-              description={APP.vault.teachingEmpty.description}
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          <AnimatePresence initial={false}>
-            {filteredItems.map((it) => (
-              <motion.li
-                key={it.id}
-                layout
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={filterKind}
+                onChange={(e) => setFilterKind(e.target.value as typeof filterKind)}
+                className="text-sm rounded-md border border-border bg-background px-2 py-1"
+                aria-label="Filter by evidence kind"
               >
-                <Card className="flex items-center justify-between p-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {mimeTypeToIcon(it.mimeType)}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 truncate text-sm font-medium">
-                        <span>{it.name}</span>
-                        <EvidenceStatusBadge status="present" />
-                        <span className="text-xs text-muted-foreground font-mono">
-                          [{APP.vault.encryptedBadge}]
-                        </span>
+                <option value="all">All evidence</option>
+                {EVIDENCE_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {evidenceKindLabel(k)}
+                  </option>
+                ))}
+              </select>
+              <Button onClick={() => void refresh()} variant="outline" size="sm" disabled={busy}>
+                <RefreshCw className="size-4" />
+              </Button>
+              <Button onClick={onSyncUp} variant="outline" size="sm" disabled={busy}>
+                <Cloud className="size-4" />
+              </Button>
+              <Button onClick={onLock} variant="outline" size="sm">
+                <Lock className="size-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>
+              {filteredItems.length} record of {displayItems.length}
+              {filteredItems.length !== displayItems.length && ` of ${displayItems.length}`}
+            </span>
+            <span className="tabular-nums">{formatBytes(totalBytes)} total</span>
+          </div>
+
+          <FileDropZone onFile={onAddFile} disabled={busy} />
+
+          {displayItems.length === 0 ? (
+            <Card className="p-6">
+              <CardContent className="pt-0">
+                <EmptyState
+                  icon={FileText}
+                  title={APP.vault.teachingEmpty.title}
+                  description={APP.vault.teachingEmpty.description}
+                />
+              </CardContent>
+            </Card>
+          ) : filteredItems.length === 0 ? (
+            <Card className="p-6">
+              <CardContent className="pt-0">
+                <EmptyState
+                  icon={FileText}
+                  title="No files match"
+                  description={
+                    searchTerm ? `No results for "${searchTerm}"` : "Adjust your filter."
+                  }
+                  action={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSearchTerm("");
+                        setFilterKind("all");
+                      }}
+                    >
+                      Clear search
+                    </Button>
+                  }
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              <AnimatePresence initial={false}>
+                {filteredItems.map((it) => (
+                  <motion.li
+                    key={it.id}
+                    layout
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <Card className="flex items-center justify-between p-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {mimeTypeToIcon(it.mimeType)}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 truncate text-sm font-medium">
+                            <span>{it.name}</span>
+                            {it.evidenceKind && <EvidenceStatusBadge status="present" />}
+                            <Badge variant="outline">{APP.vault.encryptedBadge}</Badge>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {it.mimeType} · {formatBytes(it.sizeBytes)} ·{" "}
+                            {new Date(it.createdAt)
+                              .toLocaleString(undefined, {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                              .replace(/\s/g, " ")}
+                            {it.evidenceKind
+                              ? ` · ${evidenceKindLabel(it.evidenceKind as EvidenceKind)}`
+                              : ""}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {it.mimeType} · {formatBytes(it.sizeBytes)} ·{" "}
-                        {new Date(it.createdAt).toLocaleString()}
-                        {it.evidenceKind
-                          ? ` · ${evidenceKindLabel(it.evidenceKind as EvidenceKind)}`
-                          : ""}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void onView(it.id)}
+                          aria-label="View"
+                        >
+                          <Eye className="size-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void onDownload(it.id)}
+                          aria-label="Download"
+                        >
+                          <Download className="size-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setDeleteTarget(it)}
+                          aria-label="Delete"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
                       </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" onClick={() => void onView(it.id)}>
-                      <Eye className="size-4" />
-                      <span className="sr-only">View</span>
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => void onDownload(it.id)}>
-                      <Download className="size-4" />
-                      <span className="sr-only">Download</span>
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(it)}>
-                      <Trash2 className="size-4" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
-                  </div>
-                </Card>
-              </motion.li>
-            ))}
-          </AnimatePresence>
-        </ul>
-      )}
-
-      <p className="text-xs text-muted-foreground">
-        Preview fingerprint: {asBase64(new TextEncoder().encode(userId)).slice(0, 8)}… (envelope v
-        {VAULT_ENVELOPE_VERSION})
-      </p>
-
-      {APP.vault.caseRecordsHidden && (
-        <p className="text-xs text-muted-foreground">{APP.vault.caseRecordsHidden}</p>
-      )}
-
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent>
-          {deleteTarget && (
-            <>
-              <DialogTitle>
-                {APP.vault.deleteConfirm.title.replace("{name}", deleteTarget.name)}
-              </DialogTitle>
-              <DialogDescription>{APP.vault.deleteConfirm.description}</DialogDescription>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-                  {APP.vault.deleteConfirm.cancel}
-                </Button>
-                <Button variant="destructive" onClick={() => void confirmDelete()}>
-                  {APP.vault.deleteConfirm.confirm}
-                </Button>
-              </DialogFooter>
-            </>
+                    </Card>
+                  </motion.li>
+                ))}
+              </AnimatePresence>
+            </ul>
           )}
-        </DialogContent>
-      </Dialog>
-    </div>
+
+          <p className="text-xs text-muted-foreground">
+            Case file and logs are stored separately. Unlock your case on the dashboard.
+          </p>
+
+          <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+            <DialogContent>
+              {deleteTarget && (
+                <>
+                  <DialogTitle>
+                    {APP.vault.deleteConfirm.title.replace("{name}", deleteTarget.name)}
+                  </DialogTitle>
+                  <DialogDescription>{APP.vault.deleteConfirm.description}</DialogDescription>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                      {APP.vault.deleteConfirm.cancel}
+                    </Button>
+                    <Button variant="destructive" onClick={() => void confirmDelete()}>
+                      {APP.vault.deleteConfirm.confirm}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
+    </VaultGate>
   );
 }
 

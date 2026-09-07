@@ -13,7 +13,6 @@ import {
   HelpCircle,
   Loader2,
   Save,
-  Unlock,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FieldSuggester } from "@/components/FieldSuggester";
 import { Stepper } from "@/components/Stepper";
 import type { StepperStep } from "@/components/Stepper";
+import { VaultGate } from "@/components/VaultGate";
 import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
 import { getBrowserVault } from "@/lib/vault/browser";
@@ -161,9 +161,8 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
         vaultRef.current = v;
         const initialized = await v.isInitialized();
         if (!initialized) {
-          await v.initWithPassphrase("default-default");
           setVaultReady(true);
-          setVaultUnlocked(true);
+          setVaultUnlocked(false);
           return;
         }
         const status = await v.status();
@@ -394,60 +393,27 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
     }
   }, [vaultUnlocked, caseFile]);
 
-  if (!vaultReady) {
+  if (!vaultReady || !vaultUnlocked) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4" />
-            Preparing your vault…
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!vaultUnlocked) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <Unlock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-            <div className="flex-1">
-              <h2 className="font-medium text-foreground">{APP.interview.unlockPrompt.title}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {APP.interview.unlockPrompt.desc}
-              </p>
-              <div className="mt-3 flex flex-col gap-3">
-                <Input
-                  type="password"
-                  autoComplete="current-password"
-                  value={passphrase}
-                  onChange={(e) => setPassphrase(e.target.value)}
-                  placeholder={APP.interview.unlockPrompt.placeholder}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void handleUnlock();
-                  }}
-                />
-                <Button
-                  onClick={() => void handleUnlock()}
-                  disabled={unlockBusy}
-                  size="sm"
-                  className="self-start"
-                >
-                  {unlockBusy ? <Loader2 className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                  Unlock
-                </Button>
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                <a href="/vault" className="text-primary underline-offset-4 hover:underline">
-                  Need to set up or recover your vault?
-                </a>
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <VaultGate
+        vault={vaultRef.current}
+        onUnlocked={() => {
+          setVaultReady(true);
+          setVaultUnlocked(true);
+          void (async () => {
+            const v = vaultRef.current;
+            if (!v) return;
+            try {
+              const existing = await loadCaseFile(v);
+              if (existing) setShowResumeDialog(true);
+            } catch {
+              // ignore
+            }
+          })();
+        }}
+      >
+        {() => null}
+      </VaultGate>
     );
   }
 
