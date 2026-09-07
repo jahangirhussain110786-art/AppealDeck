@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Send, FileText, Loader2, ShieldAlert } from "lucide-react";
+import { Send, FileText, Loader2, ShieldAlert, Lock } from "lucide-react";
 import { getBrowserVault } from "@/lib/vault/browser";
 import type { Vault } from "@/core/vault/vault";
 import { saveCaseLog, loadCaseLog, loadCaseFile } from "@/lib/caseStore";
@@ -31,7 +31,10 @@ import { ReplyCategoryLabel } from "@/components/ReplyCategoryLabel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { APP } from "@/content/app";
+import { GLOBAL_EXPECTATIONS } from "@/core";
 import type { LicenseSummary } from "@/lib/license";
 import type { EvidenceKind } from "@/core";
 
@@ -167,7 +170,7 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
     const logEntry: CaseLog = {
       ...currentLog,
       submittedAt: new Date().toISOString(),
-      attemptCount: caseFile.attemptCount + 1,
+      attemptCount: currentLog.attemptCount + 1,
     };
     const ctx = buildContext(caseFile, logEntry);
     logEntry.state = nextState(ctx, caseFile.state);
@@ -190,9 +193,51 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
         transition={{ duration: 0.3, delay: 0.1 }}
         className="space-y-6"
       >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded-full" />
+              <Skeleton className="h-5 w-32" />
+            </div>
+            <Skeleton className="h-4 w-48" />
+          </div>
+        </div>
+
+        <Card aria-disabled>
+          <CardHeader>
+            <CardTitle className="text-base">{APP.dashboard.readiness.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Progress value={0} aria-label={READINESS_COPY} />
+            <p className="text-xs text-muted-foreground">{READINESS_COPY}</p>
+            <Skeleton className="h-3 w-24" />
+          </CardContent>
+        </Card>
+
+        <Card aria-disabled>
+          <CardHeader>
+            <CardTitle className="text-base">{APP.dashboard.actions.nextBestActions}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Lock className="absolute top-4 right-4 h-4 w-4 text-muted-foreground" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4 mt-1" />
+          </CardContent>
+        </Card>
+
+        <Card aria-disabled>
+          <CardHeader>
+            <CardTitle className="text-base">{APP.dashboard.replyCard.title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Lock className="absolute top-4 right-4 h-4 w-4 text-muted-foreground" />
+            <Skeleton className="h-4 w-3/4" />
+          </CardContent>
+        </Card>
+
         <HonestExpectationsCard
-          summary={APP.dashboard.noPassCard.summary}
-          whatToDo={APP.dashboard.noPassCard.whatToDo}
+          summary={GLOBAL_EXPECTATIONS.typicalNote}
+          whatToDo={[...GLOBAL_EXPECTATIONS.whatWeDo, ...GLOBAL_EXPECTATIONS.whatWeDoNot]}
         />
         <Button asChild>
           <Link href="/pricing">{APP.dashboard.noPassCard.cta}</Link>
@@ -256,13 +301,14 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Case readiness</CardTitle>
+                <CardTitle className="text-base">{APP.dashboard.readiness.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <p className="text-xs text-muted-foreground">{READINESS_COPY}</p>
                 {readiness.missing.length > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    Missing: {readiness.missing.map((m) => m.kind).join(", ")}
+                    {APP.dashboard.readiness.missingLabel}{" "}
+                    {readiness.missing.map((m) => m.kind).join(", ")}
                   </p>
                 )}
               </CardContent>
@@ -273,8 +319,8 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
                 <DeadlineChip
                   deadline={{
                     kind: "appeal_window",
-                    dueAt: new Date(noticeDate),
-                    label: "Notice received",
+                    dueAt: null,
+                    label: APP.dashboard.deadlines.noticeReceived,
                   }}
                 />
               </div>
@@ -282,7 +328,7 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Next best actions</CardTitle>
+                <CardTitle className="text-base">{APP.dashboard.actions.nextBestActions}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ol className="list-decimal space-y-2 pl-5 text-sm">
@@ -299,8 +345,8 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
                     }
                   >
                     {next === "SUBMITTED" || next === "REVISION" || next === "APPROVED"
-                      ? "Review your POA"
-                      : "Continue case"}
+                      ? APP.dashboard.actions.reviewPoa
+                      : APP.dashboard.actions.continueCase}
                   </Link>
                 </Button>
               </CardContent>
@@ -312,7 +358,7 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
                   <div className="flex items-start gap-3">
                     <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
                     <div>
-                      <h3 className="font-medium text-foreground">Resubmission requires novelty</h3>
+                      <h3 className="font-medium text-foreground">{APP.dashboard.novelty.title}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">
                         This is attempt #{currentLog.attemptCount}. Amazon requires new information
                         or changed framing on resubmission.
@@ -360,7 +406,8 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
                     className="space-y-3"
                   >
                     <p>
-                      Amazon marked this as: <ReplyCategoryLabel category={replyResult.category} />
+                      {APP.dashboard.replyCard.markedAs}{" "}
+                      <ReplyCategoryLabel category={replyResult.category} />
                     </p>
                     {replyResult.extractedAsks.length > 0 && (
                       <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
@@ -371,7 +418,7 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
                     )}
                     <div className="flex gap-2">
                       <Button onClick={confirmReply} size="sm">
-                        Update case →
+                        {APP.dashboard.replyCard.updateButton} →
                       </Button>
                       <Button
                         variant="ghost"
@@ -381,7 +428,7 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
                           setReplyText("");
                         }}
                       >
-                        Cancel
+                        {APP.dashboard.replyCard.cancelButton}
                       </Button>
                     </div>
                   </motion.div>
