@@ -4,8 +4,15 @@ import { CheckCircle2, Circle, Shield, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { generateActionItems, noveltyRequired, READINESS_COPY } from "@/core";
-import type { CaseFileData } from "@/core/readiness";
+import {
+  computeReadiness,
+  requiredKinds,
+  noveltyRequired,
+  expectationsCopy,
+  READINESS_COPY,
+} from "@/core";
+import type { CaseFileData, EvidenceKind } from "@/core";
+import { APP } from "@/content/app";
 
 interface ChecklistItem {
   id: string;
@@ -16,9 +23,27 @@ interface ChecklistItem {
 
 interface BeforeYouSubmitChecklistProps {
   caseFile: CaseFileData;
+  /** Number of submissions already made (0 for a first submission). */
   attemptCount: number;
+  /** The full draft with the seller's edits applied. */
   draftText: string;
+  /** Whether the critic passed the draft. */
   allChecked: boolean;
+}
+
+function fill(template: string, vars: Record<string, string | number>): string {
+  return Object.entries(vars).reduce(
+    (acc, [key, value]) => acc.replace(`{${key}}`, String(value)),
+    template,
+  );
+}
+
+function evidenceLabel(kind: string): string {
+  return APP.evidenceKinds[kind as EvidenceKind] ?? kind;
+}
+
+function hasTemplatePhrases(text: string): boolean {
+  return /\[.*describe.*\]|\[.*no .* recorded\]|\[.*no specific/i.test(text);
 }
 
 export function BeforeYouSubmitChecklist({
@@ -27,64 +52,76 @@ export function BeforeYouSubmitChecklist({
   draftText,
   allChecked,
 }: BeforeYouSubmitChecklistProps) {
-  const actionItems = generateActionItems(caseFile.kind);
-  const missing = caseFile.evidenceSlots;
-  const requiredKinds = actionItems.map((a) => a.evidenceSlots).flat();
+  const copy = APP.compose.checklist;
 
-  const evidenceComplete = requiredKinds.every(
-    (k) => missing[k] && missing[k].present && !missing[k].disqualified,
-  );
+  const readiness = computeReadiness(caseFile);
+  const missing = readiness.missing.map((r) => evidenceLabel(r.kind));
+  const notAccepted = readiness.disqualifiedPresent.map(evidenceLabel);
+  const evidenceComplete = missing.length === 0 && notAccepted.length === 0;
+  const templatePhrases = hasTemplatePhrases(draftText);
+  const needsNovelty = noveltyRequired(attemptCount);
+
+  const evidenceDetail = evidenceComplete
+    ? fill(copy.evidenceComplete, { count: requiredKinds(caseFile.kind).length })
+    : [
+        fill(copy.evidenceMissing, { count: missing.length + notAccepted.length }),
+        missing.length > 0 ? fill(copy.evidenceMissingDetail, { kinds: missing.join(", ") }) : null,
+        notAccepted.length > 0
+          ? fill(copy.evidenceDisqualifiedDetail, { kinds: notAccepted.join(", ") })
+          : null,
+      ]
+        .filter((part): part is string => part !== null)
+        .join(" · ");
 
   const items: ChecklistItem[] = [
     {
       id: "evidence",
-      label: "Required evidence attached",
+      label: copy.items.evidence,
       checked: evidenceComplete,
-      detail: evidenceComplete
-        ? `${requiredKinds.length} required evidence items present`
-        : `${requiredKinds.filter((k) => !(missing[k]?.present && !missing[k]?.disqualified)).length} still missing`,
+      detail: evidenceDetail,
     },
     {
       id: "no_template_phrases",
-      label: "No template phrases left in the draft",
-      checked: !hasTemplatePhrases(draftText),
-      detail: hasTemplatePhrases(draftText)
-        ? "Found bracketed placeholders like '[Describe...]' — replace with real facts"
-        : "No placeholders detected",
+      label: copy.items.templatePhrases,
+      checked: !templatePhrases,
+      detail: templatePhrases ? copy.templatePhrases : copy.noTemplatePhrases,
     },
     {
       id: "novelty",
-      label: `Novelty on attempt ${attemptCount + 1}`,
-      checked: !noveltyRequired(attemptCount),
-      detail: noveltyRequired(attemptCount)
-        ? "This is at least your second attempt — Amazon requires new information or changed framing"
-        : "First submission — novelty not yet required",
+      label: fill(copy.items.novelty, { n: attemptCount + 1 }),
+      checked: !needsNovelty,
+      detail: needsNovelty ? expectationsCopy("REVISION") : copy.noveltyFirst,
     },
     {
       id: "submit_yourself",
-      label: "You submit this yourself in Seller Central",
+      label: copy.items.submitYourself,
       checked: true,
-      detail: "AppealDeck never submits to Amazon",
+      detail: copy.submitDetail,
     },
   ];
+
+  const readyForSellerCentral = allChecked && items.every((item) => item.checked);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Shield className="h-4 w-4 text-primary" />
-          Before you submit
+          <Shield className="h-4 w-4 text-primary" aria-hidden="true" />
+          {copy.title}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-xs text-muted-foreground">{READINESS_COPY}</p>
-        <div className="space-y-2">
+        <ul role="list" className="space-y-2">
           {items.map((item) => (
-            <div key={item.id} className="flex items-start gap-3">
+            <li key={item.id} className="flex items-start gap-3">
               {item.checked ? (
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden="true" />
               ) : (
-                <Circle className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                <Circle
+                  className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
               )}
               <div className="flex-1">
                 <span
@@ -95,28 +132,23 @@ export function BeforeYouSubmitChecklist({
                 >
                   {item.label}
                 </span>
+                <span className="sr-only">
+                  {`, ${item.checked ? copy.status.done : copy.status.pending}`}
+                </span>
                 {item.detail && <p className="text-xs text-muted-foreground">{item.detail}</p>}
               </div>
-            </div>
+            </li>
           ))}
-        </div>
-        {allChecked && (
+        </ul>
+        {readyForSellerCentral && (
           <Button asChild variant="outline" size="sm" className="mt-3 gap-2">
-            <a
-              href="https://sellercentral.amazon.com/gp/account/performancenotifications"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open Seller Central
-              <ExternalLink className="h-4 w-4" />
+            <a href={APP.links.sellerCentralPerformance} target="_blank" rel="noopener noreferrer">
+              {copy.sellerCentral}
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
           </Button>
         )}
       </CardContent>
     </Card>
   );
-}
-
-function hasTemplatePhrases(text: string): boolean {
-  return /\[.*describe.*\]|\[.*no .* recorded\]|\[.*no specific/i.test(text);
 }

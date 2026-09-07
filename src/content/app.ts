@@ -104,6 +104,13 @@ export const APP = {
       button: "I submitted this",
       confirmed: "Submission recorded",
     },
+    toasts: {
+      vaultOpenFailed: "Vault failed to open",
+      analyzeFailed: "Could not analyze reply",
+      saveReplyFailed: "Could not save reply",
+      recordSubmissionFailed: "Could not record submission",
+      unknownError: "Unknown error",
+    },
   },
   compose: {
     title: "Your POA",
@@ -130,12 +137,68 @@ export const APP = {
       preventiveMeasures: "Preventive Measures",
       evidenceGaps: "Evidence Gaps (Action Required)",
     },
+    copyAll: "Copy full POA",
+    openSellerCentral: "Open Seller Central",
+    empty: {
+      title: "No case file yet",
+      description:
+        "Complete the guided interview to build your case file, then return here to draft your Plan of Action.",
+      cta: "Start the interview",
+    },
     checklist: {
       title: "Before you submit",
       submitYourself: "You submit this yourself in Seller Central.",
+      evidenceMissing: "{count} still missing",
+      evidenceComplete: "{count} required evidence items present",
+      templatePhrases:
+        "Found bracketed placeholders like '[Describe...]' — replace with real facts",
+      noTemplatePhrases: "No placeholders detected",
+      noveltyFirst: "First submission — novelty not yet required",
+      sellerCentral: "Open Seller Central",
+      submitDetail: "AppealDeck never submits to Amazon.",
+      evidenceMissingDetail: "Missing: {kinds}",
+      evidenceDisqualifiedDetail: "Not accepted: {kinds}",
+      items: {
+        evidence: "Required evidence attached",
+        templatePhrases: "No template phrases left in the draft",
+        novelty: "Novelty on attempt {n}",
+        submitYourself: "You submit this yourself in Seller Central",
+      },
+      status: {
+        done: "Complete",
+        pending: "Not yet",
+      },
     },
-    copyAll: "Copy full POA",
-    openSellerCentral: "Open Seller Central",
+    findingFix: {
+      EMPTY_EVIDENCE_SLOTS: "Attach the required evidence before submitting.",
+      UNATTESTED_CLAIMS: "Remove any claim you have not backed with evidence.",
+      NOVELTY_REMINDER: "Add new information or changed framing for this resubmission.",
+      BANNED_GUARANTEE: "Remove any promise about Amazon's decision.",
+      BANNED_REINSTATEMENT_PROMISE: "Remove any promise that your account will be reinstated.",
+      BANNED_TIME_PROMISE: "Remove any promise about a timeline.",
+      BANNED_BLAME: "Remove blame aimed at Amazon or any third party.",
+      SEVERITY_GATE: "Address the highest-severity finding before submitting.",
+    },
+    critic: {
+      title: "Critic review",
+      asideLabel: "Critic findings",
+      copySection: "Copy {heading}",
+    },
+    deviceCap: {
+      title: "Device limit reached",
+      description: "Revoke an older device in Billing to continue.",
+      action: "Manage devices in Billing",
+    },
+    error: {
+      title: "Unable to compose",
+      fallback: "Compose failed",
+      action: "Go to case",
+    },
+    loading: "Composing your Plan of Action…",
+  },
+  links: {
+    sellerCentralPerformance:
+      "https://sellercentral.amazon.com/gp/account/performancenotifications",
   },
   billing: {
     title: "Billing",

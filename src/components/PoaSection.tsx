@@ -1,14 +1,20 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { CopyButton } from "@/components/CopyButton";
 import { SeverityBadge } from "@/components/SeverityBadge";
-import type { PoaSection as CorePoaSection, CriticFinding } from "@/core/composer";
+import { badgeSeverity, worstSeverity } from "@/lib/findingSections";
+import type { PoaSection as CorePoaSection, CriticFinding } from "@/core";
+import { APP } from "@/content/app";
+
+type FixCode = keyof typeof APP.compose.findingFix;
+
+/** One-line fix from content, keyed by finding code; falls back to the engine's message. */
+function fixLineFor(finding: CriticFinding): string {
+  return APP.compose.findingFix[finding.code as FixCode] ?? finding.message;
+}
 
 interface PoaSectionProps {
   section: CorePoaSection;
@@ -19,6 +25,28 @@ interface PoaSectionProps {
   readOnly?: boolean;
 }
 
+function FindingNotes({
+  findings,
+  label,
+  className,
+}: {
+  findings: CriticFinding[];
+  label?: string;
+  className?: string;
+}) {
+  return (
+    <ul role="list" aria-label={label} className={cn("flex flex-col gap-3", className)}>
+      {findings.map((finding, i) => (
+        <li key={`${finding.code}-${i}`} className="flex flex-col gap-1">
+          <SeverityBadge severity={badgeSeverity(finding.severity)} className="w-fit" />
+          <p className="text-xs text-muted-foreground">{fixLineFor(finding)}</p>
+          <span className="sr-only">{finding.message}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function PoaSection({
   section,
   index,
@@ -27,54 +55,23 @@ export function PoaSection({
   onEdit,
   readOnly = false,
 }: PoaSectionProps) {
-  const sectionFindings = findings.filter((f) => {
-    const lowerMsg = f.message.toLowerCase();
-    if (section.heading.toLowerCase().includes("root cause") && lowerMsg.includes("root"))
-      return true;
-    if (section.heading.toLowerCase().includes("corrective") && lowerMsg.includes("corrective"))
-      return true;
-    if (section.heading.toLowerCase().includes("preventive") && lowerMsg.includes("preventive"))
-      return true;
-    if (section.heading.toLowerCase().includes("evidence") && lowerMsg.includes("evidence"))
-      return true;
-    return false;
-  });
+  const showNotes = !readOnly && findings.length > 0;
+  const notesLabel = `${APP.compose.critic.asideLabel}: ${section.heading}`;
 
   return (
     <Card>
       <CardHeader className="flex-row items-start justify-between space-y-0 pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <span>{section.heading}</span>
-          {sectionFindings.length > 0 && (
-            <SeverityBadge
-              severity={sectionFindings.some((f) => f.severity === "error") ? "high" : "medium"}
-            />
-          )}
+          {findings.length > 0 && <SeverityBadge severity={worstSeverity(findings)} />}
         </CardTitle>
-        <CopyButton text={section.body} label={`Copy ${section.heading}`} />
+        <CopyButton
+          text={readOnly ? section.body : draftText}
+          label={APP.compose.critic.copySection.replace("{heading}", section.heading)}
+        />
       </CardHeader>
       <CardContent>
-        <div className="flex items-start gap-3">
-          {!readOnly && sectionFindings.length > 0 && (
-            <div className="mt-0.5 flex flex-col items-center gap-1">
-              {sectionFindings.map((f, fi) => (
-                <div key={fi} className="flex flex-col items-center">
-                  <AlertCircle
-                    className={cn(
-                      "h-3.5 w-3.5",
-                      f.severity === "error"
-                        ? "text-destructive"
-                        : f.severity === "warning"
-                          ? "text-warning"
-                          : "text-info",
-                    )}
-                    aria-label={`Finding: ${f.code}`}
-                  />
-                  <span className="sr-only">{f.message}</span>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="flex items-start gap-4">
           {readOnly ? (
             <pre className="flex-1 whitespace-pre-wrap rounded border border-border bg-muted/20 p-3 font-mono text-sm text-foreground">
               {section.body}
@@ -83,11 +80,20 @@ export function PoaSection({
             <Textarea
               value={draftText}
               onChange={(e) => onEdit(index, e.target.value)}
+              aria-label={section.heading}
               className="font-mono text-sm"
               rows={Math.min(8, 3 + Math.ceil(section.body.length / 80))}
             />
           )}
+          {showNotes && (
+            <aside aria-label={notesLabel} className="hidden w-56 shrink-0 md:block">
+              <FindingNotes findings={findings} />
+            </aside>
+          )}
         </div>
+        {showNotes && (
+          <FindingNotes findings={findings} label={notesLabel} className="mt-3 md:hidden" />
+        )}
       </CardContent>
     </Card>
   );
@@ -99,30 +105,38 @@ export function PoaFindingsList({ findings }: { findings: CriticFinding[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Critic review</CardTitle>
+        <CardTitle className="text-base">{APP.compose.critic.title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {findings.map((f, i) => (
-          <div
-            key={i}
-            className={cn(
-              "flex items-start gap-2 rounded-lg border p-3 text-sm",
-              f.severity === "error" && "border-destructive/40 bg-destructive/5 text-destructive",
-              f.severity === "warning" && "border-warning/40 bg-warning/5 text-warning",
-              f.severity === "info" && "border-border bg-muted/30 text-muted-foreground",
-            )}
-          >
-            {f.severity === "error" ? (
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            ) : (
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-            )}
-            <div>
-              <span className="font-mono text-xs uppercase">{f.code}</span>
-              <p>{f.message}</p>
-            </div>
-          </div>
-        ))}
+      <CardContent>
+        <ul role="list" className="space-y-2">
+          {findings.map((finding, i) => {
+            const fix = fixLineFor(finding);
+            return (
+              <li
+                key={`${finding.code}-${i}`}
+                className={cn(
+                  "flex items-start gap-3 rounded-lg border p-3 text-sm",
+                  finding.severity === "error" &&
+                    "border-destructive/40 bg-destructive/5 text-destructive",
+                  finding.severity === "warning" && "border-warning/40 bg-warning/5 text-warning",
+                  finding.severity === "info" && "border-border bg-muted/30 text-muted-foreground",
+                )}
+              >
+                <SeverityBadge
+                  severity={badgeSeverity(finding.severity)}
+                  className="mt-0.5 shrink-0"
+                />
+                <div className="space-y-1">
+                  <span className="font-mono text-xs uppercase">{finding.code}</span>
+                  <p>{finding.message}</p>
+                  {fix !== finding.message && (
+                    <p className="text-xs text-muted-foreground">{fix}</p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </CardContent>
     </Card>
   );
