@@ -19,7 +19,6 @@ export interface StepperProps {
 
 export function Stepper({ steps, currentId, progress, className }: StepperProps) {
   const activeIndex = currentId ? steps.findIndex((s) => s.id === currentId) : -1;
-  const doneCount = steps.filter((s) => s.state === "done").length;
 
   return (
     <div
@@ -76,7 +75,7 @@ export function Stepper({ steps, currentId, progress, className }: StepperProps)
         >
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
           <span>
-            {progress.current}/{progress.total}
+            Step {progress.current}/{progress.total} · {steps[activeIndex]?.label ?? ""}
           </span>
         </div>
       )}

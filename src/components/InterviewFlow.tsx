@@ -9,9 +9,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  FileUp,
   HelpCircle,
-  Loader2,
   Save,
   XCircle,
 } from "lucide-react";
@@ -40,7 +38,11 @@ import {
   deleteCaseFile,
   loadCaseLog,
   saveCaseLog,
+  CASE_ID,
 } from "@/lib/caseStore";
+import type { CaseLog } from "@/lib/caseStore";
+import { FileDropZone } from "@/components/FileDropZone";
+import type { AddDocumentInput, VaultListItem } from "@/core/vault/vault";
 import type { Vault } from "@/core/vault/vault";
 import type { CaseFile as CoreCaseFile } from "@/core/interviewEngine";
 import { nextStep, interviewProgress } from "@/core/interviewEngine";
@@ -149,8 +151,13 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
   const vaultRef = useRef<Vault | null>(null);
   const [vaultReady, setVaultReady] = useState(false);
   const [vaultUnlocked, setVaultUnlocked] = useState(false);
-  const [passphrase, setPassphrase] = useState("");
-  const [unlockBusy, setUnlockBusy] = useState(false);
+  const [showVaultPicker, setShowVaultPicker] = useState(false);
+  const [vaultRecords, setVaultRecords] = useState<VaultListItem[]>([]);
+  const [ariaAnnounce, setAriaAnnounce] = useState("");
+
+  useEffect(() => {
+    setAriaAnnounce(`${step?.title}. ${step?.prompt}`);
+  }, [step?.id]);
   const [showResumeDialog, setShowResumeDialog] = useState(false);
 
   useEffect(() => {
@@ -307,27 +314,6 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
     vaultUnlocked,
   ]);
 
-  const handleUnlock = useCallback(async () => {
-    if (!vaultRef.current || passphrase.length < 8) {
-      if (passphrase.length < 8) toast.error("Passphrase must be at least 8 characters");
-      return;
-    }
-    setUnlockBusy(true);
-    try {
-      await vaultRef.current.unlock(passphrase);
-      setPassphrase("");
-      setVaultUnlocked(true);
-      const existing = await loadCaseFile(vaultRef.current);
-      if (existing) setShowResumeDialog(true);
-    } catch (e) {
-      toast.error("Unlock failed", {
-        description: e instanceof Error ? e.message : "Unknown error",
-      });
-    } finally {
-      setUnlockBusy(false);
-    }
-  }, [passphrase]);
-
   const handleResume = useCallback(async () => {
     if (!vaultRef.current || !vaultUnlocked) return;
     try {
@@ -380,12 +366,19 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
   const dismissWhyHint = useCallback(async () => {
     setWhyHintDismissed(true);
     setShowWhy(false);
-    if (vaultRef.current && vaultUnlocked && caseFile) {
+    if (vaultRef.current && vaultUnlocked) {
       try {
         const log = await loadCaseLog(vaultRef.current).catch(() => null);
         if (log) {
           log.whyHintDismissed = true;
           await saveCaseLog(vaultRef.current, log);
+        } else {
+          const newLog: CaseLog = {
+            state: "DECODED",
+            attemptCount: caseFile?.attemptCount ?? 0,
+            whyHintDismissed: true,
+          };
+          await saveCaseLog(vaultRef.current, newLog);
         }
       } catch {
         // non-fatal
@@ -436,9 +429,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
         </Dialog>
 
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            What kind of enforcement are you appealing? The engine tailors every step to this.
-          </p>
+          <p className="text-sm text-muted-foreground"> {APP.interview.kindPrompt}</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {(Object.keys(KIND_LABELS) as ViolationKind[]).map((k) => (
               <Button
@@ -464,13 +455,10 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
             <div className="space-y-2">
-              <h3 className="font-medium text-foreground">Interview complete</h3>
-              <p className="text-sm text-muted-foreground">
-                Your case file is ready. The composer will draft your POA from the facts you
-                provided.
-              </p>
+              <h3 className="font-medium text-foreground">{APP.interview.complete.title}</h3>
+              <p className="text-sm text-muted-foreground">{APP.interview.complete.desc}</p>
               <Button asChild>
-                <a href="/compose">Continue to composer</a>
+                <a href="/compose">{APP.interview.complete.continue}</a>
               </Button>
             </div>
           </div>
@@ -559,28 +547,24 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                 Step {progress.current} of {progress.total}
               </span>
               {progress.pendingEvidence > 0 && (
-                <span>{progress.pendingEvidence} evidence item(s) pending</span>
+                <span>
+                  {APP.interview.pendingEvidence.replace(
+                    "{count}",
+                    String(progress.pendingEvidence),
+                  )}
+                </span>
               )}
             </div>
           </div>
         )}
 
-        <div className="lg:hidden">
+        <div className="md:hidden">
           <div
             className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur supports-backdrop-blur:bg-background/80 border-t border-border pb-[env(safe-area-inset-bottom)]"
-            role="status"
-            aria-label="Step controls"
+            role="group"
+            aria-label={APP.interview.stepControls}
           >
             <div className="p-4">
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                <span>
-                  Step {progress?.current} of {progress?.total}
-                </span>
-                <Button variant="ghost" size="sm" onClick={handleSaveAndExit} disabled={loading}>
-                  <Save className="h-4 w-4" />
-                  <span className="sr-only">Save &amp; exit</span>
-                </Button>
-              </div>
               <Button
                 className="w-full"
                 onClick={handleSubmit}
@@ -588,15 +572,15 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                   loading || (!choiceId && !answerValue.trim() && step.inputType !== "file")
                 }
               >
-                {loading ? "Saving..." : "Continue"}
+                {loading ? APP.interview.saving : APP.interview.continue}
               </Button>
             </div>
           </div>
+          <div className="h-16" />
         </div>
 
         <div aria-live="polite" aria-atomic className="sr-only">
-          Step {step.title}. {step.prompt}
-          {loading ? "Loading" : "Ready"}
+          {ariaAnnounce}
         </div>
 
         <AnimatePresence mode="wait">
@@ -624,7 +608,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                     >
                       <span className="flex items-center gap-2">
                         <HelpCircle className="h-4 w-4 text-primary" />
-                        Why does Amazon want this?
+                        {APP.interview.whyAmazonWants}
                       </span>
                       {showWhy ? (
                         <ChevronUp className="h-4 w-4" />
@@ -637,6 +621,20 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                         {step.whyAmazonWantsIt}
                       </div>
                     )}
+                  </div>
+                )}
+
+                {!whyHintDismissed && !caseFile && step.id === "intake_root_cause" && (
+                  <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+                    <p className="text-muted-foreground">{APP.interview.whyHint}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => void dismissWhyHint()}
+                    >
+                      {APP.interview.whyHintDismiss}
+                    </Button>
                   </div>
                 )}
 
@@ -671,7 +669,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                       <Textarea
                         value={answerValue}
                         onChange={(e) => setAnswerValue(e.target.value)}
-                        placeholder="Type your answer..."
+                        placeholder={APP.interview.answerPlaceholder}
                         rows={4}
                       />
                     )}
@@ -693,17 +691,75 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                         type="number"
                         value={answerValue}
                         onChange={(e) => setAnswerValue(e.target.value)}
-                        placeholder="Enter a number"
+                        placeholder={APP.interview.numberPlaceholder}
                       />
                     )}
 
-                    {step.inputType === "file" && (
-                      <div className="rounded-lg border-2 border-dashed border-border bg-muted/20 p-6 text-center">
-                        <FileUp className="mx-auto h-8 w-8 text-muted-foreground" />
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          File upload is simulated in this build. Click below to mark as attached.
-                        </p>
-                      </div>
+                    {step.inputType === "file" && step.evidenceKind && vaultRef.current && (
+                      <FileDropZone
+                        onFile={async (file) => {
+                          const buf = new Uint8Array(await file.arrayBuffer());
+                          const input: AddDocumentInput = {
+                            name: file.name,
+                            mimeType: file.type || "application/octet-stream",
+                            data: buf,
+                            kind: "document",
+                            evidenceKind: step.evidenceKind,
+                            caseId: CASE_ID,
+                          };
+                          await vaultRef.current!.add(input);
+                          toast.success(`"${file.name}" saved to vault`, {
+                            description: "Evidence is encrypted on your device.",
+                          });
+                        }}
+                        disabled={loading}
+                        hint={APP.interview.fileUpload.maxMb}
+                      />
+                    )}
+
+                    {step.inputType === "file" && step.evidenceKind && vaultRef.current && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={async () => {
+                          const recs = await vaultRef.current!.list({
+                            evidenceKind: step.evidenceKind,
+                          });
+                          setVaultRecords(recs.filter((r) => r.kind !== "case"));
+                          setShowVaultPicker(true);
+                        }}
+                        disabled={loading}
+                      >
+                        {APP.interview.fileUpload.alreadyHave}
+                      </Button>
+                    )}
+
+                    {showVaultPicker && vaultRef.current && (
+                      <Dialog open={showVaultPicker} onOpenChange={setShowVaultPicker}>
+                        <DialogContent>
+                          <DialogTitle>{APP.interview.fileUpload.pickFromVault}</DialogTitle>
+                          <DialogDescription>
+                            {vaultRecords.length === 0
+                              ? APP.interview.fileUpload.noMatching
+                              : "Select a record to mark as present."}
+                          </DialogDescription>
+                          <div className="space-y-2">
+                            {vaultRecords.map((r) => (
+                              <Button
+                                key={r.id}
+                                variant="outline"
+                                className="w-full justify-start"
+                                onClick={async () => {
+                                  setShowVaultPicker(false);
+                                  await handleSubmit();
+                                }}
+                              >
+                                {r.name}
+                              </Button>
+                            ))}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     )}
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -713,7 +769,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                           loading || (!choiceId && !answerValue.trim() && step.inputType !== "file")
                         }
                       >
-                        {loading ? "Saving..." : "Continue"}
+                        {loading ? APP.interview.saving : APP.interview.continue}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                       <Button
@@ -725,12 +781,29 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                         <Save className="mr-2 h-4 w-4" />
                         {APP.interview.saveAndExit}
                       </Button>
+                      {step.inputType === "file" && step.evidenceKind && vaultRef.current && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            const recs = await vaultRef.current!.list({
+                              evidenceKind: step.evidenceKind,
+                            });
+                            setVaultRecords(recs.filter((r) => r.kind !== "case"));
+                            setShowVaultPicker(true);
+                          }}
+                          disabled={loading}
+                        >
+                          {APP.interview.fileUpload.alreadyHave}
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         onClick={() => setDeclineMode(true)}
                         disabled={loading}
                       >
-                        <XCircle className="mr-2 h-4 w-4" />I can&apos;t or won&apos;t provide this
+                        <XCircle className="mr-2 h-4 w-4" />
+                        {APP.interview.declineButton}
                       </Button>
                     </div>
                   </div>
@@ -770,13 +843,13 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                     <Textarea
                       value={declineReason}
                       onChange={(e) => setDeclineReason(e.target.value)}
-                      placeholder="Optional: explain why (stays in your case file only)"
+                      placeholder={APP.interview.declinePlaceholder}
                       rows={2}
                     />
 
                     <div className="flex flex-wrap gap-2">
                       <Button onClick={handleSubmit} disabled={loading} variant="destructive">
-                        Confirm and continue
+                        {APP.interview.confirmDecline}
                       </Button>
                       <Button
                         variant="ghost"
@@ -787,7 +860,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                         }}
                         disabled={loading}
                       >
-                        Go back
+                        {APP.interview.goBack}
                       </Button>
                     </div>
                   </div>

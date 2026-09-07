@@ -1,14 +1,13 @@
 import Link from "next/link";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ComposeView from "@/components/ComposeView";
+import { APP } from "@/content/app";
 
 export const dynamic = "force-dynamic";
-
-type LicenseRow = { status: string };
 
 export default async function ComposePage() {
   const user = await requireUser();
@@ -20,11 +19,10 @@ export default async function ComposePage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Your POA</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Drafts are generated from your case file. Review, copy, and submit through Seller
-            Central.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {APP.compose.title}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{APP.compose.subtitle}</p>
         </div>
 
         <Card className="border-warning/40 bg-warning/5">
@@ -32,12 +30,10 @@ export default async function ComposePage() {
             <div className="flex items-start gap-3">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
               <div>
-                <h2 className="font-medium text-foreground">Appeal Pass required</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  The POA composer requires an active Appeal Pass.
-                </p>
+                <h2 className="font-medium text-foreground">{APP.compose.noPass.title}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{APP.compose.noPass.desc}</p>
                 <Button asChild className="mt-4">
-                  <Link href="/pricing">Get the Appeal Pass</Link>
+                  <Link href="/pricing">{APP.compose.noPass.cta}</Link>
                 </Button>
               </div>
             </div>

@@ -256,6 +256,9 @@ export const APP = {
     whyHint:
       "This evidence is required for this appeal type. The engine has looked it up from Amazon's published policy for this category.",
     whyHintDismiss: "Got it",
+    declinePlaceholder: "Optional: explain why (stays in your case file only)",
+    confirmDecline: "Confirm and continue",
+    goBack: "Go back",
     complete: {
       title: "Interview complete",
       desc: "Your case file is ready. The composer will draft your POA from the facts you provided.",
@@ -264,6 +267,7 @@ export const APP = {
     noCaseYet: "No case file found",
     noCaseDesc: "Start your case on the dashboard.",
     engineBadge: "Engine: rules-first",
+    numberPlaceholder: "Enter a number",
   },
   case: {
     title: "Your case",
