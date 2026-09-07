@@ -23,7 +23,7 @@ export default async function DashboardPage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">{APP.dashboard.subtitle}</p>
       </div>
-      <DashboardClient user={user} license={license} />
+      <DashboardClient license={license} />
     </div>
   );
 }

@@ -45,7 +45,6 @@ interface ReplyAnalysis {
 }
 
 interface DashboardClientProps {
-  user: { id: string; email?: string | null };
   license: LicenseSummary;
 }
 
@@ -72,7 +71,43 @@ function buildContext(file: CaseFile, log: CaseLog | null): CaseStateContext {
   };
 }
 
-export function DashboardClient({ user, license }: DashboardClientProps) {
+function formatNoticeDate(iso: string): string {
+  return Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(iso));
+}
+
+function ReadinessCard({
+  score,
+  missingKinds,
+  locked = false,
+}: {
+  score: number;
+  missingKinds: EvidenceKind[];
+  locked?: boolean;
+}) {
+  return (
+    <Card aria-disabled={locked || undefined}>
+      <CardHeader>
+        <CardTitle className="text-base">{APP.dashboard.readiness.title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <Progress value={Math.round(score * 100)} aria-label={READINESS_COPY} />
+        <p className="text-xs text-muted-foreground">{READINESS_COPY}</p>
+        {locked ? (
+          <Skeleton className="h-3 w-24" />
+        ) : (
+          missingKinds.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {APP.dashboard.readiness.missingLabel}{" "}
+              {missingKinds.map((kind) => APP.evidenceKinds[kind]).join(", ")}
+            </p>
+          )
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function DashboardClient({ license }: DashboardClientProps) {
   const vault = useVaultInstance();
   const [caseFile, setCaseFile] = useState<CaseFile | null>(null);
   const [caseLog, setCaseLog] = useState<CaseLog | null>(null);
@@ -89,8 +124,8 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
       setReplyText("");
       setReplyResult(null);
     } catch (e) {
-      toast.error("Vault failed to open", {
-        description: e instanceof Error ? e.message : "Unknown error",
+      toast.error(APP.dashboard.toasts.vaultOpenFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
     }
   }, [vault]);
@@ -129,8 +164,8 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
       const result: ReplyAnalysis = await res.json();
       setReplyResult(result);
     } catch (e) {
-      toast.error("Could not analyze reply", {
-        description: e instanceof Error ? e.message : "Unknown error",
+      toast.error(APP.dashboard.toasts.analyzeFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
     } finally {
       setBusy(false);
@@ -155,8 +190,8 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
       setReplyText("");
       await loadFromVault();
     } catch (e) {
-      toast.error("Could not save reply", {
-        description: e instanceof Error ? e.message : "Unknown error",
+      toast.error(APP.dashboard.toasts.saveReplyFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
     }
   };
@@ -179,8 +214,8 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
       toast.success(APP.dashboard.submitCard.confirmed);
       await loadFromVault();
     } catch (e) {
-      toast.error("Could not record submission", {
-        description: e instanceof Error ? e.message : "Unknown error",
+      toast.error(APP.dashboard.toasts.recordSubmissionFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
     }
   };
@@ -203,16 +238,7 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
           </div>
         </div>
 
-        <Card aria-disabled>
-          <CardHeader>
-            <CardTitle className="text-base">{APP.dashboard.readiness.title}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Progress value={0} aria-label={READINESS_COPY} />
-            <p className="text-xs text-muted-foreground">{READINESS_COPY}</p>
-            <Skeleton className="h-3 w-24" />
-          </CardContent>
-        </Card>
+        <ReadinessCard score={0} missingKinds={[]} locked />
 
         <Card aria-disabled>
           <CardHeader>
@@ -299,30 +325,33 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
               </div>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{APP.dashboard.readiness.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-xs text-muted-foreground">{READINESS_COPY}</p>
-                {readiness.missing.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {APP.dashboard.readiness.missingLabel}{" "}
-                    {readiness.missing.map((m) => m.kind).join(", ")}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            <ReadinessCard
+              score={readiness.score}
+              missingKinds={readiness.missing.map((m) => m.kind)}
+            />
 
             {noticeDate && (
-              <div className="flex flex-wrap gap-2">
-                <DeadlineChip
-                  deadline={{
-                    kind: "appeal_window",
-                    dueAt: null,
-                    label: APP.dashboard.deadlines.noticeReceived,
-                  }}
-                />
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  <span
+                    data-tn
+                    className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-1 font-mono text-xs tabular-nums text-foreground"
+                  >
+                    {APP.dashboard.deadlines.noticeReceived} · {formatNoticeDate(noticeDate)}
+                  </span>
+                  <DeadlineChip
+                    deadline={{
+                      kind: "appeal_window",
+                      dueAt: null,
+                      label: APP.dashboard.deadlines.appealWindow,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  <Link href="/decode" className="underline-offset-4 hover:underline">
+                    {APP.dashboard.deadlines.decoderHint}
+                  </Link>
+                </p>
               </div>
             )}
 
@@ -352,7 +381,7 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
               </CardContent>
             </Card>
 
-            {expCopy === "" && isNoveltyRequired && (
+            {isNoveltyRequired && (
               <Card className="border-warning/40 bg-warning/5">
                 <CardContent className="pt-5">
                   <div className="flex items-start gap-3">
@@ -360,8 +389,7 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
                     <div>
                       <h3 className="font-medium text-foreground">{APP.dashboard.novelty.title}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        This is attempt #{currentLog.attemptCount}. Amazon requires new information
-                        or changed framing on resubmission.
+                        {APP.dashboard.novelty.description}
                       </p>
                     </div>
                   </div>
@@ -418,7 +446,7 @@ export function DashboardClient({ user, license }: DashboardClientProps) {
                     )}
                     <div className="flex gap-2">
                       <Button onClick={confirmReply} size="sm">
-                        {APP.dashboard.replyCard.updateButton} →
+                        {APP.dashboard.replyCard.updateButton}
                       </Button>
                       <Button
                         variant="ghost"
