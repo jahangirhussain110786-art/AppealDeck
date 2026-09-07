@@ -6,6 +6,9 @@ module.exports = {
         "http://127.0.0.1:3000/pricing",
         "http://127.0.0.1:3000/decode",
         "http://127.0.0.1:3000/login",
+        "http://127.0.0.1:3000/privacy",
+        "http://127.0.0.1:3000/terms",
+        "http://127.0.0.1:3000/refund",
       ],
       numberOfRuns: 3,
       settings: {
@@ -16,7 +19,7 @@ module.exports = {
     assert: {
       assertions: {
         "categories:performance": ["warn", { minScore: 0.9 }],
-        "categories:accessibility": ["error", { minScore: 0.95 }],
+        "categories:accessibility": ["error", { minScore: 1.0 }],
         "categories:best-practices": ["error", { minScore: 0.95 }],
         "categories:seo": ["error", { minScore: 0.95 }],
       },

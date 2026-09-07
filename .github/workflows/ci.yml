@@ -35,6 +35,8 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
+      - run: npm run start &
+      - run: npx --yes wait-on http://127.0.0.1:3000
       - run: npm run test:e2e
 
   lighthouse:
