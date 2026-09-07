@@ -2,7 +2,7 @@
 
 ## Current Project State
 
-- **Last updated:** 7 Sep 2026 (Wave C complete — Tasks 0-7: Dashboard as CaseState home, InterviewFlow vault save + Stepper, Compose PoaSection+checklist, VaultView teaching state + search + delete Dialog, Billing content strings + refund link + DeviceManager Dialog revoke, AuthCard shared component + content/auth.ts, axe-core a11y e2e spec + lighthouse a11y 1.0, lighthouserc + CI updates. All gates green: typecheck 0 errors, lint 0 warnings, lint:copy PASS, format:check PASS, build 27 routes + middleware, vitest 261/261.)
+- **Last updated:** 7 Sep 2026 (Wave C complete — Tasks 0-7 all green: Dashboard/server gate, InterviewFlow vault save+Stepper, Compose PoaSection+checklist, VaultView teaching/search/delete Dialog, Billing content strings+refund link+DeviceManager Dialog, AuthCard shared component+content/auth.ts, axe-core a11y e2e + lighthouse 1.0. Validation: typecheck 0 errors, lint 0 warnings, lint:copy PASS, format:check PASS, build 27 routes, vitest 261/261.)
 
 ## Wave C — Completed (Tasks 0-7)
 
