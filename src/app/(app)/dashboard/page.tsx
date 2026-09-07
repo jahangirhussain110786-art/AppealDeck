@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { fetchLicenseByEmail } from "@/lib/license";
 import { DashboardClient } from "@/components/DashboardClient";
@@ -15,8 +14,6 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const user = await requireUser();
   const license = await fetchLicenseByEmail(user.email);
-
-  if (!user) notFound();
 
   return (
     <div className="space-y-6">

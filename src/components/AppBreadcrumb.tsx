@@ -18,6 +18,14 @@ export function AppBreadcrumb() {
 
   if (!pathname || pathname === "/") return null;
 
+  const isAppRoute =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/case") ||
+    pathname.startsWith("/compose") ||
+    pathname.startsWith("/vault") ||
+    pathname.startsWith("/billing");
+  const homeHref = isAppRoute ? "/dashboard" : "/";
+
   const segments = Object.keys(BREADCRUMB_MAP).filter(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
@@ -28,7 +36,7 @@ export function AppBreadcrumb() {
       className="mb-4 flex items-center gap-1 text-sm text-muted-foreground"
     >
       <Link
-        href="/"
+        href={homeHref}
         className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
       >
         <Home className="h-3 w-3" />

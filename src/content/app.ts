@@ -3,6 +3,19 @@
 // — Wave C owns restyling these surfaces.
 
 export const APP = {
+  evidenceKinds: {
+    supplier_invoice: "Supplier invoice",
+    brand_authorization: "Brand authorization",
+    rights_owner_retraction: "Rights owner retraction",
+    identity_doc: "Identity document",
+    financial_instrument_doc: "Financial instrument document",
+    sourcing_doc: "Sourcing document",
+    listing_fix_proof: "Listing fix proof",
+    disposal_or_recall_proof: "Disposal/recall proof",
+    metric_export: "Metric export",
+    sop_document: "SOP document",
+    other: "Other",
+  },
   dashboard: {
     title: "Your dashboard",
     subtitle: "Manage your AppealDeck services and seller-account tools here.",
@@ -34,6 +47,25 @@ export const APP = {
         cta: "Start your case",
       },
     },
+    deadlines: {
+      appealWindow: "Appeal window",
+      noticeReceived: "Notice received",
+      decoderHint: "For exact windows, re-run the free decoder on your notice.",
+    },
+    readiness: {
+      title: "Case readiness",
+      missingLabel: "Missing:",
+    },
+    actions: {
+      nextBestActions: "Next best actions",
+      reviewPoa: "Review your POA",
+      continueCase: "Continue case",
+    },
+    novelty: {
+      title: "Resubmission requires novelty",
+      description:
+        "Resubmissions must include new information or changed framing. The seller must provide evidence the prior submission was addressed.",
+    },
     stateLabels: {
       DECODED: "Notice decoded",
       GATED_PRO_HELP: "Requires professional help",
@@ -60,6 +92,10 @@ export const APP = {
       analyzing: "Analyzing…",
       resultsTitle: "Category: {category}",
       noReplyYet: "No reply received yet",
+      markedAs: "Amazon marked this as:",
+      updateButton: "Update case",
+      cancelButton: "Cancel",
+      empty: "No evidence attached yet.",
     },
     submitCard: {
       title: "You submitted this in Seller Central",

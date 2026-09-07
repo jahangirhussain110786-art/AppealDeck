@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { analyzeReply } from "@/core";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
+import { isLicenseActive } from "@/lib/license";
 import { rateLimitAnalyzeReply, tooManyRequestsResponse } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,10 @@ export async function POST(req: NextRequest) {
   const user = await getApiUser();
   if (!user) {
     return unauthorizedJsonResponse();
+  }
+
+  if (!(await isLicenseActive(user.email))) {
+    return NextResponse.json({ error: "Appeal Pass required." }, { status: 403 });
   }
 
   const rate = await rateLimitAnalyzeReply(user);
