@@ -5,7 +5,18 @@ import { Loader2, MonitorSmartphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { APP } from "@/content/app";
+
+const DEVICE_CAP = 5;
 
 type Device = {
   id: string;
@@ -30,6 +41,7 @@ export function DeviceManager() {
   const [data, setData] = useState<DevicesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState<Device | null>(null);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -39,7 +51,7 @@ export function DeviceManager() {
         const r = await fetch("/api/devices", { cache: "no-store" });
         if (!r.ok) {
           if (!cancelled) {
-            setData({ devices: [], cap: 5 });
+            setData({ devices: [], cap: DEVICE_CAP });
             setLoading(false);
           }
           return;
@@ -51,7 +63,7 @@ export function DeviceManager() {
         }
       } catch {
         if (!cancelled) {
-          setData({ devices: [], cap: 5 });
+          setData({ devices: [], cap: DEVICE_CAP });
           setLoading(false);
         }
       }
@@ -85,6 +97,7 @@ export function DeviceManager() {
       toast.error((e as Error).message);
     } finally {
       setPendingId(null);
+      setRevoking(null);
     }
   }
 
@@ -93,7 +106,7 @@ export function DeviceManager() {
       <Card>
         <CardContent className="pt-5">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4" /> Loading devices…
+            <Loader2 className="h-4 w-4" /> {APP.billing.deviceCap.loading ?? "Loading devices…"}
           </div>
         </CardContent>
       </Card>
@@ -101,63 +114,90 @@ export function DeviceManager() {
   }
 
   const devices = data?.devices ?? [];
-  const cap = data?.cap ?? 5;
+  const cap = data?.cap ?? DEVICE_CAP;
+  const label = (d: Device) => d.label ?? "Unknown device";
 
   return (
-    <Card>
-      <CardContent className="pt-5 space-y-4">
-        <div className="flex items-start gap-3">
-          <MonitorSmartphone className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-          <div className="flex-1">
-            <h2 className="font-medium text-foreground">
-              Active devices ({devices.length} of {cap})
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your Appeal Pass works on up to {cap} devices. If you hit the limit, revoke an older
-              device to activate a new one.
-            </p>
+    <>
+      <Card>
+        <CardContent className="pt-5 space-y-4">
+          <div className="flex items-start gap-3">
+            <MonitorSmartphone className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <div className="flex-1">
+              <h2 className="font-medium text-foreground">
+                {APP.billing.deviceCap.title} ({devices.length} of {cap})
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {APP.billing.deviceCap.subtitle.replace("{cap}", String(cap))}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {devices.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No active devices recorded yet.</p>
-        ) : (
-          <ul className="divide-y divide-border rounded-lg border border-border">
-            {devices.map((d) => (
-              <li
-                key={d.id}
-                className={cn(
-                  "flex items-center justify-between gap-3 p-3",
-                  pendingId === d.id && "opacity-60",
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {d.label ?? "Unknown device"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    First seen {fmtDate(d.first_seen_at)} · Last seen {fmtDate(d.last_seen_at)}
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => revoke(d.id)}
-                  disabled={pendingId === d.id}
-                  aria-label={`Revoke ${d.label ?? "device"}`}
-                >
-                  {pendingId === d.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
+          {devices.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{APP.billing.deviceCap.none}</p>
+          ) : (
+            <ul className="divide-y divide-border rounded-lg border border-border">
+              {devices.map((d) => (
+                <li
+                  key={d.id}
+                  className={cn(
+                    "flex items-center justify-between gap-3 p-3",
+                    pendingId === d.id && "opacity-60",
                   )}
-                  Revoke
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{label(d)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      First seen {fmtDate(d.first_seen_at)} · Last seen {fmtDate(d.last_seen_at)}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setRevoking(d)}
+                    disabled={pendingId === d.id}
+                    aria-label={`Revoke ${label(d)}`}
+                  >
+                    {pendingId === d.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    Revoke
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!revoking} onOpenChange={(open) => !open && setRevoking(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {APP.billing.revoke.title.replace(
+                "{label}",
+                label(revoking ?? ({ id: "", label: null } as Device)),
+              )}
+            </DialogTitle>
+            <DialogDescription>{APP.billing.revoke.description}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setRevoking(null)}>
+              {APP.billing.revoke.cancel}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => revoking && revoke(revoking.id)}
+              disabled={pendingId === revoking?.id}
+            >
+              {APP.billing.revoke.confirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

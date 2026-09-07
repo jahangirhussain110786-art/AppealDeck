@@ -95,6 +95,37 @@ export const APP = {
     copyAll: "Copy full POA",
     openSellerCentral: "Open Seller Central",
   },
+  billing: {
+    title: "Billing",
+    subtitle: "Your Appeal Pass purchase and license status.",
+    active: {
+      title: "Appeal Pass — active",
+      planLabel: "Plan",
+      purchasedLabel: "Purchased",
+      receiptText:
+        "Receipts and subscription management are handled by Paddle, our merchant of record.",
+    },
+    inactive: {
+      title: "No active plan",
+      desc: "You have not purchased the Appeal Pass yet.",
+      cta: "Buy the Appeal Pass",
+    },
+    deviceCap: {
+      title: "Active devices",
+      subtitle:
+        "Your Appeal Pass works on up to {cap} devices. If you hit the limit, revoke an older device to activate a new one.",
+      none: "No active devices recorded yet.",
+      loading: "Loading devices…",
+    },
+    revoke: {
+      title: "Revoke {label}?",
+      description:
+        "This removes the device from your license. The device will be asked to re-authenticate on next use.",
+      confirm: "Revoke device",
+      cancel: "Cancel",
+    },
+    refundLink: "Request a refund",
+  },
   vault: {
     title: "Encrypted evidence vault",
     subtitle:
