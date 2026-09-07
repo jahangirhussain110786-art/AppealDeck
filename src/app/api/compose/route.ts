@@ -6,7 +6,7 @@ import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
-import { recordActivation, deviceErrorResponse, fingerprintFromRequest } from "@/lib/devices";
+import { recordActivation, deviceErrorResponse, deriveFingerprintFromRequest } from "@/lib/devices";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (supabaseAdmin && email) {
-    const fingerprint = await deriveFingerprintFromRequest(req, user);
+    const fingerprint = await deriveFingerprintFromRequest(req, user.id);
     const result = await recordActivation(supabaseAdmin, {
       userId: user.id,
       email,
@@ -93,20 +93,5 @@ export async function POST(req: NextRequest) {
     },
     critique,
     rendered: renderPoaText(draft),
-  });
-}
-
-async function deriveFingerprintFromRequest(
-  req: NextRequest,
-  user: { id: string; email?: string | null },
-): Promise<string> {
-  return fingerprintFromRequest({
-    userAgent: req.headers.get("user-agent") ?? "",
-    ip:
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      req.headers.get("x-real-ip") ??
-      "0.0.0.0",
-    acceptLanguage: req.headers.get("accept-language") ?? "",
-    userId: user.id,
   });
 }

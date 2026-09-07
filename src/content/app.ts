@@ -107,7 +107,13 @@ export const APP = {
   },
   compose: {
     title: "Your POA",
-    subtitle: "Generated from your case file. Review, copy, and submit through Seller Central.",
+    subtitle:
+      "Drafts are generated from your case file. Review, copy, and submit through Seller Central.",
+    noPass: {
+      title: "Appeal Pass required",
+      desc: "The POA composer requires an active Appeal Pass.",
+      cta: "Get the Appeal Pass",
+    },
     backButton: "Back to case",
     gapDraft: {
       title: "Gap draft",
@@ -151,7 +157,11 @@ export const APP = {
       subtitle:
         "Your Appeal Pass works on up to {cap} devices. If you hit the limit, revoke an older device to activate a new one.",
       none: "No active devices recorded yet.",
+      noneDesc:
+        "No active devices recorded yet. Your current device will appear here once you have used AppealDeck.",
       loading: "Loading devices…",
+      thisDevice: "This device",
+      revokeOwnTooltip: "Sign out instead",
     },
     revoke: {
       title: "Revoke {label}?",
@@ -180,6 +190,8 @@ export const APP = {
     recordCount: "{count} record(s)",
     totalSize: "Total: {size}",
     encryptedBadge: "Encrypted",
+    evidenceKindLabel: "Evidence kind",
+    evidenceKindPlaceholder: "Select evidence kind",
     caseRecordsHidden:
       "Case file and logs are stored separately. Unlock your case on the dashboard.",
     deleteConfirm: {
@@ -206,6 +218,62 @@ export const APP = {
       startOver: "Start over",
     },
     declineNote: "Declined — not claimed. The engine will adapt; you can still proceed.",
+    declineButton: "I can't or won't provide this",
+    answerPlaceholder: "Type your answer...",
+    kindPrompt: "What kind of enforcement are you appealing?",
+    kindHelper: "The engine tailors every step to this.",
+    fileUpload: {
+      drop: "Drop a file here, or",
+      choose: "Choose a file",
+      maxMb: "Max 10 MB per file. Encrypted on this device before storage.",
+      tooLarge: "File too large",
+      alreadyHave: "Already have this in your vault?",
+      pickFromVault: "Pick from vault",
+      noMatching: "No matching records in your vault.",
+      attach: "Attach",
+      attached: "Attached",
+    },
+    stepControls: "Step controls",
+    stepOf: "Step {current} of {total}",
+    saving: "Saving...",
+    continue: "Continue",
+    pendingEvidence: "{count} evidence item(s) pending",
+    whyAmazonWants: "Why does Amazon want this?",
+    whyHint:
+      "This evidence is required for this appeal type. The engine has looked it up from Amazon's published policy for this category.",
+    whyHintDismiss: "Got it",
+    complete: {
+      title: "Interview complete",
+      desc: "Your case file is ready. The composer will draft your POA from the facts you provided.",
+      continue: "Continue to composer",
+    },
+    noCaseYet: "No case file found",
+    noCaseDesc: "Start your case on the dashboard.",
+    engineBadge: "Engine: rules-first",
+  },
+  case: {
+    title: "Your case",
+    subtitle:
+      "Step through your appeal. The engine chooses each step based on your case type and evidence.",
+    guidedInterview: "Guided interview",
+    guidedDesc:
+      "AppealDeck will guide you step by step. Each step is chosen by the engine — not a chat bot. You can decline any evidence request and the system will show you honest alternatives.",
+    howItWorks: {
+      title: "How this works",
+      bullet1: "The engine chooses each step based on your case type and evidence.",
+      bullet2: "Decline any request — the system shows honest alternatives, never fabricates.",
+      bullet3: "When evidence is complete, the composer drafts your POA from real facts.",
+    },
+    quickLinks: {
+      title: "Quick links",
+      decode: "Decode a notice",
+      billing: "Billing",
+    },
+    noPass: {
+      title: "Appeal Pass required",
+      desc: "The guided interview, evidence checklist, and POA composer require an active Appeal Pass.",
+      cta: "Get the Appeal Pass",
+    },
   },
   breadcrumb: {
     home: "Home",

@@ -51,6 +51,26 @@ export async function fingerprintFromRequest(input: BuildFingerprintInput): Prom
   return hashFingerprint(raw);
 }
 
+/**
+ * Shared request-fingerprint helper. Used by both `/api/compose` (device
+ * activation) and `/api/devices` (current-device marker) so the two routes can
+ * never drift on which headers they read.
+ */
+export async function deriveFingerprintFromRequest(
+  req: Request | { headers: Headers },
+  userId: string,
+): Promise<string> {
+  return fingerprintFromRequest({
+    userAgent: req.headers.get("user-agent") ?? "",
+    ip:
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("x-real-ip") ??
+      "0.0.0.0",
+    acceptLanguage: req.headers.get("accept-language") ?? "",
+    userId,
+  });
+}
+
 function shortLabelFromUserAgent(ua: string | null | undefined): string {
   if (!ua) return "Unknown device";
   const m =

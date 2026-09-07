@@ -9,6 +9,14 @@ import { APP } from "@/content/app";
 
 export const dynamic = "force-dynamic";
 
+function fmtDateTabular(s: string): string {
+  try {
+    return Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(s));
+  } catch {
+    return s;
+  }
+}
+
 export default async function BillingPage() {
   const user = await requireUser();
   const email = (user.email ?? "").trim().toLowerCase();
@@ -35,7 +43,7 @@ export default async function BillingPage() {
                 <p className="mt-1 text-sm text-muted-foreground">
                   {APP.billing.active.planLabel}: {license.plan} ·{" "}
                   {APP.billing.active.purchasedLabel}{" "}
-                  {license.createdAt ? new Date(license.createdAt).toLocaleDateString() : ""}
+                  <span data-tn>{license.createdAt ? fmtDateTabular(license.createdAt) : ""}</span>
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {APP.billing.active.receiptText}

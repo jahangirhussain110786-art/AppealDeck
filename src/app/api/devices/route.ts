@@ -2,23 +2,35 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { listDevices, revokeDevice } from "@/lib/devices";
+import { listDevices, revokeDevice, deriveFingerprintFromRequest } from "@/lib/devices";
 
 export const dynamic = "force-dynamic";
 
 const RevokeBody = z.object({ deviceId: z.string().uuid() });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const user = await getApiUser();
   if (!user) {
     return unauthorizedJsonResponse();
   }
   const email = (user.email ?? "").trim().toLowerCase();
   if (!supabaseAdmin || !email) {
-    return NextResponse.json({ devices: [], cap: 5 });
+    return NextResponse.json({ devices: [], cap: 5, currentDeviceId: null });
   }
   const devices = await listDevices(supabaseAdmin, email);
-  return NextResponse.json({ devices, cap: 5 });
+  const fingerprint = await deriveFingerprintFromRequest(req, user.id);
+  const currentDeviceId = devices.find((d) => d.device_fingerprint === fingerprint)?.id ?? null;
+  const safeDevices = devices.map((d) => ({
+    id: d.id,
+    license_id: d.license_id,
+    user_id: d.user_id,
+    label: d.label,
+    user_agent: d.user_agent,
+    first_seen_at: d.first_seen_at,
+    last_seen_at: d.last_seen_at,
+    revoked_at: d.revoked_at,
+  }));
+  return NextResponse.json({ devices: safeDevices, cap: 5, currentDeviceId });
 }
 
 export async function DELETE(req: NextRequest) {
