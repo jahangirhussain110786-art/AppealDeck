@@ -5,12 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   Lock,
-  Unlock,
-  Plus,
   Trash2,
   Eye,
   Download,
-  ShieldCheck,
   RefreshCw,
   Cloud,
   FileText,
@@ -19,9 +16,10 @@ import {
   FileBox,
   Search,
   X,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,27 +29,18 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  browserWebCrypto,
-  getBrowserVault,
-  pushVaultToCloud,
-  pullVaultFromCloud,
-} from "@/lib/vault/browser";
-import { VAULT_ENVELOPE_VERSION, VaultCryptoError } from "@/core/vault/envelope";
-import { asBase64 } from "@/lib/vault/browser";
-import type { AddDocumentInput, Vault, VaultListItem, VaultStatus } from "@/core/vault/vault";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getBrowserVault, pushVaultToCloud } from "@/lib/vault/browser";
+import { FileDropZone } from "@/components/FileDropZone";
+import { VAULT_ENVELOPE_VERSION } from "@/core/vault/envelope";
+import type { AddDocumentInput, Vault, VaultListItem } from "@/core/vault/vault";
 import { EvidenceStatusBadge } from "@/components/EvidenceStatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { APP } from "@/content/app";
 import type { EvidenceKind } from "@/core/evidenceModel";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { VaultGate } from "@/components/VaultGate";
-
-type Phase =
-  | { kind: "loading" }
-  | { kind: "needs_init" }
-  | { kind: "locked"; status: Extract<VaultStatus, { state: "locked" }> }
-  | { kind: "unlocked" };
+import { Label } from "@/components/ui/label";
 
 function useVault(): Vault {
   const ref = React.useRef<Vault | null>(null);
@@ -99,6 +88,7 @@ export default function VaultView({ userId }: { userId: string }) {
   const [busy, setBusy] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [filterKind, setFilterKind] = React.useState<EvidenceKind | "all">("all");
+  const [selectedEvidenceKind, setSelectedEvidenceKind] = React.useState<EvidenceKind>("other");
   const [deleteTarget, setDeleteTarget] = React.useState<VaultListItem | null>(null);
 
   const refresh = React.useCallback(async () => {
@@ -141,6 +131,7 @@ export default function VaultView({ userId }: { userId: string }) {
         mimeType: file.type || "application/octet-stream",
         data: buf,
         kind: "document",
+        evidenceKind: selectedEvidenceKind,
       };
       await vault.add(input);
       toast.success(`Added "${file.name}"`, {
@@ -251,13 +242,24 @@ export default function VaultView({ userId }: { userId: string }) {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold">Your encrypted evidence</h2>
-              <p className="text-sm text-muted-foreground">
-                Envelope v{VAULT_ENVELOPE_VERSION}, AES-GCM, key derived from your passphrase on
-                this device.
-              </p>
+              <h2 className="text-lg font-semibold">{APP.vault.title}</h2>
+              <p className="text-sm text-muted-foreground">{APP.vault.subtitle}</p>
             </div>
-            <LocalFirstBadge />
+            <div className="flex items-center">
+              <LocalFirstBadge />
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center rounded p-1 text-muted-foreground hover:text-foreground">
+                      <Info className="h-4 w-4" aria-hidden />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    {APP.vault.cryptoDetails.replace("{version}", String(VAULT_ENVELOPE_VERSION))}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -283,37 +285,85 @@ export default function VaultView({ userId }: { userId: string }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={filterKind}
-                onChange={(e) => setFilterKind(e.target.value as typeof filterKind)}
-                className="text-sm rounded-md border border-border bg-background px-2 py-1"
-                aria-label="Filter by evidence kind"
-              >
-                <option value="all">All evidence</option>
-                {EVIDENCE_KINDS.map((k) => (
-                  <option key={k} value={k}>
-                    {evidenceKindLabel(k)}
-                  </option>
-                ))}
-              </select>
-              <Button onClick={() => void refresh()} variant="outline" size="sm" disabled={busy}>
-                <RefreshCw className="size-4" />
-              </Button>
-              <Button onClick={onSyncUp} variant="outline" size="sm" disabled={busy}>
-                <Cloud className="size-4" />
-              </Button>
-              <Button onClick={onLock} variant="outline" size="sm">
-                <Lock className="size-4" />
-              </Button>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => void refresh()}
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      aria-label={APP.vault.actions.refresh}
+                    >
+                      <RefreshCw className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{APP.vault.actions.refresh}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={onSyncUp}
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      aria-label={APP.vault.actions.sync}
+                    >
+                      <Cloud className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{APP.vault.actions.sync}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={onLock}
+                      variant="outline"
+                      size="sm"
+                      aria-label={APP.vault.actions.lock}
+                    >
+                      <Lock className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{APP.vault.actions.lock}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
 
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>
-              {filteredItems.length} record of {displayItems.length}
-              {filteredItems.length !== displayItems.length && ` of ${displayItems.length}`}
+              {filteredItems.length === displayItems.length ? (
+                <span data-tn>{displayItems.length}</span>
+              ) : (
+                <span>
+                  <span data-tn>{filteredItems.length}</span> of{" "}
+                  <span data-tn>{displayItems.length}</span>
+                </span>
+              )}{" "}
+              record{displayItems.length === 1 ? "" : "s"}
             </span>
             <span className="tabular-nums">{formatBytes(totalBytes)} total</span>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="evidence-kind-select">{APP.vault.evidenceKindLabel}</Label>
+            <select
+              id="evidence-kind-select"
+              value={selectedEvidenceKind}
+              onChange={(e) => setSelectedEvidenceKind(e.target.value as EvidenceKind)}
+              className="w-full rounded-md border border-border bg-background px-2 py-1 text-sm"
+            >
+              {EVIDENCE_KINDS.map((k) => (
+                <option key={k} value={k}>
+                  {evidenceKindLabel(k)}
+                </option>
+              ))}
+            </select>
           </div>
 
           <FileDropZone onFile={onAddFile} disabled={busy} />
@@ -333,9 +383,11 @@ export default function VaultView({ userId }: { userId: string }) {
               <CardContent className="pt-0">
                 <EmptyState
                   icon={FileText}
-                  title="No files match"
+                  title={APP.vault.noResults}
                   description={
-                    searchTerm ? `No results for "${searchTerm}"` : "Adjust your filter."
+                    searchTerm
+                      ? `${APP.vault.noResultsDesc} "${searchTerm}"`
+                      : APP.vault.noResultsDesc
                   }
                   action={
                     <Button
@@ -346,7 +398,7 @@ export default function VaultView({ userId }: { userId: string }) {
                         setFilterKind("all");
                       }}
                     >
-                      Clear search
+                      {APP.vault.clearSearch}
                     </Button>
                   }
                 />
@@ -375,46 +427,67 @@ export default function VaultView({ userId }: { userId: string }) {
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {it.mimeType} · {formatBytes(it.sizeBytes)} ·{" "}
-                            {new Date(it.createdAt)
-                              .toLocaleString(undefined, {
+                            <span data-tn>
+                              {Intl.DateTimeFormat(undefined, {
                                 year: "numeric",
                                 month: "short",
                                 day: "numeric",
                                 hour: "2-digit",
                                 minute: "2-digit",
-                              })
-                              .replace(/\s/g, " ")}
+                              }).format(new Date(it.createdAt))}
+                            </span>
                             {it.evidenceKind
-                              ? ` · ${evidenceKindLabel(it.evidenceKind as EvidenceKind)}`
+                              ? ` · ${APP.evidenceKinds[it.evidenceKind as EvidenceKind] ?? evidenceKindLabel(it.evidenceKind as EvidenceKind)}`
                               : ""}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void onView(it.id)}
-                          aria-label="View"
-                        >
-                          <Eye className="size-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void onDownload(it.id)}
-                          aria-label="Download"
-                        >
-                          <Download className="size-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => setDeleteTarget(it)}
-                          aria-label="Delete"
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => void onView(it.id)}
+                                aria-label={APP.vault.actions.view}
+                              >
+                                <Eye className="size-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{APP.vault.actions.view}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => void onDownload(it.id)}
+                                aria-label={APP.vault.actions.download}
+                              >
+                                <Download className="size-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{APP.vault.actions.download}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => setDeleteTarget(it)}
+                                aria-label={`${APP.vault.actions.delete} ${it.name}`}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{`${APP.vault.actions.delete} ${it.name}`}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </Card>
                   </motion.li>
@@ -423,9 +496,7 @@ export default function VaultView({ userId }: { userId: string }) {
             </ul>
           )}
 
-          <p className="text-xs text-muted-foreground">
-            Case file and logs are stored separately. Unlock your case on the dashboard.
-          </p>
+          <p className="text-xs text-muted-foreground">{APP.vault.caseRecordsHidden}</p>
 
           <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
             <DialogContent>
@@ -450,59 +521,5 @@ export default function VaultView({ userId }: { userId: string }) {
         </div>
       )}
     </VaultGate>
-  );
-}
-
-function FileDropZone({
-  onFile,
-  disabled,
-}: {
-  onFile: (file: File) => void | Promise<void>;
-  disabled: boolean;
-}) {
-  const [dragging, setDragging] = React.useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  return (
-    <Card
-      className={`flex flex-col items-center justify-center gap-2 border-dashed p-6 text-sm transition-colors ${
-        dragging ? "border-primary bg-accent/10" : "border-border"
-      }`}
-      onDragOver={(e) => {
-        e.preventDefault();
-        if (!disabled) setDragging(true);
-      }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setDragging(false);
-        if (disabled) return;
-        const f = e.dataTransfer.files?.[0];
-        if (f) void onFile(f);
-      }}
-    >
-      <Plus className="size-5 text-muted-foreground" />
-      <p className="text-muted-foreground">Drop a file here, or</p>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => inputRef.current?.click()}
-        disabled={disabled}
-      >
-        Choose a file
-      </Button>
-      <input
-        ref={inputRef}
-        type="file"
-        hidden
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) void onFile(f);
-          e.target.value = "";
-        }}
-      />
-      <p className="text-xs text-muted-foreground">
-        Max 10 MB per file. Encrypted on this device before upload.
-      </p>
-    </Card>
   );
 }

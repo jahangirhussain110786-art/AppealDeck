@@ -173,9 +173,11 @@ export const APP = {
     refundLink: "Request a refund",
   },
   vault: {
-    title: "Encrypted evidence vault",
+    title: "Your encrypted evidence",
     subtitle:
-      "Files you upload here are encrypted on your device with a key derived from your passphrase. Cloud sync uploads only ciphertext.",
+      "Files you upload here are encrypted on your device with a key derived from your passphrase.",
+    cryptoDetails:
+      "Envelope v{version}, AES-GCM 256-bit, 12-byte IV, optional associated data. Key model: PBKDF2-SHA-256 (310,000 iterations) derives a key-encryption key, which wraps a random per-record data key. The wrapped key lives on disk; the passphrase never leaves this device. Cloud sync uploads ciphertext only.",
     noPassTitle: "Encrypted evidence vault",
     noPassDesc:
       "The encrypted evidence vault is included with the Appeal Pass. It stores your supplier invoices, brand authorizations, and other case documents encrypted on your device (AES-GCM, key derived from a passphrase you set — we never see it).",
@@ -194,6 +196,18 @@ export const APP = {
     evidenceKindPlaceholder: "Select evidence kind",
     caseRecordsHidden:
       "Case file and logs are stored separately. Unlock your case on the dashboard.",
+    actions: {
+      refresh: "Refresh",
+      sync: "Sync to cloud",
+      lock: "Lock vault",
+      view: "View",
+      download: "Download",
+      delete: "Delete",
+    },
+    howEncrypted: "How is this encrypted?",
+    noResults: "No files match",
+    noResultsDesc: "Adjust your search or filter to see your evidence.",
+    clearSearch: "Clear search",
     deleteConfirm: {
       title: "Delete {name}?",
       description:
