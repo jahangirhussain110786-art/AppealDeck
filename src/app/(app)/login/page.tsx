@@ -1,16 +1,20 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { useSearchParams } from "next/navigation";
+import {
+  AuthShell,
+  GoogleButton,
+  Divider,
+  SubmitButton,
+  StatusMessage,
+} from "@/components/AuthCard";
 import { Input } from "@/components/ui/input";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
+import { AUTH } from "@/content/auth";
+import type { AuthStatus } from "@/components/AuthCard";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   return (
@@ -21,33 +25,27 @@ export default function LoginPage() {
 }
 
 function LoginPageInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"password" | "magic">("password");
-  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
+  const [status, setStatus] = useState<AuthStatus>("idle");
   const [message, setMessage] = useState("");
 
+  const errorParam = searchParams.get("error");
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) return;
-    supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
-      if (data.user) router.replace("/dashboard");
-    });
-    const errorParam = searchParams.get("error");
     if (errorParam) {
       setStatus("error");
-      setMessage(errorParam);
+      setMessage(decodeURIComponent(errorParam));
     }
-  }, [router, searchParams]);
+  }, [errorParam]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
       setStatus("error");
-      setMessage("Auth is not configured.");
+      setMessage(AUTH.login.messages.notConfigured);
       return;
     }
     setStatus("loading");
@@ -63,7 +61,7 @@ function LoginPageInner() {
         setMessage(error.message);
       } else {
         setStatus("sent");
-        setMessage("Check your email for a sign-in link.");
+        setMessage(AUTH.login.messages.magicSent);
       }
       return;
     }
@@ -74,15 +72,16 @@ function LoginPageInner() {
       setMessage(error.message);
       return;
     }
-    router.refresh();
-    router.replace("/dashboard");
+    setStatus("idle");
+    setMessage("");
+    window.location.href = "/dashboard";
   }
 
   async function handleGoogle() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
       setStatus("error");
-      setMessage("Auth is not configured.");
+      setMessage(AUTH.login.messages.notConfigured);
       return;
     }
     setStatus("loading");
@@ -96,150 +95,89 @@ function LoginPageInner() {
     }
   }
 
+  const toggleLabel =
+    mode === "password" ? AUTH.login.messages.togglePassword : AUTH.login.messages.toggleMagic;
+  const submitLabel =
+    mode === "password" ? AUTH.login.messages.submitPassword : AUTH.login.messages.submitMagic;
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <main id="main" className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          className="w-full"
-        >
-          <Card>
-            <CardContent className="pt-6">
-              <h1 className="text-xl font-semibold text-foreground">Sign in</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Access your AppealDeck seller tools.
-              </p>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                className="mt-6 w-full"
-                onClick={handleGoogle}
-                disabled={status === "loading"}
-              >
-                <GoogleIcon className="mr-2 h-4 w-4" />
-                Continue with Google
-              </Button>
-
-              <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="h-px flex-1 bg-border" />
-                <span>or sign in with email</span>
-                <span className="h-px flex-1 bg-border" />
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-3">
-                <div>
-                  <label htmlFor="email" className="text-sm font-medium text-foreground">
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-
-                {mode === "password" && (
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <label htmlFor="password" className="text-sm font-medium text-foreground">
-                        Password
-                      </label>
-                      <Link
-                        href="/forgot-password"
-                        className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
-                      >
-                        Forgot?
-                      </Link>
-                    </div>
-                    <Input
-                      id="password"
-                      type="password"
-                      autoComplete="current-password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                )}
-
-                {message && (
-                  <p
-                    role="alert"
-                    className={
-                      status === "error"
-                        ? "text-sm text-destructive"
-                        : "text-sm text-muted-foreground"
-                    }
-                  >
-                    {message}
-                  </p>
-                )}
-
-                <Button type="submit" size="lg" className="w-full" disabled={status === "loading"}>
-                  {status === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {mode === "password" ? "Sign in" : "Email me a sign-in link"}
-                </Button>
-              </form>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setMode((m) => (m === "password" ? "magic" : "password"));
-                  setStatus("idle");
-                  setMessage("");
-                }}
-                className="mt-4 text-sm text-primary underline-offset-4 hover:underline"
-              >
-                {mode === "password" ? "Use a magic link instead" : "Use password instead"}
-              </button>
-
-              <p className="mt-6 text-center text-sm text-muted-foreground">
-                New to AppealDeck?{" "}
-                <Link href="/signup" className="text-primary underline-offset-4 hover:underline">
-                  Create an account
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </main>
-    </div>
-  );
-}
-
-function GoogleIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
+    <AuthShell
+      title={AUTH.login.title}
+      subtitle={AUTH.login.subtitle}
+      footerPrompt={AUTH.login.footer.prompt}
+      footerAction={AUTH.login.footer.action}
+      footerHref="/signup"
     >
-      <path
-        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-        fill="#4285F4"
-      />
-      <path
-        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A10.99 10.99 0 0 0 12 23z"
-        fill="#34A853"
-      />
-      <path
-        d="M5.84 14.1A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.07H2.18A11 11 0 0 0 1 12c0 1.77.43 3.45 1.18 4.93l3.66-2.84z"
-        fill="#FBBC05"
-      />
-      <path
-        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-        fill="#EA4335"
-      />
-    </svg>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="-mt-4"
+      >
+        <GoogleButton
+          onClick={handleGoogle}
+          disabled={status === "loading"}
+          label={AUTH.login.google}
+        />
+        <Divider label={AUTH.login.divider} />
+
+        <form onSubmit={handleSubmit} className="mt-2 space-y-3">
+          <div>
+            <label htmlFor="email" className="text-sm font-medium text-foreground">
+              {AUTH.login.fields.email}
+            </label>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+
+          {mode === "password" && (
+            <div>
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="text-sm font-medium text-foreground">
+                  {AUTH.login.fields.password}
+                </label>
+                <a
+                  href="/forgot-password"
+                  className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                >
+                  {AUTH.login.fields.forgot}
+                </a>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          )}
+
+          <StatusMessage status={status} message={message} />
+          <SubmitButton status={status} label={submitLabel} />
+        </form>
+
+        <button
+          type="button"
+          onClick={() => {
+            setMode((m) => (m === "password" ? "magic" : "password"));
+            setStatus("idle");
+            setMessage("");
+          }}
+          className="mt-4 text-sm text-primary underline-offset-4 hover:underline"
+        >
+          {toggleLabel}
+        </button>
+      </motion.div>
+    </AuthShell>
   );
 }

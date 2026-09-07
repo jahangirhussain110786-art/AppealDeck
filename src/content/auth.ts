@@ -1,50 +1,87 @@
-// Copy source for auth pages (login / signup / forgot / reset).
-// Strings moved verbatim per AA-29. Auth pages restyle in Wave C (out of scope here).
+// Copy source for authenticated surfaces.
+// AA-29 strings for the auth flow pages.
 
 export const AUTH = {
   login: {
-    heading: "Sign in",
-    subline: "Access your AppealDeck seller tools.",
-    passwordMode: {
-      submit: "Sign in",
-    },
-    magicMode: {
-      submit: "Email me a sign-in link",
-    },
-    toggle: {
-      toMagic: "Use a magic link instead",
-      toPassword: "Use password instead",
-    },
-    links: {
+    title: "Sign in",
+    subtitle: "Access your AppealDeck seller tools.",
+    google: "Continue with Google",
+    divider: "or sign in with email",
+    fields: {
+      email: "Email",
+      password: "Password",
       forgot: "Forgot?",
-      forgotPage: "Forgot your password?",
-      signup: "Create an account",
-      login: "Sign in",
     },
-    errors: {
+    messages: {
       notConfigured: "Auth is not configured.",
       magicSent: "Check your email for a sign-in link.",
+      togglePassword: "Use a magic link instead",
+      toggleMagic: "Use password instead",
+      submitPassword: "Sign in",
+      submitMagic: "Email me a sign-in link",
+    },
+    footer: {
+      prompt: "New to AppealDeck?",
+      action: "Create an account",
     },
   },
   signup: {
-    heading: "Create your account",
-    subline: "Get the decoder free, or buy an Appeal Pass to draft your POA.",
-    submit: "Create account",
-    passwordHint: "At least 8 characters.",
-    passwordError: "Password must be at least 8 characters.",
-    links: {
-      login: "Sign in",
+    title: "Create your account",
+    subtitle: "Get the decoder free, or buy an Appeal Pass to draft your POA.",
+    google: "Continue with Google",
+    divider: "or sign up with email",
+    fields: {
+      email: "Email",
+      password: "Password",
+      passwordHint: "At least 8 characters.",
     },
-    magicSent: "Check your email to confirm your account.",
+    messages: {
+      notConfigured: "Auth is not configured.",
+      weakPassword: "Password must be at least 8 characters.",
+      sent: "Check your email to confirm your account.",
+      submit: "Create account",
+    },
+    footer: {
+      prompt: "Already have an account?",
+      action: "Sign in",
+    },
   },
-  forgot: {
-    heading: "Forgot your password?",
-    submit: "Send reset link",
-    sent: "Check your email for a password reset link.",
+  forgotPassword: {
+    title: "Forgot your password?",
+    subtitle: "Enter your account email and we'll send you a reset link.",
+    fields: {
+      email: "Email",
+    },
+    messages: {
+      notConfigured: "Auth is not configured.",
+      sent: "Check your email for a password reset link.",
+      submit: "Send reset link",
+    },
+    footer: {
+      prompt: "Remembered it?",
+      action: "Sign in",
+    },
   },
-  reset: {
-    heading: "Reset your password",
-    submit: "Set new password",
-    success: "Your password has been updated.",
+  resetPassword: {
+    title: "Set a new password",
+    subtitle: "Choose a strong password you haven't used before.",
+    fields: {
+      password: "New password",
+      confirm: "Confirm new password",
+    },
+    messages: {
+      notConfigured: "Auth is not configured.",
+      weakPassword: "Password must be at least 8 characters.",
+      mismatch: "Passwords do not match.",
+      updated: "Your password has been updated.",
+      submit: "Update password",
+    },
+    success: {
+      button: "Go to your case",
+    },
   },
+} as const;
+
+export const AUTH_SHARED = {
+  authNotConfigured: "Auth is not configured.",
 } as const;

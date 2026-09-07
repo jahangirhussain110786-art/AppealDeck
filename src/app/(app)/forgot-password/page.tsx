@@ -1,28 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { AuthShell, SubmitButton, StatusMessage } from "@/components/AuthCard";
 import { Input } from "@/components/ui/input";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
+import { AUTH } from "@/content/auth";
+import type { AuthStatus } from "@/components/AuthCard";
+import { motion } from "framer-motion";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
+  const [status, setStatus] = useState<AuthStatus>("idle");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
-    supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
-      if (data.user) router.replace("/");
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) router.replace("/");
     });
   }, [router]);
 
@@ -31,7 +29,7 @@ export default function ForgotPasswordPage() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
       setStatus("error");
-      setMessage("Auth is not configured.");
+      setMessage(AUTH.forgotPassword.messages.notConfigured);
       return;
     }
     setStatus("loading");
@@ -48,70 +46,43 @@ export default function ForgotPasswordPage() {
     }
 
     setStatus("sent");
-    setMessage("Check your email for a password reset link.");
+    setMessage(AUTH.forgotPassword.messages.sent);
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <main id="main" className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          className="w-full"
-        >
-          <Card>
-            <CardContent className="pt-6">
-              <h1 className="text-xl font-semibold text-foreground">Forgot your password?</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Enter your account email and we&apos;ll send you a reset link.
-              </p>
+    <AuthShell
+      title={AUTH.forgotPassword.title}
+      subtitle={AUTH.forgotPassword.subtitle}
+      footerPrompt={AUTH.forgotPassword.footer.prompt}
+      footerAction={AUTH.forgotPassword.footer.action}
+      footerHref="/login"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="-mt-4"
+      >
+        <form onSubmit={handleSubmit} className="mt-2 space-y-3">
+          <div>
+            <label htmlFor="email" className="text-sm font-medium text-foreground">
+              {AUTH.forgotPassword.fields.email}
+            </label>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1"
+            />
+          </div>
 
-              <form onSubmit={handleSubmit} className="mt-6 space-y-3">
-                <div>
-                  <label htmlFor="email" className="text-sm font-medium text-foreground">
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-
-                {message && (
-                  <p
-                    role="alert"
-                    className={
-                      status === "error"
-                        ? "text-sm text-destructive"
-                        : "text-sm text-muted-foreground"
-                    }
-                  >
-                    {message}
-                  </p>
-                )}
-
-                <Button type="submit" size="lg" className="w-full" disabled={status === "loading"}>
-                  {status === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Send reset link
-                </Button>
-              </form>
-
-              <p className="mt-6 text-center text-sm text-muted-foreground">
-                Remembered it?{" "}
-                <Link href="/login" className="text-primary underline-offset-4 hover:underline">
-                  Sign in
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </main>
-    </div>
+          <StatusMessage status={status} message={message} />
+          <SubmitButton status={status} label={AUTH.forgotPassword.messages.submit} />
+        </form>
+      </motion.div>
+    </AuthShell>
   );
 }
