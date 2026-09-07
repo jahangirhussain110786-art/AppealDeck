@@ -129,7 +129,7 @@ export function nextStep(file: CaseFile): InterviewStep | null {
       title: `Provide: ${slotKind.replace(/_/g, " ")}`,
       prompt:
         req?.whyAmazonWantsIt ??
-        `Amazon requires ${slotKind.replace(/_/g, " ")} for this appeal type.`,
+        `Attach your ${slotKind.replace(/_/g, " ")} so the Plan of Action can reference it.`,
       inputType: "file",
       evidenceKind: slotKind,
       actionItem: openAction,
