@@ -4,6 +4,24 @@
 > Every fact below was grep-verified against the tree at `9e4bfb5`. Line numbers are "as of that commit" — **re-grep before editing**, lines move.
 > This file is the source of truth for the fix pass. When this prompt and the code disagree about a *fact*, the code wins and you log the difference. When they disagree about *intent*, this prompt wins.
 
+## STATUS — updated 7 Sep 2026 (evening): Tasks 0–6 DONE, Tasks 7–9 remain (+10 optional)
+
+| Task | Status | Commit(s) |
+|---|---|---|
+| 0 secrets, ledger, handoff | ✅ done | `dd76b68` |
+| 1 VaultGate, no hardcoded passphrase | ✅ done | `7a5c605` |
+| 2 dashboard correctness | ✅ done | `0c39ffb`, `4719ac6` (mislabelled task-3), `8bbbefd` |
+| 3 compose correctness | ✅ done | `17f319a` (ComposeView rewritten; PoaSection code-mapped; checklist bound to real case data) |
+| 4 interview evidence into vault | ✅ done | `087d3b1` |
+| 5 vault view polish | ✅ done | `ad95fcb` |
+| 6 billing / devices | ✅ done | `5331820` |
+| 7 auth surface | ⬜ next | — |
+| 8 tests that prove the wave | ⬜ | — |
+| 9 documentation that tells the truth | ⬜ | — |
+| 10 Wave D-lite (optional, founder-gated) | ⬜ | — |
+
+Every Task 0–6 Accept block was re-run against the tree at `8bbbefd` on 7 Sep 2026 and passes; gates: typecheck 0, lint 0 errors (1 pre-existing InterviewFlow warning), lint:copy PASS, format:check PASS, build 25 static pages, vitest 281/281. Evidence rows, Discovered items and Deviations are in `docs/handoffs/2026-09-07-wave-c-fix.md`. Also `490474b`: interview evidence-ask fallback reworded (Discovered item, B-16). **Resume at Task 7.** Line numbers in Tasks 0–6 below are historical.
+
 ---
 
 ## 0. OPERATING PROTOCOL (read first, follow for every task)
@@ -134,7 +152,7 @@ After a compaction or a fresh session: read §0.A of this prompt, then the Resum
 
 Each task has **Why** (the verified defect), **Do** (exact steps), **Accept** (commands that must pass and go into the evidence log).
 
-### Task 0 — Stop the bleeding: secrets, ledger, misleading notes
+### Task 0 — Stop the bleeding: secrets, ledger, misleading notes — ✅ DONE `dd76b68`
 
 **Why.**
 - `docs/handoffs/wave-c-working-context.md` (added in `4173269`) contains the dev seed email, password, user id and license key under "Dev Seeds (DO NOT COMMIT)", plus an invented "Types Reference" (`CaseFile { id, caseId, email, enforcementType… }`, `ReadinessReport { red|amber|green }`, `ReplyCategory: acknowledged|committal…`) that matches nothing in `src/core`. It will mislead the next agent.
@@ -159,7 +177,7 @@ Commit: `docs(wave-c-fix/task-0): remove committed dev credentials, restore DECI
 
 ---
 
-### Task 1 — The vault passphrase flow (CRITICAL) + one shared VaultGate
+### Task 1 — The vault passphrase flow (CRITICAL) + one shared VaultGate — ✅ DONE `7a5c605`
 
 **Why.** `src/components/InterviewFlow.tsx` ~164: when the vault is uninitialised it calls `v.initWithPassphrase("default-default")` and proceeds. The seller never chooses a passphrase. After a reload the vault is locked with a passphrase they do not know; their case file is unreachable. This is new in Wave C. Separately, the passphrase setup/unlock UI is now duplicated three times (`VaultView.tsx` ~301–360 with raw `<input>`s and no labels; `DashboardClient.tsx` ~262–298 with a raw `<input>`; `InterviewFlow.tsx` ~410–452).
 
@@ -186,7 +204,7 @@ Commit: `fix(wave-c-fix/task-1): seller-chosen vault passphrase via shared Vault
 
 ---
 
-### Task 2 — Dashboard correctness
+### Task 2 — Dashboard correctness — ✅ DONE `0c39ffb` + `4719ac6` + `8bbbefd`
 
 **Why** (all in `src/components/DashboardClient.tsx`):
 - ~200 `markSubmitted` sets `attemptCount: caseFile.attemptCount + 1` — should be `currentLog.attemptCount + 1`; a second submission never increments.
@@ -225,7 +243,7 @@ Commit: `fix(wave-c-fix/task-2): dashboard attempt count, honest deadline render
 
 ---
 
-### Task 3 — Compose correctness
+### Task 3 — Compose correctness — ✅ DONE `17f319a`
 
 **Why** (all in `src/components/ComposeView.tsx` unless noted):
 - ~272 `HonestExpectationsCard` uses `APP.dashboard.noPassCard` — a paying user reads "Your case tools are locked until you have an active Appeal Pass" under their POA.
@@ -264,7 +282,7 @@ Commit: `fix(wave-c-fix/task-3): compose binds real case data to checklist, Aler
 
 ---
 
-### Task 4 — Interview: evidence actually reaches the vault; hint; mobile bar; copy
+### Task 4 — Interview: evidence actually reaches the vault; hint; mobile bar; copy — ✅ DONE `087d3b1`
 
 **Why.**
 - `InterviewFlow.tsx` file step (~735) says "File upload is simulated in this build. Click below to mark as attached." and sets `filePresent: true` with no file. Meanwhile `VaultView.onAddFile` (~204–209) stores `kind: "document"` with **no `evidenceKind`**, and `ComposeView` maps vault records to slots by `r.evidenceKind`. Result today: nothing ever carries an `evidenceKind`, the vault's evidence-kind filter filters nothing, and evidence slots become "present" only through the simulated click. `Vault.add` already accepts `evidenceKind`; the interview answer already accepts `filePresent`; the API `EvidenceSlot` already accepts `vaultRecordId`. This is binding, not engine change.
@@ -296,7 +314,7 @@ Commit: `fix(wave-c-fix/task-4): evidence uploads carry evidenceKind into the va
 
 ---
 
-### Task 5 — Vault view polish (accessibility + honesty)
+### Task 5 — Vault view polish (accessibility + honesty) — ✅ DONE `ad95fcb`
 
 **Why** (`src/components/VaultView.tsx`):
 - Icon-only buttons at ~422–430 (refresh, sync, lock) have no accessible name → axe `button-name` failure on `/vault` (not caught because `/vault` is not in the a11y spec).
@@ -325,7 +343,7 @@ Commit: `fix(wave-c-fix/task-5): vault a11y names, Badge, consistent counts, thr
 
 ---
 
-### Task 6 — Billing / devices per spec
+### Task 6 — Billing / devices per spec — ✅ DONE `5331820`
 
 **Why.** Spec §7.3 and the Wave C prompt: "device list as **cards** with last-seen (**tabular**), **current device marked**, revoke via Dialog". `DeviceManager.tsx` renders `<li>` rows, `toLocaleString()` without tabular nums, and has no notion of the current device. Device rows carry `device_fingerprint` and `fingerprintFromRequest` exists, so the server already knows which row is "this device".
 
@@ -345,7 +363,7 @@ Commit: `fix(wave-c-fix/task-6): device cards with tabular last-seen and current
 
 ---
 
-### Task 7 — Auth surface per spec §7.2
+### Task 7 — Auth surface per spec §7.2 — ⬜ NEXT
 
 **Why.** `AuthCard.tsx`: `max-w-md` instead of the `--w-form` token; no inline validation tied by `aria-describedby`; forgot-password success is a plain paragraph (spec: success screen with what-to-do-next); `reset-password` success button goes to `/case` (~132) not `/dashboard`; `forgot-password` redirects an already-signed-in user to `/` (~23) not `/dashboard`; `footerAction="Cancel"` hardcoded (~112); `AUTH_SHARED` exported and unused; reset page does not show the password rule before the error; login DOM order is email → "Forgot?" → password (fine for UX, but the e2e keyboard test assumed otherwise — fixed in Task 8, not here).
 
