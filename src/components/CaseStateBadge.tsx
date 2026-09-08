@@ -2,7 +2,6 @@
 
 import type { ViolationKind } from "@/core";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 const CASE_STATE_LABEL: Record<ViolationKind, string> = {
   INAUTHENTIC_DOCUMENTS: "Inauthentic docs",

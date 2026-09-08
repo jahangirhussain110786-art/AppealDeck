@@ -10,9 +10,11 @@ test.describe("Marketing site (public)", () => {
     ).toBeVisible();
   });
 
-  test("pricing page renders all three plans", async ({ page }) => {
+  test("pricing page renders the Free and Appeal Pass columns", async ({ page }) => {
     await page.goto("/pricing");
-    await expect(page.getByRole("heading", { level: 1, name: /pricing/i })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: /free/i })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: /appeal pass/i })).toBeVisible();
   });
 
   test("decode page accepts pasted notice text", async ({ page }) => {

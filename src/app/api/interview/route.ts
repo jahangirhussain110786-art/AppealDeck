@@ -4,7 +4,6 @@ import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
 import { createCaseFile, nextStep, applyAnswer, interviewProgress } from "@/core/interviewEngine";
 import type { CaseFile, StepAnswer } from "@/core/interviewEngine";
-import type { ViolationKind } from "@/core";
 import { rateLimitInterview, tooManyRequestsResponse } from "@/lib/ratelimit";
 
 const MAX_CASEFILE_BYTES = 200_000;

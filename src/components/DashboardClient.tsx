@@ -348,7 +348,7 @@ export function DashboardClient({ license }: DashboardClientProps) {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  <Link href="/decode" className="underline-offset-4 hover:underline">
+                  <Link href="/decode" className="underline underline-offset-4">
                     {APP.dashboard.deadlines.decoderHint}
                   </Link>
                 </p>

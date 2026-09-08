@@ -17,7 +17,7 @@ export function browserWebCrypto(): Crypto {
   return globalThis.crypto;
 }
 
-export function getBrowserVault(name: string = VAULT_DB_NAME): Vault {
+export function getBrowserVault(_name: string = VAULT_DB_NAME): Vault {
   const cryptoObj = browserWebCrypto() as unknown as ConstructorParameters<typeof Vault>[0];
   return new Vault(cryptoObj);
 }

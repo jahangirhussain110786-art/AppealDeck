@@ -41,7 +41,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "text-sm font-medium transition-colors hover:text-foreground",
+        "text-sm font-medium underline underline-offset-2 transition-colors hover:text-foreground",
         active ? "text-foreground" : "text-muted-foreground",
       )}
     >

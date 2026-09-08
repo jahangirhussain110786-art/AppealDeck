@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ClipboardPaste, FileText, RefreshCw } from "lucide-react";
+import { ClipboardPaste, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { CaseStateBadge } from "@/components/CaseStateBadge";
 import { DeadlineChipList } from "@/components/DeadlineChip";
@@ -16,7 +15,7 @@ import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { EmptyState } from "@/components/EmptyState";
 import { CopyButton } from "@/components/CopyButton";
-import { guidanceFor, GLOBAL_EXPECTATIONS } from "@/core/guidance";
+import { guidanceFor } from "@/core/guidance";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
 import { DECODE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";

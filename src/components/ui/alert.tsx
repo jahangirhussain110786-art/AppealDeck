@@ -3,17 +3,17 @@ import { cn } from "@/lib/utils";
 
 const alertVariants = {
   base: "relative flex items-start gap-2.5 rounded-lg border px-4 py-3 text-sm",
-  info: "border-info/30 bg-info/10 text-info-foreground",
-  warning: "border-warning/30 bg-warning/10 text-warning-foreground",
-  destructive: "border-destructive/30 bg-destructive/10 text-destructive-foreground",
-  success: "border-success/30 bg-success/10 text-success-foreground",
+  info: "border-info/30 bg-info/10 text-foreground",
+  warning: "border-warning/30 bg-warning/10 text-foreground",
+  destructive: "border-destructive/30 bg-destructive/10 text-foreground",
+  success: "border-success/30 bg-success/10 text-foreground",
 };
 
 const alertTitles = {
-  info: "text-info-foreground",
-  warning: "text-warning-foreground",
-  destructive: "text-destructive-foreground",
-  success: "text-success-foreground",
+  info: "text-foreground",
+  warning: "text-foreground",
+  destructive: "text-foreground",
+  success: "text-foreground",
   base: "text-foreground",
 };
 

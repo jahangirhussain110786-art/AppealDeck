@@ -10,14 +10,9 @@ import {
 } from "./envelope";
 import {
   decryptBytes,
-  decryptString,
-  deriveDek,
   encryptBytes,
-  encryptString,
-  exportRawKey,
   generateDek,
   getSubtleCrypto,
-  importRawDek,
   newKdfParams,
   unwrapDek,
   wrapDek,
@@ -62,7 +57,6 @@ export class Vault {
   private readonly db: VaultDB;
   private readonly provider: WebCryptoLike;
   private dek: CryptoKey | null = null;
-  private meta: VaultKeyStore | null = null;
 
   constructor(provider: WebCryptoLike, db?: VaultDB) {
     this.provider = provider;
@@ -76,7 +70,6 @@ export class Vault {
 
   async close(): Promise<void> {
     this.dek = null;
-    this.meta = null;
     this.db.close();
   }
 
@@ -116,7 +109,6 @@ export class Vault {
     };
     await this.db.meta.put({ key: "appealdeck-vault" as never, value: meta });
     this.dek = dek;
-    this.meta = meta;
   }
 
   async initWrapped(passphrase: string): Promise<void> {
@@ -135,7 +127,6 @@ export class Vault {
     };
     await this.db.meta.put({ key: "appealdeck-vault" as never, value: meta });
     this.dek = dek;
-    this.meta = meta;
   }
 
   async unlock(passphrase: string): Promise<void> {
@@ -148,7 +139,6 @@ export class Vault {
     }
     const dek = await unwrapDek(this.provider, passphrase, row.value.wrappedDek);
     this.dek = dek;
-    this.meta = row.value;
   }
 
   lock(): void {
@@ -178,7 +168,6 @@ export class Vault {
     };
     await this.db.meta.put({ key: "appealdeck-vault" as never, value: next });
     this.dek = dek;
-    this.meta = next;
   }
 
   private requireDek(): CryptoKey {
@@ -262,7 +251,6 @@ export class Vault {
       await this.db.meta.clear();
     });
     this.dek = null;
-    this.meta = null;
   }
 
   async exportAll(): Promise<{
@@ -325,7 +313,6 @@ export class Vault {
       }
     });
     this.dek = dek;
-    this.meta = nextMeta;
     return n;
   }
 

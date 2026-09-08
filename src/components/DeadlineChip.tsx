@@ -64,7 +64,6 @@ export interface DeadlineChipProps {
 function DeadlineChipContent({ deadline, now }: { deadline: Deadline; now: Date }) {
   const tone = toneFor(deadline.dueAt, now, deadline.kind);
   const Icon = toneIcon[tone];
-  const caveat = caveatFor(deadline.kind);
   return (
     <div
       className={cn(

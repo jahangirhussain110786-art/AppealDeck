@@ -18,11 +18,10 @@ export function isSeverityGated(kind: ViolationKind): boolean {
 import { parseNotice } from "./noticeParser";
 import type { ParsedNotice } from "./noticeParser";
 import { classifyStage1 } from "./classifier";
-import type { Classification, Confidence } from "./classifier";
+import type { Classification } from "./classifier";
 import { computeDeadlines, isIndefiniteHold } from "./deadlinesModel";
-import type { Deadline, DeadlineKind, DeadlineInput } from "./deadlinesModel";
+import type { Deadline } from "./deadlinesModel";
 import { FIXTURES, FIXTURE_KINDS } from "./fixtures";
-import type { Fixture, FixtureExpected } from "./fixtures";
 import {
   KIND_GUIDANCE,
   guidanceFor,

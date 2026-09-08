@@ -12,7 +12,6 @@ export type RateLimitResult = {
 let _compose: Ratelimit | null = null;
 let _interview: Ratelimit | null = null;
 let _analyzeReply: Ratelimit | null = null;
-let _enabled = false;
 
 function hasUpstashEnv(): boolean {
   return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);

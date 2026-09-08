@@ -3,7 +3,6 @@ import type { DocumentType } from "./readiness";
 import { composerModeFor, isRequiredComplete } from "./readiness";
 import type { CaseFileData, ComposerMode } from "./readiness";
 import { requirementsFor } from "./evidenceModel";
-import type { EvidenceKind } from "./evidenceModel";
 import { defaultDocumentType } from "./readiness";
 
 export interface PoaSection {
@@ -95,7 +94,7 @@ function buildCorrectiveActionsSection(data: CaseFileData): PoaSection {
   };
 }
 
-function buildPreventiveMeasuresSection(data: CaseFileData): PoaSection {
+function buildPreventiveMeasuresSection(_data: CaseFileData): PoaSection {
   return {
     heading: "Preventive Measures",
     body: "[Describe the systemic changes you have made to prevent this issue from recurring.]",
@@ -134,7 +133,7 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
 }
 
 function checkUnattestedClaims(
-  draft: PoaDraft,
+  _draft: PoaDraft,
   data: CaseFileData,
   findings: CriticFinding[],
 ): void {
@@ -149,7 +148,7 @@ function checkUnattestedClaims(
 }
 
 function checkEmptyEvidenceSlots(
-  draft: PoaDraft,
+  _draft: PoaDraft,
   data: CaseFileData,
   findings: CriticFinding[],
 ): void {
@@ -210,7 +209,7 @@ function checkBannedLanguage(draft: PoaDraft, findings: CriticFinding[]): void {
   }
 }
 
-function checkSeverityGate(draft: PoaDraft, data: CaseFileData, findings: CriticFinding[]): void {
+function checkSeverityGate(_draft: PoaDraft, data: CaseFileData, findings: CriticFinding[]): void {
   if (data.kind === "INAUTHENTIC_DOCUMENTS") {
     const hasInvoice = data.evidenceSlots["supplier_invoice"]?.present;
     if (!hasInvoice) {

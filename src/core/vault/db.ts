@@ -20,7 +20,7 @@ export class VaultDB extends Dexie {
   }
 }
 
-export function freshMeta(provider: {
+export function freshMeta(_provider: {
   getRandomValues: (b: Uint8Array) => Uint8Array;
 }): VaultKeyStore {
   return {

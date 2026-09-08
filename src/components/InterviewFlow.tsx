@@ -155,9 +155,11 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
   const [vaultRecords, setVaultRecords] = useState<VaultListItem[]>([]);
   const [ariaAnnounce, setAriaAnnounce] = useState("");
 
+  /* eslint-disable react-hooks/exhaustive-deps -- announce only on step.id change */
   useEffect(() => {
     setAriaAnnounce(`${step?.title}. ${step?.prompt}`);
   }, [step?.id]);
+  /* eslint-enable react-hooks/exhaustive-deps */
   const [showResumeDialog, setShowResumeDialog] = useState(false);
 
   useEffect(() => {

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
 import { AUTH } from "@/content/auth";
+import { isValidEmail, validatePasswordLength } from "@/lib/validation";
 import type { AuthStatus } from "@/components/AuthCard";
 import { motion } from "framer-motion";
 
@@ -35,15 +36,19 @@ function LoginPageInner() {
   const [status, setStatus] = useState<AuthStatus>("idle");
   const [message, setMessage] = useState("");
 
-  const validateEmail = (value: string) => {
-    if (value.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+  const validateEmailError = (value: string) => {
+    if (value.length > 0 && !isValidEmail(value)) {
       return AUTH.login.messages.invalidEmail;
     }
     return "";
   };
 
   const handleEmailBlur = () => {
-    setEmailError(validateEmail(email));
+    setEmailError(validateEmailError(email));
+  };
+
+  const handlePasswordBlur = () => {
+    setPasswordError(validatePasswordLength(password));
   };
 
   const errorParam = searchParams.get("error");
@@ -56,7 +61,7 @@ function LoginPageInner() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const emailErr = validateEmail(email);
+    const emailErr = validateEmailError(email);
     setEmailError(emailErr);
     if (emailErr) return;
 
@@ -167,7 +172,7 @@ function LoginPageInner() {
                 </label>
                 <a
                   href="/forgot-password"
-                  className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                  className="text-xs text-muted-foreground underline underline-offset-4 hover:text-primary"
                 >
                   {AUTH.login.fields.forgot}
                 </a>
@@ -179,6 +184,9 @@ function LoginPageInner() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onBlur={handlePasswordBlur}
+                aria-describedby={passwordError ? "password-error" : undefined}
+                aria-invalid={!!passwordError}
                 className="mt-1"
               />
               <FieldError id="password" message={passwordError} />

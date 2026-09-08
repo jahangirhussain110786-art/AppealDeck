@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { runDecode, isSeverityGated } from "@/core";
-import type { ViolationKind } from "@/core";
 
 export const dynamic = "force-dynamic";
 

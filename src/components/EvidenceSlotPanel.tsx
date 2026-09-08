@@ -93,7 +93,10 @@ export function EvidenceSlotPanel({
       <Card className="p-4 text-sm text-muted-foreground">
         <p>
           Encrypted vault is locked.{" "}
-          <a href="/vault" className="text-primary underline-offset-2 hover:underline">
+          <a
+            href="/vault"
+            className="text-primary underline underline-offset-2 hover:text-primary/80"
+          >
             Unlock it
           </a>{" "}
           to attach evidence from your stored documents.
@@ -148,7 +151,10 @@ export function EvidenceSlotPanel({
       </ul>
       <p className="text-xs text-muted-foreground">
         Files are encrypted on this device before being saved to the vault.{" "}
-        <a href="/vault" className="text-primary underline-offset-2 hover:underline">
+        <a
+          href="/vault"
+          className="text-primary underline underline-offset-2 hover:text-primary/80"
+        >
           Open the vault
         </a>
         <ExternalLink className="ml-0.5 inline size-3" />

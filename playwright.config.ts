@@ -20,6 +20,11 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testIgnore: "e2e/screenshots.spec.ts",
+    },
+    {
+      name: "screenshots",
+      testMatch: "e2e/screenshots.spec.ts",
     },
   ],
   webServer: {

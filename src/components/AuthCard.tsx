@@ -37,7 +37,10 @@ export function AuthShell({
               {children}
               <p className="mt-6 text-center text-sm text-muted-foreground">
                 {footerPrompt}{" "}
-                <a href={footerHref} className="text-primary underline-offset-4 hover:underline">
+                <a
+                  href={footerHref}
+                  className="text-primary underline underline-offset-4 hover:text-primary/80"
+                >
                   {footerAction}
                 </a>
               </p>

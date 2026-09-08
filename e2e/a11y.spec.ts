@@ -1,40 +1,98 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { AxeBuilder } from "@axe-core/playwright";
 
-test.describe("Accessibility (axe-core)", () => {
-  test("home page has no critical a11y violations", async ({ page }) => {
-    await page.goto("/");
-    const results = await new AxeBuilder({ page }).analyze();
-    const critical = results.violations.filter((v) => v.impact === "critical");
-    expect(critical).toEqual([]);
+async function assertNoAxeViolations(page: Page, path: string) {
+  await page.goto(path);
+  const results = await new AxeBuilder({ page }).analyze();
+  const violations = results.violations.filter(
+    (v) => v.impact === "critical" || v.impact === "serious",
+  );
+  expect(
+    violations,
+    JSON.stringify(
+      violations.map((v) => ({
+        id: v.id,
+        impact: v.impact,
+        description: v.description,
+        nodes: v.nodes.map((n) => n.html),
+      })),
+    ),
+  ).toEqual([]);
+}
+
+test.describe("Marketing + auth surfaces (axe-core, serious + critical)", () => {
+  test("home page has no serious or critical a11y violations", async ({ page }) => {
+    await assertNoAxeViolations(page, "/");
   });
 
-  test("pricing page has no critical a11y violations", async ({ page }) => {
-    await page.goto("/pricing");
-    const results = await new AxeBuilder({ page }).analyze();
-    const critical = results.violations.filter((v) => v.impact === "critical");
-    expect(critical).toEqual([]);
+  test("pricing page has no serious or critical a11y violations", async ({ page }) => {
+    await assertNoAxeViolations(page, "/pricing");
   });
 
-  test("/decode page has no critical a11y violations", async ({ page }) => {
-    await page.goto("/decode");
-    const results = await new AxeBuilder({ page }).analyze();
-    const critical = results.violations.filter((v) => v.impact === "critical");
-    expect(critical).toEqual([]);
+  test("/decode page has no serious or critical a11y violations", async ({ page }) => {
+    await assertNoAxeViolations(page, "/decode");
   });
 
-  test("legal pages have no critical a11y violations", async ({ page }) => {
-    for (const slug of ["/privacy", "/terms", "/refund"]) {
-      await page.goto(slug);
-      const results = await new AxeBuilder({ page }).analyze();
-      const critical = results.violations.filter((v) => v.impact === "critical");
-      expect(critical).toEqual([]);
-    }
+  test("/faq page has no serious or critical a11y violations", async ({ page }) => {
+    await assertNoAxeViolations(page, "/faq");
   });
 
+  test("/privacy page has no serious or critical a11y violations", async ({ page }) => {
+    await assertNoAxeViolations(page, "/privacy");
+  });
+
+  test("/terms page has no serious or critical a11y violations", async ({ page }) => {
+    await assertNoAxeViolations(page, "/terms");
+  });
+
+  test("/refund page has no serious or critical a11y violations", async ({ page }) => {
+    await assertNoAxeViolations(page, "/refund");
+  });
+
+  test("/signup page has no serious or critical a11y violations", async ({ page }) => {
+    await assertNoAxeViolations(page, "/signup");
+  });
+
+  test("/forgot-password page has no serious or critical a11y violations", async ({ page }) => {
+    await assertNoAxeViolations(page, "/forgot-password");
+  });
+
+  test("/reset-password redirects to /login when unauthenticated", async ({ page }) => {
+    await page.goto("/reset-password");
+    await page.waitForURL(/\/login/);
+    expect(page.url()).toContain("/login");
+  });
+});
+
+test.describe("Auth gate", () => {
   test("unauthenticated /dashboard redirects to /login", async ({ page }) => {
     const res = await page.goto("/dashboard");
     expect(res?.status()).toBe(200);
+    await page.waitForURL(/\/login/);
+    expect(page.url()).toContain("/login");
+  });
+
+  test("unauthenticated /case redirects to /login", async ({ page }) => {
+    await page.goto("/case");
+    await page.waitForURL(/\/login/);
+    expect(page.url()).toContain("/login");
+  });
+
+  test("unauthenticated /compose redirects to /login", async ({ page }) => {
+    await page.goto("/compose");
+    await page.waitForURL(/\/login/);
+    expect(page.url()).toContain("/login");
+  });
+
+  test("unauthenticated /vault redirects to /login", async ({ page }) => {
+    await page.goto("/vault");
+    await page.waitForURL(/\/login/);
+    expect(page.url()).toContain("/login");
+  });
+
+  test("unauthenticated /billing redirects to /login", async ({ page }) => {
+    await page.goto("/billing");
+    await page.waitForURL(/\/login/);
     expect(page.url()).toContain("/login");
   });
 
@@ -45,15 +103,33 @@ test.describe("Accessibility (axe-core)", () => {
   });
 });
 
-test.describe("Authenticated a11y (dev seed)", () => {
+test.describe("Keyboard navigation (unauthenticated)", () => {
   test("login form is keyboard-navigable", async ({ page }) => {
     await page.goto("/login");
-    await page.getByLabel(/email/i).focus();
-    await page.keyboard.type("test@example.com");
+    const email = page.getByLabel(/email/i);
+    await email.focus();
+    await email.fill("seller@example.com");
     await page.keyboard.press("Tab");
-    await page.keyboard.type("password123");
+    await page.keyboard.press("Tab");
+    const password = page.getByLabel(/^password$/i);
+    await expect(password).toBeFocused();
+    await password.fill("hunter2");
     await page.keyboard.press("Tab");
     const submitButton = page.getByRole("button", { name: /sign in/i });
+    await expect(submitButton).toBeFocused();
+  });
+
+  test("signup form is keyboard-navigable", async ({ page }) => {
+    await page.goto("/signup");
+    const email = page.getByLabel(/email/i);
+    await email.focus();
+    await email.fill("seller@example.com");
+    await page.keyboard.press("Tab");
+    const password = page.getByLabel(/^password$/i);
+    await expect(password).toBeFocused();
+    await password.fill("hunter2");
+    await page.keyboard.press("Tab");
+    const submitButton = page.getByRole("button", { name: /create account|sign up/i });
     await expect(submitButton).toBeFocused();
   });
 });

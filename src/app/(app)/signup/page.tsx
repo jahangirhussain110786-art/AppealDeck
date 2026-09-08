@@ -13,6 +13,7 @@ import {
 } from "@/components/AuthCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { isValidEmail, validatePasswordLength } from "@/lib/validation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
 import { AUTH } from "@/content/auth";
@@ -28,23 +29,19 @@ export default function SignupPage() {
   const [status, setStatus] = useState<AuthStatus>("idle");
   const [message, setMessage] = useState("");
 
-  const validateEmail = (value: string) => {
-    if (value.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+  const validateEmailError = (value: string) => {
+    if (value.length > 0 && !isValidEmail(value)) {
       return AUTH.signup.messages.invalidEmail;
     }
     return "";
   };
 
   const handleEmailBlur = () => {
-    setEmailError(validateEmail(email));
+    setEmailError(validateEmailError(email));
   };
 
   const handlePasswordBlur = () => {
-    if (password.length > 0 && password.length < 8) {
-      setPasswordError(AUTH.signup.messages.weakPassword);
-    } else {
-      setPasswordError("");
-    }
+    setPasswordError(validatePasswordLength(password));
   };
 
   useEffect(() => {
@@ -57,9 +54,8 @@ export default function SignupPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const emailErr = validateEmail(email);
-    const pwErr =
-      password.length > 0 && password.length < 8 ? AUTH.signup.messages.weakPassword : "";
+    const emailErr = validateEmailError(email);
+    const pwErr = validatePasswordLength(password);
     setEmailError(emailErr);
     setPasswordError(pwErr);
     if (emailErr || pwErr) return;

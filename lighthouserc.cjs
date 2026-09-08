@@ -9,6 +9,7 @@ module.exports = {
         "http://127.0.0.1:3000/privacy",
         "http://127.0.0.1:3000/terms",
         "http://127.0.0.1:3000/refund",
+        "http://127.0.0.1:3000/faq",
       ],
       numberOfRuns: 3,
       settings: {
