@@ -2,7 +2,13 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AuthShell, SubmitButton, StatusMessage, SuccessBanner } from "@/components/AuthCard";
+import {
+  AuthShell,
+  SubmitButton,
+  StatusMessage,
+  SuccessBanner,
+  FieldError,
+} from "@/components/AuthCard";
 import { Input } from "@/components/ui/input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,8 +28,32 @@ function ResetPasswordPageInner() {
   const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
   const [status, setStatus] = useState<AuthStatus>("idle");
   const [message, setMessage] = useState("");
+
+  const validatePassword = (value: string) => {
+    if (value.length > 0 && value.length < 8) {
+      return AUTH.resetPassword.messages.weakPassword;
+    }
+    return "";
+  };
+
+  const validateConfirm = (value: string) => {
+    if (value.length > 0 && value !== password) {
+      return AUTH.resetPassword.messages.mismatch;
+    }
+    return "";
+  };
+
+  const handlePasswordBlur = () => {
+    setPasswordError(validatePassword(password));
+  };
+
+  const handleConfirmBlur = () => {
+    setConfirmError(validateConfirm(confirm));
+  };
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -38,16 +68,12 @@ function ResetPasswordPageInner() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 8) {
-      setStatus("error");
-      setMessage(AUTH.resetPassword.messages.weakPassword);
-      return;
-    }
-    if (password !== confirm) {
-      setStatus("error");
-      setMessage(AUTH.resetPassword.messages.mismatch);
-      return;
-    }
+    const pwErr = validatePassword(password);
+    const cfErr = validateConfirm(confirm);
+    setPasswordError(pwErr);
+    setConfirmError(cfErr);
+    if (pwErr || cfErr) return;
+
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
       setStatus("error");
@@ -82,8 +108,15 @@ function ResetPasswordPageInner() {
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          onBlur={handlePasswordBlur}
+          aria-describedby={passwordError ? "password-error" : undefined}
+          aria-invalid={!!passwordError}
           className="mt-1"
         />
+        <p className="mt-1 text-xs text-muted-foreground">
+          {AUTH.resetPassword.fields.passwordHint}
+        </p>
+        <FieldError id="password" message={passwordError} />
       </div>
       <div>
         <label htmlFor="confirm" className="text-sm font-medium text-foreground">
@@ -97,8 +130,12 @@ function ResetPasswordPageInner() {
           minLength={8}
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
+          onBlur={handleConfirmBlur}
+          aria-describedby={confirmError ? "confirm-error" : undefined}
+          aria-invalid={!!confirmError}
           className="mt-1"
         />
+        <FieldError id="confirm" message={confirmError} />
       </div>
       <StatusMessage status={status} message={message} />
     </>
@@ -108,8 +145,8 @@ function ResetPasswordPageInner() {
     <AuthShell
       title={AUTH.resetPassword.title}
       subtitle={AUTH.resetPassword.subtitle}
-      footerPrompt={AUTH.resetPassword.messages.submit}
-      footerAction="Cancel"
+      footerPrompt={AUTH.resetPassword.footer.prompt}
+      footerAction={AUTH.resetPassword.footer.action}
       footerHref="/login"
     >
       <motion.div
@@ -129,7 +166,7 @@ function ResetPasswordPageInner() {
 
         {status === "done" && (
           <Button asChild size="lg" className="mt-4 w-full">
-            <a href="/case">{AUTH.resetPassword.success.button}</a>
+            <a href="/dashboard">{AUTH.resetPassword.success.button}</a>
           </Button>
         )}
       </motion.div>

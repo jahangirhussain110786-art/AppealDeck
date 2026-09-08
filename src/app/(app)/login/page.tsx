@@ -8,6 +8,7 @@ import {
   Divider,
   SubmitButton,
   StatusMessage,
+  FieldError,
 } from "@/components/AuthCard";
 import { Input } from "@/components/ui/input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -28,9 +29,22 @@ function LoginPageInner() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [mode, setMode] = useState<"password" | "magic">("password");
   const [status, setStatus] = useState<AuthStatus>("idle");
   const [message, setMessage] = useState("");
+
+  const validateEmail = (value: string) => {
+    if (value.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      return AUTH.login.messages.invalidEmail;
+    }
+    return "";
+  };
+
+  const handleEmailBlur = () => {
+    setEmailError(validateEmail(email));
+  };
 
   const errorParam = searchParams.get("error");
   useEffect(() => {
@@ -42,6 +56,10 @@ function LoginPageInner() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const emailErr = validateEmail(email);
+    setEmailError(emailErr);
+    if (emailErr) return;
+
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
       setStatus("error");
@@ -133,8 +151,12 @@ function LoginPageInner() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onBlur={handleEmailBlur}
+              aria-describedby={emailError ? "email-error" : undefined}
+              aria-invalid={!!emailError}
               className="mt-1"
             />
+            <FieldError id="email" message={emailError} />
           </div>
 
           {mode === "password" && (
@@ -159,6 +181,7 @@ function LoginPageInner() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1"
               />
+              <FieldError id="password" message={passwordError} />
             </div>
           )}
 

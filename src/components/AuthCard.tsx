@@ -25,7 +25,10 @@ export function AuthShell({
 }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <main id="main" className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-12">
+      <main
+        id="main"
+        className="mx-auto flex w-full max-w-[var(--w-form)] flex-1 items-center px-4 py-12"
+      >
         <div className="w-full space-y-0">
           <Card>
             <CardContent className="pt-6">
@@ -124,6 +127,15 @@ export function StatusMessage({ status, message }: { status: AuthStatus; message
       role="alert"
       className={status === "error" ? "text-sm text-destructive" : "text-sm text-muted-foreground"}
     >
+      {message}
+    </p>
+  );
+}
+
+export function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return (
+    <p id={`${id}-error`} role="alert" className="mt-1 text-xs text-destructive">
       {message}
     </p>
   );

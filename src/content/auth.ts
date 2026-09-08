@@ -19,6 +19,7 @@ export const AUTH = {
       toggleMagic: "Use password instead",
       submitPassword: "Sign in",
       submitMagic: "Email me a sign-in link",
+      invalidEmail: "Enter a valid email address.",
     },
     footer: {
       prompt: "New to AppealDeck?",
@@ -39,7 +40,11 @@ export const AUTH = {
       notConfigured: "Auth is not configured.",
       weakPassword: "Password must be at least 8 characters.",
       sent: "Check your email to confirm your account.",
+      sentDetail:
+        "We sent a confirmation link to your inbox. Open it to verify your email, then sign in.",
+      backToSignIn: "Back to sign in",
       submit: "Create account",
+      invalidEmail: "Enter a valid email address.",
     },
     footer: {
       prompt: "Already have an account?",
@@ -57,6 +62,10 @@ export const AUTH = {
       sent: "Check your email for a password reset link.",
       submit: "Send reset link",
     },
+    success: {
+      whatToDo: "Open the email and follow the link to reset your password.",
+      backToSignIn: "Back to sign in",
+    },
     footer: {
       prompt: "Remembered it?",
       action: "Sign in",
@@ -68,6 +77,7 @@ export const AUTH = {
     fields: {
       password: "New password",
       confirm: "Confirm new password",
+      passwordHint: "At least 8 characters.",
     },
     messages: {
       notConfigured: "Auth is not configured.",
@@ -77,11 +87,11 @@ export const AUTH = {
       submit: "Update password",
     },
     success: {
-      button: "Go to your case",
+      button: "Go to your dashboard",
+    },
+    footer: {
+      prompt: "Remembered it?",
+      action: "Sign in",
     },
   },
-} as const;
-
-export const AUTH_SHARED = {
-  authNotConfigured: "Auth is not configured.",
 } as const;

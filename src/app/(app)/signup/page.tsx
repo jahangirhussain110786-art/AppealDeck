@@ -8,8 +8,11 @@ import {
   Divider,
   SubmitButton,
   StatusMessage,
+  FieldError,
+  SuccessBanner,
 } from "@/components/AuthCard";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
 import { AUTH } from "@/content/auth";
@@ -20,8 +23,29 @@ export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [status, setStatus] = useState<AuthStatus>("idle");
   const [message, setMessage] = useState("");
+
+  const validateEmail = (value: string) => {
+    if (value.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      return AUTH.signup.messages.invalidEmail;
+    }
+    return "";
+  };
+
+  const handleEmailBlur = () => {
+    setEmailError(validateEmail(email));
+  };
+
+  const handlePasswordBlur = () => {
+    if (password.length > 0 && password.length < 8) {
+      setPasswordError(AUTH.signup.messages.weakPassword);
+    } else {
+      setPasswordError("");
+    }
+  };
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -33,11 +57,13 @@ export default function SignupPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 8) {
-      setStatus("error");
-      setMessage(AUTH.signup.messages.weakPassword);
-      return;
-    }
+    const emailErr = validateEmail(email);
+    const pwErr =
+      password.length > 0 && password.length < 8 ? AUTH.signup.messages.weakPassword : "";
+    setEmailError(emailErr);
+    setPasswordError(pwErr);
+    if (emailErr || pwErr) return;
+
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
       setStatus("error");
@@ -107,41 +133,61 @@ export default function SignupPage() {
         />
         <Divider label={AUTH.signup.divider} />
 
-        <form onSubmit={handleSubmit} className="mt-2 space-y-3">
-          <div>
-            <label htmlFor="email" className="text-sm font-medium text-foreground">
-              {AUTH.signup.fields.email}
-            </label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="text-sm font-medium text-foreground">
-              {AUTH.signup.fields.password}
-            </label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">{AUTH.signup.fields.passwordHint}</p>
-          </div>
+        {status === "sent" ? (
+          <>
+            <SuccessBanner message={message} />
+            <p className="mt-2 text-sm text-muted-foreground">{AUTH.signup.messages.sentDetail}</p>
+            <Button asChild size="lg" className="mt-4 w-full">
+              <a href="/login">{AUTH.signup.messages.backToSignIn}</a>
+            </Button>
+          </>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-2 space-y-3">
+            <div>
+              <label htmlFor="email" className="text-sm font-medium text-foreground">
+                {AUTH.signup.fields.email}
+              </label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={handleEmailBlur}
+                aria-describedby={emailError ? "email-error" : undefined}
+                aria-invalid={!!emailError}
+                className="mt-1"
+              />
+              <FieldError id="email" message={emailError} />
+            </div>
+            <div>
+              <label htmlFor="password" className="text-sm font-medium text-foreground">
+                {AUTH.signup.fields.password}
+              </label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onBlur={handlePasswordBlur}
+                aria-describedby={passwordError ? "password-error" : undefined}
+                aria-invalid={!!passwordError}
+                className="mt-1"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {AUTH.signup.fields.passwordHint}
+              </p>
+              <FieldError id="password" message={passwordError} />
+            </div>
 
-          <StatusMessage status={status} message={message} />
-          <SubmitButton status={status} label={AUTH.signup.messages.submit} />
-        </form>
+            <StatusMessage status={status} message={message} />
+            <SubmitButton status={status} label={AUTH.signup.messages.submit} />
+          </form>
+        )}
       </motion.div>
     </AuthShell>
   );

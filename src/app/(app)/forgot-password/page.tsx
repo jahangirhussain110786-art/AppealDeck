@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AuthShell, SubmitButton, StatusMessage } from "@/components/AuthCard";
+import { AuthShell, SubmitButton, StatusMessage, SuccessBanner } from "@/components/AuthCard";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
 import { AUTH } from "@/content/auth";
@@ -20,7 +21,7 @@ export default function ForgotPasswordPage() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) router.replace("/");
+      if (user) router.replace("/dashboard");
     });
   }, [router]);
 
@@ -63,25 +64,38 @@ export default function ForgotPasswordPage() {
         transition={{ duration: 0.35, ease: "easeOut" }}
         className="-mt-4"
       >
-        <form onSubmit={handleSubmit} className="mt-2 space-y-3">
-          <div>
-            <label htmlFor="email" className="text-sm font-medium text-foreground">
-              {AUTH.forgotPassword.fields.email}
-            </label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1"
-            />
-          </div>
+        {status === "sent" ? (
+          <SuccessBanner message={AUTH.forgotPassword.messages.sent} />
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-2 space-y-3">
+            <div>
+              <label htmlFor="email" className="text-sm font-medium text-foreground">
+                {AUTH.forgotPassword.fields.email}
+              </label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1"
+              />
+            </div>
 
-          <StatusMessage status={status} message={message} />
-          <SubmitButton status={status} label={AUTH.forgotPassword.messages.submit} />
-        </form>
+            <StatusMessage status={status} message={message} />
+            <SubmitButton status={status} label={AUTH.forgotPassword.messages.submit} />
+          </form>
+        )}
+
+        {status === "sent" && (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm text-muted-foreground">{AUTH.forgotPassword.success.whatToDo}</p>
+            <Button asChild size="lg" className="w-full">
+              <a href="/login">{AUTH.forgotPassword.success.backToSignIn}</a>
+            </Button>
+          </div>
+        )}
       </motion.div>
     </AuthShell>
   );
