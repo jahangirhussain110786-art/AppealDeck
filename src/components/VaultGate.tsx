@@ -13,6 +13,8 @@ import { VaultCryptoError } from "@/core/vault/envelope";
 import type { Vault, VaultStatus } from "@/core/vault/vault";
 import { EmptyState } from "@/components/EmptyState";
 import { FileText } from "lucide-react";
+import { APP } from "@/content/app";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type Phase =
   { kind: "loading" } | { kind: "needs_init" } | { kind: "locked" } | { kind: "unlocked" };
@@ -115,12 +117,12 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
     setError(null);
     try {
       await vault.initWithPassphrase(passphrase);
-      toast.success("Vault created", {
-        description: "Your evidence is now encrypted on this device.",
+      toast.success(APP.vault.create.success, {
+        description: APP.vault.create.successDesc,
       });
       onDone();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not create vault.");
+      setError(e instanceof Error ? e.message : APP.vault.create.error);
     } finally {
       setBusy(false);
     }
@@ -129,18 +131,23 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
   return (
     <Card>
       <CardContent className="pt-6">
-        <h2 className="mb-2 text-lg font-semibold">Set a vault passphrase</h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Your case file and evidence are encrypted on this device with a key derived from this
-          passphrase (PBKDF2-SHA-256, 310,000 iterations) plus AES-GCM. We never see the passphrase.
-        </p>
+        <h2 className="mb-2 text-lg font-semibold">{APP.vault.create.title}</h2>
+        <p className="mb-4 text-sm text-muted-foreground">{APP.vault.create.body}</p>
+
+        <Alert variant="warning" className="mb-4">
+          <AlertDescription>{APP.vault.create.lossWarning}</AlertDescription>
+        </Alert>
+
         <div className="flex flex-col gap-3">
           <div>
-            <Label htmlFor="vault-create-passphrase">Passphrase (min 8 chars)</Label>
+            <Label htmlFor="vault-create-passphrase">{APP.vault.create.passphraseLabel}</Label>
             <Input
               id="vault-create-passphrase"
               type="password"
               autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={passphrase}
               onChange={(e) => setPassphrase(e.target.value)}
               aria-invalid={!!error}
@@ -153,17 +160,20 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
             )}
           </div>
           <div>
-            <Label htmlFor="vault-create-confirm">Confirm passphrase</Label>
+            <Label htmlFor="vault-create-confirm">{APP.vault.create.confirmLabel}</Label>
             <Input
               id="vault-create-confirm"
               type="password"
               autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               aria-invalid={passphrase !== confirm && confirm.length > 0}
             />
             {passphrase !== confirm && confirm.length > 0 && (
-              <p className="mt-1 text-xs text-destructive">Passphrases do not match</p>
+              <p className="mt-1 text-xs text-destructive">{APP.vault.create.mismatchError}</p>
             )}
           </div>
           <Button onClick={handleInit} disabled={!canSubmit}>
@@ -172,7 +182,7 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
             ) : (
               <ShieldCheck className="size-4" />
             )}
-            {busy ? "Creating…" : "Create vault"}
+            {busy ? APP.vault.create.submitting : APP.vault.create.submit}
           </Button>
         </div>
       </CardContent>
@@ -200,9 +210,9 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
       onUnlocked();
     } catch (e) {
       if (isVaultCryptoError(e) && e.code === VAULT_CRYPTO_ERROR_CODE) {
-        setError("That passphrase didn't unlock the vault.");
+        setError(APP.vault.unlock.error);
       } else {
-        setError(e instanceof Error ? e.message : "Unlock failed.");
+        setError(e instanceof Error ? e.message : APP.vault.unlock.genericError);
       }
     } finally {
       setBusy(false);
@@ -212,17 +222,18 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
   return (
     <Card>
       <CardContent className="pt-6">
-        <h2 className="mb-2 text-lg font-semibold">Unlock your vault</h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Enter your passphrase to decrypt your case data. The key never leaves your device.
-        </p>
+        <h2 className="mb-2 text-lg font-semibold">{APP.vault.unlock.title}</h2>
+        <p className="mb-4 text-sm text-muted-foreground">{APP.vault.unlock.desc}</p>
         <div className="flex flex-col gap-3">
           <div>
-            <Label htmlFor="vault-unlock-passphrase">Passphrase</Label>
+            <Label htmlFor="vault-unlock-passphrase">{APP.vault.unlock.placeholder}</Label>
             <Input
               id="vault-unlock-passphrase"
               type="password"
               autoComplete="current-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={passphrase}
               onChange={(e) => setPassphrase(e.target.value)}
               onKeyDown={(e) => {
@@ -239,7 +250,7 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
           </div>
           <Button onClick={handleUnlock} disabled={passphrase.length < 8 || busy}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlock className="size-4" />}
-            {busy ? "Unlocking…" : "Unlock"}
+            {busy ? APP.vault.unlock.submitting : APP.vault.unlock.submit}
           </Button>
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
@@ -247,7 +258,7 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
             href="/vault"
             className="text-primary underline underline-offset-4 hover:text-primary/80"
           >
-            Need to set up or recover your vault?
+            {APP.vault.unlock.recoverLink}
           </a>
         </p>
       </CardContent>
