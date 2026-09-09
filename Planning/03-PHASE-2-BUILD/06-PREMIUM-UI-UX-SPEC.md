@@ -189,7 +189,7 @@ Rules: tokens before primitives before patterns before pages (never style a page
 
 Waves A+B are the pre-deploy minimum. Wave C ships with M-W closure. Nothing here adds a milestone.
 
-## 14. Register — external coding agent's 22 suggestions (verdicts, independently reviewed)
+## 14. Register — external coding agent's 22 suggestions + AM-19 rows 23–32 (verdicts, independently reviewed)
 
 | # | Suggestion | Verdict | Reason |
 |---|---|---|---|
@@ -215,6 +215,18 @@ Waves A+B are the pre-deploy minimum. Wave C ships with M-W closure. Nothing her
 | 20 | Confetti on first POA | **Reject (D6)** | A draft is not a win; it celebrates readiness-as-approval (banned framing) |
 | 21 | Theme screenshots on marketing | **Reject** | Toggle already exists; low value |
 | 22 | `/changelog` | **Adopt** (D) | Trust via a maintenance signal |
+| 23 | Non-affiliation/trademark disclaimer (footer, Terms, FAQ) | **Adopt** (AA-30) | Absent from `src/` and `legal/`; nominative use of "Amazon" needs it; trust by mechanism. Wording founder-approved 9 Sep 2026; sticky-bar form rejected (§1.1) |
+| 24 | Autosave status + surfaced vault-write failure | **Adopt** (AA-30) | §6 state quartet; silent `catch {}` in `InterviewFlow.tsx`; toast-per-save stays banned |
+| 25 | Passphrase unrecoverability disclosure at creation | **Adopt** (AA-30) | §10.2 mechanism honesty; no such sentence exists |
+| 26 | Plain-heading clipboard text + "as pasted" preview | **Adopt** (AA-30) | Copy-all drops headings; `renderPoaText` emits markdown the seller cannot paste |
+| 27 | Shared date/time formatter (absolute + relative + tz) | **Adopt** (AA-30) | Six ad-hoc `Intl` sites; §10.3 "14 Sep · in 10 days" rule |
+| 28 | File-input hygiene: `accept`, `multiple`, mobile `capture`, hash-based duplicate detection | **Adopt** (AA-30) | Attributes only; `plaintextHash` already stored per record |
+| 29 | Print stylesheet for compose/case | **Adopt** (AA-30) | Covers "PDF export" without a library or a new screen |
+| 30 | Vault idle auto-lock with a one-minute warning | **Adopt** (AA-30; security hygiene, freeze exemption confirmed by the founder 9 Sep 2026) | Banking-app norm; invoices/IDs on shared devices |
+| 31 | Deterministic critic rules: future tense in corrective actions, blame-shifting words, vague-time phrases, jargon swaps | **Adopt** (AA-31, M-4) | Zero-LLM regex rules in the existing critic family; warnings, never hard blocks |
+| 32 | Invoice issue-date capture + 365-day freshness flag | **Adopt** (AA-31, M-4) | Rule verified 2 Sep 2026; `evidenceModel.freshnessDays` already 365; the UI never asks |
+
+Rows 23–32 added 9 Sep 2026 under AM-19 (founder-ratified) from `docs/handoffs/2026-09-08-meta-ai-uiux-register.md` §6; the register's 56 AVOID rows and its post-freeze backlog are not repeated here.
 
 Agreed deprioritisations: search/⌘K, i18n, live chat, video, A/B rig.
 
