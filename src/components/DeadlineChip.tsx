@@ -4,29 +4,8 @@ import { useMemo } from "react";
 import { CalendarClock, CircleAlert, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { formatDate, formatRelativeDays } from "@/lib/format";
 import type { Deadline } from "@/core";
-
-const dateFmt = new Intl.DateTimeFormat("en-US", {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-});
-
-function formatAbsolute(dueAt: Date | null): string {
-  if (!dueAt) return "Date not stated";
-  return dateFmt.format(dueAt);
-}
-
-function formatRelative(dueAt: Date | null, now: Date): string {
-  if (!dueAt) return "verify in your Account Health dashboard";
-  const ms = dueAt.getTime() - now.getTime();
-  const days = Math.round(ms / 86_400_000);
-  if (days > 1) return `in ${days} days`;
-  if (days === 1) return "tomorrow";
-  if (days === 0) return "today";
-  if (days === -1) return "yesterday";
-  return `${Math.abs(days)} days ago`;
-}
 
 type Tone = "neutral" | "warn" | "destructive" | "info";
 
@@ -76,7 +55,8 @@ function DeadlineChipContent({ deadline, now }: { deadline: Deadline; now: Date 
       <div className="flex flex-col text-left">
         <span className="font-medium text-foreground">{deadline.label}</span>
         <span className="text-muted-foreground">
-          {formatAbsolute(deadline.dueAt)} | {formatRelative(deadline.dueAt, now)}
+          {formatDate(deadline.dueAt) || "Date not stated"} ·{" "}
+          {formatRelativeDays(deadline.dueAt, now)}
         </span>
       </div>
     </div>

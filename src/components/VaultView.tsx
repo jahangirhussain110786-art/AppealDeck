@@ -41,6 +41,7 @@ import type { EvidenceKind } from "@/core/evidenceModel";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { VaultGate } from "@/components/VaultGate";
 import { Label } from "@/components/ui/label";
+import { formatDate, formatBytes } from "@/lib/format";
 
 function useVault(): Vault {
   const ref = React.useRef<Vault | null>(null);
@@ -56,12 +57,6 @@ function mimeTypeToIcon(mimeType: string): React.ReactNode {
   if (mimeType.includes("spreadsheet") || mimeType.includes("excel") || mimeType.includes("csv"))
     return <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />;
   return <FileBox className="h-5 w-5 text-muted-foreground" />;
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1_048_576).toFixed(1)} MB`;
 }
 
 const EVIDENCE_KINDS: EvidenceKind[] = [
@@ -427,15 +422,7 @@ export default function VaultView({ userId }: { userId: string }) {
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {it.mimeType} · {formatBytes(it.sizeBytes)} ·{" "}
-                            <span data-tn>
-                              {Intl.DateTimeFormat(undefined, {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }).format(new Date(it.createdAt))}
-                            </span>
+                            <span data-tn>{formatDate(it.createdAt)}</span>
                             {it.evidenceKind
                               ? ` · ${APP.evidenceKinds[it.evidenceKind as EvidenceKind] ?? evidenceKindLabel(it.evidenceKind as EvidenceKind)}`
                               : ""}

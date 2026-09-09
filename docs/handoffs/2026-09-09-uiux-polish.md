@@ -4,11 +4,11 @@ Prompt: `docs/handoffs/2026-09-09-uiux-polish-prompt.md`. Baseline commit `ed052
 
 ## Resume pointer
 
-- Task: 1 · Sub-step: done · Status: done
-- Last green gate: `npm test` 287/287, `npx playwright test e2e/marketing.spec.ts` 10/10, `npm run typecheck` OK, `npm run lint:copy` PASS at uncommitted
+- Task: 2 · Sub-step: done · Status: done
+- Last green gate: `npm test` 300/300 (30 files), `npm run typecheck` OK, `npm run lint:copy` PASS at uncommitted
 - Files open for this sub-step: none
-- Next command: Task 2 step 1 (create `src/lib/format.ts` with `formatDate`, `formatTime`, `formatDateTime`, `formatRelativeDays`, `formatDateWithRelative`, `formatBytes`)
-- Context usage at last update: ~12%
+- Next command: Task 3 step 1 (add `APP.interview.saveStatus` strings to `src/content/app.ts`)
+- Context usage at last update: ~18%
 
 **Task 0 files** (all UTF-8, verified) were committed as `bfba421` on 9 Sep 2026: `Planning/03-PHASE-2-BUILD/02-BUILD-PLAN-AMENDMENTS.md`, `Planning/03-PHASE-2-BUILD/06-PREMIUM-UI-UX-SPEC.md`, `docs/DECISIONS.md`, `CLAUDE.md`, `docs/handoffs/2026-09-08-meta-ai-uiux-register.md`, `docs/handoffs/2026-09-09-meta-ai-uiux-plain-guide.md`, `docs/handoffs/2026-09-09-uiux-polish-prompt.md`, `docs/handoffs/2026-09-09-uiux-polish.md`, `docs/handoffs/SESSION-START-PROMPT.md`. `disconnected-chat!.txt` and `.claude/` were deliberately left untracked.
 
@@ -24,11 +24,16 @@ Prompt: `docs/handoffs/2026-09-09-uiux-polish-prompt.md`. Baseline commit `ed052
 | 0    | decisions ledger entry appended (count 13 → 14) | `grep -n "AM-19 ratified" docs/DECISIONS.md`; `grep -c "^## 20" docs/DECISIONS.md`                                       | `134:## 2026-09-09 — AM-19 ratified: …` · `14`                                                                                     | bfba421     |
 | 0    | edited files still UTF-8, no BOM, no UTF-16     | `head -c 2 <file> \| od -An -tx1` on the five edited files                                                               | `23 20` for every file                                                                                                             | bfba421     |
 | 0    | working tree touched only planning/docs         | `git diff --stat`                                                                                                        | `4 files changed, 37 insertions(+), 4 deletions(-)` (CLAUDE.md, amendments, spec 06, DECISIONS.md) + 3 new handoff files untracked | bfba421     |
-| 1    | independence string in 4 files                  | `grep -rni "not affiliated with" src/content src/components legal`                                                       | shared.ts, legal.ts, marketing.ts, terms.md (4 files)                                                                              | uncommitted |
-| 1    | independence section id + footer render         | `grep -n "independence" src/content/legal.ts src/components/SiteFooter.tsx`                                              | legal.ts:84 `id: "independence"`; SiteFooter.tsx:39 `SHARED.footer.independence`                                                   | uncommitted |
-| 1    | lint:copy                                       | `npm run lint:copy 2>&1 \| tail -2`                                                                                      | `lint-copy: PASS`                                                                                                                  | uncommitted |
-| 1    | playwright marketing                            | `npx playwright test e2e/marketing.spec.ts --reporter=dot 2>&1 \| tail -5`                                               | `10 passed (1.2m)`                                                                                                                 | uncommitted |
-| 1    | types clean                                     | `npm run typecheck 2>&1`                                                                                                 | no errors                                                                                                                          | uncommitted |
+| 1    | independence string in 4 files                  | `grep -rni "not affiliated with" src/content src/components legal`                                                       | shared.ts, legal.ts, marketing.ts, terms.md (4 files)                                                                              | 6b5f3c5     |
+| 1    | independence section id + footer render         | `grep -n "independence" src/content/legal.ts src/components/SiteFooter.tsx`                                              | legal.ts:84 `id: "independence"`; SiteFooter.tsx:39 `SHARED.footer.independence`                                                   | 6b5f3c5     |
+| 1    | lint:copy                                       | `npm run lint:copy 2>&1 \| tail -2`                                                                                      | `lint-copy: PASS`                                                                                                                  | 6b5f3c5     |
+| 1    | playwright marketing                            | `npx playwright test e2e/marketing.spec.ts --reporter=dot 2>&1 \| tail -5`                                               | `10 passed (1.2m)`                                                                                                                 | 6b5f3c5     |
+| 1    | types clean                                     | `npm run typecheck 2>&1`                                                                                                 | no errors                                                                                                                          | 6b5f3c5     |
+| 2    | no Intl in tsx                                  | `grep -rn "Intl.DateTimeFormat\|toLocaleDateString" src --include=*.tsx --exclude-dir=__tests__`                         | 0 hits (Intl lives only in src/lib/format.ts)                                                                                      | uncommitted |
+| 2    | no date separator pipe                          | `Select-String -Pattern '" \| "' src/components/DeadlineChip.tsx`                                                        | 1 hit on type union `type Tone = "neutral"                                                                                         | "warn"      | ...`(pre-existing, NOT the date separator; verified`git show HEAD:` had same type union) | uncommitted |
+| 2    | test count                                      | `npm test 2>&1 \| tail -6`                                                                                               | `Tests 300 passed (300)` (was 287 + 13 new)                                                                                        | uncommitted |
+| 2    | lint:copy                                       | `npm run lint:copy 2>&1 \| tail -2`                                                                                      | `lint-copy: PASS`                                                                                                                  | uncommitted |
+| 2    | format clean                                    | `npm run format:check 2>&1`                                                                                              | `All matched files use Prettier code style!`                                                                                       | uncommitted |
 
 ## Discovered during this pass
 
@@ -36,6 +41,7 @@ Prompt: `docs/handoffs/2026-09-09-uiux-polish-prompt.md`. Baseline commit `ed052
 - `legal/terms.md:12` reads "not a guarantee of reinstatement". The D6 `guarantee` grep covers `src/` only. Whether the legal draft should say "no promise of reinstatement" is the founder's call (prompt §7). Not changed.
 - `renderPoaText` (`src/core/composer.ts:226–235`) emits `## ` headings for the API `rendered` field. Whether any UI consumes `rendered` is to be confirmed in Task 5 step 5 and recorded here.
 - Git reports `LF will be replaced by CRLF` for the edited markdown files — repository `autocrlf` behaviour, pre-existing, not introduced by this pass.
+- Accept check `grep -n '" | "' src/components/DeadlineChip.tsx` returns 1 hit: the TypeScript type union `type Tone = "neutral" | "warn" | "destructive" | "info"` (pre-existing, verified via `git show HEAD:`). The date separator on the original line 79 was `|` (no quotes) and is now `·` (middle dot). No defect.
 
 ## Deviations from the prompt
 

@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import { APP } from "@/content/app";
 
 const DEVICE_CAP = 5;
@@ -32,17 +33,6 @@ type Device = {
 };
 
 type DevicesResponse = { devices: Device[]; cap: number; currentDeviceId: string | null };
-
-function fmtDateTabular(s: string): string {
-  try {
-    return Intl.DateTimeFormat(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(s));
-  } catch {
-    return s;
-  }
-}
 
 export function DeviceManager() {
   const [data, setData] = useState<DevicesResponse | null>(null);
@@ -172,7 +162,7 @@ export function DeviceManager() {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-foreground">{label(d)}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground" data-tn>
-                          First seen {fmtDateTabular(d.first_seen_at)}
+                          First seen {formatDate(d.first_seen_at)}
                         </p>
                       </div>
                       {isCurrent ? (
@@ -182,7 +172,7 @@ export function DeviceManager() {
                       ) : null}
                     </div>
                     <p className="text-xs text-muted-foreground" data-tn>
-                      Last seen {fmtDateTabular(d.last_seen_at)}
+                      Last seen {formatDate(d.last_seen_at)}
                     </p>
                     <div className="flex justify-end">
                       {isCurrent ? (

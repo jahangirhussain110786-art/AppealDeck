@@ -2,20 +2,13 @@ import Link from "next/link";
 import { CheckCircle2, CreditCard } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { isLicenseActive, fetchLicenseByEmail } from "@/lib/license";
+import { formatDate } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DeviceManager } from "@/components/DeviceManager";
 import { APP } from "@/content/app";
 
 export const dynamic = "force-dynamic";
-
-function fmtDateTabular(s: string): string {
-  try {
-    return Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(s));
-  } catch {
-    return s;
-  }
-}
 
 export default async function BillingPage() {
   const user = await requireUser();
@@ -43,7 +36,7 @@ export default async function BillingPage() {
                 <p className="mt-1 text-sm text-muted-foreground">
                   {APP.billing.active.planLabel}: {license.plan} ·{" "}
                   {APP.billing.active.purchasedLabel}{" "}
-                  <span data-tn>{license.createdAt ? fmtDateTabular(license.createdAt) : ""}</span>
+                  <span data-tn>{license.createdAt ? formatDate(license.createdAt) : ""}</span>
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {APP.billing.active.receiptText}

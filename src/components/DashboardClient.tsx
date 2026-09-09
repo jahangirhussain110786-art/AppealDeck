@@ -34,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { APP } from "@/content/app";
+import { formatDate } from "@/lib/format";
 import { GLOBAL_EXPECTATIONS } from "@/core";
 import type { LicenseSummary } from "@/lib/license";
 import type { EvidenceKind } from "@/core";
@@ -69,10 +70,6 @@ function buildContext(file: CaseFile, log: CaseLog | null): CaseStateContext {
     fundsHeld: false,
     fundsEligible: false,
   };
-}
-
-function formatNoticeDate(iso: string): string {
-  return Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(iso));
 }
 
 function ReadinessCard({
@@ -337,7 +334,7 @@ export function DashboardClient({ license }: DashboardClientProps) {
                     data-tn
                     className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-1 font-mono text-xs tabular-nums text-foreground"
                   >
-                    {APP.dashboard.deadlines.noticeReceived} · {formatNoticeDate(noticeDate)}
+                    {APP.dashboard.deadlines.noticeReceived} · {formatDate(noticeDate)}
                   </span>
                   <DeadlineChip
                     deadline={{
