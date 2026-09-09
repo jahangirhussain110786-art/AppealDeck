@@ -103,8 +103,8 @@ export default function VaultView({ userId }: { userId: string }) {
           if (!cancelled) setItems(list);
         }
       } catch (e) {
-        toast.error("Vault failed to open", {
-          description: e instanceof Error ? e.message : "Unknown error",
+        toast.error(APP.dashboard.toasts.vaultOpenFailed, {
+          description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
         });
       }
     })();
@@ -124,8 +124,8 @@ export default function VaultView({ userId }: { userId: string }) {
       await addFileToVault(vault, file, selectedEvidenceKind);
       setItems(await vault.list());
     } catch (e) {
-      toast.error("Add failed", {
-        description: e instanceof Error ? e.message : "Unknown error",
+      toast.error(APP.interview.fileUpload.addFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
     } finally {
       setBusy(false);
@@ -148,8 +148,8 @@ export default function VaultView({ userId }: { userId: string }) {
         });
       }
     } catch (e) {
-      toast.error("Could not decrypt", {
-        description: e instanceof Error ? e.message : "Unknown error",
+      toast.error(APP.dashboard.toasts.decryptFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
     }
   };
@@ -166,10 +166,10 @@ export default function VaultView({ userId }: { userId: string }) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast.success(`Downloaded ${record.name}`);
+      toast.success(`${APP.dashboard.toasts.downloadSuccess} ${record.name}`);
     } catch (e) {
-      toast.error("Download failed", {
-        description: e instanceof Error ? e.message : "Unknown error",
+      toast.error(APP.dashboard.toasts.downloadFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
     }
   };
@@ -179,10 +179,10 @@ export default function VaultView({ userId }: { userId: string }) {
     try {
       await vault.delete(deleteTarget.id);
       await refresh();
-      toast.success("Record deleted");
+      toast.success(APP.dashboard.toasts.recordDeleted);
     } catch (e) {
-      toast.error("Delete failed", {
-        description: e instanceof Error ? e.message : "Unknown error",
+      toast.error(APP.dashboard.toasts.deleteFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
     } finally {
       setDeleteTarget(null);
@@ -193,12 +193,12 @@ export default function VaultView({ userId }: { userId: string }) {
     setBusy(true);
     try {
       const r = await pushVaultToCloud(vault, userId);
-      toast.success("Vault synced", {
+      toast.success(APP.dashboard.toasts.vaultSynced, {
         description: `${r.uploaded} snapshot uploaded${r.errors ? `, ${r.errors} errors` : ""}.`,
       });
     } catch (e) {
-      toast.error("Sync failed", {
-        description: e instanceof Error ? e.message : "Unknown error",
+      toast.error(APP.dashboard.toasts.syncFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
     } finally {
       setBusy(false);
