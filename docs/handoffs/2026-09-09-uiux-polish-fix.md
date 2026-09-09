@@ -1,0 +1,45 @@
+# 2026-09-09 — UI/UX polish FIX pass (AA-30) — evidence log
+
+Prompt: `docs/handoffs/2026-09-09-uiux-polish-fix-prompt.md`. Baseline commit `a10335d` (last commit of the polish pass). Audit that produced this pass: `docs/handoffs/2026-09-09-uiux-polish-audit.md`. Original specification: `docs/handoffs/2026-09-09-uiux-polish-prompt.md`.
+
+## Resume pointer
+
+- Task: F1 · Sub-step: 1 · Status: in-progress
+- Last green gate: `npm run typecheck`, `npm run lint`, `npm run lint:copy`, `npm test` 308/308, `npm run build` 30 routes — all at `a10335d`, run by the reviewing AI on 9 Sep 2026. `npm run format:check` exit 1 at `a10335d` (CRLF working copy of `src/app/(app)/billing/page.tsx`; repaired in Task F7). F0 is docs-only — code gates unchanged.
+- Files open for this sub-step: `docs/handoffs/2026-09-09-uiux-polish-fix-prompt.md` (Task F1 section), `src/components/FileDropZone.tsx`, `src/lib/vault/addFileToVault.ts`, `src/core/vault/vault.ts`, `src/core/vault/vault.test.ts`, and the three callers.
+- Next command: read Task F1 of the fix prompt; start with step 1 (de-duplicate FileDropZone).
+- Context usage at last update: ~3 %
+
+## Baselines at `a10335d` (reviewing AI, 9 Sep 2026)
+
+| Gate         | Command                                               | Output line                                                                                                                                                                                                                            | Exit  |
+| ------------ | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| typecheck    | `npm run typecheck 2>&1 \| tail -6`                   | (no errors)                                                                                                                                                                                                                            | 0     |
+| lint         | `npm run lint 2>&1 \| tail -10`                       | `✔ No ESLint warnings or errors`                                                                                                                                                                                                       | 0     |
+| lint:copy    | `npm run lint:copy 2>&1 \| tail -4`                   | `lint-copy: banned soft list` · `banned numbers` · `colour gate` · `lint-copy: PASS` (3 passes)                                                                                                                                        | 0     |
+| format:check | `npm run format:check 2>&1 \| tail -6`                | `[warn] src/app/(app)/billing/page.tsx` · `Code style issues found`                                                                                                                                                                    | **1** |
+| vitest       | `npm test 2>&1 \| tail -8`                            | `Test Files 31 passed (31)` · `Tests 308 passed (308)`                                                                                                                                                                                 | 0     |
+| build        | `npm run build 2>&1 \| tail -50` + manifests          | `ƒ Middleware 27.1 kB` · `app routes total: 30` · `static prerendered routes: 10`                                                                                                                                                      | 0     |
+| playwright   | `npx playwright test --reporter=dot 2>&1 \| tail -30` | `77 passed (4.9m)` · `4 failed` (all `Test timeout of 30000ms exceeded`, blank page snapshot) · `30 skipped`; targeted re-run of the four with `--retries=1` → `3 passed`, `1 flaky` — cold-compile flakes, not regressions (audit §4) | 0     |
+
+## Evidence log
+
+| Task | Claim                                                        | Command                                                                                                 | Output line                                                                 | Commit                                                                                         |
+| ---- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| F0   | no `<commit>` placeholders remain in old log                 | `Select-String -Path docs/handoffs/2026-09-09-uiux-polish.md -Pattern "<commit>"                        | Measure-Object                                                              | Select-Object -ExpandProperty Count`                                                           | `0`    | 18da41e |
+| F0   | no `46bf6dd` in Task 3 rows of old log                       | `Select-String -Path docs/handoffs/2026-09-09-uiux-polish.md -Pattern "46bf6dd"                         | Measure-Object                                                              | Select-Object -ExpandProperty Count`                                                           | `0`    | 18da41e |
+| F0   | old log Task 3 rows use `9955e73`, Task 5 rows use `461c3b0` | `git log --oneline --format="%h %s" 461c3b0 9955e73 9acdc9a`                                            | `461c3b0 fix(uiux-polish/task-5)...` · `9955e73 fix(uiux-polish/task-3)...` | 18da41e |
+| F0   | resume pointer updated to Task 11 superseded                 | `Select-String -Path docs/handoffs/2026-09-09-uiux-polish.md -Pattern "superseded 9 Sep"                | Select-Object -ExpandProperty Line`                                         | `- Task: 11 · Status: superseded 9 Sep 2026 — see docs/handoffs/2026-09-09-uiux-polish-fix.md` | 18da41e |
+| F0   | deviation appended to old log                                | `Select-String -Path docs/handoffs/2026-09-09-uiux-polish.md -Pattern "Tasks 6–11: see the 9 Sep audit" | `Tasks 6–11: see the 9 Sep audit; repaired by the fix pass.`                | 18da41e |
+| F0   | all committed files UTF-8 without BOM                        | `Get-Content -Encoding Byte -TotalCount 2 <each file>                                                   | ForEach-Object { "{0:x2} {1:x2}" -f $_[0], $_[1] }`                         | `23 20` (hash space) for every file — no `ff fe`/`ef bb`                                       | 18da41e |
+| F0   | staged files: index+worktree LF                              | `git ls-files --eol <6 files>`                                                                          | `i/lf w/lf attr/` × 6                                                       | 18da41e |
+| F0   | no secrets in staged diff                                    | `git diff --cached                                                                                      | Select-String -Pattern "password                                            | passphrase                                                                                     | secret | token | license_key | Dev-"` | matches are documentation text only (CLAUDE.md, fix-prompt) — no credentials | 18da41e |
+| F0   | staged file set matches §1                                   | `git diff --cached --stat`                                                                              | `6 files changed, 416 insertions(+), 17 deletions(-)`                       | 18da41e |
+
+## Discovered during this pass
+
+- none yet
+
+## Deviations from the prompt
+
+- none yet
