@@ -111,7 +111,13 @@ export function EvidenceSlotPanel({
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Required evidence</h3>
-        <Button size="sm" variant="ghost" onClick={() => void refresh()} disabled={busy}>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-11"
+          onClick={() => void refresh()}
+          disabled={busy}
+        >
           <RefreshCw className="size-3" /> Refresh
         </Button>
       </div>
@@ -169,7 +175,13 @@ function SlotUploadButton({
   const ref = React.useRef<HTMLInputElement>(null);
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => ref.current?.click()} disabled={disabled}>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-11"
+        onClick={() => ref.current?.click()}
+        disabled={disabled}
+      >
         <Plus className="size-3" /> Attach
       </Button>
       <input

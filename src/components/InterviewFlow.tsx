@@ -700,6 +700,10 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                       <Textarea
                         value={answerValue}
                         onChange={(e) => setAnswerValue(e.target.value)}
+                        autoComplete="off"
+                        autoCapitalize="none"
+                        autoCorrect="false"
+                        spellCheck={false}
                         placeholder={APP.interview.answerPlaceholder}
                         rows={4}
                       />
