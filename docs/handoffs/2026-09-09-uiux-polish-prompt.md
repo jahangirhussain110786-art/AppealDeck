@@ -2,7 +2,7 @@
 
 Written 9 Sep 2026 against commit `ed05259`. Source of the verdicts: `docs/handoffs/2026-09-08-meta-ai-uiux-register.md` (§5 "now" list, §6 draft AM-19). Plain-language explanation for the founder: `docs/handoffs/2026-09-09-meta-ai-uiux-plain-guide.md`.
 
-## STATUS — RUNNABLE from Task 1. All four boxes ticked by the founder on 9 Sep 2026 (in chat with the reviewing AI); Task 0 paperwork performed the same day — see Task 0 for its status
+## STATUS — RUNNABLE from Task 1. All four boxes ticked by the founder on 9 Sep 2026 (in chat with the reviewing AI); Task 0 paperwork committed the same day as `bfba421`
 
 - [x] **AM-19 ratified** (9 Sep 2026, all ten rows, no strikes). Register §6 rows #23–#32 accepted as written. To reject a row, strike it here and delete the matching task below before the agent starts. (Row → task: 23→1 · 24→3 · 25→4a · 26→5 · 27→2 · 28→6 · 29→7 · 30→4b · 31, 32 → Appendix B, M-4, not this pass.)
 - [x] **Disclaimer wording approved as written** (9 Sep 2026; the agent copies these strings verbatim into `src/content/*` and `legal/terms.md`):
@@ -12,7 +12,7 @@ Written 9 Sep 2026 against commit `ed05259`. Source of the verdicts: `docs/hando
 - [x] **Vault idle auto-lock confirmed as security hygiene** (9 Sep 2026), exempt from the AM-17 feature freeze. Task 4b stays.
 - [x] **Copy items ride AA-29** (9 Sep 2026): "(optional)" step markers and Amazon terms defined on first use per page — Task 10 steps 2–3 stay.
 
-Ratified by Jhangir Hussain on 9 Sep 2026 — all four boxes, no strikes, wording approved as written. Task 0 (planning-layer paperwork) was performed by the reviewing AI the same day; the coding agent commits Task 0's files first, then starts at Task 1.
+Ratified by Jhangir Hussain on 9 Sep 2026 — all four boxes, no strikes, wording approved as written. Task 0 (planning-layer paperwork) was performed by the reviewing AI the same day and committed as `bfba421`; the coding agent starts at Task 1.
 
 ---
 
@@ -79,9 +79,9 @@ D1–D10 (CLAUDE.md §2). AM-16 (evidence-first; readiness is never a prediction
 
 ## 3. TASKS — in this order, one commit each
 
-### Task 0 — Record the ratification — ✅ DONE 9 Sep 2026 by the reviewing AI (UNCOMMITTED at handover)
+### Task 0 — Record the ratification — ✅ DONE 9 Sep 2026 by the reviewing AI, committed `bfba421`
 
-**Status.** Steps 1–5 below were performed on 9 Sep 2026 right after the founder ticked the banner. Baselines recorded in the evidence log: vitest 287/287 (29 files); build 30 app routes, 10 static prerendered, middleware 27.1 kB. Your first action: run the Accept block, then commit the Task 0 files with the message below (`git status` shows them), then start Task 1.
+**Status.** Steps 1–5 below were performed on 9 Sep 2026 right after the founder ticked the banner. Baselines recorded in the evidence log: vitest 287/287 (29 files); build 30 app routes, 10 static prerendered, middleware 27.1 kB. Committed as `bfba421` on 9 Sep 2026 with the Accept block verified in the evidence log. Start at Task 1.
 
 **Do.**
 1. Create `docs/handoffs/2026-09-09-uiux-polish.md` with the four sections named in §0.4 and a filled Resume pointer. Run `npm test 2>&1 | tail -8` and `npm run build 2>&1 | tail -20` and record the **baseline** counts (tests, pages) in the evidence log.

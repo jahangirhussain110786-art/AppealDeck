@@ -35,4 +35,4 @@ The reviewing AI writes a new pass prompt and evidence log under `docs/handoffs/
 
 ## History
 
-- 9 Sep 2026 — created for the AM-19 polish pass (`AA-30`). Task 0 of that pass was already performed by the reviewing AI and is uncommitted; the coding AI's first commit is the Task 0 commit.
+- 9 Sep 2026 — created for the AM-19 polish pass (`AA-30`). Task 0 of that pass was performed by the reviewing AI and committed as `bfba421`; the coding AI starts at Task 1.
