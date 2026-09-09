@@ -4,11 +4,11 @@ Prompt: `docs/handoffs/2026-09-09-uiux-polish-prompt.md`. Baseline commit `ed052
 
 ## Resume pointer
 
-- Task: 2 · Sub-step: done · Status: done
-- Last green gate: `npm test` 300/300 (30 files), `npm run typecheck` OK, `npm run lint:copy` PASS at uncommitted
-- Files open for this sub-step: none
-- Next command: Task 3 step 1 (add `APP.interview.saveStatus` strings to `src/content/app.ts`)
-- Context usage at last update: ~18%
+- Task: 3 · Sub-step: step-1 · Status: in-progress
+- Last green gate: `npm run typecheck` at Task 1 commit 6b5f3c5
+- Files open for this sub-step: src/content/app.ts, src/components/InterviewFlow.tsx
+- Next command: Task 3 (modify InterviewFlow.tsx: saveState, persistCaseFile helper, save status render, beforeunload guard)
+- Context usage at last update: ~25%
 
 **Task 0 files** (all UTF-8, verified) were committed as `bfba421` on 9 Sep 2026: `Planning/03-PHASE-2-BUILD/02-BUILD-PLAN-AMENDMENTS.md`, `Planning/03-PHASE-2-BUILD/06-PREMIUM-UI-UX-SPEC.md`, `docs/DECISIONS.md`, `CLAUDE.md`, `docs/handoffs/2026-09-08-meta-ai-uiux-register.md`, `docs/handoffs/2026-09-09-meta-ai-uiux-plain-guide.md`, `docs/handoffs/2026-09-09-uiux-polish-prompt.md`, `docs/handoffs/2026-09-09-uiux-polish.md`, `docs/handoffs/SESSION-START-PROMPT.md`. `disconnected-chat!.txt` and `.claude/` were deliberately left untracked.
 
@@ -30,7 +30,7 @@ Prompt: `docs/handoffs/2026-09-09-uiux-polish-prompt.md`. Baseline commit `ed052
 | 1    | playwright marketing                            | `npx playwright test e2e/marketing.spec.ts --reporter=dot 2>&1 \| tail -5`                                               | `10 passed (1.2m)`                                                                                                                 | 6b5f3c5     |
 | 1    | types clean                                     | `npm run typecheck 2>&1`                                                                                                 | no errors                                                                                                                          | 6b5f3c5     |
 | 2    | no Intl in tsx                                  | `grep -rn "Intl.DateTimeFormat\|toLocaleDateString" src --include=*.tsx --exclude-dir=__tests__`                         | 0 hits (Intl lives only in src/lib/format.ts)                                                                                      | uncommitted |
-| 2    | no date separator pipe                          | `Select-String -Pattern '" \| "' src/components/DeadlineChip.tsx`                                                        | 1 hit on type union `type Tone = "neutral"                                                                                         | "warn"      | ...`(pre-existing, NOT the date separator; verified`git show HEAD:` had same type union) | uncommitted |
+| 2    | no date separator pipe in JSX                   | `Select-String -Pattern '" \| "' src/components/DeadlineChip.tsx`                                                        | 1 hit on the TS type union (pre-existing); date separator changed from pipe to middle-dot                                          | uncommitted |
 | 2    | test count                                      | `npm test 2>&1 \| tail -6`                                                                                               | `Tests 300 passed (300)` (was 287 + 13 new)                                                                                        | uncommitted |
 | 2    | lint:copy                                       | `npm run lint:copy 2>&1 \| tail -2`                                                                                      | `lint-copy: PASS`                                                                                                                  | uncommitted |
 | 2    | format clean                                    | `npm run format:check 2>&1`                                                                                              | `All matched files use Prettier code style!`                                                                                       | uncommitted |

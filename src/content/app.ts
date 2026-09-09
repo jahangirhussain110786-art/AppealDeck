@@ -322,6 +322,13 @@ export const APP = {
     declinePlaceholder: "Optional: explain why (stays in your case file only)",
     confirmDecline: "Confirm and continue",
     goBack: "Go back",
+    saveStatus: {
+      saved: "Saved to vault · {time}",
+      failedTitle: "Your last answer was not saved to the vault",
+      failedDesc:
+        "Your answer is still on screen. Retry the save, or continue and use Save & exit later.",
+      retry: "Retry save",
+    },
     complete: {
       title: "Interview complete",
       desc: "Your case file is ready. The composer will draft your POA from the facts you provided.",

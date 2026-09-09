@@ -25,12 +25,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { FieldSuggester } from "@/components/FieldSuggester";
 import { Stepper } from "@/components/Stepper";
 import type { StepperStep } from "@/components/Stepper";
 import { VaultGate } from "@/components/VaultGate";
 import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
+import { formatTime } from "@/lib/format";
 import { getBrowserVault } from "@/lib/vault/browser";
 import {
   saveCaseFile,
@@ -148,6 +150,10 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
   const [declineReason, setDeclineReason] = useState("");
   const [declineAltId, setDeclineAltId] = useState<string | undefined>();
 
+  const [saveState, setSaveState] = useState<
+    { kind: "idle" } | { kind: "saved"; at: Date } | { kind: "failed"; message: string }
+  >({ kind: "idle" });
+
   const vaultRef = useRef<Vault | null>(null);
   const [vaultReady, setVaultReady] = useState(false);
   const [vaultUnlocked, setVaultUnlocked] = useState(false);
@@ -211,6 +217,34 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
     setDeclineAltId(undefined);
   }, []);
 
+  const persistCaseFile = useCallback(
+    async (cf: CaseFile) => {
+      if (!vaultRef.current || !vaultUnlocked) return;
+      try {
+        await saveCaseFile(vaultRef.current, cf as CoreCaseFile);
+        setSaveState({ kind: "saved", at: new Date() });
+      } catch (e) {
+        setSaveState({
+          kind: "failed",
+          message: e instanceof Error ? e.message : "Unknown error",
+        });
+      }
+    },
+    [vaultUnlocked],
+  );
+
+  const hasUnsavedAnswer = answerValue.trim() !== "" || choiceId !== undefined;
+
+  useEffect(() => {
+    if (!hasUnsavedAnswer) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasUnsavedAnswer]);
+
   const callApi = useCallback(async (action: string, payload: Record<string, unknown>) => {
     setLoading(true);
     setError(null);
@@ -245,14 +279,10 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
       setComplete(data.complete);
       resetAnswerState();
       if (vaultRef.current && vaultUnlocked) {
-        try {
-          await saveCaseFile(vaultRef.current, data.caseFile as CoreCaseFile);
-        } catch {
-          // non-fatal
-        }
+        void persistCaseFile(data.caseFile);
       }
     },
-    [callApi, resetAnswerState, vaultUnlocked],
+    [callApi, resetAnswerState, vaultUnlocked, persistCaseFile],
   );
 
   const handleSubmit = useCallback(async () => {
@@ -292,11 +322,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
     resetAnswerState();
 
     if (vaultRef.current && vaultUnlocked) {
-      try {
-        await saveCaseFile(vaultRef.current, data.caseFile as CoreCaseFile);
-      } catch {
-        // vault save failed — non-fatal, interview continues
-      }
+      void persistCaseFile(data.caseFile);
     }
 
     if (data.complete) {
@@ -314,6 +340,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
     resetAnswerState,
     onComplete,
     vaultUnlocked,
+    persistCaseFile,
   ]);
 
   const handleResume = useCallback(async () => {
@@ -383,7 +410,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
           await saveCaseLog(vaultRef.current, newLog);
         }
       } catch {
-        // non-fatal
+        // ignore
       }
     }
   }, [vaultUnlocked, caseFile]);
@@ -871,6 +898,31 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
             </Card>
           </motion.div>
         </AnimatePresence>
+
+        {saveState.kind === "saved" && (
+          <p className="text-xs text-muted-foreground">
+            {APP.interview.saveStatus.saved.replace("{time}", formatTime(saveState.at))}
+          </p>
+        )}
+
+        {saveState.kind === "failed" && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{APP.interview.saveStatus.failedTitle}</AlertTitle>
+            <AlertDescription>{APP.interview.saveStatus.failedDesc}</AlertDescription>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => {
+                void persistCaseFile(caseFile!);
+              }}
+              disabled={loading}
+            >
+              {APP.interview.saveStatus.retry}
+            </Button>
+          </Alert>
+        )}
       </div>
     </>
   );
