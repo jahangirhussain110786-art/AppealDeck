@@ -5,6 +5,7 @@ import { fontSans, fontMono } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MotionProviders } from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
+import { OfflineNotice } from "@/components/OfflineNotice";
 import { SITE_URL } from "@/lib/urls";
 
 export const metadata: Metadata = {
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <MotionProviders>
             {children}
+            <OfflineNotice />
             <Toaster />
           </MotionProviders>
         </ThemeProvider>
