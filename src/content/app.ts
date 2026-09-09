@@ -139,6 +139,9 @@ export const APP = {
     },
     copyAll: "Copy full POA",
     openSellerCentral: "Open Seller Central",
+    asPasted: {
+      toggle: "Show as it will paste",
+    },
     empty: {
       title: "No case file yet",
       description:

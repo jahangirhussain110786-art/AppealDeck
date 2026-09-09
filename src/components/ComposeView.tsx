@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -8,6 +8,12 @@ import { AlertCircle, ArrowLeft, FileText, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 import { EmptyState } from "@/components/EmptyState";
 import { VaultGate } from "@/components/VaultGate";
 import { PoaSection, PoaFindingsList } from "@/components/PoaSection";
@@ -18,9 +24,11 @@ import { getBrowserVault } from "@/lib/vault/browser";
 import type { Vault } from "@/core/vault/vault";
 import { loadCaseFile, loadCaseLog } from "@/lib/caseStore";
 import { groupFindingsBySection } from "@/lib/findingSections";
+import { buildClipboardText } from "@/lib/poaClipboard";
 import { GLOBAL_EXPECTATIONS } from "@/core";
 import type { CaseFile, CriticResult, EvidenceKind, PoaDraft } from "@/core";
 import { APP } from "@/content/app";
+import { SHARED } from "@/content/shared";
 
 interface ComposeResult {
   draft: PoaDraft;
@@ -83,69 +91,71 @@ function ComposeInner({ vault }: { vault: Vault }) {
   const [phase, setPhase] = useState<Phase>({ kind: "loading" });
   const [editedSections, setEditedSections] = useState<Record<number, string>>({});
 
-  useEffect(() => {
+  const update = useCallback((next: Phase) => setPhase(next), []);
+
+  const run = useCallback(async () => {
     let cancelled = false;
-    const update = (next: Phase) => {
-      if (!cancelled) setPhase(next);
+    const safeUpdate = (next: Phase) => {
+      if (!cancelled) update(next);
     };
 
-    const run = async () => {
-      let loaded: { file: CaseFile; priorAttempts: number } | undefined;
-      try {
-        const file = await loadCaseFile(vault);
-        if (!file) {
-          update({ kind: "empty" });
-          return;
-        }
-        const log = await loadCaseLog(vault);
-        loaded = { file, priorAttempts: log?.attemptCount ?? file.attemptCount };
-      } catch (e) {
-        update({ kind: "error", reason: "generic", message: errorMessage(e) });
+    let loaded: { file: CaseFile; priorAttempts: number } | undefined;
+    try {
+      const file = await loadCaseFile(vault);
+      if (!file) {
+        safeUpdate({ kind: "empty" });
         return;
       }
-      if (!loaded) return;
+      const log = await loadCaseLog(vault);
+      loaded = { file, priorAttempts: log?.attemptCount ?? file.attemptCount };
+    } catch (e) {
+      safeUpdate({ kind: "error", reason: "generic", message: errorMessage(e) });
+      return;
+    }
+    if (!loaded) return;
 
-      const caseData = await withVaultEvidence(vault, loaded.file);
-      const attemptNumber = Math.min(MAX_ATTEMPT_NUMBER, loaded.priorAttempts + 1);
+    const caseData = await withVaultEvidence(vault, loaded.file);
+    const attemptNumber = Math.min(MAX_ATTEMPT_NUMBER, loaded.priorAttempts + 1);
 
-      try {
-        const res = await fetch("/api/compose", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ caseData, attemptNumber }),
-        });
-        if (!res.ok) {
-          const body = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
-          if (res.status === 403 && body.error === "device_cap_reached") {
-            toast.error(APP.compose.deviceCap.title, {
-              description: APP.compose.deviceCap.description,
-            });
-            update({
-              kind: "error",
-              reason: "device_cap",
-              message: body.message ?? APP.compose.deviceCap.description,
-            });
-            return;
-          }
-          update({
+    try {
+      const res = await fetch("/api/compose", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseData, attemptNumber }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+        if (res.status === 403 && body.error === "device_cap_reached") {
+          toast.error(APP.compose.deviceCap.title, {
+            description: APP.compose.deviceCap.description,
+          });
+          safeUpdate({
             kind: "error",
-            reason: "generic",
-            message: body.error ?? `${APP.compose.error.fallback} (${res.status})`,
+            reason: "device_cap",
+            message: body.message ?? APP.compose.deviceCap.description,
           });
           return;
         }
-        const result = (await res.json()) as ComposeResult;
-        update({ kind: "ready", caseFile: caseData, result });
-      } catch (e) {
-        update({ kind: "error", reason: "generic", message: errorMessage(e) });
+        safeUpdate({
+          kind: "error",
+          reason: "generic",
+          message: body.error ?? `${APP.compose.error.fallback} (${res.status})`,
+        });
+        return;
       }
-    };
-
-    void run();
+      const result = (await res.json()) as ComposeResult;
+      safeUpdate({ kind: "ready", caseFile: caseData, result });
+    } catch (e) {
+      safeUpdate({ kind: "error", reason: "generic", message: errorMessage(e) });
+    }
     return () => {
       cancelled = true;
     };
-  }, [vault]);
+  }, [vault, update]);
+
+  useEffect(() => {
+    void run();
+  }, [run]);
 
   if (phase.kind === "loading") {
     return <ComposeSkeleton />;
@@ -177,9 +187,16 @@ function ComposeInner({ vault }: { vault: Vault }) {
           <AlertTitle>{copy.title}</AlertTitle>
           <AlertDescription>
             <p>{phase.message}</p>
-            <Button asChild variant="outline" size="sm" className="mt-2">
-              <Link href={isDeviceCap ? "/billing" : "/case"}>{copy.action}</Link>
-            </Button>
+            <div className="mt-2 flex gap-2">
+              {!isDeviceCap && (
+                <Button variant="outline" size="sm" onClick={() => void run()}>
+                  {SHARED.retryButton}
+                </Button>
+              )}
+              <Button asChild variant="outline" size="sm">
+                <Link href={isDeviceCap ? "/billing" : "/case"}>{copy.action}</Link>
+              </Button>
+            </div>
           </AlertDescription>
         </div>
       </Alert>
@@ -191,7 +208,10 @@ function ComposeInner({ vault }: { vault: Vault }) {
   const isGapDraft = draft.mode.mode === "gap-draft";
   const banner = isGapDraft ? APP.compose.gapDraft : APP.compose.fullDraft;
   const mergedSections = draft.sections.map((s, i) => editedSections[i] ?? s.body);
-  const fullDraftText = mergedSections.join("\n\n");
+  const fullDraftText = buildClipboardText(
+    draft.sections.map((s) => ({ heading: s.heading, body: s.body })),
+    editedSections,
+  );
   const { bySection, global } = groupFindingsBySection(critique.findings, draft.sections);
 
   return (
@@ -222,6 +242,17 @@ function ComposeInner({ vault }: { vault: Vault }) {
       <div className="flex items-center justify-between">
         <CopyButton text={fullDraftText} label={APP.compose.copyAll} className="gap-2" />
       </div>
+
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="as-pasted">
+          <AccordionTrigger className="text-sm font-medium">
+            {APP.compose.asPasted.toggle}
+          </AccordionTrigger>
+          <AccordionContent>
+            <pre className="whitespace-pre-wrap font-mono text-sm">{fullDraftText}</pre>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <BeforeYouSubmitChecklist
         caseFile={caseFile}
