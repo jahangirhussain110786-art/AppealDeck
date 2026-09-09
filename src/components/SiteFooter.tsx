@@ -36,6 +36,7 @@ export function SiteFooter() {
       </div>
       <div className="mx-auto px-4 py-3 text-xs text-muted-foreground">
         <p>{SHARED.footer.neverSubmits}</p>
+        <p>{SHARED.footer.independence}</p>
       </div>
     </footer>
   );

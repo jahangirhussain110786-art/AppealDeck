@@ -10,6 +10,16 @@ test.describe("Marketing site (public)", () => {
     ).toBeVisible();
   });
 
+  test("footer states independence from Amazon", async ({ page }) => {
+    test.setTimeout(60000);
+    await page.goto("/");
+    await expect(page.getByText(/not affiliated with/i)).toBeVisible();
+    await page.goto("/terms");
+    await expect(page.getByRole("heading", { name: /independence from amazon/i })).toBeVisible();
+    await page.goto("/faq");
+    await expect(page.getByText(/part of amazon/i)).toBeVisible();
+  });
+
   test("pricing page renders the Free and Appeal Pass columns", async ({ page }) => {
     await page.goto("/pricing");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

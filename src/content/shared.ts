@@ -11,6 +11,8 @@ export const SHARED = {
       faq: "FAQ",
     },
     neverSubmits: "AppealDeck never submits to Amazon on your behalf.",
+    independence:
+      "AppealDeck is an independent service and is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon and Seller Central are trademarks of Amazon.com, Inc. or its affiliates.",
   },
   metadata: {
     titleDefault: "AppealDeck — Amazon suspension notice decoder",

@@ -81,6 +81,14 @@ export const LEGAL = {
         ],
       },
       {
+        id: "independence",
+        title: "Independence from Amazon",
+        body: [
+          "AppealDeck is an independent service operated by Jhangir Hussain, trading as Hawlton, in Pakistan. It is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon, Seller Central and related names are trademarks of Amazon.com, Inc. or its affiliates, used here only to describe the notices this software reads and the appeals it helps you draft.",
+          "We never log in to Seller Central, never submit anything to Amazon for you, and have no access to your Amazon account.",
+        ],
+      },
+      {
         id: "licence",
         title: "Licence to use",
         body: [

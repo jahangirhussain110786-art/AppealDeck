@@ -127,6 +127,10 @@ export const FAQ = {
   description: "Questions about decoding, the Appeal Pass, data, and refunds.",
   items: [
     {
+      q: "Is AppealDeck part of Amazon?",
+      a: "No. AppealDeck is an independent service run by Jhangir Hussain, trading as Hawlton, in Pakistan. It is not affiliated with, endorsed by, or sponsored by Amazon. We use the Amazon name only to describe the notices our software reads and the appeals it drafts. We never log in to Seller Central and never submit anything to Amazon for you.",
+    },
+    {
       q: "Do I need an Amazon account to decode?",
       a: "No. Paste your notice text into the decoder and it runs in your browser. No account is needed for the free decoder. The Appeal Pass requires an account to activate a license key.",
     },
@@ -168,7 +172,10 @@ export const FAQ = {
     { name: "Decoding", items: ["How does the decoder work?", "Is my POA draft accurate?"] },
     { name: "Deadlines", items: ["What are the deadlines?"] },
     { name: "Vault", items: ["What is the encrypted vault for?"] },
-    { name: "Submitting", items: ["Do you submit my appeal to Amazon?"] },
+    {
+      name: "Submitting",
+      items: ["Is AppealDeck part of Amazon?", "Do you submit my appeal to Amazon?"],
+    },
   ] as const,
 } as const;
 
