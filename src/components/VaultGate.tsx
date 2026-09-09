@@ -14,7 +14,7 @@ import type { Vault, VaultStatus } from "@/core/vault/vault";
 import { EmptyState } from "@/components/EmptyState";
 import { FileText } from "lucide-react";
 import { APP } from "@/content/app";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Phase =
   { kind: "loading" } | { kind: "needs_init" } | { kind: "locked" } | { kind: "unlocked" };
@@ -44,26 +44,46 @@ export function VaultGate({
 }: VaultGateProps) {
   const [phase, setPhase] = React.useState<Phase>({ kind: "loading" });
   const [warning, setWarning] = React.useState(false);
-  const idleTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const phaseRef = React.useRef(phase);
+  const onLockedRef = React.useRef(onLocked);
+  const lockTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warnTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastReset = React.useRef(0);
+
+  React.useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  React.useEffect(() => {
+    onLockedRef.current = onLocked;
+  }, [onLocked]);
+
+  const clearTimers = React.useCallback(() => {
+    if (lockTimer.current) clearTimeout(lockTimer.current);
+    if (warnTimer.current) clearTimeout(warnTimer.current);
+    lockTimer.current = warnTimer.current = null;
+  }, []);
 
   const resetIdleTimer = React.useCallback(() => {
-    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    if (phase.kind !== "unlocked") return;
+    if (phaseRef.current.kind !== "unlocked") return;
+    clearTimers();
     setWarning(false);
-    idleTimerRef.current = setTimeout(() => {
+    warnTimer.current = setTimeout(() => {
+      if (phaseRef.current.kind === "unlocked") setWarning(true);
+    }, idleMs - warnMs);
+    lockTimer.current = setTimeout(() => {
+      if (phaseRef.current.kind !== "unlocked") return;
+      clearTimers();
       setWarning(false);
       void vault?.lock();
       setPhase({ kind: "locked" });
-      onLocked?.();
+      onLockedRef.current?.();
       toast.info(APP.vault.idleLock.locked, {
         description: APP.vault.idleLock.lockedDesc,
       });
     }, idleMs);
-
-    setTimeout(() => {
-      if (phase.kind === "unlocked") setWarning(true);
-    }, idleMs - warnMs);
-  }, [phase, vault, idleMs, warnMs, onLocked]);
+  }, [vault, idleMs, warnMs, clearTimers]);
 
   React.useEffect(() => {
     if (!vault) {
@@ -103,7 +123,12 @@ export function VaultGate({
     resetIdleTimer();
 
     const events: (keyof WindowEventMap)[] = ["pointerdown", "keydown", "touchstart", "scroll"];
-    const onActivity = () => resetIdleTimer();
+    const onActivity = () => {
+      const now = Date.now();
+      if (now - lastReset.current < 1_000) return;
+      lastReset.current = now;
+      resetIdleTimer();
+    };
     const onVisibility = () => {
       if (document.visibilityState === "visible") resetIdleTimer();
     };
@@ -114,9 +139,9 @@ export function VaultGate({
     return () => {
       for (const ev of events) window.removeEventListener(ev, onActivity);
       window.removeEventListener("visibilitychange", onVisibility);
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      clearTimers();
     };
-  }, [phase, resetIdleTimer]);
+  }, [phase.kind, resetIdleTimer, clearTimers]);
 
   if (!vault || phase.kind === "loading") {
     return (
@@ -151,9 +176,8 @@ export function VaultGate({
     <>
       {warning && (
         <Alert variant="warning" className="mb-4">
+          <AlertTitle>{APP.vault.idleLock.warningTitle}</AlertTitle>
           <AlertDescription>
-            {APP.vault.idleLock.warningTitle}
-            <br />
             {APP.vault.idleLock.warningDesc}
             <Button
               variant="outline"
