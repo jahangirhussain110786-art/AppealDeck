@@ -232,6 +232,7 @@ export default function VaultView({ userId }: { userId: string }) {
       onUnlocked={() => {
         void refresh();
       }}
+      onLocked={() => void refresh()}
     >
       {() => (
         <div className="flex flex-col gap-4">

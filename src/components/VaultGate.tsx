@@ -29,10 +29,41 @@ export interface VaultGateProps {
   vault: Vault | null;
   children: (vault: Vault) => React.ReactNode;
   onUnlocked?: () => void;
+  onLocked?: () => void;
+  idleMs?: number;
+  warnMs?: number;
 }
 
-export function VaultGate({ vault, children, onUnlocked }: VaultGateProps) {
+export function VaultGate({
+  vault,
+  children,
+  onUnlocked,
+  onLocked,
+  idleMs = 15 * 60_000,
+  warnMs = 60_000,
+}: VaultGateProps) {
   const [phase, setPhase] = React.useState<Phase>({ kind: "loading" });
+  const [warning, setWarning] = React.useState(false);
+  const idleTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const resetIdleTimer = React.useCallback(() => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    if (phase.kind !== "unlocked") return;
+    setWarning(false);
+    idleTimerRef.current = setTimeout(() => {
+      setWarning(false);
+      void vault?.lock();
+      setPhase({ kind: "locked" });
+      onLocked?.();
+      toast.info(APP.vault.idleLock.locked, {
+        description: APP.vault.idleLock.lockedDesc,
+      });
+    }, idleMs);
+
+    setTimeout(() => {
+      if (phase.kind === "unlocked") setWarning(true);
+    }, idleMs - warnMs);
+  }, [phase, vault, idleMs, warnMs, onLocked]);
 
   React.useEffect(() => {
     if (!vault) {
@@ -66,6 +97,27 @@ export function VaultGate({ vault, children, onUnlocked }: VaultGateProps) {
     };
   }, [vault]);
 
+  React.useEffect(() => {
+    if (phase.kind !== "unlocked") return;
+
+    resetIdleTimer();
+
+    const events: (keyof WindowEventMap)[] = ["pointerdown", "keydown", "touchstart", "scroll"];
+    const onActivity = () => resetIdleTimer();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") resetIdleTimer();
+    };
+
+    for (const ev of events) window.addEventListener(ev, onActivity, { passive: true });
+    window.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      for (const ev of events) window.removeEventListener(ev, onActivity);
+      window.removeEventListener("visibilitychange", onVisibility);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, [phase, resetIdleTimer]);
+
   if (!vault || phase.kind === "loading") {
     return (
       <Card className="p-6">
@@ -95,7 +147,31 @@ export function VaultGate({ vault, children, onUnlocked }: VaultGateProps) {
     );
   }
 
-  return <>{children(vault)}</>;
+  return (
+    <>
+      {warning && (
+        <Alert variant="warning" className="mb-4">
+          <AlertDescription>
+            {APP.vault.idleLock.warningTitle}
+            <br />
+            {APP.vault.idleLock.warningDesc}
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => {
+                setWarning(false);
+                resetIdleTimer();
+              }}
+            >
+              {APP.vault.idleLock.stay}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+      {children(vault)}
+    </>
+  );
 }
 
 interface VaultInitFormProps {

@@ -275,6 +275,12 @@ export function DashboardClient({ license }: DashboardClientProps) {
       onUnlocked={() => {
         void loadFromVault();
       }}
+      onLocked={() => {
+        setCaseFile(null);
+        setCaseLog(null);
+        setReplyText("");
+        setReplyResult(null);
+      }}
     >
       {() => {
         if (!caseFile) {

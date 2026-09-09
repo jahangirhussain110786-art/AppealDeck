@@ -433,6 +433,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
             }
           })();
         }}
+        onLocked={() => setVaultUnlocked(false)}
       >
         {() => null}
       </VaultGate>
