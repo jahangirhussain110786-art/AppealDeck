@@ -132,6 +132,16 @@ describe("Vault", () => {
     expect(found).toBeNull();
   });
 
+  it("findByPlaintext returns the oldest record when bytes match multiple names", async () => {
+    await v.initWithPassphrase("super-secret-pass");
+    const payload = new TextEncoder().encode("duplicate bytes");
+    const first = await v.add({ name: "first.pdf", mimeType: "application/pdf", data: payload });
+    await v.add({ name: "second.pdf", mimeType: "application/pdf", data: payload });
+    const found = await v.findByPlaintext(payload);
+    expect(found).not.toBeNull();
+    expect(found?.id).toBe(first.id);
+  });
+
   it("findByPlaintext accepts string input matching the same bytes", async () => {
     await v.initWithPassphrase("super-secret-pass");
     const rec = await v.add({ name: "x", mimeType: "text/plain", data: "payload" });

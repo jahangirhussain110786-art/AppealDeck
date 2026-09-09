@@ -47,6 +47,7 @@ import { FileDropZone } from "@/components/FileDropZone";
 import type { VaultListItem } from "@/core/vault/vault";
 import type { Vault } from "@/core/vault/vault";
 import type { CaseFile as CoreCaseFile } from "@/core/interviewEngine";
+import type { EvidenceKind } from "@/core/evidenceModel";
 import { nextStep, interviewProgress } from "@/core/interviewEngine";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
 
@@ -89,7 +90,7 @@ interface InterviewStep {
   prompt: string;
   inputType: InputType;
   options?: EnumOption[];
-  evidenceKind?: string;
+  evidenceKind?: EvidenceKind;
   required?: boolean;
   whyAmazonWantsIt?: string;
   declineAlternatives?: ActionAlternative[];
@@ -733,13 +734,10 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                     {step.inputType === "file" && step.evidenceKind && vaultRef.current && (
                       <FileDropZone
                         onFile={async (file) => {
-                          await addFileToVault(
-                            vaultRef.current!,
-                            file,
-                            step.evidenceKind,
-                            CASE_ID,
-                            step.evidenceKind,
-                          );
+                          await addFileToVault(vaultRef.current!, file, {
+                            evidenceKind: step.evidenceKind,
+                            caseId: CASE_ID,
+                          });
                         }}
                         disabled={loading}
                         hint={APP.interview.fileUpload.maxMb}

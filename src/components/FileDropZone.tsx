@@ -107,7 +107,7 @@ export function FileDropZone({
         <Button
           variant="outline"
           size="sm"
-          className="sm:hidden"
+          className="hidden [@media(pointer:coarse)]:inline-flex"
           onClick={() => cameraInputRef.current?.click()}
           disabled={disabled}
         >
@@ -136,38 +136,6 @@ export function FileDropZone({
           e.target.value = "";
         }}
       />
-      <input
-        ref={inputRef}
-        type="file"
-        hidden
-        accept={accept}
-        multiple={multiple}
-        onChange={(e) => {
-          handleFiles(e.target.files);
-          e.target.value = "";
-        }}
-      />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        hidden
-        accept="image/*"
-        capture="environment"
-        onChange={(e) => {
-          handleFiles(e.target.files);
-          e.target.value = "";
-        }}
-      />
-      <Button
-        variant="outline"
-        size="sm"
-        className="sm:hidden"
-        style={{ display: "inline-flex" }}
-        onClick={() => cameraInputRef.current?.click()}
-        disabled={disabled}
-      >
-        {APP.interview.fileUpload.takePhoto}
-      </Button>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       {!hint && <p className="text-xs text-muted-foreground">{APP.interview.fileUpload.maxMb}</p>}
     </Card>

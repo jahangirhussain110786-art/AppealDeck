@@ -121,7 +121,7 @@ export default function VaultView({ userId }: { userId: string }) {
   const onAddFile = async (file: File) => {
     setBusy(true);
     try {
-      await addFileToVault(vault, file, selectedEvidenceKind);
+      await addFileToVault(vault, file, { evidenceKind: selectedEvidenceKind });
       setItems(await vault.list());
     } catch (e) {
       toast.error(APP.interview.fileUpload.addFailed, {

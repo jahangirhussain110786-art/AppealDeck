@@ -356,6 +356,7 @@ export const APP = {
       duplicateDesc: '"{name}" matches "{existing}" byte for byte. Nothing was added.',
       added: '"{name}" added',
       addedDesc: "{size} · {slot} · encrypted on this device",
+      vaultSlot: "Vault",
       addFailed: "Add failed",
       takePhoto: "Take a photo",
     },

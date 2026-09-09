@@ -1,16 +1,17 @@
 import type { Vault, AddDocumentInput, VaultListItem } from "@/core/vault/vault";
+import type { VaultRecordInput } from "@/core/vault/schema";
+import type { EvidenceKind } from "@/core/evidenceModel";
 import { toast } from "sonner";
 import { APP } from "@/content/app";
 import { formatBytes } from "@/lib/format";
 
-export type AddResult = { status: "added"; listItem: VaultListItem } | { status: "duplicate" };
+export type AddResult =
+  { status: "added"; record: VaultRecordInput } | { status: "duplicate"; existing: VaultListItem };
 
 export async function addFileToVault(
   vault: Vault,
   file: File,
-  evidenceKind?: string,
-  caseId?: string,
-  slot?: string,
+  opts: { evidenceKind?: EvidenceKind; caseId?: string } = {},
 ): Promise<AddResult> {
   const buf = new Uint8Array(await file.arrayBuffer());
 
@@ -21,7 +22,7 @@ export async function addFileToVault(
         .replace("{name}", file.name)
         .replace("{existing}", dup.name),
     });
-    return { status: "duplicate" };
+    return { status: "duplicate", existing: dup };
   }
 
   const input: AddDocumentInput = {
@@ -29,21 +30,19 @@ export async function addFileToVault(
     mimeType: file.type || "application/octet-stream",
     data: buf,
     kind: "document",
-    evidenceKind: evidenceKind ?? undefined,
-    caseId: caseId ?? undefined,
+    evidenceKind: opts.evidenceKind ?? undefined,
+    caseId: opts.caseId ?? undefined,
   };
 
-  await vault.add(input);
-  const records = await vault.list({ evidenceKind });
-  const added = records.find((r) => r.name === file.name);
+  const record = await vault.add(input);
   const size = formatBytes(file.size);
-  const label = slot ?? APP.vault.encryptedBadge;
+  const slot = opts.evidenceKind
+    ? APP.evidenceKinds[opts.evidenceKind]
+    : APP.interview.fileUpload.vaultSlot;
 
   toast.success(APP.interview.fileUpload.added.replace("{name}", file.name), {
-    description: APP.interview.fileUpload.addedDesc
-      .replace("{size}", size)
-      .replace("{slot}", label),
+    description: APP.interview.fileUpload.addedDesc.replace("{size}", size).replace("{slot}", slot),
   });
 
-  return { status: "added", listItem: added! };
+  return { status: "added", record };
 }

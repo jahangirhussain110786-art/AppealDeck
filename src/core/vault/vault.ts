@@ -246,7 +246,7 @@ export class Vault {
     const bytes = typeof data === "string" ? new TextEncoder().encode(data) : data;
     const hash = await sha256Base64(this.provider, bytes);
     const target = `${PLAINTEXT_HASH_VERSION}.${hash}`;
-    const all = await this.db.records.orderBy("createdAt").reverse().toArray();
+    const all = await this.db.records.orderBy("createdAt").toArray();
     for (const r of all) {
       if (r.plaintextHash === target) return toListItem(r);
     }

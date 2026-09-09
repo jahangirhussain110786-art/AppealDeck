@@ -59,7 +59,7 @@ export function useEvidenceSlots(kind: ViolationKind) {
     }
     setBusy(true);
     try {
-      await addFileToVault(vault, file, kind);
+      await addFileToVault(vault, file, { evidenceKind: kind });
       await refresh();
     } finally {
       setBusy(false);
