@@ -39,6 +39,7 @@ export interface VaultListItem {
   evidenceKind?: string;
   caseId?: string;
   schemaVersion: number;
+  plaintextHash: string;
 }
 
 export interface AddDocumentInput {
@@ -241,6 +242,17 @@ export class Vault {
     return items;
   }
 
+  async findByPlaintext(data: Uint8Array | string): Promise<VaultListItem | null> {
+    const bytes = typeof data === "string" ? new TextEncoder().encode(data) : data;
+    const hash = await sha256Base64(this.provider, bytes);
+    const target = `${PLAINTEXT_HASH_VERSION}.${hash}`;
+    const all = await this.db.records.orderBy("createdAt").reverse().toArray();
+    for (const r of all) {
+      if (r.plaintextHash === target) return toListItem(r);
+    }
+    return null;
+  }
+
   async delete(id: string): Promise<void> {
     await this.db.records.delete(id);
   }
@@ -349,6 +361,7 @@ function toListItem(r: VaultRecordInput): VaultListItem {
     evidenceKind: r.evidenceKind,
     caseId: r.caseId,
     schemaVersion: r.schemaVersion,
+    plaintextHash: r.plaintextHash,
   };
 }
 

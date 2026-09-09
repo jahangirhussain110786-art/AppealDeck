@@ -110,6 +110,36 @@ describe("Vault", () => {
     expect(onlyInvoice.map((x) => x.name)).toEqual(["y"]);
   });
 
+  it("findByPlaintext returns the record when bytes match", async () => {
+    await v.initWithPassphrase("super-secret-pass");
+    const payload = new TextEncoder().encode("Hello, encrypted world!");
+    const rec = await v.add({
+      name: "invoice.pdf",
+      mimeType: "application/pdf",
+      data: payload,
+    });
+    const found = await v.findByPlaintext(payload);
+    expect(found).not.toBeNull();
+    expect(found?.id).toBe(rec.id);
+    expect(found?.name).toBe("invoice.pdf");
+    expect(found?.plaintextHash).toBeTruthy();
+  });
+
+  it("findByPlaintext returns null when bytes differ", async () => {
+    await v.initWithPassphrase("super-secret-pass");
+    await v.add({ name: "x", mimeType: "text/plain", data: "one" });
+    const found = await v.findByPlaintext(new TextEncoder().encode("different"));
+    expect(found).toBeNull();
+  });
+
+  it("findByPlaintext accepts string input matching the same bytes", async () => {
+    await v.initWithPassphrase("super-secret-pass");
+    const rec = await v.add({ name: "x", mimeType: "text/plain", data: "payload" });
+    const found = await v.findByPlaintext("payload");
+    expect(found).not.toBeNull();
+    expect(found?.id).toBe(rec.id);
+  });
+
   it("deletes a record", async () => {
     await v.initWithPassphrase("super-secret-pass");
     const rec = await v.add({ name: "x", mimeType: "text/plain", data: "x" });

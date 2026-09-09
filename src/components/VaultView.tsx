@@ -33,7 +33,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { getBrowserVault, pushVaultToCloud } from "@/lib/vault/browser";
 import { FileDropZone } from "@/components/FileDropZone";
 import { VAULT_ENVELOPE_VERSION } from "@/core/vault/envelope";
-import type { AddDocumentInput, Vault, VaultListItem } from "@/core/vault/vault";
+import type { Vault, VaultListItem } from "@/core/vault/vault";
 import { EvidenceStatusBadge } from "@/components/EvidenceStatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { APP } from "@/content/app";
@@ -42,6 +42,7 @@ import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { VaultGate } from "@/components/VaultGate";
 import { Label } from "@/components/ui/label";
 import { formatDate, formatBytes } from "@/lib/format";
+import { addFileToVault } from "@/lib/vault/addFileToVault";
 
 function useVault(): Vault {
   const ref = React.useRef<Vault | null>(null);
@@ -120,18 +121,7 @@ export default function VaultView({ userId }: { userId: string }) {
   const onAddFile = async (file: File) => {
     setBusy(true);
     try {
-      const buf = new Uint8Array(await file.arrayBuffer());
-      const input: AddDocumentInput = {
-        name: file.name,
-        mimeType: file.type || "application/octet-stream",
-        data: buf,
-        kind: "document",
-        evidenceKind: selectedEvidenceKind,
-      };
-      await vault.add(input);
-      toast.success(`Added "${file.name}"`, {
-        description: "Encrypted on this device. Ready to attach to a case.",
-      });
+      await addFileToVault(vault, file, selectedEvidenceKind);
       setItems(await vault.list());
     } catch (e) {
       toast.error("Add failed", {

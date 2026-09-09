@@ -44,10 +44,11 @@ import {
 } from "@/lib/caseStore";
 import type { CaseLog } from "@/lib/caseStore";
 import { FileDropZone } from "@/components/FileDropZone";
-import type { AddDocumentInput, VaultListItem } from "@/core/vault/vault";
+import type { VaultListItem } from "@/core/vault/vault";
 import type { Vault } from "@/core/vault/vault";
 import type { CaseFile as CoreCaseFile } from "@/core/interviewEngine";
 import { nextStep, interviewProgress } from "@/core/interviewEngine";
+import { addFileToVault } from "@/lib/vault/addFileToVault";
 
 type ViolationKind =
   | "INAUTHENTIC_DOCUMENTS"
@@ -728,19 +729,13 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                     {step.inputType === "file" && step.evidenceKind && vaultRef.current && (
                       <FileDropZone
                         onFile={async (file) => {
-                          const buf = new Uint8Array(await file.arrayBuffer());
-                          const input: AddDocumentInput = {
-                            name: file.name,
-                            mimeType: file.type || "application/octet-stream",
-                            data: buf,
-                            kind: "document",
-                            evidenceKind: step.evidenceKind,
-                            caseId: CASE_ID,
-                          };
-                          await vaultRef.current!.add(input);
-                          toast.success(`"${file.name}" saved to vault`, {
-                            description: "Evidence is encrypted on your device.",
-                          });
+                          await addFileToVault(
+                            vaultRef.current!,
+                            file,
+                            step.evidenceKind,
+                            CASE_ID,
+                            step.evidenceKind,
+                          );
                         }}
                         disabled={loading}
                         hint={APP.interview.fileUpload.maxMb}

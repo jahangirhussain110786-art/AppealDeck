@@ -5,8 +5,9 @@ import { Plus, FileText, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getBrowserVault } from "@/lib/vault/browser";
-import type { AddDocumentInput, EvidenceKind, ViolationKind } from "@/core";
+import type { EvidenceKind, ViolationKind } from "@/core";
 import { requirementsFor, allKinds } from "@/core";
+import { addFileToVault } from "@/lib/vault/addFileToVault";
 
 export interface EvidenceSlotState {
   kind: EvidenceKind;
@@ -58,14 +59,7 @@ export function useEvidenceSlots(kind: ViolationKind) {
     }
     setBusy(true);
     try {
-      const input: AddDocumentInput = {
-        name: file.name,
-        mimeType: file.type || "application/octet-stream",
-        data: new Uint8Array(await file.arrayBuffer()),
-        evidenceKind: kind,
-        kind: "document",
-      };
-      await vault.add(input);
+      await addFileToVault(vault, file, kind);
       await refresh();
     } finally {
       setBusy(false);
