@@ -3,12 +3,16 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button, type ButtonProps } from "@/components/ui/button";
+import { APP } from "@/content/app";
 
 declare global {
   interface Window {
     // Paddle.js v2 global
     Paddle?: {
-      Initialize: (opts: { token: string }) => void;
+      Initialize: (opts: {
+        token: string;
+        eventCallback?: (event: { name: string }) => void;
+      }) => void;
       Environment: { set: (env: "sandbox" | "production") => void };
       Checkout: {
         open: (opts: {
@@ -27,12 +31,16 @@ export function CheckoutButton({
   className,
   size,
   variant,
+  customerEmail,
+  onCompleted,
 }: {
   priceId?: string;
   children: React.ReactNode;
   className?: string;
   size?: ButtonProps["size"];
   variant?: ButtonProps["variant"];
+  customerEmail?: string;
+  onCompleted?: () => void;
 }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,14 +49,21 @@ export function CheckoutButton({
     const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
     const env = (process.env.NEXT_PUBLIC_PADDLE_ENV ?? "sandbox") as "sandbox" | "production";
     if (!token) {
-      setError("Checkout not configured");
+      setError(APP.checkout.unavailableTitle);
       return;
     }
 
     function init(tk: string) {
       if (!window.Paddle) return;
       window.Paddle.Environment.set(env);
-      window.Paddle.Initialize({ token: tk });
+      window.Paddle.Initialize({
+        token: tk,
+        eventCallback: (event) => {
+          if (event.name === "checkout.completed") {
+            onCompleted?.();
+          }
+        },
+      });
       setReady(true);
     }
 
@@ -69,25 +84,32 @@ export function CheckoutButton({
     script.async = true;
     script.onload = () => init(token);
     script.onerror = () => {
-      setError("Could not load checkout");
-      toast.error("Checkout failed to load", {
-        description: "Check your network and disable ad blockers, then try again.",
+      setError(APP.checkout.loadFailedTitle);
+      toast.error(APP.checkout.loadFailedTitle, {
+        description: APP.checkout.loadFailedDesc,
       });
     };
     document.body.appendChild(script);
+    // onCompleted is read fresh via the eventCallback closure at init time;
+    // re-running this effect on every onCompleted identity change would
+    // reload the Paddle script unnecessarily.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function openCheckout() {
     const id = priceId ?? process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
     if (!window.Paddle || !id) {
-      setError("Checkout unavailable");
-      toast.error("Checkout unavailable", {
-        description: "Payment is temporarily offline. Please try again in a moment.",
+      setError(APP.checkout.unavailableTitle);
+      toast.error(APP.checkout.unavailableTitle, {
+        description: APP.checkout.unavailableDesc,
       });
       return;
     }
-    toast.info("Opening Paddle checkout…");
-    window.Paddle.Checkout.open({ items: [{ priceId: id }] });
+    toast.info(APP.checkout.opening);
+    window.Paddle.Checkout.open({
+      items: [{ priceId: id }],
+      customer: customerEmail ? { email: customerEmail } : undefined,
+    });
   }
 
   return (

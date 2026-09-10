@@ -79,6 +79,12 @@ test.describe("App gate — unauthenticated pages and APIs", () => {
     expect((await r.json()).error).toBe("Unauthorized");
   });
 
+  test("GET /api/license/status requires auth (401 JSON)", async ({ request }) => {
+    const r = await request.get("/api/license/status", { maxRedirects: 0 });
+    expect(r.status()).toBe(401);
+    expect((await r.json()).error).toBe("Unauthorized");
+  });
+
   test("GET /api/devices requires auth (401 JSON)", async ({ request }) => {
     const r = await request.get("/api/devices", { maxRedirects: 0 });
     expect(r.status()).toBe(401);

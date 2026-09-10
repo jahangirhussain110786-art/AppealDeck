@@ -3,6 +3,13 @@
 // — Wave C owns restyling these surfaces.
 
 export const APP = {
+  checkout: {
+    opening: "Opening checkout…",
+    unavailableTitle: "Checkout unavailable",
+    unavailableDesc: "Payment is temporarily offline. Please try again in a moment.",
+    loadFailedTitle: "Checkout failed to load",
+    loadFailedDesc: "Check your network and disable ad blockers, then try again.",
+  },
   access: {
     signInGate: {
       title: "Save your case to continue",
