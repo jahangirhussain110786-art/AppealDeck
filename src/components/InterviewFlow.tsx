@@ -44,80 +44,21 @@ import {
 } from "@/lib/caseStore";
 import type { CaseLog } from "@/lib/caseStore";
 import { FileDropZone } from "@/components/FileDropZone";
-import type { VaultListItem } from "@/core/vault/vault";
-import type { Vault } from "@/core/vault/vault";
-import type { CaseFile as CoreCaseFile } from "@/core/interviewEngine";
-import type { EvidenceKind } from "@/core/evidenceModel";
-import { nextStep, interviewProgress } from "@/core/interviewEngine";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
-
-type ViolationKind =
-  | "INAUTHENTIC_DOCUMENTS"
-  | "RELATED_ACCOUNT"
-  | "POLICY"
-  | "INTELLECTUAL_PROPERTY"
-  | "LISTING"
-  | "FUNDS"
-  | "UNKNOWN";
-
-type StepKind =
-  | "intake_root_cause"
-  | "intake_timeline"
-  | "intake_prior_appeals"
-  | "evidence_ask"
-  | "action_check"
-  | "status_explanation";
-
-type InputType = "enum" | "file" | "date" | "number" | "short_text";
-
-interface EnumOption {
-  id: string;
-  label: string;
-}
-
-interface ActionAlternative {
-  id: string;
-  label: string;
-  honestyNote: string;
-  consequence: string;
-  readinessImpact: "none" | "reduced" | "path_change";
-}
-
-interface InterviewStep {
-  id: string;
-  kind: StepKind;
-  title: string;
-  prompt: string;
-  inputType: InputType;
-  options?: EnumOption[];
-  evidenceKind?: EvidenceKind;
-  required?: boolean;
-  whyAmazonWantsIt?: string;
-  declineAlternatives?: ActionAlternative[];
-}
-
-interface CaseFile {
-  kind: ViolationKind;
-  state: string;
-  rootCause?: string;
-  timelineEvents: Array<{ date: string; description: string }>;
-  priorAppealCount: number;
-  evidenceSlots: Record<string, { present: boolean; disqualified?: boolean }>;
-  actionItems: Array<{
-    id: string;
-    label: string;
-    evidenceSlots: string[];
-    status: "todo" | "in_progress" | "done";
-    declined?: { reason: string; at: string };
-  }>;
-  attemptCount: number;
-}
-
-interface InterviewProgress {
-  current: number;
-  total: number;
-  pendingEvidence: number;
-}
+import { Vault } from "@/core/vault/vault";
+import type { VaultListItem } from "@/core/vault/vault";
+import type { ViolationKind } from "@/core";
+import {
+  createCaseFile,
+  nextStep,
+  interviewProgress,
+  applyAnswer,
+  type CaseFile,
+  type InterviewStep,
+  type InterviewProgress,
+  type StepAnswer,
+} from "@/core/interviewEngine";
+type CoreCaseFile = CaseFile;
 
 const KIND_LABELS: Record<ViolationKind, string> = {
   INAUTHENTIC_DOCUMENTS: "Inauthentic documents",
@@ -139,7 +80,7 @@ interface InterviewFlowProps {
 export function InterviewFlow({
   initialKind,
   onComplete,
-  signedIn: _signedIn = true,
+  signedIn = true,
   hasPass: _hasPass = true,
 }: InterviewFlowProps) {
   const router = useRouter();
@@ -185,14 +126,26 @@ export function InterviewFlow({
         vaultRef.current = v;
         const initialized = await v.isInitialized();
         if (!initialized) {
+          if (signedIn) {
+            setVaultReady(true);
+            setVaultUnlocked(false);
+            return;
+          }
+          await v.initWithDeviceKey();
           setVaultReady(true);
-          setVaultUnlocked(false);
+          setVaultUnlocked(true);
           return;
         }
         const status = await v.status();
         if (status.state === "locked") {
-          setVaultReady(true);
-          setVaultUnlocked(false);
+          if (status.mode === "device" && !signedIn) {
+            await v.unlockWithDeviceKey();
+            setVaultReady(true);
+            setVaultUnlocked(true);
+          } else {
+            setVaultReady(true);
+            setVaultUnlocked(false);
+          }
           return;
         }
         setVaultReady(true);
@@ -215,7 +168,7 @@ export function InterviewFlow({
       }
     };
     void initVault();
-  }, []);
+  }, [signedIn]);
 
   const resetAnswerState = useCallback(() => {
     setAnswerValue("");
@@ -254,50 +207,31 @@ export function InterviewFlow({
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasUnsavedAnswer]);
 
-  const callApi = useCallback(async (action: string, payload: Record<string, unknown>) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/interview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, ...payload }),
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `Request failed (${res.status})`);
-      }
-      return await res.json();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const handleStart = useCallback(
     async (selectedKind: ViolationKind) => {
       setShowResumeDialog(false);
-      const data = await callApi("start", { kind: selectedKind });
-      if (!data) return;
+      const cf = createCaseFile(selectedKind);
+      const s = nextStep(cf);
       setKind(selectedKind);
-      setCaseFile(data.caseFile);
-      setStep(data.step);
-      setProgress(data.progress);
-      setComplete(data.complete);
+      setCaseFile(cf);
+      setStep((s ?? undefined) as InterviewStep | null);
+      setProgress(interviewProgress(cf) as InterviewProgress);
+      setComplete(s === null);
       resetAnswerState();
       if (vaultRef.current && vaultUnlocked) {
-        void persistCaseFile(data.caseFile);
+        void persistCaseFile(cf);
       }
     },
-    [callApi, resetAnswerState, vaultUnlocked, persistCaseFile],
+    [resetAnswerState, vaultUnlocked, persistCaseFile],
   );
 
   const handleSubmit = useCallback(async () => {
     if (!caseFile || !step) return;
 
-    let answer: Record<string, unknown> = { stepId: step.id };
+    setLoading(true);
+    setError(null);
+
+    let answer: StepAnswer = { stepId: step.id };
 
     if (declineMode) {
       answer.declined = true;
@@ -306,13 +240,19 @@ export function InterviewFlow({
     } else {
       switch (step.inputType) {
         case "enum":
-          if (!choiceId) return;
+          if (!choiceId) {
+            setLoading(false);
+            return;
+          }
           answer.choiceId = choiceId;
           break;
         case "short_text":
         case "date":
         case "number":
-          if (!answerValue.trim()) return;
+          if (!answerValue.trim()) {
+            setLoading(false);
+            return;
+          }
           answer.value = answerValue.trim();
           break;
         case "file":
@@ -321,21 +261,26 @@ export function InterviewFlow({
       }
     }
 
-    const data = await callApi("answer", { caseFile, answer });
-    if (!data) return;
+    try {
+      const next = applyAnswer(caseFile, answer);
+      setCaseFile(next);
+      const s = nextStep(next);
+      setStep((s ?? undefined) as InterviewStep | null);
+      setProgress(interviewProgress(next) as InterviewProgress);
+      setComplete(s === null);
+      resetAnswerState();
 
-    setCaseFile(data.caseFile);
-    setStep(data.step);
-    setProgress(data.progress);
-    setComplete(data.complete);
-    resetAnswerState();
+      if (vaultRef.current && vaultUnlocked) {
+        void persistCaseFile(next);
+      }
 
-    if (vaultRef.current && vaultUnlocked) {
-      void persistCaseFile(data.caseFile);
-    }
-
-    if (data.complete) {
-      if (onComplete) onComplete(data.caseFile);
+      if (s === null && onComplete) {
+        onComplete(next);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   }, [
     caseFile,
@@ -345,7 +290,6 @@ export function InterviewFlow({
     declineAltId,
     choiceId,
     answerValue,
-    callApi,
     resetAnswerState,
     onComplete,
     vaultUnlocked,
@@ -428,6 +372,8 @@ export function InterviewFlow({
     return (
       <VaultGate
         vault={vaultRef.current}
+        deviceMode
+        autoUnlock={!signedIn}
         onUnlocked={() => {
           setVaultReady(true);
           setVaultUnlocked(true);
@@ -720,7 +666,12 @@ export function InterviewFlow({
                     )}
 
                     {step.kind === "intake_root_cause" && step.inputType === "short_text" && (
-                      <FieldSuggester stepId={step.id} text={answerValue} />
+                      <>
+                        {!signedIn && (
+                          <p className="text-xs text-muted-foreground">{APP.access.aiSignedOut}</p>
+                        )}
+                        {signedIn && <FieldSuggester stepId={step.id} text={answerValue} />}
+                      </>
                     )}
 
                     {step.inputType === "date" && (

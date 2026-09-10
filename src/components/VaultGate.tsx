@@ -17,7 +17,11 @@ import { APP } from "@/content/app";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Phase =
-  { kind: "loading" } | { kind: "needs_init" } | { kind: "locked" } | { kind: "unlocked" };
+  | { kind: "loading" }
+  | { kind: "needs_init" }
+  | { kind: "device_set_passphrase" }
+  | { kind: "locked" }
+  | { kind: "unlocked" };
 
 const VAULT_CRYPTO_ERROR_CODE = "WRONG_PASSPHRASE" as const;
 
@@ -32,6 +36,8 @@ export interface VaultGateProps {
   onLocked?: () => void;
   idleMs?: number;
   warnMs?: number;
+  deviceMode?: boolean;
+  autoUnlock?: boolean;
 }
 
 export function VaultGate({
@@ -41,6 +47,8 @@ export function VaultGate({
   onLocked,
   idleMs = 15 * 60_000,
   warnMs = 60_000,
+  deviceMode = false,
+  autoUnlock = false,
 }: VaultGateProps) {
   const [phase, setPhase] = React.useState<Phase>({ kind: "loading" });
   const [warning, setWarning] = React.useState(false);
@@ -97,13 +105,27 @@ export function VaultGate({
         const initialized = await vault.isInitialized();
         if (cancelled) return;
         if (!initialized) {
-          setPhase({ kind: "needs_init" });
+          if (deviceMode && autoUnlock) {
+            await vault.initWithDeviceKey();
+            setPhase({ kind: "unlocked" });
+          } else if (deviceMode) {
+            setPhase({ kind: "device_set_passphrase" });
+          } else {
+            setPhase({ kind: "needs_init" });
+          }
           return;
         }
         const status: VaultStatus = await vault.status();
         if (cancelled) return;
         if (status.state === "locked") {
-          setPhase({ kind: "locked" });
+          if (status.mode === "device" && autoUnlock) {
+            await vault.unlockWithDeviceKey();
+            setPhase({ kind: "unlocked" });
+          } else if (status.mode === "device" && deviceMode) {
+            setPhase({ kind: "device_set_passphrase" });
+          } else {
+            setPhase({ kind: "locked" });
+          }
           return;
         }
         setPhase({ kind: "unlocked" });
@@ -115,7 +137,7 @@ export function VaultGate({
     return () => {
       cancelled = true;
     };
-  }, [vault]);
+  }, [vault, deviceMode, autoUnlock]);
 
   React.useEffect(() => {
     if (phase.kind !== "unlocked") return;
@@ -158,6 +180,10 @@ export function VaultGate({
 
   if (phase.kind === "needs_init") {
     return <VaultInitForm vault={vault} onDone={() => setPhase({ kind: "unlocked" })} />;
+  }
+
+  if (phase.kind === "device_set_passphrase") {
+    return <VaultDeviceRelockForm vault={vault} onDone={() => setPhase({ kind: "unlocked" })} />;
   }
 
   if (phase.kind === "locked") {
@@ -361,6 +387,87 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
             {APP.vault.unlock.recoverLink}
           </a>
         </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface VaultDeviceRelockProps {
+  vault: Vault;
+  onDone: () => void;
+}
+
+function VaultDeviceRelockForm({ vault, onDone }: VaultDeviceRelockProps) {
+  const [passphrase, setPassphrase] = React.useState("");
+  const [confirm, setConfirm] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const canSubmit = passphrase.length >= 8 && passphrase === confirm && !busy;
+
+  const handleRelock = async () => {
+    if (!canSubmit) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await vault.relockWithPassphrase(passphrase);
+      toast.success(APP.vault.create.success, {
+        description: APP.vault.create.successDesc,
+      });
+      onDone();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : APP.vault.unlock.genericError);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <h2 className="mb-2 text-lg font-semibold">{APP.access.setPassphrase.title}</h2>
+        <p className="mb-4 text-sm text-muted-foreground">{APP.access.setPassphrase.body}</p>
+
+        <div className="flex flex-col gap-3">
+          <div>
+            <Label htmlFor="vault-device-relock-passphrase">
+              {APP.vault.create.passphraseLabel}
+            </Label>
+            <Input
+              id="vault-device-relock-passphrase"
+              type="password"
+              autoComplete="new-password"
+              value={passphrase}
+              onChange={(e) => setPassphrase(e.target.value)}
+              aria-invalid={!!error}
+              aria-describedby="vault-device-relock-error"
+            />
+          </div>
+          <div>
+            <Label htmlFor="vault-device-relock-confirm">{APP.vault.create.confirmLabel}</Label>
+            <Input
+              id="vault-device-relock-confirm"
+              type="password"
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              aria-invalid={passphrase !== confirm && confirm.length > 0}
+            />
+          </div>
+          {error && (
+            <p id="vault-device-relock-error" className="text-xs text-destructive">
+              {error}
+            </p>
+          )}
+          <Button onClick={handleRelock} disabled={!canSubmit}>
+            {busy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ShieldCheck className="size-4" />
+            )}
+            {busy ? APP.vault.create.submitting : APP.vault.create.submit}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

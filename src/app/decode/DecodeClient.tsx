@@ -16,6 +16,7 @@ import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { EmptyState } from "@/components/EmptyState";
 import { CopyButton } from "@/components/CopyButton";
 import { OfflineNotice } from "@/components/OfflineNotice";
+import { CasePreview } from "@/components/CasePreview";
 import { guidanceFor } from "@/core/guidance";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
 import { DECODE } from "@/content/marketing";
@@ -310,6 +311,10 @@ function ResultView({
 
       <motion.div variants={{ show: { opacity: 1, y: 0 } }} className="pt-2">
         <CopyButton text={guidance.summary} aria-label="Copy plain-English summary" />
+      </motion.div>
+
+      <motion.div variants={{ show: { opacity: 1, y: 0 } }}>
+        <CasePreview kind={result.kind} />
       </motion.div>
     </motion.div>
   );
