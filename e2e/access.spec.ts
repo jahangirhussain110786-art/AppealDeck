@@ -67,4 +67,19 @@ test.describe("Access ladder — signed-out interview, gate, case preview", () =
     await page.goto("/dashboard");
     await expect(page.getByText("Your case, at a glance", { exact: true })).toBeVisible();
   });
+
+  test("signed out: header shows five nav slots with a lock only on Vault, no Billing", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "Primary" });
+    await expect(nav.getByRole("link", { name: "Decode", exact: true })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Case", exact: true })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Dashboard", exact: true })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Vault" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Pricing", exact: true })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Billing", exact: true })).toHaveCount(0);
+    // exactly one lock icon in the nav (on Vault) when signed out
+    await expect(nav.locator("svg")).toHaveCount(1);
+  });
 });
