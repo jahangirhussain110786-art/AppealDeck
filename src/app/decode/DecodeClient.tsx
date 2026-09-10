@@ -15,6 +15,7 @@ import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { EmptyState } from "@/components/EmptyState";
 import { CopyButton } from "@/components/CopyButton";
+import { OfflineNotice } from "@/components/OfflineNotice";
 import { guidanceFor } from "@/core/guidance";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
 import { DECODE } from "@/content/marketing";
@@ -115,6 +116,7 @@ export default function DecodeClient() {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-12">
+      <OfflineNotice />
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           {DECODE.pageTitle}

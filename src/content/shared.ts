@@ -34,8 +34,8 @@ export const SHARED = {
   tocHeading: "Contents",
   lastUpdated: "Last updated:",
   consentPrompt: "Select the consent to continue",
-  offlineNotice: {
-    title: "You're offline",
-    description: "Your changes are saved locally and will sync when you're back online.",
+  offline: {
+    title: "You are offline",
+    desc: "Decoding and your vault work without a connection. Drafting, critique and sync need one and will fail until you are back online.",
   },
 } as const;

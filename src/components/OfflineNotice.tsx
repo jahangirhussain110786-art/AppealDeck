@@ -1,37 +1,37 @@
 "use client";
 
-import { useEffect } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { SHARED } from "@/content/shared";
 
-export function OfflineNotice() {
+/**
+ * Inline notice shown only while the browser reports no connection.
+ * State starts as "online" so the server render and the first client render match;
+ * the real value is read from navigator.onLine in an effect.
+ */
+export function OfflineNotice({ className }: { className?: string }) {
+  const [online, setOnline] = useState(true);
+
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const update = () => {
-      if (!navigator.onLine) {
-        toast.warning(SHARED.offlineNotice.title, {
-          description: SHARED.offlineNotice.description,
-          duration: Infinity,
-          id: "offline-toast",
-        });
-      } else {
-        toast.dismiss("offline-toast");
-      }
-    };
-
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-
-    if (!navigator.onLine) {
-      update();
-    }
-
+    setOnline(navigator.onLine);
+    const goOnline = () => setOnline(true);
+    const goOffline = () => setOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
     return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
     };
   }, []);
 
-  return null;
+  if (online) return null;
+
+  return (
+    <Alert variant="warning" role="status" className={className}>
+      <div>
+        <AlertTitle>{SHARED.offline.title}</AlertTitle>
+        <AlertDescription>{SHARED.offline.desc}</AlertDescription>
+      </div>
+    </Alert>
+  );
 }
