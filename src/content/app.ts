@@ -58,7 +58,7 @@ export const APP = {
     },
     actions: {
       nextBestActions: "Next best actions",
-      reviewPoa: "Review your POA",
+      reviewPoa: "Review your Plan of Action (POA)",
       continueCase: "Continue case",
     },
     novelty: {
@@ -100,7 +100,7 @@ export const APP = {
     submitCard: {
       title: "You submitted this in Seller Central",
       description:
-        "Mark your POA as submitted to start tracking deadlines and set a reminder for a follow-up.",
+        "Mark your Plan of Action (POA) as submitted to start tracking deadlines and set a reminder for a follow-up.",
       button: "I submitted this",
       confirmed: "Submission recorded",
     },
@@ -120,7 +120,7 @@ export const APP = {
     },
   },
   compose: {
-    title: "Your POA",
+    title: "Your Plan of Action (POA)",
     subtitle:
       "Drafts are generated from your case file. Review, copy, and submit through Seller Central.",
     noPass: {
@@ -391,6 +391,7 @@ export const APP = {
     noCaseDesc: "Start your case on the dashboard.",
     engineBadge: "Engine: rules-first",
     numberPlaceholder: "Enter a number",
+    optionalSuffix: "(optional)",
   },
   case: {
     title: "Your case",
@@ -403,7 +404,8 @@ export const APP = {
       title: "How this works",
       bullet1: "The engine chooses each step based on your case type and evidence.",
       bullet2: "Decline any request — the system shows honest alternatives, never fabricates.",
-      bullet3: "When evidence is complete, the composer drafts your POA from real facts.",
+      bullet3:
+        "When evidence is complete, the composer drafts your Plan of Action (POA) from real facts.",
     },
     quickLinks: {
       title: "Quick links",
@@ -412,7 +414,7 @@ export const APP = {
     },
     noPass: {
       title: "Appeal Pass required",
-      desc: "The guided interview, evidence checklist, and POA composer require an active Appeal Pass.",
+      desc: "The guided interview, evidence checklist, and Plan of Action (POA) composer require an active Appeal Pass.",
       cta: "Get the Appeal Pass",
     },
   },

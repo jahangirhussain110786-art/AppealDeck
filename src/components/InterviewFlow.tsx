@@ -630,7 +630,10 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                 <CardTitle>{step.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">{step.prompt}</p>
+                <p className="text-sm text-muted-foreground">
+                  {step.prompt}
+                  {step.required === false && ` ${APP.interview.optionalSuffix}`}
+                </p>
 
                 {step.whyAmazonWantsIt && (
                   <div className="rounded-lg border border-border bg-muted/30">

@@ -3,4 +3,10 @@
 import { FIXTURES } from "@/core/fixtures";
 
 export const SAMPLE_NOTICE_ID = "policy-1";
-export const SAMPLE_NOTICE_TEXT: string = FIXTURES.find((f) => f.id === SAMPLE_NOTICE_ID)!.raw;
+
+const sample = FIXTURES.find((f) => f.id === SAMPLE_NOTICE_ID);
+if (!sample) {
+  throw new Error(`Sample notice fixture "${SAMPLE_NOTICE_ID}" is missing from FIXTURES`);
+}
+
+export const SAMPLE_NOTICE_TEXT: string = sample.raw;

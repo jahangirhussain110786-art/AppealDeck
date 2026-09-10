@@ -3,6 +3,7 @@
  * lint-copy.mjs — copy gate for Wave B (AA-29).
  * Banned-pattern regex over src/ excluding test / e2e / __tests__.
  * Banned-number regex over src/content/** and src/core/guidance.ts only.
+ * Banned-punctuation (exclamation marks) over src/content/** only.
  * Colour gate over src/components + src/app excluding src/components/ui/, with an allow-list.
  * Exit 1 with file:line:match on any hit.
  */
@@ -49,6 +50,9 @@ const SOFT_PATTERNS = [
 ];
 
 const BANNED_NUMBERS = [/\d+\s?%/i, /win\s*rate/i, /success\s*rate/i, /\d+\s*(hours?|hrs)\b/i];
+// banned punctuation — exclamation marks in copy (content modules only). A letter, digit or
+// closing bracket followed by "!" and then a quote, whitespace, "." or ",".
+const BANNED_PUNCTUATION = [/[A-Za-z0-9)]!(?=["'`\s.,])/];
 const SOFT_LIST_FILES = /(\bsrc\/app\/|src\/components\/|src\/content\/)/;
 
 // colour literals: #hex OR Tailwind colour-nnn (amber-500, red-300, etc.)
@@ -77,6 +81,12 @@ function walk(dir, acc) {
   }
 }
 
+// Repo-relative path with "/" separators on every platform. path.relative() returns "\"
+// on Windows, which would make every /src\/…\// filter below match nothing there.
+function relPosix(file) {
+  return path.relative(ROOT, file).split(path.sep).join("/");
+}
+
 function isExcluded(rel) {
   return (
     /__tests__|tests\//.test(rel) || /e2e/.test(rel) || /\.test\./.test(rel) || /\.spec\./.test(rel)
@@ -88,7 +98,7 @@ function lineOf(text, idx) {
 }
 
 function scanFile(file, patterns, allow, opts) {
-  const rel = path.relative(ROOT, file);
+  const rel = relPosix(file);
   if (isExcluded(rel)) return [];
   const text = readFileSync(file, "utf8");
   const findings = [];
@@ -126,7 +136,7 @@ function main() {
 
   console.error("lint-copy: banned soft list");
   for (const f of files) {
-    const rel = path.relative(ROOT, f);
+    const rel = relPosix(f);
     if (!SOFT_LIST_FILES.test(rel)) continue;
     const hits = scanFile(f, SOFT_PATTERNS, allow, {});
     if (hits.length) errors += hits.length;
@@ -134,18 +144,23 @@ function main() {
 
   console.error("lint-copy: banned numbers (content + guidance only)");
   const restricted = files.filter(
-    (f) =>
-      /src\/content\//.test(path.relative(ROOT, f)) ||
-      /src\/core\/guidance\.ts/.test(path.relative(ROOT, f)),
+    (f) => /src\/content\//.test(relPosix(f)) || /src\/core\/guidance\.ts/.test(relPosix(f)),
   );
   for (const f of restricted) {
     const hits = scanFile(f, BANNED_NUMBERS, allow, { numericDate: true });
     if (hits.length) errors += hits.length;
   }
 
+  console.error("lint-copy: banned punctuation (content only)");
+  const contentFiles = files.filter((f) => /src\/content\//.test(relPosix(f)));
+  for (const f of contentFiles) {
+    const hits = scanFile(f, BANNED_PUNCTUATION, allow, {});
+    if (hits.length) errors += hits.length;
+  }
+
   console.error("lint-copy: colour gate (hex + tailwind colour-nnn)");
   const colourFiles = files.filter((f) => {
-    const rel = path.relative(ROOT, f);
+    const rel = relPosix(f);
     return /src\/components\//.test(rel) && !/src\/components\/ui\//.test(rel);
   });
   for (const f of colourFiles) {
@@ -154,13 +169,13 @@ function main() {
     for (const m of text.matchAll(hexRe)) {
       if (COLOUR_EXCEPTIONS.has(m[0])) continue;
       const line = text.slice(0, m.index).split("\n").length;
-      console.error(`  ${path.relative(ROOT, f)}:${line}  colour "${m[0]}"`);
+      console.error(`  ${relPosix(f)}:${line}  colour "${m[0]}"`);
       errors += 1;
     }
     const tw = new RegExp(TW_COLOR_RE.source, "g");
     for (const m of text.matchAll(tw)) {
       const line = text.slice(0, m.index).split("\n").length;
-      console.error(`  ${path.relative(ROOT, f)}:${line}  tailwind colour "${m[0]}"`);
+      console.error(`  ${relPosix(f)}:${line}  tailwind colour "${m[0]}"`);
       errors += 1;
     }
   }

@@ -8,8 +8,9 @@ All user-facing strings live in typed modules under `src/content/`. No hardcoded
 - `legal.ts` — privacy / terms / refund prose + D8 consent wording shared with pricing
 - `auth.ts` — login / signup / forgot / reset
 - `app.ts` — dashboard / authenticated surfaces
-- `shared.ts` — footer, metadata titles/descriptions
-- `errors.ts` — loading text (exists)
+- `shared.ts` — footer, metadata titles/descriptions, offline notice, common buttons
+- `sampleNotice.ts` — the one non-gated fixture re-exported for the "Try a sample notice" button on `/decode`
+- `claims-allowlist.txt` — exact phrases the lint may pass (empty until a genuine Amazon term needs it)
 
 ## Voice rules (spec §10.1–10.3)
 
@@ -27,4 +28,4 @@ All user-facing strings live in typed modules under `src/content/`. No hardcoded
 
 ## How the lint works
 
-`scripts/lint-copy.mjs` scans every `.ts`/`.tsx` string for the banned regex (§10.2/§10.3) and the banned-numbers regex. It skips test files and is wired into CI after `lint`. Allow-listed phrases live in `src/content/claims-allowlist.txt`.
+`scripts/lint-copy.mjs` runs five passes: banned strings over all of `src/`; the soft list over `src/app`, `src/components` and `src/content`; banned numbers over `src/content` and `src/core/guidance.ts`; banned punctuation (exclamation marks) over `src/content`; and the colour gate over `src/components` outside `ui/`. It skips test files and is wired into CI after `lint`. Allow-listed phrases live in `src/content/claims-allowlist.txt`.
