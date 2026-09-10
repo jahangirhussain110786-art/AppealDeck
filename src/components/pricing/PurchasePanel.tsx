@@ -113,7 +113,7 @@ export function PurchasePanel() {
 
         <Dialog>
           <DialogTrigger asChild>
-            <Button type="button" variant="ghost" size="lg">
+            <Button type="button" variant="link">
               <FileText className="h-4 w-4" />
               {PRICING.samplePoa.trigger}
             </Button>

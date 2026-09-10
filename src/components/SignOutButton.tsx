@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { SHARED } from "@/content/shared";
 
 export function SignOutButton({ email }: { email?: string }) {
   const router = useRouter();
@@ -30,16 +33,22 @@ export function SignOutButton({ email }: { email?: string }) {
 
   return (
     <div className="flex items-center gap-2">
-      {email && <span className="hidden text-xs text-muted-foreground sm:inline">{email}</span>}
-      <button
-        type="button"
-        onClick={handleSignOut}
-        disabled={pending}
-        aria-label="Sign out"
-        className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground disabled:opacity-50"
-      >
-        <LogOut className="h-4 w-4" />
-      </button>
+      {email && <span className="hidden text-xs text-muted-foreground lg:inline">{email}</span>}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleSignOut}
+            disabled={pending}
+            aria-label={SHARED.nav.signOut}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{SHARED.nav.signOut}</TooltipContent>
+      </Tooltip>
     </div>
   );
 }

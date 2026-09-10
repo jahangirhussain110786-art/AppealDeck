@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileSearch, Lock, Menu } from "lucide-react";
+import { Lock, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/SignOutButton";
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -12,38 +13,34 @@ import { SHARED } from "@/content/shared";
 import { useSessionState } from "@/lib/useSessionState";
 import { cn } from "@/lib/utils";
 
-function Logo({ href = "/" }: { href?: string }) {
-  return (
-    <Link href={href} className="flex items-center gap-2 text-lg font-semibold text-foreground">
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15 text-primary">
-        <FileSearch className="h-5 w-5" />
-      </span>
-      Appeal<span className="text-primary">Deck</span>
-    </Link>
-  );
-}
-
-interface NavLinkProps {
+interface NavItem {
   href: string;
   label: string;
   lock?: boolean;
 }
 
-function NavLink({ href, label, lock }: NavLinkProps) {
+function NavPill({ href, label, lock, mobile }: NavItem & { mobile?: boolean }) {
   const pathname = usePathname();
   const active = pathname === href || pathname.startsWith(`${href}/`);
   const className = cn(
-    "inline-flex items-center gap-1.5 text-sm font-medium underline underline-offset-2 transition-colors hover:text-foreground",
-    active ? "text-foreground" : "text-muted-foreground",
+    mobile
+      ? "flex h-11 items-center rounded-md px-3 text-base font-medium hover:bg-muted"
+      : "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-[var(--dur-fast)] hover:bg-muted hover:text-foreground",
+    !mobile && active && "bg-muted text-foreground",
+    mobile && active && "bg-muted",
   );
 
   if (lock) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link href={href} aria-current={active ? "page" : undefined} className={className}>
+          <Link
+            href={href}
+            aria-current={active ? "page" : undefined}
+            className={cn(className, "inline-flex items-center")}
+          >
             {label}
-            <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+            <Lock className="ml-1 size-3.5 text-muted-foreground" aria-hidden />
           </Link>
         </TooltipTrigger>
         <TooltipContent>{SHARED.nav.lockedHint}</TooltipContent>
@@ -64,7 +61,7 @@ interface AppHeaderProps {
   signedIn?: boolean;
 }
 
-export function AppHeader({ mode: _mode, user, signedIn }: AppHeaderProps) {
+export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps) {
   const pathname = usePathname();
   const sessionState = useSessionState();
   const isSignedIn = signedIn !== undefined ? signedIn : sessionState === "signed-in";
@@ -77,7 +74,7 @@ export function AppHeader({ mode: _mode, user, signedIn }: AppHeaderProps) {
       ? `/login?next=${encodeURIComponent(pathname)}`
       : "/login";
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { href: "/decode", label: SHARED.nav.decode },
     { href: "/case", label: SHARED.nav.case },
     { href: "/dashboard", label: SHARED.nav.dashboard },
@@ -89,59 +86,77 @@ export function AppHeader({ mode: _mode, user, signedIn }: AppHeaderProps) {
   ];
 
   return (
-    <header
-      className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-      data-no-print
-    >
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Logo href={isSignedIn ? "/dashboard" : "/"} />
-        <TooltipProvider>
-          <nav className="hidden items-center gap-2 sm:flex" aria-label={SHARED.nav.primary}>
+    <TooltipProvider>
+      <header
+        className="sticky top-0 z-[var(--z-sticky)] border-b border-border/60 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/70"
+        data-no-print
+      >
+        <div
+          className={cn(
+            "mx-auto flex items-center justify-between gap-4 px-4 sm:px-6",
+            mode === "app" ? "h-14 max-w-app" : "h-16 max-w-marketing",
+          )}
+        >
+          <Logo href={isSignedIn ? "/dashboard" : "/"} />
+
+          <nav className="hidden items-center gap-1 md:flex" aria-label={SHARED.nav.primary}>
             {navItems.map((item) => (
-              <NavLink key={item.href} href={item.href} label={item.label} lock={item.lock} />
+              <NavPill key={item.href} href={item.href} label={item.label} lock={item.lock} />
             ))}
           </nav>
-        </TooltipProvider>
 
-        <div className="flex items-center gap-1">
-          <ThemeToggle aria-label={SHARED.nav.themeToggle} />
-          {isSignedOut && (
-            <Button asChild variant="ghost" size="sm" aria-label={SHARED.nav.signIn}>
-              <Link href={signInHref}>{SHARED.nav.signIn}</Link>
-            </Button>
-          )}
-          {isSignedIn && <SignOutButton email={user?.email ?? undefined} />}
-
-          <Sheet>
-            <SheetTrigger asChild>
+          <div className="flex items-center gap-1.5">
+            <ThemeToggle />
+            {isSignedOut && (
               <Button
+                asChild
                 variant="ghost"
-                size="icon"
-                className="sm:hidden"
-                aria-label={SHARED.nav.openMenu}
+                size="sm"
+                className="hidden sm:inline-flex"
+                aria-label={SHARED.nav.signIn}
               >
-                <Menu className="h-5 w-5" />
+                <Link href={signInHref}>{SHARED.nav.signIn}</Link>
               </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-64">
-              <SheetTitle>{SHARED.nav.menu}</SheetTitle>
-              <nav className="flex flex-col gap-2 pt-4" aria-label={SHARED.nav.primary}>
-                {navItems.map((item) => (
-                  <NavLink key={item.href} href={item.href} label={item.label} lock={item.lock} />
-                ))}
-              </nav>
-              {isSignedOut && (
-                <>
-                  <div className="my-2 border-t border-border" />
-                  <Button asChild variant="outline" size="sm" className="w-full">
-                    <Link href={signInHref}>{SHARED.nav.signIn}</Link>
-                  </Button>
-                </>
-              )}
-            </SheetContent>
-          </Sheet>
+            )}
+            {isSignedIn && <SignOutButton email={user?.email ?? undefined} />}
+
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  aria-label={SHARED.nav.openMenu}
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right">
+                <SheetTitle>{SHARED.nav.menu}</SheetTitle>
+                <nav className="flex flex-col gap-1" aria-label={SHARED.nav.primary}>
+                  {navItems.map((item) => (
+                    <NavPill
+                      key={item.href}
+                      href={item.href}
+                      label={item.label}
+                      lock={item.lock}
+                      mobile
+                    />
+                  ))}
+                </nav>
+                {isSignedOut && (
+                  <>
+                    <div className="border-t border-border" />
+                    <Button asChild variant="outline" size="sm" className="w-full">
+                      <Link href={signInHref}>{SHARED.nav.signIn}</Link>
+                    </Button>
+                  </>
+                )}
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </TooltipProvider>
   );
 }

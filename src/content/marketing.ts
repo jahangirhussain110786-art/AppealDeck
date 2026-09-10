@@ -4,33 +4,53 @@
 
 export const HOME = {
   hero: {
+    eyebrow: "For Amazon sellers facing a deactivation or policy notice",
     headline: "Understand your Amazon notice today. Draft a Plan of Action Amazon can act on.",
     subline:
-      "You submit it yourself in Seller Central. AppealDeck never touches your Amazon account.",
+      "Free decoder, clear deadlines, and a Plan of Action drafted from your notice and evidence in the structure Amazon reads. You review it and submit it yourself in Seller Central.",
     primaryCta: "Decode my notice — free",
-    secondaryCta: "See what the Appeal Pass includes",
+    secondaryCta: "See the Appeal Pass",
+    reassuranceLine: "Runs in your browser. No Seller Central login needed.",
     artwork: {
+      label: "Decoded notice",
       srOnly:
         "Illustration composed of the real decode result: a SeverityBadge and two DeadlineChips with illustrative dates.",
     },
   },
   howItWorks: {
+    eyebrow: "How it works",
     step1: {
-      title: "1. Paste your notice",
-      desc: "Drop the full Amazon deactivation or policy email into the decoder.",
+      title: "Paste your notice",
+      desc: "Drop the full Amazon email into the decoder. It is read in your browser.",
     },
     step2: {
-      title: "2. Get the plain-English result",
-      desc: "Deadlines and a do-now / do-not list grounded in your case type.",
+      title: "See what it means and how long you have",
+      desc: "A plain-English summary, your case type, every deadline the notice implies, and a do-now list.",
     },
     step3: {
-      title: "3. Draft your POA",
-      desc: "With the Appeal Pass, a Plan of Action you review and submit yourself.",
+      title: "Draft your Plan of Action",
+      desc: "With the Appeal Pass: a guided interview, an evidence checklist, a drafted plan and a critic review, ready for your edits.",
     },
   },
-  howItWorksTitle: "How it works",
-  howItWorksSub: "Three steps, then you decide.",
+  howItWorksTitle: "From notice to plan in three steps",
+  howItWorksSub: "Start free. Pay once only if you want the drafted plan.",
+  expectations: {
+    eyebrow: "Honest expectations",
+  },
   expectationsTitle: "What we do and do not do",
+  included: {
+    eyebrow: "What you get",
+    title: "Everything a strong appeal needs",
+    sub: "Built around the three things Amazon reads for: the cause, what you fixed, and how it stays fixed.",
+  },
+  proof: {
+    eyebrow: "Trust",
+    title: "Trust you can check, not take on faith",
+  },
+  closing: {
+    title: "Start with the free decoder",
+    desc: "Paste the notice. See what it means and how long you have. Then decide.",
+  },
 } as const;
 
 export const DECODE = {
@@ -58,13 +78,30 @@ export const DECODE = {
   noticeLikenessTitle: "Before you decode",
   likenessHint:
     "This doesn't look like an Amazon notice yet. Paste the full email, including the subject line.",
+  result: {
+    doNow: "Do now",
+    doNot: "Do not",
+    ctaTitle: "Need more than the decoder?",
+    ctaDesc:
+      "The Appeal Pass drafts and critic-checks a full Plan of Action from your notice and evidence.",
+    ctaNote: "No timers. No scarcity. Read the FAQ.",
+    copySummary: "Copy plain-English summary",
+    errorTitle: "Could not decode",
+    errorFallback: "Something went wrong.",
+    errorNetwork: "Network error. Try again.",
+    errorHint: "Paste the full Amazon notice and try again.",
+  },
 } as const;
 
 export const PRICING = {
   pageTitle: "Pricing — AppealDeck",
-  headline: "Appeal Pass — $199 one-time",
+  headline: "One Appeal Pass. One case. $199, once.",
   subline:
-    "A single fee covers everything you need to turn a suspension into a stronger, honest appeal. You submit it yourself.",
+    "The guided interview, evidence checklist, drafted Plan of Action, critic review and encrypted vault — for the case in front of you. You review and submit in Seller Central.",
+  price: "$199",
+  priceNote: "One-time. One case.",
+  included: "Included",
+  jumpToPurchase: "Continue to purchase",
   free: "Free",
   pass: "Appeal Pass",
   tableHeadings: {
@@ -128,22 +165,22 @@ export const PRICING = {
     refund: { feature: "7-day refund", free: "—", account: "—", pass: "Yes" },
   },
   trust: {
-    title: "Trust, shown by mechanism",
+    title: "Built so you can check it yourself",
     submit: {
-      label: "You submit yourself",
-      desc: "We draft. You save, edit, and submit in Seller Central.",
+      label: "You submit, we never log in",
+      desc: "The draft is yours to edit; you submit it in Seller Central.",
     },
     localFirst: {
       label: "Decoded in your browser",
-      desc: "No notice text leaves your machine during decode.",
+      desc: "Open DevTools while decoding: no notice text leaves your machine.",
     },
     vault: {
-      label: "Vault encrypted in your browser",
-      desc: "AES-GCM 256. The key never leaves your device.",
+      label: "Encrypted on your device",
+      desc: "AES-GCM 256 with a passphrase only you know.",
     },
     refund: {
-      label: "7-day, no-questions refund",
-      desc: "Email the receipt email within 7 days of purchase.",
+      label: "7-day refund",
+      desc: "Email the receipt address within 7 days. No questions.",
     },
   },
   samplePoa: {
@@ -154,7 +191,8 @@ export const PRICING = {
   },
   cta: "Get the Appeal Pass",
   faqTitle: "Frequently asked questions",
-  purchaseTitle: "Ready to draft your POA?",
+  purchaseTitle: "Get your Appeal Pass",
+  expectationsTitle: "What to expect",
 } as const;
 
 export const FOUNDER_NOTE: { name: string; location: string; text: string } | null = null;

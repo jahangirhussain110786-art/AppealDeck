@@ -33,7 +33,7 @@ export function AppBreadcrumb() {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="mb-4 flex items-center gap-1 text-sm text-muted-foreground"
+      className="mb-6 flex items-center gap-1 text-sm text-muted-foreground"
     >
       <Link
         href={homeHref}

@@ -15,7 +15,7 @@ export function AppShell({
   return (
     <div className="flex min-h-screen flex-col">
       <AppHeader mode="app" user={user} signedIn={Boolean(user)} />
-      <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-12">
+      <main id="main" className="mx-auto w-full max-w-app flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <OfflineNotice className="mb-6" />
         <AppBreadcrumb />
         {children}

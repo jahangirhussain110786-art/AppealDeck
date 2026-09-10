@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { InterviewProgress } from "@/core/interviewEngine";
 
@@ -28,33 +29,48 @@ export function Stepper({ steps, currentId, progress, className }: StepperProps)
       )}
       aria-label="Interview progress"
     >
-      <div className="hidden flex-col gap-2 md:flex">
+      <ol className="hidden flex-col gap-2 md:flex">
         {steps.map((s, i) => {
-          const isActive = activeIndex === i;
-          const isPast = i < activeIndex;
+          const isActive = i === activeIndex;
+          const isDone = s.state === "done";
           const isSkipped = s.state === "skipped";
           return (
-            <div key={s.id} className="flex items-start gap-2">
+            <li
+              key={s.id}
+              className={cn(
+                "flex items-start gap-2",
+                i !== 0 &&
+                  "relative before:absolute before:-top-2 before:left-[11px] before:h-2 before:w-px before:bg-border",
+              )}
+            >
               <div
                 className={cn(
-                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs font-medium",
-                  isPast &&
-                    s.state === "done" &&
-                    "border-primary bg-primary text-primary-foreground",
+                  "flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-medium",
+                  isDone && "border-primary bg-primary text-primary-foreground",
                   isActive && "border-primary bg-background text-primary",
-                  !isPast && !isActive && "border-border bg-background text-muted-foreground",
+                  !isDone &&
+                    !isActive &&
+                    !isSkipped &&
+                    "border-border bg-background text-muted-foreground",
                   isSkipped && "border-muted bg-background text-muted-foreground",
                 )}
                 data-step-state={s.state}
               >
-                {s.state === "done" ? "✓" : s.state === "skipped" ? "—" : i + 1}
+                {isDone ? (
+                  <Check className="size-3.5" />
+                ) : isSkipped ? (
+                  <Minus className="size-3.5" />
+                ) : (
+                  i + 1
+                )}
               </div>
               <div className="flex flex-col">
                 <span
                   className={cn(
                     "font-medium",
                     isActive && "text-primary",
-                    s.state === "done" && "text-foreground",
+                    isDone && "text-foreground",
+                    !isActive && !isDone && "text-muted-foreground",
                   )}
                 >
                   {s.label}
@@ -63,17 +79,17 @@ export function Stepper({ steps, currentId, progress, className }: StepperProps)
                   <span className="text-xs text-muted-foreground">{s.skippedReason}</span>
                 )}
               </div>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ol>
 
       {progress && (
         <div
-          className="inline-flex items-center gap-1 rounded-full bg-muted/40 px-2.5 py-1 font-mono text-xs tabular-nums md:hidden"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-1 px-3 py-1.5 text-xs font-medium tabular-nums md:hidden"
           aria-label={`Step ${progress.current} of ${progress.total}`}
         >
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
+          <span className="inline-block size-1.5 rounded-full bg-primary" aria-hidden />
           <span>
             Step {progress.current}/{progress.total} · {steps[activeIndex]?.label ?? ""}
           </span>

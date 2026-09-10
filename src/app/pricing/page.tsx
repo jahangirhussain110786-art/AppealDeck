@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { AppHeader } from "@/components/AppHeader";
-import { SiteFooter } from "@/components/SiteFooter";
-import { Card, CardContent } from "@/components/ui/card";
+import { Check, Lock, MonitorSmartphone, RotateCcw, ShieldCheck } from "lucide-react";
+import { MarketingShell } from "@/components/MarketingShell";
+import { SectionHeading } from "@/components/SectionHeading";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,13 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { FaqAccordion } from "@/components/pricing/FaqAccordion";
 import { PurchasePanel } from "@/components/pricing/PurchasePanel";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { GLOBAL_EXPECTATIONS } from "@/core/guidance";
 import { PRICING } from "@/content/marketing";
+import { LEGAL } from "@/content/legal";
 import { SHARED } from "@/content/shared";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: SHARED.metadata.titlePricing,
@@ -28,31 +31,74 @@ export const metadata: Metadata = {
 };
 
 const TRUST_ITEMS = [
-  PRICING.trust.submit,
-  PRICING.trust.localFirst,
-  PRICING.trust.vault,
-  PRICING.trust.refund,
+  { icon: ShieldCheck, ...PRICING.trust.submit },
+  { icon: MonitorSmartphone, ...PRICING.trust.localFirst },
+  { icon: Lock, ...PRICING.trust.vault },
+  { icon: RotateCcw, ...PRICING.trust.refund },
 ];
+
+const PASS_ONLY_ROWS = [
+  PRICING.rows.poa,
+  PRICING.rows.critic,
+  PRICING.rows.replyAnalysis,
+  PRICING.rows.devices,
+  PRICING.rows.refund,
+];
+
+function ValueCell({ value }: { value: string }) {
+  if (value === "Yes") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-foreground">
+        <Check className="size-4 text-success" />
+        {value}
+      </span>
+    );
+  }
+  if (value === "—") {
+    return <span className="text-muted-foreground/60">{value}</span>;
+  }
+  return <span className="text-sm text-foreground">{value}</span>;
+}
 
 export default function PricingPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <AppHeader mode="marketing" />
-      <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-16">
-        <section>
-          <div className="max-w-2xl">
-            <Badge variant="outline" className="mb-4 text-xs">
-              {PRICING.pass}
-            </Badge>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              {PRICING.headline}
-            </h1>
-            <p className="mt-4 text-lg text-muted-foreground">{PRICING.subline}</p>
-          </div>
-        </section>
+    <MarketingShell>
+      <section className="grid gap-12 py-16 lg:grid-cols-[1fr_24rem] lg:py-24">
+        <div>
+          <p className="text-eyebrow uppercase text-primary">{PRICING.pass}</p>
+          <h1 className="mt-4 text-h1 text-foreground">{PRICING.headline}</h1>
+          <p className="mt-4 text-lg text-muted-foreground">{PRICING.subline}</p>
+        </div>
 
-        <section className="mt-12">
-          <div className="overflow-x-auto">
+        <Card className="rounded-xl border-primary/30 shadow-elevated">
+          <CardContent className="pt-6">
+            <p className="text-eyebrow uppercase text-primary">{PRICING.pass}</p>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-display tabular-nums text-foreground">{PRICING.price}</span>
+              <span className="text-sm text-muted-foreground">{PRICING.priceNote}</span>
+            </div>
+            <p className="mt-4 text-eyebrow uppercase text-muted-foreground">{PRICING.included}</p>
+            <ul className="mt-3 space-y-2">
+              {PASS_ONLY_ROWS.map((row) => (
+                <li key={row.feature} className="flex items-start gap-2 text-sm text-foreground">
+                  <Check className="mt-0.5 size-4 shrink-0 text-success" />
+                  {row.feature}
+                </li>
+              ))}
+            </ul>
+            <Button asChild size="lg" className="mt-6 w-full">
+              <a href="#purchase">{PRICING.jumpToPurchase}</a>
+            </Button>
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              {PRICING.trust.submit.desc}
+            </p>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="pb-16">
+        <div className="overflow-x-auto">
+          <Card className="overflow-hidden p-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -66,54 +112,66 @@ export default function PricingPage() {
                 {Object.values(PRICING.rows).map((row) => (
                   <TableRow key={row.feature}>
                     <TableCell className="font-medium">{row.feature}</TableCell>
-                    <TableCell className="text-center">{row.free}</TableCell>
-                    <TableCell className="text-center">{row.account}</TableCell>
-                    <TableCell className="text-center">{row.pass}</TableCell>
+                    <TableCell className="text-center">
+                      <ValueCell value={row.free} />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <ValueCell value={row.account} />
+                    </TableCell>
+                    <TableCell className={cn("text-center", "bg-primary/[0.04]")}>
+                      <ValueCell value={row.pass} />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
-          <p className="mt-4 text-xs text-muted-foreground">{PRICING.samplePoa.watermark}</p>
-        </section>
-
-        <section className="mt-12">
-          <h2 className="text-lg font-semibold text-foreground">{PRICING.trust.title}</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {TRUST_ITEMS.map((item) => (
-              <Card key={item.label} className="border-border">
-                <CardContent className="pt-4">
-                  <Badge variant="info" className="mb-2 text-xs">
-                    {item.label}
-                  </Badge>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-12">
-          <h2 className="text-xl font-semibold text-foreground">{PRICING.faqTitle}</h2>
-          <FaqAccordion />
-        </section>
-
-        <section className="mt-12">
-          <Card className="border-border">
-            <CardContent className="pt-6">
-              <h2 className="text-xl font-semibold text-foreground">{PRICING.purchaseTitle}</h2>
-              <PurchasePanel />
-            </CardContent>
           </Card>
-          <div className="mt-6">
-            <HonestExpectationsCard
-              summary={GLOBAL_EXPECTATIONS.typicalNote}
-              whatToDo={[...GLOBAL_EXPECTATIONS.whatWeDo, ...GLOBAL_EXPECTATIONS.whatWeDoNot]}
-            />
-          </div>
-        </section>
-      </main>
-      <SiteFooter />
-    </div>
+        </div>
+      </section>
+
+      <section className="pb-16 sm:pb-20">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {TRUST_ITEMS.map((item) => (
+            <Card key={item.label} className="p-5">
+              <div className="flex items-start gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+                  <item.icon className="size-5" />
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{item.label}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <section className="pb-16 sm:pb-20">
+        <SectionHeading title={PRICING.faqTitle} />
+        <Card className="mt-6 px-6">
+          <FaqAccordion />
+        </Card>
+      </section>
+
+      <section id="purchase" className="pb-16 sm:pb-20">
+        <Card>
+          <CardHeader>
+            <CardTitle>{PRICING.purchaseTitle}</CardTitle>
+            <CardDescription>{LEGAL.consent.deliveryNote}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PurchasePanel />
+          </CardContent>
+        </Card>
+        <div className="mt-6">
+          <HonestExpectationsCard
+            summary={GLOBAL_EXPECTATIONS.typicalNote}
+            weDo={GLOBAL_EXPECTATIONS.whatWeDo}
+            weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
+          />
+        </div>
+      </section>
+    </MarketingShell>
   );
 }

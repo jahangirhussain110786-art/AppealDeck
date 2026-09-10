@@ -4,6 +4,8 @@ import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { SHARED } from "@/content/shared";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
@@ -13,13 +15,18 @@ export function ThemeToggle() {
   const isDark = resolvedTheme === "dark";
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label="Toggle color theme"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-    >
-      {mounted && !isDark ? <Sun /> : <Moon />}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={SHARED.nav.themeToggle}
+          onClick={() => setTheme(isDark ? "light" : "dark")}
+        >
+          {mounted && !isDark ? <Sun /> : <Moon />}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{SHARED.nav.themeToggle}</TooltipContent>
+    </Tooltip>
   );
 }

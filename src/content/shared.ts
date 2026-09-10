@@ -1,6 +1,7 @@
 // Copy source for shared strings (footer, common labels, metadata).
 
 export const SHARED = {
+  brand: { name: "AppealDeck" },
   nav: {
     primary: "Primary",
     decode: "Decode",
@@ -29,6 +30,15 @@ export const SHARED = {
     neverSubmits: "AppealDeck never submits to Amazon on your behalf.",
     independence:
       "AppealDeck is an independent service and is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon and Seller Central are trademarks of Amazon.com, Inc. or its affiliates.",
+    groups: {
+      product: "Product",
+      legal: "Legal",
+    },
+    copyright: "© {year} Hawlton",
+  },
+  expectations: {
+    weDo: "We do",
+    weDoNot: "We do not",
   },
   metadata: {
     titleDefault: "AppealDeck — Amazon suspension notice decoder",
