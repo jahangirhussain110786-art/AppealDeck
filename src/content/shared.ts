@@ -1,6 +1,22 @@
 // Copy source for shared strings (footer, common labels, metadata).
 
 export const SHARED = {
+  nav: {
+    primary: "Primary",
+    decode: "Decode",
+    case: "Case",
+    dashboard: "Dashboard",
+    vault: "Vault",
+    pricing: "Pricing",
+    billing: "Billing",
+    faq: "FAQ",
+    signIn: "Sign in",
+    signOut: "Sign out",
+    menu: "Menu",
+    openMenu: "Open menu",
+    themeToggle: "Toggle colour theme",
+    lockedHint: "Sign in to unlock",
+  },
   footer: {
     tagline:
       "AppealDeck by Hawlton. We decode notices and draft appeals; we do not submit to Amazon and do not promise reinstatement.",

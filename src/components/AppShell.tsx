@@ -9,12 +9,12 @@ export function AppShell({
   user,
   children,
 }: {
-  user: { email?: string | null };
+  user: { email?: string | null } | null;
   children: ReactNode;
 }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <AppHeader mode="app" user={user} />
+      <AppHeader mode="app" user={user} signedIn={Boolean(user)} />
       <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-12">
         <OfflineNotice className="mb-6" />
         <AppBreadcrumb />

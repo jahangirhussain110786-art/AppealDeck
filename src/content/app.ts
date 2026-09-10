@@ -3,6 +3,57 @@
 // — Wave C owns restyling these surfaces.
 
 export const APP = {
+  access: {
+    signInGate: {
+      title: "Save your case to continue",
+      body: "Your answers so far are saved on this device. From here the interview asks for documents, which are encrypted with a passphrase only you know. Sign in to set it and keep your case.",
+      signIn: "Sign in",
+      createAccount: "Create an account",
+      savedNote: "Saved on this device",
+    },
+    setPassphrase: {
+      title: "Set a passphrase to keep your case",
+      body: "Your case has been saved on this device so far. Choose the passphrase that protects it from now on. Documents you add are encrypted with it.",
+    },
+    keepCaseLink: "Sign in to keep your case",
+    dashboardSignedOut: {
+      title: "Your case, at a glance",
+      draftNote: "This draft is saved on this device only. Sign in to keep it and continue.",
+      emptyTitle: "No case on this device yet",
+      emptyDesc:
+        "Decode a notice, then start your case. Everything you enter is saved on this device as you go.",
+      decode: "Decode a notice",
+      start: "Start your case",
+    },
+    vaultSignedOut: {
+      title: "Your encrypted evidence vault",
+      desc: "The vault stores your supplier invoices, brand authorizations and other case documents encrypted on your device (AES-GCM, key derived from a passphrase you set — we never see it). It opens once you sign in.",
+      cta: "Sign in to unlock",
+      back: "Back to your case",
+    },
+    casePreview: {
+      title: "What this case will need",
+      evidenceTitle: "Evidence Amazon will ask for",
+      actionsTitle: "What happens next",
+      required: "Required",
+      optional: "Optional",
+      startCta: "Start your case — free",
+      startNote:
+        "Saved on this device as you go. Sign in when the interview reaches your documents.",
+    },
+    composeGate: {
+      title: "Unlock the drafted plan",
+      body: "Your case file is saved. The Appeal Pass drafts the Plan of Action from it, reviews the draft with the critic, and adds cloud sync for your vault.",
+      price: "$199, once, for this case",
+      activating: "Activating your Appeal Pass. Your case is saved.",
+      activatingHint: "This usually takes a few seconds after checkout.",
+      stillWaiting:
+        "Your payment went through but the activation has not arrived yet. Check again in a moment, or open Billing.",
+      checkAgain: "Check again",
+      signInToActivate: "Sign in with the email you used at checkout to activate your Appeal Pass.",
+    },
+    aiSignedOut: "Sign in to enable field suggestions.",
+  },
   evidenceKinds: {
     supplier_invoice: "Supplier invoice",
     brand_authorization: "Brand authorization",

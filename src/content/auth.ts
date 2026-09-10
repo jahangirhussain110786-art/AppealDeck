@@ -5,6 +5,7 @@ export const AUTH = {
   login: {
     title: "Sign in",
     subtitle: "Access your AppealDeck seller tools.",
+    subtitleContinue: "Your answers are saved on this device. Sign in to keep them and continue.",
     google: "Continue with Google",
     divider: "or sign in with email",
     fields: {
@@ -29,6 +30,7 @@ export const AUTH = {
   signup: {
     title: "Create your account",
     subtitle: "Get the decoder free, or buy an Appeal Pass to draft your POA.",
+    subtitleContinue: "Your answers are saved on this device. Sign in to keep them and continue.",
     google: "Continue with Google",
     divider: "or sign up with email",
     fields: {
