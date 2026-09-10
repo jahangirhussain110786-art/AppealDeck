@@ -40,21 +40,28 @@ export interface DeadlineChipProps {
   className?: string;
 }
 
+const toneIconColor: Record<Tone, string> = {
+  neutral: "text-muted-foreground",
+  warn: "text-warning",
+  destructive: "text-destructive",
+  info: "text-info",
+};
+
 function DeadlineChipContent({ deadline, now }: { deadline: Deadline; now: Date }) {
   const tone = toneFor(deadline.dueAt, now, deadline.kind);
   const Icon = toneIcon[tone];
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs",
+        "inline-flex items-center gap-2.5 rounded-md border px-3 py-2 text-xs",
         toneClasses[tone],
       )}
       data-tn
     >
-      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+      <Icon className={cn("size-4 shrink-0", toneIconColor[tone])} aria-hidden />
       <div className="flex flex-col text-left">
         <span className="font-medium text-foreground">{deadline.label}</span>
-        <span className="text-muted-foreground">
+        <span className="tabular-nums text-muted-foreground">
           {formatDate(deadline.dueAt) || "Date not stated"} ·{" "}
           {formatRelativeDays(deadline.dueAt, now)}
         </span>

@@ -12,7 +12,10 @@ const SheetOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn("fixed inset-0 z-50 bg-background/80 backdrop-blur-sm", className)}
+    className={cn(
+      "fixed inset-0 z-[var(--z-sheet)] bg-foreground/40 backdrop-blur-sm data-[state=open]:animate-fade-in",
+      className,
+    )}
     {...props}
   />
 ));
@@ -23,12 +26,13 @@ const SheetContent = React.forwardRef<
   React.ComponentProps<typeof DialogPrimitive.Content> & {
     side?: "top" | "bottom" | "left" | "right";
   }
->(({ className, children, side = "left", ...props }, ref) => {
+>(({ className, children, side = "right", ...props }, ref) => {
   const sideClass = {
-    top: "top-0 mb-10 h-auto max-h-svh rounded-b-lg",
-    bottom: "bottom-0 mt-auto h-auto max-h-svh rounded-t-lg",
-    left: "inset-y-0 left-0 h-full w-3/4 max-w-xs rounded-r-lg",
-    right: "inset-y-0 right-0 h-full w-3/4 max-w-xs rounded-l-lg",
+    top: "inset-x-0 top-0 mb-10 h-auto max-h-svh rounded-b-lg border-b animate-fade-in",
+    bottom: "inset-x-0 bottom-0 mt-auto h-auto max-h-svh rounded-t-lg border-t animate-fade-in",
+    left: "inset-y-0 left-0 w-[min(20rem,85vw)] border-r animate-fade-in",
+    right:
+      "inset-y-0 right-0 w-[min(20rem,85vw)] border-l data-[state=open]:animate-slide-in-right data-[state=closed]:animate-slide-out-right",
   };
   return (
     <DialogPrimitive.Portal>
@@ -36,7 +40,7 @@ const SheetContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 border-border bg-background p-6 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-none data-[state=open]:zoom-in-95",
+          "fixed z-[var(--z-sheet)] flex flex-col gap-6 border-border bg-surface-1 p-6 shadow-elevated",
           sideClass[side],
           className,
         )}
@@ -72,7 +76,7 @@ const SheetTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold text-foreground", className)}
+    className={cn("text-base font-semibold text-foreground", className)}
     {...props}
   />
 ));

@@ -12,7 +12,10 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn("fixed inset-0 z-50 bg-background/80 backdrop-blur-sm", className)}
+    className={cn(
+      "fixed inset-0 z-[var(--z-sheet)] bg-foreground/40 backdrop-blur-sm data-[state=open]:animate-fade-in",
+      className,
+    )}
     {...props}
   />
 ));
@@ -27,7 +30,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed bottom-0 z-50 mx-auto w-[calc(100vw-2rem)] max-w-xl rounded-t-2xl border border-border bg-background p-6 shadow-lg sm:top-1/2 sm:-translate-y-1/2 sm:max-w-lg sm:rounded-2xl sm:w-full",
+        "fixed left-1/2 top-1/2 z-[var(--z-dialog)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface-1 p-6 shadow-elevated data-[state=open]:animate-zoom-in",
         className,
       )}
       {...props}
@@ -35,7 +38,7 @@ const DialogContent = React.forwardRef<
       {children}
       <DialogPrimitive.Close
         className={cn(
-          "absolute right-4 top-4 rounded-md p-1 text-muted-foreground opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "absolute right-4 top-4 flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
       >
         <X className="h-4 w-4" />
