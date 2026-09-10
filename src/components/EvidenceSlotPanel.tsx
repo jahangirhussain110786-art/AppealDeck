@@ -1,13 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Plus, FileText, ExternalLink, RefreshCw } from "lucide-react";
+import { Plus, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { EvidenceStatusBadge } from "@/components/EvidenceStatusBadge";
 import { getBrowserVault } from "@/lib/vault/browser";
 import type { EvidenceKind, ViolationKind } from "@/core";
 import { requirementsFor, allKinds } from "@/core";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
+import { APP } from "@/content/app";
 
 export interface EvidenceSlotState {
   kind: EvidenceKind;
@@ -102,7 +104,13 @@ export function EvidenceSlotPanel({
   if (required.length === 0) {
     return (
       <Card className="p-4 text-sm text-muted-foreground">
-        No required evidence for this violation kind. Available kinds: {allKinds(kind).join(", ")}.
+        {APP.evidenceSlots.noneRequired}{" "}
+        {APP.evidenceSlots.availableKinds.replace(
+          "{kinds}",
+          allKinds(kind)
+            .map((k) => APP.evidenceKinds[k])
+            .join(", "),
+        )}
       </Card>
     );
   }
@@ -110,7 +118,7 @@ export function EvidenceSlotPanel({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Required evidence</h3>
+        <h3 className="text-sm font-semibold">{APP.evidenceSlots.title}</h3>
         <Button
           size="sm"
           variant="ghost"
@@ -118,7 +126,7 @@ export function EvidenceSlotPanel({
           onClick={() => void refresh()}
           disabled={busy}
         >
-          <RefreshCw className="size-3" /> Refresh
+          <RefreshCw className="size-3" /> {APP.evidenceSlots.refresh}
         </Button>
       </div>
       <ul className="flex flex-col gap-2">
@@ -131,13 +139,11 @@ export function EvidenceSlotPanel({
               className="flex items-center justify-between gap-2 rounded-md border border-border bg-card p-2"
             >
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">{req.kind.replace(/_/g, " ")}</div>
+                <div className="truncate text-sm font-medium">{APP.evidenceKinds[req.kind]}</div>
                 <p className="line-clamp-2 text-xs text-muted-foreground">{req.whyAmazonWantsIt}</p>
               </div>
               {present ? (
-                <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                  <FileText className="size-3" /> attached
-                </span>
+                <EvidenceStatusBadge status="present" />
               ) : (
                 <SlotUploadButton
                   kind={req.kind}
@@ -150,12 +156,12 @@ export function EvidenceSlotPanel({
         })}
       </ul>
       <p className="text-xs text-muted-foreground">
-        Files are encrypted on this device before being saved to the vault.{" "}
+        {APP.evidenceSlots.encryptedNote}{" "}
         <a
           href="/vault"
           className="text-primary underline underline-offset-2 hover:text-primary/80"
         >
-          Open the vault
+          {APP.evidenceSlots.openVault}
         </a>
         <ExternalLink className="ml-0.5 inline size-3" />
       </p>

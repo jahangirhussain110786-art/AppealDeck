@@ -4,6 +4,7 @@ import { Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { LogoMark } from "@/components/Logo";
 import type { ReactNode } from "react";
 
 export type AuthStatus = "idle" | "loading" | "sent" | "done" | "error";
@@ -24,16 +25,16 @@ export function AuthShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <main
-        id="main"
-        className="mx-auto flex w-full max-w-[var(--w-form)] flex-1 items-center px-4 py-12"
-      >
-        <div className="w-full space-y-0">
-          <Card>
-            <CardContent className="pt-6">
-              <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+    <div className="flex min-h-[calc(100svh-4rem)] flex-col">
+      <main id="main" className="mx-auto flex w-full max-w-form flex-1 items-center px-4 py-12">
+        <div className="w-full">
+          <div className="flex flex-col items-center">
+            <LogoMark size={36} />
+            <h1 className="mt-4 text-h3 text-foreground">{title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+          </div>
+          <Card className="mt-6 animate-fade-in shadow-elevated">
+            <CardContent className="p-8">
               {children}
               <p className="mt-6 text-center text-sm text-muted-foreground">
                 {footerPrompt}{" "}

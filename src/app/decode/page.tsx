@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import DecodeClient from "./DecodeClient";
+import { MarketingShell } from "@/components/MarketingShell";
 import { DECODE } from "@/content/marketing";
 
 export const metadata: Metadata = {
@@ -12,5 +13,9 @@ export const metadata: Metadata = {
 };
 
 export default function DecodePage() {
-  return <DecodeClient />;
+  return (
+    <MarketingShell width="tool">
+      <DecodeClient />
+    </MarketingShell>
+  );
 }

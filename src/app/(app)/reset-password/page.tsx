@@ -14,7 +14,6 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AUTH } from "@/content/auth";
 import type { AuthStatus } from "@/components/AuthCard";
-import { motion } from "framer-motion";
 
 export default function ResetPasswordPage() {
   return (
@@ -149,16 +148,11 @@ function ResetPasswordPageInner() {
       footerAction={AUTH.resetPassword.footer.action}
       footerHref="/login"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
-        className="-mt-4"
-      >
+      <div className="w-full">
         {status === "done" ? (
           <SuccessBanner message={message} />
         ) : (
-          <form onSubmit={handleSubmit} className="mt-2 space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {formFields()}
             <SubmitButton status={status} label={AUTH.resetPassword.messages.submit} />
           </form>
@@ -169,7 +163,7 @@ function ResetPasswordPageInner() {
             <a href="/dashboard">{AUTH.resetPassword.success.button}</a>
           </Button>
         )}
-      </motion.div>
+      </div>
     </AuthShell>
   );
 }

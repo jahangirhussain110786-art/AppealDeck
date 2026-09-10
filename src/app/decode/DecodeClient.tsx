@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ClipboardPaste, RefreshCw } from "lucide-react";
+import { Ban, Check, ClipboardPaste, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { CaseStateBadge } from "@/components/CaseStateBadge";
 import { DeadlineChipList } from "@/components/DeadlineChip";
@@ -48,6 +49,7 @@ export default function DecodeClient() {
 
   const likeness = useMemo(() => assessNoticeLikeness(text), [text]);
   const guidance = result ? guidanceFor(result.kind) : null;
+  const showHint = text.trim().length >= 40 && Boolean(likeness.hint);
 
   useEffect(() => {
     if (text.length < 1) setStatus("empty");
@@ -66,17 +68,15 @@ export default function DecodeClient() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(
-          body.error ?? "Could not decode this notice. Please check the text and try again.",
-        );
+        setError(body.error ?? DECODE.result.errorHint);
         setStatus("error");
         return;
       }
       const data: DecodeResponse = await res.json();
       setResult(data);
       setStatus("result");
-    } catch (e) {
-      setError("Network error. Please try again.");
+    } catch {
+      setError(DECODE.result.errorNetwork);
       setStatus("error");
     }
   }
@@ -104,44 +104,46 @@ export default function DecodeClient() {
     main = <LoadingView />;
   } else if (status === "error") {
     main = (
-      <ErrorView message={error ?? "Something went wrong."} onRetry={() => setStatus("empty")} />
+      <ErrorView
+        message={error ?? DECODE.result.errorFallback}
+        onRetry={() => setStatus("empty")}
+      />
     );
   } else {
     main = (
-      <EmptyState
-        icon={ClipboardPaste}
-        title={DECODE.emptyState.title}
-        description={DECODE.emptyState.description}
-      />
+      <div className="rounded-lg border border-dashed border-border p-8">
+        <EmptyState
+          icon={ClipboardPaste}
+          title={DECODE.emptyState.title}
+          description={DECODE.emptyState.description}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-12">
+    <div className="flex flex-col gap-8 py-12">
       <OfflineNotice />
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-          {DECODE.pageTitle}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">{DECODE.pageDescription}</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-h1 text-foreground">{DECODE.pageTitle}</h1>
+          <p className="mt-2 max-w-prose text-base text-muted-foreground">
+            {DECODE.pageDescription}
+          </p>
+        </div>
+        <LocalFirstBadge className="hidden sm:inline-flex" />
       </div>
 
-      <LocalFirstBadge />
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {usingSample && (
-          <div className="flex items-center gap-2">
-            <Badge variant="info">Sample notice — not yours</Badge>
-            <Button type="button" variant="ghost" size="sm" onClick={handleClear}>
-              Clear
-            </Button>
+      <Card className="p-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <label htmlFor="notice" className="text-sm font-medium text-foreground">
+              {DECODE.textarea.label}
+            </label>
+            <p className="text-xs tabular-nums text-muted-foreground" data-tn>
+              {charFmt.format(text.length)} characters
+            </p>
           </div>
-        )}
-
-        <div className="space-y-2">
-          <label htmlFor="notice" className="block text-sm font-medium text-foreground">
-            {DECODE.textarea.label}
-          </label>
           <Textarea
             id="notice"
             placeholder={DECODE.textarea.placeholder}
@@ -149,85 +151,74 @@ export default function DecodeClient() {
             onChange={(e) => setText(e.target.value)}
             spellCheck={false}
             aria-describedby="notice-hint"
-            className="min-h-[180px] font-mono text-sm"
+            className="min-h-[14rem] font-mono text-sm leading-relaxed"
           />
-          <div id="notice-hint" className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground" aria-live="polite">
-              {likeness.hint ?? " "}
-            </p>
-            <p className="font-mono text-xs text-muted-foreground" data-tn>
-              {charFmt.format(text.length)} characters
-            </p>
+          <div id="notice-hint" className="sr-only" aria-live="polite">
+            {likeness.hint ?? ""}
           </div>
-        </div>
 
-        {likeness.hint && (
-          <Alert variant="info">
-            <AlertTitle>{DECODE.noticeLikenessTitle ?? "Before you decode"}</AlertTitle>
-            <AlertDescription>{likeness.hint}</AlertDescription>
-          </Alert>
-        )}
+          {usingSample && (
+            <div className="flex items-center gap-2">
+              <Badge variant="info">{DECODE.sampleBadge}</Badge>
+              <Button type="button" variant="link" size="sm" onClick={handleClear}>
+                {DECODE.clearButton}
+              </Button>
+            </div>
+          )}
 
-        <div className="flex items-center gap-3">
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: STAGGER * 2 }}
-          >
-            <Button type="submit" variant="default" disabled={status === "loading" || !canSubmit}>
-              {status === "loading" && <RefreshCw className="h-4 w-4 animate-spin" />}
+          {showHint && (
+            <Alert variant="info">
+              <AlertTitle>{DECODE.noticeLikenessTitle}</AlertTitle>
+              <AlertDescription>{likeness.hint}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex items-center gap-3">
+            <Button type="submit" size="lg" disabled={status === "loading" || !canSubmit}>
+              {status === "loading" && <RefreshCw className="animate-spin" />}
               {DECODE.submitButton}
             </Button>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: STAGGER * 3 }}
-          >
             <Button
               type="button"
               variant="ghost"
-              size="sm"
               onClick={handleSample}
               disabled={status === "loading"}
             >
               {DECODE.sampleButton}
             </Button>
-          </motion.div>
-        </div>
-      </form>
+          </div>
+        </form>
+      </Card>
 
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.15 }}
-      >
-        {main}
-      </motion.div>
+      {main}
     </div>
   );
 }
 
 function LoadingView() {
   return (
-    <motion.div
-      className="space-y-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: STAGGER }}
-    >
-      <Skeleton className="h-7 w-3/4" />
-      <Skeleton className="h-5 w-1/2" />
-      <Skeleton className="h-20 w-full" />
-    </motion.div>
+    <Card className="space-y-4 p-6">
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-5 w-24 rounded-full" />
+        <Skeleton className="h-5 w-32 rounded-full" />
+      </div>
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-2/3" />
+      <div className="grid gap-3 md:grid-cols-2">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    </Card>
   );
 }
 
 function ErrorView({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <Alert variant="destructive">
-      <AlertTitle>Could not decode</AlertTitle>
-      <AlertDescription>{message} Paste the full Amazon notice and try again.</AlertDescription>
+      <AlertTitle>{DECODE.result.errorTitle}</AlertTitle>
+      <AlertDescription>
+        {message} {DECODE.result.errorHint}
+      </AlertDescription>
       <div className="mt-3">
         <Button variant="outline" size="sm" onClick={onRetry}>
           {SHARED.retryButton}
@@ -256,70 +247,66 @@ function ResultView({
         show: { opacity: 1, transition: { staggerChildren: STAGGER } },
       }}
     >
-      <motion.div variants={{ show: { opacity: 1, y: 0 } }}>
-        <SeverityBadge severity={severity} />
-        <span className="ml-2 text-lg font-semibold text-foreground">{guidance.title}</span>
-      </motion.div>
+      <Card className="p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <SeverityBadge severity={severity} />
+            <CaseStateBadge kind={result.kind} />
+            <h2 className="text-h3 text-foreground">{guidance.title}</h2>
+          </div>
+          <CopyButton text={guidance.summary} label={DECODE.result.copySummary} />
+        </div>
 
-      <motion.div variants={{ show: { opacity: 1, y: 0 } }}>
-        <CaseStateBadge kind={result.kind} />
-      </motion.div>
+        <p className="mt-4 text-base leading-relaxed text-muted-foreground">{guidance.summary}</p>
 
-      <motion.div variants={{ show: { opacity: 1, y: 0 } }}>
-        <p className="text-muted-foreground">{guidance.summary}</p>
-      </motion.div>
+        <div className="mt-4">
+          <DeadlineChipList deadlines={result.deadlines} />
+        </div>
 
-      <motion.div variants={{ show: { opacity: 1, y: 0 } }}>
-        <DeadlineChipList deadlines={result.deadlines} />
-      </motion.div>
-
-      <motion.div variants={{ show: { opacity: 1, y: 0 } }} className="grid gap-3 md:grid-cols-2">
-        <Alert variant="info">
-          <AlertTitle>Do now</AlertTitle>
-          <AlertDescription>
-            <ul className="mt-1 list-disc list-inside space-y-1 text-sm">
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <div className="rounded-md border border-border/70 bg-surface-2 p-4">
+            <p className="text-eyebrow uppercase text-success">{DECODE.result.doNow}</p>
+            <ul className="mt-2 space-y-1.5">
               {guidance.triage.doNow.map((d, i) => (
-                <li key={`now-${i}`}>{d}</li>
+                <li key={`now-${i}`} className="flex gap-2 text-sm text-foreground">
+                  <Check className="mt-0.5 size-4 shrink-0 text-success" />
+                  {d}
+                </li>
               ))}
             </ul>
-          </AlertDescription>
-        </Alert>
-        <Alert variant="warning">
-          <AlertTitle>Do not</AlertTitle>
-          <AlertDescription>
-            <ul className="mt-1 list-disc list-inside space-y-1 text-sm">
+          </div>
+          <div className="rounded-md border border-border/70 bg-surface-2 p-4">
+            <p className="text-eyebrow uppercase text-warning">{DECODE.result.doNot}</p>
+            <ul className="mt-2 space-y-1.5">
               {guidance.triage.doNot.map((d, i) => (
-                <li key={`not-${i}`}>{d}</li>
+                <li key={`not-${i}`} className="flex gap-2 text-sm text-foreground">
+                  <Ban className="mt-0.5 size-4 shrink-0 text-warning" />
+                  {d}
+                </li>
               ))}
             </ul>
-          </AlertDescription>
-        </Alert>
-      </motion.div>
+          </div>
+        </div>
 
-      <motion.div variants={{ show: { opacity: 1, y: 0 } }}>
-        <HonestExpectationsCard
-          summary={guidance.summary}
-          whatToDo={[
-            guidance.triage.doNow[0] ?? "Review the deadlines.",
-            ...(guidance.triage.doNot.length ? ["Avoid the listed pitfalls."] : []),
-          ]}
-        />
-      </motion.div>
+        <div className="mt-5">
+          <HonestExpectationsCard
+            summary={guidance.summary}
+            whatToDo={[
+              guidance.triage.doNow[0] ?? "Review the deadlines.",
+              ...(guidance.triage.doNot.length ? ["Avoid the listed pitfalls."] : []),
+            ]}
+          />
+        </div>
 
-      <motion.div variants={{ show: { opacity: 1, y: 0 } }}>
-        <CtaAfterResult result={result} guidance={guidance} />
-      </motion.div>
+        <div className="mt-5">
+          <CtaAfterResult result={result} guidance={guidance} />
+        </div>
+      </Card>
 
-      <motion.div variants={{ show: { opacity: 1, y: 0 } }} className="pt-2">
-        <CopyButton text={guidance.summary} aria-label="Copy plain-English summary" />
-      </motion.div>
-
-      <motion.div variants={{ show: { opacity: 1, y: 0 } }} className="space-y-3">
-        <CasePreview kind={result.kind} />
-        <Button asChild>
-          <a href={`/case?kind=${result.kind}`}>{APP.access.casePreview.startCta}</a>
-        </Button>
-      </motion.div>
+      <CasePreview kind={result.kind} />
+      <Button asChild size="lg">
+        <a href={`/case?kind=${result.kind}`}>{APP.access.casePreview.startCta}</a>
+      </Button>
     </motion.div>
   );
 }
@@ -343,21 +330,15 @@ function CtaAfterResult({
     );
   }
   return (
-    <motion.div
-      className="rounded-lg border border-border bg-surface-1 p-4"
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <p className="text-sm font-medium text-foreground">Need more than the decoder?</p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Get the Appeal Pass to draft and critic-check a full Plan of Action.
-      </p>
+    <div className="rounded-md border border-border/70 bg-surface-2 p-5">
+      <p className="text-sm font-medium text-foreground">{DECODE.result.ctaTitle}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{DECODE.result.ctaDesc}</p>
       <div className="mt-3 flex items-center gap-3">
-        <Button variant="default" size="sm" asChild>
-          <a href="/pricing">{SHARED.cta ?? "See the Appeal Pass"}</a>
+        <Button size="sm" asChild>
+          <a href="/pricing">{SHARED.cta}</a>
         </Button>
-        <span className="text-xs text-muted-foreground">No timers. No scarcity. Read the FAQ.</span>
+        <span className="text-xs text-muted-foreground">{DECODE.result.ctaNote}</span>
       </div>
-    </motion.div>
+    </div>
   );
 }

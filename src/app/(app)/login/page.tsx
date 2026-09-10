@@ -11,13 +11,13 @@ import {
   FieldError,
 } from "@/components/AuthCard";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
 import { safeNext } from "@/lib/safeNext";
 import { AUTH } from "@/content/auth";
 import { isValidEmail, validatePasswordLength } from "@/lib/validation";
 import type { AuthStatus } from "@/components/AuthCard";
-import { motion } from "framer-motion";
 
 export default function LoginPage() {
   return (
@@ -135,12 +135,7 @@ function LoginPageInner() {
       footerAction={AUTH.login.footer.action}
       footerHref="/signup"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
-        className="-mt-4"
-      >
+      <div className="w-full">
         <GoogleButton
           onClick={handleGoogle}
           disabled={status === "loading"}
@@ -148,7 +143,7 @@ function LoginPageInner() {
         />
         <Divider label={AUTH.login.divider} />
 
-        <form onSubmit={handleSubmit} className="mt-2 space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="text-sm font-medium text-foreground">
               {AUTH.login.fields.email}
@@ -205,18 +200,20 @@ function LoginPageInner() {
           <SubmitButton status={status} label={submitLabel} />
         </form>
 
-        <button
+        <Button
           type="button"
+          variant="link"
+          size="sm"
+          className="mt-4"
           onClick={() => {
             setMode((m) => (m === "password" ? "magic" : "password"));
             setStatus("idle");
             setMessage("");
           }}
-          className="mt-4 text-sm text-primary underline-offset-4 hover:underline"
         >
           {toggleLabel}
-        </button>
-      </motion.div>
+        </Button>
+      </div>
     </AuthShell>
   );
 }

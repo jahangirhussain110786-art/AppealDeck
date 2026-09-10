@@ -60,7 +60,7 @@ export function PoaSection({
 
   return (
     <Card>
-      <CardHeader className="flex-row items-start justify-between space-y-0 pb-3">
+      <CardHeader className="flex items-start justify-between gap-4 space-y-0 pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <span>{section.heading}</span>
           {findings.length > 0 && <SeverityBadge severity={worstSeverity(findings)} />}
@@ -87,7 +87,10 @@ export function PoaSection({
             />
           )}
           {showNotes && (
-            <aside aria-label={notesLabel} className="hidden w-56 shrink-0 md:block">
+            <aside
+              aria-label={notesLabel}
+              className="hidden w-60 shrink-0 rounded-md border border-border/70 bg-surface-2 p-3 md:block"
+            >
               <FindingNotes findings={findings} />
             </aside>
           )}

@@ -2,10 +2,10 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { ConsentRow } from "@/components/pricing/ConsentRow";
 import ComposeView from "@/components/ComposeView";
@@ -38,17 +38,13 @@ export function ComposeGate({ email }: { email?: string | null }) {
 
   if (phase === "activating") {
     return (
-      <Card>
-        <CardContent className="flex items-center gap-3 pt-6">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          <div>
-            <p className="text-sm font-medium text-foreground">
-              {APP.access.composeGate.activating}
-            </p>
-            <p className="text-xs text-muted-foreground">{APP.access.composeGate.activatingHint}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <Alert variant="info">
+        <AlertTitle>{APP.access.composeGate.activating}</AlertTitle>
+        <AlertDescription className="space-y-3">
+          <p>{APP.access.composeGate.activatingHint}</p>
+          <Skeleton className="h-3 w-40" />
+        </AlertDescription>
+      </Alert>
     );
   }
 
@@ -74,11 +70,13 @@ export function ComposeGate({ email }: { email?: string | null }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{APP.access.composeGate.title}</CardTitle>
+        <CardTitle className="text-h2">{APP.access.composeGate.title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{APP.access.composeGate.body}</p>
-        <p className="text-sm font-medium text-foreground">{APP.access.composeGate.price}</p>
+        <p className="text-2xl font-semibold tabular-nums text-foreground">
+          {APP.access.composeGate.price}
+        </p>
         <ConsentRow checked={consent} onCheckedChange={setConsent} idPrefix="compose-eu-consent" />
         {consent ? (
           <CheckoutButton

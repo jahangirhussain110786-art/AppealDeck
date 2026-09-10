@@ -9,7 +9,6 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
 import { AUTH } from "@/content/auth";
 import type { AuthStatus } from "@/components/AuthCard";
-import { motion } from "framer-motion";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -58,16 +57,11 @@ export default function ForgotPasswordPage() {
       footerAction={AUTH.forgotPassword.footer.action}
       footerHref="/login"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
-        className="-mt-4"
-      >
+      <div className="w-full">
         {status === "sent" ? (
           <SuccessBanner message={AUTH.forgotPassword.messages.sent} />
         ) : (
-          <form onSubmit={handleSubmit} className="mt-2 space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="text-sm font-medium text-foreground">
                 {AUTH.forgotPassword.fields.email}
@@ -100,7 +94,7 @@ export default function ForgotPasswordPage() {
             </Button>
           </div>
         )}
-      </motion.div>
+      </div>
     </AuthShell>
   );
 }

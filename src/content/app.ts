@@ -74,6 +74,16 @@ export const APP = {
     sop_document: "SOP document",
     other: "Other",
   },
+  evidenceSlots: {
+    title: "Required evidence",
+    refresh: "Refresh",
+    attach: "Attach",
+    attached: "Attached",
+    noneRequired: "No required evidence for this violation kind.",
+    availableKinds: "Available kinds: {kinds}",
+    encryptedNote: "Files are encrypted on this device before being saved to the vault.",
+    openVault: "Open the vault",
+  },
   dashboard: {
     title: "Your dashboard",
     subtitle: "Manage your AppealDeck services and seller-account tools here.",

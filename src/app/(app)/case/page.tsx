@@ -3,6 +3,7 @@ import { getOptionalUser } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { InterviewFlow } from "@/components/InterviewFlow";
 import { CasePreview } from "@/components/CasePreview";
 import { APP } from "@/content/app";
@@ -44,29 +45,35 @@ export default async function CasePage({
   const initialKind = isValidKind(params.kind) ? params.kind : undefined;
 
   return (
-    <div className="space-y-6 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
-      <div className="lg:col-span-2">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {APP.case.title}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{APP.case.subtitle}</p>
+    <div className="space-y-6 lg:grid lg:grid-cols-[1fr_20rem] lg:items-start lg:gap-8 lg:space-y-0">
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-h2 text-foreground">{APP.case.title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{APP.case.subtitle}</p>
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span>{APP.case.guidedInterview}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">{APP.case.guidedDesc}</p>
-            <InterviewFlow signedIn={signedIn} hasPass={hasPass} initialKind={initialKind} />
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2">
+          <h2 className="text-h3 text-foreground">{APP.case.guidedInterview}</h2>
+          <Badge variant="secondary">{APP.interview.engineBadge}</Badge>
+        </div>
+
+        <div className="rounded-md border border-border/70 bg-surface-2 p-4">
+          <p className="text-eyebrow uppercase text-muted-foreground">
+            {APP.case.howItWorks.title}
+          </p>
+          <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+            <li>{APP.case.howItWorks.bullet1}</li>
+            <li>{APP.case.howItWorks.bullet2}</li>
+            <li>{APP.case.howItWorks.bullet3}</li>
+          </ul>
+        </div>
+
+        <InterviewFlow signedIn={signedIn} hasPass={hasPass} initialKind={initialKind} />
       </div>
 
-      <div className="lg:col-span-1">
+      <div className="mt-6 lg:mt-0">
         <CasePreview kind={initialKind ?? "UNKNOWN"} />
 
         <Card className="mt-6">

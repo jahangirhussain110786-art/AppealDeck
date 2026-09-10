@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Send, FileText, Loader2, ShieldAlert } from "lucide-react";
 import { getBrowserVault } from "@/lib/vault/browser";
@@ -88,18 +87,23 @@ function ReadinessCard({
       <CardHeader>
         <CardTitle className="text-base">{APP.dashboard.readiness.title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-xs text-muted-foreground">{READINESS_COPY}</p>
+          {locked ? (
+            <Skeleton className="h-6 w-12" />
+          ) : (
+            <span className="text-2xl font-semibold tabular-nums text-foreground">
+              {Math.round(score * 100)}%
+            </span>
+          )}
+        </div>
         <Progress value={Math.round(score * 100)} aria-label={READINESS_COPY} />
-        <p className="text-xs text-muted-foreground">{READINESS_COPY}</p>
-        {locked ? (
-          <Skeleton className="h-3 w-24" />
-        ) : (
-          missingKinds.length > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {APP.dashboard.readiness.missingLabel}{" "}
-              {missingKinds.map((kind) => APP.evidenceKinds[kind]).join(", ")}
-            </p>
-          )
+        {!locked && missingKinds.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {APP.dashboard.readiness.missingLabel}{" "}
+            {missingKinds.map((kind) => APP.evidenceKinds[kind]).join(", ")}
+          </p>
         )}
       </CardContent>
     </Card>
@@ -227,12 +231,7 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
   if (!signedIn) {
     if (!caseFile) {
       return (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-          className="space-y-6"
-        >
+        <div className="animate-fade-in space-y-6">
           <EmptyState
             icon={FileText}
             title={APP.access.dashboardSignedOut.emptyTitle}
@@ -251,7 +250,7 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
               </div>
             }
           />
-        </motion.div>
+        </div>
       );
     }
 
@@ -266,15 +265,8 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
     const draftReadiness = computeReadiness(caseFile);
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-        className="space-y-6"
-      >
-        <h1 className="text-xl font-semibold text-foreground">
-          {APP.access.dashboardSignedOut.title}
-        </h1>
+      <div className="animate-fade-in space-y-6">
+        <h2 className="text-h3 text-foreground">{APP.access.dashboardSignedOut.title}</h2>
         <div className="flex items-center gap-2">
           <CaseStateBadge kind={caseFile.kind} />
           <span className="text-sm font-medium">{APP.dashboard.stateLabels[draftCurrent]}</span>
@@ -310,7 +302,7 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
             </Button>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     );
   }
 
@@ -357,12 +349,7 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
         const isNoveltyRequired = noveltyRequired(currentLog.attemptCount);
 
         return (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="space-y-6"
-          >
+          <div className="animate-fade-in space-y-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="mb-2 flex items-center gap-2">
@@ -445,88 +432,91 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
               </Card>
             )}
 
-            <Card data-no-print>
-              <CardHeader>
-                <CardTitle className="text-base">{APP.dashboard.replyCard.title}</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {APP.dashboard.replyCard.description}
-                </p>
-              </CardHeader>
-              <CardContent>
-                {!replyResult ? (
-                  <div className="space-y-3">
-                    <Textarea
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      spellCheck={false}
-                      placeholder={APP.dashboard.replyCard.placeholder}
-                      rows={4}
-                    />
-                    <Button onClick={analyzeReply} disabled={busy || !replyText.trim()} size="sm">
-                      {busy ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {APP.dashboard.replyCard.analyzing}
-                        </>
-                      ) : (
-                        <>
-                          <Send className="mr-2 h-4 w-4" />
-                          {APP.dashboard.replyCard.submit}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-3"
-                  >
-                    <p>
-                      {APP.dashboard.replyCard.markedAs}{" "}
-                      <ReplyCategoryLabel category={replyResult.category} />
-                    </p>
-                    {replyResult.extractedAsks.length > 0 && (
-                      <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                        {replyResult.extractedAsks.map((ask, i) => (
-                          <li key={i}>{ask}</li>
-                        ))}
-                      </ul>
-                    )}
-                    <div className="flex gap-2">
-                      <Button onClick={confirmReply} size="sm">
-                        {APP.dashboard.replyCard.updateButton}
-                      </Button>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card data-no-print>
+                <CardHeader>
+                  <CardTitle className="text-base">{APP.dashboard.replyCard.title}</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {APP.dashboard.replyCard.description}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {!replyResult ? (
+                    <div className="space-y-3">
+                      <Textarea
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        spellCheck={false}
+                        placeholder={APP.dashboard.replyCard.placeholder}
+                        rows={4}
+                      />
                       <Button
-                        variant="ghost"
+                        onClick={analyzeReply}
+                        disabled={busy || !replyText.trim()}
+                        variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setReplyResult(null);
-                          setReplyText("");
-                        }}
                       >
-                        {APP.dashboard.replyCard.cancelButton}
+                        {busy ? (
+                          <>
+                            <Loader2 className="size-4 animate-spin" />
+                            {APP.dashboard.replyCard.analyzing}
+                          </>
+                        ) : (
+                          <>
+                            <Send className="size-4" />
+                            {APP.dashboard.replyCard.submit}
+                          </>
+                        )}
                       </Button>
                     </div>
-                  </motion.div>
-                )}
-              </CardContent>
-            </Card>
+                  ) : (
+                    <div className="animate-fade-in space-y-3">
+                      <p>
+                        {APP.dashboard.replyCard.markedAs}{" "}
+                        <ReplyCategoryLabel category={replyResult.category} />
+                      </p>
+                      {replyResult.extractedAsks.length > 0 && (
+                        <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                          {replyResult.extractedAsks.map((ask, i) => (
+                            <li key={i}>{ask}</li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="flex gap-2">
+                        <Button onClick={confirmReply} variant="outline" size="sm">
+                          {APP.dashboard.replyCard.updateButton}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setReplyResult(null);
+                            setReplyText("");
+                          }}
+                        >
+                          {APP.dashboard.replyCard.cancelButton}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{APP.dashboard.submitCard.title}</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {APP.dashboard.submitCard.description}
-                </p>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={markSubmitted} disabled={busy} variant="outline" size="sm">
-                  {APP.dashboard.submitCard.button}
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">{APP.dashboard.submitCard.title}</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {APP.dashboard.submitCard.description}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={markSubmitted} disabled={busy} variant="outline" size="sm">
+                    {APP.dashboard.submitCard.button}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         );
       }}
     </VaultGate>

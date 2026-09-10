@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { Lock } from "lucide-react";
 import { getOptionalUser } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/EmptyState";
 import VaultView from "@/components/VaultView";
 import { APP } from "@/content/app";
 
@@ -13,21 +14,22 @@ export default async function VaultPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 py-10">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {APP.access.vaultSignedOut.title}
-        </h1>
-        <Card className="p-6">
-          <p className="text-sm text-muted-foreground">{APP.access.vaultSignedOut.desc}</p>
-          <div className="mt-4 flex gap-2">
-            <Button asChild>
-              <Link href="/login?next=/vault">{APP.access.vaultSignedOut.cta}</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/case">{APP.access.vaultSignedOut.back}</Link>
-            </Button>
-          </div>
-        </Card>
+      <div className="mx-auto flex w-full max-w-tool flex-col gap-4 py-10">
+        <EmptyState
+          icon={Lock}
+          title={APP.access.vaultSignedOut.title}
+          description={APP.access.vaultSignedOut.desc}
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button asChild>
+                <Link href="/login?next=/vault">{APP.access.vaultSignedOut.cta}</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/case">{APP.access.vaultSignedOut.back}</Link>
+              </Button>
+            </div>
+          }
+        />
       </div>
     );
   }
@@ -36,29 +38,34 @@ export default async function VaultPage() {
 
   if (!active) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 py-10">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {APP.access.vaultSignedOut.title}
-        </h1>
-        <Card className="p-6">
-          <p className="text-sm text-muted-foreground">{APP.access.vaultSignedOut.desc}</p>
-          <div className="mt-4 flex gap-2">
-            <Button asChild>
-              <Link href="/pricing">{APP.access.vaultSignedOut.cta}</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/case">{APP.access.vaultSignedOut.back}</Link>
-            </Button>
-          </div>
-        </Card>
+      <div className="mx-auto flex w-full max-w-tool flex-col gap-4 py-10">
+        <EmptyState
+          icon={Lock}
+          title={APP.access.vaultSignedOut.title}
+          description={APP.access.vaultSignedOut.desc}
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button asChild>
+                <Link href="/pricing">{APP.access.vaultSignedOut.cta}</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/case">{APP.access.vaultSignedOut.back}</Link>
+              </Button>
+            </div>
+          }
+        />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">{APP.vault.title}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">{APP.vault.subtitle}</p>
+    <div className="mx-auto flex w-full max-w-tool flex-col gap-4 py-10">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-h2 text-foreground">{APP.vault.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{APP.vault.subtitle}</p>
+        </div>
+      </div>
       <VaultView userId={user.id} />
     </div>
   );

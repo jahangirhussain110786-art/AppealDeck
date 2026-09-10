@@ -292,16 +292,18 @@ export default function ComposeView() {
   return (
     <div className="space-y-6">
       <div>
-        <Button asChild variant="ghost" className="mb-2 pl-0">
+        <Button asChild variant="link" className="mb-2 h-auto p-0">
           <Link href="/case">
-            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+            <ArrowLeft className="mr-1 size-4" aria-hidden="true" />
             {APP.compose.backButton}
           </Link>
         </Button>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {APP.compose.title}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{APP.compose.subtitle}</p>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-h2 text-foreground">{APP.compose.title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{APP.compose.subtitle}</p>
+          </div>
+        </div>
       </div>
 
       <VaultGate vault={vault}>{(unlocked) => <ComposeInner vault={unlocked} />}</VaultGate>

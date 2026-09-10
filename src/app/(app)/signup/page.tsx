@@ -19,7 +19,6 @@ import { APP_URL } from "@/lib/urls";
 import { safeNext } from "@/lib/safeNext";
 import { AUTH } from "@/content/auth";
 import type { AuthStatus } from "@/components/AuthCard";
-import { motion } from "framer-motion";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -121,12 +120,7 @@ export default function SignupPage() {
       footerAction={AUTH.signup.footer.action}
       footerHref="/login"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
-        className="-mt-4"
-      >
+      <div className="w-full">
         <GoogleButton
           onClick={handleGoogle}
           disabled={status === "loading"}
@@ -143,7 +137,7 @@ export default function SignupPage() {
             </Button>
           </>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-2 space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="text-sm font-medium text-foreground">
                 {AUTH.signup.fields.email}
@@ -193,7 +187,7 @@ export default function SignupPage() {
             <SubmitButton status={status} label={AUTH.signup.messages.submit} />
           </form>
         )}
-      </motion.div>
+      </div>
     </AuthShell>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import {
   Lock,
@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
   Dialog,
   DialogContent,
@@ -53,11 +54,11 @@ function useVault(): Vault {
 }
 
 function mimeTypeToIcon(mimeType: string): React.ReactNode {
-  if (mimeType.startsWith("image/")) return <FileImage className="h-5 w-5 text-muted-foreground" />;
-  if (mimeType.includes("pdf")) return <FileText className="h-5 w-5 text-muted-foreground" />;
+  if (mimeType.startsWith("image/")) return <FileImage className="size-5" />;
+  if (mimeType.includes("pdf")) return <FileText className="size-5" />;
   if (mimeType.includes("spreadsheet") || mimeType.includes("excel") || mimeType.includes("csv"))
-    return <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />;
-  return <FileBox className="h-5 w-5 text-muted-foreground" />;
+    return <FileSpreadsheet className="size-5" />;
+  return <FileBox className="size-5" />;
 }
 
 const EVIDENCE_KINDS: EvidenceKind[] = [
@@ -226,18 +227,14 @@ export default function VaultView({ userId }: { userId: string }) {
     >
       {() => (
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold">{APP.vault.title}</h2>
-              <p className="text-sm text-muted-foreground">{APP.vault.subtitle}</p>
-            </div>
+          <div className="flex items-center justify-end">
             <div className="flex items-center">
               <LocalFirstBadge />
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="inline-flex items-center rounded p-1 text-muted-foreground hover:text-foreground">
-                      <Info className="h-4 w-4" aria-hidden />
+                      <Info className="size-4" aria-hidden />
                     </span>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs">
@@ -248,26 +245,41 @@ export default function VaultView({ userId }: { userId: string }) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder={APP.vault.searchPlaceholder}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
-                  aria-label="Clear search"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative max-w-sm flex-1">
+                <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder={APP.vault.searchPlaceholder}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8"
+                />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="size-3" />
+                  </button>
+                )}
+              </div>
+              <NativeSelect
+                aria-label={APP.vault.evidenceKindLabel}
+                value={filterKind}
+                onChange={(e) => setFilterKind(e.target.value as EvidenceKind | "all")}
+                className="sm:w-56"
+              >
+                <option value="all">{APP.vault.evidenceKindLabel}</option>
+                {EVIDENCE_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {APP.evidenceKinds[k]}
+                  </option>
+                ))}
+              </NativeSelect>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -277,7 +289,7 @@ export default function VaultView({ userId }: { userId: string }) {
                     <Button
                       onClick={() => void refresh()}
                       variant="outline"
-                      size="sm"
+                      size="icon-sm"
                       disabled={busy}
                       aria-label={APP.vault.actions.refresh}
                     >
@@ -293,7 +305,7 @@ export default function VaultView({ userId }: { userId: string }) {
                     <Button
                       onClick={onSyncUp}
                       variant="outline"
-                      size="sm"
+                      size="icon-sm"
                       disabled={busy}
                       aria-label={APP.vault.actions.sync}
                     >
@@ -309,7 +321,7 @@ export default function VaultView({ userId }: { userId: string }) {
                     <Button
                       onClick={onLock}
                       variant="outline"
-                      size="sm"
+                      size="icon-sm"
                       aria-label={APP.vault.actions.lock}
                     >
                       <Lock className="size-4" />
@@ -338,18 +350,17 @@ export default function VaultView({ userId }: { userId: string }) {
 
           <div className="space-y-2">
             <Label htmlFor="evidence-kind-select">{APP.vault.evidenceKindLabel}</Label>
-            <select
+            <NativeSelect
               id="evidence-kind-select"
               value={selectedEvidenceKind}
               onChange={(e) => setSelectedEvidenceKind(e.target.value as EvidenceKind)}
-              className="w-full rounded-md border border-border bg-background px-2 py-1 text-sm"
             >
               {EVIDENCE_KINDS.map((k) => (
                 <option key={k} value={k}>
-                  {evidenceKindLabel(k)}
+                  {APP.evidenceKinds[k]}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <FileDropZone onFile={onAddFile} disabled={busy} />
@@ -402,16 +413,18 @@ export default function VaultView({ userId }: { userId: string }) {
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
                   >
-                    <Card className="flex items-center justify-between p-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {mimeTypeToIcon(it.mimeType)}
+                    <Card className="flex items-center justify-between gap-3 p-4">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="grid size-10 shrink-0 place-items-center rounded-md bg-surface-2 text-muted-foreground">
+                          {mimeTypeToIcon(it.mimeType)}
+                        </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 truncate text-sm font-medium">
                             <span>{it.name}</span>
                             {it.evidenceKind && <EvidenceStatusBadge status="present" />}
                             <Badge variant="outline">{APP.vault.encryptedBadge}</Badge>
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs tabular-nums text-muted-foreground">
                             {it.mimeType} · {formatBytes(it.sizeBytes)} ·{" "}
                             <span data-tn>{formatDateTime(it.createdAt)}</span>
                             {it.evidenceKind
@@ -420,13 +433,13 @@ export default function VaultView({ userId }: { userId: string }) {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <TooltipProvider delayDuration={200}>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                size="sm"
-                                variant="outline"
+                                size="icon-sm"
+                                variant="ghost"
                                 onClick={() => void onView(it.id)}
                                 aria-label={APP.vault.actions.view}
                               >
@@ -440,8 +453,8 @@ export default function VaultView({ userId }: { userId: string }) {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                size="sm"
-                                variant="outline"
+                                size="icon-sm"
+                                variant="ghost"
                                 onClick={() => void onDownload(it.id)}
                                 aria-label={APP.vault.actions.download}
                               >
@@ -455,8 +468,9 @@ export default function VaultView({ userId }: { userId: string }) {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                size="sm"
-                                variant="destructive"
+                                size="icon-sm"
+                                variant="ghost"
+                                className="text-muted-foreground hover:text-destructive"
                                 onClick={() => setDeleteTarget(it)}
                                 aria-label={`${APP.vault.actions.delete} ${it.name}`}
                               >

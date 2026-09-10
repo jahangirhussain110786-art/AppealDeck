@@ -19,18 +19,18 @@ export default async function BillingPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {APP.billing.title}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{APP.billing.subtitle}</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-h2 text-foreground">{APP.billing.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{APP.billing.subtitle}</p>
+        </div>
       </div>
 
       <Card>
         <CardContent className="pt-5">
           {active ? (
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
               <div>
                 <h2 className="font-medium text-foreground">{APP.billing.active.title}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -49,7 +49,7 @@ export default async function BillingPage() {
               <p className="mt-1 text-sm text-muted-foreground">{APP.billing.inactive.desc}</p>
               <Button asChild className="mt-4">
                 <Link href="/pricing">
-                  <CreditCard className="h-4 w-4" /> {APP.billing.inactive.cta}
+                  <CreditCard className="size-4" /> {APP.billing.inactive.cta}
                 </Link>
               </Button>
             </div>

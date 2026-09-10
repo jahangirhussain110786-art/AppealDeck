@@ -1,5 +1,4 @@
-import { ShieldCheck } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check, Minus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { EvidenceStatusBadge } from "@/components/EvidenceStatusBadge";
 import { APP } from "@/content/app";
@@ -19,51 +18,52 @@ export function CasePreview({ kind, caseFile }: CasePreviewProps) {
   const state = caseFile?.state ?? "DECODED";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <ShieldCheck className="h-5 w-5 text-primary" />
-          {APP.access.casePreview.title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <h4 className="mb-2 text-sm font-medium">{APP.access.casePreview.evidenceTitle}</h4>
-          <ul className="space-y-2">
-            {reqs.map((r) => {
-              const present = caseFile?.evidenceSlots[r.kind]?.present === true;
-              return (
-                <li key={r.kind} className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2">
-                    <Badge variant={r.required ? "default" : "outline"} className="mt-0.5">
-                      {r.required
-                        ? APP.access.casePreview.required
-                        : APP.access.casePreview.optional}
-                    </Badge>
-                    <span className="text-sm">{evidenceKindLabel(r.kind)}</span>
-                  </div>
-                  <EvidenceStatusBadge
-                    status={present ? "present" : "pending"}
-                    className="mt-0.5 shrink-0"
-                  />
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+    <div className="rounded-lg border border-border/80 bg-surface-2 p-5">
+      <p className="text-eyebrow uppercase text-muted-foreground">{APP.access.casePreview.title}</p>
 
-        <div>
-          <h4 className="mb-2 text-sm font-medium">{APP.access.casePreview.actionsTitle}</h4>
-          <ul className="space-y-1 text-sm text-muted-foreground">
-            {nextBestActions(state).map((action, i) => (
-              <li key={i}>{action}</li>
-            ))}
-          </ul>
-        </div>
+      <div className="mt-4">
+        <p className="text-eyebrow uppercase text-muted-foreground">
+          {APP.access.casePreview.evidenceTitle}
+        </p>
+        <ul className="mt-2 space-y-2">
+          {reqs.map((r) => {
+            const present = caseFile?.evidenceSlots[r.kind]?.present === true;
+            return (
+              <li key={r.kind} className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2.5 text-sm">
+                  {r.required ? (
+                    <Check className="mt-0.5 size-4 shrink-0 text-success" />
+                  ) : (
+                    <Minus className="mt-0.5 size-4 shrink-0 text-muted-foreground/70" />
+                  )}
+                  <span>{evidenceKindLabel(r.kind)}</span>
+                  <Badge variant="secondary" size="sm">
+                    {r.required ? APP.access.casePreview.required : APP.access.casePreview.optional}
+                  </Badge>
+                </div>
+                <EvidenceStatusBadge
+                  status={present ? "present" : "pending"}
+                  className="mt-0.5 shrink-0"
+                />
+              </li>
+            );
+          })}
+        </ul>
+      </div>
 
-        <p className="text-xs text-muted-foreground">{APP.access.casePreview.startNote}</p>
-      </CardContent>
-    </Card>
+      <div className="mt-5">
+        <p className="text-eyebrow uppercase text-muted-foreground">
+          {APP.access.casePreview.actionsTitle}
+        </p>
+        <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+          {nextBestActions(state).map((action, i) => (
+            <li key={i}>{action}</li>
+          ))}
+        </ul>
+      </div>
+
+      <p className="mt-4 text-xs text-muted-foreground">{APP.access.casePreview.startNote}</p>
+    </div>
   );
 }
 
