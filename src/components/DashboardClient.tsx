@@ -400,7 +400,7 @@ export function DashboardClient({ license }: DashboardClientProps) {
               </Card>
             )}
 
-            <Card>
+            <Card data-no-print>
               <CardHeader>
                 <CardTitle className="text-base">{APP.dashboard.replyCard.title}</CardTitle>
                 <p className="text-sm text-muted-foreground">

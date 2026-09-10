@@ -59,7 +59,10 @@ export function AppHeader({ mode = "marketing", user }: AppHeaderProps) {
   const nav = mode === "app" ? APP_NAV : MARKETING_NAV;
 
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header
+      className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      data-no-print
+    >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Logo href={mode === "app" ? "/dashboard" : "/"} />
 

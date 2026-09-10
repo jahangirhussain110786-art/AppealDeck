@@ -300,37 +300,23 @@
   content: none;
 }
 
-/* --- Print stylesheet --- */
 @media print {
   header,
   footer,
-  nav[aria-label="Breadcrumb"],
-  .sonner-toast,
-  .sonner-toast-container {
+  nav,
+  button,
+  [data-no-print],
+  [data-sonner-toaster] {
     display: none !important;
   }
-
-  .fixed,
-  .sticky,
-  .sticky\\.top-0,
-  [class*="fixed"],
-  [class*="sticky"] {
-    position: static !important;
-    transform: none !important;
-  }
-
   body {
-    -webkit-print-color-adjust: exact;
-    color-adjust: exact;
+    background: #fff;
+    color: #000;
   }
-
-  a[href]:after {
-    content: " (" attr(href) ")";
-    font-size: var(--text-micro);
-    color: hsl(var(--muted-foreground));
+  textarea {
+    display: none;
   }
-
-  a[href^="#"]:after {
-    content: none;
+  .print-only {
+    display: block !important;
   }
 }

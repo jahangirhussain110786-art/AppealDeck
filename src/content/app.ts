@@ -205,6 +205,9 @@ export const APP = {
       action: "Go to case",
     },
     loading: "Composing your Plan of Action…",
+    print: {
+      header: "Plan of Action draft · {date}",
+    },
   },
   links: {
     sellerCentralPerformance:

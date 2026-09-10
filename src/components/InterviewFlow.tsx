@@ -593,6 +593,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
         <div className="md:hidden">
           <div
             className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur supports-backdrop-blur:bg-background/80 border-t border-border pb-[env(safe-area-inset-bottom)]"
+            data-no-print
             role="group"
             aria-label={APP.interview.stepControls}
           >

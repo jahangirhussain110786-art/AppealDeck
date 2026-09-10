@@ -23,6 +23,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { getBrowserVault } from "@/lib/vault/browser";
 import type { Vault } from "@/core/vault/vault";
 import { loadCaseFile, loadCaseLog } from "@/lib/caseStore";
+import { formatDate } from "@/lib/format";
 import { groupFindingsBySection } from "@/lib/findingSections";
 import { buildClipboardText } from "@/lib/poaClipboard";
 import { GLOBAL_EXPECTATIONS } from "@/core";
@@ -238,6 +239,13 @@ function ComposeInner({ vault }: { vault: Vault }) {
           onEdit={(idx, text) => setEditedSections((prev) => ({ ...prev, [idx]: text }))}
         />
       ))}
+
+      <div className="print-only hidden whitespace-pre-wrap font-serif text-sm">
+        <p className="mb-4 font-medium">
+          {APP.compose.print.header.replace("{date}", formatDate(new Date()))}
+        </p>
+        {fullDraftText}
+      </div>
 
       <div className="flex items-center justify-between">
         <CopyButton text={fullDraftText} label={APP.compose.copyAll} className="gap-2" />
