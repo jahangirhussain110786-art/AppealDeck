@@ -2,14 +2,14 @@
 
 **How to use.** Copy the block below into a fresh coding-AI session, unchanged. When a pass is complete and a new pass prompt exists, change only the two `PATH` lines. Keep this file in the repo; the reviewing AI updates the two paths whenever it writes a new pass prompt.
 
-**Current pass (10 Sep 2026, later):** Access ladder + continuity (AM-21, AA-33), Tasks A1–A8 — `Planning/03-PHASE-2-BUILD/07-ACCESS-AND-CONTINUITY-SPEC.md` is the design authority. Task A0 (paperwork) was done by the reviewing AI; the coding AI starts at Task A1. The visual refresh v3 (AA-32) runs **after** this pass; A8 repoints the two PATH lines at it.
+**Current pass (10 Sep 2026, later):** Visual refresh v3 (AA-32) — `docs/handoffs/2026-09-09-visual-refresh-prompt.md`. The access ladder + continuity pass (AM-21, AA-33, Tasks A1–A8) is code-complete (`33e5a16`…`33bf5b5`, fix pass `50dbd4c`); its evidence log `docs/handoffs/2026-09-10-access-continuity.md` records what remains for the founder (AA-34: signed-in walk-through, sandbox checkout, screenshot sign-off, push).
 
 ```text
 You are the coding agent for AppealDeck. Repo root: V:\AppealDeck1, branch master, Windows machine.
 Work only from the files below, in this order. Do not edit anything before step 5.
 
-PASS PROMPT PATH: docs/handoffs/2026-09-10-access-continuity-prompt.md
-EVIDENCE LOG PATH: docs/handoffs/2026-09-10-access-continuity.md
+PASS PROMPT PATH: docs/handoffs/2026-09-09-visual-refresh-prompt.md
+EVIDENCE LOG PATH: docs/handoffs/2026-09-09-visual-refresh.md
 
 1. Read CLAUDE.md in full. Sections 1–3 are absolute (product, locked decisions D1–D10, FORBIDDEN SOURCES). Section 4 is the current state.
 2. Read the pass prompt: only its STATUS banner, §0, §0.A, §1, §2 and Appendix A. Do not read the task sections yet.
@@ -39,3 +39,4 @@ The reviewing AI writes a new pass prompt and evidence log under `docs/handoffs/
 - 9 Sep 2026 (evening) — repointed at the FIX pass (`docs/handoffs/2026-09-09-uiux-polish-fix-prompt.md`, log `docs/handoffs/2026-09-09-uiux-polish-fix.md`) after the audit `docs/handoffs/2026-09-09-uiux-polish-audit.md` found Tasks 7–10 failing their Accept blocks and Task 11 not done. The fix prompt adds reporting rules (§0.B): hashes only from `git log`, exit codes decide gates, shrunk tasks are written up as NOT DONE.
 - 10 Sep 2026 — fix pass complete (Tasks F0–F8; code final at `12b6a89`; the reviewing AI ran F3–F8 itself after the coding AI's session ended mid-F3). Repointed at the visual refresh v3 pass (`docs/handoffs/2026-09-09-visual-refresh-prompt.md`, log `docs/handoffs/2026-09-09-visual-refresh.md`), as that prompt's banner prescribes for Task F8. The visual pass's Task V0 commits the still-untracked visual documents, brand kit and assets.
 - 10 Sep 2026 (later) — the founder decided the AM-21 access ladder + continuity pass in chat and asked for it to run **before** the visual refresh. Repointed at `docs/handoffs/2026-09-10-access-continuity-prompt.md` / `docs/handoffs/2026-09-10-access-continuity.md` (Tasks A1–A8; A0 paperwork done). The visual deliverables were committed by the reviewing AI the same day and the visual prompt/spec/copy deck updated to build on AM-21; the access pass's Task A8 repoints these lines at the visual prompt again.
+- 10 Sep 2026 (Task A8) — the access + continuity pass is code-complete through A7 (`33bf5b5`); an audit at A4 found and fixed several bugs that left the pass non-functional end to end (sign-in gate not gating, passphrase relock leaving a blank screen, wrong-kind case preview, `?kind=` not auto-starting, signed-out reload not resuming, and a pre-existing interview-engine loop), folded into `fix(access/task-4-fix)` (`50dbd4c`) with the required tests it had skipped. Repointed at `docs/handoffs/2026-09-09-visual-refresh-prompt.md` / `docs/handoffs/2026-09-09-visual-refresh.md` as prescribed. Founder still owes AA-34 (signed-in walk-through, sandbox checkout, screenshot sign-off) and the push-`master` decision — none of that blocks the visual pass starting.
