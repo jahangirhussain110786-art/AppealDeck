@@ -1,18 +1,22 @@
 import { ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EvidenceStatusBadge } from "@/components/EvidenceStatusBadge";
 import { APP } from "@/content/app";
 import { requirementsFor } from "@/core/evidenceModel";
 import type { EvidenceKind } from "@/core/evidenceModel";
 import type { ViolationKind } from "@/core";
 import { nextBestActions } from "@/core/caseState";
+import type { CaseFile } from "@/core/interviewEngine";
 
 interface CasePreviewProps {
   kind: ViolationKind;
+  caseFile?: CaseFile;
 }
 
-export function CasePreview({ kind }: CasePreviewProps) {
+export function CasePreview({ kind, caseFile }: CasePreviewProps) {
   const reqs = requirementsFor(kind);
+  const state = caseFile?.state ?? "DECODED";
 
   return (
     <Card>
@@ -26,21 +30,32 @@ export function CasePreview({ kind }: CasePreviewProps) {
         <div>
           <h4 className="mb-2 text-sm font-medium">{APP.access.casePreview.evidenceTitle}</h4>
           <ul className="space-y-2">
-            {reqs.map((r) => (
-              <li key={r.kind} className="flex items-start gap-2">
-                <Badge variant={r.required ? "default" : "outline"} className="mt-0.5">
-                  {r.required ? APP.access.casePreview.required : APP.access.casePreview.optional}
-                </Badge>
-                <span className="text-sm">{evidenceKindLabel(r.kind)}</span>
-              </li>
-            ))}
+            {reqs.map((r) => {
+              const present = caseFile?.evidenceSlots[r.kind]?.present === true;
+              return (
+                <li key={r.kind} className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2">
+                    <Badge variant={r.required ? "default" : "outline"} className="mt-0.5">
+                      {r.required
+                        ? APP.access.casePreview.required
+                        : APP.access.casePreview.optional}
+                    </Badge>
+                    <span className="text-sm">{evidenceKindLabel(r.kind)}</span>
+                  </div>
+                  <EvidenceStatusBadge
+                    status={present ? "present" : "pending"}
+                    className="mt-0.5 shrink-0"
+                  />
+                </li>
+              );
+            })}
           </ul>
         </div>
 
         <div>
           <h4 className="mb-2 text-sm font-medium">{APP.access.casePreview.actionsTitle}</h4>
           <ul className="space-y-1 text-sm text-muted-foreground">
-            {nextBestActions("DECODED").map((action, i) => (
+            {nextBestActions(state).map((action, i) => (
               <li key={i}>{action}</li>
             ))}
           </ul>

@@ -29,10 +29,14 @@ function isVaultCryptoError(e: unknown): e is VaultCryptoError {
   return e instanceof VaultCryptoError;
 }
 
+export interface VaultUnlockedInfo {
+  viaRelock?: boolean;
+}
+
 export interface VaultGateProps {
   vault: Vault | null;
   children: (vault: Vault) => React.ReactNode;
-  onUnlocked?: () => void;
+  onUnlocked?: (info?: VaultUnlockedInfo) => void;
   onLocked?: () => void;
   idleMs?: number;
   warnMs?: number;
@@ -179,11 +183,27 @@ export function VaultGate({
   }
 
   if (phase.kind === "needs_init") {
-    return <VaultInitForm vault={vault} onDone={() => setPhase({ kind: "unlocked" })} />;
+    return (
+      <VaultInitForm
+        vault={vault}
+        onDone={() => {
+          onUnlocked?.();
+          setPhase({ kind: "unlocked" });
+        }}
+      />
+    );
   }
 
   if (phase.kind === "device_set_passphrase") {
-    return <VaultDeviceRelockForm vault={vault} onDone={() => setPhase({ kind: "unlocked" })} />;
+    return (
+      <VaultDeviceRelockForm
+        vault={vault}
+        onDone={() => {
+          onUnlocked?.({ viaRelock: true });
+          setPhase({ kind: "unlocked" });
+        }}
+      />
+    );
   }
 
   if (phase.kind === "locked") {

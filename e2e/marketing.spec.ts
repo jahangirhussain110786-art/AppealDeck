@@ -80,7 +80,9 @@ test.describe("Auth gate", () => {
     await expect(page.getByLabel(/email/i)).toBeVisible();
     await expect(page.getByLabel(/password/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /continue with google/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /sign in/i })).toBeVisible();
+    // The header also has a "Sign in" link now (five-slot header, AM-21) — target the
+    // page's own "Already have an account? Sign in" cross-link, not the header's.
+    await expect(page.getByRole("link", { name: /sign in/i }).last()).toBeVisible();
   });
 
   test("/forgot-password renders the reset form", async ({ page }) => {

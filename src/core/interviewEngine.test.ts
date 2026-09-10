@@ -56,6 +56,7 @@ describe("nextStep", () => {
       rootCause: "test",
       timelineEvents: [{ date: "2026-01-01", description: "notice" }],
       priorAppealCount: 0,
+      priorAppealsAnswered: true,
       attemptCount: 1,
     };
     const step = nextStep(file);
@@ -71,6 +72,7 @@ describe("nextStep", () => {
       rootCause: "test",
       timelineEvents: [{ date: "2026-01-01", description: "notice" }],
       priorAppealCount: 0,
+      priorAppealsAnswered: true,
       attemptCount: 1,
       actionItems: [],
       evidenceSlots: {
@@ -108,6 +110,21 @@ describe("applyAnswer", () => {
     };
     const result = applyAnswer(file, { stepId: "intake_prior_appeals", choiceId: "yes_1" });
     expect(result.priorAppealCount).toBe(1);
+  });
+
+  it("answering 'no prior appeals' moves past the step instead of re-asking it", () => {
+    // Regression: nextStep used to treat priorAppealCount === 0 as "unanswered",
+    // which is also the correct value for "No, this is my first" — trapping every
+    // first-time appellant (the most common answer) in a loop on this step.
+    const file: CaseFile = {
+      ...createCaseFile("POLICY"),
+      rootCause: "test",
+      timelineEvents: [{ date: "2026-01-01", description: "notice" }],
+    };
+    const result = applyAnswer(file, { stepId: "intake_prior_appeals", choiceId: "no" });
+    expect(result.priorAppealCount).toBe(0);
+    expect(result.priorAppealsAnswered).toBe(true);
+    expect(nextStep(result)?.kind).not.toBe("intake_prior_appeals");
   });
 
   it("marks evidence as present when file uploaded", () => {
@@ -162,6 +179,7 @@ describe("interviewProgress", () => {
       rootCause: "test",
       timelineEvents: [{ date: "2026-01-01", description: "notice" }],
       priorAppealCount: 0,
+      priorAppealsAnswered: true,
       attemptCount: 1,
       actionItems: [],
     };

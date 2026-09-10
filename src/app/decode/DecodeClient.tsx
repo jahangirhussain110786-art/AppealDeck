@@ -21,6 +21,7 @@ import { guidanceFor } from "@/core/guidance";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
 import { DECODE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
+import { APP } from "@/content/app";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 import type { ViolationKind } from "@/core";
 import type { Deadline } from "@/core";
@@ -313,8 +314,11 @@ function ResultView({
         <CopyButton text={guidance.summary} aria-label="Copy plain-English summary" />
       </motion.div>
 
-      <motion.div variants={{ show: { opacity: 1, y: 0 } }}>
+      <motion.div variants={{ show: { opacity: 1, y: 0 } }} className="space-y-3">
         <CasePreview kind={result.kind} />
+        <Button asChild>
+          <a href={`/case?kind=${result.kind}`}>{APP.access.casePreview.startCta}</a>
+        </Button>
       </motion.div>
     </motion.div>
   );

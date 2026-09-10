@@ -1,0 +1,54 @@
+import { expect, test } from "@playwright/test";
+
+test.describe("Access ladder — signed-out interview, gate, case preview", () => {
+  test("signed out: an answer at step one survives a reload", async ({ page }) => {
+    await page.goto("/case?kind=POLICY");
+    await expect(page.getByText("What happened?", { exact: true })).toBeVisible();
+
+    await page.getByPlaceholder("Type your answer...").fill("A supplier mix-up on one ASIN.");
+    await page.getByTestId("interview-continue").click();
+    await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
+  });
+
+  test("signed out: reaching the first document step shows the sign-in gate", async ({
+    page,
+  }) => {
+    await page.goto("/case?kind=POLICY");
+    await expect(page.getByText("What happened?", { exact: true })).toBeVisible();
+
+    await page.getByPlaceholder("Type your answer...").fill("A supplier mix-up on one ASIN.");
+    await page.getByTestId("interview-continue").click();
+
+    await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
+    await page.locator('input[type="date"]').fill("2026-08-01");
+    await page.getByTestId("interview-continue").click();
+
+    await expect(page.getByText("Prior appeals", { exact: true })).toBeVisible();
+    const firstTimeOption = page.getByRole("button", { name: "No, this is my first" });
+    await firstTimeOption.click();
+    await expect(firstTimeOption).toHaveClass(/ring-primary/);
+    await page.getByTestId("interview-continue").click();
+
+    await expect(page.getByText("Save your case to continue")).toBeVisible();
+    const signInLink = page.locator("main").getByRole("link", { name: "Sign in", exact: true });
+    await expect(signInLink).toHaveAttribute("href", "/login?next=%2Fcase");
+  });
+
+  test("a decoded notice shows the case preview", async ({ page }) => {
+    await page.goto("/decode");
+    await page
+      .getByPlaceholder(/paste/i)
+      .fill(
+        "Performance Notification from Amazon Seller Central: your account has been deactivated " +
+          "for policy violation. Your selling privileges have been removed. Submit a Plan of Action " +
+          "addressing each ASIN affected and the account health issue described in this notice.",
+      );
+    await page.getByRole("button", { name: "Decode", exact: true }).click();
+
+    await expect(page.getByText("What this case will need", { exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Start your case/i })).toBeVisible();
+  });
+});

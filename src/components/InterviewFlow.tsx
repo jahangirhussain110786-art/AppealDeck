@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -30,6 +31,7 @@ import { FieldSuggester } from "@/components/FieldSuggester";
 import { Stepper } from "@/components/Stepper";
 import type { StepperStep } from "@/components/Stepper";
 import { VaultGate } from "@/components/VaultGate";
+import { SignInGate } from "@/components/SignInGate";
 import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/format";
@@ -142,6 +144,23 @@ export function InterviewFlow({
             await v.unlockWithDeviceKey();
             setVaultReady(true);
             setVaultUnlocked(true);
+            try {
+              const existing = await loadCaseFile(v);
+              if (existing) {
+                const s = nextStep(existing);
+                setKind(existing.kind);
+                setCaseFile(existing);
+                setStep((s ?? undefined) as InterviewStep | null);
+                setProgress(interviewProgress(existing) as InterviewProgress);
+                setComplete(s === null);
+                const log = await loadCaseLog(v).catch(() => null);
+                if (log?.whyHintDismissed) {
+                  setWhyHintDismissed(true);
+                }
+              }
+            } catch {
+              // ignore — the visitor starts fresh instead
+            }
           } else {
             setVaultReady(true);
             setVaultUnlocked(false);
@@ -224,6 +243,16 @@ export function InterviewFlow({
     },
     [resetAnswerState, vaultUnlocked, persistCaseFile],
   );
+
+  useEffect(() => {
+    if (!vaultReady || !vaultUnlocked) return;
+    if (caseFile || showResumeDialog) return;
+    if (!kind) return;
+    void handleStart(kind);
+    // Auto-starts once, from a URL-provided kind, only when there is no existing
+    // case file to resume and no resume prompt awaiting a decision.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vaultReady, vaultUnlocked, caseFile, showResumeDialog, kind]);
 
   const handleSubmit = useCallback(async () => {
     if (!caseFile || !step) return;
@@ -319,6 +348,20 @@ export function InterviewFlow({
     }
   }, [vaultUnlocked, resetAnswerState]);
 
+  const handleResumeSilent = useCallback(
+    async (existing: CaseFile) => {
+      const next = nextStep(existing as any);
+      const prog = interviewProgress(existing as any);
+      setKind((existing as any).kind);
+      setCaseFile(existing as unknown as CaseFile);
+      setStep((next ?? undefined) as InterviewStep | null);
+      setProgress(prog as InterviewProgress);
+      setComplete(false);
+      resetAnswerState();
+    },
+    [resetAnswerState],
+  );
+
   const handleStartOver = useCallback(async () => {
     if (vaultRef.current && vaultUnlocked) {
       try {
@@ -374,7 +417,7 @@ export function InterviewFlow({
         vault={vaultRef.current}
         deviceMode
         autoUnlock={!signedIn}
-        onUnlocked={() => {
+        onUnlocked={(info) => {
           setVaultReady(true);
           setVaultUnlocked(true);
           void (async () => {
@@ -382,7 +425,13 @@ export function InterviewFlow({
             if (!v) return;
             try {
               const existing = await loadCaseFile(v);
-              if (existing) setShowResumeDialog(true);
+              if (existing) {
+                if (info?.viaRelock) {
+                  await handleResumeSilent(existing);
+                } else {
+                  setShowResumeDialog(true);
+                }
+              }
             } catch {
               // ignore
             }
@@ -453,6 +502,14 @@ export function InterviewFlow({
   }
 
   if (!step) return null;
+
+  const showSignInGate = !signedIn && step.inputType === "file";
+
+  if (showSignInGate) {
+    return (
+      <SignInGate next="/case" savedAt={saveState.kind === "saved" ? saveState.at : undefined} />
+    );
+  }
 
   const stepperSteps: StepperStep[] = [
     {
@@ -752,6 +809,7 @@ export function InterviewFlow({
 
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
+                        data-testid="interview-continue"
                         onClick={handleSubmit}
                         disabled={
                           loading || (!choiceId && !answerValue.trim() && step.inputType !== "file")
@@ -858,6 +916,17 @@ export function InterviewFlow({
             </Card>
           </motion.div>
         </AnimatePresence>
+
+        {!signedIn && (
+          <p className="text-xs text-muted-foreground">
+            <Link
+              href="/login?next=/case"
+              className="text-primary underline underline-offset-4 hover:text-primary/80"
+            >
+              {APP.access.keepCaseLink}
+            </Link>
+          </p>
+        )}
 
         {saveState.kind === "saved" && (
           <p className="text-xs text-muted-foreground">

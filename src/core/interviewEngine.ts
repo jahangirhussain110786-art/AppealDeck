@@ -50,6 +50,7 @@ export interface CaseFile {
   rootCause?: string;
   timelineEvents: Array<{ date: string; description: string }>;
   priorAppealCount: number;
+  priorAppealsAnswered?: boolean;
   evidenceSlots: Partial<Record<EvidenceKind, { present: boolean; disqualified?: boolean }>>;
   actionItems: ActionItem[];
   attemptCount: number;
@@ -67,6 +68,7 @@ export function createCaseFile(kind: ViolationKind): CaseFile {
     state: "DECODED",
     timelineEvents: [],
     priorAppealCount: 0,
+    priorAppealsAnswered: false,
     evidenceSlots: {},
     actionItems: generateActionItems(kind),
     attemptCount: 0,
@@ -102,7 +104,7 @@ export function nextStep(file: CaseFile): InterviewStep | null {
     };
   }
 
-  if (file.priorAppealCount === 0 && file.attemptCount === 0) {
+  if (!file.priorAppealsAnswered) {
     return {
       id: "intake_prior_appeals",
       kind: "intake_prior_appeals",
@@ -187,6 +189,7 @@ export function applyAnswer(file: CaseFile, answer: StepAnswer): CaseFile {
       } else if (answer.choiceId === "yes_2plus") {
         next.priorAppealCount = 2;
       }
+      next.priorAppealsAnswered = true;
       break;
 
     default:
@@ -231,9 +234,7 @@ function countCompletedSteps(file: CaseFile): number {
   let count = 0;
   if (file.rootCause) count++;
   if (file.timelineEvents.length > 0) count++;
-  if (file.priorAppealCount === 0 && file.attemptCount === 0) {
-    // not yet answered
-  } else {
+  if (file.priorAppealsAnswered) {
     count++;
   }
   for (const action of file.actionItems) {

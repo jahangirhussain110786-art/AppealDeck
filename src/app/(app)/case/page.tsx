@@ -4,7 +4,6 @@ import { isLicenseActive } from "@/lib/license";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InterviewFlow } from "@/components/InterviewFlow";
-import { SignInGate } from "@/components/SignInGate";
 import { CasePreview } from "@/components/CasePreview";
 import { APP } from "@/content/app";
 
@@ -54,12 +53,6 @@ export default async function CasePage({
           <p className="mt-1 text-sm text-muted-foreground">{APP.case.subtitle}</p>
         </div>
 
-        {!signedIn && (
-          <div className="mt-4">
-            <SignInGate next="/case" />
-          </div>
-        )}
-
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -74,11 +67,7 @@ export default async function CasePage({
       </div>
 
       <div className="lg:col-span-1">
-        {initialKind && signedIn ? (
-          <CasePreview kind={initialKind} />
-        ) : (
-          <CasePreview kind="UNKNOWN" />
-        )}
+        <CasePreview kind={initialKind ?? "UNKNOWN"} />
 
         <Card className="mt-6">
           <CardHeader>
