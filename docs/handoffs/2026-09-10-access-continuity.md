@@ -4,10 +4,10 @@ Prompt: `docs/handoffs/2026-09-10-access-continuity-prompt.md`. Spec: `Planning/
 
 ## Resume pointer
 
-- Task: A4 · Sub-step: 1 · Status: not-started (A3 committed)
-- Last green gate: A3 — `npx tsc --noEmit` 0; `npm run lint` 0 warnings; `npm run lint:copy` PASS (5 passes); `npm run format:check` 0; `npm test` 315/315; A3 accept grep checks green (`kind: "device"` → 1, `initWithDeviceKey|unlockWithDeviceKey|relockWithPassphrase` → 5, device key non-extractable, 25 `it()` blocks); persistence probe passed (fake-indexeddb preserves CryptoKey via structured clone).
-- Files open for this sub-step: src/components/InterviewFlow.tsx, src/components/VaultGate.tsx, src/app/(app)/case/page.tsx, src/components/SignInGate.tsx, src/components/CasePreview.tsx, src/components/DashboardClient.tsx, src/app/decode/DecodeClient.tsx
-- Next command: read A4 §1–§3 / spec S§2, S§4.2, S§5; add signedIn/hasPass props to InterviewFlow + CasePreview; replace callApi with engine; wire VaultGate device mode + autoUnlock; add SignInGate + CasePreview components
+- Task: A5 · Sub-step: 1 · Status: not-started (A4 committed)
+- Last green gate: A4 — `npx tsc --noEmit` 0; `npm run lint` 0 warnings; `npm run lint:copy` PASS (5 passes); `npm run format:check` 0; `npm test` 315/315
+- Files open for this sub-step: src/components/DashboardClient.tsx, src/app/(app)/page.tsx (or dashboard), src/components/SignInGate.tsx, src/components/CasePreview.tsx, src/lib/license.ts
+- Next command: read A5 §1–§3 / spec S§3.3, S§4.3. Wire signed-out dashboard draft (CasePreview + SignInGate), HonestExpectationsCard, DashboardClient license prop + signedIn branch
 - Context usage at last update: 0 %
 
 ## Baselines at `7bd3e4e` (reviewing AI, 10 Sep 2026)
@@ -35,22 +35,27 @@ Prompt: `docs/handoffs/2026-09-10-access-continuity-prompt.md`. Spec: `Planning/
 | A3   | compose + billing redirect with return path                                                                                  | `grep -c`                                                                                                    | 2 hits                                                                                                                                                                                                                                      | —       |
 | A2   | Self-check §4 gates green (after fixing TS6133 unused vars)                                                                  | `npx tsc --noEmit \| npm run lint \| npm run lint:copy \| npm run format:check \| npm test \| npm run build` | all exit 0; typ 0 err; lint 0; copy PASS; format ok; vit 309/309; build 30 routes                                                                                                                                                           | ed0b4cb |
 | A2   | Playwright signed-out gate + login-keeps-next                                                                                | `npx playwright test e2e/app-gate.spec.ts e2e/a11y.spec.ts --project=chromium --reporter=dot`                | 30 passed                                                                                                                                                                                                                                   | ed0b4cb |
-| A3   | Device KeyMode + VaultKeyStore fields, crypto helpers, vault device methods                                                  | grep + tsc + vitest                                                                                          | `kind: "device"` → 1 hit (envelope.ts:33); `initWithDeviceKey\|unlockWithDeviceKey\|relockWithPassphrase` → 5 hits (vault.ts:119,123,146,176,186); device key non-extractable (`false, ["encrypt","decrypt"]`) in crypto.ts; vitest 315/315 | 6fc49bf |
-| A3   | Persistence probe: fake-indexeddb preserves CryptoKey via structured clone                                                   | vitest device-mode tests                                                                                     | device init → add → lock → device unlock reads same record ✓                                                                                                                                                                                | 6fc49bf |
+| A4   | Device KeyMode + VaultKeyStore fields, crypto helpers, vault device methods                                                  | grep + tsc + vitest                                                                                          | `kind: "device"` → 1 hit (envelope.ts:33); `initWithDeviceKey\|unlockWithDeviceKey\|relockWithPassphrase` → 5 hits (vault.ts:119,123,146,176,186); device key non-extractable (`false, ["encrypt","decrypt"]`) in crypto.ts; vitest 315/315 | 6fc49bf |
+| A4   | Persistence probe: fake-indexeddb preserves CryptoKey via structured clone                                                   | vitest device-mode tests                                                                                     | device init → add → lock → device unlock reads same record ✓                                                                                                                                                                                | 6fc49bf |
+| A4   | Engine-driven interview (callApi replaced with createCaseFile/applyAnswer/nextStep/interviewProgress)                        | grep + tsc                                                                                                   | `callApi` → 0 hits in InterviewFlow.tsx; `createCaseFile` → 1; `applyAnswer` → 1; `nextStep` → 2; `interviewProgress` → 3                                                                                                                   | 5b10997 |
+| A4   | VaultGate device mode + autoUnlock props                                                                                     | grep                                                                                                         | `deviceMode` → 3 hits, `autoUnlock` → 3 hits in VaultGate.tsx                                                                                                                                                                               | 5b10997 |
+| A4   | SignInGate + CasePreview components                                                                                          | grep                                                                                                         | `SignInGate` → 3 hits (case/page, SignGate.tsx), `CasePreview` → 4 hits (CasePreview.tsx, case/page, DecodeClient)                                                                                                                          | 5b10997 |
+| A4   | FieldSuggester only when signedIn; aiSignedOut line                                                                          | grep                                                                                                         | `signedIn && <FieldSuggester` → 1 hit; `APP.access.aiSignedOut` → 1 hit                                                                                                                                                                     | 5b10997 |
+| A4   | Self-check §4 gates green                                                                                                    | tsc + lint + lint:copy + format:check + vitest                                                               | tsc 0 err; lint 0; copy PASS; format ok; vit 315/315                                                                                                                                                                                        | 5b10997 |
 
 ## S§11 acceptance checklist (filled by A8)
 
-| #   | Item                                                                                                       | Evidence             | Commit  |
-| --- | ---------------------------------------------------------------------------------------------------------- | -------------------- | ------- |
-| 1   | Signed out `/case`: answer, reload, still there                                                            |                      |         |
-| 2   | Signed out: gate on first file step; dashboard draft; vault teaching; compose/billing redirect with `next` | A2/A4/A5 in progress | 6fc49bf |
-| 3   | Header five slots; lock only on Vault signed out; Billing only signed in                                   |                      |         |
-| 4   | Vault unit tests (device init/unlock, relock, key deleted, wrong passphrase, status)                       |                      |         |
-| 5   | `GET /api/license/status` 401 / typed JSON                                                                 |                      |         |
-| 6   | `POST /api/extract-field` 401 / 429 / no license check                                                     |                      |         |
-| 7   | Pricing three `columnheader`s; FAQ item in Pricing group                                                   |                      |         |
-| 8   | All gates green                                                                                            |                      |         |
-| 9   | Screenshots 375/1280 light + dark, signed out routes                                                       |                      |         |
+| #   | Item                                                                                                       | Evidence      | Commit  |
+| --- | ---------------------------------------------------------------------------------------------------------- | ------------- | ------- |
+| 1   | Signed out `/case`: answer, reload, still there                                                            |               |         |
+| 2   | Signed out: gate on first file step; dashboard draft; vault teaching; compose/billing redirect with `next` | A2/A3/A4 done | 5b10997 |
+| 3   | Header five slots; lock only on Vault signed out; Billing only signed in                                   |               |         |
+| 4   | Vault unit tests (device init/unlock, relock, key deleted, wrong passphrase, status)                       |               |         |
+| 5   | `GET /api/license/status` 401 / typed JSON                                                                 |               |         |
+| 6   | `POST /api/extract-field` 401 / 429 / no license check                                                     |               |         |
+| 7   | Pricing three `columnheader`s; FAQ item in Pricing group                                                   |               |         |
+| 8   | All gates green                                                                                            |               |         |
+| 9   | Screenshots 375/1280 light + dark, signed out routes                                                       |               |         |
 
 ## Discovered during this pass
 
