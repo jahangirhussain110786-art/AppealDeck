@@ -153,6 +153,10 @@ function LoginPageInner() {
               id="email"
               type="email"
               autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              inputMode="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}

@@ -413,6 +413,7 @@ export function DashboardClient({ license }: DashboardClientProps) {
                     <Textarea
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
+                      spellCheck={false}
                       placeholder={APP.dashboard.replyCard.placeholder}
                       rows={4}
                     />

@@ -143,6 +143,7 @@ export default function DecodeClient() {
             placeholder={DECODE.textarea.placeholder}
             value={text}
             onChange={(e) => setText(e.target.value)}
+            spellCheck={false}
             aria-describedby="notice-hint"
             className="min-h-[180px] font-mono text-sm"
           />

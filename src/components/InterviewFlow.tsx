@@ -599,6 +599,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
           >
             <div className="p-4">
               <Button
+                size="lg"
                 className="w-full"
                 onClick={handleSubmit}
                 disabled={
@@ -702,10 +703,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                       <Textarea
                         value={answerValue}
                         onChange={(e) => setAnswerValue(e.target.value)}
-                        autoComplete="off"
-                        autoCapitalize="none"
-                        autoCorrect="false"
-                        spellCheck={false}
+                        spellCheck
                         placeholder={APP.interview.answerPlaceholder}
                         rows={4}
                       />
@@ -726,6 +724,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                     {step.inputType === "number" && (
                       <Input
                         type="number"
+                        inputMode="numeric"
                         value={answerValue}
                         onChange={(e) => setAnswerValue(e.target.value)}
                         placeholder={APP.interview.numberPlaceholder}
@@ -871,6 +870,7 @@ export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
                     <Textarea
                       value={declineReason}
                       onChange={(e) => setDeclineReason(e.target.value)}
+                      spellCheck
                       placeholder={APP.interview.declinePlaceholder}
                       rows={2}
                     />

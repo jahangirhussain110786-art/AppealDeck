@@ -80,6 +80,7 @@ export function PoaSection({
             <Textarea
               value={draftText}
               onChange={(e) => onEdit(index, e.target.value)}
+              spellCheck
               aria-label={section.heading}
               className="font-mono text-sm"
               rows={Math.min(8, 3 + Math.ceil(section.body.length / 80))}
