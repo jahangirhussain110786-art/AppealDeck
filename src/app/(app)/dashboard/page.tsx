@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { requireUser } from "@/lib/auth";
+import { getOptionalUser } from "@/lib/auth";
 import { fetchLicenseByEmail } from "@/lib/license";
 import { DashboardClient } from "@/components/DashboardClient";
 import { APP } from "@/content/app";
@@ -12,8 +12,12 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const user = await requireUser();
-  const license = await fetchLicenseByEmail(user.email);
+  const user = await getOptionalUser();
+  const signedIn = Boolean(user);
+  const email = (user?.email ?? "").trim().toLowerCase();
+  const license = signedIn
+    ? await fetchLicenseByEmail(email)
+    : { status: "none" as const, plan: null, licenseKey: null };
 
   return (
     <div className="space-y-6">
@@ -23,7 +27,7 @@ export default async function DashboardPage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">{APP.dashboard.subtitle}</p>
       </div>
-      <DashboardClient license={license} />
+      <DashboardClient license={license} signedIn={signedIn} />
     </div>
   );
 }

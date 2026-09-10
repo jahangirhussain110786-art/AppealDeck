@@ -84,17 +84,16 @@ test.describe("Marketing + auth surfaces (axe-core, serious + critical)", () => 
 });
 
 test.describe("Auth gate", () => {
-  test("unauthenticated /dashboard redirects to /login", async ({ page }) => {
+  test("unauthenticated /dashboard stays on the route", async ({ page }) => {
     const res = await page.goto("/dashboard");
     expect(res?.status()).toBe(200);
-    await page.waitForURL(/\/login/);
-    expect(page.url()).toContain("/login");
+    expect(page.url()).toContain("/dashboard");
   });
 
-  test("unauthenticated /case redirects to /login", async ({ page }) => {
-    await page.goto("/case");
-    await page.waitForURL(/\/login/);
-    expect(page.url()).toContain("/login");
+  test("unauthenticated /case stays on the route", async ({ page }) => {
+    const res = await page.goto("/case");
+    expect(res?.status()).toBe(200);
+    expect(page.url()).toContain("/case");
   });
 
   test("unauthenticated /compose redirects to /login", async ({ page }) => {
@@ -103,10 +102,10 @@ test.describe("Auth gate", () => {
     expect(page.url()).toContain("/login");
   });
 
-  test("unauthenticated /vault redirects to /login", async ({ page }) => {
-    await page.goto("/vault");
-    await page.waitForURL(/\/login/);
-    expect(page.url()).toContain("/login");
+  test("unauthenticated /vault stays on the route", async ({ page }) => {
+    const res = await page.goto("/vault");
+    expect(res?.status()).toBe(200);
+    expect(page.url()).toContain("/vault");
   });
 
   test("unauthenticated /billing redirects to /login", async ({ page }) => {

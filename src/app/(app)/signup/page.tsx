@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AuthShell,
   GoogleButton,
@@ -16,12 +16,17 @@ import { Button } from "@/components/ui/button";
 import { isValidEmail, validatePasswordLength } from "@/lib/validation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
+import { safeNext } from "@/lib/safeNext";
 import { AUTH } from "@/content/auth";
 import type { AuthStatus } from "@/components/AuthCard";
 import { motion } from "framer-motion";
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const next = safeNext(nextParam, APP_URL);
+  const showContinue = next.startsWith("/case");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -72,7 +77,7 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${APP_URL}/auth/callback` },
+      options: { emailRedirectTo: `${APP_URL}/auth/callback?next=${encodeURIComponent(next)}` },
     });
 
     if (error) {
@@ -82,7 +87,7 @@ export default function SignupPage() {
     }
 
     if (data.session) {
-      window.location.href = "/dashboard";
+      window.location.href = next;
       return;
     }
 
@@ -100,7 +105,7 @@ export default function SignupPage() {
     setStatus("loading");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${APP_URL}/auth/callback` },
+      options: { redirectTo: `${APP_URL}/auth/callback?next=${encodeURIComponent(next)}` },
     });
     if (error) {
       setStatus("error");
@@ -111,7 +116,7 @@ export default function SignupPage() {
   return (
     <AuthShell
       title={AUTH.signup.title}
-      subtitle={AUTH.signup.subtitle}
+      subtitle={showContinue ? AUTH.signup.subtitleContinue : AUTH.signup.subtitle}
       footerPrompt={AUTH.signup.footer.prompt}
       footerAction={AUTH.signup.footer.action}
       footerHref="/login"

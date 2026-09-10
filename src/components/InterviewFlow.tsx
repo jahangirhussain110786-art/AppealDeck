@@ -132,9 +132,16 @@ const KIND_LABELS: Record<ViolationKind, string> = {
 interface InterviewFlowProps {
   initialKind?: ViolationKind;
   onComplete?: (caseFile: CaseFile) => void;
+  signedIn?: boolean;
+  hasPass?: boolean;
 }
 
-export function InterviewFlow({ initialKind, onComplete }: InterviewFlowProps) {
+export function InterviewFlow({
+  initialKind,
+  onComplete,
+  signedIn: _signedIn = true,
+  hasPass: _hasPass = true,
+}: InterviewFlowProps) {
   const router = useRouter();
   const [kind, setKind] = useState<ViolationKind | undefined>(initialKind);
   const [caseFile, setCaseFile] = useState<CaseFile | null>(null);

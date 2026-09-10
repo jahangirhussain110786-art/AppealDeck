@@ -70,19 +70,6 @@ export const APP = {
   dashboard: {
     title: "Your dashboard",
     subtitle: "Manage your AppealDeck services and seller-account tools here.",
-    noPass: {
-      heading: "No active Appeal Pass",
-      desc: "Buy the $199 one-time Appeal Pass to unlock your drafted Plan of Action and tools.",
-      cta: "Get the Appeal Pass",
-    },
-    noPassCard: {
-      summary: "Your case tools are locked until you have an active Appeal Pass.",
-      whatToDo: [
-        "Review the pricing page to choose your plan.",
-        "Buy the Appeal Pass to unlock the guided interview and POA drafting.",
-      ],
-      cta: "Get the Appeal Pass",
-    },
     active: {
       heading: "Appeal Pass active",
       planLabel: "Plan",
@@ -174,11 +161,6 @@ export const APP = {
     title: "Your Plan of Action (POA)",
     subtitle:
       "Drafts are generated from your case file. Review, copy, and submit through Seller Central.",
-    noPass: {
-      title: "Appeal Pass required",
-      desc: "The POA composer requires an active Appeal Pass.",
-      cta: "Get the Appeal Pass",
-    },
     backButton: "Back to case",
     gapDraft: {
       title: "Gap draft",
@@ -305,11 +287,6 @@ export const APP = {
       "Files you upload here are encrypted on your device with a key derived from your passphrase.",
     cryptoDetails:
       "Envelope v{version}, AES-GCM 256-bit, 12-byte IV, optional associated data. Key model: PBKDF2-SHA-256 (310,000 iterations) derives a key-encryption key, which wraps a random per-record data key. The wrapped key lives on disk; the passphrase never leaves this device. Cloud sync uploads ciphertext only.",
-    noPassTitle: "Encrypted evidence vault",
-    noPassDesc:
-      "The encrypted evidence vault is included with the Appeal Pass. It stores your supplier invoices, brand authorizations, and other case documents encrypted on your device (AES-GCM, key derived from a passphrase you set — we never see it).",
-    noPassCta: "Get the Appeal Pass",
-    noPassBack: "Back to your case",
     teachingEmpty: {
       title: "No evidence yet",
       description:
@@ -462,11 +439,6 @@ export const APP = {
       title: "Quick links",
       decode: "Decode a notice",
       billing: "Billing",
-    },
-    noPass: {
-      title: "Appeal Pass required",
-      desc: "The guided interview, evidence checklist, and Plan of Action (POA) composer require an active Appeal Pass.",
-      cta: "Get the Appeal Pass",
     },
   },
   breadcrumb: {

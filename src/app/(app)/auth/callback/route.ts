@@ -1,24 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-function safeNext(explicitNext: string | null, origin: string): string {
-  if (!explicitNext) return "/dashboard";
-  if (
-    !explicitNext.startsWith("/") ||
-    explicitNext.startsWith("//") ||
-    explicitNext.startsWith("/\\")
-  ) {
-    return "/dashboard";
-  }
-  try {
-    if (new URL(explicitNext, origin).origin !== origin) {
-      return "/dashboard";
-    }
-  } catch {
-    return "/dashboard";
-  }
-  return explicitNext;
-}
+import { safeNext } from "@/lib/safeNext";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);

@@ -1,34 +1,46 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("App gate — unauthenticated pages and APIs", () => {
-  test("unauthenticated /dashboard redirects to /login", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForURL(/\/login/);
-    expect(page.url()).toContain("/login");
+  test("unauthenticated /dashboard stays on the route", async ({ page }) => {
+    const res = await page.goto("/dashboard");
+    expect(res?.status()).toBe(200);
+    expect(page.url()).toContain("/dashboard");
+    await expect(page.locator("h1")).toBeVisible();
   });
 
-  test("unauthenticated /case redirects to /login", async ({ page }) => {
-    await page.goto("/case");
-    await page.waitForURL(/\/login/);
-    expect(page.url()).toContain("/login");
+  test("unauthenticated /case stays on the route", async ({ page }) => {
+    const res = await page.goto("/case");
+    expect(res?.status()).toBe(200);
+    expect(page.url()).toContain("/case");
+    await expect(page.locator("h1")).toBeVisible();
   });
 
-  test("unauthenticated /compose redirects to /login", async ({ page }) => {
+  test("unauthenticated /compose redirects to /login with next", async ({ page }) => {
     await page.goto("/compose");
     await page.waitForURL(/\/login/);
-    expect(page.url()).toContain("/login");
+    const url = new URL(page.url(), "http://localhost");
+    expect(url.pathname).toBe("/login");
+    expect(url.searchParams.get("next")).toBe("/compose");
   });
 
-  test("unauthenticated /vault redirects to /login", async ({ page }) => {
-    await page.goto("/vault");
-    await page.waitForURL(/\/login/);
-    expect(page.url()).toContain("/login");
+  test("unauthenticated /vault stays on the route", async ({ page }) => {
+    const res = await page.goto("/vault");
+    expect(res?.status()).toBe(200);
+    expect(page.url()).toContain("/vault");
+    await expect(page.locator("h1")).toBeVisible();
   });
 
-  test("unauthenticated /billing redirects to /login", async ({ page }) => {
+  test("unauthenticated /billing redirects to /login with next", async ({ page }) => {
     await page.goto("/billing");
     await page.waitForURL(/\/login/);
-    expect(page.url()).toContain("/login");
+    const url = new URL(page.url(), "http://localhost");
+    expect(url.pathname).toBe("/login");
+    expect(url.searchParams.get("next")).toBe("/billing");
+  });
+
+  test("login keeps next", async ({ page }) => {
+    await page.goto("/login?next=/case");
+    await expect(page.locator("text=Your answers are saved on this device")).toBeVisible();
   });
 
   test("POST /api/interview requires auth (401 JSON)", async ({ request }) => {

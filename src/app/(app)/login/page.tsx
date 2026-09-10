@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
+import { safeNext } from "@/lib/safeNext";
 import { AUTH } from "@/content/auth";
 import { isValidEmail, validatePasswordLength } from "@/lib/validation";
 import type { AuthStatus } from "@/components/AuthCard";
@@ -28,6 +29,9 @@ export default function LoginPage() {
 
 function LoginPageInner() {
   const searchParams = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const next = safeNext(nextParam, APP_URL);
+  const showContinue = next.startsWith("/case");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -77,7 +81,7 @@ function LoginPageInner() {
     if (mode === "magic") {
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: `${APP_URL}/auth/callback` },
+        options: { emailRedirectTo: `${APP_URL}/auth/callback?next=${encodeURIComponent(next)}` },
       });
       if (error) {
         setStatus("error");
@@ -97,7 +101,7 @@ function LoginPageInner() {
     }
     setStatus("idle");
     setMessage("");
-    window.location.href = "/dashboard";
+    window.location.href = next;
   }
 
   async function handleGoogle() {
@@ -110,7 +114,7 @@ function LoginPageInner() {
     setStatus("loading");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${APP_URL}/auth/callback` },
+      options: { redirectTo: `${APP_URL}/auth/callback?next=${encodeURIComponent(next)}` },
     });
     if (error) {
       setStatus("error");
@@ -126,7 +130,7 @@ function LoginPageInner() {
   return (
     <AuthShell
       title={AUTH.login.title}
-      subtitle={AUTH.login.subtitle}
+      subtitle={showContinue ? AUTH.login.subtitleContinue : AUTH.login.subtitle}
       footerPrompt={AUTH.login.footer.prompt}
       footerAction={AUTH.login.footer.action}
       footerHref="/signup"

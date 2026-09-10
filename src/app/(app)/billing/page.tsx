@@ -11,7 +11,7 @@ import { APP } from "@/content/app";
 export const dynamic = "force-dynamic";
 
 export default async function BillingPage() {
-  const user = await requireUser();
+  const user = await requireUser("/billing");
   const email = (user.email ?? "").trim().toLowerCase();
 
   const active = await isLicenseActive(email);

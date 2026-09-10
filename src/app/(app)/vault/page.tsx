@@ -1,31 +1,53 @@
-import { requireUser } from "@/lib/auth";
+import Link from "next/link";
+import { getOptionalUser } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import Link from "next/link";
 import VaultView from "@/components/VaultView";
 import { APP } from "@/content/app";
 
 export const dynamic = "force-dynamic";
 
 export default async function VaultPage() {
-  const user = await requireUser();
+  const user = await getOptionalUser();
+
+  if (!user) {
+    return (
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 py-10">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          {APP.access.vaultSignedOut.title}
+        </h1>
+        <Card className="p-6">
+          <p className="text-sm text-muted-foreground">{APP.access.vaultSignedOut.desc}</p>
+          <div className="mt-4 flex gap-2">
+            <Button asChild>
+              <Link href="/login?next=/vault">{APP.access.vaultSignedOut.cta}</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/case">{APP.access.vaultSignedOut.back}</Link>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   const active = await isLicenseActive(user.email);
 
   if (!active) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 py-10">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {APP.vault.noPassTitle}
+          {APP.access.vaultSignedOut.title}
         </h1>
         <Card className="p-6">
-          <p className="text-sm text-muted-foreground">{APP.vault.noPassDesc}</p>
+          <p className="text-sm text-muted-foreground">{APP.access.vaultSignedOut.desc}</p>
           <div className="mt-4 flex gap-2">
             <Button asChild>
-              <Link href="/pricing">{APP.vault.noPassCta}</Link>
+              <Link href="/pricing">{APP.access.vaultSignedOut.cta}</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/case">{APP.vault.noPassBack}</Link>
+              <Link href="/case">{APP.access.vaultSignedOut.back}</Link>
             </Button>
           </div>
         </Card>

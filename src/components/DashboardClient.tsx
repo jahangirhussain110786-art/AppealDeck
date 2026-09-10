@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Send, FileText, Loader2, ShieldAlert, Lock } from "lucide-react";
+import { Send, FileText, Loader2, ShieldAlert } from "lucide-react";
 import { getBrowserVault } from "@/lib/vault/browser";
 import type { Vault } from "@/core/vault/vault";
 import { saveCaseLog, loadCaseLog, loadCaseFile } from "@/lib/caseStore";
@@ -26,7 +26,6 @@ import { CaseStateBadge } from "@/components/CaseStateBadge";
 import { DeadlineChip } from "@/components/DeadlineChip";
 import { EmptyState } from "@/components/EmptyState";
 import { VaultGate } from "@/components/VaultGate";
-import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { ReplyCategoryLabel } from "@/components/ReplyCategoryLabel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,8 +33,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { APP } from "@/content/app";
+import { SHARED } from "@/content/shared";
 import { formatDate } from "@/lib/format";
-import { GLOBAL_EXPECTATIONS } from "@/core";
 import type { LicenseSummary } from "@/lib/license";
 import type { EvidenceKind } from "@/core";
 
@@ -47,6 +46,7 @@ interface ReplyAnalysis {
 
 interface DashboardClientProps {
   license: LicenseSummary;
+  signedIn: boolean;
 }
 
 function useVaultInstance(): Vault {
@@ -104,7 +104,7 @@ function ReadinessCard({
   );
 }
 
-export function DashboardClient({ license }: DashboardClientProps) {
+export function DashboardClient({ license: _license, signedIn }: DashboardClientProps) {
   const vault = useVaultInstance();
   const [caseFile, setCaseFile] = useState<CaseFile | null>(null);
   const [caseLog, setCaseLog] = useState<CaseLog | null>(null);
@@ -217,7 +217,7 @@ export function DashboardClient({ license }: DashboardClientProps) {
     }
   };
 
-  if (license.status !== "active") {
+  if (!signedIn) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -225,46 +225,24 @@ export function DashboardClient({ license }: DashboardClientProps) {
         transition={{ duration: 0.3, delay: 0.1 }}
         className="space-y-6"
       >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="mb-2 flex items-center gap-2">
-              <Skeleton className="h-5 w-5 rounded-full" />
-              <Skeleton className="h-5 w-32" />
+        <EmptyState
+          icon={FileText}
+          title={APP.access.dashboardSignedOut.emptyTitle}
+          description={APP.access.dashboardSignedOut.emptyDesc}
+          action={
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button asChild variant="outline">
+                <Link href="/decode">{APP.access.dashboardSignedOut.decode}</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/case">{APP.access.dashboardSignedOut.start}</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/login?next=/dashboard">{SHARED.nav.signIn}</Link>
+              </Button>
             </div>
-            <Skeleton className="h-4 w-48" />
-          </div>
-        </div>
-
-        <ReadinessCard score={0} missingKinds={[]} locked />
-
-        <Card aria-disabled>
-          <CardHeader>
-            <CardTitle className="text-base">{APP.dashboard.actions.nextBestActions}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Lock className="absolute top-4 right-4 h-4 w-4 text-muted-foreground" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4 mt-1" />
-          </CardContent>
-        </Card>
-
-        <Card aria-disabled>
-          <CardHeader>
-            <CardTitle className="text-base">{APP.dashboard.replyCard.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Lock className="absolute top-4 right-4 h-4 w-4 text-muted-foreground" />
-            <Skeleton className="h-4 w-3/4" />
-          </CardContent>
-        </Card>
-
-        <HonestExpectationsCard
-          summary={GLOBAL_EXPECTATIONS.typicalNote}
-          whatToDo={[...GLOBAL_EXPECTATIONS.whatWeDo, ...GLOBAL_EXPECTATIONS.whatWeDoNot]}
+          }
         />
-        <Button asChild>
-          <Link href="/pricing">{APP.dashboard.noPassCard.cta}</Link>
-        </Button>
       </motion.div>
     );
   }
