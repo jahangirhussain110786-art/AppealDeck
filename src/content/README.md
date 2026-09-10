@@ -7,8 +7,8 @@ All user-facing strings live in typed modules under `src/content/`. No hardcoded
 - `marketing.ts` — home, decode, pricing, founder note
 - `legal.ts` — privacy / terms / refund prose + D8 consent wording shared with pricing
 - `auth.ts` — login / signup / forgot / reset
-- `app.ts` — dashboard / authenticated surfaces
-- `shared.ts` — footer, metadata titles/descriptions, offline notice, common buttons
+- `app.ts` — dashboard / authenticated surfaces; the `access` group (AM-21) holds the sign-in gate, passphrase-relock prompt, signed-out dashboard/vault teaching states, case preview, compose gate and checkout strings for the no-account / free-account / Appeal Pass ladder
+- `shared.ts` — footer, metadata titles/descriptions, offline notice, common buttons; `SHARED.nav.*` (AM-21) holds the five-slot header labels used in both signed-in and signed-out states
 - `sampleNotice.ts` — the one non-gated fixture re-exported for the "Try a sample notice" button on `/decode`
 - `claims-allowlist.txt` — exact phrases the lint may pass (empty until a genuine Amazon term needs it)
 

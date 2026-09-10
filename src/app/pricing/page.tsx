@@ -57,8 +57,9 @@ export default function PricingPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{PRICING.tableHeadings.feature}</TableHead>
-                  <TableHead className="text-center">{PRICING.free}</TableHead>
-                  <TableHead className="text-center">{PRICING.pass}</TableHead>
+                  <TableHead className="text-center">{PRICING.tableHeadings.free}</TableHead>
+                  <TableHead className="text-center">{PRICING.tableHeadings.account}</TableHead>
+                  <TableHead className="text-center">{PRICING.tableHeadings.pass}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -66,6 +67,7 @@ export default function PricingPage() {
                   <TableRow key={row.feature}>
                     <TableCell className="font-medium">{row.feature}</TableCell>
                     <TableCell className="text-center">{row.free}</TableCell>
+                    <TableCell className="text-center">{row.account}</TableCell>
                     <TableCell className="text-center">{row.pass}</TableCell>
                   </TableRow>
                 ))}

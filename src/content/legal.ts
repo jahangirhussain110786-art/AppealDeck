@@ -32,6 +32,7 @@ export const LEGAL = {
           "We collect only the information needed to operate the service. During decode, your notice text stays in your browser and is never uploaded.",
           "When you create an account or buy the Appeal Pass, Paddle collects the payment and billing information. We receive a licence record (email, plan, status) via a Paddle webhook.",
           "When you store evidence in the encrypted vault, the ciphertext is synced to a Supabase Storage bucket. We never hold the decryption key.",
+          "Before you sign in, anything you enter in the guided interview is encrypted on your device with a key your browser holds; it does not reach our servers. When you sign in and set a passphrase, the same records are re-locked under that passphrase. Clearing your browser data before you sign in deletes that draft; there is no copy anywhere else.",
         ],
       },
       {

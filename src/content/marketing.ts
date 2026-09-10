@@ -70,25 +70,62 @@ export const PRICING = {
   tableHeadings: {
     feature: "What you get",
     free: "Free",
+    account: "Free account",
     pass: "Appeal Pass",
   },
   rows: {
-    decode: { feature: "Decode your notice in plain English", free: "Yes", pass: "Yes" },
+    decode: {
+      feature: "Decode your notice in plain English",
+      free: "Yes",
+      account: "Yes",
+      pass: "Yes",
+    },
     plainEnglish: {
       feature: "Deadlines + do-not list",
       free: "Yes",
+      account: "Yes",
       pass: "Yes",
     },
-    poa: { feature: "Drafted Plan of Action", free: "—", pass: "Yes" },
-    critic: { feature: "Critic flags on your draft", free: "—", pass: "Yes" },
+    preview: {
+      feature: "Case preview: evidence list and action checklist",
+      free: "Yes",
+      account: "Yes",
+      pass: "Yes",
+    },
     interview: {
       feature: "Guided interview checklist",
-      free: "—",
-      pass: "with the Appeal Pass at launch",
+      free: "First steps",
+      account: "Yes",
+      pass: "Yes",
     },
-    vault: { feature: "Encrypted local vault (10 MB cap per record)", free: "—", pass: "Yes" },
-    devices: { feature: "5-device activations", free: "—", pass: "Yes" },
-    refund: { feature: "7-day refund", free: "—", pass: "Yes" },
+    vault: {
+      feature: "Encrypted local vault (10 MB cap per record)",
+      free: "—",
+      account: "Yes",
+      pass: "Yes",
+    },
+    readiness: {
+      feature: "Case dashboard and readiness",
+      free: "Draft only",
+      account: "Yes",
+      pass: "Yes",
+    },
+    aiSuggest: {
+      feature: "AI field suggestions",
+      free: "—",
+      account: "Yes, daily cap",
+      pass: "Yes",
+    },
+    poa: { feature: "Drafted Plan of Action", free: "—", account: "—", pass: "Yes" },
+    critic: { feature: "Critic flags on your draft", free: "—", account: "—", pass: "Yes" },
+    replyAnalysis: {
+      feature: "Amazon-reply analysis",
+      free: "—",
+      account: "—",
+      pass: "Yes",
+    },
+    devices: { feature: "5-device activations", free: "—", account: "—", pass: "Yes" },
+    refund: { feature: "7-day refund", free: "—", account: "—", pass: "Yes" },
   },
   trust: {
     title: "Trust, shown by mechanism",
@@ -158,6 +195,10 @@ export const FAQ = {
       q: "Do you submit my appeal to Amazon?",
       a: "No. AppealDeck drafts the Plan of Action for you to review and submit yourself. We never log in to your Seller Central account and never submit on your behalf.",
     },
+    {
+      q: "What is free, and what needs an account?",
+      a: "Decoding, deadlines, the do-now list and the first interview steps are free with no account, saved on this device. Sign in, still free, to add documents to your encrypted vault, see how complete your case file is and use AI field suggestions. The Appeal Pass drafts and reviews the Plan of Action and adds cloud sync.",
+    },
   ] as const,
   cta: {
     title: "Still have questions?",
@@ -167,7 +208,11 @@ export const FAQ = {
   groups: [
     {
       name: "Pricing",
-      items: ["Do I need an Amazon account to decode?", "What is your refund policy?"],
+      items: [
+        "Do I need an Amazon account to decode?",
+        "What is your refund policy?",
+        "What is free, and what needs an account?",
+      ],
     },
     { name: "Decoding", items: ["How does the decoder work?", "Is my POA draft accurate?"] },
     { name: "Deadlines", items: ["What are the deadlines?"] },
