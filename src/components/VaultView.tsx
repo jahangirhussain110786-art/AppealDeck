@@ -41,7 +41,7 @@ import type { EvidenceKind } from "@/core/evidenceModel";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { VaultGate } from "@/components/VaultGate";
 import { Label } from "@/components/ui/label";
-import { formatDate, formatBytes } from "@/lib/format";
+import { formatDateTime, formatBytes } from "@/lib/format";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
 
 function useVault(): Vault {
@@ -413,7 +413,7 @@ export default function VaultView({ userId }: { userId: string }) {
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {it.mimeType} · {formatBytes(it.sizeBytes)} ·{" "}
-                            <span data-tn>{formatDate(it.createdAt)}</span>
+                            <span data-tn>{formatDateTime(it.createdAt)}</span>
                             {it.evidenceKind
                               ? ` · ${APP.evidenceKinds[it.evidenceKind as EvidenceKind] ?? evidenceKindLabel(it.evidenceKind as EvidenceKind)}`
                               : ""}

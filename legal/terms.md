@@ -11,7 +11,7 @@ By using AppealDeck you agree to these terms. If you do not agree, do not use th
 
 ## 2. What AppealDeck is — and is not
 
-AppealDeck is **software** that decodes Amazon suspension notices and drafts a Plan of Action for you to review and submit yourself. It is **not legal advice** and **not a guarantee of reinstatement**. Amazon decides all outcomes. We make **no promise or representation about any appeal result**, success rate, or timeline.
+AppealDeck is **software** that decodes Amazon suspension/notice text and helps you draft a Plan of Action. It is **not legal advice** and **not a guarantee of reinstatement**. Amazon decides all outcomes. We make **no promise or representation about any appeal result**, success rate, or timeline.
 
 AppealDeck is an independent service operated by Jhangir Hussain, trading as Hawlton, in Pakistan. It is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon, Seller Central and related names are trademarks of Amazon.com, Inc. or its affiliates, used here only to describe the notices this software reads and the appeals it helps you draft.
 

@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
-import { formatDate } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { APP } from "@/content/app";
 
 const DEVICE_CAP = 5;
@@ -162,7 +162,7 @@ export function DeviceManager() {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-foreground">{label(d)}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground" data-tn>
-                          First seen {formatDate(d.first_seen_at)}
+                          First seen {formatDateTime(d.first_seen_at)}
                         </p>
                       </div>
                       {isCurrent ? (
@@ -172,7 +172,7 @@ export function DeviceManager() {
                       ) : null}
                     </div>
                     <p className="text-xs text-muted-foreground" data-tn>
-                      Last seen {formatDate(d.last_seen_at)}
+                      Last seen {formatDateTime(d.last_seen_at)}
                     </p>
                     <div className="flex justify-end">
                       {isCurrent ? (
