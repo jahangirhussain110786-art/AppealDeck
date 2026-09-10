@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
-import { isLicenseActive } from "@/lib/license";
+import { rateLimitExtractField, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { callGemini, withGeminiBreaker } from "@/lib/llm/gemini";
 
 export const dynamic = "force-dynamic";
@@ -136,8 +136,9 @@ export const POST = withGeminiBreaker(async (req: NextRequest) => {
   if (!user) {
     return unauthorizedJsonResponse();
   }
-  if (!(await isLicenseActive(user.email))) {
-    return NextResponse.json({ error: "Appeal Pass required." }, { status: 403 });
+  const rate = await rateLimitExtractField(user);
+  if (!rate.success) {
+    return tooManyRequestsResponse(rate);
   }
   return handleExtractField(req);
 });

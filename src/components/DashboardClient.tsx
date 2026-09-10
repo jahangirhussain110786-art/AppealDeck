@@ -26,6 +26,8 @@ import { CaseStateBadge } from "@/components/CaseStateBadge";
 import { DeadlineChip } from "@/components/DeadlineChip";
 import { EmptyState } from "@/components/EmptyState";
 import { VaultGate } from "@/components/VaultGate";
+import { CasePreview } from "@/components/CasePreview";
+import { openVaultForVisitor } from "@/lib/vault/visitor";
 import { ReplyCategoryLabel } from "@/components/ReplyCategoryLabel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -131,6 +133,11 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
     let cancelled = false;
     void (async () => {
       try {
+        if (!signedIn) {
+          const unlocked = await openVaultForVisitor(vault);
+          if (!cancelled && unlocked) await loadFromVault();
+          return;
+        }
         await vault.open();
         if (vault.isUnlocked()) {
           await loadFromVault();
@@ -143,7 +150,7 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
     return () => {
       cancelled = true;
     };
-  }, [vault, loadFromVault]);
+  }, [vault, loadFromVault, signedIn]);
 
   const analyzeReply = async () => {
     if (!replyText.trim()) return;
@@ -218,6 +225,46 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
   };
 
   if (!signedIn) {
+    if (!caseFile) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="space-y-6"
+        >
+          <EmptyState
+            icon={FileText}
+            title={APP.access.dashboardSignedOut.emptyTitle}
+            description={APP.access.dashboardSignedOut.emptyDesc}
+            action={
+              <div className="flex flex-wrap justify-center gap-3">
+                <Button asChild variant="outline">
+                  <Link href="/decode">{APP.access.dashboardSignedOut.decode}</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/case">{APP.access.dashboardSignedOut.start}</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/login?next=/dashboard">{SHARED.nav.signIn}</Link>
+                </Button>
+              </div>
+            }
+          />
+        </motion.div>
+      );
+    }
+
+    const draftLog: CaseLog = caseLog ?? {
+      state: caseFile.state,
+      attemptCount: caseFile.attemptCount,
+    };
+    const draftCtx = buildContext(caseFile, draftLog);
+    const draftCurrent: CaseState = draftLog.state;
+    const draftNext = nextState(draftCtx, draftCurrent);
+    const draftActions = nextBestActions(draftNext);
+    const draftReadiness = computeReadiness(caseFile);
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -225,24 +272,44 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
         transition={{ duration: 0.3, delay: 0.1 }}
         className="space-y-6"
       >
-        <EmptyState
-          icon={FileText}
-          title={APP.access.dashboardSignedOut.emptyTitle}
-          description={APP.access.dashboardSignedOut.emptyDesc}
-          action={
-            <div className="flex flex-wrap justify-center gap-3">
-              <Button asChild variant="outline">
-                <Link href="/decode">{APP.access.dashboardSignedOut.decode}</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/case">{APP.access.dashboardSignedOut.start}</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/login?next=/dashboard">{SHARED.nav.signIn}</Link>
-              </Button>
-            </div>
-          }
+        <h1 className="text-xl font-semibold text-foreground">
+          {APP.access.dashboardSignedOut.title}
+        </h1>
+        <div className="flex items-center gap-2">
+          <CaseStateBadge kind={caseFile.kind} />
+          <span className="text-sm font-medium">{APP.dashboard.stateLabels[draftCurrent]}</span>
+        </div>
+
+        <ReadinessCard
+          score={draftReadiness.score}
+          missingKinds={draftReadiness.missing.map((m) => m.kind)}
         />
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{APP.dashboard.actions.nextBestActions}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+              {draftActions.map((action, i) => (
+                <li key={i}>{action}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
+        <CasePreview kind={caseFile.kind} caseFile={caseFile} />
+
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-5">
+            <p className="text-sm text-muted-foreground">
+              {APP.access.dashboardSignedOut.draftNote}
+            </p>
+            <Button asChild>
+              <Link href="/login?next=/dashboard">{APP.access.keepCaseLink}</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </motion.div>
     );
   }

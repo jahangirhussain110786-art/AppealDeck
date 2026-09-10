@@ -51,4 +51,20 @@ test.describe("Access ladder — signed-out interview, gate, case preview", () =
     await expect(page.getByText("What this case will need", { exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: /Start your case/i })).toBeVisible();
   });
+
+  test("signed out: dashboard shows the empty state with no draft", async ({ page }) => {
+    await page.goto("/dashboard");
+    await expect(page.getByText("No case on this device yet", { exact: true })).toBeVisible();
+  });
+
+  test("signed out: dashboard shows the draft summary once a case exists", async ({ page }) => {
+    await page.goto("/case?kind=POLICY");
+    await expect(page.getByText("What happened?", { exact: true })).toBeVisible();
+    await page.getByPlaceholder("Type your answer...").fill("A supplier mix-up on one ASIN.");
+    await page.getByTestId("interview-continue").click();
+    await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
+
+    await page.goto("/dashboard");
+    await expect(page.getByText("Your case, at a glance", { exact: true })).toBeVisible();
+  });
 });
