@@ -2,14 +2,14 @@
 
 **How to use.** Copy the block below into a fresh coding-AI session, unchanged. When a pass is complete and a new pass prompt exists, change only the two `PATH` lines. Keep this file in the repo; the reviewing AI updates the two paths whenever it writes a new pass prompt.
 
-**Current pass (9 Sep 2026, evening):** AM-19 UI/UX polish — FIX pass (AA-30), Tasks F0–F8. The first pass (Tasks 1–10, commits `6b5f3c5`…`a10335d`) was audited the same evening; Tasks 7–11 must be redone from the fix prompt.
+**Current pass (10 Sep 2026):** Visual refresh v3 (AA-32), Tasks V0–V11. The AM-19 polish FIX pass (AA-30, Tasks F0–F8) is complete — code final at `12b6a89`, evidence `docs/handoffs/2026-09-09-uiux-polish-fix.md`. The visual prompt's start condition is that `git log --oneline -1` shows `docs(uiux-polish-fix/task-8): …`.
 
 ```text
 You are the coding agent for AppealDeck. Repo root: V:\AppealDeck1, branch master, Windows machine.
 Work only from the files below, in this order. Do not edit anything before step 5.
 
-PASS PROMPT PATH: docs/handoffs/2026-09-09-uiux-polish-fix-prompt.md
-EVIDENCE LOG PATH: docs/handoffs/2026-09-09-uiux-polish-fix.md
+PASS PROMPT PATH: docs/handoffs/2026-09-09-visual-refresh-prompt.md
+EVIDENCE LOG PATH: docs/handoffs/2026-09-09-visual-refresh.md
 
 1. Read CLAUDE.md in full. Sections 1–3 are absolute (product, locked decisions D1–D10, FORBIDDEN SOURCES). Section 4 is the current state.
 2. Read the pass prompt: only its STATUS banner, §0, §0.A, §1, §2 and Appendix A. Do not read the task sections yet.
@@ -37,3 +37,4 @@ The reviewing AI writes a new pass prompt and evidence log under `docs/handoffs/
 
 - 9 Sep 2026 — created for the AM-19 polish pass (`AA-30`). Task 0 of that pass was performed by the reviewing AI and committed as `bfba421`; the coding AI starts at Task 1.
 - 9 Sep 2026 (evening) — repointed at the FIX pass (`docs/handoffs/2026-09-09-uiux-polish-fix-prompt.md`, log `docs/handoffs/2026-09-09-uiux-polish-fix.md`) after the audit `docs/handoffs/2026-09-09-uiux-polish-audit.md` found Tasks 7–10 failing their Accept blocks and Task 11 not done. The fix prompt adds reporting rules (§0.B): hashes only from `git log`, exit codes decide gates, shrunk tasks are written up as NOT DONE.
+- 10 Sep 2026 — fix pass complete (Tasks F0–F8; code final at `12b6a89`; the reviewing AI ran F3–F8 itself after the coding AI's session ended mid-F3). Repointed at the visual refresh v3 pass (`docs/handoffs/2026-09-09-visual-refresh-prompt.md`, log `docs/handoffs/2026-09-09-visual-refresh.md`), as that prompt's banner prescribes for Task F8. The visual pass's Task V0 commits the still-untracked visual documents, brand kit and assets.
