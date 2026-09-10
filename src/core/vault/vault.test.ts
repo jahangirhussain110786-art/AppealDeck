@@ -250,4 +250,68 @@ describe("Vault", () => {
     expect(list).toHaveLength(1);
     expect(list[0]?.id).toBe(rec.id);
   });
+
+  it("device mode: init, add, lock, device unlock reads the same record", async () => {
+    await v.initWithDeviceKey();
+    expect(await v.status()).toEqual({ state: "unlocked" });
+    const rec = await v.add({
+      name: "doc.pdf",
+      mimeType: "application/pdf",
+      data: "device-secret",
+    });
+    await v.lock();
+    expect((await v.status()).mode).toBe("device");
+    await v.unlockWithDeviceKey();
+    const { text, record } = await v.getString(rec.id);
+    expect(text).toBe("device-secret");
+    expect(record.id).toBe(rec.id);
+  });
+
+  it("relockWithPassphrase switches to passphrase mode and keeps records", async () => {
+    await v.initWithDeviceKey();
+    const rec = await v.add({ name: "x", mimeType: "text/plain", data: "keep-me" });
+    await v.relockWithPassphrase("my-pass-2026");
+    await v.lock();
+    expect((await v.status()).mode).toBe("passphrase");
+    const meta = await v.rawMeta();
+    expect(meta?.mode.kind).toBe("passphrase");
+    expect(meta?.deviceKey).toBeUndefined();
+    expect(meta?.deviceWrappedDek).toBeUndefined();
+    expect(meta?.wrappedDek).toBeTruthy();
+    await v.unlock("my-pass-2026");
+    const { text } = await v.getString(rec.id);
+    expect(text).toBe("keep-me");
+  });
+
+  it("wrong passphrase after relock fails with WRONG_PASSPHRASE", async () => {
+    await v.initWithDeviceKey();
+    await v.add({ name: "x", mimeType: "text/plain", data: "x" });
+    await v.relockWithPassphrase("correct-pass-2026");
+    await v.lock();
+    await expect(v.unlock("wrong-pass-2026")).rejects.toMatchObject({
+      code: "WRONG_PASSPHRASE",
+    });
+  });
+
+  it("relockWithPassphrase rejects passphrases shorter than 8 chars", async () => {
+    await v.initWithDeviceKey();
+    await expect(v.relockWithPassphrase("short")).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+    });
+  });
+
+  it("unlock throws INVALID_INPUT when mode is device", async () => {
+    await v.initWithDeviceKey();
+    await v.lock();
+    await expect(v.unlock("any-pass-2026")).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+    });
+  });
+
+  it("status reports mode device while locked in device mode", async () => {
+    await v.initWithDeviceKey();
+    await v.add({ name: "x", mimeType: "text/plain", data: "x" });
+    await v.lock();
+    expect(await v.status()).toMatchObject({ state: "locked", mode: "device" });
+  });
 });

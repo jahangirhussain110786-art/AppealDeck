@@ -1,5 +1,5 @@
 import { VaultDB } from "./db";
-import type { VaultRecordInput, VaultKeyStore } from "./schema";
+import type { VaultMeta, VaultRecordInput, VaultKeyStore } from "./schema";
 import {
   VAULT_ENVELOPE_VERSION,
   VaultCryptoError,
@@ -12,10 +12,13 @@ import {
   decryptBytes,
   encryptBytes,
   generateDek,
+  generateDeviceKey,
   getSubtleCrypto,
   newKdfParams,
   unwrapDek,
+  unwrapDekWithKey,
   wrapDek,
+  wrapDekWithKey,
   type WebCryptoLike,
 } from "./crypto";
 
@@ -58,6 +61,7 @@ export class Vault {
   private readonly db: VaultDB;
   private readonly provider: WebCryptoLike;
   private dek: CryptoKey | null = null;
+  private deviceKey: CryptoKey | null = null;
 
   constructor(provider: WebCryptoLike, db?: VaultDB) {
     this.provider = provider;
@@ -112,21 +116,52 @@ export class Vault {
     this.dek = dek;
   }
 
-  async initWrapped(passphrase: string): Promise<void> {
-    if (!passphrase || passphrase.length < 8) {
-      throw new VaultCryptoError("INVALID_INPUT", "Passphrase must be at least 8 characters");
+  async initWithDeviceKey(): Promise<void> {
+    const row = await this.db.meta.get("appealdeck-vault" as never);
+    if (row) {
+      if (row.value.mode.kind === "device") {
+        await this.unlockWithDeviceKey();
+        return;
+      }
+      throw new VaultCryptoError(
+        "ENVELOPE_CORRUPT",
+        "Vault is already initialized with a different key mode",
+      );
     }
-    const kdf = newKdfParams(this.provider);
     const dek = await generateDek(this.provider);
-    const wrapped = await wrapDek(this.provider, dek, passphrase, kdf);
+    const deviceKey = await generateDeviceKey(this.provider);
+    const deviceWrappedDek = await wrapDekWithKey(this.provider, dek, deviceKey);
     const meta: VaultKeyStore = {
-      mode: { kind: "wrapped", verifiedAt: new Date().toISOString() },
-      kdf,
-      wrappedDek: wrapped,
+      mode: { kind: "device", verifiedAt: new Date().toISOString() },
+      deviceKey,
+      deviceWrappedDek,
       version: VAULT_ENVELOPE_VERSION,
       createdAt: new Date().toISOString(),
     };
     await this.db.meta.put({ key: "appealdeck-vault" as never, value: meta });
+    this.dek = dek;
+    this.deviceKey = deviceKey;
+  }
+
+  async unlockWithDeviceKey(): Promise<void> {
+    const row = await this.db.meta.get("appealdeck-vault" as never);
+    if (!row) {
+      throw new VaultCryptoError("INVALID_INPUT", "Vault is not initialized");
+    }
+    if (row.value.mode.kind !== "device") {
+      throw new VaultCryptoError(
+        "ENVELOPE_CORRUPT",
+        `Vault is not in device mode (mode: ${row.value.mode.kind})`,
+      );
+    }
+    if (!row.value.deviceWrappedDek) {
+      throw new VaultCryptoError(
+        "ENVELOPE_CORRUPT",
+        "Vault metadata is missing a device-wrapped DEK",
+      );
+    }
+    const deviceKey = await this.getDeviceKey(row);
+    const dek = await unwrapDekWithKey(this.provider, deviceKey, row.value.deviceWrappedDek);
     this.dek = dek;
   }
 
@@ -135,6 +170,12 @@ export class Vault {
     if (!row) {
       throw new VaultCryptoError("INVALID_INPUT", "Vault is not initialized");
     }
+    if (row.value.mode.kind === "device") {
+      throw new VaultCryptoError(
+        "INVALID_INPUT",
+        "Vault is in device mode; use unlockWithDeviceKey instead",
+      );
+    }
     if (!row.value.wrappedDek || !row.value.kdf) {
       throw new VaultCryptoError("ENVELOPE_CORRUPT", "Vault metadata is missing a wrapped DEK");
     }
@@ -142,8 +183,62 @@ export class Vault {
     this.dek = dek;
   }
 
+  async relockWithPassphrase(passphrase: string): Promise<void> {
+    if (!passphrase || passphrase.length < 8) {
+      throw new VaultCryptoError("INVALID_INPUT", "Passphrase must be at least 8 characters");
+    }
+    const row = await this.db.meta.get("appealdeck-vault" as never);
+    if (!row) {
+      throw new VaultCryptoError("INVALID_INPUT", "Vault is not initialized");
+    }
+    if (row.value.mode.kind !== "device") {
+      throw new VaultCryptoError(
+        "ENVELOPE_CORRUPT",
+        `Vault is not in device mode (mode: ${row.value.mode.kind})`,
+      );
+    }
+    if (!row.value.deviceWrappedDek) {
+      throw new VaultCryptoError(
+        "ENVELOPE_CORRUPT",
+        "Vault metadata is missing a device-wrapped DEK",
+      );
+    }
+    const dek = this.dek ?? (await this.unlockAndReturnDek(row));
+    const kdf = newKdfParams(this.provider);
+    const wrapped = await wrapDek(this.provider, dek, passphrase, kdf);
+    const next: VaultKeyStore = {
+      mode: { kind: "passphrase", kdf, verifiedAt: new Date().toISOString() },
+      kdf,
+      wrappedDek: wrapped,
+      version: VAULT_ENVELOPE_VERSION,
+      createdAt: row.value.createdAt,
+    };
+    await this.db.meta.put({ key: "appealdeck-vault" as never, value: next });
+    this.deviceKey = null;
+  }
+
   lock(): void {
     this.dek = null;
+    this.deviceKey = null;
+  }
+
+  private async unlockAndReturnDek(row: VaultMeta): Promise<CryptoKey> {
+    const dk = await this.getDeviceKey(row);
+    this.deviceKey = dk;
+    const dek = await unwrapDekWithKey(this.provider, dk, row.value.deviceWrappedDek!);
+    this.dek = dek;
+    return dek;
+  }
+
+  private async getDeviceKey(row: VaultMeta | undefined): Promise<CryptoKey> {
+    if (this.deviceKey) {
+      return this.deviceKey;
+    }
+    if (row?.value.deviceKey) {
+      this.deviceKey = row.value.deviceKey;
+      return this.deviceKey;
+    }
+    throw new VaultCryptoError("ENVELOPE_CORRUPT", "Vault metadata is missing the device key");
   }
 
   isUnlocked(): boolean {

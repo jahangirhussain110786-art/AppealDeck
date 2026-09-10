@@ -23,6 +23,8 @@ export interface VaultKeyStore {
   mode: import("./envelope").KeyMode;
   wrappedDek?: import("./envelope").WrappedDek;
   kdf?: import("./envelope").KdfParams;
+  deviceKey?: CryptoKey;
+  deviceWrappedDek?: import("./envelope").EncryptionEnvelope;
   version: typeof import("./envelope").VAULT_ENVELOPE_VERSION;
   createdAt: string;
 }

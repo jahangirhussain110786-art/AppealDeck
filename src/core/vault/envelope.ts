@@ -30,7 +30,9 @@ export interface WrappedDek {
 
 export type KeyMode =
   | { kind: "passphrase"; kdf: KdfParams; verifiedAt: string }
-  | { kind: "wrapped"; verifiedAt: string };
+  | { kind: "device"; verifiedAt: string };
+
+export type VaultKeyModeKind = KeyMode["kind"];
 
 export interface VaultConfig {
   mode: KeyMode;

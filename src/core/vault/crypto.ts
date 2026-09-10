@@ -318,3 +318,28 @@ export async function unwrapDek(
   }
   return importRawDek(provider, raw);
 }
+
+export async function generateDeviceKey(provider: WebCryptoLike): Promise<CryptoKey> {
+  return provider.subtle.generateKey({ name: "AES-GCM", length: AES_KEY_LENGTH_BITS }, false, [
+    "encrypt",
+    "decrypt",
+  ]);
+}
+
+export async function wrapDekWithKey(
+  provider: WebCryptoLike,
+  dek: CryptoKey,
+  kek: CryptoKey,
+): Promise<EncryptionEnvelope> {
+  const raw = await exportRawKey(provider, dek);
+  return encryptBytes(provider, kek, raw);
+}
+
+export async function unwrapDekWithKey(
+  provider: WebCryptoLike,
+  kek: CryptoKey,
+  env: EncryptionEnvelope,
+): Promise<CryptoKey> {
+  const raw = await decryptBytes(provider, kek, env);
+  return importRawDek(provider, raw);
+}
