@@ -42,8 +42,9 @@ Reference after the access + continuity pass (AM-21) and its own second verifica
 
 ## Discovered during this pass
 
-- none yet
+- **Badge `default` variant contrast failure (found by a11y e2e, fixed):** S§2's contrast table checked `text-primary` against the plain page `--background` (5.0:1, compliant) but not against the tinted badge background S§5.2 introduces (`bg-primary/10`). axe-core measured the actual composite — `#1c7d5e` on `#e8f2ef` — at 4.43:1, under the 4.5:1 AA minimum for normal text. Found on the home page's `CaseStateBadge` ("Policy violation"). Fixed by reducing the default badge's background tint from `bg-primary/10` to `bg-primary/[0.07]` (lighter background, more contrast against the same dark-green text) — full a11y suite (18 tests) reruns green after the fix, including pricing/decode/faq which also render tinted badges.
 
 ## Deviations from the prompt
 
-- none yet
+- Task V3's badge `default` variant background is `bg-primary/[0.07]`, not spec's literal `bg-primary/10` — per prompt rule 0.C.1 ("if a value cannot work, record why and use the nearest value that does"), since `/10` fails WCAG AA contrast in practice. See Discovered above.
+- V1–V6 were committed as 3 grouped commits (`feat(visual-v3/task-1)`, a combined task-2+3 commit, a combined task-4+5+6 commit) rather than 6 separate ones, per the founder's mid-pass direction to batch checks/commits every 3 tasks instead of one at a time. Each commit message states exactly which task's work it contains.
