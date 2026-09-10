@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     url: SITE_URL,
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "AppealDeck — Amazon suspension notice decoder",
     description:
       "Decode your Amazon deactivation or policy notice in plain English. Free decoder, $199 Appeal Pass.",
@@ -44,7 +44,7 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "hsl(0 0% 100%)" },
-    { media: "(prefers-color-scheme: dark)", color: "hsl(222 30% 6%)" },
+    { media: "(prefers-color-scheme: dark)", color: "hsl(224 28% 7%)" },
   ],
 };
 
