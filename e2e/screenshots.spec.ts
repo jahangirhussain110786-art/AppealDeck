@@ -2,8 +2,12 @@ import { test, type FullConfig } from "@playwright/test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-const OUT = "docs/handoffs/screenshots/2026-09-07";
-const PUBLIC_ROUTES = ["/", "/decode", "/pricing", "/faq", "/login", "/signup"];
+// Output directory and public route list can be overridden per run, e.g.
+//   SCREENSHOT_OUT=docs/handoffs/screenshots/2026-09-10 SCREENSHOT_ROUTES=/,/terms
+const OUT = process.env.SCREENSHOT_OUT ?? "docs/handoffs/screenshots/2026-09-07";
+const PUBLIC_ROUTES = process.env.SCREENSHOT_ROUTES
+  ? process.env.SCREENSHOT_ROUTES.split(",").filter(Boolean)
+  : ["/", "/decode", "/pricing", "/faq", "/login", "/signup"];
 const AUTH_ROUTES = ["/dashboard", "/case", "/compose", "/vault", "/billing"];
 const WIDTHS = [375, 768, 1280];
 
