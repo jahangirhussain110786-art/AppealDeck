@@ -13,7 +13,7 @@ Baseline: commit `1e4dd05` (visual overhaul v4 handoff committed + session-start
 
 ## STATUS — RUNNABLE from Task V0
 
-- [ ] V0: Paperwork — create this prompt, the evidence log, DECISIONS.md entry, repoint SESSION-START-PROMPT.md
+- [x] V0: Paperwork — create this prompt, the evidence log, DECISIONS.md entry, repoint SESSION-START-PROMPT.md — **DONE**, commit `533dc84`
 - [ ] V1: Tokens — color reconciliation (FOUNDER-GATED if warm-neutral chosen), radius, accent font (Newsreader)
 - [ ] V2: Primitives — Badge size variant, aurora/dot-grid background utility, illustrations library
 - [ ] V3: Home page rebuild against `Main.dc.html`
@@ -47,7 +47,7 @@ These are the real token architecture files the overhaul builds on (all verified
 - `src/lib/fonts.ts` — `next/font/google` config. Add Newsreader here with `variable: "--font-accent"`.
 - `src/components/ui/badge.tsx` — shadcn-style Badge primitive. Add `size="sm"` variant here.
 - `src/components/ui/input.tsx` — Input primitive (for the PasswordInput reference pattern, though that's already done).
-- `src/components/DevUIGallery.tsx` — dev-only route (`/dev/ui`). Add V2 primitives here for visual testing.
+- `src/app/dev/ui/DevUiGallery.tsx` — dev-only route (`/dev/ui`). Add V2 primitives here for visual testing.
 - `src/content/marketing.ts` — marketing copy (hero subline must stay byte-identical to the mockup).
 - `src/content/app.ts` — app strings. New copy goes here under `APP.*`.
 - `src/app/(app)/case/page.tsx` — guided interview entry.
@@ -112,20 +112,20 @@ Dark:  --background: 224 28% 7%;  --foreground: 220 18% 92%; --border: 224 16% 1
 
 1. Write this prompt file at `docs/handoffs/2026-09-11-visual-overhaul-v4-prompt.md` (already done by the reviewing AI that wrote it — your job is to verify it exists and is consistent).
 2. Create the evidence log at `docs/handoffs/2026-09-11-visual-overhaul-v4.md` with a Resume pointer at V0.
-3. Append the AM-22 entry to `docs/DECISIONS.md`.
+3. Append the AM-22 entry to `docs/DECISIONS.md`, and the matching AM-22/AA-35 section to `Planning/03-PHASE-2-BUILD/02-BUILD-PLAN-AMENDMENTS.md` (the amendments file is the authoritative-over-v1.0 record per `CLAUDE.md` §5 — every prior ratified AM-XX, including AM-19/AM-20/AM-21, got a section there, not only a `DECISIONS.md` entry). Bump the Definition-of-done count and status line to AA-01…AA-35.
 4. Update `docs/handoffs/SESSION-START-PROMPT.md` PATH lines to point at the new prompt + evidence log.
 5. Run the existing gates to confirm nothing is broken (this is a docs-only change): `npm run typecheck`, `npm run lint`, `npm run lint:copy`, `npm run format:check`, `npm run test`, `npm run build`.
 
 **Accept.**
 
 ```
-git status --short                    → only the 4 files this task creates/updates (prompt, evidence log, DECISIONS.md, SESSION-START-PROMPT.md)
+git status --short                    → only the 5 files this task creates/updates (prompt, evidence log, DECISIONS.md, 02-BUILD-PLAN-AMENDMENTS.md, SESSION-START-PROMPT.md)
 npm run typecheck                     → exit 0
 npm run lint                          → 0 warnings
 npm run lint:copy                     → PASS
 npm run format:check                  → exit 0
 npm test                              → 373 passed (no regressions from the founder-fixes pass)
-npm run build                         → 32 routes (no change)
+npm run build                         → 33 routes (no change)
 ```
 
 Commit: `docs(AM-22/task-0): formal prompt, evidence log, and DECISIONS.md entry for the visual overhaul v4 pass; repoint session-start prompt`
@@ -166,13 +166,13 @@ Commit: `docs(AM-22/task-0): formal prompt, evidence log, and DECISIONS.md entry
 **Accept.**
 
 ```
-grep -n "220 32% 11%" src/app/globals.css           → 0 hits (cooler-neutral foreground removed, IF warm-neutral adopted) OR unchanged (IF warm-neutral rejected)
+grep -n "224 32% 11%" src/app/globals.css           → 0 hits (cooler-neutral foreground removed, IF warm-neutral adopted) OR unchanged (IF warm-neutral rejected)
 grep -n "font-accent" src/lib/fonts.ts              → ≥ 1 hit
 grep -n "font-accent" src/app/globals.css            → ≥ 1 hit
 grep -n "accent" tailwind.config.ts                  → ≥ 1 hit (fontFamily.accent)
 ls src/components/ui/accent-word.tsx                → file exists
 npm run lint:copy                                    → PASS (no banned words introduced)
-npm run build                                        → 32 routes (no change)
+npm run build                                        → 33 routes (no change)
 npm test                                             → all green (≥ 373)
 ```
 
@@ -191,7 +191,7 @@ Commit: `feat(AM-22/v1): reconcile visual-overhaul v4 color tokens, radius, and 
    - `VaultDoorIllustration.tsx` (vault-door glyph)
    - `MagnifierDocumentIllustration.tsx` (decode magnifier-over-document)
      Each should use the resolved HSL tokens (via `hsl()` or CSS variables) so they automatically inherit theme changes.
-4. Add a section to `DevUIGallery.tsx` (`/dev/ui`) demonstrating all three primitives with both light and dark backgrounds.
+4. Add a section to `DevUiGallery.tsx` (`/dev/ui`) demonstrating all three primitives with both light and dark backgrounds.
 5. Run gates.
 
 **Accept.**
@@ -202,8 +202,8 @@ grep -n "marketing-surface-aurora\|dot-grid" src/app/globals.css    → ≥ 1 hi
 ls src/components/illustrations/ShieldCheckIllustration.tsx        → file exists
 ls src/components/illustrations/VaultDoorIllustration.tsx          → file exists
 ls src/components/illustrations/MagnifierDocumentIllustration.tsx  → file exists
-grep -n "ShieldCheck\|VaultDoor\|MagnifierDocument" src/components/DevUIGallery.tsx → ≥ 3 hits
-npm run build                                                       → 32 routes (no change)
+grep -n "ShieldCheck\|VaultDoor\|MagnifierDocument" src/app/dev/ui/DevUiGallery.tsx → ≥ 3 hits
+npm run build                                                       → 33 routes (no change)
 ```
 
 Commit: `feat(AM-22/v2): Badge sm variant, aurora/dot-grid marketing background, layered illustration library`
@@ -231,7 +231,7 @@ grep -n "AccentWord" src/app/page.tsx                    → ≥ 1 hit
 grep -n "marketing-surface-aurora" src/app/page.tsx      → ≥ 1 hit
 grep -n "deadlinesModel\|DEADLINES" src/app/page.tsx     → ≥ 1 hit (real data, not hardcoded)
 npm run lint:copy                                        → PASS
-npm run build                                            → 32 routes
+npm run build                                            → 33 routes
 ```
 
 Commit: `feat(AM-22/v3): rebuild home page against approved Main.dc.html mockup`
@@ -251,7 +251,7 @@ Commit: `feat(AM-22/v3): rebuild home page against approved Main.dc.html mockup`
    - Center: the question (radio-cards, save & exit / continue footer) — unchanged behavior
    - Right: "Why we ask" context panel with an example-answer card + "never sent to Amazon" privacy note (from the mockup)
 4. This is a visual-only pass — the AM-17 interview engine logic (no persistent input box, typed per-step inputs, save-first/gate-second/resume-third) must remain intact. Verify by running the interview tests.
-5. Add StepRail to `DevUIGallery.tsx`.
+5. Add StepRail to `DevUiGallery.tsx`.
 6. Run gates.
 
 **Accept.**
@@ -261,7 +261,7 @@ grep -n "StepRail" src/components/InterviewFlow.tsx          → ≥ 1 hit
 grep -n "Why we ask" src/components/InterviewFlow.tsx        → ≥ 1 hit
 grep -n "never sent to Amazon" src/components/InterviewFlow.tsx → ≥ 1 hit
 npm run test                                                  → all green (interview tests unchanged in behavior)
-npm run build                                                 → 32 routes
+npm run build                                                 → 33 routes
 ```
 
 Commit: `feat(AM-22/v4): rebuild guided interview layout with step-rail and context panel per Interview.dc.html`
@@ -290,7 +290,7 @@ grep -n "Start your Plan of Action" src/app/decode/page.tsx   → ≥ 1 hit
 grep -n "guarantee" src/app/decode/page.tsx                   → 0 hits
 grep -rn "90 days" src/app/decode/page.tsx                    → 0 hits (no invented policy claims)
 npm run lint:copy                                             → PASS
-npm run build                                                 → 32 routes
+npm run build                                                 → 33 routes
 ```
 
 Commit: `feat(AM-22/v5): rebuild decode result with two-column annotation card layout per Decode.dc.html`
@@ -308,7 +308,7 @@ Commit: `feat(AM-22/v5): rebuild decode result with two-column annotation card l
 3. **If founder says respect theme:** apply the existing light/dark tokens to the vault, with mint accent as `--accent` overrides locally.
 4. Use the `VaultDoorIllustration` (from V2) as the vault teaching-state graphic.
 5. Render filenames/technical strings (`AES-GCM`, file names, envelope-version) in `font-mono` with `tabular-nums`.
-6. Add a section to `DevUIGallery.tsx` showing the vault surface.
+6. Add a section to `DevUiGallery.tsx` showing the vault surface.
 7. Run gates.
 
 **Accept.**
@@ -318,7 +318,7 @@ grep -n "obsidian\|090C0B\|0B0F0E" src/app/(app)/vault/page.tsx    → ≥ 1 hit
 grep -n "VaultDoorIllustration" src/app/(app)/vault/page.tsx      → ≥ 1 hit
 grep -n "font-mono" src/components/VaultView.tsx                  → ≥ 1 hit (technical strings)
 npm run lint:copy                                                 → PASS
-npm run build                                                     → 32 routes
+npm run build                                                     → 33 routes
 ```
 
 Commit: `feat(AM-22/v6): rebuild vault surface as obsidian dark register per Vault.dc.html (founder-confirmed override)`
@@ -349,7 +349,7 @@ npm run lint                                                   → 0 warnings
 npm run lint:copy                                              → PASS
 npm run format:check                                           → exit 0
 npm test                                                       → all green
-npm run build                                                  → 32 routes
+npm run build                                                  → 33 routes
 ```
 
 Commit: `chore(AM-22/v7): sweep pass — cross-page consistency verification, fix any token/component drift`
@@ -374,7 +374,7 @@ npm run lint             → 0 warnings
 npm run lint:copy        → PASS
 npm run format:check     → exit 0
 npm run test             → all green, count ≥ 373
-npm run build            → 32 routes
+npm run build            → 33 routes
 npm run test:e2e         → all pass (or NOT RUN with reason)
 npm run lighthouse       → perf ≥ 0.9, a11y 1.0, bp ≥ 0.95, seo ≥ 0.95 (report actual numbers)
 ls docs/handoffs/screenshots/2026-09-11/ → screenshots present for home, decode, vault, login (light+dark, 375+1280)
@@ -404,7 +404,7 @@ npm run lint           → 0 warnings
 npm run lint:copy      → PASS
 npm run format:check   → exit 0
 npm run test           → all green, count ≥ 373
-npm run build          → 32 routes (or more)
+npm run build          → 33 routes (or more)
 npm run test:e2e       → pass (or NOT RUN — reason)
 npm run lighthouse     → perf ≥ 0.9, a11y 1.0, bp ≥ 0.95, seo ≥ 0.95
 ```
@@ -437,7 +437,7 @@ npm run lighthouse     → perf ≥ 0.9, a11y 1.0, bp ≥ 0.95, seo ≥ 0.95
 | Font config                 | `src/lib/fonts.ts`                                              |
 | Badge primitive             | `src/components/ui/badge.tsx`                                   |
 | Input primitive (reference) | `src/components/ui/input.tsx`                                   |
-| Dev UI gallery              | `src/components/DevUIGallery.tsx`                               |
+| Dev UI gallery              | `src/app/dev/ui/DevUiGallery.tsx`                                |
 | Marketing copy              | `src/content/marketing.ts`                                      |
 | App copy                    | `src/content/app.ts`                                            |
 | Home page                   | `src/app/page.tsx`                                              |
