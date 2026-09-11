@@ -15,6 +15,7 @@ const CaseFile = z
     kind: z.string().min(1),
     state: z.string().optional(),
     rootCause: z.string().optional(),
+    preventiveMeasures: z.string().optional(),
     timelineEvents: z
       .array(
         z.object({

@@ -6,6 +6,7 @@ import {
   documentTypesFor,
   defaultDocumentType,
   composerModeFor,
+  isNarrativeSufficient,
   toneProfileFor,
   READINESS_COPY,
   readinessLabel,
@@ -14,6 +15,8 @@ import type { CaseFileData } from "./readiness";
 
 const baseCase = (overrides: Partial<CaseFileData> = {}): CaseFileData => ({
   kind: "POLICY",
+  rootCause:
+    "Our listing verification process did not check that the supplier invoice matched the ASIN before inventory was sent to Amazon.",
   evidenceSlots: {},
   actionItems: [],
   ...overrides,
@@ -40,6 +43,8 @@ describe("computeReadiness", () => {
   it("flags disqualified evidence", () => {
     const data = baseCase({
       kind: "POLICY",
+      rootCause:
+        "Our listing verification process did not check that the supplier invoice matched the ASIN before inventory was sent to Amazon.",
       evidenceSlots: { metric_export: { present: true, disqualified: true } },
     });
     const result = computeReadiness(data);
@@ -133,6 +138,22 @@ describe("document type router", () => {
   });
 });
 
+describe("narrative sufficiency", () => {
+  it("accepts a specific root-cause narrative", () => {
+    expect(
+      isNarrativeSufficient({
+        rootCause:
+          "Our listing verification process did not check that the supplier invoice matched the ASIN before inventory was sent to Amazon.",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects short and low-effort answers", () => {
+    expect(isNarrativeSufficient({ rootCause: "idk" })).toBe(false);
+    expect(isNarrativeSufficient({ rootCause: "The supplier made a mistake." })).toBe(false);
+  });
+});
+
 describe("composer mode", () => {
   it("full-draft when complete", () => {
     const data = baseCase({
@@ -142,10 +163,19 @@ describe("composer mode", () => {
     expect(composerModeFor(data).mode).toBe("full-draft");
   });
 
-  it("gap-draft when incomplete", () => {
-    const mode = composerModeFor(baseCase({ kind: "POLICY" }));
+  it("gap-draft when narrative is incomplete", () => {
+    const mode = composerModeFor(
+      baseCase({ rootCause: "idk", evidenceSlots: { metric_export: { present: true } } }),
+    );
     expect(mode.mode).toBe("gap-draft");
-    expect(mode.reason).toMatch(/incomplete/i);
+    expect(mode.gapReason).toBe("narrative");
+    expect(mode.reason).toMatch(/narrative/i);
+  });
+
+  it("reports both evidence and narrative gaps", () => {
+    const mode = composerModeFor(baseCase({ rootCause: "idk" }));
+    expect(mode.mode).toBe("gap-draft");
+    expect(mode.gapReason).toBe("both");
   });
 });
 

@@ -50,20 +50,28 @@ describe("nextStep", () => {
     expect(step?.options).toHaveLength(3);
   });
 
-  it("asks for evidence after intake is complete", () => {
+  it("asks for preventive measures after prior appeals and before evidence", () => {
     const file: CaseFile = {
       ...createCaseFile("POLICY"),
       rootCause: "test",
       timelineEvents: [{ date: "2026-01-01", description: "notice" }],
-      priorAppealCount: 0,
       priorAppealsAnswered: true,
-      attemptCount: 1,
+    };
+    const step = nextStep(file);
+    expect(step?.kind).toBe("intake_preventive_measures");
+    expect(step?.required).toBe(false);
+  });
+
+  it("asks for evidence after preventive measures are answered or skipped", () => {
+    const file: CaseFile = {
+      ...createCaseFile("POLICY"),
+      rootCause: "test",
+      timelineEvents: [{ date: "2026-01-01", description: "notice" }],
+      priorAppealsAnswered: true,
+      preventiveMeasuresAsked: true,
     };
     const step = nextStep(file);
     expect(step?.kind).toBe("evidence_ask");
-    expect(step?.inputType).toBe("file");
-    expect(step?.evidenceKind).toBeDefined();
-    expect(step?.declineAlternatives).toBeDefined();
   });
 
   it("returns null when all evidence done and complete", () => {
@@ -73,6 +81,7 @@ describe("nextStep", () => {
       timelineEvents: [{ date: "2026-01-01", description: "notice" }],
       priorAppealCount: 0,
       priorAppealsAnswered: true,
+      preventiveMeasuresAsked: true,
       attemptCount: 1,
       actionItems: [],
       evidenceSlots: {

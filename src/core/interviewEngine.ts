@@ -9,6 +9,7 @@ export type StepKind =
   | "intake_root_cause"
   | "intake_timeline"
   | "intake_prior_appeals"
+  | "intake_preventive_measures"
   | "evidence_ask"
   | "action_check"
   | "status_explanation";
@@ -51,6 +52,8 @@ export interface CaseFile {
   timelineEvents: Array<{ date: string; description: string }>;
   priorAppealCount: number;
   priorAppealsAnswered?: boolean;
+  preventiveMeasures?: string;
+  preventiveMeasuresAsked?: boolean;
   evidenceSlots: Partial<Record<EvidenceKind, { present: boolean; disqualified?: boolean }>>;
   actionItems: ActionItem[];
   attemptCount: number;
@@ -69,6 +72,8 @@ export function createCaseFile(kind: ViolationKind): CaseFile {
     timelineEvents: [],
     priorAppealCount: 0,
     priorAppealsAnswered: false,
+    preventiveMeasures: undefined,
+    preventiveMeasuresAsked: false,
     evidenceSlots: {},
     actionItems: generateActionItems(kind),
     attemptCount: 0,
@@ -117,6 +122,18 @@ export function nextStep(file: CaseFile): InterviewStep | null {
         { id: "yes_2plus", label: "Yes, more than once" },
       ],
       required: true,
+    };
+  }
+
+  if (!file.preventiveMeasuresAsked) {
+    return {
+      id: "intake_preventive_measures",
+      kind: "intake_preventive_measures",
+      title: "Preventing this from happening again",
+      prompt:
+        "What have you changed, or will you change, so this doesn't happen again? This is optional, but a specific answer here makes your Plan of Action stronger.",
+      inputType: "short_text",
+      required: false,
     };
   }
 
@@ -192,6 +209,13 @@ export function applyAnswer(file: CaseFile, answer: StepAnswer): CaseFile {
       next.priorAppealsAnswered = true;
       break;
 
+    case "intake_preventive_measures":
+      if (answer.value?.trim()) {
+        next.preventiveMeasures = answer.value;
+      }
+      next.preventiveMeasuresAsked = true;
+      break;
+
     default:
       if (answer.stepId.startsWith("evidence_")) {
         const kind = answer.stepId.replace("evidence_", "") as EvidenceKind;
@@ -225,7 +249,7 @@ export function interviewProgress(file: CaseFile): InterviewProgress {
 }
 
 function countTotalSteps(file: CaseFile): number {
-  let count = 3;
+  let count = 4;
   count += file.actionItems.length;
   return count;
 }
@@ -235,6 +259,9 @@ function countCompletedSteps(file: CaseFile): number {
   if (file.rootCause) count++;
   if (file.timelineEvents.length > 0) count++;
   if (file.priorAppealsAnswered) {
+    count++;
+  }
+  if (file.preventiveMeasuresAsked) {
     count++;
   }
   for (const action of file.actionItems) {

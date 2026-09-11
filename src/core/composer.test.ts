@@ -6,6 +6,8 @@ import type { CaseFileData } from "./readiness";
 function makeCase(overrides: Partial<CaseFileData> = {}): CaseFileData {
   return {
     kind: "POLICY",
+    rootCause:
+      "Our listing verification process did not check that the supplier invoice matched the ASIN before inventory was sent to Amazon.",
     evidenceSlots: {},
     actionItems: [],
     ...overrides,
@@ -21,15 +23,63 @@ describe("composePoa", () => {
     expect(draft.sections[2].heading).toBe("Preventive Measures");
   });
 
-  it("marks mode as gap-draft when evidence incomplete", () => {
-    const draft = composePoa(makeCase());
+  it("uses the seller's root-cause words verbatim", () => {
+    const rootCause =
+      "Our listing verification process did not check that the supplier invoice matched the ASIN before inventory was sent to Amazon.";
+    const draft = composePoa(
+      makeCase({
+        rootCause,
+        timelineEvents: [{ date: "2026-09-01", description: "Notice received" }],
+        evidenceSlots: { metric_export: { present: true } },
+      }),
+    );
+    expect(draft.sections[0].body).toBe(`On 2026-09-01: ${rootCause}`);
+    expect(draft.mode.mode).toBe("full-draft");
+  });
+
+  it("uses a specific preventive-measures answer verbatim", () => {
+    const preventiveMeasures =
+      "We added a two-person invoice check and blocked new inventory until the ASIN and supplier details match.";
+    const draft = composePoa(
+      makeCase({
+        rootCause:
+          "Our listing verification process did not check that the supplier invoice matched the ASIN before inventory was sent to Amazon.",
+        preventiveMeasures,
+        evidenceSlots: { metric_export: { present: true } },
+      }),
+    );
+    expect(draft.sections[2].body).toBe(preventiveMeasures);
+  });
+
+  it("creates a narrative gap instead of a bracketed placeholder", () => {
+    const draft = composePoa(
+      makeCase({
+        rootCause: "idk",
+        evidenceSlots: { metric_export: { present: true } },
+      }),
+    );
+    expect(draft.mode.gapReason).toBe("narrative");
+    expect(draft.sections[0].body).not.toMatch(/\[Describe/);
+    expect(draft.sections[0].body).toContain("isn't enough detail");
+    expect(draft.sections[3].body).toContain("root-cause narrative");
+  });
+
+  it("marks complete evidence as a gap when the narrative is thin", () => {
+    const draft = composePoa(
+      makeCase({
+        rootCause: "idk",
+        evidenceSlots: { metric_export: { present: true } },
+      }),
+    );
     expect(draft.mode.mode).toBe("gap-draft");
-    expect(draft.watermark).toBeDefined();
+    expect(draft.mode.gapReason).toBe("narrative");
   });
 
   it("marks mode as full-draft when evidence complete", () => {
     const draft = composePoa(
       makeCase({
+        rootCause:
+          "Our listing verification process did not check that the supplier invoice matched the ASIN before inventory was sent to Amazon.",
         evidenceSlots: { metric_export: { present: true } },
       }),
     );

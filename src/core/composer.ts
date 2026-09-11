@@ -1,6 +1,11 @@
 import type { ViolationKind } from "./index";
 import type { DocumentType } from "./readiness";
-import { composerModeFor, isRequiredComplete } from "./readiness";
+import {
+  composerModeFor,
+  isNarrativeSufficient,
+  isNarrativeTextSufficient,
+  isRequiredComplete,
+} from "./readiness";
 import type { CaseFileData, ComposerMode } from "./readiness";
 import { requirementsFor } from "./evidenceModel";
 import { defaultDocumentType } from "./readiness";
@@ -36,6 +41,15 @@ export interface CriticResult {
 
 const GAP_DRAFT_WATERMARK = "NOT READY TO SUBMIT — evidence gaps listed below.";
 
+// The composer is platform-agnostic core, so these seller-facing gap messages live here instead of
+// importing the app content module.
+export const ROOT_CAUSE_GAP_MESSAGE =
+  "There isn't enough detail here yet to draft this section credibly. Return to the case interview and describe, specifically, what caused this issue and how your process allowed it to happen.";
+export const PREVENTIVE_MEASURES_GAP_MESSAGE =
+  "No preventive measures were provided. Add the specific changes you have made, or will make, to prevent this issue from recurring.";
+export const NARRATIVE_GAP_MESSAGE =
+  "The root-cause narrative needs more specific detail before this section can be drafted credibly.";
+
 export function composePoa(data: CaseFileData, attemptNumber: number = 1): PoaDraft {
   const mode = composerModeFor(data);
   const docType = defaultDocumentType(data.kind);
@@ -48,7 +62,7 @@ export function composePoa(data: CaseFileData, attemptNumber: number = 1): PoaDr
   sections.push(buildPreventiveMeasuresSection(data));
 
   if (mode.mode === "gap-draft") {
-    sections.push(buildGapSection(data));
+    sections.push(buildGapSection(data, mode));
   }
 
   return {
@@ -66,10 +80,17 @@ export function composePoa(data: CaseFileData, attemptNumber: number = 1): PoaDr
 }
 
 function buildRootCauseSection(data: CaseFileData): PoaSection {
-  const guidance = data.kind;
+  if (isNarrativeSufficient(data)) {
+    const leadIn = data.timelineEvents?.[0]?.date ? `On ${data.timelineEvents[0].date}: ` : "";
+    return {
+      heading: "Root Cause",
+      body: `${leadIn}${data.rootCause!.trim()}`,
+    };
+  }
+
   return {
     heading: "Root Cause",
-    body: `[Describe what caused the ${guidance.replace(/_/g, " ")} issue. Be specific and factual.]`,
+    body: ROOT_CAUSE_GAP_MESSAGE,
   };
 }
 
@@ -94,14 +115,22 @@ function buildCorrectiveActionsSection(data: CaseFileData): PoaSection {
   };
 }
 
-function buildPreventiveMeasuresSection(_data: CaseFileData): PoaSection {
+function buildPreventiveMeasuresSection(data: CaseFileData): PoaSection {
+  const preventiveMeasures = data.preventiveMeasures?.trim();
+  if (preventiveMeasures && isNarrativeTextSufficient(preventiveMeasures)) {
+    return {
+      heading: "Preventive Measures",
+      body: preventiveMeasures,
+    };
+  }
+
   return {
     heading: "Preventive Measures",
-    body: "[Describe the systemic changes you have made to prevent this issue from recurring.]",
+    body: PREVENTIVE_MEASURES_GAP_MESSAGE,
   };
 }
 
-function buildGapSection(data: CaseFileData): PoaSection {
+function buildGapSection(data: CaseFileData, mode: ComposerMode): PoaSection {
   const missing = requirementsFor(data.kind).filter((r) => {
     if (!r.required) return false;
     const slot = data.evidenceSlots[r.kind];
@@ -109,12 +138,22 @@ function buildGapSection(data: CaseFileData): PoaSection {
   });
 
   const items = missing.map((r) => `- ${r.kind.replace(/_/g, " ")}: ${r.whyAmazonWantsIt}`);
+  const parts: string[] = [];
+
+  if (missing.length > 0) {
+    parts.push(
+      "The following required evidence is missing. Obtain these items before submitting:\n\n" +
+        items.join("\n"),
+    );
+  }
+
+  if (mode.gapReason === "narrative" || mode.gapReason === "both") {
+    parts.push(NARRATIVE_GAP_MESSAGE);
+  }
 
   return {
     heading: "Evidence Gaps (Action Required)",
-    body:
-      "The following required evidence is missing. Obtain these items before submitting:\n\n" +
-      (items.length > 0 ? items.join("\n") : "[No specific gaps detected.]"),
+    body: parts.length > 0 ? parts.join("\n\n") : "[No specific gaps detected.]",
   };
 }
 

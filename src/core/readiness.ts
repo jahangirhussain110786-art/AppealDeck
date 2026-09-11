@@ -31,6 +31,9 @@ export interface ReadinessResult {
 
 export interface CaseFileData {
   kind: ViolationKind;
+  rootCause?: string;
+  timelineEvents?: Array<{ date: string; description: string }>;
+  preventiveMeasures?: string;
   /**
    * `documentDate` (optional, ISO date string) is the date printed on the uploaded document
    * itself (e.g. a supplier invoice's issue date) — not when it was uploaded. Used by the
@@ -71,6 +74,28 @@ export function computeReadiness(data: CaseFileData): ReadinessResult {
 export function isRequiredComplete(data: CaseFileData): boolean {
   const result = computeReadiness(data);
   return result.missing.length === 0 && result.disqualifiedPresent.length === 0;
+}
+
+const MIN_NARRATIVE_CHARS = 40;
+const LOW_EFFORT_NARRATIVES = new Set([
+  "idk",
+  "i don't know",
+  "n/a",
+  "na",
+  "none",
+  "unknown",
+  "not sure",
+  "no idea",
+]);
+
+export function isNarrativeSufficient(data: Pick<CaseFileData, "rootCause">): boolean {
+  return isNarrativeTextSufficient(data.rootCause);
+}
+
+export function isNarrativeTextSufficient(text: string | undefined): boolean {
+  const value = (text ?? "").trim();
+  if (value.length < MIN_NARRATIVE_CHARS) return false;
+  return !LOW_EFFORT_NARRATIVES.has(value.toLowerCase());
 }
 
 export function generateActionItems(kind: ViolationKind): ActionItem[] {
@@ -132,16 +157,28 @@ export function toneProfileFor(docType: DocumentType): string {
 export interface ComposerMode {
   mode: "full-draft" | "gap-draft";
   reason: string;
+  gapReason?: "evidence" | "narrative" | "both";
 }
 
 export function composerModeFor(data: CaseFileData): ComposerMode {
-  const complete = isRequiredComplete(data);
-  if (complete) {
-    return { mode: "full-draft", reason: "Required evidence complete." };
+  const evidenceComplete = isRequiredComplete(data);
+  const narrativeComplete = isNarrativeSufficient(data);
+  if (evidenceComplete && narrativeComplete) {
+    return { mode: "full-draft", reason: "Required evidence and narrative are complete." };
   }
+
+  const gapReason =
+    !evidenceComplete && !narrativeComplete ? "both" : !evidenceComplete ? "evidence" : "narrative";
+
   return {
     mode: "gap-draft",
-    reason: "Required evidence incomplete — rendering gap draft with action plan.",
+    reason:
+      gapReason === "narrative"
+        ? "The root-cause narrative needs more specific detail."
+        : gapReason === "both"
+          ? "Required evidence and the root-cause narrative are incomplete."
+          : "Required evidence incomplete — rendering gap draft with action plan.",
+    gapReason,
   };
 }
 
