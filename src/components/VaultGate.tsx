@@ -4,7 +4,7 @@ import * as React from "react";
 import { ShieldCheck, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -287,9 +287,8 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
         <div className="flex flex-col gap-3">
           <div>
             <Label htmlFor="vault-create-passphrase">{APP.vault.create.passphraseLabel}</Label>
-            <Input
+            <PasswordInput
               id="vault-create-passphrase"
-              type="password"
               autoComplete="new-password"
               autoCapitalize="none"
               autoCorrect="off"
@@ -298,6 +297,7 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
               onChange={(e) => setPassphrase(e.target.value)}
               aria-invalid={!!error}
               aria-describedby="vault-create-error"
+              showToggle
             />
             {error && (
               <p id="vault-create-error" className="mt-1 text-xs text-destructive">
@@ -307,9 +307,8 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
           </div>
           <div>
             <Label htmlFor="vault-create-confirm">{APP.vault.create.confirmLabel}</Label>
-            <Input
+            <PasswordInput
               id="vault-create-confirm"
-              type="password"
               autoComplete="new-password"
               autoCapitalize="none"
               autoCorrect="off"
@@ -317,6 +316,7 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               aria-invalid={passphrase !== confirm && confirm.length > 0}
+              showToggle
             />
             {passphrase !== confirm && confirm.length > 0 && (
               <p className="mt-1 text-xs text-destructive">{APP.vault.create.mismatchError}</p>
@@ -373,9 +373,8 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
         <div className="flex flex-col gap-3">
           <div>
             <Label htmlFor="vault-unlock-passphrase">{APP.vault.unlock.placeholder}</Label>
-            <Input
+            <PasswordInput
               id="vault-unlock-passphrase"
-              type="password"
               autoComplete="current-password"
               autoCapitalize="none"
               autoCorrect="off"
@@ -387,6 +386,7 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
               }}
               aria-invalid={!!error}
               aria-describedby="vault-unlock-error"
+              showToggle
             />
             {error && (
               <p id="vault-unlock-error" className="mt-1 text-xs text-destructive">
@@ -453,25 +453,25 @@ function VaultDeviceRelockForm({ vault, onDone }: VaultDeviceRelockProps) {
             <Label htmlFor="vault-device-relock-passphrase">
               {APP.vault.create.passphraseLabel}
             </Label>
-            <Input
+            <PasswordInput
               id="vault-device-relock-passphrase"
-              type="password"
               autoComplete="new-password"
               value={passphrase}
               onChange={(e) => setPassphrase(e.target.value)}
               aria-invalid={!!error}
               aria-describedby="vault-device-relock-error"
+              showToggle
             />
           </div>
           <div>
             <Label htmlFor="vault-device-relock-confirm">{APP.vault.create.confirmLabel}</Label>
-            <Input
+            <PasswordInput
               id="vault-device-relock-confirm"
-              type="password"
               autoComplete="new-password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               aria-invalid={passphrase !== confirm && confirm.length > 0}
+              showToggle
             />
           </div>
           {error && (

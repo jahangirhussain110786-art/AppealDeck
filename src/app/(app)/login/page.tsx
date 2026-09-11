@@ -11,6 +11,7 @@ import {
   FieldError,
 } from "@/components/AuthCard";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
@@ -180,9 +181,8 @@ function LoginPageInner() {
                   {AUTH.login.fields.forgot}
                 </a>
               </div>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 autoComplete="current-password"
                 required
                 value={password}
@@ -191,6 +191,7 @@ function LoginPageInner() {
                 aria-describedby={passwordError ? "password-error" : undefined}
                 aria-invalid={!!passwordError}
                 className="mt-1"
+                showToggle
               />
               <FieldError id="password" message={passwordError} />
             </div>

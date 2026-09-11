@@ -12,6 +12,7 @@ import {
   SuccessBanner,
 } from "@/components/AuthCard";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { isValidEmail, validatePasswordLength } from "@/lib/validation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -164,9 +165,8 @@ export default function SignupPage() {
               <label htmlFor="password" className="text-sm font-medium text-foreground">
                 {AUTH.signup.fields.password}
               </label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 autoComplete="new-password"
                 required
                 minLength={8}
@@ -176,6 +176,7 @@ export default function SignupPage() {
                 aria-describedby={passwordError ? "password-error" : undefined}
                 aria-invalid={!!passwordError}
                 className="mt-1"
+                showToggle
               />
               <p className="mt-1 text-xs text-muted-foreground">
                 {AUTH.signup.fields.passwordHint}

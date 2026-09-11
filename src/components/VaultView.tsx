@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { NativeSelect } from "@/components/ui/native-select";
 import {
   Dialog,
@@ -609,9 +610,8 @@ export default function VaultView({ userId }: { userId: string }) {
                   <Label htmlFor="vault-protect-passphrase">
                     {APP.vault.create.passphraseLabel}
                   </Label>
-                  <Input
+                  <PasswordInput
                     id="vault-protect-passphrase"
-                    type="password"
                     autoComplete="new-password"
                     autoCapitalize="none"
                     autoCorrect="off"
@@ -619,13 +619,13 @@ export default function VaultView({ userId }: { userId: string }) {
                     value={protectPassphrase}
                     onChange={(e) => setProtectPassphrase(e.target.value)}
                     aria-invalid={!!protectError}
+                    showToggle
                   />
                 </div>
                 <div>
                   <Label htmlFor="vault-protect-confirm">{APP.vault.create.confirmLabel}</Label>
-                  <Input
+                  <PasswordInput
                     id="vault-protect-confirm"
-                    type="password"
                     autoComplete="new-password"
                     autoCapitalize="none"
                     autoCorrect="off"
@@ -633,6 +633,7 @@ export default function VaultView({ userId }: { userId: string }) {
                     value={protectConfirm}
                     onChange={(e) => setProtectConfirm(e.target.value)}
                     aria-invalid={protectPassphrase !== protectConfirm && protectConfirm.length > 0}
+                    showToggle
                   />
                   {protectPassphrase !== protectConfirm && protectConfirm.length > 0 && (
                     <p className="mt-1 text-xs text-destructive">

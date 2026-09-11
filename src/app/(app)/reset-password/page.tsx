@@ -9,7 +9,7 @@ import {
   SuccessBanner,
   FieldError,
 } from "@/components/AuthCard";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AUTH } from "@/content/auth";
@@ -99,9 +99,8 @@ function ResetPasswordPageInner() {
         <label htmlFor="password" className="text-sm font-medium text-foreground">
           {AUTH.resetPassword.fields.password}
         </label>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}
@@ -111,6 +110,7 @@ function ResetPasswordPageInner() {
           aria-describedby={passwordError ? "password-error" : undefined}
           aria-invalid={!!passwordError}
           className="mt-1"
+          showToggle
         />
         <p className="mt-1 text-xs text-muted-foreground">
           {AUTH.resetPassword.fields.passwordHint}
@@ -121,9 +121,8 @@ function ResetPasswordPageInner() {
         <label htmlFor="confirm" className="text-sm font-medium text-foreground">
           {AUTH.resetPassword.fields.confirm}
         </label>
-        <Input
+        <PasswordInput
           id="confirm"
-          type="password"
           autoComplete="new-password"
           required
           minLength={8}
@@ -133,6 +132,7 @@ function ResetPasswordPageInner() {
           aria-describedby={confirmError ? "confirm-error" : undefined}
           aria-invalid={!!confirmError}
           className="mt-1"
+          showToggle
         />
         <FieldError id="confirm" message={confirmError} />
       </div>
