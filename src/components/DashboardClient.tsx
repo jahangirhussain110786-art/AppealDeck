@@ -18,6 +18,7 @@ import {
   computeReadiness,
   READINESS_COPY,
   noveltyRequired,
+  GLOBAL_EXPECTATIONS,
 } from "@/core";
 import type { CaseFile } from "@/core/interviewEngine";
 import type { CaseState, CaseStateContext, ReplyCategory } from "@/core/caseState";
@@ -26,6 +27,7 @@ import { DeadlineChip } from "@/components/DeadlineChip";
 import { EmptyState } from "@/components/EmptyState";
 import { VaultGate } from "@/components/VaultGate";
 import { CasePreview } from "@/components/CasePreview";
+import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { openVaultForVisitor } from "@/lib/vault/visitor";
 import { ReplyCategoryLabel } from "@/components/ReplyCategoryLabel";
 import { Button } from "@/components/ui/button";
@@ -516,6 +518,12 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
                 </CardContent>
               </Card>
             </div>
+
+            <HonestExpectationsCard
+              summary={GLOBAL_EXPECTATIONS.typicalNote}
+              weDo={GLOBAL_EXPECTATIONS.whatWeDo}
+              weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
+            />
           </div>
         );
       }}

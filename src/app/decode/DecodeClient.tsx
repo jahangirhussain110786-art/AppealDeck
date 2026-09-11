@@ -13,7 +13,6 @@ import { SeverityBadge } from "@/components/SeverityBadge";
 import { CaseStateBadge } from "@/components/CaseStateBadge";
 import { DeadlineChipList } from "@/components/DeadlineChip";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
-import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { EmptyState } from "@/components/EmptyState";
 import { CopyButton } from "@/components/CopyButton";
 import { OfflineNotice } from "@/components/OfflineNotice";
@@ -25,12 +24,13 @@ import { SHARED } from "@/content/shared";
 import { APP } from "@/content/app";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 import type { ViolationKind } from "@/core";
-import type { Deadline } from "@/core";
+import type { DeadlineLike } from "@/components/DeadlineChip";
 
+/** Wire shape of `/api/decode`: `dueAt` arrives as an ISO string, not a `Date`. */
 type DecodeResponse = {
   kind: ViolationKind;
   confidence: "deterministic" | "llm-needed";
-  deadlines: Deadline[];
+  deadlines: DeadlineLike[];
   severityGated: boolean;
 };
 
@@ -286,16 +286,6 @@ function ResultView({
               ))}
             </ul>
           </div>
-        </div>
-
-        <div className="mt-5">
-          <HonestExpectationsCard
-            summary={guidance.summary}
-            whatToDo={[
-              guidance.triage.doNow[0] ?? "Review the deadlines.",
-              ...(guidance.triage.doNot.length ? ["Avoid the listed pitfalls."] : []),
-            ]}
-          />
         </div>
 
         <div className="mt-5">

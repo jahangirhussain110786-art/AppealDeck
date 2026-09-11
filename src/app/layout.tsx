@@ -6,29 +6,27 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { MotionProviders } from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
 import { SITE_URL } from "@/lib/urls";
+import { SHARED } from "@/content/shared";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "AppealDeck — Amazon suspension notice decoder",
+    default: SHARED.metadata.titleDefault,
     template: "%s · AppealDeck",
   },
-  description:
-    "Paste your Amazon deactivation notice and get it decoded in plain English. Free decoder, $199 Appeal Pass for a drafted Plan of Action. No automation, no outcome promises.",
+  description: SHARED.metadata.description,
   applicationName: "AppealDeck",
   openGraph: {
     type: "website",
     siteName: "AppealDeck",
-    title: "AppealDeck — Amazon suspension notice decoder",
-    description:
-      "Decode your Amazon deactivation or policy notice into plain English and draft a Plan of Action you edit and submit yourself.",
+    title: SHARED.metadata.titleDefault,
+    description: SHARED.metadata.description,
     url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "AppealDeck — Amazon suspension notice decoder",
-    description:
-      "Decode your Amazon deactivation or policy notice in plain English. Free decoder, $199 Appeal Pass.",
+    title: SHARED.metadata.titleDefault,
+    description: SHARED.metadata.description,
   },
   robots: { index: true, follow: true },
   alternates: {

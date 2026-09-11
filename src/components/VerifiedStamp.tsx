@@ -20,7 +20,7 @@ export function VerifiedStamp({ checkedOn = POLICY_CHECKED_ON, className }: Veri
         <TooltipTrigger asChild>
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-xs font-medium text-success-foreground",
+              "inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-xs font-medium text-success",
               className,
             )}
           >

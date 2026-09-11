@@ -205,13 +205,11 @@ export const GLOBAL_EXPECTATIONS: GlobalExpectations = {
     "Help you present a stronger, honest appeal that you review and submit yourself.",
   ],
   whatWeDoNot: [
-    "We do not submit to Amazon on your behalf.",
-    "We do not log in to or operate your Seller Central account.",
-    "We do not promise reinstatement or a specific outcome.",
-    "We do not train on your notice text (the decoder runs in your browser).",
+    "You submit the appeal yourself in Seller Central; we never log in to your account.",
+    "Amazon makes every decision; we make your case as clear and well-evidenced as it can be.",
+    "Your notice text is decoded in your browser and is not used for training.",
   ],
-  typicalNote:
-    "Appeal decisions are Amazon's alone. Typical review ranges vary; timing is never promised.",
+  typicalNote: "Amazon makes the final decision on every appeal; review times vary.",
 };
 
 export function allGuidanceStrings(): string[] {

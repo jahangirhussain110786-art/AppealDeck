@@ -9,6 +9,18 @@ import type { Deadline } from "@/core";
 
 type Tone = "neutral" | "warn" | "destructive" | "info";
 
+/**
+ * A core `Deadline` whose `dueAt` may still be an ISO string — the shape it has after a JSON
+ * round trip through `/api/decode` or the vault. The chip normalises it; callers need not.
+ */
+export type DeadlineLike = Omit<Deadline, "dueAt"> & { dueAt: Date | string | null };
+
+function toDate(d: Date | string | null): Date | null {
+  if (!d) return null;
+  const date = typeof d === "string" ? new Date(d) : d;
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function toneFor(dueAt: Date | null, now: Date, kind: Deadline["kind"]): Tone {
   if (kind === "funds_review" || kind === "indefinite_hold") return "info";
   if (kind === "funds_appeal_eligible") return "info";
@@ -35,7 +47,7 @@ const toneIcon: Record<Tone, React.ComponentType<{ className?: string }>> = {
 };
 
 export interface DeadlineChipProps {
-  deadline: Deadline;
+  deadline: DeadlineLike;
   now?: Date;
   className?: string;
 }
@@ -47,8 +59,9 @@ const toneIconColor: Record<Tone, string> = {
   info: "text-info",
 };
 
-function DeadlineChipContent({ deadline, now }: { deadline: Deadline; now: Date }) {
-  const tone = toneFor(deadline.dueAt, now, deadline.kind);
+function DeadlineChipContent({ deadline, now }: { deadline: DeadlineLike; now: Date }) {
+  const dueAt = toDate(deadline.dueAt);
+  const tone = toneFor(dueAt, now, deadline.kind);
   const Icon = toneIcon[tone];
   return (
     <div
@@ -62,8 +75,7 @@ function DeadlineChipContent({ deadline, now }: { deadline: Deadline; now: Date 
       <div className="flex flex-col text-left">
         <span className="font-medium text-foreground">{deadline.label}</span>
         <span className="tabular-nums text-muted-foreground">
-          {formatDate(deadline.dueAt) || "Date not stated"} ·{" "}
-          {formatRelativeDays(deadline.dueAt, now)}
+          {formatDate(dueAt) || "Date not stated"} · {formatRelativeDays(dueAt, now)}
         </span>
       </div>
     </div>
@@ -118,7 +130,7 @@ export function DeadlineChipList({
   now,
   className,
 }: {
-  deadlines: Deadline[];
+  deadlines: DeadlineLike[];
   now?: Date;
   className?: string;
 }) {

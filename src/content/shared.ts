@@ -20,14 +20,15 @@ export const SHARED = {
   },
   footer: {
     tagline:
-      "AppealDeck by Hawlton. We decode notices and draft appeals; we do not submit to Amazon and do not promise reinstatement.",
+      "AppealDeck by Hawlton. Plain-English notice decoding, deadlines, and a drafted Plan of Action you submit yourself in Seller Central.",
     nav: {
       privacy: "Privacy",
       terms: "Terms",
       refund: "Refund",
       faq: "FAQ",
     },
-    neverSubmits: "AppealDeck never submits to Amazon on your behalf.",
+    neverSubmits:
+      "You submit your appeal yourself in Seller Central. AppealDeck never logs in to your account.",
     independence:
       "AppealDeck is an independent service and is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon and Seller Central are trademarks of Amazon.com, Inc. or its affiliates.",
     groups: {
@@ -37,21 +38,22 @@ export const SHARED = {
     copyright: "© {year} Hawlton",
   },
   expectations: {
-    weDo: "We do",
-    weDoNot: "We do not",
+    weDo: "What AppealDeck does",
+    weDoNot: "What stays in your hands",
   },
   metadata: {
-    titleDefault: "AppealDeck — Amazon suspension notice decoder",
+    titleDefault: "AppealDeck — Amazon notice decoder and Plan of Action drafts",
     description:
-      "Decode your Amazon deactivation or policy notice in plain English. $199 one-time Appeal Pass for a drafted Plan of Action. No automation, no outcome promises.",
-    titleDecode: "Decode your Amazon notice — AppealDeck",
+      "Understand your Amazon deactivation or policy notice in plain English, see your deadlines, and draft a Plan of Action you review and submit yourself. Free decoder. $199 one-time Appeal Pass.",
+    titleDecode: "Decode your Amazon notice, free and in your browser — AppealDeck",
     descriptionDecode:
-      "Paste your Amazon notice. Decoded in your browser — nothing sent to our servers.",
-    titlePricing: "Pricing — AppealDeck",
+      "Paste your Amazon notice and read it in plain English: case type, deadlines, and a do-now list. It runs in your browser.",
+    titlePricing: "Appeal Pass — $199 one-time — AppealDeck",
     descriptionPricing:
-      "Free decoder, $199 one-time Appeal Pass for a drafted POA. Submit yourself in Seller Central.",
+      "One payment per case: guided interview, evidence checklist, drafted Plan of Action, critic review and an encrypted vault. 7-day refund.",
     titleFaq: "FAQ — AppealDeck",
-    descriptionFaq: "Questions about decoding, the Appeal Pass, data, and refunds.",
+    descriptionFaq:
+      "How the decoder works, what the Appeal Pass includes, how your documents are protected, and how refunds work.",
   },
   submitButton: "Submit",
   retryButton: "Retry",

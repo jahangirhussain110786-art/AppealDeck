@@ -86,7 +86,8 @@ export const APP = {
   },
   dashboard: {
     title: "Your dashboard",
-    subtitle: "Manage your AppealDeck services and seller-account tools here.",
+    subtitle:
+      "Your case at a glance: what to do next, your deadlines, and how complete the file is.",
     active: {
       heading: "Appeal Pass active",
       planLabel: "Plan",

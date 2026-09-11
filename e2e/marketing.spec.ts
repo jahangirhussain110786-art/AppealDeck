@@ -20,9 +20,7 @@ test.describe("Marketing site (public)", () => {
     await expect(page.getByText(/part of amazon/i)).toBeVisible();
   });
 
-  test("pricing page renders the Free, Free account and Appeal Pass columns", async ({
-    page,
-  }) => {
+  test("pricing page renders the Free, Free account and Appeal Pass columns", async ({ page }) => {
     await page.goto("/pricing");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Free", exact: true })).toBeVisible();
@@ -44,6 +42,21 @@ test.describe("Marketing site (public)", () => {
     await expect(
       page.getByRole("button", { name: /decode|analyze|submit/i }).first(),
     ).toBeVisible();
+  });
+
+  test("the sample notice loads and decodes to a result card", async ({ page }) => {
+    await page.goto("/decode");
+    await page.getByRole("button", { name: "Try a sample notice" }).click();
+    const textarea = page.getByRole("textbox", { name: /notice/i }).first();
+    await expect(textarea).not.toHaveValue("");
+
+    await page.getByRole("button", { name: "Decode", exact: true }).click();
+
+    const main = page.locator("main");
+    await expect(main.getByRole("heading", { level: 2 }).first()).toBeVisible();
+    await expect(main.getByText("Do now", { exact: true })).toBeVisible();
+    await expect(main.getByText("Do not", { exact: true })).toBeVisible();
+    await expect(main.getByText("This page hit an error")).toHaveCount(0);
   });
 
   test("privacy + terms + refund pages are reachable", async ({ page }) => {

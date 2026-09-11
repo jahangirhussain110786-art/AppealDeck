@@ -1,9 +1,6 @@
-import Link from "next/link";
-import { Lock } from "lucide-react";
 import { getOptionalUser } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/EmptyState";
+import { VaultLockedState } from "@/components/VaultLockedState";
 import VaultView from "@/components/VaultView";
 import { APP } from "@/content/app";
 
@@ -15,20 +12,13 @@ export default async function VaultPage() {
   if (!user) {
     return (
       <div className="mx-auto flex w-full max-w-tool flex-col gap-4 py-10">
-        <EmptyState
-          icon={Lock}
+        <VaultLockedState
           title={APP.access.vaultSignedOut.title}
           description={APP.access.vaultSignedOut.desc}
-          action={
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button asChild>
-                <Link href="/login?next=/vault">{APP.access.vaultSignedOut.cta}</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/case">{APP.access.vaultSignedOut.back}</Link>
-              </Button>
-            </div>
-          }
+          ctaHref="/login?next=/vault"
+          ctaLabel={APP.access.vaultSignedOut.cta}
+          backHref="/case"
+          backLabel={APP.access.vaultSignedOut.back}
         />
       </div>
     );
@@ -39,20 +29,13 @@ export default async function VaultPage() {
   if (!active) {
     return (
       <div className="mx-auto flex w-full max-w-tool flex-col gap-4 py-10">
-        <EmptyState
-          icon={Lock}
+        <VaultLockedState
           title={APP.access.vaultSignedOut.title}
           description={APP.access.vaultSignedOut.desc}
-          action={
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button asChild>
-                <Link href="/pricing">{APP.access.vaultSignedOut.cta}</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/case">{APP.access.vaultSignedOut.back}</Link>
-              </Button>
-            </div>
-          }
+          ctaHref="/pricing"
+          ctaLabel={APP.access.vaultSignedOut.cta}
+          backHref="/case"
+          backLabel={APP.access.vaultSignedOut.back}
         />
       </div>
     );

@@ -11,7 +11,7 @@ function FooterGroup({
 }) {
   return (
     <div>
-      <h3 className="text-eyebrow uppercase text-muted-foreground">{title}</h3>
+      <h2 className="text-eyebrow uppercase text-muted-foreground">{title}</h2>
       <ul className="mt-4 space-y-2.5">
         {links.map((link) => (
           <li key={link.href}>

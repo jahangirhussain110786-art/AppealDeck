@@ -9,12 +9,15 @@ export function EmptyState({
   description,
   action,
   className,
+  titleAs: TitleTag = "p",
 }: {
   icon?: React.ComponentType<{ className?: string }>;
   title: string;
   description?: string;
   action?: ReactNode;
   className?: string;
+  /** Heading level when the empty state is the page's own heading (e.g. a signed-out gate). */
+  titleAs?: "h1" | "h2" | "h3" | "p";
 }) {
   return (
     <div
@@ -28,7 +31,7 @@ export function EmptyState({
           <Icon className="size-6" />
         </div>
       )}
-      <p className="text-base font-semibold text-foreground">{title}</p>
+      <TitleTag className="text-base font-semibold text-foreground">{title}</TitleTag>
       {description && <p className="max-w-sm text-sm text-muted-foreground">{description}</p>}
       {action && <div className="mt-1">{action}</div>}
     </div>
