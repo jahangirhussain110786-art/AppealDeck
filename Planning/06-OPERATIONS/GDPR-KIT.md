@@ -10,7 +10,7 @@
 | Data subjects | Sellers who paste notices; buyers of Appeal Passes |
 | Categories of personal data | Notice text (may contain names/ASINs/addresses), email (purchase), hashed device id (license), support messages |
 | Special categories | None intended; notice text may incidentally contain identity data — treated as confidential |
-| Recipients (subprocessors) | Paddle (MoR/payment), Google (Gemini paid tier, drafting), Supabase (licenses/backend), Plausible/Umami (analytics), Cloudflare (hosting/DNS) |
+| Recipients (subprocessors) | Paddle (MoR/payment), Google (Gemini paid tier, drafting), Supabase (licenses/backend), Plausible/Umami (analytics), Vercel (hosting — corrected 11 Sep 2026; single-host decision superseded the earlier Cloudflare plan) |
 | International transfers | US/EU via above; safeguards = each processor's DPA / MoR compliance |
 | Retention | Browser case data: until user deletes; server notice text: on request / post-support window; license records: for entitlement + accounting |
 | Security | Local-first encryption (Web Crypto), secrets in env stores only, no free-tier LLM for user data, least-privilege invites |
@@ -40,6 +40,6 @@ Log every DSR with date, type, action, completion.
 - Google Gemini: enable paid tier; rely on Google Cloud DPA. Free tier NEVER touches user data.
 - Supabase: execute a DPA; fresh project only.
 - Plausible/Umami: confirm no personal data collected (cookieless).
-- Cloudflare: review DPA.
+- Vercel: review DPA (corrected 11 Sep 2026 — was "Cloudflare," superseded by the single-host decision).
 
 **Founder action:** sign/accept each DPA at account creation; archive confirmations outside the repo.

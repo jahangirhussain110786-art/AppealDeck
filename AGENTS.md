@@ -2,7 +2,7 @@
 
 ## Current Project State
 
-- **Last updated:** 8 Sep 2026 (Wave C complete — Tasks 0-7 all green: Dashboard/server gate, InterviewFlow vault save+Stepper, Compose PoaSection+checklist, VaultView teaching/search/delete Dialog, Billing content strings+refund link+DeviceManager Dialog, AuthCard shared component+content/auth.ts, axe-core a11y e2e + lighthouse 1.0. Validation: typecheck 0 errors, lint 0 warnings, lint:copy PASS, format:check PASS, build 27 routes, vitest 287/287, Playwright 44/44.)
+- **Last updated:** 11 Sep 2026 (corrected — this line was frozen at 8 Sep for five sessions' worth of work). Since 8 Sep: the UI/UX polish pass + its fix pass (AA-30, done), the AM-21 access-and-continuity pass (no-account → free-account → Appeal Pass ladder, five-slot header, browser-key drafts with passphrase relock — AA-33, done), the visual refresh v3 (brand mark, tokens v3, hero-as-product — AA-32, done), and an 11 Sep full-repo audit + fix pass (AA-31 composer critic rules, AA-21 EF-5 outcome schema, D10 analytics wiring, a dozen stale planning docs corrected — see `docs/handoffs/2026-09-11-full-repo-audit-guidebook.md` and `CLAUDE.md` §4 for the detailed session-by-session log this file doesn't duplicate). Current gates: typecheck 0, lint 0, lint:copy PASS, vitest 362/362 in 39 files, build 32+ routes.
 
 ## Wave C — Completed (Tasks 0-7)
 
@@ -50,9 +50,10 @@ See `Planning/03-PHASE-2-BUILD/08-WAVE-C-HANDOFF.md` for full detail.
   - **Email:** `dev@appealdeck.com`
   - **Password:** `<rotated — see scripts/seed-dev-user.mjs output, never committed>`
   - **User ID:** `<see scripts/seed-dev-user.mjs output, never committed>`
-  - **How to sign in:** `npm run dev`, open `http://localhost:3000/login`, paste email + password, click Sign in. You land on the marketing home (`/`) — there is no `/app` route yet. To get to `/case`, type `/case` in the address bar after sign-in (auth gate lets you through).
-  - **To rotate the password (idempotent now):** `node --env-file=.env.local scripts/seed-dev-user.mjs` — the script now lists users, deletes any existing match, then creates a fresh one with a new random password. Safe to re-run.
-  - **DO NOT commit this password to the repo.** It's a dev fixture. AGENTS.md is the only place it lives, and this is intentional.
+  - **How to sign in (corrected 11 Sep 2026):** `npm run dev`, open `http://localhost:3000/login`, paste email + password, click Sign in — the app redirects to `/dashboard` automatically post-login (the AM-21 access pass added this; there never was an "`/app` route", and typing `/case` manually is no longer necessary). The header shows five nav slots (Decode · Case · Dashboard · Vault 🔒 · Pricing/Billing) in both signed-in and signed-out states.
+  - **This account also has an active Appeal Pass license as of 11 Sep 2026** (`node --env-file=.env.local scripts/grant-dev-license.mjs`) — so `/billing`, `/compose`, and every Pass-gated surface work under it too, not just sign-in.
+  - **To rotate the password (idempotent now):** `node --env-file=.env.local scripts/seed-dev-user.mjs` — the script now lists users, deletes any existing match, then creates a fresh one with a new random password. Safe to re-run. Rotating invalidates the license grant's association only if the user id changes the row lookup path (it doesn't — `grant-dev-license.mjs` keys by email); re-run `grant-dev-license.mjs` after rotating if `/billing` ever shows inactive.
+  - **DO NOT commit this password to the repo.** It's a dev fixture, kept in `.env.local` as `DEV_LOGIN_EMAIL`/`DEV_LOGIN_PASSWORD` (gitignored, never committed) — not in this file, despite what an earlier version of this line claimed.
   - **For production:** design partners go through the normal `/signup` flow with their own email + Google. The dev account is for local testing only.
 - **Founder action items (NEW from this auth session, status):**
   - ✅ **Supabase dashboard → Authentication → URL Configuration → Redirect URLs:** added `http://localhost:3000/auth/callback` (and prod). Email magic links + Google sign-in both confirmed working in Playwright smoke test.
@@ -182,10 +183,12 @@ AppealDeck is a Chrome extension + web SaaS for suspended Amazon sellers (notice
 - Dependencies: `npm install` at repo root (where package.json lives)
 - Dev: `npm run dev` (from repo root)
 - Build: `npm run build` (from repo root)
-- Tests: `npm test` (Vitest, from repo root) — 20 tests green on Node 20
+- Tests: `npm test` (Vitest, from repo root) — 362 tests green in 39 files as of 11 Sep 2026 (corrected — this line said "20 tests" for weeks after the suite had already grown well past that)
+- Lint: `npm run lint` (ESLint, 0 warnings) · `npm run lint:copy` (banned-phrase/number/punctuation/colour gate, `scripts/lint-copy.mjs`, 5 passes) · `npm run format:check` (Prettier)
+- E2E: `npm run test:e2e` (Playwright) · Lighthouse: `npm run lighthouse` (or run `lighthouse` directly per-URL on Windows — `lhci collect` hits a temp-dir `EPERM`, see `docs/handoffs/2026-09-09-uiux-polish-fix.md`)
 - Typecheck: `npm run typecheck` (from repo root)
-- CI: `.github/workflows/ci.yml` runs typecheck + test at repo root on Node 20
-- Git: repo is initialized with initial commit on `master`
+- CI: `.github/workflows/ci.yml` runs 3 jobs — `build` (typecheck, lint, lint:copy, format:check, build, test), `e2e` (Playwright), `lighthouse` — corrected here to match what the file's own body text already said elsewhere; this line previously claimed a single "typecheck + test" job
+- Git: repo is initialized with initial commit on `master`; `master` is pushed to `origin` (current as of `18f1233`, 11 Sep 2026)
 
 ## Boundaries
 

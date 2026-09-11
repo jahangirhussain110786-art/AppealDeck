@@ -12,18 +12,28 @@
 
 ---
 
-## Already Installed (Current `kilo.json`)
+## Already Installed (Current `kilo.json`) — corrected 11 Sep 2026
+
+**This table and the "Must Add" markers below it were last true in late August 2026.** Checked directly against the live `kilo.json` on 11 Sep 2026 (`enabled: true` entries): `github`, `vercel`, `supabase`, `postgres`, `playwright`, `posthog`, `refactor`, and `mem0` are all now **active**, not "Must Add" — eight of this list's original "Core — Must Have" rows were already closed and the table just never caught up. `paddle-sandbox` is active; `paddle-live` and `paddle-docs` are present but disabled (sandbox-only, matching pre-launch reality). This file also predates `.claude/` — the Claude Code harness now in use for this project's coding sessions, with its own separate skill set (including the `.agents/skills/paddle-*` docs) — worth a mention here so a reader doesn't think `kilo.json` is the only tooling layer.
 
 | MCP | Status | Notes |
 |-----|--------|-------|
 | Google Drive MCP | ✅ Active | Remote HTTP on `127.0.0.1:3100`; 116 tools |
 | Filesystem MCP | ✅ Active | Stdio via `@modelcontextprotocol/server-filesystem` |
 | Fetch MCP | ✅ Active | Stdio via `@modelcontextprotocol/server-fetch` |
-| Memory MCP | ✅ Active | Stdio basic memory; consider upgrading to Mem0 |
+| Memory MCP | ✅ Active | Stdio basic memory |
+| Mem0 MCP | ✅ Active (added since) | Supersedes the "consider upgrading to Mem0" note this file used to carry |
 | Sequential Thinking MCP | ✅ Active | Stdio via `@modelcontextprotocol/server-sequential-thinking` |
 | Time MCP | ✅ Active | Stdio via `@modelcontextprotocol/server-time` |
 | DuckDuckGo MCP | ✅ Active | Stdio search; can be replaced by Brave Search |
-| Paddle Sandbox/Live/Docs | ✅ Active | Remote MCPs for Paddle billing integration |
+| Paddle Sandbox/Live/Docs | ✅ Sandbox active; Live/Docs present but disabled | Remote MCPs for Paddle billing integration — Live stays off pre-launch by design |
+| GitHub MCP | ✅ Active (added since) | Was listed as "Must Add" below; corrected |
+| Vercel MCP | ✅ Active (added since) | Was listed as "Must Add" below; corrected |
+| Supabase MCP | ✅ Active (added since) | Was listed as "Must Add" below; corrected |
+| Postgres MCP | ✅ Active (added since) | Was listed as "Must Add" below; corrected |
+| Playwright MCP | ✅ Active (added since) | Was listed as "Must Add" below; corrected |
+| PostHog MCP | ✅ Active (added since) | Local dev-tooling bridge only — **not** the product's own analytics (that's Plausible/Umami, still unwired as of 11 Sep 2026, see the 11 Sep full-repo-audit guidebook) |
+| Refactor MCP | ✅ Active (added since) | Was listed as "Must Add" below; corrected |
 
 ---
 
@@ -35,20 +45,20 @@ These form the foundation of autonomous operation. Any missing items here should
 |---|-----|------|--------|---------------------|
 | 1 | **Terminal MCP** | FREE | 🔧 Must Add | Run shell commands, builds, tests, npm scripts |
 | 2 | **Filesystem MCP** | FREE | ✅ Installed | Bulk read/write across repo |
-| 3 | **GitHub MCP** | FREE | 🔧 Must Add | PRs, issues, repo management, CI/CD |
+| 3 | **GitHub MCP** | FREE | ✅ Installed (corrected 11 Sep 2026) | PRs, issues, repo management, CI/CD |
 | 4 | **Git MCP** | FREE | 🔧 Must Add | Local version control (commit, branch, diff) |
-| 5 | **Vercel MCP** | FREE tier | 🔧 Must Add | Deploy, logs, env vars, edge functions |
-| 6 | **Supabase MCP** | FREE | 🔧 Must Add | Database ops, auth, RLS, migrations |
-| 7 | **Postgres/SQLite MCP** | FREE | 🔧 Must Add | Raw SQL queries when Supabase MCP is insufficient |
+| 5 | **Vercel MCP** | FREE tier | ✅ Installed (corrected 11 Sep 2026) | Deploy, logs, env vars, edge functions |
+| 6 | **Supabase MCP** | FREE | ✅ Installed (corrected 11 Sep 2026) | Database ops, auth, RLS, migrations |
+| 7 | **Postgres/SQLite MCP** | FREE | ✅ Installed (corrected 11 Sep 2026) | Raw SQL queries when Supabase MCP is insufficient |
 | 8 | **Google Drive MCP** | FREE | ✅ Installed | Document storage, 116 tools, HTTP transport |
 | 9 | **Email MCP (Gmail/IMAP/SMTP)** | FREE | 🔧 Must Add | Client emails, support, transactional mail |
-| 10 | **Playwright MCP** | FREE | 🔧 Must Add | E2E tests, Chrome extension debugging, browser automation |
+| 10 | **Playwright MCP** | FREE | ✅ Installed (corrected 11 Sep 2026) | E2E tests, Chrome extension debugging, browser automation |
 | 11 | **Browser-Use MCP** | FREE | 🔧 Must Add | Autonomous Chrome control for Seller Central, scraping |
 | 12 | **Browser MCP** | FREE | 🔧 Must Add | Lightweight browser interaction, DOM reading |
-| 13 | **Sentry MCP** | FREE tier | 🔧 Must Add | Error tracking (5K errors/mo free) |
-| 14 | **PostHog MCP** | FREE tier | 🔧 Must Add | Analytics, feature flags, session replay |
-| 15 | **Refactor MCP** | FREE (Open Source MIT) | 🔧 Must Add | Automated codebase refactoring, analysis |
-| 16 | **Mem0 MCP** | FREE Hobby tier | 🔧 Must Add | Persistent long-term memory across sessions; replaces basic Memory MCP |
+| 13 | **Sentry MCP** | FREE tier | 🔧 Must Add | Error tracking (5K errors/mo free) — matches the still-open Sentry gap noted in the 11 Sep full-repo-audit guidebook, Section B4 |
+| 14 | **PostHog MCP** | FREE tier | ✅ Installed (corrected 11 Sep 2026) | Local dev-tooling bridge only, not the product's own analytics |
+| 15 | **Refactor MCP** | FREE (Open Source MIT) | ✅ Installed (corrected 11 Sep 2026) | Automated codebase refactoring, analysis |
+| 16 | **Mem0 MCP** | FREE Hobby tier | ✅ Installed (corrected 11 Sep 2026) | Persistent long-term memory across sessions; replaces basic Memory MCP |
 
 ---
 

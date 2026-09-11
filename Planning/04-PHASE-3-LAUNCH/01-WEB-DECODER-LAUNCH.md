@@ -37,17 +37,16 @@
 | Data posture | Web v1 stores case data (intake answers, drafts) in **unencrypted** browser-local storage (localStorage/IndexedDB) on the user's own device — never transmitted to our servers; the backend holds only license/entitlement records and anonymous event counts. The encrypted vault is extension-exclusive at v1. Redrafts therefore require the same browser. Unlock-page copy must state this honestly, e.g.: "Your case data stays in this browser's local storage on your device — we never send it to or store it on our servers. It is not encrypted at rest here; the encrypted vault is an extension feature. Redrafts require this same browser." |
 | Not in web v1 | Encrypted case vault, deadline alarms, in-page Seller Central panel, POA injector — extension-exclusive by design (they are the copy-resistant moat). No accounts/passwords in v1 — license key is the credential. |
 
-## 3. Hosting (settled)
+## 3. Hosting — SUPERSEDED 4 Sep 2026 (single-host decision)
 
-Vercel Hobby is contractually non-commercial — a checkout on it is a terms violation. The launch stack is:
+This section's original stack (Cloudflare Pages + Supabase Edge Functions) was superseded when the founder decided single-host Vercel for the first deploy — see `CLAUDE.md` §4, `docs/DEPLOYMENT.md`, and `src/middleware.ts`. **What's actually running:**
 
 | Component | Service | Cost |
 |---|---|---|
-| Static site (decoder page, composer app) | **Cloudflare Pages** (free tier) | $0/mo |
-| All API work — MoR webhook receiver, `reason` LLM proxy, `verify-license` (Supabase Edge Functions) — plus Postgres (`licenses` table, telemetry counts) | **Supabase** (free tier at start → Pro from first sustained sales) | $0 → $25/mo |
-| Fallback only — if porting the donor Express backend proves necessary at M-5; decided then by the AI assistant + Founder and logged (⚠ FOUNDER-DECISION only if it adds spend) | Vercel Pro — **not provisioned by default** | $20/mo (fallback only) |
+| Everything — static pages, the decoder, the composer, and every API route (webhook receiver, LLM proxy, license status) | **Vercel** (Next.js app, one origin) | $0/mo on Hobby through the first cohort of customers |
+| Postgres (`licenses` table, telemetry counts) + auth | **Supabase** (free tier at start → Pro from first sustained sales) | $0 → $25/mo |
 
-Launch infrastructure cost: **$0–25/mo.** License keys are self-issued: MoR webhooks (Paddle primary, Polar fallback) land on a Supabase Edge Function that upserts the `licenses` table; a `verify-license` Edge Function serves the composer unlock. MoR retry behavior (Paddle retries webhooks 60 times over 3 days) plus idempotency covers Edge Function cold starts. [source: The Second Opinion.md, amendment 1]
+Running the paid product on Vercel Hobby is a deliberate, founder-informed choice (not the terms violation this section originally warned about — see `AGENTS.md`'s own upgrade-trigger note), made because single-host simplicity was worth more at this stage than avoiding Hobby. Launch infrastructure cost: **$0/mo pre-revenue.** License keys are self-issued: the Paddle webhook (`src/app/api/webhooks/paddle/route.ts`) upserts the `licenses` table directly; `GET /api/license/status` serves the composer unlock check. No Supabase Edge Functions, no donor Express backend, no Cloudflare Pages exist in the shipped architecture.
 
 ## 4. Checkout + EU-withdrawal consent flow (legally load-bearing — implement exactly)
 

@@ -67,7 +67,7 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
 1. Supabase dashboard → Authentication → URL Configuration
    - Site URL: `https://appealdeck.com`
    - Redirect URLs: `<origin>/auth/callback` for the current single host (the `vercel.app` URL now, the apex later) + `http://localhost:3000/auth/callback` (dev only). No `app.` entry unless the split is switched on.
-2. Supabase dashboard → SQL Editor: confirm migrations `0001` through `0007` are applied. If not, copy each `supabase/migrations/*.sql` file and run in order.
+2. Supabase dashboard → SQL Editor: confirm migrations `0001` through `0008` are applied. If not, copy each `supabase/migrations/*.sql` file and run in order. **`0008_outcome_events.sql` is new as of 11 Sep 2026** (the EF-5 opt-in outcome table) and has not yet been applied to any project — no AI session has direct SQL access, only the REST API, so this one needs a manual copy-paste into the SQL Editor same as the others. Until it's applied, `POST /api/outcome` fails closed (returns an error, writes nothing) rather than crashing.
 3. Supabase dashboard → Settings → API: copy `URL`, `anon` key, `service_role` key to Vercel env.
 
 ## 5. Paddle production setup (founder action)

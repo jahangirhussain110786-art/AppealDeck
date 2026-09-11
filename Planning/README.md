@@ -61,7 +61,7 @@ Details, decision rights, and burnout guardrails: [08-TEAM/01-ROLES-AND-OWNERS.m
 
 ## Money, honestly
 
-Available cash: ~$1,100–2,300 (+ ~$500–1,200 recruitment budget). One-time setup ≈ $20–50 on the lean path (store account $5, domain ~$15; the old $200 agreement-template line item is gone — solo founder, no partnership agreement) plus two priority spends: appeals consultant $1,000–2,000 and E&O insurance $500–2,500/yr before public launch. Target infrastructure run-rate: $0–25/mo at launch (Cloudflare Pages free + Supabase; ceiling ≤$50/mo). The only planning-grade year-1 revenue figure is the conservative **~$17k gross**; every larger number in the source research is illustrative. Full budget and allocation decision: [07-REFERENCE/05-RESOURCE-STACK-AND-BUDGET.md](07-REFERENCE/05-RESOURCE-STACK-AND-BUDGET.md).
+Available cash: ~$1,100–2,300 (+ ~$500–1,200 recruitment budget). One-time setup ≈ $20–50 on the lean path (store account $5, domain ~$15; the old $200 agreement-template line item is gone — solo founder, no partnership agreement) plus two priority spends: appeals consultant $1,000–2,000 and E&O insurance $500–2,500/yr before public launch. Target infrastructure run-rate: $0/mo at launch pre-revenue (single-host Vercel Hobby, free, + Supabase free — corrected 11 Sep 2026; the original Cloudflare Pages plan was superseded 4 Sep 2026, see `07-REFERENCE/04-UNKNOWNS-REGISTER.md`; ceiling ≤$50/mo once upgrades are justified). The only planning-grade year-1 revenue figure is the conservative **~$17k gross**; every larger number in the source research is illustrative. Full budget and allocation decision: [07-REFERENCE/05-RESOURCE-STACK-AND-BUDGET.md](07-REFERENCE/05-RESOURCE-STACK-AND-BUDGET.md).
 
 ## Provenance
 

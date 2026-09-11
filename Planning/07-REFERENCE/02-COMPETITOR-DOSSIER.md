@@ -1,6 +1,6 @@
 # 02-COMPETITOR-DOSSIER — Full competitor profiles, differentiation matrix, and the moat statement
 
-**Why this file exists / when to use it:** "Zero competition" is dead — live Chrome Web Store searches on 25 Aug 2026 refuted it. This file is the current, verified picture of everyone competing for the suspended seller's money: who they are, what they charge, what they cannot do, how fast they could copy our wedge, and where we still win. Use it when writing positioning copy (with `01-MARKET-EVIDENCE.md` as the fact gate), when the weekly competitive check runs (Gate 3 check 35 in `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`), and whenever a competitor move needs a response. All profiles verified 25 Aug 2026 [source: VERIFICATIONS.md]; these results override older competitive documents.
+**Why this file exists / when to use it:** "Zero competition" is dead — live Chrome Web Store searches on 25 Aug 2026 refuted it. This file is the current, verified picture of everyone competing for the suspended seller's money: who they are, what they charge, what they cannot do, how fast they could copy our wedge, and where we still win. Use it when writing positioning copy (with `01-MARKET-EVIDENCE.md` as the fact gate), when the weekly competitive check runs (Gate 3 check 35 in `../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`), and whenever a competitor move needs a response. All profiles verified 25 Aug 2026 [source: VERIFICATIONS.md]; these results override older competitive documents. §1.5 and §3a were merged in 11 Sep 2026 from the 2 Sep 2026 live-web recheck (`Planning/03-PHASE-2-BUILD/reference/2026-09-02-COMPETITOR-RECHECK.md`), on the founder's approval — see `docs/DECISIONS.md`.
 
 **Terms used below:** POA = Plan of Action (the appeal document). SP-API = Amazon's official Selling Partner API — the sanctioned programmatic channel, requiring the seller to grant OAuth (delegated login) access to their account data. CWS = Chrome Web Store. MoR = Merchant of Record. AHA = Account Health Assurance; AHR = Account Health Rating (0–1000); Amelia = Amazon's Seller Central AI assistant. BSA §19 = Amazon's "Agent Policy" (effective 4 Mar 2026) restricting automated access. "Copyability" = how quickly the competitor could replicate AppealDeck's wedge (in-page panic capture, per-case one-time price, local-first privacy, encrypted vault, deadline engine). Response timelines are labeled judgments, not facts.
 
@@ -57,7 +57,22 @@
 
 **$11 to unlock a full POA draft** (per search snippet). Site served a broken Netlify wildcard SSL certificate on 25 Aug 2026 — the signature of an unmaintained side project. **Copyability/response: negligible capacity (judgment).** Its real significance is pricing psychology: an $11 draft exists, so our $199 must visibly buy classification depth, case management, deadlines, and vault — not prose alone.
 
-### 1.5 Minor CWS extensions (category occupation, not competition)
+### 1.5 Additional entrants and deaths (merged 11 Sep 2026 from the 2 Sep 2026 recheck)
+
+**Provenance:** `Planning/03-PHASE-2-BUILD/reference/2026-09-02-COMPETITOR-RECHECK.md` — a live web-research pass (WebSearch + direct fetches) done 2 Sep 2026, archived because its originating chat was deleted. Merged here on the founder's 11 Sep 2026 approval; full sourcing/URLs live in that archived file, not repeated here.
+
+| Entrant | Status (2 Sep 2026) | Detail |
+|---|---|---|
+| AppealsHub / "AppealPro" (appealshub.com) | **Dead — HTTP 404** | Indexed but the homepage no longer resolves; graveyard evidence for the "software tools die of neglect" thesis. |
+| AppealPath (appealpath.co) | **Confirmed still broken** | Both the bare and `www` domains served a broken SSL certificate as of 2 Sep — matches §1.4 above, now dated twice. |
+| SellerRule (sellerrule.com) | Active — free lead-gen tool | Free "Appeal Template Generator": an editable outline/checklist, not a paid product. Occupies the free-tool end of the category without competing on depth. |
+| DoNotPay "Unban My Account" | Active — consumer-grade, adjacent | Generic account-unban demand-letter generator that happens to cover Amazon; not seller-specific, no root-cause/evidence workflow, no POA structure. Illustrates that horizontal AI-legal tools mis-fit this niche. |
+| Free GPT wrappers ("AMZ Appeal GPT", "Amazon Appeal Expert") | Active — zero-dollar | Prompt wrappers in the ChatGPT GPT store / YesChat; no evidence system, no case data, no deadline tracking. The free-decoder wedge has to out-execute these on trust and depth, not just be free. |
+| EcomSellerTools (Scott Margolius) | **Pivoted away** | The 2021 "POA Examples" eBook is a dead artifact; the site now sells generic consulting sessions, not a template product — further evidence no 2021-era appeal-software incumbent survived in its original form. |
+
+**Headline finding carried over:** no surviving 2021–2023 "appeal software" incumbent exists at all — the category jumped straight from templates/eBooks to a 2025–26 wave of AI SaaS tools, none of which has a findable review footprint yet. This is consistent with, and strengthens, §1's existing per-competitor analysis; it does not change any of the copyability or response-timeline judgments already recorded above.
+
+### 1.6 Minor CWS extensions (category occupation, not competition)
 
 | Extension | Detail (25 Aug 2026) |
 |---|---|
@@ -80,6 +95,7 @@ Verified prices and details: `01-MARKET-EVIDENCE.md` §1.2 (single source of tru
 | Thompson & Holt | ~$600 (third-party cited; own site unreachable 25 Aug 2026) | LOW — cheapest named human anchor; our $199 undercuts it ~3x. |
 | Riverbend Consulting · Amazon Sellers Lawyer | Quote-only; user-reported $2,250–$4,000 | LOW — quote-gating means they cannot be beaten or matched on price transparency; we win that axis by default. |
 | My Amazon Guy · AMZ Sellers Attorney | $1,000–$2,000 / $1,500–$2,300 flat | LOW — attorney/agency lanes; AMZ Sellers Attorney's authority is attorney-client privilege, a lane we explicitly do not enter (we are document preparation, not legal advice). |
+| Seller Basics (merged 11 Sep 2026 from the 2 Sep 2026 recheck) | $199/mo membership (account health help, suspension assistance, IP claim defense, attorney quick-consults) plus an added $5,000 for pre-existing/pending suspensions or Section 3 reviews | LOW — insurance-style subscription-plus-surcharge model, not self-serve or transparent per-case pricing; reinforces the same structural gap AppealDeck's one-time price exploits. |
 
 The firm tier's structural weakness is ours to exploit honestly: no self-serve, no instant access, opaque quotes — versus our transparent one-time price at 3–25x below their verified fees.
 
@@ -93,6 +109,24 @@ The firm tier's structural weakness is ours to exploit honestly: no self-serve, 
 | **Amelia** (AI assistant, US Seller Central) | Explains violations, reads policy case history, interprets policy, guides resolution workflows. | **Does not write appeals/POAs.** Documented monitoring blind spots (SentryKit, 1 Jul 2026). |
 
 **Copyability: the one existential-scale scenario.** If Amazon extends Amelia to draft POAs, the decode-and-draft core is commoditized at the source. Timeline unknowable; tracked as risk R-23 in `03-RISK-REGISTER.md` with its early-warning signal (monitor Amazon seller-news and Amelia release notes monthly). What Amazon will never build: a deadline engine, an escalation-ready evidence vault, and honest adversarial coaching **against its own enforcement** — that is the durable remainder.
+
+---
+
+## 3a. Why generated/template appeals get rejected (verified evidence, merged 11 Sep 2026 from the 2 Sep 2026 recheck)
+
+**Provenance:** same archived recheck as §1.5 above. This is the strongest evidence backing the evidence-first, decode-before-draft design — a direct product-quality justification, not just a positioning line.
+
+Best single source is a competitor's own attack piece: Riverbend Consulting, "ChatGPT, Claude, and Amazon Seller Appeals" (Christian Rodgers, published 23 Jul 2026). Key findings, each independently corroborated by real Seller Central forum threads:
+
+- Generic, templated language is detected and deprioritized by Amazon's review systems — one forum thread documented 24 rejections of the same appeal before the seller stopped padding it with filler and blaming employees instead of naming the systemic root cause.
+- Submitting a Plan of Action when Amazon actually demanded supporting documents (invoices, etc.) triggers **instant automated rejection** — a different forum thread showed a rejection landing in under a minute for exactly this reason.
+- AI drafting tends to mirror the seller's own (sometimes wrong) theory of the case rather than question it, has no way to evaluate whether the evidence actually proves the claim, and has no visibility into the seller's real account history.
+- Unfulfillable or invented commitments ("we will fix this") and empty phrases ("we take full responsibility") are named rejection triggers.
+- Each weak, rejected appeal **burns one of a limited number of response opportunities** — the cost of a bad draft is not just wasted time, it is a shrinking chance to ever get reinstated.
+
+**Synthesized failure taxonomy, each traceable to the evidence above:** generic/templated language; the wrong artifact type submitted (prose when documents were required); root cause blamed on people instead of systems; the tool mirroring the seller's wrong theory instead of challenging it; invented or unfulfillable commitments; and burning a limited appeal attempt on a weak draft. **This taxonomy is the direct justification for AA-31's composer critic rules** (future-tense-promise detection, blame-shifting-language detection, the evidence-completeness gate before a full draft is offered, and the document-type router) — it is not a hypothetical risk, it is documented, dated, real-world failure behavior from the seller's own community and a competing firm's own published analysis.
+
+On success-rate claims specifically: a wide survey of the same market (SellerAppeal, Team4eCom, Amazon Appeal Xperts, ASA Compliance Group, Amazon Appeal Pro, AMZDudes, ReinstateAMZ, Appeal Partners) found 93–99% "success rates" advertised everywhere, every one self-reported with no published methodology, and one competitor's own reviews flagging a firm that asks for the seller's Amazon password and remote-desktop access — exactly the credential-handover risk AppealDeck's local-first design refuses to introduce. The two most reputable human firms in the whole survey (AMZ Sellers Attorney, ecommerceChris) are the only ones that publish **no** success-rate number at all — the credible tier's own norm already matches D6's "win rates only from opt-in outcome data" rule.
 
 ---
 

@@ -98,7 +98,7 @@
 
 ## 4. Actions
 
-- [ ] **1.** Treat `V:\Extension 2.3\Future\` as a read-only archive: no edits, no new files there; all living content resides in `V:\AppealDeck\`. **Owner:** Founder · **Cost:** $0 · **Deadline:** immediately · **Blocks:** single-source-of-truth discipline.
+- [ ] **1.** Treat `V:\Extension 2.3\Future\` as a read-only archive: no edits, no new files there; all living content resides in `V:\AppealDeck1\`. **Owner:** Founder · **Cost:** $0 · **Deadline:** immediately · **Blocks:** single-source-of-truth discipline.
 - [ ] **2.** When any playbook file cites a source graded C/D/F for a load-bearing number, re-verify that number live and record it in the citing file with a (verified) tag. **Owner:** AI assistant · **Cost:** $0 · **Deadline:** rolling, before each dependent purchase/publication · **Blocks:** budget and copy accuracy.
 - [ ] **3.** If a new research document is ever added to the corpus, append a row to §2 (what it is, producer, grade, status, absorber) in the same commit that introduces it. **Owner:** AI assistant (Founder approves the grade) · **Cost:** $0 · **Deadline:** with each addition · **Blocks:** index completeness.
 - [ ] **4.** Spot-check quarterly that no playbook file quotes a superseded source claim (grep the phase folders for "Lemon Squeezy", "zero competition", "no refund after generation", "17 days"). **Owner:** AI assistant · **Cost:** $0 · **Deadline:** quarterly from launch · **Blocks:** supersession discipline.

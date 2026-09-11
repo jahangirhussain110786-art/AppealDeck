@@ -59,7 +59,7 @@ Rules of the architecture:
 1. **The decoder page is the asset.** Every explainer page embeds a decoder CTA above the fold ("Not sure which type you have? Paste your notice — free, nothing stored without your say-so"). Explainers exist to catch specific queries and hand the visitor to the decoder.
 2. **One page per v1 violation type**, interlinked through the `/suspensions/` hub (topical cluster). The violation taxonomy comes from the build plan's Amazon domain pack (`../03-PHASE-2-BUILD/reference/APPEALDECK_BUILD_PLAN_v1.0.md` §7).
 3. **Community threads index first.** Good Reddit answers rank on Google within days; our pages take months. Write replies knowing they are also search results, then capture the same query with an optimized page later.
-4. Static pages; they run on whatever hosting Phase 1 chose (Cloudflare Pages free tier is contractually fine for commercial use; Vercel Hobby is NOT — non-commercial-only terms). [source: APPEALDECK_STREAM9_DISTRIBUTION_REPORT.md]
+4. Static pages; they run on Vercel (single-host decision, 4 Sep 2026 — superseding this row's original Cloudflare-only assumption; see `07-REFERENCE/04-UNKNOWNS-REGISTER.md`). [source: APPEALDECK_STREAM9_DISTRIBUTION_REPORT.md]
 
 ---
 

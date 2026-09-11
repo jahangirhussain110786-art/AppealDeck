@@ -20,7 +20,7 @@ The project uses a **long-lived HTTP MCP server** (not per-call npx stdio). The 
 ### a. Verify kilo.json config
 
 ```
-Read V:\AppealDeck\kilo.json
+Read V:\AppealDeck1\kilo.json
 Confirm "google-drive" entry exists under "mcp":
   "google-drive": {
     "type": "remote",
@@ -73,7 +73,7 @@ npx @piotr-agier/google-drive-mcp version
 (Should print version, e.g. v2.6.0)
 
 Check the server log:
-  Read V:\AppealDeck\.drive-mcp.log
+  Read V:\AppealDeck1\.drive-mcp.log
   (Runtime file — gitignored, not committed)
 ```
 

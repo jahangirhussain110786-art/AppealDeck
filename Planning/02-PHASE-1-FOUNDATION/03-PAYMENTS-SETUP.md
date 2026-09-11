@@ -92,11 +92,13 @@ Human services are not MoR-eligible: Paddle's AUP prohibits them. Do not create 
 
 ---
 
-## 5. Webhook → backend design (pointer — implementation lives in Phase 2)
+## 5. Webhook → backend design — item 1 superseded 11 Sep 2026, rest still the working design
 
-The AI assistant implements this under milestone M-5; the contract is fixed here so both rails are wired identically. Full module spec: build plan M11/M12.
+**Corrected 11 Sep 2026:** item 1's `PAYMENTS_PROVIDER` env-switch design was never built, and `.env.example` now records why: Polar isn't integrated at all yet, so a switch toggling between "Paddle" and a rail that doesn't exist would be complexity with nothing to select. The actual, deliberate decision (see `docs/DECISIONS.md`): **single-rail MVP, always Paddle; a future move to Polar is a code migration when it actually happens, not a runtime switch.** Items 2–5 below describe the real, implemented webhook design accurately (as a single Next.js API route rather than a Supabase Edge Function — see the hosting note in `07-REFERENCE/05-RESOURCE-STACK-AND-BUDGET.md`) and don't need correcting.
 
-1. **One endpoint**, a Supabase Edge Function (e.g. `payments-webhook`), addressable by both providers; a `PAYMENTS_PROVIDER` env switch selects the active rail for checkout, but the endpoint accepts and verifies events from either.
+The AI assistant implemented this under milestone M-5 (`src/app/api/webhooks/paddle/route.ts`); the contract below is what both a future Polar integration and Paddle itself follow. Full module spec: build plan M11/M12.
+
+1. ~~One endpoint, a Supabase Edge Function..., a `PAYMENTS_PROVIDER` env switch selects the active rail~~ — **as built:** one Next.js API route, Paddle only; a Polar integration would get its own route or a code-level dispatch once it exists, not an env var toggling between a real rail and a nonexistent one.
 2. **Signature verification first.** Reject anything that fails the provider's webhook signature check (Paddle signature header / Polar webhook secret) before parsing the body. Secrets live only in Supabase function secrets.
 3. **Idempotency by event ID.** Persist the raw event with a unique constraint on `(provider, event_id)`; a duplicate delivery is acknowledged and skipped. MoRs redeliver on any failure — duplicates are normal, double-issued licenses are not.
 4. **Answer inside 5 seconds.** Providers time out slow handlers and retry. The handler persists the raw event, returns 200, and does the actual work (license generation, email, revocation) asynchronously. Never do LLM calls, email sending, or anything slow before the 200.

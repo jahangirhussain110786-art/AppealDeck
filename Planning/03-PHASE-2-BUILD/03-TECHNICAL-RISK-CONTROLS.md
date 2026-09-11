@@ -200,6 +200,8 @@
 
 ## TRC-11 — License and clock tampering: tamper resolves to the free tier
 
+**Scope note added 11 Sep 2026:** everything below describes the offline-capable **browser extension** design (a signed cache in `chrome.storage.local`, an offline grace period, a service-worker alarm) — none of that exists yet because the extension hasn't been built (M-7/M-8, per D3). The **web app**, live today, uses a deliberately simpler **server-truth-only** model: `src/lib/license.ts` asks Supabase directly on every check, no local cache, so there is nothing to tamper with client-side and no offline grace to protect. That's a reasonable design for an always-online web app, not a gap — this section's requirements become active once the extension ships and genuinely needs to work offline.
+
 **Risk (v1.0 M11; MR-09 adjacent).** A $199 one-time unlock invites local tampering: edited entitlement cache, system clock rolled back to stretch the 72-hour offline grace, replayed stale entitlements.
 
 **Requirement.**

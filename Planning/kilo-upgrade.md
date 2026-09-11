@@ -59,7 +59,7 @@ stay in the project file as-is.
 | Scope | Location | Holds |
 |---|---|---|
 | **Global** (every project) | `C:\Users\Hawlton Alliance\.config\kilo\` | How Kilo thinks & behaves, generic MCP servers, agent roster, secrets |
-| **Project** (this repo only) | `V:\AppealDeck\kilo.json`, `.kilo\` | Paddle MCP servers, `.agents/skills` path, anything AppealDeck-specific |
+| **Project** (this repo only) | `V:\AppealDeck1\kilo.json`, `.kilo\` | Paddle MCP servers, `.agents/skills` path, anything AppealDeck-specific |
 
 | File | Purpose |
 |---|---|

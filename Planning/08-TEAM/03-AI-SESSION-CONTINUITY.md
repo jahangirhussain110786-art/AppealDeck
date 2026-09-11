@@ -15,7 +15,7 @@
 
 ---
 
-## 2. The CLAUDE.md specification (repo root: `V:\AppealDeck\CLAUDE.md`)
+## 2. The CLAUDE.md specification (repo root: `V:\AppealDeck1\CLAUDE.md`)
 
 CLAUDE.md is read automatically at session start, so it must contain exactly what a zero-context session needs — no more (a bloated CLAUDE.md gets skimmed). Required sections, in order:
 
@@ -58,22 +58,24 @@ The founder's role: don't accept "done for today" from any session until the rit
 
 ---
 
-## 4. Milestone-boundary handoff files (the PROJECT_STATE_HANDOFF.md pattern)
+## 4. Pass-boundary handoff files (the actual, in-use pattern — rewritten 11 Sep 2026)
 
-The predecessor project proved this pattern: a single file, `PROJECT_STATE_HANDOFF.md`, written "to survive chat deletion — give this file to any future AI assistant for instant context", carrying state, file inventory, urgent warnings, decision trail, and a literal say-this-to-a-fresh-session prompt [source: PROJECT_STATE_HANDOFF.md]. It worked: this playbook was built from it. Replicate it at every milestone boundary.
+**This section originally prescribed one file per milestone (`docs/handoffs/M-<n>-HANDOFF.md`) — that file naming was never used even once.** What actually developed over two-plus weeks of real sessions is a finer-grained, more useful convention, and it's the reason this exact section could be audited and corrected: every pass (not just every milestone) got its own paper trail. Document reality, not the original guess.
 
-At the completion of each milestone (M-1…M-8, plus M-W the web launch), the AI assistant writes `docs/handoffs/M-<n>-HANDOFF.md` containing:
+**The pattern in actual use**, one set of files per distinct pass of work (a UI polish pass, an access/continuity pass, a visual refresh, a full-repo audit — not tied to the M-1…M-8 milestone numbers):
 
-| Section | Content |
+| File | Purpose |
 |---|---|
-| State paragraph | Where the project stands, in one paragraph a stranger can act on |
-| Milestone evidence | The acceptance-gate criteria and how they were met (links to tests/builds) |
-| File inventory delta | What was added/changed this milestone and what each part is for |
-| Decisions this milestone | Copied or referenced from `docs/DECISIONS.md` |
-| Warnings | Anything dangerous a future session must know first (half-migrations, temporary hacks, pending rotations) |
-| Resume prompt | A literal quoted instruction: "Read `CLAUDE.md`, then `docs/DECISIONS.md`, then this file; current milestone is M-<n+1>; start with <next action>." |
+| `docs/handoffs/<date>-<topic>-prompt.md` | The task breakdown for a coding session to follow — one task per commit, with an explicit "Accept" block (the exact grep/test command and expected output) per task |
+| `docs/handoffs/<date>-<topic>.md` | The evidence log: a "Resume pointer" (which task, which sub-step, last green gate) at the top, then one evidence row per task with the real command run and its real output, a "Discovered" section for anything found mid-pass, and a "Deviations" section for anywhere a spec value couldn't be followed literally and why |
+| `docs/handoffs/<date>-<topic>-audit.md` (as needed) | An independent review of a prior pass's own claims — re-running its Accept commands at the stated commit, not trusting the prose |
+| `docs/handoffs/<date>-<topic>-plain-guide.md` (as needed) | A plain-language companion when a pass produced something too dense for a quick read (a long register, a big audit) — the founder is a non-developer and cannot act on a coded 189-row table without one |
 
-Handoff files are append-only history — never edited after their milestone closes (corrections go in the next handoff). CLAUDE.md is the present; handoffs are the immutable past; `docs/DECISIONS.md` is the reasoning ledger connecting them.
+**Two files this section never anticipated are now load-bearing:**
+- **`AGENTS.md`** (repo root) — a second, longer-form state file alongside `CLAUDE.md`, with its own "Current Project State" section and deeper reference material (domain topology, route inventory, setup commands). Keep it in sync with `CLAUDE.md` §4 at the end of any pass that changes routes, commands, or the topology.
+- **`docs/handoffs/SESSION-START-PROMPT.md`** — the file the founder actually pastes into a fresh coding session. Its two PATH lines point at whichever prompt + evidence log pair is the *current* pass; repoint them the moment a pass finishes and the next one is chosen, or the next session starts working on something already done.
+
+Handoff files stay append-only within their own pass (corrections go in a later dated entry, not by rewriting history) — this is what let the 11 Sep full-repo audit trust their evidence rows enough to build on them. `CLAUDE.md` §4 is the present (one paragraph per session, chronological); handoffs are the detailed record a `CLAUDE.md` bullet points back to; `docs/DECISIONS.md` is the reasoning ledger connecting all of it.
 
 ---
 
@@ -106,7 +108,7 @@ Expected switching cost: **1–3 days** (estimate) — tool setup, workflow diff
 
 ## 7. Action items
 
-- [ ] **1. Create `V:\AppealDeck\CLAUDE.md` per the §2 spec — all five sections, forbidden-sources block verbatim — before the first build session.** — **Owner:** AI assistant (writes) + Founder (confirms it exists before build starts) · **Cost:** $0 · **Deadline:** Week 1, before B-02 repo scaffold work begins (`../03-PHASE-2-BUILD/01-BUILD-SEQUENCE.md`) · **Blocks:** safe session boundaries for the entire build
+- [x] **1. Create `V:\AppealDeck1\CLAUDE.md` per the §2 spec — all five sections, forbidden-sources block verbatim — before the first build session.** — **Owner:** AI assistant (writes) + Founder (confirms it exists before build starts) · **Cost:** $0 · **Deadline:** Week 1, before B-02 repo scaffold work begins (`../03-PHASE-2-BUILD/01-BUILD-SEQUENCE.md`) · **Blocks:** safe session boundaries for the entire build
 - [ ] **2. Create `docs/DECISIONS.md` with its entry format (date · decision · alternatives · rationale · files) and a first entry recording the repo's creation parameters.** — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 1, with item 1 · **Blocks:** §3 ritual step 2
 - [ ] **3. Run the §3 end-of-session ritual at every session close; founder verifies with the one-line question.** — **Owner:** AI assistant (executes) + Founder (enforces) · **Cost:** ~5 min/session · **Deadline:** every session, M-1→M-8 · **Blocks:** cheap recovery (§5); MR-28 mitigation
 - [ ] **4. Write `docs/handoffs/M-<n>-HANDOFF.md` at every milestone boundary per the §4 table (M-1…M-8 + M-W).** — **Owner:** AI assistant · **Cost:** ~15 min/milestone · **Deadline:** at each milestone's close, before the next begins · **Blocks:** mid-project re-entry by any future tool or person

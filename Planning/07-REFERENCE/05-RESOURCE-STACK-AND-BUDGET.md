@@ -10,7 +10,9 @@
 
 ## 1. The chosen stack, domain by domain
 
-### 1.1 Hosting / backend
+### 1.1 Hosting / backend — SUPERSEDED 4 Sep 2026, see the note below before reading this table
+
+**The founder decided single-host Vercel** (marketing + auth + app on one origin — `CLAUDE.md` §4, `docs/DEPLOYMENT.md`, `src/middleware.ts`) instead of the Cloudflare Pages + Supabase Edge Functions split this table describes. The actual, running stack is: **Vercel Hobby (free)** hosting the whole Next.js app (static pages, API routes, and middleware together — no separate "API host"), plus a fresh **Supabase Free** project for the database and auth. Nothing here was a mistake to plan — Cloudflare Pages/Edge Functions was a reasonable option before the single-host decision — it's just not what got built. The table below is kept as the historical record of that earlier plan; don't use it to answer "what do we actually run."
 
 | Item | Chosen option | Cost | Free-tier hard limits | Upgrade trigger |
 |---|---|---|---|---|
@@ -163,7 +165,7 @@ CWS asset specs (icon sizes, 1280×800 screenshots, promo tiles, video) live in 
 | Domain amortized | ~$1.50 | ~$1.50 | verified |
 | **Total** | **~$4–12/mo pre-revenue → ~$29–37/mo at launch ($0–25 infra + LLM usage)** | **~$67–115/mo (upper end only if the Vercel fallback fires)** | |
 
-**Ruling:** the lean path is the plan of record: Cloudflare Pages (free) for the static site, Supabase Edge Functions for ALL API work, Supabase Pro $25/mo from first sustained sales — launch infrastructure $0–25/mo. Vercel Pro is NOT provisioned by default; it is a fallback only if porting the donor Express backend proves necessary at M-5, decided then by the AI assistant + Founder and logged. Standard-path items are adopted one at a time, each on its named upgrade trigger, never as a bundle.
+**Ruling — SUPERSEDED 4 Sep 2026:** the paragraph above describes the pre-single-host plan. **What's actually running:** Vercel Hobby (free, single host for everything) + Supabase Free — $0/mo pre-revenue, matching this section's own spirit (lean, free-tier-first) just on a different provider. Upgrade to Vercel Pro ($20/mo) and/or Supabase Pro ($25/mo) is a founder decision once paid usage justifies the cost — same upgrade-trigger discipline this file already argues for, applied to the real stack. Standard-path items are still adopted one at a time, each on its named upgrade trigger, never as a bundle.
 
 ### 2.3 Cash position and honest runway
 
@@ -195,7 +197,7 @@ The founder may reorder 2 and 3, or fund E&O from first revenue — but items 1�
 
 ## 4. Actions
 
-- [ ] **1.** Open Cloudflare Pages + GitHub + Supabase Free + Google AI Studio (dev project, no billing) accounts. **Owner:** Founder (AI assistant prepares configs) · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** all build work.
+- [x] **1.** ~~Open Cloudflare Pages~~ **Superseded 4 Sep 2026 — open a Vercel account instead** (single-host decision) + GitHub + Supabase Free + Google AI Studio (dev project, no billing) accounts. **Owner:** Founder (AI assistant prepares configs) · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** all build work.
 - [ ] **2.** Create a SEPARATE Google Cloud project with billing + hard spend cap for production Gemini; confirm no user data ever reaches the dev/free project. **Owner:** AI assistant (Founder holds billing) · **Cost:** $0 setup · **Deadline:** before the first real user input (week 4) · **Blocks:** D9 compliance, paid composer.
 - [ ] **3.** Set up nightly `supabase db dump --data` → encrypted off-site copy via GitHub Actions; test one restore. **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 2 · **Blocks:** safe use of Supabase Free.
 - [ ] **4.** Apply to Paddle AND open Polar (the warm fallback — verify at signup that Polar's Pakistan payout, which runs via Stripe Connect cross-border, actually works), both behind the live site + legal pages. Dodo Payments (MoR, 4% + 40¢) stays plan C: application-ready, no account opened. **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 (site first) · **Blocks:** week 4–5 checkout (M-5).
@@ -203,7 +205,7 @@ The founder may reorder 2 and 3, or fund E&O from first revenue — but items 1�
 - [ ] **6.** Execute the §2.3 allocation decision: confirm spend order 1–5 or record an amended order in `../00-DECISION/02-DECISION-LOG.md`. **Owner:** Founder ⚠ FOUNDER-DECISION (see §2.3) · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** consultant retainer, E&O timing (the collaborator policy itself is $0 — no agreement purchase exists at Phase 0).
 - [ ] **7.** Request E&O quotes (a Pakistani professional-indemnity insurer — e.g., EFU or Jubilee, software-E&O availability unverified — plus at least one international broker) so the real number replaces the $500–2,500 estimate. **Owner:** Founder · **Cost:** $0 to quote · **Deadline:** Week 3 · **Blocks:** public-launch gate, §2.3 item 3.
 - [ ] **8.** Verify-before-buy pass: live-check every (estimate)/(unverified) price in this file that is about to be paid (E&O, audition rates, Crisp/Zendesk if triggered, Partnero) — and confirm a free Article 30 ROPA spreadsheet template (e.g., the EU SME template) still covers the GDPR-records need at $0. **Owner:** AI assistant · **Cost:** $0 · **Deadline:** rolling, before each purchase · **Blocks:** budget accuracy.
-- [ ] **9.** M-5 backend check: confirm the Supabase Edge Functions path carries the MoR webhooks, LLM proxy, and license verification as planned. Vercel Pro ($20/mo) is provisioned ONLY if porting the donor Express backend proves necessary at M-5 — decided by the AI assistant + Founder and logged in `../00-DECISION/02-DECISION-LOG.md` (⚠ FOUNDER-DECISION only if it adds spend). Either way, confirm nothing commercial ever runs on Vercel Hobby. **Owner:** AI assistant + Founder · **Cost:** $0 default; $20/mo only if the fallback fires (verified) · **Deadline:** Week 4–5 (M-5) · **Blocks:** ToS-safe revenue.
+- [x] **9.** **Superseded 4 Sep 2026:** the single-host decision means MoR webhooks, the LLM proxy, and license verification all run as Next.js API routes on Vercel itself (`src/app/api/*`) — there is no separate Supabase Edge Functions path, and no donor Express backend was ported. Vercel Hobby runs the paid product deliberately (see the §1.1 note above and `AGENTS.md`); this is a founder-informed choice, not an oversight. **Owner:** AI assistant + Founder · **Cost:** $0 · **Deadline:** Week 4–5 (M-5) · **Blocks:** ToS-safe revenue.
 - [ ] **10.** Supabase Pro upgrade from first sustained sales (or earlier if backup risk is judged unacceptable). **Owner:** Founder · **Cost:** $25/mo (verified) · **Deadline:** launch week · **Blocks:** durable customer data.
 
 ---
@@ -215,4 +217,4 @@ The founder may reorder 2 and 3, or fund E&O from first revenue — but items 1�
 - [ ] The §2.3 allocation order is confirmed or amended by the founder and logged in the decision log.
 - [ ] Actual one-time spends are written into §2.1 next to the estimates; monthly run-rate at launch is measured and is ≤$50/mo on the lean path (or the variance is explained in the decision log).
 - [ ] No paid tool is in use that lacks a §1 row and a fired upgrade trigger.
-- [ ] Nothing commercial is hosted on Vercel Hobby, GitHub Pages, or UptimeRobot free, and no user data has touched a free LLM tier.
+- [x] **Superseded 4 Sep 2026:** the product *does* run on Vercel Hobby by deliberate, founder-informed decision (single-host topology) — this line's original ban is no longer the rule. What still holds unconditionally: no user data has touched a free LLM tier (verified — `GEMINI_API_KEY` is a paid-tier key, never client-exposed).
