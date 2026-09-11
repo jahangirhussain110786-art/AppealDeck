@@ -31,7 +31,15 @@ export interface ReadinessResult {
 
 export interface CaseFileData {
   kind: ViolationKind;
-  evidenceSlots: Partial<Record<EvidenceKind, { present: boolean; disqualified?: boolean }>>;
+  /**
+   * `documentDate` (optional, ISO date string) is the date printed on the uploaded document
+   * itself (e.g. a supplier invoice's issue date) — not when it was uploaded. Used by the
+   * composer's freshness check (AA-31) against each requirement's `freshnessDays`. Left
+   * undefined wherever the vault UI doesn't yet capture it; the check simply skips those slots.
+   */
+  evidenceSlots: Partial<
+    Record<EvidenceKind, { present: boolean; disqualified?: boolean; documentDate?: string }>
+  >;
   actionItems: ActionItem[];
 }
 

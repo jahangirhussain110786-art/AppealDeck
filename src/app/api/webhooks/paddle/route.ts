@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { sendPurchaseConfirmationEmail } from "@/lib/email";
 
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -91,6 +92,9 @@ function firstPriceId(items: any): string | undefined {
   return undefined;
 }
 
+/** @returns "created" | "updated" | "skipped" (duplicate event or no admin client) — callers use
+ * this to decide whether a purchase confirmation email is warranted (only on a genuine new license,
+ * never on a duplicate webhook redelivery or a renewal update). */
 async function ensureLicense(params: {
   email: string;
   providerId: string;
@@ -98,8 +102,8 @@ async function ensureLicense(params: {
   status: string;
   provider: "paddle";
   providerEventId: string;
-}): Promise<void> {
-  if (!supabaseAdmin) return;
+}): Promise<"created" | "updated" | "skipped"> {
+  if (!supabaseAdmin) return "skipped";
   const { email, providerId, plan, status, provider, providerEventId } = params;
 
   if (providerEventId) {
@@ -108,7 +112,7 @@ async function ensureLicense(params: {
       .select("id")
       .eq("provider_event_id", providerEventId)
       .maybeSingle();
-    if (seen) return;
+    if (seen) return "skipped";
   }
 
   const { data: existing } = await supabaseAdmin
@@ -118,6 +122,7 @@ async function ensureLicense(params: {
     .maybeSingle();
 
   const isActive = status === "active";
+  let result: "created" | "updated";
 
   if (existing) {
     await supabaseAdmin
@@ -131,6 +136,7 @@ async function ensureLicense(params: {
         paused_at: status === "paused" ? nowIso() : null,
       })
       .eq("provider_subscription_id", providerId);
+    result = "updated";
   } else {
     await supabaseAdmin.from("licenses").insert({
       license_key: newLicenseKey(),
@@ -141,6 +147,7 @@ async function ensureLicense(params: {
       status,
       activated_at: isActive ? nowIso() : null,
     });
+    result = "created";
   }
 
   if (providerEventId) {
@@ -148,6 +155,8 @@ async function ensureLicense(params: {
       .from("license_events")
       .insert({ provider: "paddle", provider_event_id: providerEventId });
   }
+
+  return result;
 }
 
 async function handleEvent(event: PaddleEvent): Promise<void> {
@@ -158,7 +167,7 @@ async function handleEvent(event: PaddleEvent): Promise<void> {
     const email = extractEmail(data);
     if (!email) return;
     const priceId = firstPriceId(data?.items);
-    await ensureLicense({
+    const result = await ensureLicense({
       email,
       providerId: String(data?.subscription_id ?? data?.id ?? ""),
       plan: planForPrice(priceId),
@@ -166,6 +175,11 @@ async function handleEvent(event: PaddleEvent): Promise<void> {
       provider: "paddle",
       providerEventId: String(data?.id ?? ""),
     });
+    // Only the actual one-time Appeal Pass purchase (not a subscription renewal, not a duplicate
+    // webhook redelivery) sends the D8-required confirmation email — a genuinely new license row.
+    if (result === "created") {
+      await sendPurchaseConfirmationEmail({ to: email, purchasedAt: nowIso() });
+    }
     return;
   }
 

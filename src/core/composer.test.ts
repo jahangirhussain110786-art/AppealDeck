@@ -159,6 +159,119 @@ describe("critiquePoa", () => {
     const result = critiquePoa(draft, data);
     expect(result.findings.some((f) => f.code === "NOVELTY_REMINDER")).toBe(true);
   });
+
+  // AA-31 deterministic critic rules (11 Sep 2026) — each is a warning or info finding, never an
+  // error, per the amendment's own "warnings, never hard blocks" instruction.
+  describe("AA-31 rules", () => {
+    it("warns on future-tense corrective actions", () => {
+      const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
+      const draft = composePoa(data);
+      const corrective = draft.sections.find((s) => s.heading === "Corrective Actions")!;
+      corrective.body = "We will fix this issue and prevent it from happening again.";
+      const result = critiquePoa(draft, data);
+      const finding = result.findings.find((f) => f.code === "FUTURE_TENSE_CORRECTIVE_ACTION");
+      expect(finding).toBeDefined();
+      expect(finding?.severity).toBe("warning");
+    });
+
+    it("does not flag past-tense corrective actions", () => {
+      const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
+      const draft = composePoa(data);
+      const corrective = draft.sections.find((s) => s.heading === "Corrective Actions")!;
+      corrective.body = "We removed the affected listing and retrained the QA team on 3 Sep 2026.";
+      const result = critiquePoa(draft, data);
+      expect(result.findings.some((f) => f.code === "FUTURE_TENSE_CORRECTIVE_ACTION")).toBe(false);
+    });
+
+    it("warns when Root Cause blames a supplier or employee instead of the seller's own process", () => {
+      const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
+      const draft = composePoa(data);
+      const rootCause = draft.sections.find((s) => s.heading === "Root Cause")!;
+      rootCause.body = "The supplier caused this by sending the wrong documentation.";
+      const result = critiquePoa(draft, data);
+      const finding = result.findings.find((f) => f.code === "BLAME_SHIFTING_LANGUAGE");
+      expect(finding).toBeDefined();
+      expect(finding?.severity).toBe("warning");
+    });
+
+    it("warns on vague-time phrases anywhere in the draft", () => {
+      const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
+      const draft = composePoa(data);
+      draft.sections[0].body = "We recently corrected the issue with our supplier.";
+      const result = critiquePoa(draft, data);
+      const finding = result.findings.find((f) => f.code === "VAGUE_TIME_PHRASE");
+      expect(finding).toBeDefined();
+      expect(finding?.severity).toBe("warning");
+    });
+
+    it("warns when a dated required document is older than its freshness window", () => {
+      const staleDate = new Date(Date.now() - 400 * 86_400_000).toISOString();
+      const data = makeCase({
+        kind: "INAUTHENTIC_DOCUMENTS",
+        evidenceSlots: { supplier_invoice: { present: true, documentDate: staleDate } },
+      });
+      const draft = composePoa(data);
+      const result = critiquePoa(draft, data);
+      const finding = result.findings.find((f) => f.code === "DOCUMENT_STALE");
+      expect(finding).toBeDefined();
+      expect(finding?.severity).toBe("warning");
+    });
+
+    it("does not flag a document within its freshness window", () => {
+      const freshDate = new Date(Date.now() - 10 * 86_400_000).toISOString();
+      const data = makeCase({
+        kind: "INAUTHENTIC_DOCUMENTS",
+        evidenceSlots: { supplier_invoice: { present: true, documentDate: freshDate } },
+      });
+      const draft = composePoa(data);
+      const result = critiquePoa(draft, data);
+      expect(result.findings.some((f) => f.code === "DOCUMENT_STALE")).toBe(false);
+    });
+
+    it("skips the freshness check when no document date was captured", () => {
+      const data = makeCase({
+        kind: "INAUTHENTIC_DOCUMENTS",
+        evidenceSlots: { supplier_invoice: { present: true } },
+      });
+      const draft = composePoa(data);
+      const result = critiquePoa(draft, data);
+      expect(result.findings.some((f) => f.code === "DOCUMENT_STALE")).toBe(false);
+    });
+
+    it("nudges (info-level) when present evidence isn't referenced by name in the draft", () => {
+      const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
+      const draft = composePoa(data);
+      const result = critiquePoa(draft, data);
+      const finding = result.findings.find((f) => f.code === "EVIDENCE_NOT_REFERENCED_BY_NAME");
+      expect(finding).toBeDefined();
+      expect(finding?.severity).toBe("info");
+    });
+
+    it("does not nudge when the evidence kind is already mentioned by name", () => {
+      const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
+      const draft = composePoa(data);
+      draft.sections[0].body = "See the attached metric export for supporting figures.";
+      const result = critiquePoa(draft, data);
+      expect(result.findings.some((f) => f.code === "EVIDENCE_NOT_REFERENCED_BY_NAME")).toBe(false);
+    });
+
+    it("none of the new rules ever produce an error-severity finding", () => {
+      const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
+      const draft = composePoa(data);
+      draft.sections[0].body = "The supplier caused this. We recently fixed it and will monitor.";
+      const result = critiquePoa(draft, data);
+      const newCodes = [
+        "FUTURE_TENSE_CORRECTIVE_ACTION",
+        "BLAME_SHIFTING_LANGUAGE",
+        "VAGUE_TIME_PHRASE",
+        "DOCUMENT_STALE",
+        "EVIDENCE_NOT_REFERENCED_BY_NAME",
+      ];
+      const newFindings = result.findings.filter((f) => newCodes.includes(f.code));
+      expect(newFindings.length).toBeGreaterThan(0);
+      expect(newFindings.every((f) => f.severity !== "error")).toBe(true);
+    });
+  });
 });
 
 describe("renderPoaText", () => {

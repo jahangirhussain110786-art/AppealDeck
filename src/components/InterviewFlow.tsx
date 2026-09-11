@@ -47,6 +47,7 @@ import {
 import type { CaseLog } from "@/lib/caseStore";
 import { FileDropZone } from "@/components/FileDropZone";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
+import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { Vault } from "@/core/vault/vault";
 import type { VaultListItem } from "@/core/vault/vault";
 import type { ViolationKind } from "@/core";
@@ -109,6 +110,9 @@ export function InterviewFlow({
   const vaultRef = useRef<Vault | null>(null);
   const [vaultReady, setVaultReady] = useState(false);
   const [vaultUnlocked, setVaultUnlocked] = useState(false);
+  // D10 funnel: "intake started" fires at most once per mount, on the first answer applied to a
+  // genuinely fresh case (caseFile was null before this answer) — never on a resumed case.
+  const intakeStartedRef = useRef(false);
   const [showVaultPicker, setShowVaultPicker] = useState(false);
   const [vaultRecords, setVaultRecords] = useState<VaultListItem[]>([]);
   const [ariaAnnounce, setAriaAnnounce] = useState("");
@@ -292,6 +296,14 @@ export function InterviewFlow({
 
     try {
       const next = applyAnswer(caseFile, answer);
+      if (!intakeStartedRef.current) {
+        intakeStartedRef.current = true;
+        // Simplification: fires on the first answer applied in this component instance, whether
+        // this is a fresh case or a resumed one — a precise "genuinely first-ever answer" signal
+        // would need a persisted flag on the case file itself, which isn't worth the schema change
+        // for a funnel-measurement nicety (D10). Good enough to show real intake activity.
+        trackFunnelEvent(FUNNEL_EVENTS.intakeStarted, { kind: next.kind });
+      }
       setCaseFile(next);
       const s = nextStep(next);
       setStep((s ?? undefined) as InterviewStep | null);

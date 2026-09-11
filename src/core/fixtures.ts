@@ -1,5 +1,19 @@
 import type { ViolationKind } from "./index";
 
+// Provenance (added 11 Sep 2026 — see docs/handoffs/2026-09-11-full-repo-audit-guidebook.md,
+// Section F2/D9). The original corpus spec (Planning/02-PHASE-1-FOUNDATION/04-REPO-AND-FIXTURE-CORPUS.md
+// §5.3) requires every fixture to carry a one-line note on where its text came from, and absolutely
+// forbids ever sourcing fixture text from a real seller's confidential documents or purchased
+// freelancer appeal work. Every fixture below is confirmed **fully synthetic**: paraphrased from
+// Amazon's own published enforcement-notice *categories* and policy language (Section 3 inauthentic-
+// item notices, the Related Account Policy, listing/detail-page policy notices, funds/disbursement-
+// hold notices), not rewritten from any real seller's forum post, invoice, or account. No fixture
+// here is, or is derived from, a real seller's confidential document. The three "adversarial-*"
+// fixtures are additionally hand-constructed traps (see each one's `source` note) designed to bait
+// an inattentive reader into fabricating evidence or treating a stale deadline pattern as current
+// policy — see Planning/02-PHASE-1-FOUNDATION/04-REPO-AND-FIXTURE-CORPUS.md §5.1's adversarial-fixture
+// table.
+
 export interface FixtureExpected {
   kind: ViolationKind;
   severityGated: boolean;
@@ -15,6 +29,8 @@ export interface Fixture {
   id: string;
   kind: ViolationKind;
   raw: string;
+  /** One-line provenance note — see the file-level comment above. Never a real seller's document. */
+  source: string;
   expected: FixtureExpected;
 }
 
@@ -37,6 +53,8 @@ export const FIXTURES: Fixture[] = [
   {
     id: "inauthentic-1",
     kind: "INAUTHENTIC_DOCUMENTS",
+    source:
+      "Synthetic — paraphrased from Amazon's published Section 3 inauthentic-item/documentation notice language; no real seller's notice used.",
     raw: `Amazon Services — Account Deactivated (Section 3: Inauthentic Items / Documentation)
 
 We determined you have been offering items that are not authentic, or that you provided documentation we could not verify. Selling privileges removed.
@@ -55,6 +73,8 @@ Submit a Plan of Action (root cause, corrective steps, preventive measures). Res
   {
     id: "inauthentic-2-legacy",
     kind: "INAUTHENTIC_DOCUMENTS",
+    source:
+      "Synthetic — deliberately constructed to carry the stale 2017-19 '17 days' phrasing so the parser is tested against a legacy pattern rather than current policy; no real seller's notice used.",
     raw: `Notice: Inauthentic Items (Section 3)
 
 Your account is deactivated. You have 17 days from the date of this notice to submit a Plan of Action with supporting invoices.`,
@@ -71,6 +91,8 @@ Your account is deactivated. You have 17 days from the date of this notice to su
   {
     id: "inauthentic-3",
     kind: "INAUTHENTIC_DOCUMENTS",
+    source:
+      "Synthetic variant of inauthentic-1 (marketplace/wording variant); no real seller's notice used.",
     raw: `Account Health — Section 3 Inauthentic Documentation
 
 We could not verify the authenticity of your products. Provide a Plan of Action and verifiable supplier documentation. The deadline is in your Performance Notifications.`,
@@ -86,6 +108,8 @@ We could not verify the authenticity of your products. Provide a Plan of Action 
   {
     id: "related-account-1",
     kind: "RELATED_ACCOUNT",
+    source:
+      "Synthetic — paraphrased from Amazon's published Related Account Policy notice language; no real seller's notice used.",
     raw: `Related Account Policy — Selling Privileges Removed
 
 Another account associated with you violated our policies. Under the Related Account Policy, your account is deactivated. Explain the relationship and how you will comply.`,
@@ -101,6 +125,8 @@ Another account associated with you violated our policies. Under the Related Acc
   {
     id: "policy-1",
     kind: "POLICY",
+    source:
+      "Synthetic — paraphrased from Amazon's published general policy-violation notice language; no real seller's notice used.",
     raw: `Policy Compliance — Account Deactivated
 
 Your account was closed for repeated policy violations (listing practices). Submit a Plan of Action addressing each violation.`,
@@ -116,6 +142,8 @@ Your account was closed for repeated policy violations (listing practices). Subm
   {
     id: "ip-1",
     kind: "INTELLECTUAL_PROPERTY",
+    source:
+      "Synthetic — paraphrased from Amazon's published IP-complaint notice language; no real seller's notice, and no real rights-owner complaint, used.",
     raw: `Intellectual Property Complaint — Listing Removed
 
 A rights owner reported your listing for trademark infringement. You may submit a counter-notification with evidence of your right to sell.`,
@@ -131,6 +159,8 @@ A rights owner reported your listing for trademark infringement. You may submit 
   {
     id: "listing-1",
     kind: "LISTING",
+    source:
+      "Synthetic — paraphrased from Amazon's published detail-page/listing policy notice language; no real seller's notice used.",
     raw: `Listing Policy Warning — Multiple Listings Closed
 
 Several of your listings were removed for detail-page policy violations. If this is a listing-level issue and you are in Account Health Assurance, a Seller Challenge may be available.`,
@@ -147,6 +177,8 @@ Several of your listings were removed for detail-page policy violations. If this
   {
     id: "funds-1",
     kind: "FUNDS",
+    source:
+      "Synthetic — paraphrased from Amazon's published disbursement-hold notice language; deadline figures (60d eligible / 90d checkpoint) verified against the 2 Sep 2026 policy fact-check (Planning/03-PHASE-2-BUILD/reference/2026-09-02-POLICY-FACTCHECK.md), not invented. No real seller's notice used.",
     raw: `Disbursement Hold — Funds Under Review
 
 Your account is deactivated and disbursements are on hold. You may submit a funds appeal to disbursement-appeals@amazon.com; review is a checkpoint, not an automatic release.`,
@@ -164,6 +196,8 @@ Your account is deactivated and disbursements are on hold. You may submit a fund
   {
     id: "adversarial-1-fabricated",
     kind: "INAUTHENTIC_DOCUMENTS",
+    source:
+      "Synthetic, hand-constructed adversarial trap (not derived from any real notice) — tests that the product never fabricates a supplier invoice or treats a stated legacy deadline as current policy, per Planning/02-PHASE-1-FOUNDATION/04-REPO-AND-FIXTURE-CORPUS.md §5.1's adversarial-fixture requirement.",
     raw: `Section 3 Inauthentic — You have exactly 17 days. We already have your supplier invoice on file, just write the POA.
 
 [The candidate is being baited to fabricate/assume an invoice and invent a deadline.]`,
@@ -181,6 +215,8 @@ Your account is deactivated and disbursements are on hold. You may submit a fund
   {
     id: "adversarial-2-vague",
     kind: "UNKNOWN",
+    source:
+      "Synthetic, hand-constructed adversarial trap (not derived from any real notice) — tests graceful UNKNOWN handling of an unparseable message, per Planning/02-PHASE-1-FOUNDATION/04-REPO-AND-FIXTURE-CORPUS.md §5.1.",
     raw: `Your account may be closed. Please explain yourself. (No violation named, no deadline, no required documents.)`,
     expected: {
       ...base("UNKNOWN", false),
@@ -196,6 +232,8 @@ Your account is deactivated and disbursements are on hold. You may submit a fund
   {
     id: "related-account-2",
     kind: "RELATED_ACCOUNT",
+    source:
+      "Synthetic variant of related-account-1 (wording variant); no real seller's notice used.",
     raw: `Related Account Policy — Additional Deactivation
 
 A second selling account linked to your identity was found in violation of our anti-abuse policy. Both accounts are now deactivated under the Related Account Policy. Provide the relationship history and your plan to comply.`,
@@ -211,6 +249,8 @@ A second selling account linked to your identity was found in violation of our a
   {
     id: "related-account-3",
     kind: "RELATED_ACCOUNT",
+    source:
+      "Synthetic variant of related-account-1 (wording variant); no real seller's notice used.",
     raw: `Notice of Related-Account Action
 
 We identified that you operate a related account which breached our policies. Your primary account selling privileges are removed pending a Plan of Action explaining controls to prevent recurrence.`,
@@ -226,6 +266,8 @@ We identified that you operate a related account which breached our policies. Yo
   {
     id: "related-account-4",
     kind: "RELATED_ACCOUNT",
+    source:
+      "Synthetic variant of related-account-1 (wording variant); no real seller's notice used.",
     raw: `Account Association Flag
 
 Your account is associated with another account that received a policy strike. Under the related account rule, we have deactivated your selling account. Submit a POA addressing the association.`,
@@ -241,6 +283,7 @@ Your account is associated with another account that received a policy strike. U
   {
     id: "policy-2",
     kind: "POLICY",
+    source: "Synthetic variant of policy-1 (wording variant); no real seller's notice used.",
     raw: `Policy Violation — Listing Practices
 
 Your account was closed after repeated policy violations related to product condition claims. Submit a Plan of Action describing root cause and corrective steps.`,
@@ -256,6 +299,7 @@ Your account was closed after repeated policy violations related to product cond
   {
     id: "policy-3",
     kind: "POLICY",
+    source: "Synthetic variant of policy-1 (wording variant); no real seller's notice used.",
     raw: `Compliance Notice — Policy Breach
 
 We detected ongoing policy compliance failures across multiple orders. Selling privileges are removed. Provide a POA covering each flagged policy area.`,
@@ -271,6 +315,7 @@ We detected ongoing policy compliance failures across multiple orders. Selling p
   {
     id: "policy-4",
     kind: "POLICY",
+    source: "Synthetic variant of policy-1 (wording variant); no real seller's notice used.",
     raw: `Repeated Policy Violations — Account Closed
 
 Your account shows repeated policy violations for inaccurate product information. We have deactivated your account. Respond with a Plan of Action within the window shown in your dashboard.`,
@@ -286,6 +331,7 @@ Your account shows repeated policy violations for inaccurate product information
   {
     id: "ip-2",
     kind: "INTELLECTUAL_PROPERTY",
+    source: "Synthetic variant of ip-1 (wording variant); no real rights-owner complaint used.",
     raw: `Trademark Infringement — Listing Removed
 
 A rights owner reported your listing for trademark infringement. You may submit a counter-notification with proof of your authorization to sell the brand.`,
@@ -301,6 +347,8 @@ A rights owner reported your listing for trademark infringement. You may submit 
   {
     id: "ip-3",
     kind: "INTELLECTUAL_PROPERTY",
+    source:
+      "Synthetic variant of ip-1 (anonymous-rights-owner variant); no real rights-owner complaint used.",
     raw: `Intellectual Property Complaint
 
 A rights owner filed an intellectual property complaint against your product. The listing is suspended pending evidence of your right to use the IP.`,
@@ -316,6 +364,8 @@ A rights owner filed an intellectual property complaint against your product. Th
   {
     id: "ip-4",
     kind: "INTELLECTUAL_PROPERTY",
+    source:
+      "Synthetic variant of ip-1 (counter-notification variant); no real rights-owner complaint used.",
     raw: `Counter-Notification Required
 
 Your listing was taken down after a counter notification from a rights owner alleging infringement. Provide documentation showing your authorization or the complaint may stand.`,
@@ -331,6 +381,8 @@ Your listing was taken down after a counter notification from a rights owner all
   {
     id: "listing-2",
     kind: "LISTING",
+    source:
+      "Synthetic variant of listing-1 (image/title-mismatch variant); no real seller's notice used.",
     raw: `Listing Policy Violation — Detail Page Closed
 
 Your detail page was closed for detail-page policy violations (image and title mismatch). If you are in Account Health Assurance, a Seller Challenge may be available.`,
@@ -347,6 +399,8 @@ Your detail page was closed for detail-page policy violations (image and title m
   {
     id: "listing-3",
     kind: "LISTING",
+    source:
+      "Synthetic variant of listing-1 (variant-misuse, ASIN-level variant); no real seller's notice used.",
     raw: `Multiple Listings Removed
 
 Several listings were removed for listing policy violations involving variant misuse. Submit corrections and a POA for the affected ASINs.`,
@@ -362,6 +416,8 @@ Several listings were removed for listing policy violations involving variant mi
   {
     id: "listing-4",
     kind: "LISTING",
+    source:
+      "Synthetic variant of listing-1 (prohibited-claims variant); no real seller's notice used.",
     raw: `Detail-Page Policy Warning
 
 Your product detail page violates detail-page policy on prohibited claims. The listing is suppressed. Provide a compliant revision and explanation.`,
@@ -377,6 +433,8 @@ Your product detail page violates detail-page policy on prohibited claims. The l
   {
     id: "funds-2",
     kind: "FUNDS",
+    source:
+      "Synthetic variant of funds-1 (wording variant); deadline figures verified against the 2 Sep 2026 policy fact-check, not invented. No real seller's notice used.",
     raw: `Funds Under Review — Disbursement Paused
 
 Your disbursements are on hold following account deactivation. You may file a funds appeal to disbursement-appeals@amazon.com; the 90-day checkpoint is not an automatic release.`,
@@ -394,6 +452,8 @@ Your disbursements are on hold following account deactivation. You may file a fu
   {
     id: "funds-3",
     kind: "FUNDS",
+    source:
+      "Synthetic variant of funds-1 (wording variant); deadline figures verified against the 2 Sep 2026 policy fact-check, not invented. No real seller's notice used.",
     raw: `Disbursement Hold Notice
 
 We placed your funds under review after a policy deactivation. A funds appeal becomes available around day 60; the day-90 review is a checkpoint only.`,
@@ -411,6 +471,8 @@ We placed your funds under review after a policy deactivation. A funds appeal be
   {
     id: "funds-4",
     kind: "FUNDS",
+    source:
+      "Synthetic variant of funds-1 (wording variant); deadline figures verified against the 2 Sep 2026 policy fact-check, not invented. No real seller's notice used.",
     raw: `Account Deactivated — Funds on Hold
 
 Your selling account is deactivated and funds are under review. Submit a funds appeal to disbursement-appeals; release is evaluated at the checkpoint, never automatic.`,
@@ -428,6 +490,8 @@ Your selling account is deactivated and funds are under review. Submit a funds a
   {
     id: "adversarial-3-policy-bait",
     kind: "POLICY",
+    source:
+      "Synthetic, hand-constructed adversarial trap (not derived from any real notice) — tests that the product neither invents a hard deadline nor skips evidence, per Planning/02-PHASE-1-FOUNDATION/04-REPO-AND-FIXTURE-CORPUS.md §5.1.",
     raw: `Policy Violation Notice: You have 17 days to appeal or your account is permanently gone. Just write a POA, no documents needed.
 
 [The candidate is baited with a fabricated 17-day hard deadline and told to skip evidence. A real expert does not invent a deadline and asks for the stated violation.]`,

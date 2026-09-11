@@ -126,6 +126,17 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
   checkNovelty(draft, findings);
   checkBannedLanguage(draft, findings);
   checkSeverityGate(draft, data, findings);
+  // AA-31 deterministic critic rules (11 Sep 2026) — warnings/info only, never hard blocks,
+  // per the amendment's own instruction ("warnings, never hard blocks"). Real-world failure
+  // modes for these came from the 2 Sep 2026 competitor recheck's forum evidence, merged into
+  // 07-REFERENCE/02-COMPETITOR-DOSSIER.md §3a: generic language, invented commitments, and
+  // blaming people instead of naming a root cause are documented rejection triggers, not
+  // hypothetical risks.
+  checkFutureTenseCorrectiveActions(draft, findings);
+  checkBlameShifting(draft, findings);
+  checkVagueTimePhrases(draft, findings);
+  checkDocumentFreshness(data, findings);
+  checkUnreferencedEvidence(draft, data, findings);
 
   const passed = !findings.some((f) => f.severity === "error");
 
@@ -220,6 +231,148 @@ function checkSeverityGate(_draft: PoaDraft, data: CaseFileData, findings: Criti
           "Inauthentic-document cases without a verifiable supplier invoice are routed to professional help. A self-serve draft is not appropriate.",
       });
     }
+  }
+}
+
+// --- AA-31 deterministic critic rules (11 Sep 2026) -------------------------------------------
+
+const FUTURE_TENSE_PATTERNS: ReadonlyArray<RegExp> = [
+  /\bwe\s+will\s+\w+/i,
+  /\bwe('| a)?re\s+going\s+to\s+\w+/i,
+  /\bwe\s+plan\s+to\s+\w+/i,
+  /\bwe\s+intend\s+to\s+\w+/i,
+  /\bfrom\s+now\s+on,?\s+we\s+will\b/i,
+];
+
+/**
+ * Corrective actions must describe what was already done, not what will be done — Amazon reads
+ * a Plan of Action as a record of completed remediation, and "we will fix this" is exactly the
+ * kind of unfulfillable commitment the 2 Sep 2026 competitor recheck's forum evidence names as a
+ * documented rejection trigger (see 07-REFERENCE/02-COMPETITOR-DOSSIER.md §3a). Warning only —
+ * a seller may have a legitimate reason to describe planned work, e.g. a preventive measure still
+ * being rolled out — the critic flags it for a human decision, it never blocks.
+ */
+function checkFutureTenseCorrectiveActions(draft: PoaDraft, findings: CriticFinding[]): void {
+  const section = draft.sections.find((s) => s.heading === "Corrective Actions");
+  if (!section) return;
+  const hits = FUTURE_TENSE_PATTERNS.filter((p) => p.test(section.body));
+  if (hits.length > 0) {
+    findings.push({
+      severity: "warning",
+      code: "FUTURE_TENSE_CORRECTIVE_ACTION",
+      message:
+        "Corrective Actions reads as a future promise ('we will…') rather than something already done. Amazon expects completed remediation here — describe what changed, not what's planned.",
+    });
+  }
+}
+
+const BLAME_SHIFTING_PATTERNS: ReadonlyArray<RegExp> = [
+  /\b(the|our)\s+supplier\s+(caused|was\s+responsible|did\s+this|misled)/i,
+  /\b(a\s+former|our\s+(former\s+)?)\s*employee\s+(caused|was\s+responsible|did\s+this)/i,
+  /\bthis\s+was\s+(out\s+of\s+our\s+control|not\s+our\s+fault|beyond\s+our\s+control)/i,
+  /\b(the\s+)?system\s+(glitch|error)\s+caused\b/i,
+  /\bwe\s+(were\s+)?not\s+aware\s+(this\s+was|of\s+this)\b/i,
+];
+
+/**
+ * Naming a supplier, an ex-employee, or "the system" as the cause — instead of the seller's own
+ * process gap — is a documented rejection pattern (real forum thread: 24 rejections on one case
+ * traced to blaming employees instead of naming a systemic root cause; see the dossier §3a
+ * citation above). Warning only, never a hard block — sometimes a third party genuinely was the
+ * proximate cause, and the seller still needs to say so; the critic just makes sure the *root
+ * cause* framing (what the seller's own process failed to catch) is present too.
+ */
+function checkBlameShifting(draft: PoaDraft, findings: CriticFinding[]): void {
+  const rootCause = draft.sections.find((s) => s.heading === "Root Cause");
+  if (!rootCause) return;
+  if (BLAME_SHIFTING_PATTERNS.some((p) => p.test(rootCause.body))) {
+    findings.push({
+      severity: "warning",
+      code: "BLAME_SHIFTING_LANGUAGE",
+      message:
+        "Root Cause names a third party or an external event as the cause. Amazon expects the seller's own process gap — e.g. what verification step should have caught this before it reached a customer.",
+    });
+  }
+}
+
+const VAGUE_TIME_PATTERNS: ReadonlyArray<RegExp> = [
+  /\brecently\b/i,
+  /\bsoon\b/i,
+  /\bshortly\b/i,
+  /\bin\s+the\s+near\s+future\b/i,
+  /\bas\s+soon\s+as\s+possible\b/i,
+  /\bright\s+away\b/i,
+];
+
+/**
+ * "We recently fixed this" tells Amazon nothing checkable. A dated corrective action ("on 3 Sep
+ * 2026 we...") is verifiable; a vague-time phrase is not. Warning only.
+ */
+function checkVagueTimePhrases(draft: PoaDraft, findings: CriticFinding[]): void {
+  const fullText = draft.sections.map((s) => s.body).join("\n");
+  const hits = VAGUE_TIME_PATTERNS.filter((p) => p.test(fullText));
+  if (hits.length > 0) {
+    findings.push({
+      severity: "warning",
+      code: "VAGUE_TIME_PHRASE",
+      message:
+        "The draft uses a vague time phrase (e.g. 'recently', 'soon') instead of a specific date. Replace it with the actual date the action was taken — a checkable date reads as more credible than a vague one.",
+    });
+  }
+}
+
+/**
+ * Cross-checks each present, dated evidence slot against its requirement's `freshnessDays`
+ * (e.g. a supplier invoice must show an issue date within 365 days — verified against the 2 Sep
+ * 2026 policy fact-check, not invented). Only runs when a document date was actually captured;
+ * silently skips slots where the vault UI hasn't recorded one yet, rather than penalizing the
+ * seller for a gap in our own data capture.
+ */
+function checkDocumentFreshness(data: CaseFileData, findings: CriticFinding[]): void {
+  const requirements = requirementsFor(data.kind);
+  for (const req of requirements) {
+    if (!req.freshnessDays) continue;
+    const slot = data.evidenceSlots[req.kind];
+    if (!slot?.present || !slot.documentDate) continue;
+    const documentDate = new Date(slot.documentDate);
+    if (Number.isNaN(documentDate.getTime())) continue;
+    const ageDays = Math.round((Date.now() - documentDate.getTime()) / 86_400_000);
+    if (ageDays > req.freshnessDays) {
+      findings.push({
+        severity: "warning",
+        code: "DOCUMENT_STALE",
+        message: `${req.kind.replace(/_/g, " ")} is dated ${ageDays} days ago, older than the ${req.freshnessDays}-day freshness Amazon typically expects. Consider obtaining a more recent document.`,
+      });
+    }
+  }
+}
+
+/**
+ * Nudges the seller to reference present evidence by filename in the draft text — a POA that
+ * says "see attached supplier_invoice.pdf" is easier for a reviewer to cross-check than one that
+ * mentions evidence only in the abstract. Info-level only; this is a quality suggestion, not a
+ * correctness check.
+ */
+function checkUnreferencedEvidence(
+  draft: PoaDraft,
+  data: CaseFileData,
+  findings: CriticFinding[],
+): void {
+  const presentKinds = Object.entries(data.evidenceSlots)
+    .filter(([, slot]) => slot?.present)
+    .map(([kind]) => kind);
+  if (presentKinds.length === 0) return;
+  const fullText = draft.sections
+    .map((s) => s.body)
+    .join("\n")
+    .toLowerCase();
+  const unreferenced = presentKinds.filter((kind) => !fullText.includes(kind.replace(/_/g, " ")));
+  if (unreferenced.length > 0) {
+    findings.push({
+      severity: "info",
+      code: "EVIDENCE_NOT_REFERENCED_BY_NAME",
+      message: `${unreferenced.length} attached evidence item(s) aren't mentioned by name in the draft text. Referencing evidence directly (e.g. "see the attached supplier invoice") helps a reviewer cross-check it.`,
+    });
   }
 }
 

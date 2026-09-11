@@ -205,7 +205,7 @@ export const GLOBAL_EXPECTATIONS: GlobalExpectations = {
     "Help you present a stronger, honest appeal that you review and submit yourself.",
   ],
   whatWeDoNot: [
-    "You submit the appeal yourself in Seller Central; we never log in to your account.",
+    "You submit the appeal yourself in Seller Central (Amazon's seller dashboard); we never log in to your account.",
     "Amazon makes every decision; we make your case as clear and well-evidenced as it can be.",
     "Your notice text is decoded in your browser and is not used for training.",
   ],

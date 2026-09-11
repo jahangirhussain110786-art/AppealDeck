@@ -20,6 +20,7 @@ import { SHARED } from "@/content/shared";
 import { useSessionState } from "@/lib/useSessionState";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { pollLicenseStatus, LicensePollTimeoutError } from "@/lib/licensePoll";
+import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 
 type CompletionPhase = "idle" | "activating" | "timeout";
 
@@ -41,6 +42,7 @@ export function PurchasePanel() {
 
   const handleCompleted = useCallback(() => {
     if (sessionState !== "signed-in") return;
+    trackFunnelEvent(FUNNEL_EVENTS.purchaseCompleted);
     setPhase("activating");
     void pollLicenseStatus()
       .then(() => router.push("/compose"))

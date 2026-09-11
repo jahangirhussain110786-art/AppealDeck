@@ -13,8 +13,15 @@ export interface CaseLog {
   state: CaseState;
   attemptCount: number;
   submittedAt?: string;
+  /** Readiness score (0-100) at the moment `submittedAt` was recorded — a snapshot, not
+   * recomputed later. Feeds the EF-5 opt-in outcome record's `readinessAtSubmit` field
+   * (src/core/outcomeModel.ts). Absent on cases submitted before this field existed. */
+  readinessAtSubmit?: number;
   lastReply?: { category: ReplyCategory; at: string };
   whyHintDismissed?: boolean;
+  /** True once the seller has responded (either way) to the opt-in outcome-sharing prompt for
+   * this case, so it's asked at most once per terminal reply. */
+  outcomePromptResolved?: boolean;
 }
 
 async function findRecordId(vault: Vault, name: string): Promise<string | null> {

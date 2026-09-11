@@ -19,7 +19,10 @@ import {
   READINESS_COPY,
   noveltyRequired,
   GLOBAL_EXPECTATIONS,
+  defaultDocumentType,
 } from "@/core";
+import { buildOutcomeRecord, outcomeFromReplyCategory } from "@/core/outcomeModel";
+import { OutcomeShareCard } from "@/components/OutcomeShareCard";
 import type { CaseFile } from "@/core/interviewEngine";
 import type { CaseState, CaseStateContext, ReplyCategory } from "@/core/caseState";
 import { CaseStateBadge } from "@/components/CaseStateBadge";
@@ -206,6 +209,19 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
     }
   };
 
+  const resolveOutcomePrompt = async (shared: boolean) => {
+    if (!caseFile || !caseLog) return;
+    const logEntry: CaseLog = { ...caseLog, outcomePromptResolved: true };
+    try {
+      await saveCaseLog(vault, logEntry);
+      await loadFromVault();
+      if (shared) toast.success(APP.dashboard.outcomeShare.accept);
+    } catch {
+      // Non-critical — the case still works either way; a save hiccup here means the prompt may
+      // reappear next visit, which is a safe failure mode, not a data-loss one.
+    }
+  };
+
   const markSubmitted = async () => {
     if (!caseFile) return;
     const currentLog: CaseLog = caseLog ?? {
@@ -216,6 +232,9 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
       ...currentLog,
       submittedAt: new Date().toISOString(),
       attemptCount: currentLog.attemptCount + 1,
+      // Snapshot readiness at the moment of submission — the outcome record (EF-5) needs what
+      // the seller actually knew when they submitted, not a score recomputed later.
+      readinessAtSubmit: Math.round(computeReadiness(caseFile).score * 100),
     };
     const ctx = buildContext(caseFile, logEntry);
     logEntry.state = nextState(ctx, caseFile.state);
@@ -503,6 +522,27 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
                   )}
                 </CardContent>
               </Card>
+
+              {caseFile &&
+                caseLog?.lastReply &&
+                !caseLog.outcomePromptResolved &&
+                (() => {
+                  const outcome = outcomeFromReplyCategory(caseLog.lastReply.category);
+                  if (!outcome) return null;
+                  const record = buildOutcomeRecord({
+                    kind: caseFile.kind,
+                    marketplace: "unknown",
+                    docType: defaultDocumentType(caseFile.kind),
+                    attempts: caseLog.attemptCount,
+                    readinessAtSubmit:
+                      caseLog.readinessAtSubmit ??
+                      Math.round(computeReadiness(caseFile).score * 100),
+                    outcome,
+                    submittedAt: caseLog.submittedAt ?? caseLog.lastReply.at,
+                    outcomeAt: caseLog.lastReply.at,
+                  });
+                  return <OutcomeShareCard record={record} onResolved={resolveOutcomePrompt} />;
+                })()}
 
               <Card>
                 <CardHeader>

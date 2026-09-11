@@ -7,7 +7,7 @@ export const HOME = {
     eyebrow: "For Amazon sellers facing a deactivation or policy notice",
     headline: "Understand your Amazon notice today. Draft a Plan of Action Amazon can act on.",
     subline:
-      "Free decoder, clear deadlines, and a Plan of Action drafted from your notice and evidence in the structure Amazon reads. You review it and submit it yourself in Seller Central.",
+      "Free decoder, clear deadlines, and a Plan of Action drafted from your notice and evidence in the structure Amazon reads. You review it and submit it yourself in Seller Central (Amazon's seller dashboard).",
     primaryCta: "Decode my notice — free",
     secondaryCta: "See the Appeal Pass",
     reassuranceLine: "Runs in your browser. No Seller Central login needed.",

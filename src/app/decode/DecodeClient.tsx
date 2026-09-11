@@ -18,6 +18,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { OfflineNotice } from "@/components/OfflineNotice";
 import { CasePreview } from "@/components/CasePreview";
 import { guidanceFor } from "@/core/guidance";
+import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
 import { DECODE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
@@ -75,6 +76,7 @@ export default function DecodeClient() {
       const data: DecodeResponse = await res.json();
       setResult(data);
       setStatus("result");
+      trackFunnelEvent(FUNNEL_EVENTS.decodeCompleted, { kind: data.kind });
     } catch {
       setError(DECODE.result.errorNetwork);
       setStatus("error");

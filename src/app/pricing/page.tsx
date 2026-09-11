@@ -155,7 +155,16 @@ export default function PricingPage() {
       </section>
 
       <section id="purchase" className="pb-16 sm:pb-20">
-        <Card>
+        {/* Honest-expectations card renders before the purchase panel, per the checkout-consent
+            spec (legal/withdrawal-consent.md item 1) and D8's intent — a visitor must see the
+            expectations disclosure before they reach the pay button, not after. Fixed 11 Sep 2026;
+            see docs/handoffs/2026-09-11-full-repo-audit-guidebook.md Section F3. */}
+        <HonestExpectationsCard
+          summary={GLOBAL_EXPECTATIONS.typicalNote}
+          weDo={GLOBAL_EXPECTATIONS.whatWeDo}
+          weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
+        />
+        <Card className="mt-6">
           <CardHeader>
             <CardTitle>{PRICING.purchaseTitle}</CardTitle>
             <CardDescription>{LEGAL.consent.deliveryNote}</CardDescription>
@@ -164,13 +173,6 @@ export default function PricingPage() {
             <PurchasePanel />
           </CardContent>
         </Card>
-        <div className="mt-6">
-          <HonestExpectationsCard
-            summary={GLOBAL_EXPECTATIONS.typicalNote}
-            weDo={GLOBAL_EXPECTATIONS.whatWeDo}
-            weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
-          />
-        </div>
       </section>
     </MarketingShell>
   );

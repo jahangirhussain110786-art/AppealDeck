@@ -112,6 +112,12 @@ export const APP = {
       title: "Case readiness",
       missingLabel: "Missing:",
     },
+    outcomeShare: {
+      title: "Share this outcome anonymously?",
+      body: "This sends only the case type, document type, attempt count, readiness score, the result, and how many days it took — never your notice text, evidence, or any identifying detail. It helps us report honest results instead of invented ones.",
+      accept: "Share it",
+      decline: "Not this time",
+    },
     actions: {
       nextBestActions: "Next best actions",
       reviewPoa: "Review your Plan of Action (POA)",
@@ -178,7 +184,7 @@ export const APP = {
   compose: {
     title: "Your Plan of Action (POA)",
     subtitle:
-      "Drafts are generated from your case file. Review, copy, and submit through Seller Central.",
+      "Drafts are generated from your case file. Review, copy, and submit through Seller Central (Amazon's seller dashboard).",
     backButton: "Back to case",
     gapDraft: {
       title: "Gap draft",

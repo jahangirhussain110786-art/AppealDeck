@@ -13,6 +13,7 @@ let _compose: Ratelimit | null = null;
 let _interview: Ratelimit | null = null;
 let _analyzeReply: Ratelimit | null = null;
 let _extractField: Ratelimit | null = null;
+let _outcome: Ratelimit | null = null;
 
 function hasUpstashEnv(): boolean {
   return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
@@ -86,6 +87,25 @@ function getExtractFieldLimiter(): Ratelimit | null {
   return _extractField;
 }
 
+function getOutcomeLimiter(): Ratelimit | null {
+  if (!hasUpstashEnv()) return null;
+  if (!_outcome) {
+    const redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    });
+    // A seller shares an outcome once per case, rarely more than a handful of times ever —
+    // a generous daily cap is purely an abuse guard, not an expected-usage ceiling.
+    _outcome = new Ratelimit({
+      redis,
+      limiter: Ratelimit.fixedWindow(10, "1 d"),
+      analytics: true,
+      prefix: "ratelimit:outcome",
+    });
+  }
+  return _outcome;
+}
+
 export function isRateLimitEnabled(): boolean {
   return hasUpstashEnv();
 }
@@ -112,6 +132,15 @@ export async function rateLimitAnalyzeReply(user: AppUser): Promise<RateLimitRes
   const limiter = getAnalyzeReplyLimiter();
   if (!limiter) {
     return { success: true, limit: 60, remaining: 60, reset: Date.now() + 60_000 };
+  }
+  const r = await limiter.limit(user.id);
+  return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
+}
+
+export async function rateLimitOutcome(user: AppUser): Promise<RateLimitResult> {
+  const limiter = getOutcomeLimiter();
+  if (!limiter) {
+    return { success: true, limit: 10, remaining: 10, reset: Date.now() + 86_400_000 };
   }
   const r = await limiter.limit(user.id);
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
