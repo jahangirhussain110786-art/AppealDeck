@@ -100,6 +100,10 @@ export default function VaultView({ userId }: { userId: string }) {
   const [showSwitchDialog, setShowSwitchDialog] = React.useState(false);
   const [switchBusy, setSwitchBusy] = React.useState(false);
 
+  const [previewTarget, setPreviewTarget] = React.useState<VaultListItem | null>(null);
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
+  const [previewText, setPreviewText] = React.useState<string | null>(null);
+
   const refresh = React.useCallback(async () => {
     const list = await vault.list(filterKind !== "all" ? { evidenceKind: filterKind } : undefined);
     setItems(list);
@@ -189,21 +193,27 @@ export default function VaultView({ userId }: { userId: string }) {
     }
   };
 
-  const onView = async (id: string) => {
+  const openPreview = async (item: VaultListItem) => {
     try {
-      const { bytes, record } = await vault.get(id);
-      if (record.mimeType.startsWith("text/") || record.mimeType === "application/json") {
+      const { bytes, record } = await vault.get(item.id);
+      setPreviewUrl(null);
+      setPreviewText(null);
+      if (record.mimeType.startsWith("image/")) {
+        const url = URL.createObjectURL(
+          new Blob([new Uint8Array(bytes)], { type: record.mimeType }),
+        );
+        setPreviewUrl(url);
+      } else if (record.mimeType === "application/pdf") {
+        const url = URL.createObjectURL(
+          new Blob([new Uint8Array(bytes)], { type: record.mimeType }),
+        );
+        setPreviewUrl(url);
+      } else if (record.mimeType.startsWith("text/") || record.mimeType === "application/json") {
         const text = new TextDecoder().decode(bytes);
-        const trimmed = text.length > 2000 ? `${text.slice(0, 2000)}…` : text;
-        toast(`Preview of ${record.name}`, {
-          description: `${record.sizeBytes} bytes —\n\n${trimmed}`,
-          duration: 10_000,
-        });
-      } else {
-        toast.info(`${record.name}`, {
-          description: `Binary file, ${record.sizeBytes} bytes. Use download to save.`,
-        });
+        const capped = text.length > 200_000 ? text.slice(0, 200_000) : text;
+        setPreviewText(capped);
       }
+      setPreviewTarget(item);
     } catch (e) {
       toast.error(APP.dashboard.toasts.decryptFailed, {
         description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
@@ -215,15 +225,50 @@ export default function VaultView({ userId }: { userId: string }) {
     try {
       const { bytes, record } = await vault.get(id);
       const blob = new Blob([new Uint8Array(bytes)], { type: record.mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = record.name;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast.success(`${APP.dashboard.toasts.downloadSuccess} ${record.name}`);
+
+      if (
+        typeof window !== "undefined" &&
+        typeof (window as unknown as { showSaveFilePicker?: unknown }).showSaveFilePicker ===
+          "function"
+      ) {
+        try {
+          const handle = await (
+            window as unknown as {
+              showSaveFilePicker: (opts: {
+                suggestedName: string;
+                types: Record<string, { accept: string[] }>;
+              }) => Promise<{
+                createWritable: () => Promise<{
+                  write: (data: Blob) => Promise<void>;
+                  close: () => Promise<void>;
+                }>;
+              }>;
+            }
+          ).showSaveFilePicker({
+            suggestedName: record.name,
+            types: { [record.mimeType]: { accept: [record.mimeType] } },
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          toast.success(APP.dashboard.toasts.downloadSuccessSaved.replace("{name}", record.name));
+        } catch (e) {
+          if (e instanceof DOMException && e.name === "AbortError") {
+            return;
+          }
+          throw e;
+        }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = record.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast.info(`${APP.dashboard.toasts.downloadSuccess} ${record.name}`);
+      }
     } catch (e) {
       toast.error(APP.dashboard.toasts.downloadFailed, {
         description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
@@ -517,7 +562,7 @@ export default function VaultView({ userId }: { userId: string }) {
                               <Button
                                 size="icon-sm"
                                 variant="ghost"
-                                onClick={() => void onView(it.id)}
+                                onClick={() => void openPreview(it)}
                                 aria-label={APP.vault.actions.view}
                               >
                                 <Eye className="size-4" />
@@ -676,6 +721,79 @@ export default function VaultView({ userId }: { userId: string }) {
                 </Button>
               </DialogFooter>
             </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={!!previewTarget}
+            onOpenChange={(open) => {
+              if (!open) {
+                if (previewUrl) {
+                  URL.revokeObjectURL(previewUrl);
+                }
+                setPreviewUrl(null);
+                setPreviewText(null);
+                setPreviewTarget(null);
+              }
+            }}
+          >
+            {previewTarget && (
+              <DialogContent className="max-w-3xl max-h-[80vh]">
+                <DialogTitle>
+                  {APP.vault.preview.title.replace("{name}", previewTarget.name)}
+                </DialogTitle>
+                <div className="overflow-y-auto">
+                  {previewUrl && previewTarget.mimeType.startsWith("image/") ? (
+                    <img
+                      src={previewUrl}
+                      alt={previewTarget.name}
+                      className="max-w-full rounded-md"
+                    />
+                  ) : previewUrl && previewTarget.mimeType === "application/pdf" ? (
+                    <iframe
+                      src={previewUrl}
+                      title={previewTarget.name}
+                      className="h-[70vh] w-full rounded-md"
+                    />
+                  ) : previewText !== null ? (
+                    <pre className="whitespace-pre-wrap text-xs">
+                      {previewText}
+                      {previewText.length === 200_000 && (
+                        <p className="mt-2 text-muted-foreground">
+                          {APP.vault.preview.textTooLarge.replace("{count}", "200,000")}
+                        </p>
+                      )}
+                    </pre>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {APP.vault.preview.noPreviewForType}
+                    </p>
+                  )}
+                </div>
+                <DialogFooter>
+                  {previewUrl || previewText !== null ? null : (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (previewTarget) void onDownload(previewTarget.id);
+                      }}
+                    >
+                      {APP.vault.preview.downloadInstead}
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (previewUrl) URL.revokeObjectURL(previewUrl);
+                      setPreviewUrl(null);
+                      setPreviewText(null);
+                      setPreviewTarget(null);
+                    }}
+                  >
+                    {APP.vault.preview.close}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            )}
           </Dialog>
         </div>
       )}

@@ -173,7 +173,8 @@ export const APP = {
       recordSubmissionFailed: "Could not record submission",
       unknownError: "Unknown error",
       decryptFailed: "Could not decrypt",
-      downloadSuccess: "Downloaded",
+      downloadSuccess: "Download started",
+      downloadSuccessSaved: "Saved {name}",
       downloadFailed: "Download failed",
       recordDeleted: "Record deleted",
       deleteFailed: "Delete failed",
@@ -400,6 +401,13 @@ export const APP = {
       switchSuccess: "Automatic unlock restored",
       switchSuccessDesc: "No passphrase is needed on this device from now on.",
       switchError: "Could not switch to automatic unlock.",
+    },
+    preview: {
+      title: "Preview — {name}",
+      textTooLarge: "Showing the first {count} characters (file is larger).",
+      noPreviewForType: "No preview is available for this file type.",
+      downloadInstead: "Download",
+      close: "Close",
     },
   },
   interview: {
