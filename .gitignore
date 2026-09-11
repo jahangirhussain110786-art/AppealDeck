@@ -57,6 +57,10 @@ skills-lock.json
 # Playwright test outputs
 /playwright-report/
 /test-results/
+# Playwright auth storage state (session cookies/tokens) written by e2e/screenshots.spec.ts's
+# authenticated-route capture — added 11 Sep 2026 after a real run left one of these uncommitted
+# next to a screenshot set; must never be committed regardless of which output dir is used.
+.auth.json
 
 # Stray workspace artifacts
 .mcp-bridge-*.cmd

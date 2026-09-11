@@ -1,0 +1,18 @@
+# Force LF line endings for all text files regardless of the checkout platform's core.autocrlf
+# setting. This fixes a recurring Prettier/format:check flake on Windows, where a file re-saved
+# with CRLF by a Windows tool (or Git's own autocrlf conversion) fails `npm run format:check`
+# even though its committed content (the blob) is LF. See the 10 Sep 2026 uiux-polish-fix pass
+# (docs/handoffs/2026-09-09-uiux-polish-fix.md, Task F7) for the incident this fixes.
+* text=auto eol=lf
+
+# Binary assets must never go through line-ending normalization.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
