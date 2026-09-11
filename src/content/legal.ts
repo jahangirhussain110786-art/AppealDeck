@@ -18,9 +18,9 @@ export type LegalDoc = "privacy" | "terms" | "refund";
 
 export const LEGAL = {
   lastUpdated: {
-    privacy: "2026-08-25",
-    terms: "2026-08-25",
-    refund: "2026-08-25",
+    privacy: "2026-09-11",
+    terms: "2026-09-10",
+    refund: "2026-09-11",
   },
   privacy: {
     title: "Privacy",
@@ -41,7 +41,16 @@ export const LEGAL = {
         body: [
           "To recognize you across sessions, keep your licence active, and sync your encrypted vault.",
           "To send you a receipt and account-related email (billing lifecycle). We do not send marketing email by default.",
+          "To draft your Plan of Action, we send your notice text and case answers to Google's Gemini paid tier only — never the free tier, which trains on submitted data. The draft is returned to you and the submitted text is deleted once your case no longer needs it.",
           "To count usage against Paddle and Upstash free tiers for abuse protection.",
+          "To measure how many visitors reach each step of the free decoder and the Appeal Pass, using a cookieless analytics tool (Plausible or Umami) that counts page visits without collecting personal data or setting cross-site identifiers.",
+        ],
+      },
+      {
+        id: "international-transfers",
+        title: "Where your data is processed",
+        body: [
+          "Some processing happens outside Pakistan — Google (Gemini drafting) and Paddle (payments) both operate internationally, including the US and EU. Each is bound by its own data-processing agreement. We do not sell your data to anyone.",
         ],
       },
       {
@@ -53,11 +62,35 @@ export const LEGAL = {
         ],
       },
       {
+        id: "retention",
+        title: "How long we keep it",
+        body: [
+          "Notice text and case answers submitted for drafting are deleted once your case no longer needs them, or sooner if you ask.",
+          "Licence records (email, plan, status) are kept for as long as needed for billing, entitlement, and accounting.",
+          "Your case file and vault contents stay in your browser until you delete them — we never hold a copy.",
+        ],
+      },
+      {
         id: "your-rights",
         title: "Your rights",
         body: [
           "You may delete your account and its licence record at any time by emailing billing@appealdeck.com.",
+          "Depending on where you live, you may also have the right to access, correct, delete, or receive a copy of the data we hold about you, and to object to how we use it. Email privacy@appealdeck.com to exercise any of these rights; we respond within 30 days.",
           "Decryption is a function of your passphrase. We cannot recover a forgotten passphrase — it is never stored.",
+        ],
+      },
+      {
+        id: "breach-notification",
+        title: "If something goes wrong",
+        body: [
+          "If a breach of your personal data ever happens, we notify affected users, and the relevant authority where the law requires it, within three days of finding out.",
+        ],
+      },
+      {
+        id: "who-this-is-for",
+        title: "Who this is for",
+        body: [
+          "AppealDeck is a business tool for Amazon sellers. It is not directed at anyone under 18.",
         ],
       },
       {
@@ -98,6 +131,13 @@ export const LEGAL = {
         ],
       },
       {
+        id: "severity-gating",
+        title: "When we won't sell you a Pass",
+        body: [
+          "For certain case types — for example allegations involving fabricated documents, fraud, or anything touching child safety — we will not sell an Appeal Pass. We route you to professional help instead. This is a safety limit, not a judgment on your case.",
+        ],
+      },
+      {
         id: "restriction",
         title: "What you must not do",
         body: [
@@ -112,6 +152,21 @@ export const LEGAL = {
         body: [
           "We may suspend or revoke access for violation of these terms or abuse of the service.",
           "On termination, your licence ends. Local drafts may remain in your browser until you clear it.",
+        ],
+      },
+      {
+        id: "liability",
+        title: "Liability",
+        body: [
+          "AppealDeck is provided as-is, to the extent the law allows. We are not liable for any suspension, loss, or decision that results from using the product.",
+          "Where we are found liable for anything, the total is capped at the amount you paid us for the Appeal Pass.",
+        ],
+      },
+      {
+        id: "changes",
+        title: "Changes to these terms",
+        body: [
+          "We may update these terms as the product changes. Material changes are posted here and, where they affect you directly, emailed to you.",
         ],
       },
       {
@@ -132,7 +187,6 @@ export const LEGAL = {
         title: "7-day refund",
         body: [
           "You may request a refund of the Appeal Pass within 7 days of purchase, no questions asked.",
-          "Requests are processed within 5 business days and refunded to the original payment method.",
         ],
       },
       {
@@ -140,6 +194,7 @@ export const LEGAL = {
         title: "How to request",
         body: [
           "Email billing@appealdeck.com with your receipt or licence key.",
+          "We process the request within 5 business days; how long it then takes to reach your account depends on your bank.",
           "Once refunded, access to Appeal Pass features is removed.",
         ],
       },

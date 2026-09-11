@@ -1,4 +1,8 @@
 <!-- DRAFT — AI-authored, founder must review + publish. Implements D8. -->
+<!-- NOTE added 11 Sep 2026: this file is NOT what's rendered on /refund. The live source is
+     src/content/legal.ts, which now uses this draft's more honest "5 business days to process,
+     then it depends on your bank" timeline instead of a flat claim — see docs/DECISIONS.md.
+     Treat this file as the original authoring record, not the source of truth. -->
 
 # Refund Policy — AppealDeck
 

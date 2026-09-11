@@ -1,4 +1,9 @@
 <!-- DRAFT — AI-authored, founder must review + publish. -->
+<!-- NOTE added 11 Sep 2026: this file is NOT what's rendered on /terms. The live source is
+     src/content/legal.ts, which was brought to substantive parity with this draft (severity
+     gating, liability cap, a changes clause) in the 11 Sep 2026 full-repo audit — see
+     docs/DECISIONS.md. Treat this file as the original authoring record, not the source of
+     truth; edit src/content/legal.ts for anything that must actually change. -->
 
 # Terms of Service — AppealDeck
 

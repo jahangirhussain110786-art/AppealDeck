@@ -1,4 +1,9 @@
 <!-- DRAFT — AI-authored, founder must review. This is the checkout implementation spec for D8 EU-withdrawal consent. -->
+<!-- NOTE added 11 Sep 2026: the founder approved the SHIPPED checkbox wording as final (it differs
+     from the wording proposed below — see src/content/legal.ts's `consent.withdrawalCheckbox.label`
+     and docs/DECISIONS.md). Item 4 below (a confirmation email) is now implemented — src/lib/email.ts,
+     wired into the Paddle webhook. Item 1's card-before-button ordering was found violated on
+     /pricing and fixed the same session (src/app/pricing/page.tsx). -->
 
 # Checkout consent mechanics (implementation spec)
 
