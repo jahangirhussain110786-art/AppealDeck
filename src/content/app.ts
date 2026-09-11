@@ -13,7 +13,7 @@ export const APP = {
   access: {
     signInGate: {
       title: "Save your case to continue",
-      body: "Your answers so far are saved on this device. From here the interview asks for documents, which are encrypted with a passphrase only you know. Sign in to set it and keep your case.",
+      body: "Your answers so far are saved on this device, encrypted with a key that stays in this browser. From here the interview asks for documents — sign in so your case carries over to the dashboard and vault.",
       signIn: "Sign in",
       createAccount: "Create an account",
       savedNote: "Saved on this device",
@@ -34,7 +34,7 @@ export const APP = {
     },
     vaultSignedOut: {
       title: "Your encrypted evidence vault",
-      desc: "The vault stores your supplier invoices, brand authorizations and other case documents encrypted on your device (AES-GCM, key derived from a passphrase you set — we never see it). It opens once you sign in.",
+      desc: "The vault stores your supplier invoices, brand authorizations and other case documents encrypted on your device (AES-GCM). It opens automatically once you sign in — no passphrase to remember, unless you choose to add one from the vault.",
       cta: "Sign in to unlock",
       back: "Back to your case",
     },
@@ -308,9 +308,9 @@ export const APP = {
   vault: {
     title: "Your encrypted evidence",
     subtitle:
-      "Files you upload here are encrypted on your device with a key derived from your passphrase.",
+      "Files you upload here are encrypted on your device. By default the key is held only in this browser — add a passphrase below if you want one.",
     cryptoDetails:
-      "Envelope v{version}, AES-GCM 256-bit, 12-byte IV, optional associated data. Key model: PBKDF2-SHA-256 (310,000 iterations) derives a key-encryption key, which wraps a random per-record data key. The wrapped key lives on disk; the passphrase never leaves this device. Cloud sync uploads ciphertext only.",
+      "Envelope v{version}, AES-GCM 256-bit, 12-byte IV, optional associated data. Key model: by default, a non-extractable device key generated in this browser wraps a random data key. Choosing a passphrase instead derives the wrapping key with PBKDF2-SHA-256 (310,000 iterations) — either way, the key material never leaves this device. Cloud sync uploads ciphertext only.",
     teachingEmpty: {
       title: "No evidence yet",
       description:
@@ -322,8 +322,7 @@ export const APP = {
     encryptedBadge: "Encrypted",
     evidenceKindLabel: "Evidence kind",
     evidenceKindPlaceholder: "Select evidence kind",
-    caseRecordsHidden:
-      "Case file and logs are stored separately. Unlock your case on the dashboard.",
+    caseRecordsHidden: "Case file and logs are stored separately and open automatically here.",
     actions: {
       refresh: "Refresh",
       sync: "Sync to cloud",
@@ -374,6 +373,33 @@ export const APP = {
       stay: "Stay unlocked",
       locked: "Vault locked",
       lockedDesc: "The vault auto-locked after 15 minutes of inactivity.",
+    },
+    security: {
+      deviceModeLabel: "Automatic unlock (this device)",
+      deviceModeDesc:
+        "Your case and evidence are encrypted with a key held only in this browser. No passphrase to remember or lose — dashboard, case and vault all open automatically here.",
+      passphraseModeLabel: "Passphrase-protected",
+      passphraseModeDesc:
+        "Your case and evidence are encrypted with a key derived from your passphrase, which applies everywhere in the app since they share one vault.",
+      protectCta: "Protect with a passphrase",
+      protectDialogTitle: "Protect this vault with a passphrase",
+      protectDialogBody:
+        "This replaces automatic unlock with a passphrase you choose. Because your case and evidence share one encrypted vault, dashboard and case will ask for this passphrase too, not only this page.",
+      protectDialogWarning:
+        "If you forget this passphrase, nobody can recover your data, including us. Write it down and keep it somewhere safe.",
+      protectSubmit: "Set passphrase",
+      protectSubmitting: "Setting…",
+      protectSuccess: "Passphrase set",
+      protectSuccessDesc: "This vault, case and dashboard now unlock with your passphrase.",
+      protectError: "Could not set a passphrase.",
+      switchCta: "Switch to automatic unlock",
+      switchDialogTitle: "Switch back to automatic unlock?",
+      switchDialogBody:
+        "This removes the passphrase. Dashboard, case and vault will open automatically in this browser, without asking for it again.",
+      switchConfirm: "Switch to automatic",
+      switchSuccess: "Automatic unlock restored",
+      switchSuccessDesc: "No passphrase is needed on this device from now on.",
+      switchError: "Could not switch to automatic unlock.",
     },
   },
   interview: {

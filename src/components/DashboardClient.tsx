@@ -32,6 +32,7 @@ import { VaultGate } from "@/components/VaultGate";
 import { CasePreview } from "@/components/CasePreview";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { openVaultForVisitor } from "@/lib/vault/visitor";
+import { ensureFreshGuestSession } from "@/lib/vault/guestSession";
 import { ReplyCategoryLabel } from "@/components/ReplyCategoryLabel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -143,6 +144,7 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
     void (async () => {
       try {
         if (!signedIn) {
+          await ensureFreshGuestSession(vault, signedIn);
           const unlocked = await openVaultForVisitor(vault);
           if (!cancelled && unlocked) await loadFromVault();
           return;
@@ -330,6 +332,8 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
   return (
     <VaultGate
       vault={vault}
+      deviceMode
+      autoUnlock
       onUnlocked={() => {
         void loadFromVault();
       }}

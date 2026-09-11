@@ -314,4 +314,48 @@ describe("Vault", () => {
     await v.lock();
     expect(await v.status()).toMatchObject({ state: "locked", mode: "device" });
   });
+
+  it("relockWithDeviceKey switches back to automatic unlock and keeps records", async () => {
+    await v.initWithDeviceKey();
+    const rec = await v.add({ name: "x", mimeType: "text/plain", data: "keep-me" });
+    await v.relockWithPassphrase("my-pass-2026");
+    await v.relockWithDeviceKey();
+    const meta = await v.rawMeta();
+    expect(meta?.mode.kind).toBe("device");
+    expect(meta?.wrappedDek).toBeUndefined();
+    expect(meta?.kdf).toBeUndefined();
+    expect(meta?.deviceWrappedDek).toBeTruthy();
+    await v.lock();
+    expect((await v.status()).mode).toBe("device");
+    await v.unlockWithDeviceKey();
+    const { text } = await v.getString(rec.id);
+    expect(text).toBe("keep-me");
+  });
+
+  it("relockWithDeviceKey accepts the passphrase when locked", async () => {
+    await v.initWithDeviceKey();
+    await v.relockWithPassphrase("my-pass-2026");
+    await v.lock();
+    await v.relockWithDeviceKey("my-pass-2026");
+    const meta = await v.rawMeta();
+    expect(meta?.mode.kind).toBe("device");
+    await v.lock();
+    expect((await v.status()).mode).toBe("device");
+  });
+
+  it("relockWithDeviceKey requires the passphrase when locked and none is given", async () => {
+    await v.initWithDeviceKey();
+    await v.relockWithPassphrase("my-pass-2026");
+    await v.lock();
+    await expect(v.relockWithDeviceKey()).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+    });
+  });
+
+  it("relockWithDeviceKey rejects when the vault isn't in passphrase mode", async () => {
+    await v.initWithDeviceKey();
+    await expect(v.relockWithDeviceKey()).rejects.toMatchObject({
+      code: "ENVELOPE_CORRUPT",
+    });
+  });
 });

@@ -217,6 +217,47 @@ export class Vault {
     this.deviceKey = null;
   }
 
+  /**
+   * Reverses {@link relockWithPassphrase}: re-wraps the existing DEK under a fresh
+   * non-extractable device key and switches the vault back to frictionless
+   * auto-unlock. Requires the current passphrase (unless the vault is already
+   * unlocked in this instance) so a lost/forgotten passphrase can't be bypassed.
+   */
+  async relockWithDeviceKey(passphrase?: string): Promise<void> {
+    const row = await this.db.meta.get("appealdeck-vault" as never);
+    if (!row) {
+      throw new VaultCryptoError("INVALID_INPUT", "Vault is not initialized");
+    }
+    if (row.value.mode.kind !== "passphrase") {
+      throw new VaultCryptoError(
+        "ENVELOPE_CORRUPT",
+        `Vault is not in passphrase mode (mode: ${row.value.mode.kind})`,
+      );
+    }
+    let dek = this.dek;
+    if (!dek) {
+      if (!passphrase) {
+        throw new VaultCryptoError("INVALID_INPUT", "Passphrase is required to unlock first");
+      }
+      if (!row.value.wrappedDek) {
+        throw new VaultCryptoError("ENVELOPE_CORRUPT", "Vault metadata is missing a wrapped DEK");
+      }
+      dek = await unwrapDek(this.provider, passphrase, row.value.wrappedDek);
+    }
+    const deviceKey = await generateDeviceKey(this.provider);
+    const deviceWrappedDek = await wrapDekWithKey(this.provider, dek, deviceKey);
+    const next: VaultKeyStore = {
+      mode: { kind: "device", verifiedAt: new Date().toISOString() },
+      deviceKey,
+      deviceWrappedDek,
+      version: VAULT_ENVELOPE_VERSION,
+      createdAt: row.value.createdAt,
+    };
+    await this.db.meta.put({ key: "appealdeck-vault" as never, value: next });
+    this.dek = dek;
+    this.deviceKey = deviceKey;
+  }
+
   lock(): void {
     this.dek = null;
     this.deviceKey = null;

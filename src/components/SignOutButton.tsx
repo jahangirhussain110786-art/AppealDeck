@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -10,13 +9,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { SHARED } from "@/content/shared";
 
 export function SignOutButton({ email }: { email?: string }) {
-  const router = useRouter();
   const [pending, setPending] = useState(false);
 
   async function handleSignOut() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
-      router.push("/login");
+      window.location.assign("/login");
       return;
     }
     setPending(true);
@@ -26,9 +24,12 @@ export function SignOutButton({ email }: { email?: string }) {
       setPending(false);
       return;
     }
-    toast.success("Signed out");
-    router.refresh();
-    router.push("/login");
+    // A full navigation, not a client-side router push: Next's client Router
+    // Cache can otherwise keep serving an already-rendered (signed-in) copy of
+    // /dashboard, /case, /vault etc. for up to its stale window after the
+    // cookie is gone, which read back as "auto signed in as the previous
+    // account." A hard navigation discards that cache entirely.
+    window.location.assign("/login");
   }
 
   return (

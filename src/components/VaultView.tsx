@@ -17,6 +17,7 @@ import {
   Search,
   X,
   Info,
+  KeyRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,6 +43,7 @@ import type { EvidenceKind } from "@/core/evidenceModel";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { VaultGate } from "@/components/VaultGate";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatDateTime, formatBytes } from "@/lib/format";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
 
@@ -88,10 +90,24 @@ export default function VaultView({ userId }: { userId: string }) {
   const [selectedEvidenceKind, setSelectedEvidenceKind] = React.useState<EvidenceKind>("other");
   const [deleteTarget, setDeleteTarget] = React.useState<VaultListItem | null>(null);
 
+  const [keyMode, setKeyMode] = React.useState<"device" | "passphrase" | null>(null);
+  const [showProtectDialog, setShowProtectDialog] = React.useState(false);
+  const [protectPassphrase, setProtectPassphrase] = React.useState("");
+  const [protectConfirm, setProtectConfirm] = React.useState("");
+  const [protectBusy, setProtectBusy] = React.useState(false);
+  const [protectError, setProtectError] = React.useState<string | null>(null);
+  const [showSwitchDialog, setShowSwitchDialog] = React.useState(false);
+  const [switchBusy, setSwitchBusy] = React.useState(false);
+
   const refresh = React.useCallback(async () => {
     const list = await vault.list(filterKind !== "all" ? { evidenceKind: filterKind } : undefined);
     setItems(list);
   }, [vault, filterKind]);
+
+  const refreshMode = React.useCallback(async () => {
+    const meta = await vault.rawMeta();
+    setKeyMode(meta?.mode.kind ?? null);
+  }, [vault]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -102,6 +118,7 @@ export default function VaultView({ userId }: { userId: string }) {
         if (!cancelled && initialized) {
           const list = await vault.list();
           if (!cancelled) setItems(list);
+          if (!cancelled) await refreshMode();
         }
       } catch (e) {
         toast.error(APP.dashboard.toasts.vaultOpenFailed, {
@@ -112,11 +129,49 @@ export default function VaultView({ userId }: { userId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [vault]);
+  }, [vault, refreshMode]);
 
   const onLock = () => {
     vault.lock();
     setItems([]);
+  };
+
+  const handleProtectSubmit = async () => {
+    if (protectPassphrase.length < 8 || protectPassphrase !== protectConfirm || protectBusy) return;
+    setProtectBusy(true);
+    setProtectError(null);
+    try {
+      await vault.relockWithPassphrase(protectPassphrase);
+      setProtectPassphrase("");
+      setProtectConfirm("");
+      setShowProtectDialog(false);
+      setKeyMode("passphrase");
+      toast.success(APP.vault.security.protectSuccess, {
+        description: APP.vault.security.protectSuccessDesc,
+      });
+    } catch (e) {
+      setProtectError(e instanceof Error ? e.message : APP.vault.security.protectError);
+    } finally {
+      setProtectBusy(false);
+    }
+  };
+
+  const handleSwitchToDevice = async () => {
+    setSwitchBusy(true);
+    try {
+      await vault.relockWithDeviceKey();
+      setShowSwitchDialog(false);
+      setKeyMode("device");
+      toast.success(APP.vault.security.switchSuccess, {
+        description: APP.vault.security.switchSuccessDesc,
+      });
+    } catch (e) {
+      toast.error(APP.vault.security.switchError, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
+      });
+    } finally {
+      setSwitchBusy(false);
+    }
   };
 
   const onAddFile = async (file: File) => {
@@ -220,8 +275,11 @@ export default function VaultView({ userId }: { userId: string }) {
   return (
     <VaultGate
       vault={vault}
+      deviceMode
+      autoUnlock
       onUnlocked={() => {
         void refresh();
+        void refreshMode();
       }}
       onLocked={() => void refresh()}
     >
@@ -243,6 +301,24 @@ export default function VaultView({ userId }: { userId: string }) {
                 </Tooltip>
               </TooltipProvider>
             </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-surface-2 px-3 py-2 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <KeyRound className="size-3.5" aria-hidden />
+              {keyMode === "passphrase"
+                ? APP.vault.security.passphraseModeLabel
+                : APP.vault.security.deviceModeLabel}
+            </span>
+            {keyMode === "passphrase" ? (
+              <Button variant="outline" size="sm" onClick={() => setShowSwitchDialog(true)}>
+                {APP.vault.security.switchCta}
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => setShowProtectDialog(true)}>
+                {APP.vault.security.protectCta}
+              </Button>
+            )}
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -508,6 +584,96 @@ export default function VaultView({ userId }: { userId: string }) {
                   </DialogFooter>
                 </>
               )}
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={showProtectDialog}
+            onOpenChange={(open) => {
+              setShowProtectDialog(open);
+              if (!open) {
+                setProtectPassphrase("");
+                setProtectConfirm("");
+                setProtectError(null);
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogTitle>{APP.vault.security.protectDialogTitle}</DialogTitle>
+              <DialogDescription>{APP.vault.security.protectDialogBody}</DialogDescription>
+              <Alert variant="warning">
+                <AlertDescription>{APP.vault.security.protectDialogWarning}</AlertDescription>
+              </Alert>
+              <div className="flex flex-col gap-3">
+                <div>
+                  <Label htmlFor="vault-protect-passphrase">
+                    {APP.vault.create.passphraseLabel}
+                  </Label>
+                  <Input
+                    id="vault-protect-passphrase"
+                    type="password"
+                    autoComplete="new-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={protectPassphrase}
+                    onChange={(e) => setProtectPassphrase(e.target.value)}
+                    aria-invalid={!!protectError}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="vault-protect-confirm">{APP.vault.create.confirmLabel}</Label>
+                  <Input
+                    id="vault-protect-confirm"
+                    type="password"
+                    autoComplete="new-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={protectConfirm}
+                    onChange={(e) => setProtectConfirm(e.target.value)}
+                    aria-invalid={protectPassphrase !== protectConfirm && protectConfirm.length > 0}
+                  />
+                  {protectPassphrase !== protectConfirm && protectConfirm.length > 0 && (
+                    <p className="mt-1 text-xs text-destructive">
+                      {APP.vault.create.mismatchError}
+                    </p>
+                  )}
+                </div>
+                {protectError && <p className="text-xs text-destructive">{protectError}</p>}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowProtectDialog(false)}>
+                  {APP.vault.deleteConfirm.cancel}
+                </Button>
+                <Button
+                  onClick={() => void handleProtectSubmit()}
+                  disabled={
+                    protectPassphrase.length < 8 ||
+                    protectPassphrase !== protectConfirm ||
+                    protectBusy
+                  }
+                >
+                  {protectBusy
+                    ? APP.vault.security.protectSubmitting
+                    : APP.vault.security.protectSubmit}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showSwitchDialog} onOpenChange={setShowSwitchDialog}>
+            <DialogContent>
+              <DialogTitle>{APP.vault.security.switchDialogTitle}</DialogTitle>
+              <DialogDescription>{APP.vault.security.switchDialogBody}</DialogDescription>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowSwitchDialog(false)}>
+                  {APP.vault.deleteConfirm.cancel}
+                </Button>
+                <Button onClick={() => void handleSwitchToDevice()} disabled={switchBusy}>
+                  {APP.vault.security.switchConfirm}
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>

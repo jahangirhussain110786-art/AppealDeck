@@ -306,7 +306,9 @@ export default function ComposeView() {
         </div>
       </div>
 
-      <VaultGate vault={vault}>{(unlocked) => <ComposeInner vault={unlocked} />}</VaultGate>
+      <VaultGate vault={vault} deviceMode autoUnlock>
+        {(unlocked) => <ComposeInner vault={unlocked} />}
+      </VaultGate>
     </div>
   );
 }

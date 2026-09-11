@@ -36,6 +36,7 @@ import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/format";
 import { getBrowserVault } from "@/lib/vault/browser";
+import { ensureFreshGuestSession } from "@/lib/vault/guestSession";
 import {
   saveCaseFile,
   loadCaseFile,
@@ -128,15 +129,15 @@ export function InterviewFlow({
     const initVault = async () => {
       try {
         const v = getBrowserVault();
+        await ensureFreshGuestSession(v, signedIn);
         await v.open();
         vaultRef.current = v;
         const initialized = await v.isInitialized();
         if (!initialized) {
-          if (signedIn) {
-            setVaultReady(true);
-            setVaultUnlocked(false);
-            return;
-          }
+          // Frictionless by design (11 Sep 2026): the vault auto-unlocks via a
+          // non-extractable device key for everyone, signed in or not. A
+          // passphrase is never required here — it's an optional protection a
+          // signed-in seller can opt into from the Vault page only.
           await v.initWithDeviceKey();
           setVaultReady(true);
           setVaultUnlocked(true);
@@ -144,7 +145,7 @@ export function InterviewFlow({
         }
         const status = await v.status();
         if (status.state === "locked") {
-          if (status.mode === "device" && !signedIn) {
+          if (status.mode === "device") {
             await v.unlockWithDeviceKey();
             setVaultReady(true);
             setVaultUnlocked(true);
@@ -166,6 +167,8 @@ export function InterviewFlow({
               // ignore — the visitor starts fresh instead
             }
           } else {
+            // Passphrase mode: only reachable if the seller explicitly opted
+            // into it from the Vault page. Defer to VaultGate's unlock form.
             setVaultReady(true);
             setVaultUnlocked(false);
           }
@@ -428,7 +431,7 @@ export function InterviewFlow({
       <VaultGate
         vault={vaultRef.current}
         deviceMode
-        autoUnlock={!signedIn}
+        autoUnlock
         onUnlocked={(info) => {
           setVaultReady(true);
           setVaultUnlocked(true);
