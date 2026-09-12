@@ -272,10 +272,10 @@ function ResultView({
     >
       <JourneyProgress stage="decode" kind={result.kind} />
 
-      <div className={hasAnnotations ? "grid items-stretch gap-4 lg:grid-cols-[1.6fr_1fr]" : ""}>
-        <div className="flex h-full flex-col gap-4">
+      <div className={hasAnnotations ? "grid items-start gap-4 lg:grid-cols-[1.6fr_1fr]" : ""}>
+        <div className="flex flex-col gap-4">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="space-y-4 pt-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-3">
                   <SeverityBadge severity={severity} />
@@ -285,37 +285,33 @@ function ResultView({
                 <CopyButton text={guidance.summary} label={DECODE.result.copySummary} />
               </div>
 
-              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-                {guidance.summary}
-              </p>
+              <p className="text-base leading-relaxed text-muted-foreground">{guidance.summary}</p>
+
+              {result.deadlines.length > 0 && (
+                <div className="border-t border-border/70 pt-4">
+                  <p className="text-eyebrow uppercase text-muted-foreground">
+                    {DECODE.result.deadlinesTitle}
+                  </p>
+                  <div className="mt-2">
+                    <DeadlineChipList deadlines={result.deadlines} />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {result.deadlines.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{DECODE.result.deadlinesTitle}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DeadlineChipList deadlines={result.deadlines} />
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="mt-auto">
-            <CtaAfterResult result={result} guidance={guidance} />
-          </div>
+          <CtaAfterResult result={result} guidance={guidance} />
         </div>
 
         {hasAnnotations && (
-          <div className="flex h-full flex-col gap-4">
+          <div className="flex flex-col gap-4">
             <p className="text-eyebrow uppercase text-muted-foreground">
               {DECODE.result.whatThisMeans}
             </p>
             {annotations.map((a) => (
               <AnnotationCard key={a.id} tag={a.tag} heading={a.heading} body={a.body} />
             ))}
-            <Button size="lg" className="mt-auto justify-center" asChild>
+            <Button size="lg" className="justify-center" asChild>
               <a href={`/case?kind=${result.kind}`}>
                 {DECODE.result.startPoaCta}
                 <ArrowRight className="size-4" aria-hidden />
