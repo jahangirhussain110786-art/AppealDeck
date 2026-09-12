@@ -32,6 +32,16 @@ test.describe("Access ladder — signed-out interview, gate, case preview", () =
     await expect(firstTimeOption).toHaveClass(/ring-primary/);
     await page.getByTestId("interview-continue").click();
 
+    // Optional "preventive measures" step (founder-issues-fix pass, 6436aba) sits
+    // between prior appeals and the first document step. It's optional but the
+    // Continue button still requires non-empty text (a separate, pre-existing
+    // behavior, not part of this visual pass) — answer it to reach the gate.
+    await expect(page.getByText("Preventing this from happening again", { exact: true })).toBeVisible();
+    await page
+      .getByPlaceholder("Type your answer...")
+      .fill("Added a second reviewer on listing edits.");
+    await page.getByTestId("interview-continue").click();
+
     await expect(page.getByText("Save your case to continue")).toBeVisible();
     const signInLink = page.locator("main").getByRole("link", { name: "Sign in", exact: true });
     await expect(signInLink).toHaveAttribute("href", "/login?next=%2Fcase");

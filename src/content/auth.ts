@@ -96,4 +96,16 @@ export const AUTH = {
       action: "Sign in",
     },
   },
+  // AM-22/V3b — the auth split-screen preview panel. Sample-data content, never
+  // a real case: the caption is a D6 honesty requirement, not decoration.
+  preview: {
+    urlBar: "appealdeck.com/dashboard",
+    eyebrow: "Your case",
+    appealWindowLabel: "Appeal window",
+    poaLabel: "Plan of Action",
+    poaStatus: "Draft in progress · 4 of 6 sections",
+    doNowLabel: "Do now",
+    doNowItem: "Attach a supplier invoice for the flagged ASIN",
+    caption: "A preview with sample data — your dashboard, once signed in, shows your own case.",
+  },
 } as const;

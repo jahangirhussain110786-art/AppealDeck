@@ -9,6 +9,13 @@ import { Card } from "@/components/ui/card";
 import { VerifiedStamp } from "@/components/VerifiedStamp";
 import { HOME, PRICING, FOUNDER_NOTE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
+import { AccentWord } from "@/components/ui/accent-word";
+import { splitAccent } from "@/lib/splitAccent";
+
+// One accent word per the approved mockup headline (AM-22/V3) — "today." in
+// "Understand your Amazon notice today." Falls back to plain text if the copy
+// ever changes and no longer contains this exact phrase.
+const HERO_ACCENT = splitAccent(HOME.hero.headline, "today.");
 
 export const metadata: Metadata = {
   title: SHARED.metadata.titleDefault,
@@ -40,11 +47,19 @@ export default function HomePage() {
 
 function HeroSection() {
   return (
-    <section className="grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-28">
+    <section className="marketing-surface-aurora grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-28">
       <div>
         <p className="text-eyebrow uppercase text-primary">{HOME.hero.eyebrow}</p>
         <h1 className="mt-4 max-w-[16ch] text-balance text-display text-foreground">
-          {HOME.hero.headline}
+          {HERO_ACCENT ? (
+            <>
+              {HERO_ACCENT.pre}
+              <AccentWord>{HERO_ACCENT.accent}</AccentWord>
+              {HERO_ACCENT.post}
+            </>
+          ) : (
+            HOME.hero.headline
+          )}
         </h1>
         <p className="mt-6 max-w-[46ch] text-lg leading-relaxed text-muted-foreground">
           {HOME.hero.subline}

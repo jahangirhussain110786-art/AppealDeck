@@ -84,6 +84,7 @@ const config: Config = {
         sm: "var(--radius-sm)",
         md: "var(--radius-md)",
         lg: "var(--radius-lg)",
+        row: "var(--radius-row)",
         xl: "var(--radius-xl)",
       },
       boxShadow: {
@@ -97,6 +98,7 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-sans)"],
         mono: ["var(--font-mono)"],
+        accent: ["var(--font-accent)"],
       },
       typography: {
         DEFAULT: {

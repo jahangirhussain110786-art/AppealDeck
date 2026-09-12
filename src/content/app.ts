@@ -455,6 +455,9 @@ export const APP = {
     continue: "Continue",
     pendingEvidence: "{count} evidence item(s) pending",
     whyAmazonWants: "Why does Amazon want this?",
+    whyPanelEyebrow: "Why we ask",
+    whyPanelPrivacy:
+      "This stays in your case file. It is never sent to Amazon unless you include it in your draft.",
     whyHint:
       "This evidence is required for this appeal type. The engine has looked it up from Amazon's published policy for this category.",
     whyHintDismiss: "Got it",

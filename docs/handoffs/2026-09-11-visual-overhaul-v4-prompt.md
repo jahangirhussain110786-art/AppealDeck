@@ -6,21 +6,21 @@ Baseline: commit `1e4dd05` (visual overhaul v4 handoff committed + session-start
 
 **Two founder-gated decisions must be confirmed before their tasks start (flag them, don't guess — see §7):**
 
-- **V1/color reconciliation:** adopt the mockup's warm-neutral palette (`#FBFBFA` / `#14201C` / `#4B5A54` / `#EDEDEA`) or keep the current cooler-neutral palette (`224 32% 11%` foreground / `220 16% 90%` border)?
-- **V6/vault theme override:** should `/vault` deliberately override the user's light/dark preference with a permanent dark "obsidian" surface, or respect `next-themes`/`.dark` like the rest of the app?
+- **V1/color reconciliation — RESOLVED 12 Sep 2026:** adopt the mockup's warm-neutral palette in full (background/foreground/muted-foreground/border/muted/surface-2, exact hex→HSL — see V1 below).
+- **V6/vault theme — RESOLVED 12 Sep 2026, REVERSED from the default reading:** `/vault` respects `next-themes`/`.dark` like every other page — no permanent dark "obsidian" override.
 
 ---
 
 ## STATUS — RUNNABLE from Task V0
 
 - [x] V0: Paperwork — create this prompt, the evidence log, DECISIONS.md entry, repoint SESSION-START-PROMPT.md — **DONE**, commit `533dc84`
-- [ ] V1: Tokens — color reconciliation (FOUNDER-GATED if warm-neutral chosen), radius, accent font (Newsreader)
-- [ ] V2: Primitives — Badge size variant, aurora/dot-grid background utility, illustrations library
-- [ ] V3: Home page rebuild against `Main.dc.html`
-- [ ] V3b: Auth pages (login/signup) rebuild against `Login.dc.html` — **added 12 Sep 2026**
-- [ ] V4: Guided interview layout rebuild (step-rail + context panel)
+- [x] V1: Tokens — color reconciliation, radius, accent font (Newsreader) — **DONE** 12 Sep 2026
+- [x] V2: Primitives — Badge size variant, aurora/dot-grid background utility, illustrations library — **DONE** 12 Sep 2026
+- [x] V3: Home page rebuild against `Main.dc.html` — **DONE** 12 Sep 2026
+- [x] V3b: Auth pages (login/signup) rebuild against `Login.dc.html` — **DONE** 12 Sep 2026
+- [x] V4: Guided interview layout rebuild (rail + context panel, adapted to 2 columns) — **DONE** 12 Sep 2026
 - [ ] V5: Decode result layout rebuild (annotation cards)
-- [ ] V6: Vault surface rebuild (FOUNDER-GATED — vault theme override decision must be confirmed)
+- [ ] V6: Vault surface rebuild (respects site theme — no override, founder-reversed 12 Sep 2026)
 - [ ] V7: Sweep pass — cross-page consistency check
 - [ ] V8: Gates — full gate run + screenshot set for founder sign-off
 
@@ -231,7 +231,7 @@ Commit: `feat(AM-22/v2): Badge sm variant, aurora/dot-grid marketing background,
 ```
 grep -n "AccentWord" src/app/page.tsx                    → ≥ 1 hit
 grep -n "marketing-surface-aurora" src/app/page.tsx      → ≥ 1 hit
-grep -n "deadlinesModel\|DEADLINES" src/app/page.tsx     → ≥ 1 hit (real data, not hardcoded)
+grep -n "Deadline\|guidanceFor" src/components/marketing/HeroArtifact.tsx → ≥ 1 hit (real data, not hardcoded — this panel already lived in HeroArtifact.tsx from the visual-refresh-v3 pass, imported into page.tsx, not inlined there)
 npm run lint:copy                                        → PASS
 npm run build                                            → 33 routes
 ```
@@ -265,33 +265,33 @@ Commit: `feat(AM-22/v3b): rebuild login/signup as a split-screen with a labelled
 
 ---
 
-### V4 — Guided interview layout rebuild (step-rail + context panel)
+### V4 — Guided interview layout rebuild (step-rail + context panel) — DONE 12 Sep 2026, adapted from the literal plan
 
-**Why.** `InterviewFlow.tsx` currently has none of the mockup's three-column split: no step-rail (numbered circles + connecting lines), no "Why we ask" context panel with example-answer card and privacy note.
+**Why.** `InterviewFlow.tsx` had none of the mockup's split: no persistent rail, and "why we ask" was a click-to-expand toggle, not an always-visible panel.
 
-**Do.**
+**Two real findings changed the "Do" below from what was originally planned:**
 
-1. Open `docs/handoffs/2026-09-11-visual-direction-v2-mockup/Interview.dc.html`.
-2. Build a `StepRail` component (`src/components/StepRail.tsx`): numbered circles, connecting lines, current step highlighted. Props: `steps: { id, label }[]`, `currentStepId`.
-3. Restructure `InterviewFlow.tsx` into a three-column grid:
-   - Left: `<StepRail>` with the interview's steps
-   - Center: the question (radio-cards, save & exit / continue footer) — unchanged behavior
-   - Right: "Why we ask" context panel with an example-answer card + "never sent to Amazon" privacy note (from the mockup)
-4. This is a visual-only pass — the AM-17 interview engine logic (no persistent input box, typed per-step inputs, save-first/gate-second/resume-third) must remain intact. Verify by running the interview tests.
-5. Add StepRail to `DevUiGallery.tsx`.
-6. Run gates.
+1. **No new `StepRail` component was built.** `src/components/Stepper.tsx` already implements a numbered-circle-with-connecting-line vertical rail (`md:flex md:flex-col`, done/current/todo/skipped states) — built in an earlier pass, unused for this purpose until now. Building a parallel `StepRail` would have duplicated it, against this project's own no-duplicate-systems convention (the same reasoning that keeps Badge's size variant instead of a second badge system). Reused `Stepper` as the rail instead.
+2. **The literal 3-column split (rail | question | why-panel) does not fit.** `/case`'s own `page.tsx` already reserves a 20rem sidebar for `CasePreview` (`lg:grid-cols-[1fr_20rem]`), and `main` is capped at `max-w-app` (72rem) regardless of viewport — so a 3rd column here starves the question card to ~168px wide at every screen size (verified directly in a browser, not assumed). **Adapted to 2 columns** (rail | question), with the why-we-ask panel rendered as a full-width, persistent (not collapsible) panel under the question at `lg:`, instead of fighting for a 3rd column. Still answers the brief — always visible, not click-to-expand — just laid out to fit the real page it lives in.
+
+**Do (as actually executed).**
+
+1. Read `docs/handoffs/2026-09-11-visual-direction-v2-mockup/Interview.dc.html` for intent (numbered rail, persistent why-we-ask, privacy note) — not ported pixel-for-pixel given finding 2 above.
+2. `InterviewFlow.tsx`: `lg:grid-cols-[minmax(0,180px)_minmax(0,1fr)]` — `Stepper` in column 1 (`lg:sticky`), the question `Card` in column 2, a new persistent why-we-ask panel (same `step.whyAmazonWantsIt` data, no engine change) full-width in column 2 below the card, visible only at `lg:` (the collapsible in-card toggle stays for `<lg`). The "Step X of Y" line moved from the rail into the question `CardHeader` as an eyebrow (matching the mockup's placement).
+3. No change to the AM-17 engine or AM-21 save-first/gate-second/resume-third logic — verified via `npm test` (373/373, all interview-adjacent tests green) and a manual browser walkthrough of the full step sequence including a reload mid-interview.
+4. Not done: adding this to `DevUiGallery.tsx` — `Stepper` already has gallery coverage from its original pass; the new why-we-ask panel is one JSX block reusing existing primitives (Alert-like `div`, `HelpCircle`/`Shield`), not judged worth a dedicated gallery entry. Flagged here rather than silently skipped.
 
 **Accept.**
 
 ```
-grep -n "StepRail" src/components/InterviewFlow.tsx          → ≥ 1 hit
-grep -n "Why we ask" src/components/InterviewFlow.tsx        → ≥ 1 hit
-grep -n "never sent to Amazon" src/components/InterviewFlow.tsx → ≥ 1 hit
-npm run test                                                  → all green (interview tests unchanged in behavior)
-npm run build                                                 → 33 routes
+grep -n "Stepper" src/components/InterviewFlow.tsx                    → ≥ 1 hit (rail, reused not rebuilt)
+grep -n "whyPanelEyebrow\|whyAmazonWantsIt" src/components/InterviewFlow.tsx → ≥ 1 hit
+grep -n "never sent to Amazon" src/content/app.ts                     → ≥ 1 hit (whyPanelPrivacy copy)
+npm run test                                                          → all green (373/373, interview tests unchanged in behavior)
+npm run build                                                         → 33 routes
 ```
 
-Commit: `feat(AM-22/v4): rebuild guided interview layout with step-rail and context panel per Interview.dc.html`
+Commit: folded into the batched AM-22 V1–V4 commit (see the evidence log) per the founder's 12 Sep direction to batch several tasks per commit rather than one commit per task.
 
 ---
 
@@ -326,29 +326,28 @@ Commit: `feat(AM-22/v5): rebuild decode result with two-column annotation card l
 
 ### V6 — Vault surface rebuild against `Vault.dc.html`
 
-**FOUNDER-GATED.** The vault theme override decision must be confirmed before this task starts. Does `/vault` deliberately override the user's light/dark preference with a permanent dark "obsidian" surface, or should it respect `next-themes`?
+**FOUNDER-GATED decision RESOLVED 12 Sep 2026 (reversed from the handoff's default reading):** the founder explicitly said *"let the vault support the light and dark both variants with the theme and look we just selected for entire webapp"* — `/vault` does **not** get a permanent dark "obsidian" override. It respects `next-themes`/`.dark` exactly like every other page, using the V1-reconciled warm-neutral tokens. `Vault.dc.html`'s obsidian surface was one explored direction, not the shipped behavior — carry over its layout (row list, illustration, mono filenames) and its mint-accent *flavor* as an ordinary `--accent`/`--success`-family tint, not as a hardcoded dark background.
 
 **Do.**
 
-1. Open `docs/handoffs/2026-09-11-visual-direction-v2-mockup/Vault.dc.html`.
-2. **If founder confirms vault override:** In `src/app/(app)/vault/page.tsx` (or `VaultView.tsx`), render the vault content area as a permanently dark surface (`#090C0B → #0B0F0E` gradient) with `#4FDBA6` bright-mint accent, regardless of site-wide theme. The app header stays on the site-wide theme (deliberate contrast per the mockup).
-3. **If founder says respect theme:** apply the existing light/dark tokens to the vault, with mint accent as `--accent` overrides locally.
-4. Use the `VaultDoorIllustration` (from V2) as the vault teaching-state graphic.
-5. Render filenames/technical strings (`AES-GCM`, file names, envelope-version) in `font-mono` with `tabular-nums`.
-6. Add a section to `DevUiGallery.tsx` showing the vault surface.
-7. Run gates.
+1. Open `docs/handoffs/2026-09-11-visual-direction-v2-mockup/Vault.dc.html` for layout reference only — its literal `#090C0B`/`#0B0F0E` dark-mode colors are NOT ported; use the real `--background`/`--surface-1`/`--surface-2` tokens (light and dark) instead.
+2. In `src/app/(app)/vault/page.tsx` / `VaultView.tsx`, apply the row/list layout from the mockup (file rows with an icon tile, filename, kind/size caption, an "Encrypted" badge) using standard theme tokens — it must look correct in both light and dark mode via the existing toggle, with no special-cased always-dark branch.
+3. Use the `VaultDoorIllustration` (from V2) as the vault teaching-state graphic; it should already inherit theme via CSS variables (built that way in V2).
+4. Render filenames/technical strings (`AES-GCM`, file names, envelope-version) in `font-mono` with `tabular-nums`.
+5. Add a section to `DevUiGallery.tsx` showing the vault surface in both light and dark.
+6. Run gates, including a manual/E2E check that `/vault` responds to the theme toggle like other pages (no page that never changes when the user switches theme).
 
 **Accept.**
 
 ```
-grep -n "obsidian\|090C0B\|0B0F0E" src/app/(app)/vault/page.tsx    → ≥ 1 hit (IF override confirmed)
+grep -rn "#090C0B\|#0B0F0E\|090C0B\|0B0F0E" src/app/(app)/vault/ src/components/VaultView.tsx  → 0 hits (no hardcoded obsidian override ported into real code)
 grep -n "VaultDoorIllustration" src/app/(app)/vault/page.tsx      → ≥ 1 hit
 grep -n "font-mono" src/components/VaultView.tsx                  → ≥ 1 hit (technical strings)
 npm run lint:copy                                                 → PASS
 npm run build                                                     → 33 routes
 ```
 
-Commit: `feat(AM-22/v6): rebuild vault surface as obsidian dark register per Vault.dc.html (founder-confirmed override)`
+Commit: `feat(AM-22/v6): rebuild vault surface per Vault.dc.html's layout, on the standard light/dark theme tokens (no obsidian override — founder-reversed 12 Sep)`
 
 ---
 
@@ -440,7 +439,7 @@ npm run lighthouse     → perf ≥ 0.9, a11y 1.0, bp ≥ 0.95, seo ≥ 0.95
 
 ## 6. AFTER THE PASS (surface, do not perform)
 
-- Founder: confirm the two founder-gated decisions (V1 color reconciliation, V6 vault theme override). Sign off screenshots. Decide push-`master`.
+- Both founder-gated decisions are resolved (V1 warm-neutral in full; V6 no vault override — see §7). Founder: sign off screenshots at V8. Decide push-`master`.
 - Founder: review the accent font (Newsreader) usage and the new illustration set.
 - AI assistant (reviewer): update `SESSION-START-PROMPT.md` and `CLAUDE.md` §4 to point at the next pass.
 
@@ -448,8 +447,8 @@ npm run lighthouse     → perf ≥ 0.9, a11y 1.0, bp ≥ 0.95, seo ≥ 0.95
 
 ## 7. FOUNDER-GATED
 
-- **V1/color reconciliation:** warm-neutral vs cooler-neutral — founder must confirm.
-- **V6/vault theme override:** permanent dark obsidian vs respect site theme — founder must confirm.
+- **V1/color reconciliation:** RESOLVED — warm-neutral in full.
+- **V6/vault theme override:** RESOLVED — no override; vault respects the site theme.
 - Never touch `Planning/07-REFERENCE`, `FOUNDER_NOTE`, `legal/` (except copy through `lint:copy`), or anything in `docs/handoffs/2026-09-11-visual-direction-v2-mockup/` (the mockups are read-only source).
 - Do not start Task 4 (real AI-drafted composer) from the founder-issues fix pass — it is a separate, founder-gated feature.
 

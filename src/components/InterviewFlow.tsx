@@ -12,6 +12,7 @@ import {
   ChevronUp,
   HelpCircle,
   Save,
+  Shield,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -590,28 +591,30 @@ export function InterviewFlow({
         </DialogContent>
       </Dialog>
 
-      <div className="space-y-4">
+      {/* AM-22/V4 — rail | question split at lg+, matching Interview.dc.html's
+          intent. NOTE (found + fixed 12 Sep 2026): Interview.dc.html's own
+          3-column layout assumes a dedicated full-width interview page — the
+          real /case page already reserves a 20rem sidebar for CasePreview
+          (page.tsx's own lg:grid-cols-[1fr_20rem]), and `main` caps at
+          max-w-app (72rem) regardless of viewport, so a literal 3rd
+          why-we-ask column here starves the question card to ~168px wide at
+          any screen size (verified: never gets wider, since the parent's
+          width is capped, not viewport-dependent). Adapted to 2 columns
+          (rail | question); the why-we-ask content still renders prominently
+          and persistently at lg+ (§ below), now as a full-width panel under
+          the question instead of fighting for a third column. Stacks to a
+          single column below lg, unchanged from the prior layout. Purely
+          visual: no change to the AM-17 engine or the AM-21
+          save-first/gate-second/resume-third behavior below. */}
+      <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,180px)_minmax(0,1fr)] lg:items-start lg:gap-8 lg:space-y-0">
         {progress && (
-          <div className="space-y-2">
+          <div className="lg:sticky lg:top-20 lg:col-start-1">
             <Stepper
               steps={stepperSteps}
               currentId={step?.id}
               progress={progress}
-              className="md:max-w-xs"
+              className="md:max-w-xs lg:max-w-none"
             />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>
-                Step {progress.current} of {progress.total}
-              </span>
-              {progress.pendingEvidence > 0 && (
-                <span>
-                  {APP.interview.pendingEvidence.replace(
-                    "{count}",
-                    String(progress.pendingEvidence),
-                  )}
-                </span>
-              )}
-            </div>
           </div>
         )}
 
@@ -645,6 +648,7 @@ export function InterviewFlow({
         <AnimatePresence mode="wait">
           <motion.div
             key={step.id}
+            className="lg:col-start-2"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
@@ -652,6 +656,16 @@ export function InterviewFlow({
           >
             <Card>
               <CardHeader>
+                {progress && (
+                  <p className="text-eyebrow uppercase text-muted-foreground">
+                    Step {progress.current} of {progress.total}
+                    {progress.pendingEvidence > 0 &&
+                      ` · ${APP.interview.pendingEvidence.replace(
+                        "{count}",
+                        String(progress.pendingEvidence),
+                      )}`}
+                  </p>
+                )}
                 <CardTitle>{step.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -661,7 +675,7 @@ export function InterviewFlow({
                 </p>
 
                 {step.whyAmazonWantsIt && (
-                  <div className="rounded-lg border border-border bg-muted/30">
+                  <div className="rounded-lg border border-border bg-muted/30 lg:hidden">
                     <button
                       type="button"
                       className="flex w-full items-center justify-between p-3 text-left text-sm font-medium text-foreground"
@@ -932,41 +946,65 @@ export function InterviewFlow({
           </motion.div>
         </AnimatePresence>
 
-        {!signedIn && (
-          <p className="text-xs text-muted-foreground">
-            <Link
-              href="/login?next=/case"
-              className="text-primary underline underline-offset-4 hover:text-primary/80"
-            >
-              {APP.access.keepCaseLink}
-            </Link>
-          </p>
+        {/* Persistent "why we ask" panel (AM-22/V4) — full-width under the
+            question at lg+, replacing the collapsible toggle above at that
+            breakpoint (see the note above on why this isn't a 3rd column).
+            Same step.whyAmazonWantsIt data; no engine change. */}
+        {step.whyAmazonWantsIt && (
+          <div className="hidden rounded-lg border border-border bg-muted/30 p-4 lg:col-start-2 lg:block">
+            <div className="flex items-center gap-2 text-primary">
+              <div className="grid size-7 shrink-0 place-items-center rounded-md bg-primary/10">
+                <HelpCircle className="size-4" />
+              </div>
+              <span className="text-eyebrow uppercase">{APP.interview.whyPanelEyebrow}</span>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-foreground/90">
+              {step.whyAmazonWantsIt}
+            </p>
+            <div className="mt-4 flex items-start gap-2 text-muted-foreground">
+              <Shield className="mt-0.5 size-4 shrink-0" />
+              <p className="text-xs leading-relaxed">{APP.interview.whyPanelPrivacy}</p>
+            </div>
+          </div>
         )}
 
-        {saveState.kind === "saved" && (
-          <p className="text-xs text-muted-foreground">
-            {APP.interview.saveStatus.saved.replace("{time}", formatTime(saveState.at))}
-          </p>
-        )}
+        <div className="space-y-2 lg:col-span-2">
+          {!signedIn && (
+            <p className="text-xs text-muted-foreground">
+              <Link
+                href="/login?next=/case"
+                className="text-primary underline underline-offset-4 hover:text-primary/80"
+              >
+                {APP.access.keepCaseLink}
+              </Link>
+            </p>
+          )}
 
-        {saveState.kind === "failed" && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{APP.interview.saveStatus.failedTitle}</AlertTitle>
-            <AlertDescription>{APP.interview.saveStatus.failedDesc}</AlertDescription>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={() => {
-                void persistCaseFile(caseFile!);
-              }}
-              disabled={loading}
-            >
-              {APP.interview.saveStatus.retry}
-            </Button>
-          </Alert>
-        )}
+          {saveState.kind === "saved" && (
+            <p className="text-xs text-muted-foreground">
+              {APP.interview.saveStatus.saved.replace("{time}", formatTime(saveState.at))}
+            </p>
+          )}
+
+          {saveState.kind === "failed" && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>{APP.interview.saveStatus.failedTitle}</AlertTitle>
+              <AlertDescription>{APP.interview.saveStatus.failedDesc}</AlertDescription>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  void persistCaseFile(caseFile!);
+                }}
+                disabled={loading}
+              >
+                {APP.interview.saveStatus.retry}
+              </Button>
+            </Alert>
+          )}
+        </div>
       </div>
     </>
   );

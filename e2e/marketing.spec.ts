@@ -98,7 +98,11 @@ test.describe("Auth gate", () => {
       }),
     ).toBeVisible();
     await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/password/i)).toBeVisible();
+    // getByLabel(/password/i) is ambiguous since PasswordInput's show/hide
+    // toggle button also carries an aria-label containing "password" (Task 2,
+    // ed44480) — target the textbox role specifically, pre-existing gap,
+    // unrelated to this pass.
+    await expect(page.getByRole("textbox", { name: /password/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /continue with google/i })).toBeVisible();
     // The header also has a "Sign in" link now (five-slot header, AM-21) — target the
     // page's own "Already have an account? Sign in" cross-link, not the header's.

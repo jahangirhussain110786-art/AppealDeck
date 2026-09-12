@@ -16,13 +16,20 @@
     /* --- Fonts --- */
     --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --font-accent: "Newsreader", Georgia, serif;
 
-    /* --- Colour: light --- */
-    --background: 0 0% 100%;
-    --foreground: 224 32% 11%;
+    /* --- Colour: light ---
+       Warm-neutral reconciliation (AM-22/V1, 12 Sep 2026) — background/foreground/
+       muted-foreground/border/muted/surface-2/input/shadow converted from the
+       mockup's approved hex (#FBFBFA/#14201C/#4B5A54/#EDEDEA/#FAFBF9) via exact
+       hex->HSL, not eyeballed. --primary/--brand/--accent/--warning/--success/
+       --info/--destructive are unchanged — out of this reconciliation's scope
+       (--primary already matched the mockup's #1C7D5E to within 1% saturation). */
+    --background: 60 11% 98%;
+    --foreground: 160 23% 10%;
     --surface-1: 0 0% 100%;
-    --surface-2: 220 20% 97%;
-    --surface-inverse: 224 28% 10%;
+    --surface-2: 60 10% 96%;
+    --surface-inverse: 160 24% 9%;
     --brand: 161 64% 30%;
     --primary: 161 64% 30%;
     --primary-foreground: 0 0% 100%;
@@ -34,17 +41,18 @@
     --success-foreground: 0 0% 100%;
     --destructive: 0 68% 45%;
     --destructive-foreground: 0 0% 100%;
-    --muted: 220 18% 95%;
-    --muted-foreground: 220 9% 42%;
+    --muted: 60 10% 95%;
+    --muted-foreground: 156 9% 32%;
     --accent: 161 64% 30%;
     --accent-foreground: 0 0% 100%;
-    --border: 220 16% 90%;
-    --input: 220 16% 84%;
+    --border: 60 8% 92%;
+    --input: 60 8% 86%;
     --ring: 161 64% 34%;
-    --shadow: 224 32% 11%;
+    --shadow: 160 23% 10%;
     --radius-sm: 0.375rem;
     --radius-md: 0.625rem;
-    --radius-lg: 0.875rem;
+    --radius-lg: 0.8125rem;
+    --radius-row: 1rem;
     --radius-xl: 1.25rem;
 
     /* --- Spacing / width tokens --- */
@@ -74,15 +82,22 @@
   }
 
   .dark {
-    /* --- Colour: dark --- */
-    --background: 224 28% 7%;
-    --foreground: 220 18% 92%;
-    --surface-1: 224 24% 10%;
-    --surface-2: 224 22% 13%;
-    --surface-inverse: 220 18% 96%;
+    /* --- Colour: dark ---
+       Warm-neutral reconciliation (AM-22/V1): the mockup only specified a light
+       palette (its dark exploration was the vault's obsidian surface, which the
+       founder decided NOT to ship as a theme override — see V6). So the dark
+       neutrals here are hue-rotated from the old cool 220-224° family into the
+       same warm 60-165° family the light mode now uses, keeping the exact
+       lightness/saturation this app's contrast was already tuned against —
+       not a new set of values invented from nothing. */
+    --background: 160 22% 7%;
+    --foreground: 60 14% 92%;
+    --surface-1: 160 19% 10%;
+    --surface-2: 160 18% 13%;
+    --surface-inverse: 60 14% 96%;
     --brand: 161 64% 30%;
     --primary: 160 52% 62%;
-    --primary-foreground: 224 40% 8%;
+    --primary-foreground: 160 40% 8%;
     --info: 217 85% 68%;
     --info-foreground: 224 40% 8%;
     --warning: 38 92% 62%;
@@ -91,14 +106,14 @@
     --success-foreground: 152 80% 8%;
     --destructive: 0 70% 60%;
     --destructive-foreground: 0 0% 8%;
-    --muted: 224 18% 15%;
-    --muted-foreground: 220 10% 66%;
+    --muted: 160 15% 15%;
+    --muted-foreground: 60 8% 66%;
     --accent: 160 52% 62%;
-    --accent-foreground: 224 40% 8%;
-    --border: 224 16% 18%;
-    --input: 224 16% 24%;
+    --accent-foreground: 160 40% 8%;
+    --border: 160 13% 18%;
+    --input: 160 13% 24%;
     --ring: 160 52% 62%;
-    --shadow: 224 60% 2%;
+    --shadow: 160 60% 2%;
     color-scheme: dark;
   }
 }
@@ -216,6 +231,61 @@
       hsl(var(--primary) / 0.1),
       transparent 70%
     );
+  }
+
+  /* Hero-only flourish (AM-22/V2) — a dot-grid fading out by ~78% down the page,
+     plus two blurred aurora blobs (brand green + a small indigo), per
+     Main.dc.html §2.5. Purely decorative: pointer-events: none, static (no
+     animation, so prefers-reduced-motion needs nothing extra), and used ONLY on
+     the home hero — not a page-wide texture like .marketing-surface above. */
+  .marketing-surface-aurora {
+    position: relative;
+  }
+  .marketing-surface-aurora::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(hsl(var(--foreground) / 0.055) 1px, transparent 1px);
+    background-size: 22px 22px;
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.9) 0%,
+      rgba(0, 0, 0, 0.15) 60%,
+      transparent 78%
+    );
+    mask-image: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.9) 0%,
+      rgba(0, 0, 0, 0.15) 60%,
+      transparent 78%
+    );
+  }
+  .marketing-surface-aurora::after {
+    content: "";
+    position: absolute;
+    top: -220px;
+    right: -160px;
+    z-index: -1;
+    pointer-events: none;
+    width: 780px;
+    height: 780px;
+    border-radius: 50%;
+    background:
+      radial-gradient(
+        circle at 30% 30%,
+        hsl(var(--primary) / 0.3) 0%,
+        hsl(var(--primary) / 0.1) 45%,
+        transparent 70%
+      ),
+      radial-gradient(
+        circle at 75% 10%,
+        hsl(239 84% 67% / 0.22) 0%,
+        hsl(239 84% 67% / 0.06) 50%,
+        transparent 72%
+      );
+    filter: blur(10px);
   }
 }
 

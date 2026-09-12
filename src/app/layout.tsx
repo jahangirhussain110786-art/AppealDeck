@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
-import { fontSans, fontMono } from "@/lib/fonts";
+import { fontSans, fontMono, fontAccent } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MotionProviders } from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${fontSans.variable} ${fontMono.variable} min-h-screen bg-background text-foreground antialiased`}
+        className={`${fontSans.variable} ${fontMono.variable} ${fontAccent.variable} min-h-screen bg-background text-foreground antialiased`}
       >
         <a
           href="#main"

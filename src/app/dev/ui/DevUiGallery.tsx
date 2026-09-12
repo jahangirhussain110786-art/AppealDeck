@@ -48,6 +48,10 @@ import { Logo, LogoMark } from "@/components/Logo";
 import { SectionHeading } from "@/components/SectionHeading";
 import { HeroArtifact } from "@/components/marketing/HeroArtifact";
 import { EvidenceSlotPanel } from "@/components/EvidenceSlotPanel";
+import { ShieldCheckIllustration } from "@/components/illustrations/ShieldCheckIllustration";
+import { VaultDoorIllustration } from "@/components/illustrations/VaultDoorIllustration";
+import { MagnifierDocumentIllustration } from "@/components/illustrations/MagnifierDocumentIllustration";
+import { AccentWord } from "@/components/ui/accent-word";
 import { Kbd } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -539,6 +543,37 @@ export function DevUiGallery() {
               ]}
             />
           </CardContent>
+        </Card>
+      </Section>
+
+      <Section title="AM-22 - Illustrations (light + dark)">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card className="flex items-center justify-around gap-6 p-6">
+            <ShieldCheckIllustration />
+            <VaultDoorIllustration />
+            <MagnifierDocumentIllustration />
+          </Card>
+          <Card className="flex items-center justify-around gap-6 rounded-xl bg-surface-inverse p-6 dark">
+            <ShieldCheckIllustration />
+            <VaultDoorIllustration />
+            <MagnifierDocumentIllustration />
+          </Card>
+        </div>
+      </Section>
+
+      <Section title="AM-22 - Accent word + badge sizes">
+        <Card className="space-y-3 p-6">
+          <p className="text-h3 text-foreground">
+            Sign in to <AccentWord>continue</AccentWord>
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge>Default pill</Badge>
+            <Badge size="sm">Compact pill</Badge>
+            <Badge variant="warning">Low severity</Badge>
+            <Badge variant="secondary" size="sm">
+              Policy violation
+            </Badge>
+          </div>
         </Card>
       </Section>
     </main>
