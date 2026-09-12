@@ -196,6 +196,25 @@ export const APP = {
       title: "Full draft",
       description: "All required evidence is present. This is a complete Plan of Action.",
     },
+    strength: {
+      title: "Draft strength",
+      strong: "Strong",
+      needsWork: "Needs work",
+      weak: "Weak",
+      strongDetail: "The critic review below found no open issues.",
+      needsWorkDetail: "The critic review below found points worth addressing before you submit.",
+      weakDetail: "Required evidence or detail is still missing — see the sections below.",
+      note: "Reflects the critic review and case-file completeness below — not a prediction of Amazon's decision.",
+    },
+    aiDrafted: {
+      badge: "AI-drafted from your answers",
+      detail:
+        "This wording was drafted from the facts you gave in the interview. Read it over and correct anything before you submit.",
+    },
+    sellerWords: {
+      badge: "Your own words",
+      detail: "Shown exactly as you wrote it in the interview.",
+    },
     sections: {
       rootCause: "Root Cause",
       correctiveActions: "Corrective Actions",

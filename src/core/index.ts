@@ -53,6 +53,8 @@ import {
   toneProfileFor,
   READINESS_COPY,
   readinessLabel,
+  isNarrativeSufficient,
+  isNarrativeTextSufficient,
 } from "./readiness";
 import {
   LETTER_TEMPLATES,
@@ -100,6 +102,8 @@ export {
   toneProfileFor,
   READINESS_COPY,
   readinessLabel,
+  isNarrativeSufficient,
+  isNarrativeTextSufficient,
 };
 export type {
   DocumentType,

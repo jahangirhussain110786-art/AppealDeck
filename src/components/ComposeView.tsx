@@ -20,16 +20,24 @@ import { PoaSection, PoaFindingsList } from "@/components/PoaSection";
 import { BeforeYouSubmitChecklist } from "@/components/BeforeYouSubmitChecklist";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { CopyButton } from "@/components/CopyButton";
+import { Badge } from "@/components/ui/badge";
 import { getBrowserVault } from "@/lib/vault/browser";
 import type { Vault } from "@/core/vault/vault";
 import { loadCaseFile, loadCaseLog } from "@/lib/caseStore";
 import { formatDate } from "@/lib/format";
 import { groupFindingsBySection } from "@/lib/findingSections";
+import { computeDraftStrength } from "@/lib/draftStrength";
 import { buildClipboardText } from "@/lib/poaClipboard";
-import { GLOBAL_EXPECTATIONS } from "@/core";
+import { GLOBAL_EXPECTATIONS, isNarrativeSufficient, isNarrativeTextSufficient } from "@/core";
 import type { CaseFile, CriticResult, EvidenceKind, PoaDraft } from "@/core";
 import { APP } from "@/content/app";
 import { SHARED } from "@/content/shared";
+
+const STRENGTH_VARIANT = {
+  strong: "success",
+  needs_work: "warning",
+  weak: "destructive",
+} as const;
 
 interface ComposeResult {
   draft: PoaDraft;
@@ -215,13 +223,34 @@ function ComposeInner({ vault }: { vault: Vault }) {
   );
   const { bySection, global } = groupFindingsBySection(critique.findings, draft.sections);
 
+  const strength = computeDraftStrength(draft.mode, critique.findings);
+  const strengthCopy =
+    strength === "strong"
+      ? { label: APP.compose.strength.strong, detail: APP.compose.strength.strongDetail }
+      : strength === "needs_work"
+        ? { label: APP.compose.strength.needsWork, detail: APP.compose.strength.needsWorkDetail }
+        : { label: APP.compose.strength.weak, detail: APP.compose.strength.weakDetail };
+
+  function isSellerNarrative(heading: string): boolean {
+    if (heading === "Root Cause") return isNarrativeSufficient(caseFile);
+    if (heading === "Preventive Measures")
+      return isNarrativeTextSufficient(caseFile.preventiveMeasures);
+    return false;
+  }
+
   return (
     <div className="space-y-4">
       <Alert variant="info">
         <div>
-          <AlertTitle>{banner.title}</AlertTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <AlertTitle>{banner.title}</AlertTitle>
+            <Badge variant={STRENGTH_VARIANT[strength]} title={strengthCopy.detail}>
+              {APP.compose.strength.title}: {strengthCopy.label}
+            </Badge>
+          </div>
           <AlertDescription>
             <p>{isGapDraft ? `${draft.mode.reason} ${banner.description}` : banner.description}</p>
+            <p className="text-xs text-muted-foreground">{APP.compose.strength.note}</p>
             {draft.watermark && <p className="font-mono text-xs">{draft.watermark}</p>}
           </AlertDescription>
         </div>
@@ -237,6 +266,7 @@ function ComposeInner({ vault }: { vault: Vault }) {
           findings={bySection[i] ?? []}
           draftText={mergedSections[i] ?? section.body}
           onEdit={(idx, text) => setEditedSections((prev) => ({ ...prev, [idx]: text }))}
+          isSellerNarrative={isSellerNarrative(section.heading)}
         />
       ))}
 

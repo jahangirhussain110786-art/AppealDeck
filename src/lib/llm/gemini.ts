@@ -17,13 +17,17 @@ const MAX_OUTPUT_TOKENS = 512;
  * picks the right one. Per-task env overrides let ops swap a model without
  * code changes. The default model covers anything not in the table.
  */
-export type LlmTask = "extract-field" | "critique-poa" | "phrase-engine-output" | "triage-router";
+export type LlmTask =
+  "extract-field" | "critique-poa" | "phrase-engine-output" | "triage-router" | "draft-poa-section";
 
 const TASK_MODELS: Record<LlmTask, string> = {
   "extract-field": "gemini-3.5-flash",
   "critique-poa": "gemini-3.5-flash",
   "phrase-engine-output": "gemini-3.5-flash-lite",
   "triage-router": "gemini-flash-lite-latest",
+  // A real generation task (full sections of prose), not a cheap classify/extract call —
+  // deliberately the strongest flash tier available, not the lite models above.
+  "draft-poa-section": "gemini-3.5-flash",
 };
 
 function envForTask(task: LlmTask): string | undefined {
@@ -74,6 +78,24 @@ export const breakerOptions: BreakerOptions = {
   minVolumePerWindow: 10,
   windowMs: 60_000,
   cooldownMs: 30_000,
+  scope: "user",
+};
+
+/**
+ * Dedicated breaker for the "draft-poa-section" task (AM-23 / founder-authorized 12 Sep 2026).
+ * D9 requires a real generation task to carry its own spend cap rather than share a budget with
+ * the small, cheap tasks above — a full-section draft costs far more per call than an extraction
+ * or a triage classification. A tighter per-minute limit and a longer cooldown are deliberate:
+ * this task is not meant to run more than once or twice per compose session.
+ */
+export const composeBreakerOptions: BreakerOptions = {
+  name: "gemini-compose",
+  spendCapPerDay: 60,
+  perMinuteLimit: 4,
+  errorRateThreshold: 0.5,
+  minVolumePerWindow: 6,
+  windowMs: 60_000,
+  cooldownMs: 60_000,
   scope: "user",
 };
 

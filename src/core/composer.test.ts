@@ -127,6 +127,7 @@ describe("composePoa", () => {
     expect(draft.metadata.attemptNumber).toBe(2);
     expect(draft.metadata.kind).toBe("POLICY");
     expect(draft.metadata.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(draft.metadata.aiDrafted).toBe(false);
   });
 });
 

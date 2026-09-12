@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { composePoa, critiquePoa, renderPoaText } from "@/core";
-import type { CaseFileData } from "@/core";
+import type { CaseFileData, PoaDraft } from "@/core";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { recordActivation, deviceErrorResponse, deriveFingerprintFromRequest } from "@/lib/devices";
+import { isGeminiConfigured, composeBreakerOptions } from "@/lib/llm/gemini";
+import { checkBreaker, recordBreaker, fingerprintForRequest } from "@/lib/breaker";
+import { composePoaWithLlm, applyLlmSections } from "@/lib/llm/composePoaLlm";
 
 export const dynamic = "force-dynamic";
 
@@ -81,7 +84,7 @@ export async function POST(req: NextRequest) {
   const { caseData, attemptNumber = 1 } = parsed.data;
   const data = caseData as unknown as CaseFileData;
 
-  const draft = composePoa(data, attemptNumber);
+  const draft = await composeDraft(data, attemptNumber, req, user.id);
   const critique = critiquePoa(draft, data);
 
   return NextResponse.json({
@@ -95,4 +98,39 @@ export async function POST(req: NextRequest) {
     critique,
     rendered: renderPoaText(draft),
   });
+}
+
+/**
+ * Deterministic draft first, always — `composePoa()` never fails and never costs anything.
+ * Only attempts the real AI-drafted rewrite (Task 4 / AM-23) when Gemini is configured and this
+ * user's dedicated compose breaker allows it; any failure at any step (breaker closed, Gemini
+ * down, malformed output, a rejected phrase) silently keeps the deterministic draft — this must
+ * never be the difference between a seller getting a draft and getting an error page.
+ */
+async function composeDraft(
+  data: CaseFileData,
+  attemptNumber: number,
+  req: NextRequest,
+  userId: string,
+): Promise<PoaDraft> {
+  const deterministic = composePoa(data, attemptNumber);
+
+  if (!isGeminiConfigured()) {
+    return deterministic;
+  }
+
+  const fingerprint = fingerprintForRequest(req, userId);
+  const check = await checkBreaker(composeBreakerOptions, fingerprint);
+  if (!check.allowed) {
+    return deterministic;
+  }
+
+  const llm = await composePoaWithLlm(data);
+  await recordBreaker(composeBreakerOptions, { ok: llm.ok, context: check.context });
+
+  if (!llm.ok) {
+    return deterministic;
+  }
+
+  return applyLlmSections(deterministic, data, llm.sections);
 }

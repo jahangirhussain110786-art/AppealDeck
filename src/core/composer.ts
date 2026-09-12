@@ -13,6 +13,13 @@ import { defaultDocumentType } from "./readiness";
 export interface PoaSection {
   heading: string;
   body: string;
+  /**
+   * Provenance of `body`, for an honest per-section label in the UI. Undefined (the default from
+   * `composePoa()` itself) means the deterministic path — the seller's own words, or a plain
+   * system message about a gap. Only `applyLlmSections` (`src/lib/llm/composePoaLlm.ts`) sets
+   * `"ai"`, and only on the specific section it actually replaced.
+   */
+  source?: "seller" | "ai";
 }
 
 export interface PoaDraft {
@@ -25,6 +32,15 @@ export interface PoaDraft {
     kind: ViolationKind;
     evidenceComplete: boolean;
     attemptNumber: number;
+    /**
+     * True only when an LLM call (`composePoaWithLlm`, `src/lib/llm/composePoaLlm.ts`) actually
+     * replaced the Root Cause / Preventive Measures body text with a drafted version, grounded in
+     * the same seller-provided facts. `composePoa()` itself never sets this — it is the
+     * deterministic, always-available fallback and always produces verbatim seller text. Left
+     * false here rather than omitted so every draft (deterministic or not) reports its own
+     * provenance instead of leaving the seller to guess.
+     */
+    aiDrafted: boolean;
   };
 }
 
@@ -75,6 +91,7 @@ export function composePoa(data: CaseFileData, attemptNumber: number = 1): PoaDr
       kind: data.kind,
       evidenceComplete: complete,
       attemptNumber,
+      aiDrafted: false,
     },
   };
 }

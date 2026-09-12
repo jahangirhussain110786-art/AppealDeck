@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/CopyButton";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { badgeSeverity, worstSeverity } from "@/lib/findingSections";
@@ -23,6 +24,26 @@ interface PoaSectionProps {
   draftText: string;
   onEdit: (index: number, text: string) => void;
   readOnly?: boolean;
+  /**
+   * True when this section's body is the seller's own narrative (verbatim or AI-drafted from it)
+   * rather than a system-generated gap message or a structured list (Corrective Actions, Evidence
+   * Gaps). Controls whether the provenance badge renders at all — showing "Your own words" on a
+   * "there isn't enough detail yet" gap message would be misleading.
+   */
+  isSellerNarrative?: boolean;
+}
+
+function ProvenanceBadge({ source }: { source: CorePoaSection["source"] }) {
+  const copy = source === "ai" ? APP.compose.aiDrafted : APP.compose.sellerWords;
+  return (
+    <Badge
+      variant={source === "ai" ? "info" : "secondary"}
+      title={copy.detail}
+      className="font-normal"
+    >
+      {copy.badge}
+    </Badge>
+  );
 }
 
 function FindingNotes({
@@ -54,6 +75,7 @@ export function PoaSection({
   draftText,
   onEdit,
   readOnly = false,
+  isSellerNarrative = false,
 }: PoaSectionProps) {
   const showNotes = !readOnly && findings.length > 0;
   const notesLabel = `${APP.compose.critic.asideLabel}: ${section.heading}`;
@@ -61,9 +83,10 @@ export function PoaSection({
   return (
     <Card>
       <CardHeader className="flex items-start justify-between gap-4 space-y-0 pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+        <CardTitle className="flex flex-wrap items-center gap-2 text-base">
           <span>{section.heading}</span>
           {findings.length > 0 && <SeverityBadge severity={worstSeverity(findings)} />}
+          {isSellerNarrative && <ProvenanceBadge source={section.source} />}
         </CardTitle>
         <CopyButton
           text={readOnly ? section.body : draftText}
