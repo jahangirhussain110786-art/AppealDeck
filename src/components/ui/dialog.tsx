@@ -27,24 +27,36 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <DialogPrimitive.Portal>
     <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-1/2 top-1/2 z-[var(--z-dialog)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface-1 p-6 shadow-elevated data-[state=open]:animate-zoom-in",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close
+    {/*
+      Centered via a flex wrapper, not the old `fixed left-1/2 top-1/2 -translate-x-1/2
+      -translate-y-1/2` transform trick. That transform sits on the same ancestor chain as
+      whatever the dialog renders (e.g. VaultView's PDF preview <iframe>), and a browser's
+      native embedded PDF viewer surface does not reliably respect a CSS transform on an
+      ancestor the way ordinary DOM content does — the plugin's own toolbar/chrome rendered
+      at an offset position instead of centered (founder screenshot, 12 Sep 2026). A flex-
+      centered wrapper with no transform on the Content box itself avoids that class of bug
+      entirely, with an identical centered result for every other (non-plugin) dialog.
+    */}
+    <div className="fixed inset-0 z-[var(--z-dialog)] flex items-center justify-center p-4">
+      <DialogPrimitive.Content
+        ref={ref}
         className={cn(
-          "absolute right-4 top-4 flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "relative w-full max-w-lg rounded-xl border border-border bg-surface-1 p-6 shadow-elevated data-[state=open]:animate-zoom-in",
+          className,
         )}
+        {...props}
       >
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
+        {children}
+        <DialogPrimitive.Close
+          className={cn(
+            "absolute right-4 top-4 flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          )}
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </div>
   </DialogPrimitive.Portal>
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
