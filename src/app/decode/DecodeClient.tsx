@@ -272,8 +272,8 @@ function ResultView({
     >
       <JourneyProgress stage="decode" kind={result.kind} />
 
-      <div className={hasAnnotations ? "grid items-start gap-4 lg:grid-cols-[1.6fr_1fr]" : ""}>
-        <div className="space-y-4">
+      <div className={hasAnnotations ? "grid items-stretch gap-4 lg:grid-cols-[1.6fr_1fr]" : ""}>
+        <div className="flex h-full flex-col gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -302,18 +302,20 @@ function ResultView({
             </Card>
           )}
 
-          <CtaAfterResult result={result} guidance={guidance} />
+          <div className="mt-auto">
+            <CtaAfterResult result={result} guidance={guidance} />
+          </div>
         </div>
 
         {hasAnnotations && (
-          <div className="flex flex-col gap-4">
+          <div className="flex h-full flex-col gap-4">
             <p className="text-eyebrow uppercase text-muted-foreground">
               {DECODE.result.whatThisMeans}
             </p>
             {annotations.map((a) => (
               <AnnotationCard key={a.id} tag={a.tag} heading={a.heading} body={a.body} />
             ))}
-            <Button size="lg" className="justify-center" asChild>
+            <Button size="lg" className="mt-auto justify-center" asChild>
               <a href={`/case?kind=${result.kind}`}>
                 {DECODE.result.startPoaCta}
                 <ArrowRight className="size-4" aria-hidden />
