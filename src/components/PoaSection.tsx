@@ -1,9 +1,11 @@
 "use client";
 
+import { RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/CopyButton";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { badgeSeverity, worstSeverity } from "@/lib/findingSections";
@@ -31,6 +33,10 @@ interface PoaSectionProps {
    * "there isn't enough detail yet" gap message would be misleading.
    */
   isSellerNarrative?: boolean;
+  /** True once the seller has edited this section away from what the system generated. */
+  isEdited?: boolean;
+  /** Restores this section's text to what the system originally generated, discarding edits. */
+  onRestore?: (index: number) => void;
 }
 
 function ProvenanceBadge({ source }: { source: CorePoaSection["source"] }) {
@@ -76,6 +82,8 @@ export function PoaSection({
   onEdit,
   readOnly = false,
   isSellerNarrative = false,
+  isEdited = false,
+  onRestore,
 }: PoaSectionProps) {
   const showNotes = !readOnly && findings.length > 0;
   const notesLabel = `${APP.compose.critic.asideLabel}: ${section.heading}`;
@@ -88,10 +96,24 @@ export function PoaSection({
           {findings.length > 0 && <SeverityBadge severity={worstSeverity(findings)} />}
           {isSellerNarrative && <ProvenanceBadge source={section.source} />}
         </CardTitle>
-        <CopyButton
-          text={readOnly ? section.body : draftText}
-          label={APP.compose.critic.copySection.replace("{heading}", section.heading)}
-        />
+        <div className="flex items-center gap-1">
+          {!readOnly && isEdited && onRestore && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => onRestore(index)}
+              title={APP.compose.restoreOriginal.detail}
+            >
+              <RotateCcw className="size-3.5" aria-hidden />
+              {APP.compose.restoreOriginal.button}
+            </Button>
+          )}
+          <CopyButton
+            text={readOnly ? section.body : draftText}
+            label={APP.compose.critic.copySection.replace("{heading}", section.heading)}
+          />
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex items-start gap-4">

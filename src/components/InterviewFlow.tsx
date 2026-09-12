@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertCircle,
   ArrowRight,
+  Ban,
+  Check,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -33,6 +35,8 @@ import { Stepper } from "@/components/Stepper";
 import type { StepperStep } from "@/components/Stepper";
 import { VaultGate } from "@/components/VaultGate";
 import { SignInGate } from "@/components/SignInGate";
+import { JourneyProgress } from "@/components/JourneyProgress";
+import { guidanceFor } from "@/core/guidance";
 import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/format";
@@ -101,6 +105,7 @@ export function InterviewFlow({
   const [choiceId, setChoiceId] = useState<string | undefined>();
   const [showWhy, setShowWhy] = useState(false);
   const [whyHintDismissed, setWhyHintDismissed] = useState(false);
+  const [guidanceDismissed, setGuidanceDismissed] = useState(false);
   const [declineMode, setDeclineMode] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
   const [declineAltId, setDeclineAltId] = useState<string | undefined>();
@@ -163,6 +168,9 @@ export function InterviewFlow({
                 if (log?.whyHintDismissed) {
                   setWhyHintDismissed(true);
                 }
+                if (log?.guidanceDismissed) {
+                  setGuidanceDismissed(true);
+                }
               }
             } catch {
               // ignore — the visitor starts fresh instead
@@ -183,6 +191,9 @@ export function InterviewFlow({
             const log = await loadCaseLog(v).catch(() => null);
             if (log?.whyHintDismissed) {
               setWhyHintDismissed(true);
+            }
+            if (log?.guidanceDismissed) {
+              setGuidanceDismissed(true);
             }
             setShowResumeDialog(true);
           }
@@ -308,6 +319,12 @@ export function InterviewFlow({
         // for a funnel-measurement nicety (D10). Good enough to show real intake activity.
         trackFunnelEvent(FUNNEL_EVENTS.intakeStarted, { kind: next.kind });
       }
+      if (step.kind === "action_check" && answer.choiceId === "will_do") {
+        toast(APP.interview.willDoAck.title, {
+          description: APP.interview.willDoAck.description,
+        });
+      }
+
       setCaseFile(next);
       const s = nextStep(next);
       setStep((s ?? undefined) as InterviewStep | null);
@@ -427,6 +444,28 @@ export function InterviewFlow({
     }
   }, [vaultUnlocked, caseFile]);
 
+  const dismissGuidance = useCallback(async () => {
+    setGuidanceDismissed(true);
+    if (vaultRef.current && vaultUnlocked) {
+      try {
+        const log = await loadCaseLog(vaultRef.current).catch(() => null);
+        if (log) {
+          log.guidanceDismissed = true;
+          await saveCaseLog(vaultRef.current, log);
+        } else {
+          const newLog: CaseLog = {
+            state: "DECODED",
+            attemptCount: caseFile?.attemptCount ?? 0,
+            guidanceDismissed: true,
+          };
+          await saveCaseLog(vaultRef.current, newLog);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [vaultUnlocked, caseFile]);
+
   if (!vaultReady || !vaultUnlocked) {
     return (
       <VaultGate
@@ -500,20 +539,23 @@ export function InterviewFlow({
 
   if (complete) {
     return (
-      <Card className="border-success/40 bg-success/5">
-        <CardContent className="pt-5">
-          <div className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
-            <div className="space-y-2">
-              <h3 className="font-medium text-foreground">{APP.interview.complete.title}</h3>
-              <p className="text-sm text-muted-foreground">{APP.interview.complete.desc}</p>
-              <Button asChild>
-                <a href="/compose">{APP.interview.complete.continue}</a>
-              </Button>
+      <div className="space-y-4">
+        <JourneyProgress stage="build" />
+        <Card className="border-success/40 bg-success/5">
+          <CardContent className="pt-5">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
+              <div className="space-y-2">
+                <h3 className="font-medium text-foreground">{APP.interview.complete.title}</h3>
+                <p className="text-sm text-muted-foreground">{APP.interview.complete.desc}</p>
+                <Button asChild>
+                  <a href="/compose">{APP.interview.complete.continue}</a>
+                </Button>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -562,7 +604,8 @@ export function InterviewFlow({
     },
     ...(caseFile?.actionItems.map((a, i) => {
       const evidenceKind = a.evidenceSlots[0];
-      const isActive = step.id === `evidence_${evidenceKind}`;
+      const isActive =
+        step.id === `evidence_${evidenceKind}` || step.id === `action_check_${evidenceKind}`;
       let s: StepperStep["state"] = "todo";
       if (a.status === "done") s = "done";
       else if (a.declined) s = "skipped";
@@ -590,6 +633,54 @@ export function InterviewFlow({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <JourneyProgress stage="build" className="mb-2" />
+
+      {kind && !guidanceDismissed && step.id === "intake_root_cause" && (
+        <div className="mb-4 rounded-lg border border-border bg-surface-2 p-4">
+          <p className="text-eyebrow uppercase text-muted-foreground">
+            {APP.interview.guidanceBanner.eyebrow}
+          </p>
+          <h3 className="mt-1 text-base font-medium text-foreground">{guidanceFor(kind).title}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{guidanceFor(kind).summary}</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-eyebrow uppercase text-success">
+                {APP.interview.guidanceBanner.doNow}
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {guidanceFor(kind).triage.doNow.map((d, i) => (
+                  <li key={`gb-now-${i}`} className="flex gap-2 text-sm text-foreground">
+                    <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+                    {d}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-eyebrow uppercase text-warning">
+                {APP.interview.guidanceBanner.doNot}
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {guidanceFor(kind).triage.doNot.map((d, i) => (
+                  <li key={`gb-not-${i}`} className="flex gap-2 text-sm text-foreground">
+                    <Ban className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
+                    {d}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            onClick={() => void dismissGuidance()}
+          >
+            {APP.interview.guidanceBanner.dismiss}
+          </Button>
+        </div>
+      )}
 
       {/* AM-22/V4 — rail | question split at lg+, matching Interview.dc.html's
           intent. NOTE (found + fixed 12 Sep 2026): Interview.dc.html's own

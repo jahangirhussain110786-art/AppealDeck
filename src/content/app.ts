@@ -215,6 +215,11 @@ export const APP = {
       badge: "Your own words",
       detail: "Shown exactly as you wrote it in the interview.",
     },
+    restoreOriginal: {
+      button: "Restore original",
+      detail: "Replace your edits with the version AppealDeck generated for this section.",
+      toast: "Restored the original wording for this section.",
+    },
     sections: {
       rootCause: "Root Cause",
       correctiveActions: "Corrective Actions",
@@ -502,6 +507,24 @@ export const APP = {
     engineBadge: "Engine: rules-first",
     numberPlaceholder: "Enter a number",
     optionalSuffix: "(optional)",
+    willDoAck: {
+      title: "Noted — this one's still ahead of you",
+      description:
+        "A Plan of Action reads strongest once the real change is in place, not only planned. Come back to this item once it's done, and AppealDeck will pick up right where you left off.",
+    },
+    guidanceBanner: {
+      eyebrow: "Before we start",
+      whatToDoTitle: "What matters for this case",
+      doNow: "Do now",
+      doNot: "Avoid",
+      dismiss: "Got it — let's start",
+    },
+    journey: {
+      decode: "Decode",
+      build: "Build your case",
+      draft: "Draft your POA",
+      submit: "Submit",
+    },
   },
   case: {
     title: "Your case",

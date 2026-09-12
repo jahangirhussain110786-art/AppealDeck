@@ -121,6 +121,11 @@ function buildCorrectiveActionsSection(data: CaseFileData): PoaSection {
       actions.push(`- [Completed, unattested] ${item.label}`);
     } else if (item.declined) {
       actions.push(`- [Declined: ${item.declined.reason}] ${item.label}`);
+    } else if (item.status === "in_progress" && item.actionCheckAnswer === "will_do") {
+      // The seller told the interview they intend to do this but have not yet — an honest
+      // "planned" label, not a claim of completion (D6: never state a corrective action as done
+      // when it isn't).
+      actions.push(`- [Planned, not yet done] ${item.label}`);
     } else {
       actions.push(`- [Pending] ${item.label}`);
     }

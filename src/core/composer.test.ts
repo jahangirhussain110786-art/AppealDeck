@@ -104,6 +104,24 @@ describe("composePoa", () => {
     expect(gapSection).toBeUndefined();
   });
 
+  it("labels a 'will do' action item as planned, not completed", () => {
+    const draft = composePoa(
+      makeCase({
+        actionItems: [
+          {
+            id: "test",
+            label: "Obtain supplier invoice",
+            evidenceSlots: ["supplier_invoice"],
+            status: "in_progress",
+            actionCheckAnswer: "will_do",
+          },
+        ],
+      }),
+    );
+    const corrective = draft.sections.find((s) => s.heading === "Corrective Actions");
+    expect(corrective?.body).toContain("[Planned, not yet done] Obtain supplier invoice");
+  });
+
   it("lists declined actions with reason", () => {
     const draft = composePoa(
       makeCase({

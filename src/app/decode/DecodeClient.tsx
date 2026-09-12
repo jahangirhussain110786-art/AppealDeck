@@ -18,6 +18,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { OfflineNotice } from "@/components/OfflineNotice";
 import { CasePreview } from "@/components/CasePreview";
 import { AnnotationCard } from "@/components/AnnotationCard";
+import { JourneyProgress } from "@/components/JourneyProgress";
 import { guidanceFor } from "@/core/guidance";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
@@ -263,6 +264,8 @@ function ResultView({
         show: { opacity: 1, transition: { staggerChildren: STAGGER } },
       }}
     >
+      <JourneyProgress stage="decode" />
+
       <div className={hasAnnotations ? "grid items-start gap-4 lg:grid-cols-[1.6fr_1fr]" : ""}>
         <Card className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">

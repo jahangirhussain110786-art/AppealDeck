@@ -137,9 +137,40 @@ export function nextStep(file: CaseFile): InterviewStep | null {
     };
   }
 
-  const openAction = file.actionItems.find((a) => a.status === "todo");
-  if (openAction) {
-    const slotKind = openAction.evidenceSlots[0];
+  // AM-24 (12 Sep 2026) — ask whether the action is already done before asking for a file. A
+  // seller who hasn't done it yet gets an honest "not yet, but I will" path instead of being sent
+  // straight to an upload box for something they haven't done.
+  const uncheckedAction = file.actionItems.find((a) => a.status === "todo" && !a.actionCheckAnswer);
+  if (uncheckedAction) {
+    const slotKind = uncheckedAction.evidenceSlots[0];
+    if (!slotKind) return null;
+    const req = requirementsFor(file.kind).find((r) => r.kind === slotKind);
+    const label = slotKind.replace(/_/g, " ");
+    return {
+      id: `action_check_${slotKind}`,
+      kind: "action_check",
+      title: `Where do you stand on your ${label}?`,
+      prompt:
+        (req?.whyAmazonWantsIt ? `${req.whyAmazonWantsIt} ` : "") +
+        `Have you already got this, or is it still something you need to do?`,
+      inputType: "enum",
+      options: [
+        { id: "done", label: "I already have this" },
+        { id: "will_do", label: "Not yet, but I will get it" },
+      ],
+      evidenceKind: slotKind,
+      actionItem: uncheckedAction,
+      required: req?.required ?? true,
+      whyAmazonWantsIt: req?.whyAmazonWantsIt,
+      declineAlternatives: req ? alternativesFor(req) : undefined,
+    };
+  }
+
+  const readyForUpload = file.actionItems.find(
+    (a) => a.status === "todo" && a.actionCheckAnswer === "done",
+  );
+  if (readyForUpload) {
+    const slotKind = readyForUpload.evidenceSlots[0];
     if (!slotKind) return null;
     const req = requirementsFor(file.kind).find((r) => r.kind === slotKind);
     return {
@@ -151,7 +182,7 @@ export function nextStep(file: CaseFile): InterviewStep | null {
         `Attach your ${slotKind.replace(/_/g, " ")} so the Plan of Action can reference it.`,
       inputType: "file",
       evidenceKind: slotKind,
-      actionItem: openAction,
+      actionItem: readyForUpload,
       required: req?.required ?? true,
       whyAmazonWantsIt: req?.whyAmazonWantsIt,
       declineAlternatives: req ? alternativesFor(req) : undefined,
@@ -217,6 +248,28 @@ export function applyAnswer(file: CaseFile, answer: StepAnswer): CaseFile {
       break;
 
     default:
+      if (answer.stepId.startsWith("action_check_")) {
+        const kind = answer.stepId.replace("action_check_", "") as EvidenceKind;
+        const actionIdx = next.actionItems.findIndex((a) => a.evidenceSlots[0] === kind);
+        if (actionIdx === -1) break;
+        const action = next.actionItems[actionIdx];
+        if (!action) break;
+
+        if (answer.declined) {
+          action.status = "todo";
+          action.declined = {
+            reason: answer.declineReason ?? "User declined",
+            at: new Date().toISOString(),
+          };
+        } else if (answer.choiceId === "will_do") {
+          action.status = "in_progress";
+          action.actionCheckAnswer = "will_do";
+        } else if (answer.choiceId === "done") {
+          action.actionCheckAnswer = "done";
+        }
+        break;
+      }
+
       if (answer.stepId.startsWith("evidence_")) {
         const kind = answer.stepId.replace("evidence_", "") as EvidenceKind;
         const actionIdx = next.actionItems.findIndex((a) => a.evidenceSlots[0] === kind);
@@ -244,7 +297,11 @@ export function applyAnswer(file: CaseFile, answer: StepAnswer): CaseFile {
 export function interviewProgress(file: CaseFile): InterviewProgress {
   const total = countTotalSteps(file);
   const current = countCompletedSteps(file);
-  const pendingEvidence = file.actionItems.filter((a) => a.status === "todo").length;
+  // "in_progress" (a "will do" answer) is still real, undelivered evidence — it should keep
+  // reading as pending, not silently drop out of the count just because the question was asked.
+  const pendingEvidence = file.actionItems.filter(
+    (a) => a.status === "todo" || a.status === "in_progress",
+  ).length;
   return { current, total, pendingEvidence };
 }
 
@@ -265,7 +322,9 @@ function countCompletedSteps(file: CaseFile): number {
     count++;
   }
   for (const action of file.actionItems) {
-    if (action.status === "done") count++;
+    // A "will do" answer is a real, answered question — it moves the seller forward even though
+    // no file was uploaded yet, so it should read as progress, not as still-outstanding.
+    if (action.status === "done" || action.status === "in_progress") count++;
   }
   return count;
 }

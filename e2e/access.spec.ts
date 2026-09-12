@@ -42,6 +42,13 @@ test.describe("Access ladder — signed-out interview, gate, case preview", () =
       .fill("Added a second reviewer on listing edits.");
     await page.getByTestId("interview-continue").click();
 
+    // AM-24 (12 Sep 2026): the interview now asks whether the seller already has the required
+    // evidence before asking for the file itself — this "action_check" step is an enum choice,
+    // not a file input, so it's not sign-in gated. Only the actual upload step, right after, is.
+    await expect(page.getByText("I already have this", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "I already have this" }).click();
+    await page.getByTestId("interview-continue").click();
+
     await expect(page.getByText("Save your case to continue")).toBeVisible();
     const signInLink = page.locator("main").getByRole("link", { name: "Sign in", exact: true });
     await expect(signInLink).toHaveAttribute("href", "/login?next=%2Fcase");

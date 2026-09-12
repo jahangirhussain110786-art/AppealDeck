@@ -12,6 +12,15 @@ export interface ActionItem {
   status: "todo" | "in_progress" | "done";
   declined?: { reason: string; at: string };
   attestation?: { attestedAt: string; note: string };
+  /**
+   * Answer to the "have you done this yet?" check the interview asks before requesting a file
+   * (AM-24, 12 Sep 2026 — founder: sellers should be asked whether an action is already done,
+   * still planned, or not possible, not sent straight to a file-upload box). `"done"` means the
+   * interview should now ask for the proof; `"will_do"` means the seller intends to but hasn't
+   * yet, so the file step is skipped for now and the item's `status` moves to `"in_progress"`.
+   * Undefined means the check hasn't been asked yet.
+   */
+  actionCheckAnswer?: "done" | "will_do";
 }
 
 export interface ActionAlternative {

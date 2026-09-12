@@ -19,6 +19,9 @@ export interface CaseLog {
   readinessAtSubmit?: number;
   lastReply?: { category: ReplyCategory; at: string };
   whyHintDismissed?: boolean;
+  /** True once the seller has dismissed the opening "what matters for this case" guidance
+   * banner (AM-24, 12 Sep 2026) — shown once at the start of the interview, not re-shown. */
+  guidanceDismissed?: boolean;
   /** True once the seller has responded (either way) to the opt-in outcome-sharing prompt for
    * this case, so it's asked at most once per terminal reply. */
   outcomePromptResolved?: boolean;

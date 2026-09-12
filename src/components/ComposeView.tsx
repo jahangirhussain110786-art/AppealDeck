@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/accordion";
 import { EmptyState } from "@/components/EmptyState";
 import { VaultGate } from "@/components/VaultGate";
+import { JourneyProgress } from "@/components/JourneyProgress";
 import { PoaSection, PoaFindingsList } from "@/components/PoaSection";
 import { BeforeYouSubmitChecklist } from "@/components/BeforeYouSubmitChecklist";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
@@ -238,8 +239,19 @@ function ComposeInner({ vault }: { vault: Vault }) {
     return false;
   }
 
+  const restoreSection = (index: number) => {
+    setEditedSections((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+    toast(APP.compose.restoreOriginal.toast);
+  };
+
   return (
     <div className="space-y-4">
+      <JourneyProgress stage="draft" />
+
       <Alert variant="info">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -267,6 +279,8 @@ function ComposeInner({ vault }: { vault: Vault }) {
           draftText={mergedSections[i] ?? section.body}
           onEdit={(idx, text) => setEditedSections((prev) => ({ ...prev, [idx]: text }))}
           isSellerNarrative={isSellerNarrative(section.heading)}
+          isEdited={editedSections[i] !== undefined && editedSections[i] !== section.body}
+          onRestore={restoreSection}
         />
       ))}
 
