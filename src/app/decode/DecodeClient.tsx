@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { CaseStateBadge } from "@/components/CaseStateBadge";
 import { DeadlineChipList } from "@/components/DeadlineChip";
@@ -273,51 +273,67 @@ function ResultView({
       <JourneyProgress stage="decode" kind={result.kind} />
 
       <div className={hasAnnotations ? "grid items-start gap-4 lg:grid-cols-[1.6fr_1fr]" : ""}>
-        <Card className="p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <SeverityBadge severity={severity} />
-              <CaseStateBadge kind={result.kind} />
-              <h2 className="text-h3 text-foreground">{guidance.title}</h2>
-            </div>
-            <CopyButton text={guidance.summary} label={DECODE.result.copySummary} />
-          </div>
+        <div className="space-y-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <SeverityBadge severity={severity} />
+                  <CaseStateBadge kind={result.kind} />
+                  <h2 className="text-h3 text-foreground">{guidance.title}</h2>
+                </div>
+                <CopyButton text={guidance.summary} label={DECODE.result.copySummary} />
+              </div>
 
-          <p className="mt-4 text-base leading-relaxed text-muted-foreground">{guidance.summary}</p>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                {guidance.summary}
+              </p>
+            </CardContent>
+          </Card>
 
-          <div className="mt-4">
-            <DeadlineChipList deadlines={result.deadlines} />
-          </div>
+          {result.deadlines.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">{DECODE.result.deadlinesTitle}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DeadlineChipList deadlines={result.deadlines} />
+              </CardContent>
+            </Card>
+          )}
 
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="rounded-md border border-border/70 bg-surface-2 p-4">
-              <p className="text-eyebrow uppercase text-success">{DECODE.result.doNow}</p>
-              <ul className="mt-2 space-y-1.5">
-                {guidance.triage.doNow.map((d, i) => (
-                  <li key={`now-${i}`} className="flex gap-2 text-sm text-foreground">
-                    <Check className="mt-0.5 size-4 shrink-0 text-success" />
-                    {d}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-md border border-border/70 bg-surface-2 p-4">
-              <p className="text-eyebrow uppercase text-warning">{DECODE.result.doNot}</p>
-              <ul className="mt-2 space-y-1.5">
-                {guidance.triage.doNot.map((d, i) => (
-                  <li key={`not-${i}`} className="flex gap-2 text-sm text-foreground">
-                    <Ban className="mt-0.5 size-4 shrink-0 text-warning" />
-                    {d}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{DECODE.result.whatToDoTitle}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-md border border-border/70 bg-surface-2 p-4">
+                <p className="text-eyebrow uppercase text-success">{DECODE.result.doNow}</p>
+                <ul className="mt-2 space-y-1.5">
+                  {guidance.triage.doNow.map((d, i) => (
+                    <li key={`now-${i}`} className="flex gap-2 text-sm text-foreground">
+                      <Check className="mt-0.5 size-4 shrink-0 text-success" />
+                      {d}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-md border border-border/70 bg-surface-2 p-4">
+                <p className="text-eyebrow uppercase text-warning">{DECODE.result.doNot}</p>
+                <ul className="mt-2 space-y-1.5">
+                  {guidance.triage.doNot.map((d, i) => (
+                    <li key={`not-${i}`} className="flex gap-2 text-sm text-foreground">
+                      <Ban className="mt-0.5 size-4 shrink-0 text-warning" />
+                      {d}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="mt-5">
-            <CtaAfterResult result={result} guidance={guidance} />
-          </div>
-        </Card>
+          <CtaAfterResult result={result} guidance={guidance} />
+        </div>
 
         {hasAnnotations && (
           <div className="flex flex-col gap-4">

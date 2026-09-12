@@ -72,6 +72,8 @@ export const DECODE = {
   likenessHint:
     "This doesn't look like an Amazon notice yet. Paste the full email, including the subject line.",
   result: {
+    deadlinesTitle: "Deadlines",
+    whatToDoTitle: "What to do",
     doNow: "Do now",
     doNot: "Do not",
     ctaTitle: "Ready to turn this into a Plan of Action?",
