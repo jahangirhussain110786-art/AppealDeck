@@ -4,7 +4,7 @@ Baseline: commit `1e4dd05` (handoff committed + session-start repointed). All ga
 
 ## Resume pointer
 
-Task: V6 · Status: completed · Last green gate: all gates green (batched commit, see below) · Next: V8 (final gates + screenshots) — V7 (sweep pass) was not requested by the founder this round and was skipped, not silently dropped (see Discovered/Deviations)
+Task: V8 · Status: completed · Last green gate: all gates green + Lighthouse 1·1·1·1 (production build) + 30 screenshots captured · Next: founder sign-off, then V7 (sweep pass) if/when directed — V7 was not requested this round and was skipped, not silently dropped (see Discovered/Deviations)
 
 **Founder direction 12 Sep 2026 (batching, mid-pass):** commit at least 3-4 tasks per commit rather than one-per-task; run gates once at the end of a batch, not after every task. V1–V4 (+ V3b) below were built as one batch under this direction.
 
@@ -73,9 +73,46 @@ Verified live in a browser, signed in as the standing dev account: the empty-vau
 
 Status: not started — the founder's direction this round was explicitly "V5, V6 and V8"; V7 was not requested and is not silently skipped, it is deferred. Nothing found during V5/V6 work suggested drift needing an urgent sweep (illustrations, `AccentWord`, and the Badge size variant were all reused, not duplicated, in both tasks).
 
-## Task V8 — Final gates + screenshots
+## Task V8 — Final gates + screenshots — DONE 12 Sep 2026
 
-Status: not started — next task.
+All gates re-run at `4bf76b0` (the V5+V6 commit), plus the checks the earlier batch's gate run didn't cover:
+
+```
+npm run typecheck      → exit 0
+npm run lint           → 0 warnings
+npm run lint:copy      → PASS (5 passes)
+npm run format:check   → exit 0
+npm run test           → 373 passed (39 files)
+npm run build          → 33 routes + middleware (clean rebuild after rm -rf .next)
+npx playwright test --project=chromium (full suite, no filter)
+                       → 54 passed, 0 failed (includes the a11y.spec.ts and api.spec.ts
+                         files not run in the V5/V6 batch's targeted check — all green;
+                         the "dashboard shows the draft summary" test that was flaky
+                         under one specific worker split earlier in this session passed
+                         clean here too, consistent with it being a parallelism
+                         artifact, not a regression)
+```
+
+**Lighthouse** (`npx lighthouse <url> --output=json --output-path=... --chrome-flags="--headless --no-sandbox --disable-gpu" --preset=desktop --quiet` per this project's established Windows workaround — `lhci` still dies on the same `EPERM` deleting Chrome's temp profile on kill; the JSON report is written before the crash either way):
+
+- **First run, against `next dev`:** accessibility/best-practices/SEO all 1.0 on `/`, `/decode`, `/login`, `/pricing`, but **performance only ~0.68–0.70** on all four pages. Investigated rather than accepted at face value: this is a known Lighthouse-vs-`next dev` artifact (unminified bundles, source maps, the dev HMR websocket) — not a real regression from V1–V6's work.
+- **Confirmed against a real production build** (`rm -rf .next && npm run build && npm run start` via the `appealdeck-prod` launch config): perf · a11y · best-practices · SEO = **1 · 1 · 1 · 1** on `/`, `/decode`, `/login`, `/pricing` — matches the visual-refresh-v3 baseline exactly, no regression from the visual-overhaul-v4 changes (V1–V6).
+- `/vault` (signed-out gate state — Lighthouse's own Chrome instance doesn't carry the dev-account session cookie, and scripting an authenticated Lighthouse run was out of scope for this pass): 1 · 1 · 1 · 1. **The authenticated file-list view itself was not Lighthouse-audited** — same category of gap this project has flagged honestly before (screenshots did capture it via a real signed-in session — see below — Lighthouse did not).
+
+**Screenshots** — `e2e/screenshots.spec.ts` (existing harness, not new), run against the same production server, with `DEV_LOGIN_EMAIL`/`DEV_LOGIN_PASSWORD` passed on the command line (the harness reads `process.env` directly; `playwright.config.ts` does not load `.env.local` itself, so these must be exported into the shell, not merely present in the file):
+
+```
+SCREENSHOT_OUT=docs/handoffs/screenshots/2026-09-11 SCREENSHOT_ROUTES=/,/decode,/login \
+  npx playwright test --project=screenshots
+```
+
+30 PNGs at `docs/handoffs/screenshots/2026-09-11/`: `/`, `/decode`, `/login` (public) and `/case`, `/vault` (auth-gated, real signed-in session) × {375, 768, 1280}px × {light, dark} — exceeds the prompt's minimum (375/1280 only) by also capturing 768px. All 30 captured cleanly, 0 failures. Spot-checked `vault-1280-dark.png` and `decode-1280-light.png` visually: vault dark mode renders the reconciled warm-neutral dark tokens (not obsidian) with the `VaultDoorIllustration` and the mono envelope caption; decode renders the V1–V2 tokens/primitives correctly. `.auth.json` (the Playwright storage-state file the harness writes into the output directory) is already covered by the repo's `.gitignore` pattern.
+
+## Founder sign-off (still owed)
+
+- Sign off the 30 screenshots above.
+- V7 (sweep pass) was not part of this round's direction — founder to confirm whether it's wanted before or after sign-off, or folded into a later pass.
+- The authenticated-vault Lighthouse gap noted above (cosmetic/perf audit only; a11y of the signed-out gate page itself is 1.0).
 
 ## Discovered / Deviations
 

@@ -22,7 +22,7 @@ Baseline: commit `1e4dd05` (visual overhaul v4 handoff committed + session-start
 - [x] V5: Decode result layout rebuild (annotation cards) — **DONE** 12 Sep 2026
 - [x] V6: Vault surface rebuild (respects site theme — no override, founder-reversed 12 Sep 2026) — **DONE** 12 Sep 2026
 - [ ] V7: Sweep pass — cross-page consistency check — **not requested this round, deferred, not skipped silently** (see evidence log)
-- [ ] V8: Gates — full gate run + screenshot set for founder sign-off — next
+- [x] V8: Gates — full gate run + screenshot set for founder sign-off — **DONE** 12 Sep 2026
 
 **Scope guard (AM-18, carries over):** presentation, assets, copy, and layout only. No new API routes, no engine changes, no new features. D1–D10 are not reopened. The `07-REFERENCE` directory is edit-gated.
 
