@@ -181,15 +181,19 @@ export default function VaultView({ userId }: { userId: string }) {
     }
   };
 
-  const onAddFile = async (file: File) => {
+  const onAddFile = async (file: File): Promise<boolean> => {
     setBusy(true);
     try {
-      await addFileToVault(vault, file, { evidenceKind: selectedEvidenceKind });
+      const result = await addFileToVault(vault, file, { evidenceKind: selectedEvidenceKind });
       setItems(await vault.list());
+      // A duplicate already gets its own informational toast from addFileToVault — nothing new
+      // was uploaded, so FileDropZone shouldn't show a fresh "uploaded" confirmation for it too.
+      return result.status === "added";
     } catch (e) {
       toast.error(APP.interview.fileUpload.addFailed, {
         description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
+      return false;
     } finally {
       setBusy(false);
     }

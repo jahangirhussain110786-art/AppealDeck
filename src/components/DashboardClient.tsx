@@ -3,9 +3,17 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Send, FileText, Loader2, ShieldAlert } from "lucide-react";
+import {
+  Send,
+  FileText,
+  Loader2,
+  ShieldAlert,
+  CheckCircle2,
+  CreditCard,
+  FileCheck2,
+} from "lucide-react";
 import { getBrowserVault } from "@/lib/vault/browser";
-import type { Vault } from "@/core/vault/vault";
+import type { Vault, VaultListItem } from "@/core/vault/vault";
 import { saveCaseLog, loadCaseLog, loadCaseFile } from "@/lib/caseStore";
 import type { CaseLog } from "@/lib/caseStore";
 import {
@@ -41,9 +49,10 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { APP } from "@/content/app";
 import { SHARED } from "@/content/shared";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatBytes } from "@/lib/format";
 import type { LicenseSummary } from "@/lib/license";
 import type { EvidenceKind } from "@/core";
+import { cn } from "@/lib/utils";
 
 interface ReplyAnalysis {
   category: ReplyCategory;
@@ -77,6 +86,74 @@ function buildContext(file: CaseFile, log: CaseLog | null): CaseStateContext {
     fundsHeld: false,
     fundsEligible: false,
   };
+}
+
+/**
+ * Renders the Appeal Pass status the license/status API already returns to this component —
+ * previously fetched, typed, and passed in, then silently discarded (`license: _license`). A
+ * seller had no way to see from Dashboard whether their Pass was active without going to Billing.
+ */
+function PassStatusRow({ license }: { license: LicenseSummary }) {
+  const active = license.status === "active";
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-sm",
+        active ? "border-success/30 bg-success/5" : "border-border bg-surface-2",
+      )}
+    >
+      {active ? (
+        <CheckCircle2 className="size-4 shrink-0 text-success" aria-hidden />
+      ) : (
+        <CreditCard className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+      )}
+      <span className="font-medium text-foreground">
+        {active ? APP.dashboard.active.heading : APP.dashboard.inactive.heading}
+      </span>
+      {active && license.plan && (
+        <span className="text-muted-foreground">
+          · {APP.dashboard.active.planLabel}: {license.plan}
+        </span>
+      )}
+      {!active && (
+        <Link href="/pricing" className="ml-auto text-xs underline underline-offset-4">
+          {APP.dashboard.inactive.cta}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+/** The most recently uploaded evidence files, so a seller can see what's already in the vault
+ * without leaving Dashboard for it. */
+function EvidenceActivityCard({ records }: { records: VaultListItem[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{APP.dashboard.activity.title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {records.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{APP.dashboard.activity.empty}</p>
+        ) : (
+          <ul className="space-y-2">
+            {records.slice(0, 5).map((r) => (
+              <li key={r.id} className="flex items-center gap-2 text-sm">
+                <FileCheck2 className="size-4 shrink-0 text-success" aria-hidden />
+                <span className="truncate font-medium text-foreground">{r.name}</span>
+                <span className="ml-auto shrink-0 whitespace-nowrap font-mono text-xs tabular-nums text-muted-foreground">
+                  {formatBytes(r.sizeBytes)} · {formatDate(r.createdAt)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <Button asChild variant="ghost" size="sm" className="mt-3">
+          <Link href="/vault">{APP.dashboard.activity.viewAll}</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
 
 function ReadinessCard({
@@ -116,10 +193,11 @@ function ReadinessCard({
   );
 }
 
-export function DashboardClient({ license: _license, signedIn }: DashboardClientProps) {
+export function DashboardClient({ license, signedIn }: DashboardClientProps) {
   const vault = useVaultInstance();
   const [caseFile, setCaseFile] = useState<CaseFile | null>(null);
   const [caseLog, setCaseLog] = useState<CaseLog | null>(null);
+  const [evidenceRecords, setEvidenceRecords] = useState<VaultListItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [replyResult, setReplyResult] = useState<ReplyAnalysis | null>(null);
@@ -128,8 +206,14 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
     try {
       const file = await loadCaseFile(vault);
       const log = file ? await loadCaseLog(vault) : null;
+      // Real evidence documents only — case-file/case-log bookkeeping records share the same
+      // vault under kind "case" and aren't something a seller thinks of as "a file I uploaded".
+      const records = (await vault.list())
+        .filter((r) => r.kind !== "case")
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setCaseFile(file);
       setCaseLog(log);
+      setEvidenceRecords(records);
       setReplyText("");
       setReplyResult(null);
     } catch (e) {
@@ -347,16 +431,19 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
       {() => {
         if (!caseFile) {
           return (
-            <EmptyState
-              icon={FileText}
-              title={APP.dashboard.caseSummary.noCase.title}
-              description={APP.dashboard.caseSummary.noCase.description}
-              action={
-                <Button asChild>
-                  <Link href="/case">{APP.dashboard.caseSummary.noCase.cta}</Link>
-                </Button>
-              }
-            />
+            <div className="animate-fade-in space-y-4">
+              <PassStatusRow license={license} />
+              <EmptyState
+                icon={FileText}
+                title={APP.dashboard.caseSummary.noCase.title}
+                description={APP.dashboard.caseSummary.noCase.description}
+                action={
+                  <Button asChild>
+                    <Link href="/case">{APP.dashboard.caseSummary.noCase.cta}</Link>
+                  </Button>
+                }
+              />
+            </div>
           );
         }
 
@@ -375,6 +462,8 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
 
         return (
           <div className="animate-fade-in space-y-6">
+            <PassStatusRow license={license} />
+
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="mb-2 flex items-center gap-2">
@@ -389,6 +478,8 @@ export function DashboardClient({ license: _license, signedIn }: DashboardClient
               score={readiness.score}
               missingKinds={readiness.missing.map((m) => m.kind)}
             />
+
+            <EvidenceActivityCard records={evidenceRecords} />
 
             {noticeDate && (
               <div className="space-y-2">

@@ -5,7 +5,6 @@ export const SHARED = {
   nav: {
     primary: "Primary",
     decode: "Decode",
-    case: "Case",
     dashboard: "Dashboard",
     vault: "Vault",
     pricing: "Pricing",
@@ -17,6 +16,7 @@ export const SHARED = {
     openMenu: "Open menu",
     themeToggle: "Toggle colour theme",
     lockedHint: "Sign in to unlock",
+    profileMenu: "Account menu",
   },
   footer: {
     tagline:

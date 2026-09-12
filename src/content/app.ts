@@ -94,6 +94,16 @@ export const APP = {
       grantedLabel: "Granted",
       licenseLabel: "License",
     },
+    inactive: {
+      heading: "No active Appeal Pass",
+      description: "Purchase an Appeal Pass to draft and submit your Plan of Action.",
+      cta: "View pricing",
+    },
+    activity: {
+      title: "Evidence uploaded",
+      empty: "No files uploaded yet.",
+      viewAll: "View all in Vault",
+    },
     caseSummary: {
       title: "Your case",
       noCase: {
@@ -474,6 +484,7 @@ export const APP = {
       vaultSlot: "Vault",
       addFailed: "Add failed",
       takePhoto: "Take a photo",
+      uploadedLabel: "Uploaded",
     },
     stepControls: "Step controls",
     stepOf: "Step {current} of {total}",

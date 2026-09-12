@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Lock, Menu } from "lucide-react";
+import { Lock, LogOut, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { SignOutButton } from "@/components/SignOutButton";
+import { ProfileMenu } from "@/components/ProfileMenu";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { SHARED } from "@/content/shared";
 import { useSessionState } from "@/lib/useSessionState";
+import { useSignOut } from "@/lib/useSignOut";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -66,6 +67,7 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
   const sessionState = useSessionState();
   const isSignedIn = signedIn !== undefined ? signedIn : sessionState === "signed-in";
   const isSignedOut = !isSignedIn;
+  const { signOut, pending: signOutPending } = useSignOut();
 
   const signInHref =
     pathname.startsWith("/case") ||
@@ -74,15 +76,16 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
       ? `/login?next=${encodeURIComponent(pathname)}`
       : "/login";
 
+  // AM-25 (12 Sep 2026, founder direction): the header shows only Decode, Dashboard, Vault.
+  // "Case" is intake, not a destination in its own right (Dashboard's "Start"/"Continue" button
+  // is the real entry point) — it no longer gets a nav slot. Billing moves into the profile menu
+  // for a signed-in seller; there's no profile to hide Pricing behind when signed out, so it
+  // stays a plain nav item in that state only.
   const navItems: NavItem[] = [
     { href: "/decode", label: SHARED.nav.decode },
-    { href: "/case", label: SHARED.nav.case },
     { href: "/dashboard", label: SHARED.nav.dashboard },
     { href: "/vault", label: SHARED.nav.vault, lock: isSignedOut },
-    {
-      href: isSignedIn ? "/billing" : "/pricing",
-      label: isSignedIn ? SHARED.nav.billing : SHARED.nav.pricing,
-    },
+    ...(isSignedOut ? [{ href: "/pricing", label: SHARED.nav.pricing }] : []),
   ];
 
   return (
@@ -118,7 +121,7 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
                 <Link href={signInHref}>{SHARED.nav.signIn}</Link>
               </Button>
             )}
-            {isSignedIn && <SignOutButton email={user?.email ?? undefined} />}
+            {isSignedIn && <ProfileMenu email={user?.email} />}
 
             <Sheet>
               <SheetTrigger asChild>
@@ -143,12 +146,29 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
                       mobile
                     />
                   ))}
+                  {isSignedIn && <NavPill href="/billing" label={SHARED.nav.billing} mobile />}
                 </nav>
                 {isSignedOut && (
                   <>
                     <div className="border-t border-border" />
                     <Button asChild variant="outline" size="sm" className="w-full">
                       <Link href={signInHref}>{SHARED.nav.signIn}</Link>
+                    </Button>
+                  </>
+                )}
+                {isSignedIn && (
+                  <>
+                    <div className="border-t border-border" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => void signOut()}
+                      disabled={signOutPending}
+                    >
+                      <LogOut className="mr-2 size-4" aria-hidden />
+                      {SHARED.nav.signOut}
                     </Button>
                   </>
                 )}

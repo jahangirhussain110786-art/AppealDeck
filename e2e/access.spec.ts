@@ -85,13 +85,16 @@ test.describe("Access ladder — signed-out interview, gate, case preview", () =
     await expect(page.getByText("Your case, at a glance", { exact: true })).toBeVisible();
   });
 
-  test("signed out: header shows five nav slots with a lock only on Vault, no Billing", async ({
+  test("signed out: header shows four nav slots with a lock only on Vault, no Case or Billing", async ({
     page,
   }) => {
+    // AM-25 (12 Sep 2026): "Case" is intake, not a nav destination — Dashboard's own
+    // start/continue button is the entry point. Billing lives behind the profile menu for a
+    // signed-in seller, and there's no profile to hide Pricing behind when signed out.
     await page.goto("/");
     const nav = page.getByRole("navigation", { name: "Primary" });
     await expect(nav.getByRole("link", { name: "Decode", exact: true })).toBeVisible();
-    await expect(nav.getByRole("link", { name: "Case", exact: true })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Case", exact: true })).toHaveCount(0);
     await expect(nav.getByRole("link", { name: "Dashboard", exact: true })).toBeVisible();
     await expect(nav.getByRole("link", { name: "Vault" })).toBeVisible();
     await expect(nav.getByRole("link", { name: "Pricing", exact: true })).toBeVisible();

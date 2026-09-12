@@ -872,10 +872,21 @@ export function InterviewFlow({
                     {step.inputType === "file" && step.evidenceKind && vaultRef.current && (
                       <FileDropZone
                         onFile={async (file) => {
-                          await addFileToVault(vaultRef.current!, file, {
-                            evidenceKind: step.evidenceKind,
-                            caseId: CASE_ID,
-                          });
+                          try {
+                            const result = await addFileToVault(vaultRef.current!, file, {
+                              evidenceKind: step.evidenceKind,
+                              caseId: CASE_ID,
+                            });
+                            // A duplicate already gets its own informational toast from
+                            // addFileToVault — nothing new was uploaded, so this box shouldn't
+                            // show a fresh "uploaded" confirmation for it too.
+                            return result.status === "added";
+                          } catch (e) {
+                            toast.error(APP.interview.fileUpload.addFailed, {
+                              description: e instanceof Error ? e.message : undefined,
+                            });
+                            return false;
+                          }
                         }}
                         disabled={loading}
                         hint={APP.interview.fileUpload.maxMb}
