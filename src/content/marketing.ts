@@ -67,10 +67,7 @@ export const DECODE = {
     title: "Decoding…",
     hint: "This takes a moment.",
   },
-  emptyState: {
-    title: "Your decoded notice appears here",
-    description: "Paste the email above and choose Decode.",
-  },
+  decodeAnotherButton: "Decode another notice",
   noticeLikenessTitle: "Before you decode",
   likenessHint:
     "This doesn't look like an Amazon notice yet. Paste the full email, including the subject line.",

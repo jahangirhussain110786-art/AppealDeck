@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, Fragment } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Ban, Check, ClipboardPaste, RefreshCw } from "lucide-react";
+import { ArrowRight, Ban, Check, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -13,7 +13,6 @@ import { SeverityBadge } from "@/components/SeverityBadge";
 import { CaseStateBadge } from "@/components/CaseStateBadge";
 import { DeadlineChipList } from "@/components/DeadlineChip";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
-import { EmptyState } from "@/components/EmptyState";
 import { CopyButton } from "@/components/CopyButton";
 import { OfflineNotice } from "@/components/OfflineNotice";
 import { CasePreview } from "@/components/CasePreview";
@@ -103,9 +102,18 @@ export default function DecodeClient() {
     setResult(null);
   }
 
+  function handleReset() {
+    setText("");
+    setUsingSample(false);
+    setStatus("empty");
+    setResult(null);
+    setDecodedText("");
+    setError(null);
+  }
+
   const canSubmit = text.trim().length > 0;
 
-  let main: React.ReactNode;
+  let main: React.ReactNode = null;
   if (status === "result" && result) {
     main = <ResultView result={result} guidance={guidance!} text={decodedText} />;
   } else if (status === "loading") {
@@ -116,16 +124,6 @@ export default function DecodeClient() {
         message={error ?? DECODE.result.errorFallback}
         onRetry={() => setStatus("empty")}
       />
-    );
-  } else {
-    main = (
-      <div className="rounded-lg border border-dashed border-border p-8">
-        <EmptyState
-          icon={ClipboardPaste}
-          title={DECODE.emptyState.title}
-          description={DECODE.emptyState.description}
-        />
-      </div>
     );
   }
 
@@ -142,63 +140,71 @@ export default function DecodeClient() {
         <LocalFirstBadge className="hidden sm:inline-flex" />
       </div>
 
-      <Card className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center justify-between gap-2">
-            <label htmlFor="notice" className="text-sm font-medium text-foreground">
-              {DECODE.textarea.label}
-            </label>
-            <p className="text-xs tabular-nums text-muted-foreground" data-tn>
-              {charFmt.format(text.length)} characters
-            </p>
-          </div>
-          <Textarea
-            id="notice"
-            placeholder={DECODE.textarea.placeholder}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            spellCheck={false}
-            aria-describedby="notice-hint"
-            className="min-h-[14rem] font-mono text-sm leading-relaxed"
-          />
-          <div id="notice-hint" className="sr-only" aria-live="polite">
-            {likeness.hint ?? ""}
-          </div>
+      {status !== "result" && (
+        <Card className="p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="notice" className="text-sm font-medium text-foreground">
+                {DECODE.textarea.label}
+              </label>
+              <p className="text-xs tabular-nums text-muted-foreground" data-tn>
+                {charFmt.format(text.length)} characters
+              </p>
+            </div>
+            <Textarea
+              id="notice"
+              placeholder={DECODE.textarea.placeholder}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              spellCheck={false}
+              aria-describedby="notice-hint"
+              className="min-h-[14rem] font-mono text-sm leading-relaxed"
+            />
+            <div id="notice-hint" className="sr-only" aria-live="polite">
+              {likeness.hint ?? ""}
+            </div>
 
-          {usingSample && (
-            <div className="flex items-center gap-2">
-              <Badge variant="info">{DECODE.sampleBadge}</Badge>
-              <Button type="button" variant="link" size="sm" onClick={handleClear}>
-                {DECODE.clearButton}
+            {usingSample && (
+              <div className="flex items-center gap-2">
+                <Badge variant="info">{DECODE.sampleBadge}</Badge>
+                <Button type="button" variant="link" size="sm" onClick={handleClear}>
+                  {DECODE.clearButton}
+                </Button>
+              </div>
+            )}
+
+            {showHint && (
+              <Alert variant="info">
+                <AlertTitle>{DECODE.noticeLikenessTitle}</AlertTitle>
+                <AlertDescription>{likeness.hint}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex items-center gap-3">
+              <Button type="submit" size="lg" disabled={status === "loading" || !canSubmit}>
+                {status === "loading" && <RefreshCw className="animate-spin" />}
+                {DECODE.submitButton}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleSample}
+                disabled={status === "loading"}
+              >
+                {DECODE.sampleButton}
               </Button>
             </div>
-          )}
-
-          {showHint && (
-            <Alert variant="info">
-              <AlertTitle>{DECODE.noticeLikenessTitle}</AlertTitle>
-              <AlertDescription>{likeness.hint}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="flex items-center gap-3">
-            <Button type="submit" size="lg" disabled={status === "loading" || !canSubmit}>
-              {status === "loading" && <RefreshCw className="animate-spin" />}
-              {DECODE.submitButton}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleSample}
-              disabled={status === "loading"}
-            >
-              {DECODE.sampleButton}
-            </Button>
-          </div>
-        </form>
-      </Card>
+          </form>
+        </Card>
+      )}
 
       {main}
+
+      {status === "result" && (
+        <Button type="button" variant="outline" onClick={handleReset} className="self-start">
+          {DECODE.decodeAnotherButton}
+        </Button>
+      )}
     </div>
   );
 }
