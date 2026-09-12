@@ -264,7 +264,7 @@ function ResultView({
         show: { opacity: 1, transition: { staggerChildren: STAGGER } },
       }}
     >
-      <JourneyProgress stage="decode" />
+      <JourneyProgress stage="decode" kind={result.kind} />
 
       <div className={hasAnnotations ? "grid items-start gap-4 lg:grid-cols-[1.6fr_1fr]" : ""}>
         <Card className="p-6">

@@ -540,7 +540,7 @@ export function InterviewFlow({
   if (complete) {
     return (
       <div className="space-y-4">
-        <JourneyProgress stage="build" />
+        <JourneyProgress stage="build" kind={kind} />
         <Card className="border-success/40 bg-success/5">
           <CardContent className="pt-5">
             <div className="flex items-start gap-3">
@@ -634,7 +634,7 @@ export function InterviewFlow({
         </DialogContent>
       </Dialog>
 
-      <JourneyProgress stage="build" className="mb-2" />
+      <JourneyProgress stage="build" kind={kind} className="mb-2" />
 
       {kind && !guidanceDismissed && step.id === "intake_root_cause" && (
         <div className="mb-4 rounded-lg border border-border bg-surface-2 p-4">

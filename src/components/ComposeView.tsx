@@ -250,7 +250,7 @@ function ComposeInner({ vault }: { vault: Vault }) {
 
   return (
     <div className="space-y-4">
-      <JourneyProgress stage="draft" />
+      <JourneyProgress stage="draft" kind={caseFile.kind} />
 
       <Alert variant="info">
         <div>
