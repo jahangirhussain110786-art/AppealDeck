@@ -302,36 +302,6 @@ function ResultView({
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{DECODE.result.whatToDoTitle}</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-md border border-border/70 bg-surface-2 p-4">
-                <p className="text-eyebrow uppercase text-success">{DECODE.result.doNow}</p>
-                <ul className="mt-2 space-y-1.5">
-                  {guidance.triage.doNow.map((d, i) => (
-                    <li key={`now-${i}`} className="flex gap-2 text-sm text-foreground">
-                      <Check className="mt-0.5 size-4 shrink-0 text-success" />
-                      {d}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-md border border-border/70 bg-surface-2 p-4">
-                <p className="text-eyebrow uppercase text-warning">{DECODE.result.doNot}</p>
-                <ul className="mt-2 space-y-1.5">
-                  {guidance.triage.doNot.map((d, i) => (
-                    <li key={`not-${i}`} className="flex gap-2 text-sm text-foreground">
-                      <Ban className="mt-0.5 size-4 shrink-0 text-warning" />
-                      {d}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-
           <CtaAfterResult result={result} guidance={guidance} />
         </div>
 
@@ -352,6 +322,36 @@ function ResultView({
           </div>
         )}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{DECODE.result.whatToDoTitle}</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-md border border-border/70 bg-surface-2 p-4">
+            <p className="text-eyebrow uppercase text-success">{DECODE.result.doNow}</p>
+            <ul className="mt-2 space-y-1.5">
+              {guidance.triage.doNow.map((d, i) => (
+                <li key={`now-${i}`} className="flex gap-2 text-sm text-foreground">
+                  <Check className="mt-0.5 size-4 shrink-0 text-success" />
+                  {d}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-md border border-border/70 bg-surface-2 p-4">
+            <p className="text-eyebrow uppercase text-warning">{DECODE.result.doNot}</p>
+            <ul className="mt-2 space-y-1.5">
+              {guidance.triage.doNot.map((d, i) => (
+                <li key={`not-${i}`} className="flex gap-2 text-sm text-foreground">
+                  <Ban className="mt-0.5 size-4 shrink-0 text-warning" />
+                  {d}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
 
       <CasePreview kind={result.kind} />
       <Button asChild size="lg">
