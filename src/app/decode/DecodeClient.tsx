@@ -137,7 +137,7 @@ export default function DecodeClient() {
             {DECODE.pageDescription}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-3">
           <LocalFirstBadge className="hidden sm:inline-flex" />
           {status === "result" && (
             <Button type="button" variant="outline" size="sm" onClick={handleReset}>
