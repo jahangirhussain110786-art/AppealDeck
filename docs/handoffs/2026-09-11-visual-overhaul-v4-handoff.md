@@ -29,16 +29,24 @@ Across several iterations this session (fixing copy/data accuracy errors, adding
 > *"if you want to enhance and improve these further you can do from the sites you are inspired, while also considering our brand's authenticity, quality, premium feel, and everything professionally and perfectly."*
 
 **Approved reference artifact (published, view/export only — does not persist mockup edits across sessions, treat as a snapshot):**
-https://claude.ai/code/artifact/020b42eb-325e-412d-a378-8838d1917a1e
+~~https://claude.ai/code/artifact/020b42eb-325e-412d-a378-8838d1917a1e~~ — **dead 12 Sep 2026** (returns "not found" — likely tied to the authoring session's own account/context, not this repo). Superseded by the republished canvas below, which now includes a fifth artboard.
+
+**Republished reference artifact (12 Sep 2026, adds the Login artboard + a typography sweep):**
+https://claude.ai/code/artifact/a1305de4-04bf-4dc4-a2f6-658cd62c1337
 
 **Approved mockup source, copied into this repo so a fresh session has it without depending on this session's temp scratchpad** (the scratchpad directory a Claude session uses does *not* survive to a new session — copying these in was necessary, not optional):
 - [docs/handoffs/2026-09-11-visual-direction-v2-mockup/Main.dc.html](2026-09-11-visual-direction-v2-mockup/Main.dc.html) — home hero + "how it works"
 - [docs/handoffs/2026-09-11-visual-direction-v2-mockup/Interview.dc.html](2026-09-11-visual-direction-v2-mockup/Interview.dc.html) — split-screen guided interview
 - [docs/handoffs/2026-09-11-visual-direction-v2-mockup/Decode.dc.html](2026-09-11-visual-direction-v2-mockup/Decode.dc.html) — annotated decode result
 - [docs/handoffs/2026-09-11-visual-direction-v2-mockup/Vault.dc.html](2026-09-11-visual-direction-v2-mockup/Vault.dc.html) — obsidian vault surface
+- [docs/handoffs/2026-09-11-visual-direction-v2-mockup/Login.dc.html](2026-09-11-visual-direction-v2-mockup/Login.dc.html) — **added 12 Sep 2026**: sign-in split-screen, right panel a framed product-preview mock (labelled sample data, not a real screenshot — see §2.8)
 - [docs/handoffs/2026-09-11-visual-direction-v2-mockup/canvas.json](2026-09-11-visual-direction-v2-mockup/canvas.json) — layout manifest for re-seeding the canvas if further mockup edits are wanted
 
 Each `.dc.html` is a plain static HTML file (view it directly in any browser) — open it to see the exact approved markup, not just this document's description of it.
+
+### 12 Sep 2026 addendum — real screenshots + typography, answered in chat
+
+The founder asked two things directly: (1) should product screenshots be used the way Apollo/Linear/Stripe use them (e.g. on the login page), and (2) should font sizing/hierarchy get explicit attention across the whole app. Both were answered and acted on in this pass — see §2.8 and §2.9 below for what changed and why. Net effect: a new Login artboard, and an eyebrow-label/button type-scale sweep across all five screens (three different eyebrow sizes found — 12px/12.5px/11.5px with two different letter-spacings — unified to one).
 
 **Important limitation to disclose to the founder before implementation starts:** live site-browsing (Linear, Stripe, Ironclad, etc.) was blocked for most of this session, so the later refinement rounds (font choice, consistency fixes) were reasoned from earlier-session observations and first-party design judgment, not fresh live inspection. If a fresh session has working browser access, it is worth a quick re-look at the inspiration sites before finalizing font/spacing choices below — nothing here is so locked that a small justified adjustment should be blocked.
 
@@ -88,6 +96,37 @@ This session explicitly rejected the founder-shared Gemini stock-photo/Unsplash 
 - **Guided interview** (`Interview.dc.html`): a three-column split — a narrow step-rail (numbered circles + connecting lines, current step highlighted) — the question itself (radio-cards, save & exit / continue footer) — a "Why we ask" context panel with an example-answer card and a "never sent to Amazon" privacy note. This is a real layout change to `InterviewFlow.tsx`, which today does not have the step-rail or the right-column context panel.
 - **Decode result** (`Decode.dc.html`): two-column — the decoded notice text with inline `hl-risk`/`hl-clear` highlighted spans — floating annotation cards on the right explaining specific highlighted phrases, each tagged clear/risky, ending in a "Start your Plan of Action" CTA. This is new relative to the real `/decode` page's current single-column result card.
 - **Vault** (`Vault.dc.html`): the app header stays on the light theme (deliberate contrast), but the vault content area itself renders as a permanently dark "obsidian" surface (`#090C0B` gradient, mint accents) **regardless of the site-wide light/dark toggle**. **This is a real architectural decision the founder should explicitly confirm before implementation**: does `/vault` deliberately override the user's light/dark preference (mockup's choice — vault-as-a-distinct-space metaphor), or should it respect `next-themes`/the `.dark` class like the rest of the app? Flag this clearly; don't build it silently either way.
+
+### 2.8 Real screenshots vs. custom illustrations — not a contradiction
+
+§2.6 rejected **stock photography** (generic desk/laptop/handshake images) as filler that reads as "AI-slop" on a precision/honesty product. Real **screenshots of AppealDeck's own interface** are a different category — evidence, not decoration — and fit this product's positioning better than illustration would, the same way Linear/Stripe/Apollo/1Password use their own UI as marketing material. Decided 12 Sep 2026: use them, at concrete product moments, alongside (not instead of) the illustration library from §2.6:
+
+- **Login/signup split screen** — one side auth, the other a framed view of the product. `Login.dc.html` (new artboard) builds this now.
+- **Home hero** — once the home page is rebuilt (Task V3), the "decoded notice artifact panel" is a strong candidate to become a real framed screenshot instead of the current hand-styled illustration-panel.
+- Illustrations (shield-check, vault-door, magnifier) stay illustration — those are abstract concepts with no screen to show.
+
+**The sequencing catch:** the real app doesn't carry this visual language yet (V1–V8 haven't been built), so there is nothing genuine to screenshot today — capturing the *current* UI would just reimport the look this pass is replacing. `Login.dc.html` therefore uses a **labelled sample-data preview** inside a browser-chrome frame (traffic-light dots, a fake URL bar, the same deadline-row/do-now components already designed for `Main.dc.html`), with an explicit caption ("A preview with sample data — your dashboard, once signed in, shows your own case") rather than presenting mock content as if it were real. **Task for the overhaul (folds into V3/V6):** once the home page and dashboard are actually rebuilt in code, capture genuine screenshots of those pages and swap them into the framed panel — the frame/chrome treatment from `Login.dc.html` is the pattern to reuse, not the sample content inside it.
+
+### 2.9 Typography — a real drift, now reconciled
+
+Checked directly against `Main.dc.html` on 12 Sep 2026: every heading/label was a raw inline `font-size` with no named scale, and several near-duplicate values had drifted apart with no visual reason (eyebrow-style uppercase micro-labels alone used 12px/0.08em tracking in one place, 12px/0.06em in another, and 11.5px/0.06em in a third — same semantic role, three different renderings). The same audit across `Interview.dc.html`, `Decode.dc.html`, `Vault.dc.html` found the identical pattern (13px vs 13.5px body copy, 12px vs 12.5px captions, a header logo/wordmark sized differently on `Vault.dc.html` than the identical header on `Main.dc.html`).
+
+**Fixed in the mockup source (12 Sep 2026), one named scale across all five artboards:**
+
+```
+Display 53/1.1/800        — hero H1 only
+H1      40/1.15/800       — the Interview question headline
+H2      28/1.2/700        — section headers ("How it works")
+H3      20/1.3/700        — (reserved — no current use)
+H4      16/1.4/700        — card titles
+Body-lg 17.5/1.62/440     — hero subline
+Body    15/1.5/500-600    — nav links, .btn label text
+Body-sm 13.5/1.55/400-600 — card copy, deadline rows, annotation body text
+Caption 12.5/1.4/600      — pills, muted meta-text (sentence case)
+Eyebrow 11.5/1.3/700, uppercase, 0.06em tracking — every micro-label, no exceptions
+```
+
+`.pill-sm`'s 11px (§2.4) is a deliberate different value for a different component, not eyebrow drift — left unchanged. Each `.dc.html`'s `<style>` block now opens with a one-line comment recording this scale, so it doesn't drift again as the mockup is edited further. **Task for the overhaul:** carry the same discipline into `globals.css`'s fluid type tokens (Task V1) and treat any inline pixel value outside the named scale, in the real app, the same way the AA-31/sweep-pass convention already treats a duplicated color or radius — a bug, not a style choice.
 
 ---
 

@@ -17,6 +17,7 @@ Baseline: commit `1e4dd05` (visual overhaul v4 handoff committed + session-start
 - [ ] V1: Tokens — color reconciliation (FOUNDER-GATED if warm-neutral chosen), radius, accent font (Newsreader)
 - [ ] V2: Primitives — Badge size variant, aurora/dot-grid background utility, illustrations library
 - [ ] V3: Home page rebuild against `Main.dc.html`
+- [ ] V3b: Auth pages (login/signup) rebuild against `Login.dc.html` — **added 12 Sep 2026**
 - [ ] V4: Guided interview layout rebuild (step-rail + context panel)
 - [ ] V5: Decode result layout rebuild (annotation cards)
 - [ ] V6: Vault surface rebuild (FOUNDER-GATED — vault theme override decision must be confirmed)
@@ -54,6 +55,7 @@ These are the real token architecture files the overhaul builds on (all verified
 - `src/components/InterviewFlow.tsx` — the interview engine UI (V4 target).
 - `src/app/decode/page.tsx` — decode result page (V5 target).
 - `src/app/(app)/vault/page.tsx` — vault entry (V6 target).
+- `src/app/(app)/login/page.tsx`, `src/app/(app)/signup/page.tsx` — auth entry points (V3b target).
 - `src/components/VaultView.tsx` — vault UI (V6 target).
 
 ---
@@ -235,6 +237,31 @@ npm run build                                            → 33 routes
 ```
 
 Commit: `feat(AM-22/v3): rebuild home page against approved Main.dc.html mockup`
+
+---
+
+### V3b — Auth pages (login/signup) rebuild against `Login.dc.html`
+
+**Why.** Founder direction 12 Sep 2026: use real product imagery the way Apollo/Linear/Stripe do — the auth split-screen is the clearest, lowest-risk place to start (§2.8 of the handoff). The mockup's right panel is a **labelled sample-data preview**, not a real screenshot, since the real dashboard doesn't carry this visual language yet — keep that honesty framing in the real page too (this is a real user's real sign-in page; do not imply the preview is their own data).
+
+**Do.**
+
+1. Open `docs/handoffs/2026-09-11-visual-direction-v2-mockup/Login.dc.html` and read the exact approved markup.
+2. Rebuild `src/app/(app)/login/page.tsx` (and `.../signup/page.tsx` analogously — same split-screen shell, signup-specific fields) as a split-screen: left the real auth form (email/password via `PasswordInput`, Google, magic link — unchanged from current behavior, this is presentation only), right a framed browser-chrome panel showing a stylized preview of the dashboard using the same components the real dashboard renders (deadline rows, do-now item) fed with clearly-fixture, non-real data.
+3. Caption the preview honestly, e.g. "A preview with sample data — your dashboard, once signed in, shows your own case" (or `src/content/app.ts` copy to the same effect) — this is a D6 requirement, not decoration: never let the frame imply it shows the viewer's real case.
+4. This is presentation-only — the actual auth logic (NextAuth/Supabase calls, `?next=` handling, the AM-21 access ladder) must not change.
+5. Run gates.
+
+**Accept.**
+
+```
+grep -n "PasswordInput" src/app/(app)/login/page.tsx        → ≥ 1 hit (real component, unchanged)
+grep -n "sample data" src/app/(app)/login/page.tsx           → ≥ 1 hit (honesty caption present)
+npm run lint:copy                                            → PASS
+npm run build                                                → 33 routes
+```
+
+Commit: `feat(AM-22/v3b): rebuild login/signup as a split-screen with a labelled sample-data preview panel per Login.dc.html`
 
 ---
 
@@ -445,6 +472,7 @@ npm run lighthouse     → perf ≥ 0.9, a11y 1.0, bp ≥ 0.95, seo ≥ 0.95
 | Interview entry             | `src/app/(app)/case/page.tsx`                                   |
 | Interview flow UI           | `src/components/InterviewFlow.tsx`                              |
 | Vault page                  | `src/app/(app)/vault/page.tsx`                                  |
+| Login / signup pages        | `src/app/(app)/login/page.tsx`, `src/app/(app)/signup/page.tsx` |
 | Vault view                  | `src/components/VaultView.tsx`                                  |
 | Interview engine (behavior) | `src/core/interviewEngine.ts`                                   |
 | Deadline model              | `src/core/deadlinesModel.ts`                                    |

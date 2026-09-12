@@ -11,6 +11,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
   <style>
+    /* Type scale v2 (reconciled 12 Sep, shared with Main/Interview) — Eyebrow labels
+       are always 11.5/700/uppercase/0.06em tracking. .pill-sm's 11px is its own
+       deliberate approved value (handoff SS2.4), not eyebrow drift — left as-is. */
     * { box-sizing: border-box; }
     body { margin: 0; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; background: #FBFBFA; color: #14201C; }
     .accent { font-family: 'Newsreader', Georgia, serif; font-style: italic; font-weight: 500; }
@@ -19,7 +22,7 @@
     .pill-sm { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
     .hl-risk { background: rgba(217,164,6,0.22); border-bottom: 2px solid rgba(180,130,0,0.55); padding: 1px 2px; border-radius: 3px; position: relative; cursor: help; }
     .hl-clear { background: rgba(28,125,94,0.16); border-bottom: 2px solid rgba(28,125,94,0.5); padding: 1px 2px; border-radius: 3px; }
-    .btn-primary { display: inline-flex; align-items: center; gap: 8px; border-radius: 13px; font-weight: 600; font-size: 14.5px; padding: 12px 20px; border: none; cursor: pointer; background: linear-gradient(180deg, #229070 0%, #1C7D5E 100%); color: #fff; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; border-radius: 13px; font-weight: 600; font-size: 15px; padding: 13px 22px; border: none; cursor: pointer; background: linear-gradient(180deg, #229070 0%, #1C7D5E 100%); color: #fff; }
   </style>
 </helmet>
 
@@ -79,14 +82,14 @@
       <line x1="43.5" y1="41.5" x2="50" y2="48" stroke="url(#lensGrad)" stroke-width="3" stroke-linecap="round"/>
     </svg>
 
-    <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: #7A867F; margin-bottom: -4px;">What this means</div>
+    <div style="font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #7A867F; margin-bottom: -4px;">What this means</div>
 
     <div class="card" style="padding: 18px; border-left: 3px solid #D9A406;">
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A6300" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
         <span style="font-size: 13.5px; font-weight: 700; color: #14201C;">"claims we could not verify"</span>
       </div>
-      <p style="font-size: 13px; line-height: 1.55; color: #4B5A54; margin: 0;">Amazon doesn't say which claims. Name every specific product-condition claim on the flagged listings, not a general statement.</p>
+      <p style="font-size: 13.5px; line-height: 1.55; color: #4B5A54; margin: 0;">Amazon doesn't say which claims. Name every specific product-condition claim on the flagged listings, not a general statement.</p>
     </div>
 
     <div class="card" style="padding: 18px; border-left: 3px solid #1C7D5E; background: rgba(28,125,94,0.03);">
@@ -94,7 +97,7 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1C7D5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         <span style="font-size: 13.5px; font-weight: 700; color: #14201C;">"90 days" — this notice's own window</span>
       </div>
-      <p style="font-size: 13px; line-height: 1.55; color: #4B5A54; margin: 0;">This notice states its own window plainly. Other notices state different windows — always use the one written on the notice in front of you, not this one, and confirm it in your Account Health dashboard.</p>
+      <p style="font-size: 13.5px; line-height: 1.55; color: #4B5A54; margin: 0;">This notice states its own window plainly. Other notices state different windows — always use the one written on the notice in front of you, not this one, and confirm it in your Account Health dashboard.</p>
     </div>
 
     <div class="card" style="padding: 18px; border-left: 3px solid #1C7D5E; background: rgba(28,125,94,0.03);">
@@ -102,7 +105,7 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1C7D5E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         <span style="font-size: 13.5px; font-weight: 700; color: #14201C;">This part is clear</span>
       </div>
-      <p style="font-size: 13px; line-height: 1.55; color: #4B5A54; margin: 0;">Amazon states exactly what the Plan of Action needs: root cause, corrective actions, and preventive measures. Structure your draft around these three headings.</p>
+      <p style="font-size: 13.5px; line-height: 1.55; color: #4B5A54; margin: 0;">Amazon states exactly what the Plan of Action needs: root cause, corrective actions, and preventive measures. Structure your draft around these three headings.</p>
     </div>
 
     <button class="btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;">
