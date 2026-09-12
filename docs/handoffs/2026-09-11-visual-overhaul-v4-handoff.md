@@ -128,6 +128,15 @@ Eyebrow 11.5/1.3/700, uppercase, 0.06em tracking — every micro-label, no excep
 
 `.pill-sm`'s 11px (§2.4) is a deliberate different value for a different component, not eyebrow drift — left unchanged. Each `.dc.html`'s `<style>` block now opens with a one-line comment recording this scale, so it doesn't drift again as the mockup is edited further. **Task for the overhaul:** carry the same discipline into `globals.css`'s fluid type tokens (Task V1) and treat any inline pixel value outside the named scale, in the real app, the same way the AA-31/sweep-pass convention already treats a duplicated color or radius — a bug, not a style choice.
 
+**Second pass, same day — font *family* usage, not just size.** Founder asked directly whether font-family usage (Inter/Newsreader/JetBrains Mono together) had actually been checked, not just sizes. It hadn't been checked closely enough the first time — a follow-up audit (grep each file's Google Fonts `<link>` against actual class usage) found three more real defects, all fixed:
+
+- `Main.dc.html` loaded JetBrains Mono via its font `<link>` but never used it anywhere in the markup — a dead font request. Removed the unused family from the import.
+- `Decode.dc.html` loaded Newsreader and defined an unused `.accent` CSS rule, but the screen has no headline moment to carry an accent word (its biggest text is the decoded-notice body copy, not a title) — removed the unused import and rule rather than inventing a headline just to spend the font.
+- The type-scale comment's own **"H1 40/1.15/750" line described a size nothing on any screen actually used** — `Interview.dc.html`'s real page-headline is 32px/800, and the first pass of `Login.dc.html` had independently invented 30px without checking either the comment or Interview's real value. Corrected the documented scale to the real 32px/800/-0.02em and set Login's headline to match Interview's exactly (same role, same screen shape — should never have differed). Vault's own 22px page heading is confirmed as its own deliberately quieter register for the obsidian surface, not a sixth level that needs reconciling to 32.
+- A stray `11px` eyebrow label inside `Login.dc.html`'s own preview-panel content (should have been the standard 11.5px like the other 9 eyebrow instances across all five screens) — introduced when the file was first written, caught on the follow-up pass, fixed.
+
+All nine eyebrow-role labels across all five screens are now byte-identical; every font a screen loads is used on that screen and every headline-role element that should match another (Interview ↔ Login) now does, exactly.
+
 ---
 
 ## 3. Implementation plan for the fresh session (proposed task order)

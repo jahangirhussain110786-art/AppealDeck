@@ -9,14 +9,17 @@
 <helmet>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* Type scale v2 (reconciled 12 Sep, shared with Main/Interview) — Eyebrow labels
        are always 11.5/700/uppercase/0.06em tracking. .pill-sm's 11px is its own
        deliberate approved value (handoff SS2.4), not eyebrow drift — left as-is. */
     * { box-sizing: border-box; }
     body { margin: 0; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; background: #FBFBFA; color: #14201C; }
-    .accent { font-family: 'Newsreader', Georgia, serif; font-style: italic; font-weight: 500; }
+    /* No .accent/Newsreader here (12 Sep fix): this screen has no headline moment
+       to carry one -- its biggest text is the decoded-notice body copy, not a
+       page title. Loading the font unused was dead weight; removed rather than
+       inventing a headline just to spend it. */
     .card { background: #fff; border: 1px solid #EDEDEA; border-radius: 20px; }
     .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; }
     .pill-sm { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
