@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, Fragment } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Ban, Check, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import { JourneyProgress } from "@/components/JourneyProgress";
 import { guidanceFor } from "@/core/guidance";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
-import { buildNoticeAnnotations, segmentNoticeText } from "@/lib/decodeAnnotations";
+import { buildNoticeAnnotations } from "@/lib/decodeAnnotations";
 import { DECODE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { APP } from "@/content/app";
@@ -258,7 +258,6 @@ function ResultView({
     () => buildNoticeAnnotations(text, result.kind, DECODE.annotations),
     [text, result.kind],
   );
-  const segments = useMemo(() => segmentNoticeText(text, annotations), [text, annotations]);
   const hasAnnotations = annotations.length > 0;
 
   return (
@@ -285,33 +284,6 @@ function ResultView({
           </div>
 
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">{guidance.summary}</p>
-
-          {hasAnnotations && (
-            <div className="mt-5 rounded-md border border-border/70 bg-surface-2 p-4">
-              <p className="text-eyebrow uppercase text-muted-foreground">
-                {DECODE.result.annotatedNoticeLabel}
-              </p>
-              <p className="mt-2 whitespace-pre-wrap font-mono text-sm leading-loose text-foreground">
-                {segments.map((seg, i) =>
-                  seg.tag ? (
-                    <mark key={i} className={seg.tag === "risky" ? "hl-risk" : "hl-clear"}>
-                      {seg.text}
-                    </mark>
-                  ) : (
-                    <Fragment key={i}>{seg.text}</Fragment>
-                  ),
-                )}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Badge variant="warning" size="sm">
-                  {DECODE.result.legendRisky}
-                </Badge>
-                <Badge variant="success" size="sm">
-                  {DECODE.result.legendClear}
-                </Badge>
-              </div>
-            </div>
-          )}
 
           <div className="mt-4">
             <DeadlineChipList deadlines={result.deadlines} />

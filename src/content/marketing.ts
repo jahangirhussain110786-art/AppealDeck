@@ -83,10 +83,7 @@ export const DECODE = {
     errorFallback: "Something went wrong.",
     errorNetwork: "Network error. Try again.",
     errorHint: "Paste the full Amazon notice and try again.",
-    annotatedNoticeLabel: "Your notice, annotated",
     whatThisMeans: "What this means",
-    legendRisky: "Vague or risky phrasing",
-    legendClear: "Clear, actionable request",
     startPoaCta: "Start your Plan of Action",
   },
   /**
