@@ -561,6 +561,46 @@ export function DevUiGallery() {
         </div>
       </Section>
 
+      <Section title="AM-22 - Vault surface (light + dark, no obsidian override)">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {[false, true].map((dark) => (
+            <Card
+              key={dark ? "dark" : "light"}
+              className={
+                dark ? "space-y-3 rounded-xl bg-surface-inverse p-6 dark" : "space-y-3 p-6"
+              }
+            >
+              <div className="flex items-center gap-3">
+                <VaultDoorIllustration size={40} />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Your encrypted evidence</p>
+                  <p className="text-xs text-muted-foreground">
+                    Files here are encrypted on your device.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-row border border-border/70 bg-surface-2 p-3">
+                <div className="grid size-9 shrink-0 place-items-center rounded-md bg-surface-1 text-muted-foreground">
+                  <FileText className="size-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-mono text-sm">supplier-invoice_2026.pdf</span>
+                    <Badge variant="outline">Encrypted</Badge>
+                  </div>
+                  <div className="font-mono text-xs tabular-nums text-muted-foreground">
+                    application/pdf · 214 KB
+                  </div>
+                </div>
+              </div>
+              <p className="font-mono text-xs tabular-nums text-muted-foreground">
+                Envelope v2 · AES-GCM 256-bit
+              </p>
+            </Card>
+          ))}
+        </div>
+      </Section>
+
       <Section title="AM-22 - Accent word + badge sizes">
         <Card className="space-y-3 p-6">
           <p className="text-h3 text-foreground">

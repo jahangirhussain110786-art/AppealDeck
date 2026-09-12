@@ -86,6 +86,28 @@ export const DECODE = {
     errorFallback: "Something went wrong.",
     errorNetwork: "Network error. Try again.",
     errorHint: "Paste the full Amazon notice and try again.",
+    annotatedNoticeLabel: "Your notice, annotated",
+    whatThisMeans: "What this means",
+    legendRisky: "Vague or risky phrasing",
+    legendClear: "Clear, actionable request",
+    startPoaCta: "Start your Plan of Action",
+  },
+  /**
+   * Annotation-card body copy (AM-22/V5, per Decode.dc.html) — the heading quotes the
+   * real phrase found in the seller's own pasted notice; this is the fixed explanation
+   * that goes with it. See src/lib/decodeAnnotations.ts.
+   */
+  annotations: {
+    unverifiableClaims:
+      "Amazon doesn't say which claims. Name every specific product-condition claim on the flagged listings in your response, not a general statement.",
+    statedWindow:
+      "This notice states its own appeal window plainly. Other notices state different windows — always use the one written on the notice in front of you, and confirm it in your Account Health dashboard.",
+    legacyWindow:
+      "Appeal windows have changed over time. Confirm the window shown in your Account Health dashboard before relying on the number in this notice.",
+    ambiguousWindow:
+      "This notice doesn't state a fixed number of days. Check the appeal window shown in your Account Health dashboard rather than assuming one.",
+    clearStructure:
+      "Amazon states exactly what the Plan of Action needs: root cause, corrective actions, and preventive measures. Structure your draft around these three headings.",
   },
 } as const;
 

@@ -18,6 +18,7 @@ import {
   X,
   Info,
   KeyRound,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,6 +40,7 @@ import { VAULT_ENVELOPE_VERSION } from "@/core/vault/envelope";
 import type { Vault, VaultListItem } from "@/core/vault/vault";
 import { EvidenceStatusBadge } from "@/components/EvidenceStatusBadge";
 import { EmptyState } from "@/components/EmptyState";
+import { VaultDoorIllustration } from "@/components/illustrations/VaultDoorIllustration";
 import { APP } from "@/content/app";
 import type { EvidenceKind } from "@/core/evidenceModel";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
@@ -489,12 +491,14 @@ export default function VaultView({ userId }: { userId: string }) {
 
           {displayItems.length === 0 ? (
             <Card className="p-6">
-              <CardContent className="pt-0">
-                <EmptyState
-                  icon={FileText}
-                  title={APP.vault.teachingEmpty.title}
-                  description={APP.vault.teachingEmpty.description}
-                />
+              <CardContent className="flex flex-col items-center gap-3 pt-0 text-center">
+                <VaultDoorIllustration size={52} />
+                <p className="text-base font-semibold text-foreground">
+                  {APP.vault.teachingEmpty.title}
+                </p>
+                <p className="max-w-sm text-sm text-muted-foreground">
+                  {APP.vault.teachingEmpty.description}
+                </p>
               </CardContent>
             </Card>
           ) : filteredItems.length === 0 ? (
@@ -535,18 +539,18 @@ export default function VaultView({ userId }: { userId: string }) {
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
                   >
-                    <Card className="flex items-center justify-between gap-3 p-4">
+                    <Card className="flex items-center justify-between gap-3 rounded-row p-4">
                       <div className="flex min-w-0 items-center gap-3">
-                        <div className="grid size-10 shrink-0 place-items-center rounded-md bg-surface-2 text-muted-foreground">
+                        <div className="grid size-9 shrink-0 place-items-center rounded-md bg-surface-2 text-muted-foreground">
                           {mimeTypeToIcon(it.mimeType)}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 truncate text-sm font-medium">
-                            <span>{it.name}</span>
+                            <span className="truncate font-mono">{it.name}</span>
                             {it.evidenceKind && <EvidenceStatusBadge status="present" />}
                             <Badge variant="outline">{APP.vault.encryptedBadge}</Badge>
                           </div>
-                          <div className="text-xs tabular-nums text-muted-foreground">
+                          <div className="font-mono text-xs tabular-nums text-muted-foreground">
                             {it.mimeType} · {formatBytes(it.sizeBytes)} ·{" "}
                             <span data-tn>{formatDateTime(it.createdAt)}</span>
                             {it.evidenceKind
@@ -611,6 +615,10 @@ export default function VaultView({ userId }: { userId: string }) {
           )}
 
           <p className="text-xs text-muted-foreground">{APP.vault.caseRecordsHidden}</p>
+          <p className="flex items-center gap-1.5 font-mono text-xs tabular-nums text-muted-foreground">
+            <Shield className="size-3.5 shrink-0" aria-hidden />
+            {APP.vault.envelopeCaption.replace("{version}", String(VAULT_ENVELOPE_VERSION))}
+          </p>
 
           <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
             <DialogContent>

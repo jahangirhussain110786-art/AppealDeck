@@ -287,6 +287,22 @@
       );
     filter: blur(10px);
   }
+
+  /* Inline notice-annotation highlights (AM-22/V5, per Decode.dc.html) — mark a real
+     phrase from the seller's own pasted text as risky/vague or clear/actionable.
+     Token-first: --warning/--success, not the mockup's literal rgba/hex. */
+  .hl-risk {
+    background: hsl(var(--warning) / 0.18);
+    border-bottom: 2px solid hsl(var(--warning) / 0.55);
+    border-radius: 3px;
+    padding: 0 2px;
+  }
+  .hl-clear {
+    background: hsl(var(--success) / 0.14);
+    border-bottom: 2px solid hsl(var(--success) / 0.5);
+    border-radius: 3px;
+    padding: 0 2px;
+  }
 }
 
 /* --- Reduced motion --- */

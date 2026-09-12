@@ -312,6 +312,8 @@ export const APP = {
       "Files you upload here are encrypted on your device. By default the key is held only in this browser — add a passphrase below if you want one.",
     cryptoDetails:
       "Envelope v{version}, AES-GCM 256-bit, 12-byte IV, optional associated data. Key model: by default, a non-extractable device key generated in this browser wraps a random data key. Choosing a passphrase instead derives the wrapping key with PBKDF2-SHA-256 (310,000 iterations) — either way, the key material never leaves this device. Cloud sync uploads ciphertext only.",
+    envelopeCaption:
+      "Envelope v{version} · AES-GCM 256-bit · PBKDF2-SHA-256, 310,000 iterations · your key never leaves this device",
     teachingEmpty: {
       title: "No evidence yet",
       description:

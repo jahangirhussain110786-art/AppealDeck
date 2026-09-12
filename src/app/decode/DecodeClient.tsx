@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Fragment } from "react";
 import { motion } from "framer-motion";
-import { Ban, Check, ClipboardPaste, RefreshCw } from "lucide-react";
+import { ArrowRight, Ban, Check, ClipboardPaste, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -17,9 +17,11 @@ import { EmptyState } from "@/components/EmptyState";
 import { CopyButton } from "@/components/CopyButton";
 import { OfflineNotice } from "@/components/OfflineNotice";
 import { CasePreview } from "@/components/CasePreview";
+import { AnnotationCard } from "@/components/AnnotationCard";
 import { guidanceFor } from "@/core/guidance";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
+import { buildNoticeAnnotations, segmentNoticeText } from "@/lib/decodeAnnotations";
 import { DECODE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { APP } from "@/content/app";
@@ -45,6 +47,7 @@ export default function DecodeClient() {
   const [text, setText] = useState("");
   const [status, setStatus] = useState<Status>("empty");
   const [result, setResult] = useState<DecodeResponse | null>(null);
+  const [decodedText, setDecodedText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [usingSample, setUsingSample] = useState(false);
 
@@ -59,13 +62,14 @@ export default function DecodeClient() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!text.trim() || text.trim().length < 1) return;
+    const submitted = text.trim();
     setStatus("loading");
     setError(null);
     try {
       const res = await fetch("/api/decode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text.trim() }),
+        body: JSON.stringify({ text: submitted }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -75,6 +79,7 @@ export default function DecodeClient() {
       }
       const data: DecodeResponse = await res.json();
       setResult(data);
+      setDecodedText(submitted);
       setStatus("result");
       trackFunnelEvent(FUNNEL_EVENTS.decodeCompleted, { kind: data.kind });
     } catch {
@@ -101,7 +106,7 @@ export default function DecodeClient() {
 
   let main: React.ReactNode;
   if (status === "result" && result) {
-    main = <ResultView result={result} guidance={guidance!} />;
+    main = <ResultView result={result} guidance={guidance!} text={decodedText} />;
   } else if (status === "loading") {
     main = <LoadingView />;
   } else if (status === "error") {
@@ -233,11 +238,20 @@ function ErrorView({ message, onRetry }: { message: string; onRetry: () => void 
 function ResultView({
   result,
   guidance,
+  text,
 }: {
   result: DecodeResponse;
   guidance: ReturnType<typeof guidanceFor>;
+  text: string;
 }) {
   const severity = result.severityGated ? ("high" as const) : ("low" as const);
+
+  const annotations = useMemo(
+    () => buildNoticeAnnotations(text, result.kind, DECODE.annotations),
+    [text, result.kind],
+  );
+  const segments = useMemo(() => segmentNoticeText(text, annotations), [text, annotations]);
+  const hasAnnotations = annotations.length > 0;
 
   return (
     <motion.div
@@ -249,51 +263,97 @@ function ResultView({
         show: { opacity: 1, transition: { staggerChildren: STAGGER } },
       }}
     >
-      <Card className="p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <SeverityBadge severity={severity} />
-            <CaseStateBadge kind={result.kind} />
-            <h2 className="text-h3 text-foreground">{guidance.title}</h2>
+      <div className={hasAnnotations ? "grid items-start gap-4 lg:grid-cols-[1.6fr_1fr]" : ""}>
+        <Card className="p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <SeverityBadge severity={severity} />
+              <CaseStateBadge kind={result.kind} />
+              <h2 className="text-h3 text-foreground">{guidance.title}</h2>
+            </div>
+            <CopyButton text={guidance.summary} label={DECODE.result.copySummary} />
           </div>
-          <CopyButton text={guidance.summary} label={DECODE.result.copySummary} />
-        </div>
 
-        <p className="mt-4 text-base leading-relaxed text-muted-foreground">{guidance.summary}</p>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">{guidance.summary}</p>
 
-        <div className="mt-4">
-          <DeadlineChipList deadlines={result.deadlines} />
-        </div>
+          {hasAnnotations && (
+            <div className="mt-5 rounded-md border border-border/70 bg-surface-2 p-4">
+              <p className="text-eyebrow uppercase text-muted-foreground">
+                {DECODE.result.annotatedNoticeLabel}
+              </p>
+              <p className="mt-2 whitespace-pre-wrap font-mono text-sm leading-loose text-foreground">
+                {segments.map((seg, i) =>
+                  seg.tag ? (
+                    <mark key={i} className={seg.tag === "risky" ? "hl-risk" : "hl-clear"}>
+                      {seg.text}
+                    </mark>
+                  ) : (
+                    <Fragment key={i}>{seg.text}</Fragment>
+                  ),
+                )}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge variant="warning" size="sm">
+                  {DECODE.result.legendRisky}
+                </Badge>
+                <Badge variant="success" size="sm">
+                  {DECODE.result.legendClear}
+                </Badge>
+              </div>
+            </div>
+          )}
 
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <div className="rounded-md border border-border/70 bg-surface-2 p-4">
-            <p className="text-eyebrow uppercase text-success">{DECODE.result.doNow}</p>
-            <ul className="mt-2 space-y-1.5">
-              {guidance.triage.doNow.map((d, i) => (
-                <li key={`now-${i}`} className="flex gap-2 text-sm text-foreground">
-                  <Check className="mt-0.5 size-4 shrink-0 text-success" />
-                  {d}
-                </li>
-              ))}
-            </ul>
+          <div className="mt-4">
+            <DeadlineChipList deadlines={result.deadlines} />
           </div>
-          <div className="rounded-md border border-border/70 bg-surface-2 p-4">
-            <p className="text-eyebrow uppercase text-warning">{DECODE.result.doNot}</p>
-            <ul className="mt-2 space-y-1.5">
-              {guidance.triage.doNot.map((d, i) => (
-                <li key={`not-${i}`} className="flex gap-2 text-sm text-foreground">
-                  <Ban className="mt-0.5 size-4 shrink-0 text-warning" />
-                  {d}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
 
-        <div className="mt-5">
-          <CtaAfterResult result={result} guidance={guidance} />
-        </div>
-      </Card>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="rounded-md border border-border/70 bg-surface-2 p-4">
+              <p className="text-eyebrow uppercase text-success">{DECODE.result.doNow}</p>
+              <ul className="mt-2 space-y-1.5">
+                {guidance.triage.doNow.map((d, i) => (
+                  <li key={`now-${i}`} className="flex gap-2 text-sm text-foreground">
+                    <Check className="mt-0.5 size-4 shrink-0 text-success" />
+                    {d}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-md border border-border/70 bg-surface-2 p-4">
+              <p className="text-eyebrow uppercase text-warning">{DECODE.result.doNot}</p>
+              <ul className="mt-2 space-y-1.5">
+                {guidance.triage.doNot.map((d, i) => (
+                  <li key={`not-${i}`} className="flex gap-2 text-sm text-foreground">
+                    <Ban className="mt-0.5 size-4 shrink-0 text-warning" />
+                    {d}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <CtaAfterResult result={result} guidance={guidance} />
+          </div>
+        </Card>
+
+        {hasAnnotations && (
+          <div className="flex flex-col gap-4">
+            <p className="text-eyebrow uppercase text-muted-foreground">
+              {DECODE.result.whatThisMeans}
+            </p>
+            {annotations.map((a) => (
+              <AnnotationCard key={a.id} tag={a.tag} heading={a.heading} body={a.body} />
+            ))}
+            <Button size="lg" className="justify-center" asChild>
+              <a href={`/case?kind=${result.kind}`}>
+                {DECODE.result.startPoaCta}
+                <ArrowRight className="size-4" aria-hidden />
+              </a>
+            </Button>
+          </div>
+        )}
+      </div>
 
       <CasePreview kind={result.kind} />
       <Button asChild size="lg">

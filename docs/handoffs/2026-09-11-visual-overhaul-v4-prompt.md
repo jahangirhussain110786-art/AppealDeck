@@ -19,10 +19,10 @@ Baseline: commit `1e4dd05` (visual overhaul v4 handoff committed + session-start
 - [x] V3: Home page rebuild against `Main.dc.html` — **DONE** 12 Sep 2026
 - [x] V3b: Auth pages (login/signup) rebuild against `Login.dc.html` — **DONE** 12 Sep 2026
 - [x] V4: Guided interview layout rebuild (rail + context panel, adapted to 2 columns) — **DONE** 12 Sep 2026
-- [ ] V5: Decode result layout rebuild (annotation cards)
-- [ ] V6: Vault surface rebuild (respects site theme — no override, founder-reversed 12 Sep 2026)
-- [ ] V7: Sweep pass — cross-page consistency check
-- [ ] V8: Gates — full gate run + screenshot set for founder sign-off
+- [x] V5: Decode result layout rebuild (annotation cards) — **DONE** 12 Sep 2026
+- [x] V6: Vault surface rebuild (respects site theme — no override, founder-reversed 12 Sep 2026) — **DONE** 12 Sep 2026
+- [ ] V7: Sweep pass — cross-page consistency check — **not requested this round, deferred, not skipped silently** (see evidence log)
+- [ ] V8: Gates — full gate run + screenshot set for founder sign-off — next
 
 **Scope guard (AM-18, carries over):** presentation, assets, copy, and layout only. No new API routes, no engine changes, no new features. D1–D10 are not reopened. The `07-REFERENCE` directory is edit-gated.
 
@@ -326,7 +326,7 @@ Commit: `feat(AM-22/v5): rebuild decode result with two-column annotation card l
 
 ### V6 — Vault surface rebuild against `Vault.dc.html`
 
-**FOUNDER-GATED decision RESOLVED 12 Sep 2026 (reversed from the handoff's default reading):** the founder explicitly said *"let the vault support the light and dark both variants with the theme and look we just selected for entire webapp"* — `/vault` does **not** get a permanent dark "obsidian" override. It respects `next-themes`/`.dark` exactly like every other page, using the V1-reconciled warm-neutral tokens. `Vault.dc.html`'s obsidian surface was one explored direction, not the shipped behavior — carry over its layout (row list, illustration, mono filenames) and its mint-accent *flavor* as an ordinary `--accent`/`--success`-family tint, not as a hardcoded dark background.
+**FOUNDER-GATED decision RESOLVED 12 Sep 2026 (reversed from the handoff's default reading):** the founder explicitly said _"let the vault support the light and dark both variants with the theme and look we just selected for entire webapp"_ — `/vault` does **not** get a permanent dark "obsidian" override. It respects `next-themes`/`.dark` exactly like every other page, using the V1-reconciled warm-neutral tokens. `Vault.dc.html`'s obsidian surface was one explored direction, not the shipped behavior — carry over its layout (row list, illustration, mono filenames) and its mint-accent _flavor_ as an ordinary `--accent`/`--success`-family tint, not as a hardcoded dark background.
 
 **Do.**
 
@@ -463,7 +463,7 @@ npm run lighthouse     → perf ≥ 0.9, a11y 1.0, bp ≥ 0.95, seo ≥ 0.95
 | Font config                 | `src/lib/fonts.ts`                                              |
 | Badge primitive             | `src/components/ui/badge.tsx`                                   |
 | Input primitive (reference) | `src/components/ui/input.tsx`                                   |
-| Dev UI gallery              | `src/app/dev/ui/DevUiGallery.tsx`                                |
+| Dev UI gallery              | `src/app/dev/ui/DevUiGallery.tsx`                               |
 | Marketing copy              | `src/content/marketing.ts`                                      |
 | App copy                    | `src/content/app.ts`                                            |
 | Home page                   | `src/app/page.tsx`                                              |
