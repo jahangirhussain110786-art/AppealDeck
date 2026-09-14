@@ -197,14 +197,30 @@ export const APP = {
     subtitle:
       "Drafts are generated from your case file. Review, copy, and submit through Seller Central (Amazon's seller dashboard).",
     backButton: "Back to case",
-    gapDraft: {
-      title: "Gap draft",
-      description:
-        "Some required evidence is missing. The composer has named what's missing below. Obtain these items before submitting.",
-    },
     fullDraft: {
       title: "Full draft",
-      description: "All required evidence is present. This is a complete Plan of Action.",
+      description:
+        "All required evidence and narrative are present. This is a complete Plan of Action.",
+    },
+    nextSteps: {
+      title: "Not ready to submit yet",
+      description:
+        "AppealDeck only shows a complete Plan of Action once every part below is in place. Finish these, then return to this page for the full draft.",
+      pillars: {
+        evidence: {
+          title: "Required evidence",
+          complete: "All required evidence is attached.",
+        },
+        rootCause: {
+          title: "Root cause",
+          complete: "Your root-cause narrative has enough detail to draft from.",
+        },
+        preventiveMeasures: {
+          title: "Preventive measures",
+          complete: "Your preventive-measures narrative has enough detail to draft from.",
+        },
+      },
+      fixInInterview: "Continue the interview",
     },
     strength: {
       title: "Draft strength",

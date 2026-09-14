@@ -132,7 +132,14 @@ export type {
   CaseFile,
   InterviewProgress,
 } from "./interviewEngine";
-export { composePoa, critiquePoa, renderPoaText } from "./composer";
+export {
+  composePoa,
+  critiquePoa,
+  renderPoaText,
+  ROOT_CAUSE_GAP_MESSAGE,
+  PREVENTIVE_MEASURES_GAP_MESSAGE,
+  NARRATIVE_GAP_MESSAGE,
+} from "./composer";
 export type { PoaSection, PoaDraft, CriticFinding, CriticResult } from "./composer";
 export type { VaultStatus, VaultListItem, AddDocumentInput } from "./vault/vault";
 export type {

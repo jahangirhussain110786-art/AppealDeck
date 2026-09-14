@@ -64,7 +64,7 @@ export const ROOT_CAUSE_GAP_MESSAGE =
 export const PREVENTIVE_MEASURES_GAP_MESSAGE =
   "No preventive measures were provided. Add the specific changes you have made, or will make, to prevent this issue from recurring.";
 export const NARRATIVE_GAP_MESSAGE =
-  "The root-cause narrative needs more specific detail before this section can be drafted credibly.";
+  "One or both narrative sections (Root Cause, Preventive Measures) need more specific detail before this draft is credible — see those sections above for which one.";
 
 export function composePoa(data: CaseFileData, attemptNumber: number = 1): PoaDraft {
   const mode = composerModeFor(data);

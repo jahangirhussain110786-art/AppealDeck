@@ -169,9 +169,20 @@ export interface ComposerMode {
   gapReason?: "evidence" | "narrative" | "both";
 }
 
+/**
+ * Gates the composer on all three pillars a submittable POA needs: required evidence, a
+ * sufficient root-cause narrative, and a sufficient preventive-measures narrative (founder
+ * direction, 14 Sep 2026: "if any one pillar of the 3 has nothing at all, it should never show
+ * up the structured POA"). Previously this only checked evidence + root cause — a case with
+ * complete evidence and a good root cause but an empty preventive-measures answer was reported
+ * as `"full-draft"` even though `composePoa()`'s Preventive Measures section would render nothing
+ * but a gap message. `gapReason: "narrative"` now covers either narrative field being
+ * insufficient (or both) — the UI names which one specifically via its own checks.
+ */
 export function composerModeFor(data: CaseFileData): ComposerMode {
   const evidenceComplete = isRequiredComplete(data);
-  const narrativeComplete = isNarrativeSufficient(data);
+  const narrativeComplete =
+    isNarrativeSufficient(data) && isNarrativeTextSufficient(data.preventiveMeasures);
   if (evidenceComplete && narrativeComplete) {
     return { mode: "full-draft", reason: "Required evidence and narrative are complete." };
   }
@@ -183,9 +194,9 @@ export function composerModeFor(data: CaseFileData): ComposerMode {
     mode: "gap-draft",
     reason:
       gapReason === "narrative"
-        ? "The root-cause narrative needs more specific detail."
+        ? "The root-cause and/or preventive-measures narrative needs more specific detail."
         : gapReason === "both"
-          ? "Required evidence and the root-cause narrative are incomplete."
+          ? "Required evidence and the narrative sections are incomplete."
           : "Required evidence incomplete — rendering gap draft with action plan.",
     gapReason,
   };

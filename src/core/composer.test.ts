@@ -8,6 +8,8 @@ function makeCase(overrides: Partial<CaseFileData> = {}): CaseFileData {
     kind: "POLICY",
     rootCause:
       "Our listing verification process did not check that the supplier invoice matched the ASIN before inventory was sent to Amazon.",
+    preventiveMeasures:
+      "We added a two-person invoice check and blocked new inventory until the ASIN and supplier details match.",
     evidenceSlots: {},
     actionItems: [],
     ...overrides,
@@ -61,7 +63,7 @@ describe("composePoa", () => {
     expect(draft.mode.gapReason).toBe("narrative");
     expect(draft.sections[0].body).not.toMatch(/\[Describe/);
     expect(draft.sections[0].body).toContain("isn't enough detail");
-    expect(draft.sections[3].body).toContain("root-cause narrative");
+    expect(draft.sections[3].body).toContain("narrative sections");
   });
 
   it("marks complete evidence as a gap when the narrative is thin", () => {
@@ -85,6 +87,20 @@ describe("composePoa", () => {
     );
     expect(draft.mode.mode).toBe("full-draft");
     expect(draft.watermark).toBeUndefined();
+  });
+
+  it("marks mode as gap-draft when preventive measures are missing, even with evidence and root cause complete", () => {
+    const draft = composePoa(
+      makeCase({
+        preventiveMeasures: undefined,
+        evidenceSlots: { metric_export: { present: true } },
+      }),
+    );
+    expect(draft.mode.mode).toBe("gap-draft");
+    expect(draft.mode.gapReason).toBe("narrative");
+    expect(draft.sections[2].heading).toBe("Preventive Measures");
+    expect(draft.sections[2].body).not.toMatch(/\[Describe/);
+    expect(draft.sections[2].body).toContain("No preventive measures were provided");
   });
 
   it("includes gap section for gap draft", () => {

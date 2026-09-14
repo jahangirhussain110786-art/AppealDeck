@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { VaultGate } from "@/components/VaultGate";
 import { JourneyProgress } from "@/components/JourneyProgress";
 import { PoaSection, PoaFindingsList } from "@/components/PoaSection";
+import { NextStepsView } from "@/components/NextStepsView";
 import { BeforeYouSubmitChecklist } from "@/components/BeforeYouSubmitChecklist";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { CopyButton } from "@/components/CopyButton";
@@ -216,7 +217,6 @@ function ComposeInner({ vault }: { vault: Vault }) {
   const { caseFile, result } = phase;
   const { draft, critique } = result;
   const isGapDraft = draft.mode.mode === "gap-draft";
-  const banner = isGapDraft ? APP.compose.gapDraft : APP.compose.fullDraft;
   const mergedSections = draft.sections.map((s, i) => editedSections[i] ?? s.body);
   const fullDraftText = buildClipboardText(
     draft.sections.map((s) => ({ heading: s.heading, body: s.body })),
@@ -252,75 +252,80 @@ function ComposeInner({ vault }: { vault: Vault }) {
     <div className="space-y-4">
       <JourneyProgress stage="draft" kind={caseFile.kind} />
 
-      <Alert variant="info">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <AlertTitle>{banner.title}</AlertTitle>
-            <Badge variant={STRENGTH_VARIANT[strength]} title={strengthCopy.detail}>
-              {APP.compose.strength.title}: {strengthCopy.label}
-            </Badge>
-          </div>
-          <AlertDescription>
-            <p>{isGapDraft ? `${draft.mode.reason} ${banner.description}` : banner.description}</p>
-            <p className="text-xs text-muted-foreground">{APP.compose.strength.note}</p>
-            {draft.watermark && <p className="font-mono text-xs">{draft.watermark}</p>}
-          </AlertDescription>
-        </div>
-      </Alert>
-
       <PoaFindingsList findings={global} />
 
-      {draft.sections.map((section, i) => (
-        <PoaSection
-          key={section.heading}
-          section={section}
-          index={i}
-          findings={bySection[i] ?? []}
-          draftText={mergedSections[i] ?? section.body}
-          onEdit={(idx, text) => setEditedSections((prev) => ({ ...prev, [idx]: text }))}
-          isSellerNarrative={isSellerNarrative(section.heading)}
-          isEdited={editedSections[i] !== undefined && editedSections[i] !== section.body}
-          onRestore={restoreSection}
-        />
-      ))}
+      {isGapDraft ? (
+        <NextStepsView caseFile={caseFile} />
+      ) : (
+        <>
+          <Alert variant="info">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <AlertTitle>{APP.compose.fullDraft.title}</AlertTitle>
+                <Badge variant={STRENGTH_VARIANT[strength]} title={strengthCopy.detail}>
+                  {APP.compose.strength.title}: {strengthCopy.label}
+                </Badge>
+              </div>
+              <AlertDescription>
+                <p>{APP.compose.fullDraft.description}</p>
+                <p className="text-xs text-muted-foreground">{APP.compose.strength.note}</p>
+              </AlertDescription>
+            </div>
+          </Alert>
 
-      <div className="print-only hidden whitespace-pre-wrap font-serif text-sm">
-        <p className="mb-4 font-medium">
-          {APP.compose.print.header.replace("{date}", formatDate(new Date()))}
-        </p>
-        {fullDraftText}
-      </div>
+          {draft.sections.map((section, i) => (
+            <PoaSection
+              key={section.heading}
+              section={section}
+              index={i}
+              findings={bySection[i] ?? []}
+              draftText={mergedSections[i] ?? section.body}
+              onEdit={(idx, text) => setEditedSections((prev) => ({ ...prev, [idx]: text }))}
+              isSellerNarrative={isSellerNarrative(section.heading)}
+              isEdited={editedSections[i] !== undefined && editedSections[i] !== section.body}
+              onRestore={restoreSection}
+            />
+          ))}
 
-      <div className="flex items-center justify-between">
-        <CopyButton text={fullDraftText} label={APP.compose.copyAll} className="gap-2" />
-      </div>
+          <div className="print-only hidden whitespace-pre-wrap font-serif text-sm">
+            <p className="mb-4 font-medium">
+              {APP.compose.print.header.replace("{date}", formatDate(new Date()))}
+            </p>
+            {fullDraftText}
+          </div>
 
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="as-pasted">
-          <AccordionTrigger className="text-sm font-medium">
-            {APP.compose.asPasted.toggle}
-          </AccordionTrigger>
-          <AccordionContent>
-            <pre className="whitespace-pre-wrap font-mono text-sm">{fullDraftText}</pre>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+          <div className="flex items-center justify-between">
+            <CopyButton text={fullDraftText} label={APP.compose.copyAll} className="gap-2" />
+          </div>
 
-      <BeforeYouSubmitChecklist
-        caseFile={caseFile}
-        attemptCount={draft.metadata.attemptNumber - 1}
-        draftText={fullDraftText}
-        allChecked={critique.passed}
-      />
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="as-pasted">
+              <AccordionTrigger className="text-sm font-medium">
+                {APP.compose.asPasted.toggle}
+              </AccordionTrigger>
+              <AccordionContent>
+                <pre className="whitespace-pre-wrap font-mono text-sm">{fullDraftText}</pre>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="border-t border-border pt-4 text-center text-sm text-muted-foreground"
-      >
-        {APP.compose.checklist.submitYourself}
-      </motion.div>
+          <BeforeYouSubmitChecklist
+            caseFile={caseFile}
+            attemptCount={draft.metadata.attemptNumber - 1}
+            draftText={fullDraftText}
+            allChecked={critique.passed}
+          />
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="border-t border-border pt-4 text-center text-sm text-muted-foreground"
+          >
+            {APP.compose.checklist.submitYourself}
+          </motion.div>
+        </>
+      )}
 
       <HonestExpectationsCard
         summary={GLOBAL_EXPECTATIONS.typicalNote}

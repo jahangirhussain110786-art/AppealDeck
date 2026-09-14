@@ -17,6 +17,8 @@ const baseCase = (overrides: Partial<CaseFileData> = {}): CaseFileData => ({
   kind: "POLICY",
   rootCause:
     "Our listing verification process did not check that the supplier invoice matched the ASIN before inventory was sent to Amazon.",
+  preventiveMeasures:
+    "We added a two-person invoice check and blocked new inventory until the ASIN and supplier details match.",
   evidenceSlots: {},
   actionItems: [],
   ...overrides,
@@ -176,6 +178,28 @@ describe("composer mode", () => {
     const mode = composerModeFor(baseCase({ rootCause: "idk" }));
     expect(mode.mode).toBe("gap-draft");
     expect(mode.gapReason).toBe("both");
+  });
+
+  it("gap-draft when preventive measures are missing, even with evidence and root cause complete", () => {
+    const mode = composerModeFor(
+      baseCase({
+        preventiveMeasures: undefined,
+        evidenceSlots: { metric_export: { present: true } },
+      }),
+    );
+    expect(mode.mode).toBe("gap-draft");
+    expect(mode.gapReason).toBe("narrative");
+  });
+
+  it("gap-draft when preventive measures are a low-effort answer", () => {
+    const mode = composerModeFor(
+      baseCase({
+        preventiveMeasures: "n/a",
+        evidenceSlots: { metric_export: { present: true } },
+      }),
+    );
+    expect(mode.mode).toBe("gap-draft");
+    expect(mode.gapReason).toBe("narrative");
   });
 });
 
