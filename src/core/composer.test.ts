@@ -156,6 +156,41 @@ describe("composePoa", () => {
     expect(corrective?.body).toContain("Declined: Supplier refuses");
   });
 
+  it("names every attached evidence item in an Evidence Attached section", () => {
+    const draft = composePoa(
+      makeCase({
+        evidenceSlots: {
+          metric_export: { present: true },
+          sop_document: { present: true },
+          supplier_invoice: { present: false },
+        },
+      }),
+    );
+    const evidenceSection = draft.sections.find((s) => s.heading === "Evidence Attached");
+    expect(evidenceSection).toBeDefined();
+    expect(evidenceSection?.body).toContain("metric export");
+    expect(evidenceSection?.body).toContain("sop document");
+    expect(evidenceSection?.body).not.toContain("supplier invoice");
+  });
+
+  it("omits the Evidence Attached section when nothing is attached yet", () => {
+    const draft = composePoa(makeCase());
+    expect(draft.sections.find((s) => s.heading === "Evidence Attached")).toBeUndefined();
+  });
+
+  it("keeps existing section indices stable — Evidence Attached is appended last", () => {
+    // Regression guard: this section is additive and must never shift Root Cause / Corrective
+    // Actions / Preventive Measures / the gap section out of their existing positions.
+    const draft = composePoa(
+      makeCase({ rootCause: "idk", evidenceSlots: { metric_export: { present: true } } }),
+    );
+    expect(draft.sections[0].heading).toBe("Root Cause");
+    expect(draft.sections[1].heading).toBe("Corrective Actions");
+    expect(draft.sections[2].heading).toBe("Preventive Measures");
+    expect(draft.sections[3].heading).toBe("Evidence Gaps (Action Required)");
+    expect(draft.sections[4].heading).toBe("Evidence Attached");
+  });
+
   it("sets metadata correctly", () => {
     const draft = composePoa(makeCase(), 2);
     expect(draft.metadata.attemptNumber).toBe(2);
@@ -254,7 +289,7 @@ describe("critiquePoa", () => {
       const corrective = draft.sections.find((s) => s.heading === "Corrective Actions")!;
       corrective.body = "We will fix this issue and prevent it from happening again.";
       const result = critiquePoa(draft, data);
-      const finding = result.findings.find((f) => f.code === "FUTURE_TENSE_CORRECTIVE_ACTION");
+      const finding = result.findings.find((f) => f.code === "FUTURE_TENSE_LANGUAGE");
       expect(finding).toBeDefined();
       expect(finding?.severity).toBe("warning");
     });
@@ -265,7 +300,40 @@ describe("critiquePoa", () => {
       const corrective = draft.sections.find((s) => s.heading === "Corrective Actions")!;
       corrective.body = "We removed the affected listing and retrained the QA team on 3 Sep 2026.";
       const result = critiquePoa(draft, data);
-      expect(result.findings.some((f) => f.code === "FUTURE_TENSE_CORRECTIVE_ACTION")).toBe(false);
+      expect(result.findings.some((f) => f.code === "FUTURE_TENSE_LANGUAGE")).toBe(false);
+    });
+
+    // 14 Sep 2026 fix: Corrective Actions is always machine-generated from bracketed status
+    // labels and can never really contain this language — the seller's own narrative sections
+    // are where a broken promise actually shows up, and nothing was checking them before.
+    it("warns on future-tense language in the seller's Root Cause narrative", () => {
+      const data = makeCase({
+        rootCause:
+          "We will investigate the root cause once we have time to review our processes properly.",
+        evidenceSlots: { metric_export: { present: true } },
+      });
+      const draft = composePoa(data);
+      const result = critiquePoa(draft, data);
+      const finding = result.findings.find(
+        (f) => f.code === "FUTURE_TENSE_LANGUAGE" && f.message.startsWith("Root Cause"),
+      );
+      expect(finding).toBeDefined();
+      expect(finding?.severity).toBe("warning");
+    });
+
+    it("warns on future-tense language in the seller's Preventive Measures narrative", () => {
+      const data = makeCase({
+        preventiveMeasures:
+          "We will implement two-person verification going forward for every new shipment.",
+        evidenceSlots: { metric_export: { present: true } },
+      });
+      const draft = composePoa(data);
+      const result = critiquePoa(draft, data);
+      const finding = result.findings.find(
+        (f) => f.code === "FUTURE_TENSE_LANGUAGE" && f.message.startsWith("Preventive Measures"),
+      );
+      expect(finding).toBeDefined();
+      expect(finding?.severity).toBe("warning");
     });
 
     it("warns when Root Cause blames a supplier or employee instead of the seller's own process", () => {
@@ -323,34 +391,16 @@ describe("critiquePoa", () => {
       expect(result.findings.some((f) => f.code === "DOCUMENT_STALE")).toBe(false);
     });
 
-    it("nudges (info-level) when present evidence isn't referenced by name in the draft", () => {
-      const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
-      const draft = composePoa(data);
-      const result = critiquePoa(draft, data);
-      const finding = result.findings.find((f) => f.code === "EVIDENCE_NOT_REFERENCED_BY_NAME");
-      expect(finding).toBeDefined();
-      expect(finding?.severity).toBe("info");
-    });
-
-    it("does not nudge when the evidence kind is already mentioned by name", () => {
-      const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
-      const draft = composePoa(data);
-      draft.sections[0].body = "See the attached metric export for supporting figures.";
-      const result = critiquePoa(draft, data);
-      expect(result.findings.some((f) => f.code === "EVIDENCE_NOT_REFERENCED_BY_NAME")).toBe(false);
-    });
-
     it("none of the new rules ever produce an error-severity finding", () => {
       const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
       const draft = composePoa(data);
       draft.sections[0].body = "The supplier caused this. We recently fixed it and will monitor.";
       const result = critiquePoa(draft, data);
       const newCodes = [
-        "FUTURE_TENSE_CORRECTIVE_ACTION",
+        "FUTURE_TENSE_LANGUAGE",
         "BLAME_SHIFTING_LANGUAGE",
         "VAGUE_TIME_PHRASE",
         "DOCUMENT_STALE",
-        "EVIDENCE_NOT_REFERENCED_BY_NAME",
       ];
       const newFindings = result.findings.filter((f) => newCodes.includes(f.code));
       expect(newFindings.length).toBeGreaterThan(0);

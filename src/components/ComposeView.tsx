@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -30,7 +30,12 @@ import { formatDate } from "@/lib/format";
 import { groupFindingsBySection } from "@/lib/findingSections";
 import { computeDraftStrength } from "@/lib/draftStrength";
 import { buildClipboardText } from "@/lib/poaClipboard";
-import { GLOBAL_EXPECTATIONS, isNarrativeSufficient, isNarrativeTextSufficient } from "@/core";
+import {
+  GLOBAL_EXPECTATIONS,
+  critiquePoa,
+  isNarrativeSufficient,
+  isNarrativeTextSufficient,
+} from "@/core";
 import type { CaseFile, CriticResult, EvidenceKind, PoaDraft } from "@/core";
 import { APP } from "@/content/app";
 import { SHARED } from "@/content/shared";
@@ -194,6 +199,34 @@ function ComposeInner({ vault }: { vault: Vault }) {
     }
   }, [run]);
 
+  // Hooks must run unconditionally on every render, before the phase-based early returns below —
+  // so the live critic recompute lives here, deriving its own null-safe inputs from `phase`
+  // rather than from the narrowed destructuring further down (which only exists once phase.kind
+  // is "ready").
+  const readyDraft = phase.kind === "ready" ? phase.result.draft : null;
+  const readyCaseFile = phase.kind === "ready" ? phase.caseFile : null;
+
+  const mergedSections = useMemo(
+    () => (readyDraft ? readyDraft.sections.map((s, i) => editedSections[i] ?? s.body) : []),
+    [readyDraft, editedSections],
+  );
+
+  // The critic (banned language, future-tense, blame-shifting, vague-time, freshness, severity
+  // gate...) originally only ever ran once, server-side, against the machine-generated draft —
+  // every section below is freely editable, so an edit that introduced a real problem left the
+  // findings panel silent, and an edit that fixed one left a warning showing as unresolved (14
+  // Sep 2026 fix). Recomputed here, live, against exactly what the seller has actually typed.
+  const critique = useMemo(() => {
+    if (!readyDraft || !readyCaseFile) return null;
+    return critiquePoa(
+      {
+        ...readyDraft,
+        sections: readyDraft.sections.map((s, i) => ({ ...s, body: mergedSections[i] ?? s.body })),
+      },
+      readyCaseFile,
+    );
+  }, [readyDraft, readyCaseFile, mergedSections]);
+
   if (phase.kind === "loading") {
     return <ComposeSkeleton />;
   }
@@ -247,16 +280,19 @@ function ComposeInner({ vault }: { vault: Vault }) {
   }
 
   const { caseFile, result, priorityEvidenceKinds } = phase;
-  const { draft, critique } = result;
+  const { draft } = result;
+  // Safe: readyDraft/readyCaseFile/critique were computed from this same "ready" phase above,
+  // in this same render — they cannot be null here.
+  const liveCritique = critique!;
   const isGapDraft = draft.mode.mode === "gap-draft";
-  const mergedSections = draft.sections.map((s, i) => editedSections[i] ?? s.body);
   const fullDraftText = buildClipboardText(
     draft.sections.map((s) => ({ heading: s.heading, body: s.body })),
     editedSections,
   );
-  const { bySection, global } = groupFindingsBySection(critique.findings, draft.sections);
 
-  const strength = computeDraftStrength(draft.mode, critique.findings);
+  const { bySection, global } = groupFindingsBySection(liveCritique.findings, draft.sections);
+
+  const strength = computeDraftStrength(draft.mode, liveCritique.findings);
   const strengthCopy =
     strength === "strong"
       ? { label: APP.compose.strength.strong, detail: APP.compose.strength.strongDetail }
@@ -345,7 +381,7 @@ function ComposeInner({ vault }: { vault: Vault }) {
             caseFile={caseFile}
             attemptCount={draft.metadata.attemptNumber - 1}
             draftText={fullDraftText}
-            allChecked={critique.passed}
+            allChecked={liveCritique.passed}
           />
 
           <motion.div

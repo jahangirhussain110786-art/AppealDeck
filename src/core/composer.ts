@@ -8,6 +8,7 @@ import {
 } from "./readiness";
 import type { CaseFileData, ComposerMode } from "./readiness";
 import { requirementsFor } from "./evidenceModel";
+import type { EvidenceKind } from "./evidenceModel";
 import { defaultDocumentType } from "./readiness";
 
 export interface PoaSection {
@@ -80,6 +81,9 @@ export function composePoa(data: CaseFileData, attemptNumber: number = 1): PoaDr
   if (mode.mode === "gap-draft") {
     sections.push(buildGapSection(data, mode));
   }
+
+  const evidenceAttached = buildEvidenceAttachedSection(data);
+  if (evidenceAttached) sections.push(evidenceAttached);
 
   return {
     docType,
@@ -179,6 +183,26 @@ function buildGapSection(data: CaseFileData, mode: ComposerMode): PoaSection {
   };
 }
 
+/**
+ * Names every attached evidence item by kind, so a reviewer reading the POA text itself knows
+ * what accompanies it — previously nothing did this: the only nod to it was an info-level critic
+ * nudge telling the seller to go type it in themselves (checkUnreferencedEvidence, removed below
+ * now that this section makes it unconditionally satisfied). Returns null when nothing is
+ * attached yet, rather than an empty or placeholder section.
+ */
+function buildEvidenceAttachedSection(data: CaseFileData): PoaSection | null {
+  const presentKinds = (Object.keys(data.evidenceSlots) as EvidenceKind[]).filter(
+    (kind) => data.evidenceSlots[kind]?.present,
+  );
+  if (presentKinds.length === 0) return null;
+
+  const items = presentKinds.map((kind) => `- ${kind.replace(/_/g, " ")}`);
+  return {
+    heading: "Evidence Attached",
+    body: items.join("\n"),
+  };
+}
+
 export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
   const findings: CriticFinding[] = [];
 
@@ -193,11 +217,10 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
   // 07-REFERENCE/02-COMPETITOR-DOSSIER.md §3a: generic language, invented commitments, and
   // blaming people instead of naming a root cause are documented rejection triggers, not
   // hypothetical risks.
-  checkFutureTenseCorrectiveActions(draft, findings);
+  checkFutureTenseLanguage(draft, findings);
   checkBlameShifting(draft, findings);
   checkVagueTimePhrases(draft, findings);
   checkDocumentFreshness(data, findings);
-  checkUnreferencedEvidence(draft, data, findings);
 
   const passed = !findings.some((f) => f.severity === "error");
 
@@ -305,25 +328,36 @@ const FUTURE_TENSE_PATTERNS: ReadonlyArray<RegExp> = [
   /\bfrom\s+now\s+on,?\s+we\s+will\b/i,
 ];
 
+const FUTURE_TENSE_HEADINGS = ["Root Cause", "Corrective Actions", "Preventive Measures"] as const;
+
 /**
- * Corrective actions must describe what was already done, not what will be done — Amazon reads
- * a Plan of Action as a record of completed remediation, and "we will fix this" is exactly the
- * kind of unfulfillable commitment the 2 Sep 2026 competitor recheck's forum evidence names as a
- * documented rejection trigger (see 07-REFERENCE/02-COMPETITOR-DOSSIER.md §3a). Warning only —
- * a seller may have a legitimate reason to describe planned work, e.g. a preventive measure still
- * being rolled out — the critic flags it for a human decision, it never blocks.
+ * A Plan of Action should describe what was already done, not what will be done — "we will fix
+ * this" is exactly the kind of unfulfillable commitment the 2 Sep 2026 competitor recheck's forum
+ * evidence names as a documented rejection trigger (see
+ * 07-REFERENCE/02-COMPETITOR-DOSSIER.md §3a). Warning only — a seller may have a legitimate
+ * reason to describe planned work, e.g. a preventive measure still being rolled out — the critic
+ * flags it for a human decision, it never blocks.
+ *
+ * Originally scoped to Corrective Actions alone (14 Sep 2026 fix: rescoped to every prose
+ * section). That section is always machine-generated from bracketed status labels ([Completed],
+ * [Planned, not yet done], [Declined: reason]) and can never actually contain a sentence like
+ * "we will fix this" through real usage — the check could only ever fire on a section the seller
+ * had manually rewritten into prose. The place this language actually shows up is the seller's
+ * own free-text Root Cause / Preventive Measures narrative — "we will implement two-person
+ * verification going forward" is a completely ordinary, plausible thing to write there, and
+ * nothing was catching it.
  */
-function checkFutureTenseCorrectiveActions(draft: PoaDraft, findings: CriticFinding[]): void {
-  const section = draft.sections.find((s) => s.heading === "Corrective Actions");
-  if (!section) return;
-  const hits = FUTURE_TENSE_PATTERNS.filter((p) => p.test(section.body));
-  if (hits.length > 0) {
-    findings.push({
-      severity: "warning",
-      code: "FUTURE_TENSE_CORRECTIVE_ACTION",
-      message:
-        "Corrective Actions reads as a future promise ('we will…') rather than something already done. Amazon expects completed remediation here — describe what changed, not what's planned.",
-    });
+function checkFutureTenseLanguage(draft: PoaDraft, findings: CriticFinding[]): void {
+  for (const heading of FUTURE_TENSE_HEADINGS) {
+    const section = draft.sections.find((s) => s.heading === heading);
+    if (!section) continue;
+    if (FUTURE_TENSE_PATTERNS.some((p) => p.test(section.body))) {
+      findings.push({
+        severity: "warning",
+        code: "FUTURE_TENSE_LANGUAGE",
+        message: `${heading} reads as a future promise ("we will…") rather than something already done. Amazon expects completed remediation — describe what changed, not what's planned.`,
+      });
+    }
   }
 }
 
@@ -405,35 +439,6 @@ function checkDocumentFreshness(data: CaseFileData, findings: CriticFinding[]): 
         message: `${req.kind.replace(/_/g, " ")} is dated ${ageDays} days ago, older than the ${req.freshnessDays}-day freshness Amazon typically expects. Consider obtaining a more recent document.`,
       });
     }
-  }
-}
-
-/**
- * Nudges the seller to reference present evidence by filename in the draft text — a POA that
- * says "see attached supplier_invoice.pdf" is easier for a reviewer to cross-check than one that
- * mentions evidence only in the abstract. Info-level only; this is a quality suggestion, not a
- * correctness check.
- */
-function checkUnreferencedEvidence(
-  draft: PoaDraft,
-  data: CaseFileData,
-  findings: CriticFinding[],
-): void {
-  const presentKinds = Object.entries(data.evidenceSlots)
-    .filter(([, slot]) => slot?.present)
-    .map(([kind]) => kind);
-  if (presentKinds.length === 0) return;
-  const fullText = draft.sections
-    .map((s) => s.body)
-    .join("\n")
-    .toLowerCase();
-  const unreferenced = presentKinds.filter((kind) => !fullText.includes(kind.replace(/_/g, " ")));
-  if (unreferenced.length > 0) {
-    findings.push({
-      severity: "info",
-      code: "EVIDENCE_NOT_REFERENCED_BY_NAME",
-      message: `${unreferenced.length} attached evidence item(s) aren't mentioned by name in the draft text. Referencing evidence directly (e.g. "see the attached supplier invoice") helps a reviewer cross-check it.`,
-    });
   }
 }
 
