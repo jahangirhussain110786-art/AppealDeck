@@ -104,8 +104,26 @@ ongoing relationship with the user's situation; this manages one transaction.
 
 ## Definition of done (for this planning pass only)
 
-- [ ] Founder has read this spec and either approves the P0 data-layer shape as written, asks for
-      changes, or says which phase (if any) to start.
-- [ ] Once approved: an AM-XX entry appended to `02-BUILD-PLAN-AMENDMENTS.md` and
-      `docs/DECISIONS.md`, and a task-by-task build prompt written (same pattern as every prior
-      spec in this directory) — before any schema code changes, given the real-data risk in §6.
+- [x] Founder has read this spec and approved it directly in chat (14 Sep 2026: "whatever you
+      have found to fix, just fix this, i approve you") rather than asking for changes.
+- [x] **P0 shipped** (commit `e8f9c37`): `CaseFile` carries a real `id`/`createdAt`
+      (`core/interviewEngine.ts`); `caseStore.ts` rewritten around real per-case ids with a case
+      index + active-case pointer, `listCases()`/`getActiveCaseId()` exported read-only; every
+      existing call site's signature is unchanged (no ripple through ComposeView/DashboardClient/
+      VaultView); migration is zero-data-movement — a pre-migration vault's old fixed
+      `"appealdeck-case-1"` id is adopted as that case's permanent id on first read, nothing is
+      moved, deleted, or re-keyed (proven by a test that seeds a literal pre-migration record and
+      asserts it is byte-for-byte untouched). `InterviewFlow.tsx`'s evidence-upload caseId now
+      uses the real active case's id instead of the old constant — a genuine correctness fix the
+      old code needed regardless. Gates: tsc 0 · eslint 0 · lint-copy PASS · format 0 · vitest
+      431/431 · build 33 routes · Playwright chromium 54/54 (including the live signed-out
+      interview + dashboard flow).
+- [ ] **P1 (case-switcher UI) not started.** With exactly one case per seller today (true until a
+      UI exists to start a second one), behavior is unchanged end-to-end — this was P0's explicit
+      goal. Also not yet touched in P1's scope: evidence listing elsewhere
+      (`EvidenceSlotPanel`'s own uploads, `ComposeView`'s `withVaultEvidence`) still reads the
+      whole vault rather than filtering by the active case's id — harmless only because no second
+      case exists anywhere in the UI yet to create the ambiguity; genuinely needed once P1 ships.
+- [ ] AM-XX entry + `docs/DECISIONS.md` entry for this pass, once the founder wants it recorded
+      alongside the other AM amendments (not blocking further work — founder approval already
+      given directly in chat).
