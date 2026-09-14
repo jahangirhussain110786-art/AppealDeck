@@ -4,6 +4,7 @@ import { requirementsFor } from "./evidenceModel";
 import type { EvidenceKind, EvidenceRequirement } from "./evidenceModel";
 import { generateActionItems, isRequiredComplete } from "./readiness";
 import type { ActionItem, ActionAlternative } from "./readiness";
+import type { SerializedDeadline } from "./deadlinesModel";
 
 export type StepKind =
   | "intake_root_cause"
@@ -57,6 +58,15 @@ export interface CaseFile {
   evidenceSlots: Partial<Record<EvidenceKind, { present: boolean; disqualified?: boolean }>>;
   actionItems: ActionItem[];
   attemptCount: number;
+  /**
+   * The deadlines `computeDeadlines()` produced when this case's notice was decoded (14 Sep
+   * 2026 fix) — real due dates, not recomputed. Before this field existed, a case carried no
+   * memory of its decode result at all: `/decode` showed a real countdown, then Dashboard
+   * rendered a permanently-`dueAt: null` stub the instant the case was created. Absent on cases
+   * started without a prior decode, or created before this field existed — callers must degrade
+   * honestly rather than assume it is always present.
+   */
+  deadlines?: SerializedDeadline[];
 }
 
 export interface InterviewProgress {

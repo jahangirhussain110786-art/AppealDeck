@@ -34,7 +34,7 @@ import { OutcomeShareCard } from "@/components/OutcomeShareCard";
 import type { CaseFile } from "@/core/interviewEngine";
 import type { CaseState, CaseStateContext, ReplyCategory } from "@/core/caseState";
 import { CaseStateBadge } from "@/components/CaseStateBadge";
-import { DeadlineChip } from "@/components/DeadlineChip";
+import { DeadlineChip, DeadlineChipList } from "@/components/DeadlineChip";
 import { EmptyState } from "@/components/EmptyState";
 import { VaultGate } from "@/components/VaultGate";
 import { CasePreview } from "@/components/CasePreview";
@@ -526,19 +526,25 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
                   >
                     {APP.dashboard.deadlines.noticeReceived} · {formatDate(noticeDate)}
                   </span>
-                  <DeadlineChip
-                    deadline={{
-                      kind: "appeal_window",
-                      dueAt: null,
-                      label: APP.dashboard.deadlines.appealWindow,
-                    }}
-                  />
+                  {caseFile.deadlines && caseFile.deadlines.length > 0 ? (
+                    <DeadlineChipList deadlines={caseFile.deadlines} />
+                  ) : (
+                    <DeadlineChip
+                      deadline={{
+                        kind: "appeal_window",
+                        dueAt: null,
+                        label: APP.dashboard.deadlines.appealWindow,
+                      }}
+                    />
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  <Link href="/decode" className="underline underline-offset-4">
-                    {APP.dashboard.deadlines.decoderHint}
-                  </Link>
-                </p>
+                {(!caseFile.deadlines || caseFile.deadlines.length === 0) && (
+                  <p className="text-xs text-muted-foreground">
+                    <Link href="/decode" className="underline underline-offset-4">
+                      {APP.dashboard.deadlines.decoderHint}
+                    </Link>
+                  </p>
+                )}
               </div>
             )}
 

@@ -90,3 +90,21 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
 export function isIndefiniteHold(kind: ViolationKind): boolean {
   return kind === "INAUTHENTIC_DOCUMENTS";
 }
+
+/**
+ * JSON-safe shape of `Deadline` for persistence — `Date` does not survive a JSON round trip
+ * (`JSON.stringify`/`parse`, or an API response, turns it into a string or drops it). Anything
+ * written to the vault must use this shape instead. `DeadlineChip`'s own `DeadlineLike` type
+ * already expects exactly this (`dueAt: Date | string | null`), so nothing on the read side
+ * needs to change.
+ */
+export interface SerializedDeadline {
+  kind: DeadlineKind;
+  dueAt: string | null;
+  label: string;
+  isIndefinite?: boolean;
+}
+
+export function serializeDeadlines(deadlines: readonly Deadline[]): SerializedDeadline[] {
+  return deadlines.map((d) => ({ ...d, dueAt: d.dueAt ? d.dueAt.toISOString() : null }));
+}

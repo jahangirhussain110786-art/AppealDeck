@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/format";
 import { getBrowserVault } from "@/lib/vault/browser";
 import { ensureFreshGuestSession } from "@/lib/vault/guestSession";
+import { consumePendingDeadlines } from "@/lib/pendingDeadlines";
 import {
   saveCaseFile,
   loadCaseFile,
@@ -249,6 +250,8 @@ export function InterviewFlow({
     async (selectedKind: ViolationKind) => {
       setShowResumeDialog(false);
       const cf = createCaseFile(selectedKind);
+      const pendingDeadlines = consumePendingDeadlines();
+      if (pendingDeadlines) cf.deadlines = pendingDeadlines;
       const s = nextStep(cf);
       setKind(selectedKind);
       setCaseFile(cf);

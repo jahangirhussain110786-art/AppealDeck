@@ -22,6 +22,7 @@ import { guidanceFor } from "@/core/guidance";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
 import { buildNoticeAnnotations } from "@/lib/decodeAnnotations";
+import { stashPendingDeadlines } from "@/lib/pendingDeadlines";
 import { DECODE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { APP } from "@/content/app";
@@ -312,7 +313,10 @@ function ResultView({
               <AnnotationCard key={a.id} tag={a.tag} heading={a.heading} body={a.body} />
             ))}
             <Button size="lg" className="justify-center" asChild>
-              <a href={`/case?kind=${result.kind}`}>
+              <a
+                href={`/case?kind=${result.kind}`}
+                onClick={() => stashPendingDeadlines(result.deadlines)}
+              >
                 {DECODE.result.startPoaCta}
                 <ArrowRight className="size-4" aria-hidden />
               </a>
@@ -353,7 +357,12 @@ function ResultView({
 
       <CasePreview kind={result.kind} />
       <Button asChild size="lg">
-        <a href={`/case?kind=${result.kind}`}>{APP.access.casePreview.startCta}</a>
+        <a
+          href={`/case?kind=${result.kind}`}
+          onClick={() => stashPendingDeadlines(result.deadlines)}
+        >
+          {APP.access.casePreview.startCta}
+        </a>
       </Button>
     </motion.div>
   );
