@@ -13,7 +13,7 @@ import {
   ROOT_CAUSE_GAP_MESSAGE,
   PREVENTIVE_MEASURES_GAP_MESSAGE,
 } from "@/core";
-import type { CaseFile } from "@/core";
+import type { CaseFile, EvidenceKind } from "@/core";
 import { APP } from "@/content/app";
 
 /**
@@ -25,7 +25,15 @@ import { APP } from "@/content/app";
  * it: no Copy button, no print view, no "before you submit" checklist — none of those make sense
  * for something that isn't a draft yet.
  */
-export function NextStepsView({ caseFile }: { caseFile: CaseFile }) {
+export function NextStepsView({
+  caseFile,
+  priorityEvidenceKinds = [],
+}: {
+  caseFile: CaseFile;
+  /** Evidence Amazon's reply specifically asked for (CaseLog.lastReply.extractedAsks), so the
+   * evidence pillar can surface it first instead of only ever repeating the original checklist. */
+  priorityEvidenceKinds?: EvidenceKind[];
+}) {
   const copy = APP.compose.nextSteps;
   const readiness = computeReadiness(caseFile);
   const evidenceDone = readiness.missing.length === 0 && readiness.disqualifiedPresent.length === 0;
@@ -53,7 +61,7 @@ export function NextStepsView({ caseFile }: { caseFile: CaseFile }) {
           {evidenceDone ? (
             <p className="text-sm text-muted-foreground">{copy.pillars.evidence.complete}</p>
           ) : (
-            <EvidenceSlotPanel kind={caseFile.kind} />
+            <EvidenceSlotPanel kind={caseFile.kind} priorityKinds={priorityEvidenceKinds} />
           )}
         </CardContent>
       </Card>

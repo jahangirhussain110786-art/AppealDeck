@@ -51,7 +51,13 @@ type Phase =
   | { kind: "loading" }
   | { kind: "empty" }
   | { kind: "error"; reason: "generic" | "device_cap"; message: string }
-  | { kind: "ready"; caseFile: CaseFile; result: ComposeResult };
+  | {
+      kind: "ready";
+      caseFile: CaseFile;
+      result: ComposeResult;
+      /** Evidence Amazon's reply specifically asked for (CaseLog.lastReply.extractedAsks). */
+      priorityEvidenceKinds: EvidenceKind[];
+    };
 
 /** Upper bound the compose API accepts for attemptNumber. */
 const MAX_ATTEMPT_NUMBER = 99;
@@ -110,7 +116,8 @@ function ComposeInner({ vault }: { vault: Vault }) {
       if (!cancelled) update(next);
     };
 
-    let loaded: { file: CaseFile; priorAttempts: number } | undefined;
+    let loaded:
+      { file: CaseFile; priorAttempts: number; priorityEvidenceKinds: EvidenceKind[] } | undefined;
     try {
       const file = await loadCaseFile(vault);
       if (!file) {
@@ -118,7 +125,11 @@ function ComposeInner({ vault }: { vault: Vault }) {
         return;
       }
       const log = await loadCaseLog(vault);
-      loaded = { file, priorAttempts: log?.attemptCount ?? file.attemptCount };
+      loaded = {
+        file,
+        priorAttempts: log?.attemptCount ?? file.attemptCount,
+        priorityEvidenceKinds: log?.lastReply?.extractedAsks ?? [],
+      };
     } catch (e) {
       safeUpdate({ kind: "error", reason: "generic", message: errorMessage(e) });
       return;
@@ -155,7 +166,12 @@ function ComposeInner({ vault }: { vault: Vault }) {
         return;
       }
       const result = (await res.json()) as ComposeResult;
-      safeUpdate({ kind: "ready", caseFile: caseData, result });
+      safeUpdate({
+        kind: "ready",
+        caseFile: caseData,
+        result,
+        priorityEvidenceKinds: loaded.priorityEvidenceKinds,
+      });
     } catch (e) {
       safeUpdate({ kind: "error", reason: "generic", message: errorMessage(e) });
     }
@@ -214,7 +230,7 @@ function ComposeInner({ vault }: { vault: Vault }) {
     );
   }
 
-  const { caseFile, result } = phase;
+  const { caseFile, result, priorityEvidenceKinds } = phase;
   const { draft, critique } = result;
   const isGapDraft = draft.mode.mode === "gap-draft";
   const mergedSections = draft.sections.map((s, i) => editedSections[i] ?? s.body);
@@ -255,7 +271,7 @@ function ComposeInner({ vault }: { vault: Vault }) {
       <PoaFindingsList findings={global} />
 
       {isGapDraft ? (
-        <NextStepsView caseFile={caseFile} />
+        <NextStepsView caseFile={caseFile} priorityEvidenceKinds={priorityEvidenceKinds} />
       ) : (
         <>
           <Alert variant="info">

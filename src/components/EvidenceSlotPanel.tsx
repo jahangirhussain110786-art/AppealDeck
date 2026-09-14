@@ -1,13 +1,22 @@
 "use client";
 
 import * as React from "react";
-import { Plus, ExternalLink, RefreshCw } from "lucide-react";
+import { Plus, ExternalLink, RefreshCw, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { CopyButton } from "@/components/CopyButton";
 import { EvidenceStatusBadge } from "@/components/EvidenceStatusBadge";
 import { getBrowserVault } from "@/lib/vault/browser";
 import type { EvidenceKind, ViolationKind } from "@/core";
-import { requirementsFor, allKinds } from "@/core";
+import { requirementsFor, allKinds, lettersForEvidenceKind } from "@/core";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
 import { APP } from "@/content/app";
 
@@ -74,11 +83,20 @@ export function useEvidenceSlots(kind: ViolationKind) {
 export function EvidenceSlotPanel({
   kind,
   onChange,
+  priorityKinds = [],
 }: {
   kind: ViolationKind;
   onChange?: (slots: EvidenceSlotState[]) => void;
+  /**
+   * Evidence kinds to surface first, with a "Amazon asked for this in their reply" badge —
+   * typically `CaseLog.lastReply.extractedAsks` from a resubmission's reply analysis. Purely a
+   * display hint: it never changes which evidence is actually required for `kind`.
+   */
+  priorityKinds?: EvidenceKind[];
 }) {
   const { slots, unlocked, busy, refresh, onUpload, required } = useEvidenceSlots(kind);
+  const [letterDialogKind, setLetterDialogKind] = React.useState<EvidenceKind | null>(null);
+  const letterTemplate = letterDialogKind ? lettersForEvidenceKind(letterDialogKind)[0] : undefined;
 
   React.useEffect(() => {
     if (onChange) onChange(slots);
@@ -130,30 +148,59 @@ export function EvidenceSlotPanel({
         </Button>
       </div>
       <ul className="flex flex-col gap-2">
-        {required.map((req) => {
-          const slot = slots.find((s) => s.kind === req.kind);
-          const present = slot?.present;
-          return (
-            <li
-              key={req.kind}
-              className="flex items-center justify-between gap-2 rounded-md border border-border bg-card p-2"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">{APP.evidenceKinds[req.kind]}</div>
-                <p className="line-clamp-2 text-xs text-muted-foreground">{req.whyAmazonWantsIt}</p>
-              </div>
-              {present ? (
-                <EvidenceStatusBadge status="present" />
-              ) : (
-                <SlotUploadButton
-                  kind={req.kind}
-                  disabled={busy}
-                  onPick={(file) => onUpload(req.kind, file)}
-                />
-              )}
-            </li>
-          );
-        })}
+        {[...required]
+          .sort(
+            (a, b) =>
+              Number(priorityKinds.includes(b.kind)) - Number(priorityKinds.includes(a.kind)),
+          )
+          .map((req) => {
+            const slot = slots.find((s) => s.kind === req.kind);
+            const present = slot?.present;
+            const isPriority = priorityKinds.includes(req.kind);
+            const hasLetter = lettersForEvidenceKind(req.kind).length > 0;
+            return (
+              <li
+                key={req.kind}
+                className="flex items-center justify-between gap-2 rounded-md border border-border bg-card p-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="truncate text-sm font-medium">
+                      {APP.evidenceKinds[req.kind]}
+                    </span>
+                    {isPriority && (
+                      <Badge variant="warning" className="shrink-0 font-normal">
+                        {APP.evidenceSlots.priorityBadge}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="line-clamp-2 text-xs text-muted-foreground">
+                    {req.whyAmazonWantsIt}
+                  </p>
+                  {!present && hasLetter && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-xs"
+                      onClick={() => setLetterDialogKind(req.kind)}
+                    >
+                      <Mail className="mr-1 size-3" aria-hidden="true" />
+                      {APP.evidenceSlots.requestTemplate}
+                    </Button>
+                  )}
+                </div>
+                {present ? (
+                  <EvidenceStatusBadge status="present" />
+                ) : (
+                  <SlotUploadButton
+                    kind={req.kind}
+                    disabled={busy}
+                    onPick={(file) => onUpload(req.kind, file)}
+                  />
+                )}
+              </li>
+            );
+          })}
       </ul>
       <p className="text-xs text-muted-foreground">
         {APP.evidenceSlots.encryptedNote}{" "}
@@ -165,6 +212,35 @@ export function EvidenceSlotPanel({
         </a>
         <ExternalLink className="ml-0.5 inline size-3" />
       </p>
+
+      <Dialog
+        open={letterTemplate !== undefined}
+        onOpenChange={(open) => !open && setLetterDialogKind(null)}
+      >
+        <DialogContent>
+          {letterTemplate && (
+            <>
+              <DialogTitle>{letterTemplate.label}</DialogTitle>
+              <DialogDescription>{letterTemplate.purpose}</DialogDescription>
+              <pre className="max-h-80 overflow-y-auto whitespace-pre-wrap rounded border border-border bg-muted/20 p-3 font-mono text-xs text-foreground">
+                {letterTemplate.body}
+              </pre>
+              <p className="text-xs text-muted-foreground">
+                {APP.evidenceSlots.requestDialog.description}
+              </p>
+              <DialogFooter>
+                <CopyButton
+                  text={letterTemplate.body}
+                  label={APP.evidenceSlots.requestDialog.copy}
+                />
+                <Button variant="outline" size="sm" onClick={() => setLetterDialogKind(null)}>
+                  {APP.evidenceSlots.requestDialog.close}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

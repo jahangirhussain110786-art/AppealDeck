@@ -83,6 +83,14 @@ export const APP = {
     availableKinds: "Available kinds: {kinds}",
     encryptedNote: "Files are encrypted on this device before being saved to the vault.",
     openVault: "Open the vault",
+    priorityBadge: "Amazon asked for this in their reply",
+    requestTemplate: "Get a request template",
+    requestDialog: {
+      description:
+        "AppealDeck never sends anything on your behalf. Copy this, fill in the brackets, and send it yourself.",
+      copy: "Copy",
+      close: "Close",
+    },
   },
   dashboard: {
     title: "Your dashboard",

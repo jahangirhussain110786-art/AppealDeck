@@ -130,6 +130,36 @@ describe("nextBestActions", () => {
   it("CLOSED returns empty actions", () => {
     expect(nextBestActions("CLOSED")).toEqual([]);
   });
+
+  it("REMEDIATION names the specific missing evidence when given", () => {
+    const actions = nextBestActions("REMEDIATION", ["Supplier invoice", "Identity document"]);
+    expect(actions[0]).toContain("Supplier invoice");
+    expect(actions[0]).toContain("Identity document");
+  });
+
+  it("REMEDIATION falls back to the generic sentence with no missing labels", () => {
+    expect(nextBestActions("REMEDIATION", [])).toEqual([
+      "Complete the required actions and attach evidence",
+    ]);
+  });
+
+  it("REJECTED/REVISION name exactly what Amazon's reply asked for when given", () => {
+    const actions = nextBestActions("REJECTED", ["Identity document"]);
+    expect(actions[0]).toContain("Identity document");
+    expect(actions[0]).toMatch(/resubmit/i);
+  });
+
+  it("REJECTED/REVISION fall back to the generic sentence with no reply-derived labels", () => {
+    expect(nextBestActions("REVISION", [])).toEqual([
+      "Review the feedback, address the gaps, and resubmit with new information",
+    ]);
+  });
+
+  it("ignores missingLabels for states that don't use it", () => {
+    expect(nextBestActions("READY", ["Supplier invoice"])).toEqual([
+      "Review and submit your Plan of Action",
+    ]);
+  });
 });
 
 describe("availableDocTypes", () => {

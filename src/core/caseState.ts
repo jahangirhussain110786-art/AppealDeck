@@ -105,7 +105,17 @@ export function nextState(ctx: CaseStateContext, current: CaseState): CaseState 
   return current;
 }
 
-export function nextBestActions(state: CaseState): string[] {
+/**
+ * `missingLabels` names the specific items still outstanding for states where that's known and
+ * actionable — required-evidence labels for `REMEDIATION`, or the evidence Amazon's reply
+ * explicitly asked for (`CaseLog.lastReply.extractedAsks`) for `REJECTED`/`REVISION`. Passing it
+ * turns a generic "attach evidence" sentence into "Attach: supplier invoice, identity document"
+ * — the caller already has this data computed (readiness/reply analysis) one card away on the
+ * same page, so this closes real distance rather than adding new work (14 Sep 2026 founder
+ * direction: exact, correct guidance over generic canned text). Ignored — safe to omit — for
+ * every other state.
+ */
+export function nextBestActions(state: CaseState, missingLabels: readonly string[] = []): string[] {
   switch (state) {
     case "DECODED":
       return ["Start intake to classify your case needs"];
@@ -114,7 +124,9 @@ export function nextBestActions(state: CaseState): string[] {
     case "INTAKE":
       return ["Complete the intake questions"];
     case "REMEDIATION":
-      return ["Complete the required actions and attach evidence"];
+      return missingLabels.length > 0
+        ? [`Attach the required evidence: ${missingLabels.join(", ")}`]
+        : ["Complete the required actions and attach evidence"];
     case "READY":
       return ["Review and submit your Plan of Action"];
     case "SUBMITTED":
@@ -125,7 +137,11 @@ export function nextBestActions(state: CaseState): string[] {
       return ["Reinstatement confirmed. Review the post-win hardening checklist"];
     case "REJECTED":
     case "REVISION":
-      return ["Review the feedback, address the gaps, and resubmit with new information"];
+      return missingLabels.length > 0
+        ? [
+            `Amazon's reply specifically asked for: ${missingLabels.join(", ")}. Address that, then resubmit with new information.`,
+          ]
+        : ["Review the feedback, address the gaps, and resubmit with new information"];
     case "NO_RESPONSE":
       return ["Send a follow-up referencing your original submission"];
     case "FOLLOW_UP":

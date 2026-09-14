@@ -3,6 +3,7 @@
 import type { Vault } from "@/core/vault/vault";
 import type { CaseFile } from "@/core/interviewEngine";
 import type { CaseState, ReplyCategory } from "@/core/caseState";
+import type { EvidenceKind } from "@/core/evidenceModel";
 
 export const CASE_ID = "appealdeck-case-1";
 
@@ -17,7 +18,19 @@ export interface CaseLog {
    * recomputed later. Feeds the EF-5 opt-in outcome record's `readinessAtSubmit` field
    * (src/core/outcomeModel.ts). Absent on cases submitted before this field existed. */
   readinessAtSubmit?: number;
-  lastReply?: { category: ReplyCategory; at: string };
+  lastReply?: {
+    category: ReplyCategory;
+    at: string;
+    /**
+     * Evidence kinds `analyzeReply()` (src/core/responseAnalyzer.ts) found Amazon's reply
+     * explicitly asking for — e.g. a reply that says "provide your government-issued ID" yields
+     * `["identity_doc"]`. Carried through so the evidence UI can prioritize exactly what Amazon
+     * named instead of only ever re-showing the original, generic requirement list (14 Sep 2026
+     * founder direction: "a true humanized flow-full resolution from identifying the issue to
+     * taking needed actions").
+     */
+    extractedAsks?: EvidenceKind[];
+  };
   whyHintDismissed?: boolean;
   /** True once the seller has dismissed the opening "what matters for this case" guidance
    * banner (AM-24, 12 Sep 2026) — shown once at the start of the interview, not re-shown. */

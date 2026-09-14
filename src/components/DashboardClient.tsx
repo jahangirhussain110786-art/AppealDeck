@@ -73,6 +73,24 @@ function useVaultInstance(): Vault {
   return ref.current;
 }
 
+/**
+ * Personalizes nextBestActions()'s generic sentence with what's actually outstanding: required
+ * evidence while still gathering it, or exactly what Amazon's reply asked for once one has come
+ * back — both already computed on this page (readiness card, reply analysis) but not previously
+ * connected to the action list underneath them.
+ */
+function missingLabelsFor(
+  state: CaseState,
+  missingEvidenceKinds: EvidenceKind[],
+  extractedAsks: EvidenceKind[] | undefined,
+): string[] {
+  if (state === "REMEDIATION") return missingEvidenceKinds.map((k) => APP.evidenceKinds[k]);
+  if ((state === "REJECTED" || state === "REVISION") && extractedAsks && extractedAsks.length > 0) {
+    return extractedAsks.map((k) => APP.evidenceKinds[k]);
+  }
+  return [];
+}
+
 function buildContext(file: CaseFile, log: CaseLog | null): CaseStateContext {
   return {
     kind: file.kind,
@@ -279,7 +297,11 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     };
     const logEntry: CaseLog = {
       ...currentLog,
-      lastReply: { category: replyResult.category, at: new Date().toISOString() },
+      lastReply: {
+        category: replyResult.category,
+        at: new Date().toISOString(),
+        extractedAsks: replyResult.extractedAsks,
+      },
     };
     const ctx = buildContext(caseFile, logEntry);
     logEntry.state = nextState(ctx, caseFile.state);
@@ -368,8 +390,15 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     const draftCtx = buildContext(caseFile, draftLog);
     const draftCurrent: CaseState = draftLog.state;
     const draftNext = nextState(draftCtx, draftCurrent);
-    const draftActions = nextBestActions(draftNext);
     const draftReadiness = computeReadiness(caseFile);
+    const draftActions = nextBestActions(
+      draftNext,
+      missingLabelsFor(
+        draftNext,
+        draftReadiness.missing.map((m) => m.kind),
+        draftLog.lastReply?.extractedAsks,
+      ),
+    );
 
     return (
       <div className="animate-fade-in space-y-6">
@@ -454,8 +483,15 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
         const ctx = buildContext(caseFile, currentLog);
         const current: CaseState = currentLog.state;
         const next = nextState(ctx, current);
-        const actions = nextBestActions(next);
         const readiness = computeReadiness(caseFile);
+        const actions = nextBestActions(
+          next,
+          missingLabelsFor(
+            next,
+            readiness.missing.map((m) => m.kind),
+            currentLog.lastReply?.extractedAsks,
+          ),
+        );
         const expCopy = expectationsCopy(next);
         const noticeDate = caseFile.timelineEvents[0]?.date ?? null;
         const isNoveltyRequired = noveltyRequired(currentLog.attemptCount);
@@ -594,7 +630,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
                       {replyResult.extractedAsks.length > 0 && (
                         <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                           {replyResult.extractedAsks.map((ask, i) => (
-                            <li key={i}>{ask}</li>
+                            <li key={i}>{APP.evidenceKinds[ask]}</li>
                           ))}
                         </ul>
                       )}
