@@ -11,6 +11,20 @@ describe("createCaseFile", () => {
     expect(file.timelineEvents).toEqual([]);
     expect(file.priorAppealCount).toBe(0);
   });
+
+  // 14 Sep 2026 multi-case fix: every case now needs a real, permanent identity.
+  it("assigns a real id and creation timestamp", () => {
+    const file = createCaseFile("POLICY");
+    expect(file.id).toBeTruthy();
+    expect(typeof file.id).toBe("string");
+    expect(file.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it("assigns a different id to each new case", () => {
+    const a = createCaseFile("POLICY");
+    const b = createCaseFile("POLICY");
+    expect(a.id).not.toBe(b.id);
+  });
 });
 
 describe("nextStep", () => {

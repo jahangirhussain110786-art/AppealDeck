@@ -49,7 +49,6 @@ import {
   deleteCaseFile,
   loadCaseLog,
   saveCaseLog,
-  CASE_ID,
 } from "@/lib/caseStore";
 import type { CaseLog } from "@/lib/caseStore";
 import { FileDropZone } from "@/components/FileDropZone";
@@ -878,7 +877,7 @@ export function InterviewFlow({
                           try {
                             const result = await addFileToVault(vaultRef.current!, file, {
                               evidenceKind: step.evidenceKind,
-                              caseId: CASE_ID,
+                              caseId: caseFile?.id,
                             });
                             // A duplicate already gets its own informational toast from
                             // addFileToVault — nothing new was uploaded, so this box shouldn't

@@ -47,8 +47,18 @@ export interface StepAnswer {
 }
 
 export interface CaseFile {
+  /**
+   * Real, permanent identifier for this case (14 Sep 2026 multi-case fix) — a vault can now hold
+   * more than one case, so nothing may assume "the one case" implicitly by name anymore.
+   * `caseStore.ts` uses this as the vault partition key. A vault created before this field
+   * existed has cases without one; `caseStore.ts` self-heals those on first read rather than
+   * requiring every seller's existing case to be rewritten.
+   */
+  id: string;
   kind: ViolationKind;
   state: CaseState;
+  /** ISO timestamp this case was created — set once by `createCaseFile()`, never recomputed. */
+  createdAt: string;
   rootCause?: string;
   timelineEvents: Array<{ date: string; description: string }>;
   priorAppealCount: number;
@@ -77,8 +87,10 @@ export interface InterviewProgress {
 
 export function createCaseFile(kind: ViolationKind): CaseFile {
   return {
+    id: crypto.randomUUID(),
     kind,
     state: "DECODED",
+    createdAt: new Date().toISOString(),
     timelineEvents: [],
     priorAppealCount: 0,
     priorAppealsAnswered: false,
