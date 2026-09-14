@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { AlertCircle, ArrowLeft, FileText, ShieldAlert } from "lucide-react";
+import { AlertCircle, ArrowLeft, FileText, Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -107,6 +107,7 @@ function ComposeSkeleton() {
 function ComposeInner({ vault }: { vault: Vault }) {
   const [phase, setPhase] = useState<Phase>({ kind: "loading" });
   const [editedSections, setEditedSections] = useState<Record<number, string>>({});
+  const [retrying, setRetrying] = useState(false);
 
   const update = useCallback((next: Phase) => setPhase(next), []);
 
@@ -184,6 +185,15 @@ function ComposeInner({ vault }: { vault: Vault }) {
     void run();
   }, [run]);
 
+  const retry = useCallback(async () => {
+    setRetrying(true);
+    try {
+      await run();
+    } finally {
+      setRetrying(false);
+    }
+  }, [run]);
+
   if (phase.kind === "loading") {
     return <ComposeSkeleton />;
   }
@@ -216,7 +226,13 @@ function ComposeInner({ vault }: { vault: Vault }) {
             <p>{phase.message}</p>
             <div className="mt-2 flex gap-2">
               {!isDeviceCap && (
-                <Button variant="outline" size="sm" onClick={() => void run()}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void retry()}
+                  disabled={retrying}
+                >
+                  {retrying && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
                   {SHARED.retryButton}
                 </Button>
               )}

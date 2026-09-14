@@ -6,7 +6,6 @@ import { ArrowRight, Ban, Check, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SeverityBadge } from "@/components/SeverityBadge";
@@ -114,11 +113,14 @@ export default function DecodeClient() {
 
   const canSubmit = text.trim().length > 0;
 
+  // Decoding is a subsequent action on a form that's already on screen, not a fresh page load —
+  // the submit button's own spinner (below) is the loading state; a full skeleton card appearing
+  // underneath an already-visible, already-spinning button is redundant noise, not a helpful
+  // signal (14 Sep 2026 founder direction: a click that replaces content in place shows loading
+  // in the button, not a skeleton wipe).
   let main: React.ReactNode = null;
   if (status === "result" && result) {
     main = <ResultView result={result} guidance={guidance!} text={decodedText} />;
-  } else if (status === "loading") {
-    main = <LoadingView />;
   } else if (status === "error") {
     main = (
       <ErrorView
@@ -208,23 +210,6 @@ export default function DecodeClient() {
 
       {main}
     </div>
-  );
-}
-
-function LoadingView() {
-  return (
-    <Card className="space-y-4 p-6">
-      <div className="flex items-center gap-3">
-        <Skeleton className="h-5 w-24 rounded-full" />
-        <Skeleton className="h-5 w-32 rounded-full" />
-      </div>
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-2/3" />
-      <div className="grid gap-3 md:grid-cols-2">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-      </div>
-    </Card>
   );
 }
 

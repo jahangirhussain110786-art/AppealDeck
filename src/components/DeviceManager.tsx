@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { MonitorSmartphone, Trash2 } from "lucide-react";
+import { Loader2, MonitorSmartphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -205,7 +205,7 @@ export function DeviceManager() {
                           aria-label={`Revoke ${label(d)}`}
                         >
                           {pendingId === d.id ? (
-                            <Trash2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                           ) : (
                             <Trash2 className="h-4 w-4" />
                           )}{" "}
@@ -242,6 +242,9 @@ export function DeviceManager() {
               onClick={() => revoking && revoke(revoking.id)}
               disabled={pendingId === revoking?.id}
             >
+              {pendingId === revoking?.id && (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              )}
               {APP.billing.revoke.confirm}
             </Button>
           </DialogFooter>

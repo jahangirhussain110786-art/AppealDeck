@@ -46,7 +46,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
 import { APP } from "@/content/app";
 import { SHARED } from "@/content/shared";
 import { formatDate, formatBytes } from "@/lib/format";
@@ -174,33 +173,21 @@ function EvidenceActivityCard({ records }: { records: VaultListItem[] }) {
   );
 }
 
-function ReadinessCard({
-  score,
-  missingKinds,
-  locked = false,
-}: {
-  score: number;
-  missingKinds: EvidenceKind[];
-  locked?: boolean;
-}) {
+function ReadinessCard({ score, missingKinds }: { score: number; missingKinds: EvidenceKind[] }) {
   return (
-    <Card aria-disabled={locked || undefined}>
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">{APP.dashboard.readiness.title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-xs text-muted-foreground">{READINESS_COPY}</p>
-          {locked ? (
-            <Skeleton className="h-6 w-12" />
-          ) : (
-            <span className="text-2xl font-semibold tabular-nums text-foreground">
-              {Math.round(score * 100)}%
-            </span>
-          )}
+          <span className="text-2xl font-semibold tabular-nums text-foreground">
+            {Math.round(score * 100)}%
+          </span>
         </div>
         <Progress value={Math.round(score * 100)} aria-label={READINESS_COPY} />
-        {!locked && missingKinds.length > 0 && (
+        {missingKinds.length > 0 && (
           <p className="text-xs text-muted-foreground">
             {APP.dashboard.readiness.missingLabel}{" "}
             {missingKinds.map((kind) => APP.evidenceKinds[kind]).join(", ")}
@@ -219,6 +206,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
   const [busy, setBusy] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [replyResult, setReplyResult] = useState<ReplyAnalysis | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const loadFromVault = useCallback(async () => {
     try {
@@ -346,6 +334,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     };
     const ctx = buildContext(caseFile, logEntry);
     logEntry.state = nextState(ctx, caseFile.state);
+    setSubmitting(true);
     try {
       await saveCaseLog(vault, logEntry);
       toast.success(APP.dashboard.submitCard.confirmed);
@@ -354,6 +343,8 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
       toast.error(APP.dashboard.toasts.recordSubmissionFailed, {
         description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -689,7 +680,8 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <Button onClick={markSubmitted} disabled={busy} variant="outline" size="sm">
+                  <Button onClick={markSubmitted} disabled={submitting} variant="outline" size="sm">
+                    {submitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
                     {APP.dashboard.submitCard.button}
                   </Button>
                 </CardContent>
