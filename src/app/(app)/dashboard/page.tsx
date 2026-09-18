@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { getOptionalUser } from "@/lib/auth";
-import { fetchLicenseByEmail } from "@/lib/license";
+import { fetchLicenseForUser } from "@/lib/license";
 import { DashboardClient } from "@/components/DashboardClient";
 import { APP } from "@/content/app";
 
@@ -14,9 +14,8 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const user = await getOptionalUser();
   const signedIn = Boolean(user);
-  const email = (user?.email ?? "").trim().toLowerCase();
   const license = signedIn
-    ? await fetchLicenseByEmail(email)
+    ? await fetchLicenseForUser(user?.id)
     : { status: "none" as const, plan: null, licenseKey: null };
 
   return (

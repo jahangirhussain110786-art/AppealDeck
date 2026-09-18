@@ -28,7 +28,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `next dev --port ${PORT}`,
+    command: process.env.CI
+      ? `node node_modules/next/dist/bin/next start --port ${PORT}`
+      : `node node_modules/next/dist/bin/next dev --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -6,6 +6,10 @@ on:
 
 jobs:
   deploy-preview:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -32,7 +36,9 @@ jobs:
       - name: Deploy preview
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: vercel deploy --yes --prebuilt --token=$VERCEL_TOKEN
+        run: |
+          deployment_url=$(vercel deploy --yes --prebuilt --token="$VERCEL_TOKEN")
+          echo "DEPLOYMENT_URL=$deployment_url" >> "$GITHUB_OUTPUT"
         id: deploy
       - name: Comment PR with preview URL
         if: steps.deploy.outputs.DEPLOYMENT_URL != ''
@@ -40,4 +46,4 @@ jobs:
         with:
           message: |
             **Preview deployed** → ${{ steps.deploy.outputs.DEPLOYMENT_URL }}
-            Lighthouse + e2e will run against this URL in the separate `lighthouse` and `e2e` jobs.
+            Lighthouse and e2e run against their own local production builds in CI.

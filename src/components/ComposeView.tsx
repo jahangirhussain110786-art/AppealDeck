@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { VaultGate } from "@/components/VaultGate";
 import { JourneyProgress } from "@/components/JourneyProgress";
 import { PoaSection, PoaFindingsList } from "@/components/PoaSection";
+import { ComposeGate } from "@/components/ComposeGate";
 import { NextStepsView } from "@/components/NextStepsView";
 import { BeforeYouSubmitChecklist } from "@/components/BeforeYouSubmitChecklist";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
@@ -25,6 +26,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { Badge } from "@/components/ui/badge";
 import { getBrowserVault } from "@/lib/vault/browser";
 import type { Vault } from "@/core/vault/vault";
+import { withCaseEvidence } from "@/lib/caseEvidence";
 import { loadCaseFile, loadCaseLog } from "@/lib/caseStore";
 import { formatDate } from "@/lib/format";
 import { groupFindingsBySection } from "@/lib/findingSections";
@@ -55,6 +57,7 @@ interface ComposeResult {
 type Phase =
   | { kind: "loading" }
   | { kind: "empty" }
+  | { kind: "purchase"; caseId: string }
   | { kind: "error"; reason: "generic" | "device_cap"; message: string }
   | {
       kind: "ready";
@@ -73,21 +76,6 @@ function useVaultInstance(): Vault {
     ref.current = getBrowserVault();
   }
   return ref.current;
-}
-
-/** Mark an evidence kind present when a vault record carries it (uploads made in the interview). */
-async function withVaultEvidence(vault: Vault, file: CaseFile): Promise<CaseFile> {
-  const evidenceSlots = { ...file.evidenceSlots };
-  try {
-    for (const record of await vault.list()) {
-      if (!record.evidenceKind) continue;
-      const kind = record.evidenceKind as EvidenceKind;
-      evidenceSlots[kind] = { ...evidenceSlots[kind], present: true };
-    }
-  } catch {
-    // Listing failed: keep the slots recorded on the case file.
-  }
-  return { ...file, evidenceSlots };
 }
 
 function errorMessage(e: unknown): string {
@@ -142,7 +130,7 @@ function ComposeInner({ vault }: { vault: Vault }) {
     }
     if (!loaded) return;
 
-    const caseData = await withVaultEvidence(vault, loaded.file);
+    const caseData = await withCaseEvidence(vault, loaded.file);
     const attemptNumber = Math.min(MAX_ATTEMPT_NUMBER, loaded.priorAttempts + 1);
 
     try {
@@ -152,7 +140,15 @@ function ComposeInner({ vault }: { vault: Vault }) {
         body: JSON.stringify({ caseData, attemptNumber }),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+          code?: string;
+        };
+        if (res.status === 403 && body.code === "case_pass_required") {
+          safeUpdate({ kind: "purchase", caseId: caseData.id });
+          return;
+        }
         if (res.status === 403 && body.error === "device_cap_reached") {
           toast.error(APP.compose.deviceCap.title, {
             description: APP.compose.deviceCap.description,
@@ -231,6 +227,9 @@ function ComposeInner({ vault }: { vault: Vault }) {
     return <ComposeSkeleton />;
   }
 
+  if (phase.kind === "purchase")
+    return <ComposeGate vault={vault} caseId={phase.caseId} onActivated={() => void retry()} />;
+
   if (phase.kind === "empty") {
     return (
       <EmptyState
@@ -257,6 +256,11 @@ function ComposeInner({ vault }: { vault: Vault }) {
           <AlertTitle>{copy.title}</AlertTitle>
           <AlertDescription>
             <p>{phase.message}</p>
+            {phase.message.includes("Pass") && (
+              <Link className="underline" href="/pricing">
+                Get an Appeal Pass for this case
+              </Link>
+            )}
             <div className="mt-2 flex gap-2">
               {!isDeviceCap && (
                 <Button
@@ -323,7 +327,11 @@ function ComposeInner({ vault }: { vault: Vault }) {
       <PoaFindingsList findings={global} />
 
       {isGapDraft ? (
-        <NextStepsView caseFile={caseFile} priorityEvidenceKinds={priorityEvidenceKinds} />
+        <NextStepsView
+          vault={vault}
+          caseFile={caseFile}
+          priorityEvidenceKinds={priorityEvidenceKinds}
+        />
       ) : (
         <>
           <Alert variant="info">

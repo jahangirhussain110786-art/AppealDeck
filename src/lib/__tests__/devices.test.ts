@@ -33,21 +33,28 @@ type Chain = Record<string, any> & {
 };
 
 class LicensesQB {
+  private filters: Array<[string, any]> = [];
   constructor(private db: MemDb) {}
   select(_cols: string) {
     return this;
   }
-  eq(field: string, value: any): Chain {
-    const db = this.db;
-    return makeChain({
-      eq(f: string, v: any) {
-        return new LicensesQB(db).eq(f, v);
-      },
-      maybeSingle: async () => {
-        const hit = db.licenses.find((r) => r[field] === value);
-        return { data: hit ? { ...hit } : null, error: null };
-      },
-    });
+  eq(field: string, value: any) {
+    this.filters.push([field, value]);
+    return this;
+  }
+  order() {
+    return this;
+  }
+  limit() {
+    return this;
+  }
+  async maybeSingle() {
+    return {
+      data:
+        this.db.licenses.find((row) => this.filters.every(([key, value]) => row[key] === value)) ??
+        null,
+      error: null,
+    };
   }
 }
 
@@ -160,6 +167,7 @@ function uuidFor(n: number): string {
 const LICENSE = {
   id: "11111111-1111-1111-1111-111111111111",
   email: "user@example.com",
+  user_id: "user-uuid",
   status: "active",
   plan: "appeal_pass",
 };
@@ -295,7 +303,7 @@ describe("devices", () => {
       });
     }
     const firstId = db.devices[0].id;
-    const rev = await revokeDevice(db.client(), "user@example.com", firstId);
+    const rev = await revokeDevice(db.client(), "user-uuid", firstId);
     expect(rev.ok).toBe(true);
 
     const fresh = await recordActivation(db.client(), {
@@ -309,7 +317,7 @@ describe("devices", () => {
   });
 
   it("revoke rejects non-uuid deviceId", async () => {
-    const r = await revokeDevice(db.client(), "user@example.com", "not-a-uuid");
+    const r = await revokeDevice(db.client(), "user-uuid", "not-a-uuid");
     expect(r.ok).toBe(false);
     expect(r.reason).toBe("invalid_id");
   });
@@ -330,17 +338,13 @@ describe("devices", () => {
     };
     db.licenses.push({ ...other });
     db.devices[0].license_id = other.id;
-    const r = await revokeDevice(db.client(), "user@example.com", otherDeviceId);
+    const r = await revokeDevice(db.client(), "user-uuid", otherDeviceId);
     expect(r.ok).toBe(false);
     expect(r.reason).toBe("not_owner");
   });
 
   it("revoke returns not_found for missing device", async () => {
-    const r = await revokeDevice(
-      db.client(),
-      "user@example.com",
-      "99999999-9999-9999-9999-999999999999",
-    );
+    const r = await revokeDevice(db.client(), "user-uuid", "99999999-9999-9999-9999-999999999999");
     expect(r.ok).toBe(false);
     expect(r.reason).toBe("not_found");
   });
@@ -365,7 +369,7 @@ describe("devices", () => {
         userAgent: UA,
       });
     }
-    const list = await listDevices(db.client(), "user@example.com");
+    const list = await listDevices(db.client(), "user-uuid");
     expect(list).toHaveLength(3);
     expect(list.every((d: LicenseDevice) => d.revoked_at == null)).toBe(true);
   });
@@ -393,7 +397,7 @@ describe("devices", () => {
     });
     expect(r1.status).toBe("ok");
     const deviceId = db.devices[0].id;
-    const rev = await revokeDevice(db.client(), "user@example.com", deviceId);
+    const rev = await revokeDevice(db.client(), "user-uuid", deviceId);
     expect(rev.ok).toBe(true);
     expect(db.devices[0].revoked_at).not.toBeNull();
 

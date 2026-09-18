@@ -15,7 +15,7 @@ export interface LicenseDevice {
 }
 
 export interface DeviceActivationResult {
-  status: "ok" | "over_cap";
+  status: "ok" | "over_cap" | "unavailable";
   device: LicenseDevice | null;
   activeCount: number;
   cap: number;
@@ -86,16 +86,17 @@ function shortLabelFromUserAgent(ua: string | null | undefined): string {
   return ua.slice(0, 60);
 }
 
-async function findActiveLicenseByEmail(
+async function findActiveLicenseForUser(
   client: SupabaseClient,
-  email: string,
+  userId: string,
 ): Promise<{ id: string } | null> {
-  const normalized = email.trim().toLowerCase();
   const { data } = await client
     .from("licenses")
     .select("id, status")
-    .eq("email", normalized)
+    .eq("user_id", userId)
     .eq("status", "active")
+    .order("created_at", { ascending: true })
+    .limit(1)
     .maybeSingle();
   if (!data) return null;
   return { id: (data as { id: string }).id };
@@ -119,7 +120,7 @@ export async function recordActivation(
     userAgent: string | null;
   },
 ): Promise<DeviceActivationResult> {
-  const license = await findActiveLicenseByEmail(client, params.email);
+  const license = await findActiveLicenseForUser(client, params.userId);
   if (!license) {
     return { status: "ok", device: null, activeCount: 0, cap: DEVICE_CAP, overCapDevices: [] };
   }
@@ -134,11 +135,28 @@ export async function recordActivation(
   if (existing) {
     const row = existing as LicenseDevice;
     if (row.revoked_at) {
+      const count = await countActiveDevices(client, license.id);
+      if (count >= DEVICE_CAP)
+        return {
+          status: "over_cap",
+          device: null,
+          activeCount: count,
+          cap: DEVICE_CAP,
+          overCapDevices: [],
+        };
       const now = new Date().toISOString();
-      await client
+      const { error } = await client
         .from("license_devices")
         .update({ revoked_at: null, last_seen_at: now })
         .eq("id", row.id);
+      if (error)
+        return {
+          status: error.code === "23514" ? "over_cap" : "unavailable",
+          device: null,
+          activeCount: await countActiveDevices(client, license.id),
+          cap: DEVICE_CAP,
+          overCapDevices: [],
+        };
       return {
         status: "ok",
         device: { ...row, revoked_at: null, last_seen_at: now },
@@ -212,7 +230,13 @@ export async function recordActivation(
         };
       }
     }
-    return { status: "ok", device: null, activeCount, cap: DEVICE_CAP, overCapDevices: [] };
+    return {
+      status: code === "23514" ? "over_cap" : "unavailable",
+      device: null,
+      activeCount: await countActiveDevices(client, license.id),
+      cap: DEVICE_CAP,
+      overCapDevices: [],
+    };
   }
 
   return {
@@ -224,8 +248,11 @@ export async function recordActivation(
   };
 }
 
-export async function listDevices(client: SupabaseClient, email: string): Promise<LicenseDevice[]> {
-  const license = await findActiveLicenseByEmail(client, email);
+export async function listDevices(
+  client: SupabaseClient,
+  userId: string,
+): Promise<LicenseDevice[]> {
+  const license = await findActiveLicenseForUser(client, userId);
   if (!license) return [];
   const { data } = await client
     .from("license_devices")
@@ -238,11 +265,11 @@ export async function listDevices(client: SupabaseClient, email: string): Promis
 
 export async function revokeDevice(
   client: SupabaseClient,
-  email: string,
+  userId: string,
   deviceId: string,
 ): Promise<{ ok: boolean; reason?: string }> {
   if (!isUuid(deviceId)) return { ok: false, reason: "invalid_id" };
-  const license = await findActiveLicenseByEmail(client, email);
+  const license = await findActiveLicenseForUser(client, userId);
   if (!license) return { ok: false, reason: "no_license" };
   const { data: target } = await client
     .from("license_devices")
@@ -261,6 +288,11 @@ export async function revokeDevice(
 }
 
 export function deviceErrorResponse(result: DeviceActivationResult) {
+  if (result.status === "unavailable")
+    return new Response(
+      JSON.stringify({ error: "Device verification unavailable. Please retry." }),
+      { status: 503, headers: { "Content-Type": "application/json" } },
+    );
   return new Response(
     JSON.stringify({
       error: "device_cap_reached",

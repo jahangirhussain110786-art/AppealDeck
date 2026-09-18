@@ -153,8 +153,6 @@ export function InterviewFlow({
         if (status.state === "locked") {
           if (status.mode === "device") {
             await v.unlockWithDeviceKey();
-            setVaultReady(true);
-            setVaultUnlocked(true);
             try {
               const existing = await loadCaseFile(v);
               if (existing) {
@@ -173,8 +171,13 @@ export function InterviewFlow({
                 }
               }
             } catch {
-              // ignore — the visitor starts fresh instead
+              setError("Could not read your saved case. Reload to try again.");
+              setVaultReady(true);
+              setVaultUnlocked(false);
+              return;
             }
+            setVaultReady(true);
+            setVaultUnlocked(true);
           } else {
             // Passphrase mode: only reachable if the seller explicitly opted
             // into it from the Vault page. Defer to VaultGate's unlock form.
@@ -183,8 +186,6 @@ export function InterviewFlow({
           }
           return;
         }
-        setVaultReady(true);
-        setVaultUnlocked(true);
         try {
           const existing = await loadCaseFile(v);
           if (existing) {
@@ -198,11 +199,15 @@ export function InterviewFlow({
             setShowResumeDialog(true);
           }
         } catch {
-          // ignore
+          setError("Could not read your saved case. Reload to try again.");
+          return;
         }
-      } catch {
         setVaultReady(true);
         setVaultUnlocked(true);
+      } catch {
+        setError("Could not open your saved case. Reload to try again.");
+        setVaultReady(true);
+        setVaultUnlocked(false);
       }
     };
     void initVault();
@@ -469,28 +474,31 @@ export function InterviewFlow({
   }, [vaultUnlocked, caseFile]);
 
   if (!vaultReady || !vaultUnlocked) {
+    if (error)
+      return (
+        <div role="alert" className="space-y-3 p-4">
+          <p>{error}</p>
+          <Button onClick={() => window.location.reload()}>Reload</Button>
+        </div>
+      );
     return (
       <VaultGate
         vault={vaultRef.current}
         deviceMode
         autoUnlock
-        onUnlocked={(info) => {
-          setVaultReady(true);
-          setVaultUnlocked(true);
+        onUnlocked={() => {
           void (async () => {
             const v = vaultRef.current;
             if (!v) return;
             try {
               const existing = await loadCaseFile(v);
               if (existing) {
-                if (info?.viaRelock) {
-                  await handleResumeSilent(existing);
-                } else {
-                  setShowResumeDialog(true);
-                }
+                await handleResumeSilent(existing);
               }
+              setVaultReady(true);
+              setVaultUnlocked(true);
             } catch {
-              // ignore
+              setError("Could not read your saved case. Reload to try again.");
             }
           })();
         }}

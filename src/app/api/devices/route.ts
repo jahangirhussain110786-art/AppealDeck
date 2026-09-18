@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   if (!supabaseAdmin || !email) {
     return NextResponse.json({ devices: [], cap: 5, currentDeviceId: null });
   }
-  const devices = await listDevices(supabaseAdmin, email);
+  const devices = await listDevices(supabaseAdmin, user.id);
   const fingerprint = await deriveFingerprintFromRequest(req, user.id);
   const currentDeviceId = devices.find((d) => d.device_fingerprint === fingerprint)?.id ?? null;
   const safeDevices = devices.map((d) => ({
@@ -52,7 +52,7 @@ export async function DELETE(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "deviceId (uuid) required" }, { status: 400 });
   }
-  const result = await revokeDevice(supabaseAdmin, email, parsed.data.deviceId);
+  const result = await revokeDevice(supabaseAdmin, user.id, parsed.data.deviceId);
   if (!result.ok) {
     return NextResponse.json(
       { error: result.reason ?? "revoke_failed" },

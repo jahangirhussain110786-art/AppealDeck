@@ -16,7 +16,7 @@ export async function addFileToVault(
   const buf = new Uint8Array(await file.arrayBuffer());
 
   const dup = await vault.findByPlaintext(buf);
-  if (dup) {
+  if (dup && dup.caseId === opts.caseId && dup.evidenceKind === opts.evidenceKind) {
     toast.info(APP.interview.fileUpload.duplicate, {
       description: APP.interview.fileUpload.duplicateDesc
         .replace("{name}", file.name)

@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { Button, type ButtonProps } from "@/components/ui/button";
+import { getBrowserVault } from "@/lib/vault/browser";
+import { loadCaseFile } from "@/lib/caseStore";
+import { openVaultForVisitor } from "@/lib/vault/visitor";
+import type { Vault } from "@/core/vault/vault";
 import { APP } from "@/content/app";
 
 declare global {
@@ -19,6 +23,7 @@ declare global {
           items: { priceId: string }[];
           settings?: { displayMode?: "overlay" | "inline" };
           customer?: { email?: string };
+          customData?: { checkout_intent_id: string };
         }) => void;
       };
     };
@@ -26,13 +31,14 @@ declare global {
 }
 
 export function CheckoutButton({
-  priceId,
   children,
   className,
   size,
   variant,
   customerEmail,
   onCompleted,
+  consent = false,
+  vault: sharedVault,
 }: {
   priceId?: string;
   children: React.ReactNode;
@@ -41,7 +47,12 @@ export function CheckoutButton({
   variant?: ButtonProps["variant"];
   customerEmail?: string;
   onCompleted?: () => void;
+  consent?: boolean;
+  vault?: Vault;
 }) {
+  const completedRef = useRef(onCompleted);
+  completedRef.current = onCompleted;
+  const [opening, setOpening] = useState(false);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +71,7 @@ export function CheckoutButton({
         token: tk,
         eventCallback: (event) => {
           if (event.name === "checkout.completed") {
-            onCompleted?.();
+            completedRef.current?.();
           }
         },
       });
@@ -96,31 +107,47 @@ export function CheckoutButton({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function openCheckout() {
-    const id = priceId ?? process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
-    if (!window.Paddle || !id) {
-      setError(APP.checkout.unavailableTitle);
-      toast.error(APP.checkout.unavailableTitle, {
-        description: APP.checkout.unavailableDesc,
+  async function openCheckout() {
+    if (opening || !consent || !window.Paddle) return;
+    setOpening(true);
+    const vault = sharedVault ?? getBrowserVault();
+    try {
+      if (!(await openVaultForVisitor(vault))) throw new Error("Unlock your case before checkout.");
+      const file = await loadCaseFile(vault);
+      if (!file)
+        throw new Error("Start your case before buying an Appeal Pass. Each Pass covers one case.");
+      const response = await fetch("/api/checkout/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseId: file.id, kind: file.kind, consent }),
       });
-      return;
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(
+          response.status === 401 ? "Sign in before buying your case's Appeal Pass." : data.error,
+        );
+      window.Paddle.Checkout.open({
+        items: [{ priceId: data.priceId }],
+        customer: customerEmail ? { email: customerEmail } : undefined,
+        customData: { checkout_intent_id: data.intentId },
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Checkout could not open.");
+    } finally {
+      setOpening(false);
+      if (!sharedVault) await vault.close();
     }
-    toast.info(APP.checkout.opening);
-    window.Paddle.Checkout.open({
-      items: [{ priceId: id }],
-      customer: customerEmail ? { email: customerEmail } : undefined,
-    });
   }
 
   return (
     <Button
       onClick={openCheckout}
-      disabled={!ready}
+      disabled={!ready || opening || !consent}
       className={className}
       size={size}
       variant={variant}
     >
-      {error ? error : children}
+      {opening ? "Preparing checkout…" : error ? error : children}
     </Button>
   );
 }

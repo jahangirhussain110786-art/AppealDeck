@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import type { Vault } from "@/core/vault/vault";
+import { toast } from "sonner";
 import { Plus, ExternalLink, RefreshCw, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,6 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { CopyButton } from "@/components/CopyButton";
 import { EvidenceStatusBadge } from "@/components/EvidenceStatusBadge";
+import { getActiveCaseId } from "@/lib/caseStore";
+import { openVaultForVisitor } from "@/lib/vault/visitor";
 import { getBrowserVault } from "@/lib/vault/browser";
 import type { EvidenceKind, ViolationKind } from "@/core";
 import { requirementsFor, allKinds, lettersForEvidenceKind } from "@/core";
@@ -27,8 +31,8 @@ export interface EvidenceSlotState {
   vaultRecordId?: string;
 }
 
-export function useEvidenceSlots(kind: ViolationKind) {
-  const vault = React.useMemo(() => getBrowserVault(), []);
+export function useEvidenceSlots(kind: ViolationKind, sharedVault?: Vault) {
+  const vault = React.useMemo(() => sharedVault ?? getBrowserVault(), [sharedVault]);
   const [slots, setSlots] = React.useState<EvidenceSlotState[]>([]);
   const [unlocked, setUnlocked] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
@@ -36,13 +40,15 @@ export function useEvidenceSlots(kind: ViolationKind) {
   const required = React.useMemo(() => requirementsFor(kind).filter((r) => r.required), [kind]);
 
   const refresh = React.useCallback(async () => {
+    await openVaultForVisitor(vault);
     if (!vault.isUnlocked()) {
       setUnlocked(false);
       setSlots([]);
       return;
     }
     setUnlocked(true);
-    const all = await vault.list();
+    const caseId = await getActiveCaseId(vault);
+    const all = await vault.list({ caseId: caseId ?? "no-active-case" });
     const byKind = new Map<string, { id: string; name: string; createdAt: string }>();
     for (const r of all) {
       if (r.evidenceKind && !byKind.has(r.evidenceKind)) {
@@ -62,7 +68,7 @@ export function useEvidenceSlots(kind: ViolationKind) {
   }, [vault, required]);
 
   React.useEffect(() => {
-    void refresh();
+    void refresh().catch(() => toast.error("Could not load evidence. Please retry."));
   }, [refresh]);
   const onUpload = async (kind: EvidenceKind, file: File) => {
     if (!vault.isUnlocked()) {
@@ -70,7 +76,10 @@ export function useEvidenceSlots(kind: ViolationKind) {
     }
     setBusy(true);
     try {
-      await addFileToVault(vault, file, { evidenceKind: kind });
+      await addFileToVault(vault, file, {
+        evidenceKind: kind,
+        caseId: (await getActiveCaseId(vault)) ?? undefined,
+      });
       await refresh();
     } finally {
       setBusy(false);
@@ -82,10 +91,12 @@ export function useEvidenceSlots(kind: ViolationKind) {
 
 export function EvidenceSlotPanel({
   kind,
+  vault,
   onChange,
   priorityKinds = [],
 }: {
   kind: ViolationKind;
+  vault?: Vault;
   onChange?: (slots: EvidenceSlotState[]) => void;
   /**
    * Evidence kinds to surface first, with a "Amazon asked for this in their reply" badge —
@@ -94,7 +105,7 @@ export function EvidenceSlotPanel({
    */
   priorityKinds?: EvidenceKind[];
 }) {
-  const { slots, unlocked, busy, refresh, onUpload, required } = useEvidenceSlots(kind);
+  const { slots, unlocked, busy, refresh, onUpload, required } = useEvidenceSlots(kind, vault);
   const [letterDialogKind, setLetterDialogKind] = React.useState<EvidenceKind | null>(null);
   const letterTemplate = letterDialogKind ? lettersForEvidenceKind(letterDialogKind)[0] : undefined;
 
@@ -272,7 +283,10 @@ function SlotUploadButton({
         hidden
         onChange={(e) => {
           const f = e.target.files?.[0];
-          if (f) onPick(f);
+          if (f)
+            Promise.resolve(onPick(f)).catch(() =>
+              toast.error("Could not attach the file. Please retry."),
+            );
           e.target.value = "";
         }}
       />

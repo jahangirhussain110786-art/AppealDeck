@@ -100,7 +100,7 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
             mode === "app" ? "h-14 max-w-app" : "h-16 max-w-marketing",
           )}
         >
-          <Logo href={isSignedIn ? "/dashboard" : "/"} />
+          <Logo href="/" />
 
           <nav className="hidden items-center gap-1 md:flex" aria-label={SHARED.nav.primary}>
             {navItems.map((item) => (

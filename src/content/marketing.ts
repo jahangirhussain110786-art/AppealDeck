@@ -252,7 +252,7 @@ export const FAQ = {
     },
     {
       q: "What is the encrypted vault for?",
-      a: "Keep your evidence — invoices, photos, notes — in one encrypted place, on your device. AES-256-GCM with a passphrase you choose; the key never leaves your browser. Encrypted copies sync so you can pick up on another device, and nobody at AppealDeck can read them.",
+      a: "Keep evidence contents encrypted on your device with AES-256-GCM. Your browser unlocks them automatically unless you add a passphrase. Appeal Pass holders can upload a backup protected by a backup passphrase and restore it on another device. File names, tags and case references remain visible metadata; we do not receive the content decryption key.",
     },
     {
       q: "What is your refund policy?",

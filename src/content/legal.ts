@@ -31,8 +31,8 @@ export const LEGAL = {
         body: [
           "We collect only the information needed to operate the service. During decode, your notice text stays in your browser and is never uploaded.",
           "When you create an account or buy the Appeal Pass, Paddle collects the payment and billing information. We receive a licence record (email, plan, status) via a Paddle webhook.",
-          "When you store evidence in the encrypted vault, the ciphertext is synced to a Supabase Storage bucket. We never hold the decryption key.",
-          "Before you sign in, anything you enter in the guided interview is encrypted on your device with a key your browser holds; it does not reach our servers. When you sign in and set a passphrase, the same records are re-locked under that passphrase. Clearing your browser data before you sign in deletes that draft; there is no copy anywhere else.",
+          "Evidence contents are encrypted in your browser. If you choose cloud backup, encrypted contents and unencrypted metadata (including file names, tags, types, case references and content hashes) are uploaded to Supabase Storage. A backup passphrase protects the content key; we do not receive that passphrase.",
+          "Before sign-in, interview drafts are encrypted with a secret held for that tab session. Closing the session or clearing browser data can make them unrecoverable. Signing in on that tab transfers the draft into your account vault after it is unlocked, preserving existing cases. Account vaults unlock automatically by default; you can add passphrase protection.",
         ],
       },
       {
@@ -58,7 +58,7 @@ export const LEGAL = {
         title: "Cookies and local storage",
         body: [
           "We use one essential cookie for your session and one to remember your colour-theme choice. You can delete both at any time.",
-          "The case file is stored encrypted in your browser's IndexedDB vault, keyed by a passphrase you set. We cannot read it.",
+          "The case file is stored encrypted in your browser's IndexedDB vault. Account vaults use a browser-held key by default, with optional passphrase protection. Drafting and AI suggestions send the relevant case text to our server and AI provider as described above.",
         ],
       },
       {

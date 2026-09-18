@@ -66,3 +66,6 @@ skills-lock.json
 .mcp-bridge-*.cmd
 appealdeck.md
 
+
+# Local compatibility junctions; canonical skills live in .agents/skills.
+.claude/skills/

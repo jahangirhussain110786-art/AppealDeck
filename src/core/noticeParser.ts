@@ -32,14 +32,23 @@ export function parseNotice(raw: string): ParsedNotice {
     if (re.test(raw)) kindHints.push(kind);
   }
   const legacySeventeenDay = /17\s*days/i.test(raw);
-  const windowMatch = raw.match(/(\d+)\s*(?:day|days)/i);
-  const statedWindowDays = windowMatch ? Number(windowMatch[1]) : null;
+  const windows = new Set<number>();
+  const patterns = [
+    /\b(?:submit|file|send)\b[^.!?;\n]{0,65}?\b(?:appeal|plan of action)\b[^.!?;\n]{0,40}?\bwithin\s+(\d{1,3})\s+days?\b/gi,
+    /\b(?:you have|within)\s+(?:exactly\s+)?(\d{1,3})\s+days?\b[^.!?;\n]{0,60}?\bto\s+(?:appeal|submit (?:an? |your |a )?(?:appeal|plan of action))\b/gi,
+    /\bappeal\s+(?:window|deadline)\s*(?:is|of|:)?\s*(\d{1,3})\s+days?\b/gi,
+  ];
+  for (const pattern of patterns) {
+    for (const match of raw.matchAll(pattern)) {
+      const days = Number(match[1]);
+      if (days > 0 && days <= 365) windows.add(days);
+    }
+  }
+  const statedWindowDays = windows.size === 1 ? [...windows][0]! : null;
   const mentionsFunds = /disbursement|funds? (?:is|are|under) (?:on hold|under review)/i.test(raw);
   const mentionsFundsAppeal = /funds? appeal|disbursement-appeals/i.test(raw);
   const mentionsSellerChallenge = /seller challenge|account health assurance/i.test(raw);
-  const windowAmbiguous =
-    /appeal window shown in your|verify in your notice|may be closed/i.test(raw) &&
-    statedWindowDays === null;
+  const windowAmbiguous = statedWindowDays === null;
   return {
     raw,
     kindHints,

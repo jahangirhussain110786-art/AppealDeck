@@ -40,8 +40,7 @@ export default async function CasePage({
   const params = await searchParams;
   const user = await getOptionalUser();
   const signedIn = Boolean(user);
-  const email = (user?.email ?? "").trim().toLowerCase();
-  const hasPass = user ? await isLicenseActive(email) : false;
+  const hasPass = user ? await isLicenseActive(user.id) : false;
   const initialKind = isValidKind(params.kind) ? params.kind : undefined;
 
   return (

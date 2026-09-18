@@ -261,14 +261,14 @@ describe("critiquePoa", () => {
     expect(result.passed).toBe(false);
   });
 
-  it("passes severity gate when invoice present", () => {
+  it("keeps severe cases gated even when an invoice is present", () => {
     const data = makeCase({
       kind: "INAUTHENTIC_DOCUMENTS",
       evidenceSlots: { supplier_invoice: { present: true } },
     });
     const draft = composePoa(data);
     const result = critiquePoa(draft, data);
-    expect(result.findings.some((f) => f.code === "SEVERITY_GATE")).toBe(false);
+    expect(result.findings.some((f) => f.code === "SEVERITY_GATE")).toBe(true);
   });
 
   it("warns about novelty on attempt > 1", () => {

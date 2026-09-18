@@ -31,6 +31,7 @@ export interface CaseIndexEntry {
 }
 
 export interface CaseLog {
+  reminderAt?: string;
   state: CaseState;
   attemptCount: number;
   submittedAt?: string;
@@ -199,26 +200,35 @@ export async function getActiveCaseId(vault: Vault): Promise<string | null> {
   return resolveActiveCaseId(vault);
 }
 
-export async function saveCaseFile(vault: Vault, caseFile: CaseFile): Promise<void> {
-  const caseId = caseFile.id;
-  const existing = await findRecordId(vault, CASE_FILE_NAME, caseId);
-  if (existing) {
-    await vault.delete(existing);
-  }
-  await vault.addString({
-    name: CASE_FILE_NAME,
-    mimeType: "application/json",
-    data: JSON.stringify(caseFile),
-    caseId,
-    kind: "case",
+export async function setActiveCaseId(vault: Vault, caseId: string): Promise<void> {
+  await vault.atomic(async () => {
+    if (!(await findRecordId(vault, CASE_FILE_NAME, caseId))) throw new Error("Case not found");
+    await writeActivePointer(vault, caseId);
   });
-  // A real case file is authoritative: it becomes (or confirms) the active case, and its entry
-  // in the index is kept current — regardless of what, if anything, resolved as active before.
-  await writeActivePointer(vault, caseId);
-  await upsertCaseIndexEntry(vault, {
-    id: caseId,
-    kind: caseFile.kind,
-    createdAt: caseFile.createdAt,
+}
+
+export async function saveCaseFile(vault: Vault, caseFile: CaseFile): Promise<void> {
+  return vault.atomic(async () => {
+    const caseId = caseFile.id;
+    const existing = await findRecordId(vault, CASE_FILE_NAME, caseId);
+    if (existing) {
+      await vault.delete(existing);
+    }
+    await vault.addString({
+      name: CASE_FILE_NAME,
+      mimeType: "application/json",
+      data: JSON.stringify(caseFile),
+      caseId,
+      kind: "case",
+    });
+    // A real case file is authoritative: it becomes (or confirms) the active case, and its entry
+    // in the index is kept current — regardless of what, if anything, resolved as active before.
+    await writeActivePointer(vault, caseId);
+    await upsertCaseIndexEntry(vault, {
+      id: caseId,
+      kind: caseFile.kind,
+      createdAt: caseFile.createdAt,
+    });
   });
 }
 
@@ -239,17 +249,19 @@ export async function loadCaseFile(vault: Vault): Promise<CaseFile | null> {
 }
 
 export async function saveCaseLog(vault: Vault, log: CaseLog): Promise<void> {
-  const caseId = await resolveOrCreateActiveCaseId(vault);
-  const existing = await findRecordId(vault, CASE_LOG_NAME, caseId);
-  if (existing) {
-    await vault.delete(existing);
-  }
-  await vault.addString({
-    name: CASE_LOG_NAME,
-    mimeType: "application/json",
-    data: JSON.stringify(log),
-    caseId,
-    kind: "case",
+  return vault.atomic(async () => {
+    const caseId = await resolveOrCreateActiveCaseId(vault);
+    const existing = await findRecordId(vault, CASE_LOG_NAME, caseId);
+    if (existing) {
+      await vault.delete(existing);
+    }
+    await vault.addString({
+      name: CASE_LOG_NAME,
+      mimeType: "application/json",
+      data: JSON.stringify(log),
+      caseId,
+      kind: "case",
+    });
   });
 }
 
@@ -263,21 +275,27 @@ export async function loadCaseLog(vault: Vault): Promise<CaseLog | null> {
 }
 
 export async function deleteCaseFile(vault: Vault): Promise<void> {
-  const caseId = await resolveActiveCaseId(vault);
-  if (!caseId) return;
-  const id = await findRecordId(vault, CASE_FILE_NAME, caseId);
-  if (id) await vault.delete(id);
-  // "Start over" discards the case entirely — nothing should still point at a case with no file,
-  // so the next save (a fresh createCaseFile()) starts genuinely clean rather than colliding
-  // with a stale pointer/index entry for a case that no longer exists.
-  const pointerId = await findMetaRecordId(vault, ACTIVE_CASE_POINTER_NAME);
-  if (pointerId) await vault.delete(pointerId);
-  await removeCaseIndexEntry(vault, caseId);
+  return vault.atomic(async () => {
+    const caseId = await resolveActiveCaseId(vault);
+    if (!caseId) return;
+    const id = await findRecordId(vault, CASE_FILE_NAME, caseId);
+    if (id) await vault.delete(id);
+    const logId = await findRecordId(vault, CASE_LOG_NAME, caseId);
+    if (logId) await vault.delete(logId);
+    // "Start over" discards the case entirely — nothing should still point at a case with no file,
+    // so the next save (a fresh createCaseFile()) starts genuinely clean rather than colliding
+    // with a stale pointer/index entry for a case that no longer exists.
+    const pointerId = await findMetaRecordId(vault, ACTIVE_CASE_POINTER_NAME);
+    if (pointerId) await vault.delete(pointerId);
+    await removeCaseIndexEntry(vault, caseId);
+  });
 }
 
 export async function deleteCaseLog(vault: Vault): Promise<void> {
-  const caseId = await resolveActiveCaseId(vault);
-  if (!caseId) return;
-  const id = await findRecordId(vault, CASE_LOG_NAME, caseId);
-  if (id) await vault.delete(id);
+  return vault.atomic(async () => {
+    const caseId = await resolveActiveCaseId(vault);
+    if (!caseId) return;
+    const id = await findRecordId(vault, CASE_LOG_NAME, caseId);
+    if (id) await vault.delete(id);
+  });
 }

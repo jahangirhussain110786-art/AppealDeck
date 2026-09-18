@@ -24,7 +24,7 @@ export default async function VaultPage() {
     );
   }
 
-  const active = await isLicenseActive(user.email);
+  const active = await isLicenseActive(user.id);
 
   if (!active) {
     return (

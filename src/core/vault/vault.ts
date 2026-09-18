@@ -1,4 +1,5 @@
 import { VaultDB } from "./db";
+import Dexie from "dexie";
 import type { VaultMeta, VaultRecordInput, VaultKeyStore } from "./schema";
 import {
   VAULT_ENVELOPE_VERSION,
@@ -58,7 +59,7 @@ export interface AddDocumentInput {
 const MAX_RECORD_BYTES = 10 * 1024 * 1024;
 
 export class Vault {
-  private readonly db: VaultDB;
+  protected db: VaultDB;
   private readonly provider: WebCryptoLike;
   private dek: CryptoKey | null = null;
   private deviceKey: CryptoKey | null = null;
@@ -71,6 +72,60 @@ export class Vault {
 
   async open(): Promise<void> {
     await this.db.open();
+  }
+
+  /** Keeps crypto promises alive inside a serialized IndexedDB write transaction. */
+  async atomic<T>(work: () => Promise<T>): Promise<T> {
+    return this.db.transaction("rw", this.db.records, this.db.meta, work);
+  }
+
+  /** Copies an existing local vault only into an empty destination, preserving the source. */
+  async copyIntoEmpty(source: Vault, sourceSessionSecret?: string): Promise<void> {
+    const snapshot = await source.exportAll();
+    if (sourceSessionSecret && snapshot.meta.wrappedDek) {
+      const dek = await unwrapDek(this.provider, sourceSessionSecret, snapshot.meta.wrappedDek);
+      const deviceKey = await generateDeviceKey(this.provider);
+      const deviceWrappedDek = await wrapDekWithKey(this.provider, dek, deviceKey);
+      snapshot.meta = {
+        mode: { kind: "device", verifiedAt: new Date().toISOString() },
+        deviceKey,
+        deviceWrappedDek,
+        version: VAULT_ENVELOPE_VERSION,
+        createdAt: snapshot.meta.createdAt,
+      };
+    }
+    await this.db.transaction("rw", this.db.records, this.db.meta, async () => {
+      if (await this.db.records.count()) {
+        throw new Error(
+          "Destination already contains a vault. Export it before recovering another vault.",
+        );
+      }
+      await this.db.meta.put({ key: "appealdeck-vault", value: snapshot.meta });
+      await this.db.records.bulkPut(snapshot.records);
+    });
+  }
+
+  /** Portable backups always wrap the key with a user-held passphrase. */
+  async exportPortable(passphrase?: string) {
+    const snapshot = await this.exportAll();
+    if (snapshot.meta.mode.kind === "device") {
+      if (!passphrase || passphrase.length < 8) {
+        throw new Error(
+          "Choose a backup passphrase of at least 8 characters. Keep it to restore this backup.",
+        );
+      }
+      const kdf = newKdfParams(this.provider);
+      const wrappedDek = await wrapDek(this.provider, this.requireDek(), passphrase, kdf);
+      snapshot.meta = {
+        version: VAULT_ENVELOPE_VERSION,
+        createdAt: snapshot.meta.createdAt,
+        mode: { kind: "passphrase", kdf, verifiedAt: new Date().toISOString() },
+        kdf,
+        wrappedDek,
+      };
+    }
+    const { deviceKey: _key, deviceWrappedDek: _wrapped, ...meta } = snapshot.meta;
+    return { ...snapshot, meta };
   }
 
   async close(): Promise<void> {
@@ -112,7 +167,7 @@ export class Vault {
       version: VAULT_ENVELOPE_VERSION,
       createdAt: new Date().toISOString(),
     };
-    await this.db.meta.put({ key: "appealdeck-vault" as never, value: meta });
+    await this.db.meta.add({ key: "appealdeck-vault" as never, value: meta });
     this.dek = dek;
   }
 
@@ -138,7 +193,13 @@ export class Vault {
       version: VAULT_ENVELOPE_VERSION,
       createdAt: new Date().toISOString(),
     };
-    await this.db.meta.put({ key: "appealdeck-vault" as never, value: meta });
+    try {
+      await this.db.meta.add({ key: "appealdeck-vault" as never, value: meta });
+    } catch (error) {
+      if ((error as Error).name !== "ConstraintError") throw error;
+      await this.unlockWithDeviceKey();
+      return;
+    }
     this.dek = dek;
     this.deviceKey = deviceKey;
   }
@@ -323,8 +384,8 @@ export class Vault {
         `Record exceeds max size of ${MAX_RECORD_BYTES} bytes`,
       );
     }
-    const envelope = await encryptBytes(this.provider, dek, data);
-    const hash = await sha256Base64(this.provider, data);
+    const envelope = await Dexie.waitFor(encryptBytes(this.provider, dek, data));
+    const hash = await Dexie.waitFor(sha256Base64(this.provider, data));
     const now = new Date().toISOString();
     const record: VaultRecordInput = {
       id: cryptoRandomId(this.provider),
@@ -357,7 +418,7 @@ export class Vault {
     if (!record) {
       throw new VaultCryptoError("INVALID_INPUT", `No record with id ${id}`);
     }
-    const bytes = await decryptBytes(this.provider, dek, record.ciphertext);
+    const bytes = await Dexie.waitFor(decryptBytes(this.provider, dek, record.ciphertext));
     return { record, bytes };
   }
 
@@ -426,16 +487,24 @@ export class Vault {
     },
     options: { sourcePassphrase: string; destinationPassphrase: string },
   ): Promise<number> {
-    if (payload.version > VAULT_ENVELOPE_VERSION) {
+    if (payload.version !== VAULT_ENVELOPE_VERSION || !Array.isArray(payload.records)) {
       throw new VaultCryptoError(
         "ENVELOPE_TOO_NEW",
         `Import version ${payload.version} is newer than the running app`,
       );
     }
-    if (!payload.meta.wrappedDek) {
+    if (!payload.meta?.wrappedDek) {
       throw new VaultCryptoError("ENVELOPE_CORRUPT", "Import payload is missing a wrapped DEK");
     }
     const dek = await unwrapDek(this.provider, options.sourcePassphrase, payload.meta.wrappedDek);
+    // Verify every record before touching the destination. Never mix keys in one vault.
+    const ids = new Set<string>();
+    for (const record of payload.records) {
+      if (!record.id || ids.has(record.id))
+        throw new Error("Backup contains duplicate or missing record IDs");
+      ids.add(record.id);
+      await decryptBytes(this.provider, dek, record.ciphertext);
+    }
     const newKdf = newKdfParams(this.provider);
     const newWrapped = await wrapDek(this.provider, dek, options.destinationPassphrase, newKdf);
     const nextMeta: VaultKeyStore = {
@@ -447,6 +516,11 @@ export class Vault {
     };
     let n = 0;
     await this.db.transaction("rw", this.db.records, this.db.meta, async () => {
+      if (await this.db.records.count()) {
+        throw new Error(
+          "Restore requires an empty vault. Your existing files have been preserved.",
+        );
+      }
       await this.db.meta.put({ key: "appealdeck-vault" as never, value: nextMeta });
       for (const r of payload.records) {
         const env: EncryptionEnvelope = r.ciphertext;

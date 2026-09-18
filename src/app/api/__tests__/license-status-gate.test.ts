@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const getApiUserMock = vi.fn();
-const fetchLicenseByEmailMock = vi.fn();
+const fetchLicenseForUserMock = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   getApiUser: () => getApiUserMock(),
@@ -10,14 +10,14 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/lib/license", () => ({
-  fetchLicenseByEmail: (...args: unknown[]) => fetchLicenseByEmailMock(...args),
+  fetchLicenseForUser: (...args: unknown[]) => fetchLicenseForUserMock(...args),
 }));
 
 import { GET } from "../license/status/route";
 
 beforeEach(() => {
   getApiUserMock.mockReset();
-  fetchLicenseByEmailMock.mockReset();
+  fetchLicenseForUserMock.mockReset();
 });
 
 describe("GET /api/license/status", () => {
@@ -31,7 +31,7 @@ describe("GET /api/license/status", () => {
 
   it("returns the typed license summary when signed in", async () => {
     getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
-    fetchLicenseByEmailMock.mockResolvedValue({
+    fetchLicenseForUserMock.mockResolvedValue({
       status: "active",
       plan: "appeal-pass",
       licenseKey: "key-1",
@@ -45,7 +45,7 @@ describe("GET /api/license/status", () => {
 
   it("returns status none when signed in with no license", async () => {
     getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
-    fetchLicenseByEmailMock.mockResolvedValue({ status: "none", plan: null, licenseKey: null });
+    fetchLicenseForUserMock.mockResolvedValue({ status: "none", plan: null, licenseKey: null });
     const res = await GET();
     const body = await res.json();
     expect(body).toEqual({ status: "none", plan: null });

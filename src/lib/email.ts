@@ -18,6 +18,8 @@ export interface PurchaseConfirmationInput {
   to: string;
   /** ISO date string (or Date) the purchase completed. */
   purchasedAt: string | Date;
+  consentText?: string;
+  idempotencyKey?: string;
 }
 
 export interface BuiltEmail {
@@ -44,7 +46,7 @@ function formatDate(d: string | Date): string {
 export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput): BuiltEmail {
   const dateLabel = formatDate(input.purchasedAt);
   const subject = `Your ${PRICING.pass} receipt and consent copy`;
-  const consentLine = LEGAL.consent.withdrawalCheckbox.label;
+  const consentLine = input.consentText ?? LEGAL.consent.withdrawalCheckbox.label;
   const refundLine =
     "You can request a full refund within 7 days of purchase, no questions asked, by replying to this email or writing to billing@appealdeck.com.";
 
@@ -87,30 +89,23 @@ export async function sendPurchaseConfirmationEmail(
 ): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM ?? "AppealDeck <billing@appealdeck.com>";
-  if (!apiKey) {
-    console.warn(
-      "sendPurchaseConfirmationEmail: RESEND_API_KEY not set — confirmation email not sent. " +
-        "Set RESEND_API_KEY (and optionally EMAIL_FROM) to enable this D8-required email.",
-    );
-    return;
-  }
+  if (!apiKey) throw new Error("Confirmation email is not configured");
 
   const { subject, html, text } = buildPurchaseConfirmationEmail(input);
 
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
+      signal: AbortSignal.timeout(5000),
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        ...(input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey } : {}),
       },
       body: JSON.stringify({ from, to: input.to, subject, html, text }),
     });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      console.error("sendPurchaseConfirmationEmail: Resend API error", res.status, body);
-    }
-  } catch (e) {
-    console.error("sendPurchaseConfirmationEmail: request failed", (e as Error).message);
+    if (!res.ok) throw new Error("Confirmation email provider returned " + res.status);
+  } catch {
+    throw new Error("Confirmation email delivery failed");
   }
 }

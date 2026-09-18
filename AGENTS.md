@@ -1,3 +1,5 @@
+> **18 Sep 2026 integrity update:** Current implementation and live migration details are in [docs/handoffs/2026-09-18-integrity-fixes.md](docs/handoffs/2026-09-18-integrity-fixes.md). This supersedes older status claims below: account-ID and per-case entitlements, transactional Paddle processing, isolated guest/account vaults, portable backup restore, strict request validation and corrected CI are now implemented. Supabase migrations 0009 and 0010 were applied; Paddle setup is sandbox-only. No app deployment occurred. Production webhook delivery and confirmation email configuration remain launch checks.
+
 # AppealDeck Project Context
 
 ## Current Project State

@@ -306,13 +306,12 @@ function checkBannedLanguage(draft: PoaDraft, findings: CriticFinding[]): void {
 
 function checkSeverityGate(_draft: PoaDraft, data: CaseFileData, findings: CriticFinding[]): void {
   if (data.kind === "INAUTHENTIC_DOCUMENTS") {
-    const hasInvoice = data.evidenceSlots["supplier_invoice"]?.present;
-    if (!hasInvoice) {
+    {
       findings.push({
         severity: "error",
         code: "SEVERITY_GATE",
         message:
-          "Inauthentic-document cases without a verifiable supplier invoice are routed to professional help. A self-serve draft is not appropriate.",
+          "Inauthentic-document cases are routed to professional help. A self-serve draft is not appropriate.",
       });
     }
   }

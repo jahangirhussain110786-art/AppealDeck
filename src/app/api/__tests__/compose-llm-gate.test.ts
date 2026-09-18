@@ -15,6 +15,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/lib/license", () => ({
+  claimCasePass: () => Promise.resolve(true),
   isLicenseActive: (email: string) => isLicenseActiveMock(email),
 }));
 
@@ -36,6 +37,7 @@ vi.mock("@/lib/devices", () => ({
 }));
 
 vi.mock("@/core", () => ({
+  isSeverityGated: (kind: string) => kind === "INAUTHENTIC_DOCUMENTS",
   composePoa: () => ({
     docType: "poa",
     mode: { mode: "full-draft", reason: "fully-backed" },
@@ -97,7 +99,9 @@ beforeEach(() => {
 describe("/api/compose AI-drafted path", () => {
   it("keeps the deterministic draft when Gemini is not configured", async () => {
     isGeminiConfiguredMock.mockReturnValue(false);
-    const res = await POST(makeReq({ caseData: { kind: "POLICY" }, attemptNumber: 1 }));
+    const res = await POST(
+      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+    );
     const body = await res.json();
     expect(body.draft.metadata.aiDrafted).toBe(false);
     expect(checkBreakerMock).not.toHaveBeenCalled();
@@ -106,7 +110,9 @@ describe("/api/compose AI-drafted path", () => {
   it("keeps the deterministic draft when the breaker does not allow the call", async () => {
     isGeminiConfiguredMock.mockReturnValue(true);
     checkBreakerMock.mockResolvedValue({ allowed: false, reason: "spend_cap", resetAt: 0 });
-    const res = await POST(makeReq({ caseData: { kind: "POLICY" }, attemptNumber: 1 }));
+    const res = await POST(
+      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+    );
     const body = await res.json();
     expect(body.draft.metadata.aiDrafted).toBe(false);
     expect(composePoaWithLlmMock).not.toHaveBeenCalled();
@@ -119,7 +125,9 @@ describe("/api/compose AI-drafted path", () => {
       context: { fingerprint: "breaker-fp", now: Date.now() },
     });
     composePoaWithLlmMock.mockResolvedValue({ ok: false, reason: "narrative_insufficient" });
-    const res = await POST(makeReq({ caseData: { kind: "POLICY" }, attemptNumber: 1 }));
+    const res = await POST(
+      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+    );
     const body = await res.json();
     expect(body.draft.metadata.aiDrafted).toBe(false);
     expect(recordBreakerMock).toHaveBeenCalled();
@@ -135,7 +143,9 @@ describe("/api/compose AI-drafted path", () => {
       ok: true,
       sections: { rootCause: "A professionally drafted paragraph." },
     });
-    const res = await POST(makeReq({ caseData: { kind: "POLICY" }, attemptNumber: 1 }));
+    const res = await POST(
+      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+    );
     const body = await res.json();
     expect(body.draft.metadata.aiDrafted).toBe(true);
     const rootCause = body.draft.sections.find(

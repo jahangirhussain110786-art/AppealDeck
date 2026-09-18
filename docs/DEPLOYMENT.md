@@ -1,3 +1,5 @@
+> **18 Sep 2026 update:** Before deployment, follow the current requirements in [the integrity handoff](handoffs/2026-09-18-integrity-fixes.md#deployment-requirements-and-remaining-external-limits). Apply migrations 0009 and 0010; configure the checkout price/webhook and durable email worker. Production rate limiting now fails closed. Historical setup details below must be read with this update.
+
 # AppealDeck — Vercel Deployment Guide (Hobby / Free Tier)
 
 This guide is the single source of truth for getting AppealDeck onto Vercel Hobby (free) for the first 20 customers. If a step says "founder action", it's a manual click in a dashboard that the AI cannot perform for you.

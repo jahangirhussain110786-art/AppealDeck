@@ -13,7 +13,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,md,json}\"",
     "analyze": "ANALYZE=true next build",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=chromium",
     "test:e2e:ui": "playwright test --ui",
     "lighthouse": "lhci autorun",
     "test": "vitest run",

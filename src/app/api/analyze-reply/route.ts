@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     return unauthorizedJsonResponse();
   }
 
-  if (!(await isLicenseActive(user.email))) {
+  if (!(await isLicenseActive(user.id))) {
     return NextResponse.json({ error: "Appeal Pass required." }, { status: 403 });
   }
 

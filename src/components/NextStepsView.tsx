@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Vault } from "@/core/vault/vault";
 import { AlertCircle, CheckCircle2, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,9 +28,11 @@ import { APP } from "@/content/app";
  */
 export function NextStepsView({
   caseFile,
+  vault,
   priorityEvidenceKinds = [],
 }: {
   caseFile: CaseFile;
+  vault?: Vault;
   /** Evidence Amazon's reply specifically asked for (CaseLog.lastReply.extractedAsks), so the
    * evidence pillar can surface it first instead of only ever repeating the original checklist. */
   priorityEvidenceKinds?: EvidenceKind[];
@@ -61,7 +64,11 @@ export function NextStepsView({
           {evidenceDone ? (
             <p className="text-sm text-muted-foreground">{copy.pillars.evidence.complete}</p>
           ) : (
-            <EvidenceSlotPanel kind={caseFile.kind} priorityKinds={priorityEvidenceKinds} />
+            <EvidenceSlotPanel
+              vault={vault}
+              kind={caseFile.kind}
+              priorityKinds={priorityEvidenceKinds}
+            />
           )}
         </CardContent>
       </Card>

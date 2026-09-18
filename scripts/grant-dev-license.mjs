@@ -48,12 +48,17 @@ if (selectError) {
   process.exit(1);
 }
 
+const { data: users, error: usersError } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+if (usersError) throw usersError;
+const user = users.users.find(u => u.email?.toLowerCase() === EMAIL);
+if (!user) throw new Error("Create the dev user before granting a license");
 const nowIso = new Date().toISOString();
 
 if (existing) {
   const { error: updateError } = await supabase
     .from("licenses")
     .update({
+      user_id: user.id,
       status: "active",
       plan: "appeal_pass",
       provider: "dev-grant",
@@ -73,6 +78,7 @@ if (existing) {
   const licenseKey = newLicenseKey();
   const { error: insertError } = await supabase.from("licenses").insert({
     license_key: licenseKey,
+    user_id: user.id,
     email: EMAIL,
     plan: "appeal_pass",
     provider: "dev-grant",

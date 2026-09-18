@@ -14,7 +14,15 @@ import {
 } from "lucide-react";
 import { getBrowserVault } from "@/lib/vault/browser";
 import type { Vault, VaultListItem } from "@/core/vault/vault";
-import { saveCaseLog, loadCaseLog, loadCaseFile } from "@/lib/caseStore";
+import {
+  saveCaseLog,
+  loadCaseLog,
+  loadCaseFile,
+  listCases,
+  setActiveCaseId,
+} from "@/lib/caseStore";
+import { withCaseEvidence } from "@/lib/caseEvidence";
+import type { CaseIndexEntry } from "@/lib/caseStore";
 import type { CaseLog } from "@/lib/caseStore";
 import {
   nextState,
@@ -99,6 +107,7 @@ function buildContext(file: CaseFile, log: CaseLog | null): CaseStateContext {
     submitted: isSubmitted(file.state) || log?.submittedAt !== undefined,
     attemptCount: log?.attemptCount ?? file.attemptCount,
     hasReply: log?.lastReply !== undefined,
+    reminderDue: Boolean(log?.reminderAt && Date.parse(log.reminderAt) <= Date.now()),
     replyCategory: log?.lastReply?.category,
     fundsHeld: false,
     fundsEligible: false,
@@ -208,13 +217,16 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
   const [replyResult, setReplyResult] = useState<ReplyAnalysis | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [cases, setCases] = useState<CaseIndexEntry[]>([]);
   const loadFromVault = useCallback(async () => {
     try {
-      const file = await loadCaseFile(vault);
+      const stored = await loadCaseFile(vault);
+      const file = stored ? await withCaseEvidence(vault, stored) : null;
+      setCases(await listCases(vault));
       const log = file ? await loadCaseLog(vault) : null;
       // Real evidence documents only — case-file/case-log bookkeeping records share the same
       // vault under kind "case" and aren't something a seller thinks of as "a file I uploaded".
-      const records = (await vault.list())
+      const records = (await vault.list({ caseId: file?.id ?? "no-active-case" }))
         .filter((r) => r.kind !== "case")
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setCaseFile(file);
@@ -490,12 +502,49 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
         return (
           <div className="animate-fade-in space-y-6">
             <PassStatusRow license={license} />
-
+            {cases.length > 1 && (
+              <label className="block text-sm">
+                Current case
+                <select
+                  className="ml-2 rounded border bg-background p-2"
+                  value={caseFile.id}
+                  onChange={(event) => {
+                    void setActiveCaseId(vault, event.target.value)
+                      .then(loadFromVault)
+                      .catch(() => toast.error("Could not switch cases"));
+                  }}
+                >
+                  {cases.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.kind.replaceAll("_", " ")} · {formatDate(c.createdAt)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {ctx.submitted && !ctx.hasReply && (
+              <label className="block text-sm">
+                Your follow-up reminder date
+                <input
+                  className="ml-2 rounded border bg-background p-2"
+                  type="date"
+                  value={currentLog.reminderAt?.slice(0, 10) ?? ""}
+                  onChange={(event) => {
+                    const reminderAt = event.target.value
+                      ? event.target.value + "T00:00:00Z"
+                      : undefined;
+                    void saveCaseLog(vault, { ...currentLog, reminderAt })
+                      .then(loadFromVault)
+                      .catch(() => toast.error("Could not save reminder"));
+                  }}
+                />
+              </label>
+            )}
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="mb-2 flex items-center gap-2">
                   <CaseStateBadge kind={caseFile.kind} />
-                  <span className="text-sm font-medium">{APP.dashboard.stateLabels[current]}</span>
+                  <span className="text-sm font-medium">{APP.dashboard.stateLabels[next]}</span>
                 </div>
                 {expCopy && <p className="text-sm text-muted-foreground">{expCopy}</p>}
               </div>

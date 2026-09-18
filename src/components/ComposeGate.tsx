@@ -8,32 +8,45 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { ConsentRow } from "@/components/pricing/ConsentRow";
-import ComposeView from "@/components/ComposeView";
 import { APP } from "@/content/app";
 import { SHARED } from "@/content/shared";
 import { PRICING } from "@/content/marketing";
-import { pollLicenseStatus, LicensePollTimeoutError } from "@/lib/licensePoll";
+import type { Vault } from "@/core/vault/vault";
+import { pollLicenseStatus } from "@/lib/licensePoll";
 
 type Phase = "idle" | "activating" | "active" | "timeout";
 
-export function ComposeGate({ email }: { email?: string | null }) {
+export function ComposeGate({
+  email,
+  vault,
+  caseId,
+  onActivated,
+}: {
+  email?: string | null;
+  vault?: Vault;
+  caseId?: string;
+  onActivated?: () => void;
+}) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [consent, setConsent] = useState(false);
   const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
 
   const startPolling = useCallback(() => {
     setPhase("activating");
-    void pollLicenseStatus()
-      .then(() => setPhase("active"))
-      .catch((e) => {
-        if (e instanceof LicensePollTimeoutError) {
-          setPhase("timeout");
-        }
-      });
-  }, []);
+    void pollLicenseStatus({ caseId })
+      .then(() => {
+        if (onActivated) onActivated();
+        else setPhase("active");
+      })
+      .catch(() => setPhase("timeout"));
+  }, [caseId, onActivated]);
 
   if (phase === "active") {
-    return <ComposeView />;
+    return (
+      <Button asChild>
+        <Link href="/compose">Continue to your draft</Link>
+      </Button>
+    );
   }
 
   if (phase === "activating") {
@@ -80,6 +93,8 @@ export function ComposeGate({ email }: { email?: string | null }) {
         <ConsentRow checked={consent} onCheckedChange={setConsent} idPrefix="compose-eu-consent" />
         {consent ? (
           <CheckoutButton
+            vault={vault}
+            consent={consent}
             priceId={priceId}
             size="lg"
             customerEmail={email ?? undefined}

@@ -24,6 +24,7 @@ export interface CaseStateContext {
   submitted: boolean;
   attemptCount: number;
   hasReply: boolean;
+  reminderDue?: boolean;
   replyCategory?: ReplyCategory;
   fundsHeld: boolean;
   fundsEligible: boolean;
@@ -87,10 +88,14 @@ const TRANSITIONS: ReadonlyArray<Transition> = [
         ctx.replyCategory === "identity_verification"),
     priority: 75,
   },
-  { to: "AWAITING", guard: (ctx) => ctx.submitted && !ctx.hasReply, priority: 70 },
+  {
+    to: "AWAITING",
+    guard: (ctx) => ctx.submitted && !ctx.hasReply && !ctx.reminderDue,
+    priority: 70,
+  },
   {
     to: "NO_RESPONSE",
-    guard: (ctx) => ctx.submitted && ctx.attemptCount >= 1 && !ctx.hasReply,
+    guard: (ctx) => ctx.submitted && !ctx.hasReply && ctx.reminderDue === true,
     priority: 60,
   },
 ];

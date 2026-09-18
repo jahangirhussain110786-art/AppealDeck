@@ -113,45 +113,95 @@ export function isRateLimitEnabled(): boolean {
 export async function rateLimitCompose(user: AppUser): Promise<RateLimitResult> {
   const limiter = getComposeLimiter();
   if (!limiter) {
-    return { success: true, limit: 30, remaining: 30, reset: Date.now() + 60_000 };
+    return {
+      success: process.env.NODE_ENV !== "production",
+      limit: 30,
+      remaining: 30,
+      reset: Date.now() + 60_000,
+    };
   }
-  const r = await limiter.limit(user.id);
+  let r;
+  try {
+    r = await limiter.limit(user.id);
+  } catch {
+    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+  }
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
 
 export async function rateLimitInterview(user: AppUser): Promise<RateLimitResult> {
   const limiter = getInterviewLimiter();
   if (!limiter) {
-    return { success: true, limit: 60, remaining: 60, reset: Date.now() + 60_000 };
+    return {
+      success: process.env.NODE_ENV !== "production",
+      limit: 60,
+      remaining: 60,
+      reset: Date.now() + 60_000,
+    };
   }
-  const r = await limiter.limit(user.id);
+  let r;
+  try {
+    r = await limiter.limit(user.id);
+  } catch {
+    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+  }
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
 
 export async function rateLimitAnalyzeReply(user: AppUser): Promise<RateLimitResult> {
   const limiter = getAnalyzeReplyLimiter();
   if (!limiter) {
-    return { success: true, limit: 60, remaining: 60, reset: Date.now() + 60_000 };
+    return {
+      success: process.env.NODE_ENV !== "production",
+      limit: 60,
+      remaining: 60,
+      reset: Date.now() + 60_000,
+    };
   }
-  const r = await limiter.limit(user.id);
+  let r;
+  try {
+    r = await limiter.limit(user.id);
+  } catch {
+    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+  }
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
 
 export async function rateLimitOutcome(user: AppUser): Promise<RateLimitResult> {
   const limiter = getOutcomeLimiter();
   if (!limiter) {
-    return { success: true, limit: 10, remaining: 10, reset: Date.now() + 86_400_000 };
+    return {
+      success: process.env.NODE_ENV !== "production",
+      limit: 10,
+      remaining: 10,
+      reset: Date.now() + 86_400_000,
+    };
   }
-  const r = await limiter.limit(user.id);
+  let r;
+  try {
+    r = await limiter.limit(user.id);
+  } catch {
+    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+  }
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
 
 export async function rateLimitExtractField(user: AppUser): Promise<RateLimitResult> {
   const limiter = getExtractFieldLimiter();
   if (!limiter) {
-    return { success: true, limit: 20, remaining: 20, reset: Date.now() + 86_400_000 };
+    return {
+      success: process.env.NODE_ENV !== "production",
+      limit: 20,
+      remaining: 20,
+      reset: Date.now() + 86_400_000,
+    };
   }
-  const r = await limiter.limit(user.id);
+  let r;
+  try {
+    r = await limiter.limit(user.id);
+  } catch {
+    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+  }
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
 

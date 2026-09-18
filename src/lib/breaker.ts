@@ -105,43 +105,49 @@ export async function checkBreaker(
   fingerprint: string,
   now: number = Date.now(),
 ): Promise<CheckResult> {
-  const redis = getRedis();
-  if (!redis) {
-    return { allowed: true, context: { fingerprint, now } };
-  }
+  try {
+    const redis = getRedis();
+    if (!redis) {
+      return process.env.NODE_ENV === "production"
+        ? { allowed: false, reason: "circuit_open", resetAt: now + 60_000 }
+        : { allowed: true, context: { fingerprint, now } };
+    }
 
-  const circuitUntil = Number((await redis.get(circuitKey(opts.name))) ?? 0);
-  if (circuitUntil > now) {
-    return { allowed: false, reason: "circuit_open", resetAt: circuitUntil };
-  }
+    const circuitUntil = Number((await redis.get(circuitKey(opts.name))) ?? 0);
+    if (circuitUntil > now) {
+      return { allowed: false, reason: "circuit_open", resetAt: circuitUntil };
+    }
 
-  if (opts.scope !== "none" && opts.perMinuteLimit > 0) {
-    const limiter = getPerMinuteLimiter(opts.name, opts.perMinuteLimit);
-    if (limiter) {
-      const r = await limiter.limit(fingerprint);
-      if (!r.success) {
-        return { allowed: false, reason: "rate_limit", resetAt: r.reset };
+    if (opts.scope !== "none" && opts.perMinuteLimit > 0) {
+      const limiter = getPerMinuteLimiter(opts.name, opts.perMinuteLimit);
+      if (limiter) {
+        const r = await limiter.limit(fingerprint);
+        if (!r.success) {
+          return { allowed: false, reason: "rate_limit", resetAt: r.reset };
+        }
       }
     }
-  }
 
-  if (opts.spendCapPerDay > 0) {
-    const used = Number((await redis.incr(spendKey(opts.name, now))) ?? 0);
-    if (used === 1) {
-      await redis.expire(spendKey(opts.name, now), 90_000);
+    if (opts.spendCapPerDay > 0) {
+      const used = Number((await redis.incr(spendKey(opts.name, now))) ?? 0);
+      if (used === 1) {
+        await redis.expire(spendKey(opts.name, now), 90_000);
+      }
+      if (used > opts.spendCapPerDay) {
+        return {
+          allowed: false,
+          reason: "spend_cap",
+          resetAt: endOfDay(now),
+          used,
+          cap: opts.spendCapPerDay,
+        };
+      }
     }
-    if (used > opts.spendCapPerDay) {
-      return {
-        allowed: false,
-        reason: "spend_cap",
-        resetAt: endOfDay(now),
-        used,
-        cap: opts.spendCapPerDay,
-      };
-    }
-  }
 
-  return { allowed: true, context: { fingerprint, now } };
+    return { allowed: true, context: { fingerprint, now } };
+  } catch {
+    return { allowed: false, reason: "circuit_open", resetAt: now + 60_000 };
+  }
 }
 
 export type RecordInput = {
@@ -277,7 +283,11 @@ export function withBreaker(
     }
     const response = await handler(req, outcome.context);
     const ok = response.status >= 200 && response.status < 500;
-    await record(opts, { ok, context: outcome.context });
+    try {
+      await record(opts, { ok, context: outcome.context });
+    } catch {
+      /* Metrics failure must not replace an already-completed response. */
+    }
     return response;
   };
 }

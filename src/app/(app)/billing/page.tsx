@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, CreditCard } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { isLicenseActive, fetchLicenseByEmail } from "@/lib/license";
+import { isLicenseActive, fetchLicenseForUser } from "@/lib/license";
 import { formatDate } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,9 @@ export const dynamic = "force-dynamic";
 
 export default async function BillingPage() {
   const user = await requireUser("/billing");
-  const email = (user.email ?? "").trim().toLowerCase();
 
-  const active = await isLicenseActive(email);
-  const license = await fetchLicenseByEmail(email);
+  const active = await isLicenseActive(user.id);
+  const license = await fetchLicenseForUser(user?.id);
 
   return (
     <div className="space-y-6">

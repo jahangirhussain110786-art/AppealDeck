@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { composePoa, critiquePoa, renderPoaText } from "@/core";
+import { composePoa, critiquePoa, renderPoaText, isSeverityGated } from "@/core";
 import type { CaseFileData, PoaDraft } from "@/core";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
-import { isLicenseActive } from "@/lib/license";
+import { isLicenseActive, claimCasePass } from "@/lib/license";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { recordActivation, deviceErrorResponse, deriveFingerprintFromRequest } from "@/lib/devices";
@@ -11,31 +11,12 @@ import { isGeminiConfigured, composeBreakerOptions } from "@/lib/llm/gemini";
 import { checkBreaker, recordBreaker, fingerprintForRequest } from "@/lib/breaker";
 import { composePoaWithLlm, applyLlmSections } from "@/lib/llm/composePoaLlm";
 
+import { CaseDataSchema } from "@/lib/caseSchema";
+
 export const dynamic = "force-dynamic";
 
-const CaseFile = z
-  .object({
-    kind: z.string().min(1),
-    state: z.string().optional(),
-    rootCause: z.string().optional(),
-    preventiveMeasures: z.string().optional(),
-    timelineEvents: z
-      .array(
-        z.object({
-          date: z.string(),
-          description: z.string(),
-        }),
-      )
-      .optional(),
-    priorAppealCount: z.number().int().nonnegative().optional(),
-    evidenceSlots: z.record(z.string(), z.unknown()).optional(),
-    actionItems: z.array(z.unknown()).optional(),
-    attemptCount: z.number().int().nonnegative().optional(),
-  })
-  .passthrough();
-
 const ComposeBody = z.object({
-  caseData: CaseFile,
+  caseData: CaseDataSchema,
   attemptNumber: z.number().int().min(1).max(99).optional(),
 });
 
@@ -51,26 +32,12 @@ export async function POST(req: NextRequest) {
     return tooManyRequestsResponse(rate);
   }
 
-  if (!(await isLicenseActive(email))) {
-    return NextResponse.json({ error: "Appeal Pass required." }, { status: 403 });
-  }
-
-  if (supabaseAdmin && email) {
-    const fingerprint = await deriveFingerprintFromRequest(req, user.id);
-    const result = await recordActivation(supabaseAdmin, {
-      userId: user.id,
-      email,
-      fingerprint,
-      userAgent: req.headers.get("user-agent"),
-    });
-    if (result.status === "over_cap") {
-      return deviceErrorResponse(result);
-    }
-  }
-
   let body: unknown;
   try {
-    body = await req.json();
+    const raw = await req.text();
+    if (new TextEncoder().encode(raw).length > 200_000)
+      return NextResponse.json({ error: "Case is too large." }, { status: 413 });
+    body = JSON.parse(raw);
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
@@ -82,7 +49,37 @@ export async function POST(req: NextRequest) {
   }
 
   const { caseData, attemptNumber = 1 } = parsed.data;
-  const data = caseData as unknown as CaseFileData;
+  if (isSeverityGated(caseData.kind))
+    return NextResponse.json(
+      { error: "This case requires professional help. Self-serve drafting is unavailable." },
+      { status: 403 },
+    );
+  if (!(await isLicenseActive(user.id))) {
+    return NextResponse.json(
+      { error: "Appeal Pass required.", code: "case_pass_required" },
+      { status: 403 },
+    );
+  }
+
+  if (supabaseAdmin && email) {
+    const fingerprint = await deriveFingerprintFromRequest(req, user.id);
+    const result = await recordActivation(supabaseAdmin, {
+      userId: user.id,
+      email,
+      fingerprint,
+      userAgent: req.headers.get("user-agent"),
+    });
+    if (result.status !== "ok") {
+      return deviceErrorResponse(result);
+    }
+  }
+
+  if (!(await claimCasePass(user.id, caseData.id)))
+    return NextResponse.json(
+      { error: "An Appeal Pass is required for this case.", code: "case_pass_required" },
+      { status: 403 },
+    );
+  const data: CaseFileData = caseData;
 
   const draft = await composeDraft(data, attemptNumber, req, user.id);
   const critique = critiquePoa(draft, data);
@@ -119,18 +116,22 @@ async function composeDraft(
     return deterministic;
   }
 
-  const fingerprint = fingerprintForRequest(req, userId);
-  const check = await checkBreaker(composeBreakerOptions, fingerprint);
-  if (!check.allowed) {
+  try {
+    const fingerprint = fingerprintForRequest(req, userId);
+    const check = await checkBreaker(composeBreakerOptions, fingerprint);
+    if (!check.allowed) {
+      return deterministic;
+    }
+
+    const llm = await composePoaWithLlm(data);
+    await recordBreaker(composeBreakerOptions, { ok: llm.ok, context: check.context });
+
+    if (!llm.ok) {
+      return deterministic;
+    }
+
+    return applyLlmSections(deterministic, data, llm.sections);
+  } catch {
     return deterministic;
   }
-
-  const llm = await composePoaWithLlm(data);
-  await recordBreaker(composeBreakerOptions, { ok: llm.ok, context: check.context });
-
-  if (!llm.ok) {
-    return deterministic;
-  }
-
-  return applyLlmSections(deterministic, data, llm.sections);
 }

@@ -4,6 +4,7 @@ export interface LicensePollResult {
 }
 
 export interface PollLicenseOptions {
+  caseId?: string;
   fetchImpl?: typeof fetch;
   intervalMs?: number;
   timeoutMs?: number;
@@ -34,12 +35,31 @@ export async function pollLicenseStatus(
     sleep = defaultSleep,
   } = options;
 
+  let caseId = options.caseId;
+  if (!caseId && !options.fetchImpl && typeof window !== "undefined") {
+    const { getBrowserVault } = await import("./vault/browser");
+    const { loadCaseFile } = await import("./caseStore");
+    const { openVaultForVisitor } = await import("./vault/visitor");
+    const vault = getBrowserVault();
+    try {
+      if (await openVaultForVisitor(vault)) caseId = (await loadCaseFile(vault))?.id;
+    } finally {
+      await vault.close();
+    }
+  }
+  const statusUrl = caseId
+    ? "/api/license/status?caseId=" + encodeURIComponent(caseId)
+    : "/api/license/status";
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    const res = await fetchImpl("/api/license/status", { cache: "no-store" });
+    const res = await fetchImpl(statusUrl, { cache: "no-store" });
     if (res.ok) {
       const data = (await res.json()) as LicensePollResult;
-      if (data.status === "active") return data;
+      if (data.status === "active") {
+        if (!options.fetchImpl)
+          void fetch("/api/checkout/confirmation", { method: "POST" }).catch(() => {});
+        return data;
+      }
     }
     if (Date.now() + intervalMs > deadline) {
       throw new LicensePollTimeoutError();

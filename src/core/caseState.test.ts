@@ -50,6 +50,15 @@ describe("caseState transitions", () => {
     expect(nextState(ctx, "SUBMITTED")).toBe("AWAITING");
   });
 
+  it("NO_RESPONSE only after the seller's reminder is due", () => {
+    expect(
+      nextState(baseCtx({ submitted: true, attemptCount: 1, reminderDue: true }), "AWAITING"),
+    ).toBe("NO_RESPONSE");
+    expect(
+      nextState(baseCtx({ submitted: true, attemptCount: 5, reminderDue: false }), "AWAITING"),
+    ).toBe("AWAITING");
+  });
+
   it("APPROVED when reinstated reply arrives", () => {
     const ctx = baseCtx({ submitted: true, hasReply: true, replyCategory: "reinstated" });
     expect(nextState(ctx, "AWAITING")).toBe("APPROVED");

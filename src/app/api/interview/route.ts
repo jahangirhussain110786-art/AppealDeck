@@ -1,3 +1,4 @@
+import { CaseDataSchema } from "@/lib/caseSchema";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
@@ -20,40 +21,7 @@ const ViolationKinds = [
   "UNKNOWN",
 ] as const;
 
-const TimelineEvent = z.object({
-  date: z.string(),
-  description: z.string(),
-});
-
-const EvidenceSlot = z.object({
-  present: z.boolean().optional(),
-  disqualified: z.boolean().optional(),
-  vaultRecordId: z.string().optional(),
-});
-
-const ActionItem = z.object({
-  id: z.string(),
-  label: z.string(),
-  evidenceSlots: z.array(z.string()).optional(),
-  status: z.enum(["todo", "in_progress", "done"]),
-  declined: z
-    .object({
-      reason: z.string(),
-      at: z.string(),
-    })
-    .optional(),
-});
-
-const CaseFileSchema = z.object({
-  kind: z.enum(ViolationKinds),
-  state: z.string(),
-  rootCause: z.string().optional(),
-  timelineEvents: z.array(TimelineEvent),
-  priorAppealCount: z.number().int().nonnegative(),
-  evidenceSlots: z.record(z.string(), EvidenceSlot),
-  actionItems: z.array(ActionItem),
-  attemptCount: z.number().int().nonnegative(),
-});
+const CaseFileSchema = CaseDataSchema;
 
 const AnswerSchema = z.object({
   stepId: z.string().max(64),
@@ -84,7 +52,7 @@ export async function POST(req: NextRequest) {
     return unauthorizedJsonResponse();
   }
 
-  if (!(await isLicenseActive(user.email))) {
+  if (!(await isLicenseActive(user.id))) {
     return NextResponse.json({ error: "Appeal Pass required." }, { status: 403 });
   }
 

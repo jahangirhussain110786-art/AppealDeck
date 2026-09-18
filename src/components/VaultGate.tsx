@@ -18,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Phase =
   | { kind: "loading" }
+  | { kind: "error" }
   | { kind: "needs_init" }
   | { kind: "device_set_passphrase" }
   | { kind: "locked" }
@@ -59,6 +60,8 @@ export function VaultGate({
 
   const phaseRef = React.useRef(phase);
   const onLockedRef = React.useRef(onLocked);
+  const onUnlockedRef = React.useRef(onUnlocked);
+  onUnlockedRef.current = onUnlocked;
   const lockTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const warnTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastReset = React.useRef(0);
@@ -111,6 +114,8 @@ export function VaultGate({
         if (!initialized) {
           if (deviceMode && autoUnlock) {
             await vault.initWithDeviceKey();
+            if (cancelled) return;
+            onUnlockedRef.current?.();
             setPhase({ kind: "unlocked" });
           } else if (deviceMode) {
             setPhase({ kind: "device_set_passphrase" });
@@ -124,6 +129,8 @@ export function VaultGate({
         if (status.state === "locked") {
           if (status.mode === "device" && autoUnlock) {
             await vault.unlockWithDeviceKey();
+            if (cancelled) return;
+            onUnlockedRef.current?.();
             setPhase({ kind: "unlocked" });
           } else if (status.mode === "device" && deviceMode) {
             setPhase({ kind: "device_set_passphrase" });
@@ -132,10 +139,11 @@ export function VaultGate({
           }
           return;
         }
+        onUnlockedRef.current?.();
         setPhase({ kind: "unlocked" });
       } catch {
         if (cancelled) return;
-        setPhase({ kind: "loading" });
+        setPhase({ kind: "error" });
       }
     })();
     return () => {
@@ -169,6 +177,18 @@ export function VaultGate({
     };
   }, [phase.kind, resetIdleTimer, clearTimers]);
 
+  if (phase.kind === "error")
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Could not open your vault</AlertTitle>
+        <AlertDescription>
+          Your files have not been deleted. Check your connection and sign-in, then reload.
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Reload
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
   if (!vault || phase.kind === "loading") {
     return (
       <Card className="p-6">

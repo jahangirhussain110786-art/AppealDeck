@@ -19,7 +19,7 @@ import { APP } from "@/content/app";
 import { SHARED } from "@/content/shared";
 import { useSessionState } from "@/lib/useSessionState";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { pollLicenseStatus, LicensePollTimeoutError } from "@/lib/licensePoll";
+import { pollLicenseStatus } from "@/lib/licensePoll";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 
 type CompletionPhase = "idle" | "activating" | "timeout";
@@ -46,9 +46,7 @@ export function PurchasePanel() {
     setPhase("activating");
     void pollLicenseStatus()
       .then(() => router.push("/compose"))
-      .catch((e) => {
-        if (e instanceof LicensePollTimeoutError) setPhase("timeout");
-      });
+      .catch(() => setPhase("timeout"));
   }, [sessionState, router]);
 
   if (phase === "activating") {
@@ -98,6 +96,7 @@ export function PurchasePanel() {
       <div className="flex flex-col gap-3 sm:flex-row">
         {consent ? (
           <CheckoutButton
+            consent={consent}
             priceId={priceId}
             size="lg"
             className="flex-1"

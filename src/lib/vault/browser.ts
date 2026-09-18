@@ -7,6 +7,8 @@ import { VAULT_ENVELOPE_VERSION } from "@/core/vault/envelope";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toBase64 } from "@/core/vault/crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { ScopedBrowserVault } from "./scoped";
+import { VaultDB } from "@/core/vault/db";
 
 const VAULT_BUCKET = "appealdeck-vault" as const;
 
@@ -17,9 +19,9 @@ export function browserWebCrypto(): Crypto {
   return globalThis.crypto;
 }
 
-export function getBrowserVault(_name: string = VAULT_DB_NAME): Vault {
+export function getBrowserVault(name?: string): Vault {
   const cryptoObj = browserWebCrypto() as unknown as ConstructorParameters<typeof Vault>[0];
-  return new Vault(cryptoObj);
+  return name ? new Vault(cryptoObj, new VaultDB(name)) : new ScopedBrowserVault(cryptoObj);
 }
 
 export interface SyncResult {
@@ -39,7 +41,7 @@ export interface SyncSummary {
 export async function pushVaultToCloud(
   vault: Vault,
   userId: string,
-  options: { supabase?: SupabaseClient } = {},
+  options: { supabase?: SupabaseClient; backupPassphrase?: string } = {},
 ): Promise<SyncSummary> {
   if (!vault.isUnlocked()) {
     throw new Error("Vault is locked — unlock before syncing");
@@ -48,7 +50,7 @@ export async function pushVaultToCloud(
   if (!supabase) {
     throw new Error("Supabase client is not configured");
   }
-  const exported = await vault.exportAll();
+  const exported = await vault.exportPortable(options.backupPassphrase);
   const payload = JSON.stringify({
     version: exported.version,
     meta: exported.meta,
@@ -62,7 +64,7 @@ export async function pushVaultToCloud(
     cacheControl: "no-store",
   });
   if (error) {
-    return { uploaded: 0, skipped: 0, errors: 1, syncedAt: new Date().toISOString() };
+    throw new Error("Cloud backup could not be saved. Your local files are unchanged.");
   }
   return { uploaded: 1, skipped: 0, errors: 0, syncedAt: new Date().toISOString() };
 }

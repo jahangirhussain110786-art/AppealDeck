@@ -34,7 +34,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { getBrowserVault, pushVaultToCloud } from "@/lib/vault/browser";
+import { getBrowserVault, pushVaultToCloud, pullVaultFromCloud } from "@/lib/vault/browser";
 import { FileDropZone } from "@/components/FileDropZone";
 import { VAULT_ENVELOPE_VERSION } from "@/core/vault/envelope";
 import type { Vault, VaultListItem } from "@/core/vault/vault";
@@ -48,6 +48,7 @@ import { VaultGate } from "@/components/VaultGate";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatDateTime, formatBytes } from "@/lib/format";
+import { getActiveCaseId } from "@/lib/caseStore";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
 
 function useVault(): Vault {
@@ -87,6 +88,9 @@ function evidenceKindLabel(kind: EvidenceKind): string {
 export default function VaultView({ userId }: { userId: string }) {
   const vault = useVault();
   const [items, setItems] = React.useState<VaultListItem[]>([]);
+  const [backupPassphrase, setBackupPassphrase] = React.useState("");
+  const [recoveryPassphrase, setRecoveryPassphrase] = React.useState("");
+  const [legacyAvailable, setLegacyAvailable] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [filterKind, setFilterKind] = React.useState<EvidenceKind | "all">("all");
@@ -121,6 +125,10 @@ export default function VaultView({ userId }: { userId: string }) {
     void (async () => {
       try {
         await vault.open();
+        const legacy = getBrowserVault("appealdeck-vault");
+        await legacy.open();
+        setLegacyAvailable(await legacy.isInitialized());
+        await legacy.close();
         const initialized = await vault.isInitialized();
         if (!cancelled && initialized) {
           const list = await vault.list();
@@ -184,7 +192,10 @@ export default function VaultView({ userId }: { userId: string }) {
   const onAddFile = async (file: File): Promise<boolean> => {
     setBusy(true);
     try {
-      const result = await addFileToVault(vault, file, { evidenceKind: selectedEvidenceKind });
+      const result = await addFileToVault(vault, file, {
+        evidenceKind: selectedEvidenceKind,
+        caseId: (await getActiveCaseId(vault)) ?? undefined,
+      });
       setItems(await vault.list());
       // A duplicate already gets its own informational toast from addFileToVault — nothing new
       // was uploaded, so FileDropZone shouldn't show a fresh "uploaded" confirmation for it too.
@@ -300,7 +311,8 @@ export default function VaultView({ userId }: { userId: string }) {
   const onSyncUp = async () => {
     setBusy(true);
     try {
-      const r = await pushVaultToCloud(vault, userId);
+      const r = await pushVaultToCloud(vault, userId, { backupPassphrase });
+      setBackupPassphrase("");
       toast.success(APP.dashboard.toasts.vaultSynced, {
         description: `${r.uploaded} snapshot uploaded${r.errors ? `, ${r.errors} errors` : ""}.`,
       });
@@ -310,6 +322,32 @@ export default function VaultView({ userId }: { userId: string }) {
       });
     } finally {
       setBusy(false);
+    }
+  };
+
+  const restore = async (legacy = false) => {
+    setBusy(true);
+    try {
+      if (legacy) {
+        const source = getBrowserVault("appealdeck-vault");
+        await source.open();
+        try {
+          await vault.copyIntoEmpty(source);
+        } finally {
+          await source.close();
+        }
+      } else {
+        await pullVaultFromCloud(vault, userId, {
+          sourcePassphrase: recoveryPassphrase,
+          destinationPassphrase: recoveryPassphrase,
+        });
+      }
+      window.location.reload();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Restore failed");
+    } finally {
+      setBusy(false);
+      setRecoveryPassphrase("");
     }
   };
 
@@ -355,6 +393,66 @@ export default function VaultView({ userId }: { userId: string }) {
             </div>
           </div>
 
+          <Card className="space-y-3 p-4">
+            <h2 className="text-base font-semibold">Backup and recovery</h2>
+            <p className="text-sm text-muted-foreground">
+              File contents are encrypted. Filenames, tags, file types and case references are
+              included as metadata. Restore requires an empty vault and preserves existing files if
+              it cannot proceed.
+            </p>
+            {keyMode === "device" && (
+              <div className="space-y-2">
+                <Label htmlFor="backup-passphrase">Backup passphrase</Label>
+                <PasswordInput
+                  id="backup-passphrase"
+                  value={backupPassphrase}
+                  onChange={(e) => setBackupPassphrase(e.target.value)}
+                  placeholder="At least 8 characters"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Keep this passphrase to restore on another device. Automatic unlock on this device
+                  stays enabled.
+                </p>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="restore-passphrase">Restore passphrase</Label>
+              <PasswordInput
+                id="restore-passphrase"
+                value={recoveryPassphrase}
+                onChange={(e) => setRecoveryPassphrase(e.target.value)}
+              />
+            </div>
+            <Button
+              variant="outline"
+              disabled={busy || recoveryPassphrase.length < 8}
+              onClick={() => void restore()}
+            >
+              Restore latest cloud backup
+            </Button>
+            {legacyAvailable && (
+              <div className="space-y-2">
+                <p className="text-sm">
+                  An older shared vault remains on this browser. Recover it only if these are your
+                  files; the original will be preserved.
+                </p>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        "I confirm the older files on this browser belong to me. Copy them into my empty account vault?",
+                      )
+                    )
+                      void restore(true);
+                  }}
+                >
+                  Recover my older local files
+                </Button>
+              </div>
+            )}
+          </Card>
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-surface-2 px-3 py-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <KeyRound className="size-3.5" aria-hidden />

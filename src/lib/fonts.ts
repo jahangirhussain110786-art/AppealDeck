@@ -20,6 +20,7 @@ export const fontMono = JetBrains_Mono({
 export const fontAccent = Newsreader({
   subsets: ["latin"],
   variable: "--font-accent",
+  adjustFontFallback: false,
   display: "swap",
   style: ["italic"],
   weight: ["500"],

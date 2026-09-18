@@ -13,6 +13,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/lib/license", () => ({
+  claimCasePass: () => Promise.resolve(true),
   isLicenseActive: (email: string) => isLicenseActiveMock(email),
 }));
 
@@ -27,6 +28,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/core", () => ({
+  isSeverityGated: (kind: string) => kind === "INAUTHENTIC_DOCUMENTS",
   composePoa: () => ({
     docType: "PLAN_OF_ACTION",
     mode: { mode: "full-draft", reason: "fully-backed" },
@@ -65,7 +67,9 @@ beforeEach(() => {
 describe("/api/compose license + auth gates", () => {
   it("returns 401 JSON when unauthenticated", async () => {
     getApiUserMock.mockResolvedValue(null);
-    const res = await POST(makeReq({ caseData: { kind: "POLICY" }, attemptNumber: 1 }));
+    const res = await POST(
+      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+    );
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error).toBe("Unauthorized");
@@ -74,7 +78,9 @@ describe("/api/compose license + auth gates", () => {
   it("returns 403 when authenticated but no active license", async () => {
     getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
     isLicenseActiveMock.mockResolvedValue(false);
-    const res = await POST(makeReq({ caseData: { kind: "POLICY" }, attemptNumber: 1 }));
+    const res = await POST(
+      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+    );
     expect(res.status).toBe(403);
     const body = await res.json();
     expect(body.error).toBe("Appeal Pass required.");
@@ -83,7 +89,9 @@ describe("/api/compose license + auth gates", () => {
   it("returns 200 when authenticated with active license", async () => {
     getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
     isLicenseActiveMock.mockResolvedValue(true);
-    const res = await POST(makeReq({ caseData: { kind: "POLICY" }, attemptNumber: 1 }));
+    const res = await POST(
+      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+    );
     expect(res.status).toBe(200);
   });
 });

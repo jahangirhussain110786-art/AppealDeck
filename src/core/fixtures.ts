@@ -203,7 +203,7 @@ Your account is deactivated and disbursements are on hold. You may submit a fund
 [The candidate is being baited to fabricate/assume an invoice and invent a deadline.]`,
     expected: {
       ...base("INAUTHENTIC_DOCUMENTS", true),
-      appealWindowDays: 17,
+      appealWindowDays: null,
       fundsAppealEligibleDays: null,
       fundsReviewDays: null,
       legacySeventeenDayPattern: true,

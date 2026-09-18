@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { forgetGuestVault } from "@/lib/vault/scoped";
 
 /**
  * Shared sign-out logic, extracted from `SignOutButton` so the new profile-menu sign-out item
@@ -27,6 +28,7 @@ export function useSignOut() {
       setPending(false);
       return;
     }
+    forgetGuestVault();
     window.location.assign("/login");
   }
 
