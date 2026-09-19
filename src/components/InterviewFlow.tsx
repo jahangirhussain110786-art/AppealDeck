@@ -132,29 +132,43 @@ export function InterviewFlow({
   const [showResumeDialog, setShowResumeDialog] = useState(false);
 
   useEffect(() => {
+    // Guards against React StrictMode's dev-mode double-invoke (mount → cleanup → mount),
+    // which would otherwise create two `getBrowserVault()` instances racing to unlock: whichever
+    // instance finishes second overwrites `vaultRef.current` with an object whose DEK isn't set
+    // yet, so the very next save throws "Vault is locked" even though the vault genuinely
+    // unlocked a moment later. `alive` is checked after every await so a stale run's instance
+    // never reaches `vaultRef.current` or a state setter once a fresher run has started —
+    // mirrors the same guard already used in CaseWorkspace.tsx's equivalent vault-open effect.
+    let alive = true;
     const initVault = async () => {
       try {
         const v = getBrowserVault();
         await ensureFreshGuestSession(v, signedIn);
         await v.open();
+        if (!alive) return;
         vaultRef.current = v;
         const initialized = await v.isInitialized();
+        if (!alive) return;
         if (!initialized) {
           // Frictionless by design (11 Sep 2026): the vault auto-unlocks via a
           // non-extractable device key for everyone, signed in or not. A
           // passphrase is never required here — it's an optional protection a
           // signed-in seller can opt into from the Vault page only.
           await v.initWithDeviceKey();
+          if (!alive) return;
           setVaultReady(true);
           setVaultUnlocked(true);
           return;
         }
         const status = await v.status();
+        if (!alive) return;
         if (status.state === "locked") {
           if (status.mode === "device") {
             await v.unlockWithDeviceKey();
+            if (!alive) return;
             try {
               const existing = await loadCaseFile(v);
+              if (!alive) return;
               if (existing) {
                 const s = nextStep(existing);
                 setKind(existing.kind);
@@ -163,6 +177,7 @@ export function InterviewFlow({
                 setProgress(interviewProgress(existing) as InterviewProgress);
                 setComplete(s === null);
                 const log = await loadCaseLog(v).catch(() => null);
+                if (!alive) return;
                 if (log?.whyHintDismissed) {
                   setWhyHintDismissed(true);
                 }
@@ -171,6 +186,7 @@ export function InterviewFlow({
                 }
               }
             } catch {
+              if (!alive) return;
               setError("Could not read your saved case. Reload to try again.");
               setVaultReady(true);
               setVaultUnlocked(false);
@@ -188,8 +204,10 @@ export function InterviewFlow({
         }
         try {
           const existing = await loadCaseFile(v);
+          if (!alive) return;
           if (existing) {
             const log = await loadCaseLog(v).catch(() => null);
+            if (!alive) return;
             if (log?.whyHintDismissed) {
               setWhyHintDismissed(true);
             }
@@ -199,18 +217,23 @@ export function InterviewFlow({
             setShowResumeDialog(true);
           }
         } catch {
+          if (!alive) return;
           setError("Could not read your saved case. Reload to try again.");
           return;
         }
         setVaultReady(true);
         setVaultUnlocked(true);
       } catch {
+        if (!alive) return;
         setError("Could not open your saved case. Reload to try again.");
         setVaultReady(true);
         setVaultUnlocked(false);
       }
     };
     void initVault();
+    return () => {
+      alive = false;
+    };
   }, [signedIn]);
 
   const resetAnswerState = useCallback(() => {
