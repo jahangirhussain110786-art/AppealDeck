@@ -198,10 +198,17 @@ export function ResponseReview({
               ) : purchase ? (
                 <ComposeGate vault={vault} caseId={file.id} onActivated={onGenerate} />
               ) : (
-                <Button disabled={busy || dirty} onClick={onGenerate}>
-                  <FileCheck2 className="mr-2 h-4 w-4" aria-hidden />
-                  {gaps.length ? "Prepare working draft" : "Prepare response"}
-                </Button>
+                <div className="space-y-2">
+                  <Button disabled={busy || dirty} onClick={onGenerate}>
+                    <FileCheck2 className="mr-2 h-4 w-4" aria-hidden />
+                    {gaps.length ? "Prepare working draft" : "Prepare response"}
+                  </Button>
+                  {dirty && !busy && (
+                    <p className="text-xs text-warning">
+                      Save your response facts above before preparing the response.
+                    </p>
+                  )}
+                </div>
               )}
               <p className="text-xs text-muted-foreground">
                 Requires an Appeal Pass for this case. Facts and file references go to AppealDeck;

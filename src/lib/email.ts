@@ -12,6 +12,7 @@
 
 import { PRICING } from "@/content/marketing";
 import { LEGAL } from "@/content/legal";
+import { formatLongDate } from "@/lib/format";
 
 export interface PurchaseConfirmationInput {
   /** Buyer's email, already validated by the caller. */
@@ -28,23 +29,13 @@ export interface BuiltEmail {
   text: string;
 }
 
-function formatDate(d: string | Date): string {
-  const date = typeof d === "string" ? new Date(d) : d;
-  if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(date);
-}
-
 /**
  * Pure content builder — no network, fully unit-testable. Echoes what D8 / the checkout-consent
  * spec (legal/withdrawal-consent.md item 4) requires: what was bought, the price, the consent
  * given, and the refund route.
  */
 export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput): BuiltEmail {
-  const dateLabel = formatDate(input.purchasedAt);
+  const dateLabel = formatLongDate(input.purchasedAt);
   const subject = `Your ${PRICING.pass} receipt and consent copy`;
   const consentLine = input.consentText ?? LEGAL.consent.withdrawalCheckbox.label;
   const refundLine =

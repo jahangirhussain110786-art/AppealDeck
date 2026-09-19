@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatRelativeDays, formatDateWithRelative, formatBytes } from "@/lib/format";
+import {
+  formatDate,
+  formatLongDate,
+  formatRelativeDays,
+  formatDateWithRelative,
+  formatBytes,
+} from "@/lib/format";
 
 describe("formatDate", () => {
   it("formats a Date as 14 Sep 2026", () => {
@@ -10,6 +16,18 @@ describe("formatDate", () => {
   });
   it("returns empty string for null", () => {
     expect(formatDate(null)).toBe("");
+  });
+});
+
+describe("formatLongDate", () => {
+  it("formats a Date as a long-form US date, for formal documents like email receipts", () => {
+    expect(formatLongDate(new Date(2026, 8, 14))).toBe("September 14, 2026");
+  });
+  it("formats a date string", () => {
+    expect(formatLongDate("2026-09-14T14:02:00Z")).toMatch(/September 1[34], 2026/);
+  });
+  it("returns empty string for an invalid date", () => {
+    expect(formatLongDate("not-a-date")).toBe("");
   });
 });
 

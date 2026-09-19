@@ -161,7 +161,10 @@ function main() {
   console.error("lint-copy: colour gate (hex + tailwind colour-nnn)");
   const colourFiles = files.filter((f) => {
     const rel = relPosix(f);
-    return /src\/components\//.test(rel) && !/src\/components\/ui\//.test(rel);
+    return (
+      (/src\/components\//.test(rel) || /src\/app\//.test(rel)) &&
+      !/src\/components\/ui\//.test(rel)
+    );
   });
   for (const f of colourFiles) {
     const text = readFileSync(f, "utf8");

@@ -94,6 +94,19 @@ export async function handleExtractField(
         { status: 200 },
       );
     }
+    if (result.reason === "upstream_error") {
+      // result.message can carry up to 200 chars of Gemini's raw response body (model id,
+      // quota state, internal error codes) — useful for our own logs, not for the client.
+      console.error("Gemini extract-field upstream error:", result.message);
+      return NextResponse.json(
+        {
+          ok: false,
+          reason: "rules_only",
+          message: "Cloud extraction is temporarily unavailable.",
+        },
+        { status: 200 },
+      );
+    }
     return NextResponse.json(
       { ok: false, reason: "rules_only", message: result.message },
       { status: 200 },

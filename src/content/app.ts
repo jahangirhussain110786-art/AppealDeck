@@ -67,6 +67,15 @@ export const APP = {
     },
     aiSignedOut: "Sign in to enable field suggestions.",
   },
+  violationKinds: {
+    INAUTHENTIC_DOCUMENTS: "Inauthentic documents",
+    RELATED_ACCOUNT: "Related account",
+    POLICY: "Policy violation",
+    INTELLECTUAL_PROPERTY: "Intellectual property",
+    LISTING: "Listing violation",
+    FUNDS: "Funds hold",
+    UNKNOWN: "Unknown / other",
+  },
   evidenceKinds: {
     supplier_invoice: "Supplier invoice",
     brand_authorization: "Brand authorization",
@@ -186,7 +195,7 @@ export const APP = {
     submitCard: {
       title: "You submitted this in Seller Central",
       description:
-        "Mark your Plan of Action (POA) as submitted to start tracking deadlines and set a reminder for a follow-up.",
+        "Mark your Plan of Action (POA) as submitted to record it in your case. You can set your own follow-up reminder date separately.",
       button: "I submitted this",
       confirmed: "Submission recorded",
     },

@@ -212,9 +212,7 @@ async function resolveOrCreateActiveCaseId(vault: Vault): Promise<string> {
 }
 
 /** Read-only list of every case in this vault, newest first — enough for a "Your Cases" surface
- * without loading each full case file. Not yet wired into any UI (P1, per
- * Planning/03-PHASE-2-BUILD/09-MULTI-CASE-ARCHITECTURE-SPEC.md); exported now so the data has
- * been real and tested since the day multi-case support landed. */
+ * without loading each full case file. Used by DashboardClient and WorkspaceSummary's case list. */
 export async function listCases(vault: Vault): Promise<CaseIndexEntry[]> {
   await resolveActiveCaseId(vault); // self-heals a pre-migration vault into the index first
   const index = await readCaseIndex(vault);

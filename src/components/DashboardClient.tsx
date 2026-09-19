@@ -564,7 +564,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
               <label className="block text-sm">
                 Current case
                 <select
-                  className="ml-2 rounded border bg-background p-2"
+                  className="ml-2 h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   value={caseFile.id}
                   onChange={(event) => {
                     void setActiveCaseId(vault, event.target.value)
@@ -584,7 +584,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
               <label className="block text-sm">
                 Your follow-up reminder date
                 <input
-                  className="ml-2 rounded border bg-background p-2"
+                  className="ml-2 h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   type="date"
                   value={currentLog.reminderAt?.slice(0, 10) ?? ""}
                   onChange={(event) => {

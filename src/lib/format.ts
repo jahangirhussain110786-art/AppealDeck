@@ -38,6 +38,18 @@ export function formatDateWithRelative(target: Date | string | null, now: Date):
   return `${formatDate(target)} · ${formatRelativeDays(target, now)}`;
 }
 
+/** Long-form, locale-fixed date ("September 19, 2026") for formal external documents (email
+ * receipts) where a compact/local-timezone-flavoured formatDate() would read oddly. */
+export function formatLongDate(d: string | Date): string {
+  const date = typeof d === "string" ? new Date(d) : d;
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
 export function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1_048_576) return `${(n / 1024).toFixed(1)} KB`;

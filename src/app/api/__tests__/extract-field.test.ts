@@ -135,11 +135,11 @@ describe("handleExtractField", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns rules_only on Gemini upstream_error", async () => {
+  it("returns rules_only on Gemini upstream_error without leaking the raw upstream message", async () => {
     callGeminiMock.mockResolvedValue({
       ok: false,
       reason: "upstream_error",
-      message: "Gemini returned 503: overloaded",
+      message: "Gemini returned 503: overloaded, quota exceeded for model gemini-2.5-flash",
     });
     const res = await handleExtractField(
       makeReq({ stepId: "intake_root_cause", text: "Account suspended" }),
@@ -148,6 +148,8 @@ describe("handleExtractField", () => {
     const body = await res.json();
     expect(body.ok).toBe(false);
     expect(body.reason).toBe("rules_only");
+    expect(body.message).not.toContain("overloaded");
+    expect(body.message).not.toContain("gemini-2.5-flash");
   });
 
   it("returns rules_only on Gemini timeout", async () => {

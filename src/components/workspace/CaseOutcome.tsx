@@ -119,7 +119,7 @@ export function CaseOutcome({
               Your follow-up reminder date
             </span>
             <input
-              className="h-11 rounded-md border border-input bg-background px-3 text-sm"
+              className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               type="date"
               disabled={busy || saving}
               value={current.reminderAt?.slice(0, 10) ?? ""}

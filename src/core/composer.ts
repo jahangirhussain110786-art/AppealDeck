@@ -213,6 +213,16 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
       findings.push({ severity: "warning", code: "WORKSPACE_GAP", message });
     checkBannedLanguage(draft, findings);
     checkSeverityGate(draft, data, findings);
+    // The AA-31 text-quality checks below read draft.sections directly (heading + body), which
+    // composeWorkspace() populates identically to the legacy composer — future-tense language,
+    // blame-shifting and vague-time phrases are exactly as real a rejection risk in a workspace
+    // seller's own Root Cause/Corrective Actions/Preventive Measures prose. Only
+    // checkDocumentFreshness is skipped here: it reads the legacy evidenceSlots/EvidenceKind
+    // model, which a workspace case doesn't populate (its own equivalent gating already runs via
+    // workspaceGaps() above, against Requirement objects, not evidenceSlots).
+    checkFutureTenseLanguage(draft, findings);
+    checkBlameShifting(draft, findings);
+    checkVagueTimePhrases(draft, findings);
     return { findings, passed: !findings.some((f) => f.severity === "error") };
   }
 

@@ -31,7 +31,13 @@ import { EvidenceReview } from "./EvidenceReview";
 import { ResponseReview, type WorkspaceResponse } from "./ResponseReview";
 import { DetailDisclosure, IconTile, VIEW_ICONS } from "./WorkspaceVisuals";
 import { createCaseFile, type CaseFile } from "@/core/interviewEngine";
-import { isSeverityGated, type ViolationKind } from "@/core";
+import {
+  isSeverityGated,
+  computeDeadlines,
+  serializeDeadlines,
+  parseNotice,
+  type ViolationKind,
+} from "@/core";
 import {
   addWorkspaceEvent,
   applyWorkspaceReply,
@@ -227,7 +233,7 @@ function WorkspaceInner({
     update: (w: Workspace) => Workspace,
     message?: string,
     state?: CaseFile["state"],
-    opts?: { silent?: boolean },
+    opts?: { silent?: boolean; deadlines?: CaseFile["deadlines"] },
   ) => {
     if (saving.current || !fileRef.current) return false;
     saving.current = true;
@@ -248,6 +254,7 @@ function WorkspaceInner({
         ...current,
         workspace: next,
         state: state ?? (current.state === "SUBMITTED" ? "REVISION" : current.state),
+        ...(opts?.deadlines !== undefined ? { deadlines: opts.deadlines } : {}),
       };
       await vault.atomic(async () => {
         const disk = await loadCaseFile(vault);
@@ -758,7 +765,7 @@ function WorkspaceInner({
                         <FileSearch className="h-4 w-4" aria-hidden />
                         <p className="text-eyebrow uppercase">Next action</p>
                       </div>
-                      <CardTitle className="text-xl">
+                      <CardTitle as="h2" className="text-xl">
                         {gated
                           ? "Get professional help with this allegation"
                           : awaiting
@@ -815,7 +822,9 @@ function WorkspaceInner({
                   </Card>
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base">Your plan</CardTitle>
+                      <CardTitle as="h2" className="text-base">
+                        Your plan
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ol className="space-y-4">
@@ -878,7 +887,9 @@ function WorkspaceInner({
                     <IconTile icon={FolderOpen} tone="warning" />
                     <div>
                       <p className="text-eyebrow uppercase text-muted-foreground">02 / Evidence</p>
-                      <CardTitle className="mt-1 text-lg">Requested records</CardTitle>
+                      <CardTitle as="h2" className="mt-1 text-lg">
+                        Requested records
+                      </CardTitle>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -1049,7 +1060,9 @@ function WorkspaceInner({
                     <IconTile icon={History} tone="info" />
                     <div>
                       <p className="text-eyebrow uppercase text-muted-foreground">04 / History</p>
-                      <CardTitle className="mt-1 text-lg">Submissions and replies</CardTitle>
+                      <CardTitle as="h2" className="mt-1 text-lg">
+                        Submissions and replies
+                      </CardTitle>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -1174,11 +1187,23 @@ function WorkspaceInner({
                             disabled={busy}
                             size="sm"
                             onClick={async () => {
+                              // The reply carries whatever new time window Amazon stated, if any
+                              // — the case's deadlines were frozen at the original notice and
+                              // would otherwise keep showing a now-irrelevant (possibly already
+                              // expired) date after this revision starts.
+                              const recomputed = serializeDeadlines(
+                                computeDeadlines({
+                                  noticeReceivedAt: new Date(),
+                                  parsed: parseNotice(r.text),
+                                  kind: file.kind,
+                                }),
+                              );
                               if (
                                 await commit(
                                   (old) => applyWorkspaceReply(old, r.id),
                                   undefined,
                                   "REVISION",
+                                  { deadlines: recomputed },
                                 )
                               ) {
                                 setReviewRequest(false);
@@ -1196,7 +1221,9 @@ function WorkspaceInner({
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Activity</CardTitle>
+                  <CardTitle as="h2" className="text-base">
+                    Activity
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ol className="space-y-3">
@@ -1260,7 +1287,7 @@ function WorkspaceInner({
         <aside className="space-y-4 lg:sticky lg:top-24" aria-label="Case context">
           <Card className="overflow-hidden">
             <CardHeader className="pb-3">
-              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">
+              <CardTitle as="h2" className="text-xs uppercase tracking-wider text-muted-foreground">
                 Case snapshot
               </CardTitle>
             </CardHeader>
@@ -1324,9 +1351,11 @@ function WorkspaceInner({
                     {file.deadlines?.length
                       ? file.deadlines
                           .map((d) =>
-                            d.dueAt
-                              ? `${d.label}: ${formatDate(d.dueAt)}`
-                              : `${d.label} · confirm the date in Account Health`,
+                            d.isIndefinite
+                              ? `${d.label} — no countdown to track`
+                              : d.dueAt
+                                ? `${d.label}: ${formatDate(d.dueAt)}`
+                                : `${d.label} · confirm the date in Account Health`,
                           )
                           .join(" · ")
                       : "No confirmed deadline recorded. Check your current notice."}

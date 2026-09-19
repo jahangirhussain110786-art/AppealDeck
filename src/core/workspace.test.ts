@@ -135,6 +135,24 @@ describe("response and provenance", () => {
     expect(draft.sections.at(-1)?.body).toContain("invoice.pdf, page 2");
     expect(critiquePoa(draft, file).findings).toEqual([]);
   });
+  it("runs the AA-31 text-quality checks (future tense, blame-shifting, vague time) on a workspace draft too", () => {
+    const workspace = {
+      ...documentWorkspace(),
+      protocol: "operational" as const,
+      explanation:
+        "The supplier caused this issue and we were not aware of this until recently. We will implement two-person verification going forward.",
+      correctiveActions: "We will fix our onboarding process soon.",
+      preventiveMeasures: "We plan to add a review step shortly.",
+    };
+    const file = { ...createCaseFile("UNKNOWN"), workspace };
+    const draft = composePoa(file);
+    const { findings } = critiquePoa(draft, file);
+    const codes = findings.map((f) => f.code);
+    expect(codes).toContain("FUTURE_TENSE_LANGUAGE");
+    expect(codes).toContain("BLAME_SHIFTING_LANGUAGE");
+    expect(codes).toContain("VAGUE_TIME_PHRASE");
+  });
+
   it("does not consider upload, waiting, unchecked scope or missing provenance ready", () => {
     const workspace = documentWorkspace();
     for (const status of ["needed", "waiting"] as const) {

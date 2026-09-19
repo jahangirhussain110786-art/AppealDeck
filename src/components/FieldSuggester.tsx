@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, AlertCircle, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { APP } from "@/content/app";
 
 type Suggestions = {
   suggestedKind?: string;
@@ -21,15 +22,7 @@ type State =
 
 const MIN_TEXT_LENGTH = 20;
 
-const KIND_LABELS: Record<string, string> = {
-  INAUTHENTIC_DOCUMENTS: "Inauthentic documents",
-  RELATED_ACCOUNT: "Related account",
-  POLICY: "Policy violation",
-  INTELLECTUAL_PROPERTY: "Intellectual property",
-  LISTING: "Listing violation",
-  FUNDS: "Funds hold",
-  UNKNOWN: "Unknown / other",
-};
+const KIND_LABELS: Record<string, string> = APP.violationKinds;
 
 const SEVERITY_LABELS: Record<NonNullable<Suggestions["suggestedSeverity"]>, string> = {
   low: "Low",

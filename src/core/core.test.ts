@@ -46,12 +46,17 @@ describe("classifier stage-1", () => {
 });
 
 describe("deadlinesModel (AM-03)", () => {
+  // These two reuse "inauthentic-*" fixture text purely for its date-pattern wording (legacy
+  // 17-day clause / ambiguous window) — they test the generic stated-days/ambiguity extraction,
+  // not severity-based routing, so kind is passed as POLICY (any non-indefinite-hold kind) rather
+  // than INAUTHENTIC_DOCUMENTS; that kind's own deadline behavior is covered separately below and
+  // in runDecode's "routes severity-gated inauthentic straight to an indefinite hold" test.
   it("uses stated days for a clear window", () => {
     const p = parseNotice(FIXTURES.find((f) => f.id === "inauthentic-2-legacy")!.raw);
     const ds = computeDeadlines({
       noticeReceivedAt: new Date("2026-09-01"),
       parsed: p,
-      kind: "INAUTHENTIC_DOCUMENTS",
+      kind: "POLICY",
     });
     const aw = ds.find((d) => d.kind === "appeal_window");
     expect(aw?.dueAt?.toISOString().slice(0, 10)).toBe("2026-09-18");
@@ -62,7 +67,7 @@ describe("deadlinesModel (AM-03)", () => {
     const ds = computeDeadlines({
       noticeReceivedAt: new Date("2026-09-01"),
       parsed: p,
-      kind: "INAUTHENTIC_DOCUMENTS",
+      kind: "POLICY",
     });
     expect(ds.find((d) => d.kind === "appeal_window")?.dueAt).toBeNull();
   });
@@ -117,7 +122,12 @@ describe("decode pipeline (runDecode)", () => {
     const res = runDecode(raw, { noticeReceivedAt: new Date("2026-09-01") });
     expect(res.classification.severityGated).toBe(true);
     expect(isIndefiniteHold(res.classification.kind)).toBe(true);
-    expect(res.deadlines.find((d) => d.kind === "appeal_window")?.dueAt).toBeNull();
+    // computeDeadlines() replaces the generic appeal-window entry with an explicit
+    // indefinite-hold one for this kind — no countdown is shown at all, never a null-dated one.
+    expect(res.deadlines.find((d) => d.kind === "appeal_window")).toBeUndefined();
+    expect(res.deadlines).toEqual([
+      expect.objectContaining({ kind: "indefinite_hold", dueAt: null, isIndefinite: true }),
+    ]);
   });
 });
 

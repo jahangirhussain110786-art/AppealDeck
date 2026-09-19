@@ -67,17 +67,8 @@ import {
   type InterviewProgress,
   type StepAnswer,
 } from "@/core/interviewEngine";
-type CoreCaseFile = CaseFile;
 
-const KIND_LABELS: Record<ViolationKind, string> = {
-  INAUTHENTIC_DOCUMENTS: "Inauthentic documents",
-  RELATED_ACCOUNT: "Related account",
-  POLICY: "Policy violation",
-  INTELLECTUAL_PROPERTY: "Intellectual property",
-  LISTING: "Listing violation",
-  FUNDS: "Funds hold",
-  UNKNOWN: "Unknown / other",
-};
+const KIND_LABELS = APP.violationKinds;
 
 interface InterviewFlowProps {
   initialKind?: ViolationKind;
@@ -249,7 +240,7 @@ export function InterviewFlow({
     async (cf: CaseFile) => {
       if (!vaultRef.current || !vaultUnlocked) return;
       try {
-        await saveCaseFile(vaultRef.current, cf as CoreCaseFile);
+        await saveCaseFile(vaultRef.current, cf);
         setSaveState({ kind: "saved", at: new Date() });
       } catch (e) {
         setSaveState({
@@ -393,10 +384,10 @@ export function InterviewFlow({
     try {
       const existing = await loadCaseFile(vaultRef.current);
       if (existing) {
-        const next = nextStep(existing as any);
-        const prog = interviewProgress(existing as any);
-        setKind((existing as any).kind);
-        setCaseFile(existing as unknown as CaseFile);
+        const next = nextStep(existing);
+        const prog = interviewProgress(existing);
+        setKind(existing.kind);
+        setCaseFile(existing);
         setStep((next ?? undefined) as InterviewStep | null);
         setProgress(prog as InterviewProgress);
         setComplete(false);
@@ -413,10 +404,10 @@ export function InterviewFlow({
 
   const handleResumeSilent = useCallback(
     async (existing: CaseFile) => {
-      const next = nextStep(existing as any);
-      const prog = interviewProgress(existing as any);
-      setKind((existing as any).kind);
-      setCaseFile(existing as unknown as CaseFile);
+      const next = nextStep(existing);
+      const prog = interviewProgress(existing);
+      setKind(existing.kind);
+      setCaseFile(existing);
       setStep((next ?? undefined) as InterviewStep | null);
       setProgress(prog as InterviewProgress);
       setComplete(false);
@@ -429,8 +420,12 @@ export function InterviewFlow({
     if (vaultRef.current && vaultUnlocked) {
       try {
         await deleteCaseFile(vaultRef.current);
-      } catch {
-        // ignore
+      } catch (e) {
+        toast.error("Could not discard the previous case", {
+          description:
+            (e instanceof Error ? e.message : "Unknown error") +
+            " — it may still appear in your case list.",
+        });
       }
     }
     setShowResumeDialog(false);
@@ -439,7 +434,7 @@ export function InterviewFlow({
   const handleSaveAndExit = useCallback(async () => {
     if (vaultRef.current && vaultUnlocked && caseFile) {
       try {
-        await saveCaseFile(vaultRef.current, caseFile as CoreCaseFile);
+        await saveCaseFile(vaultRef.current, caseFile);
         toast.success("Case saved", { description: "Your progress has been saved to the vault." });
       } catch (e) {
         toast.error("Could not save case", {
@@ -790,10 +785,10 @@ export function InterviewFlow({
                       )}`}
                   </p>
                 )}
-                <CardTitle>{step.title}</CardTitle>
+                <CardTitle id="interview-step-title">{step.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
+                <p id="interview-step-prompt" className="text-sm text-muted-foreground">
                   {step.prompt}
                   {step.required === false && ` ${APP.interview.optionalSuffix}`}
                 </p>
@@ -867,6 +862,8 @@ export function InterviewFlow({
 
                     {step.inputType === "short_text" && (
                       <Textarea
+                        aria-labelledby="interview-step-title"
+                        aria-describedby="interview-step-prompt"
                         value={answerValue}
                         onChange={(e) => setAnswerValue(e.target.value)}
                         spellCheck
@@ -887,6 +884,8 @@ export function InterviewFlow({
                     {step.inputType === "date" && (
                       <Input
                         type="date"
+                        aria-labelledby="interview-step-title"
+                        aria-describedby="interview-step-prompt"
                         value={answerValue}
                         onChange={(e) => setAnswerValue(e.target.value)}
                       />
@@ -896,6 +895,8 @@ export function InterviewFlow({
                       <Input
                         type="number"
                         inputMode="numeric"
+                        aria-labelledby="interview-step-title"
+                        aria-describedby="interview-step-prompt"
                         value={answerValue}
                         onChange={(e) => setAnswerValue(e.target.value)}
                         placeholder={APP.interview.numberPlaceholder}
@@ -1019,7 +1020,7 @@ export function InterviewFlow({
                   </div>
                 ) : (
                   <div className="space-y-4 rounded-lg border border-warning/40 bg-warning/5 p-4">
-                    <p className="text-sm font-medium text-foreground">
+                    <p id="interview-decline-note" className="text-sm font-medium text-foreground">
                       {APP.interview.declineNote}
                     </p>
 
@@ -1051,6 +1052,7 @@ export function InterviewFlow({
                     )}
 
                     <Textarea
+                      aria-labelledby="interview-decline-note"
                       value={declineReason}
                       onChange={(e) => setDeclineReason(e.target.value)}
                       spellCheck

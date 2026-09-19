@@ -34,6 +34,21 @@ function addDays(from: Date, days: number): Date {
 export function computeDeadlines(input: DeadlineInput): Deadline[] {
   const out: Deadline[] = [];
 
+  // Inauthentic-documents cases are severity-gated (routed to professional help, no self-serve
+  // draft) and don't resolve on a fixed timeline the way a standard appeal window does — showing
+  // a numeric countdown here would overstate a deadline that isn't real (D6). This replaces the
+  // generic appeal-window entry below rather than sitting alongside it.
+  if (isIndefiniteHold(input.kind)) {
+    return [
+      {
+        kind: "indefinite_hold",
+        dueAt: null,
+        label: "No fixed appeal window — routed to professional help",
+        isIndefinite: true,
+      },
+    ];
+  }
+
   if (input.parsed.legacySeventeenDay && input.parsed.statedWindowDays === 17) {
     out.push({
       kind: "appeal_window",

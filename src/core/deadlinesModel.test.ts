@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { serializeDeadlines } from "./deadlinesModel";
+import { computeDeadlines, serializeDeadlines } from "./deadlinesModel";
 import type { Deadline } from "./deadlinesModel";
+import { parseNotice } from "./noticeParser";
 
 describe("serializeDeadlines", () => {
   it("converts a real due date to an ISO string", () => {
@@ -34,5 +35,39 @@ describe("serializeDeadlines", () => {
 
   it("returns an empty array for no deadlines", () => {
     expect(serializeDeadlines([])).toEqual([]);
+  });
+});
+
+describe("computeDeadlines", () => {
+  it("replaces the stated appeal window with an indefinite-hold entry for inauthentic-documents cases", () => {
+    const parsed = parseNotice(
+      "Your account has been deactivated because we received a report that some of your items are not authentic. Submit your appeal within 17 days.",
+    );
+    const deadlines = computeDeadlines({
+      noticeReceivedAt: new Date("2026-09-19T00:00:00.000Z"),
+      parsed,
+      kind: "INAUTHENTIC_DOCUMENTS",
+    });
+    expect(deadlines).toEqual([
+      {
+        kind: "indefinite_hold",
+        dueAt: null,
+        label: "No fixed appeal window — routed to professional help",
+        isIndefinite: true,
+      },
+    ]);
+  });
+
+  it("still computes a normal appeal-window deadline for every other kind", () => {
+    const parsed = parseNotice(
+      "Your account has been deactivated. Submit your appeal within 17 days.",
+    );
+    const deadlines = computeDeadlines({
+      noticeReceivedAt: new Date("2026-09-19T00:00:00.000Z"),
+      parsed,
+      kind: "POLICY",
+    });
+    expect(deadlines.some((d) => d.kind === "indefinite_hold")).toBe(false);
+    expect(deadlines[0].kind).toBe("appeal_window");
   });
 });
