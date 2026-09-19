@@ -59,7 +59,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     kind: result.classification.kind,
     confidence: result.classification.confidence,
-    deadlines: result.deadlines,
+    // Decode has no confirmed receipt/deactivation date. Preserve stated windows without
+    // presenting a deadline computed from today's date as the seller's actual deadline.
+    deadlines: result.deadlines.map((deadline) => ({ ...deadline, dueAt: null })),
     severityGated: isSeverityGated(result.classification.kind),
   });
 }

@@ -232,8 +232,11 @@ export async function saveCaseFile(vault: Vault, caseFile: CaseFile): Promise<vo
   });
 }
 
-export async function loadCaseFile(vault: Vault): Promise<CaseFile | null> {
-  const caseId = await resolveActiveCaseId(vault);
+export async function loadCaseFile(
+  vault: Vault,
+  requestedCaseId?: string,
+): Promise<CaseFile | null> {
+  const caseId = requestedCaseId ?? (await resolveActiveCaseId(vault));
   if (!caseId) return null;
   const id = await findRecordId(vault, CASE_FILE_NAME, caseId);
   if (!id) return null;

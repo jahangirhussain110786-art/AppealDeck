@@ -3,7 +3,7 @@ import { requirementsFor } from "./evidenceModel";
 import type { EvidenceKind, EvidenceRequirement } from "./evidenceModel";
 
 export type DocumentType =
-  "poa" | "ip_dispute" | "funds_appeal" | "listing_appeal" | "followup_nudge";
+  "poa" | "ip_dispute" | "funds_appeal" | "listing_appeal" | "followup_nudge" | "document_response";
 
 export interface ActionItem {
   id: string;
@@ -39,6 +39,7 @@ export interface ReadinessResult {
 }
 
 export interface CaseFileData {
+  workspace?: import("./workspace").Workspace;
   kind: ViolationKind;
   rootCause?: string;
   timelineEvents?: Array<{ date: string; description: string }>;

@@ -4,13 +4,13 @@
 
 export const HOME = {
   hero: {
-    eyebrow: "For Amazon sellers facing a deactivation or policy notice",
-    headline: "Understand your Amazon notice today. Draft a Plan of Action Amazon can act on.",
+    eyebrow: "A case workspace for Amazon sellers",
+    headline: "A clearer path from notice to response.",
     subline:
-      "Free decoder, clear deadlines, and a Plan of Action drafted from your notice and evidence in the structure Amazon reads. You review it and submit it yourself in Seller Central (Amazon's seller dashboard).",
+      "Understand the request. Organize your evidence. Prepare a factual response—all in one case workspace.",
     primaryCta: "Decode my notice — free",
     secondaryCta: "See the Appeal Pass",
-    reassuranceLine: "Runs in your browser. No Seller Central login needed.",
+    reassuranceLine: "Start free. No Seller Central login needed. You submit the response.",
     artwork: {
       label: "Decoded notice",
       srOnly:
@@ -21,38 +21,37 @@ export const HOME = {
     eyebrow: "How it works",
     step1: {
       title: "Paste your notice",
-      desc: "Drop the full Amazon email into the decoder. It is read in your browser.",
+      desc: "See the detected issue, stated deadlines and next steps.",
     },
     step2: {
-      title: "See what it means and how long you have",
-      desc: "A plain-English summary, your case type, every deadline the notice implies, and a do-now list.",
+      title: "Build your evidence",
+      desc: "Keep original files, review notes and missing records together.",
     },
     step3: {
-      title: "Draft your Plan of Action",
-      desc: "With the Appeal Pass: a guided interview, an evidence checklist, a drafted plan and a critic review, ready for your edits.",
+      title: "Prepare and track",
+      desc: "Use an Appeal Pass to prepare a supported response. Keep submissions and replies in your case.",
     },
   },
-  howItWorksTitle: "From notice to plan in three steps",
-  howItWorksSub: "Start free. Pay once only if you want the drafted plan.",
+  howItWorksTitle: "One connected workflow",
+  howItWorksSub: "Your notice stays with you at every step.",
   included: {
     eyebrow: "What you get",
-    title: "Everything a strong appeal needs",
-    sub: "Built around the three things Amazon reads for: the cause, what you fixed, and how it stays fixed.",
+    title: "A place for every part of the case",
+    sub: "From the first request to the next reply.",
   },
   proof: {
     eyebrow: "Trust",
-    title: "Trust you can check, not take on faith",
+    title: "Your records. Your decisions.",
   },
   closing: {
     title: "Start with the free decoder",
-    desc: "Paste the notice. See what it means and how long you have. Then decide.",
+    desc: "Understand the request before deciding your next move.",
   },
 } as const;
 
 export const DECODE = {
   pageTitle: "Decode your Amazon notice",
-  pageDescription:
-    "Paste the full email. In a moment you will see your case type, the deadlines it implies, and what to do first. Everything runs in your browser.",
+  pageDescription: "See the issue, the time window and your next action.",
   textarea: {
     label: "Your notice",
     placeholder: "Paste the full Amazon notice here…",
@@ -76,17 +75,17 @@ export const DECODE = {
     whatToDoTitle: "What to do",
     doNow: "Do now",
     doNot: "Do not",
-    ctaTitle: "Ready to turn this into a Plan of Action?",
+    ctaTitle: "Continue with the request Amazon actually made",
     ctaDesc:
-      "The Appeal Pass walks you through the questions Amazon expects answered, checks your evidence, drafts the plan and reviews it before you submit.",
-    ctaNote: "One payment. 7-day refund.",
+      "Check the response-page instructions, review requested records and prepare the appropriate response in your case workspace.",
+    ctaNote: "Organizing your case is free.",
     copySummary: "Copy plain-English summary",
     errorTitle: "Could not decode",
     errorFallback: "Something went wrong.",
     errorNetwork: "Network error. Try again.",
     errorHint: "Paste the full Amazon notice and try again.",
     whatThisMeans: "What this means",
-    startPoaCta: "Start your Plan of Action",
+    startPoaCta: "Open case workspace",
   },
   /**
    * Annotation-card body copy (AM-22/V5, per Decode.dc.html) — the heading quotes the
@@ -109,13 +108,13 @@ export const DECODE = {
 
 export const PRICING = {
   pageTitle: "Pricing — AppealDeck",
-  headline: "One Appeal Pass. One case. $199, once.",
+  headline: "Understand your case before you pay.",
   subline:
-    "The guided interview, evidence checklist, drafted Plan of Action, critic review and encrypted vault — for the case in front of you. You review and submit in Seller Central.",
+    "Start with a free notice brief and case workspace. Choose an Appeal Pass when you need to prepare a response for an eligible case.",
   price: "$199",
   priceNote: "One-time. One case.",
   included: "Included",
-  jumpToPurchase: "Continue to purchase",
+  jumpToPurchase: "See pass details",
   free: "Free",
   pass: "Appeal Pass",
   tableHeadings: {
@@ -125,68 +124,28 @@ export const PRICING = {
     pass: "Appeal Pass",
   },
   rows: {
-    decode: {
-      feature: "Plain-English decode of your notice",
-      free: "Yes",
-      account: "Yes",
-      pass: "Yes",
-    },
-    plainEnglish: {
-      feature: "Deadlines and a do-now / do-not list",
-      free: "Yes",
-      account: "Yes",
-      pass: "Yes",
-    },
-    preview: {
-      feature: "Case preview: evidence list and action checklist",
-      free: "Yes",
-      account: "Yes",
-      pass: "Yes",
-    },
-    interview: {
-      feature: "Guided interview that gathers what Amazon expects",
-      free: "First steps",
-      account: "Yes",
-      pass: "Yes",
-    },
+    decode: { feature: "Notice brief & next steps", free: "Yes", account: "Yes", pass: "Yes" },
+    preview: { feature: "Request and evidence plan", free: "Yes", account: "Yes", pass: "Yes" },
     vault: {
-      feature: "Encrypted case vault (10 MB per file)",
-      free: "—",
-      account: "Yes",
-      pass: "Yes",
+      feature: "Encrypted files & case notes",
+      free: "This session",
+      account: "On this device",
+      pass: "On this device",
     },
     readiness: {
-      feature: "Case dashboard and readiness",
-      free: "Draft only",
+      feature: "Submission & reply history",
+      free: "This session",
       account: "Yes",
       pass: "Yes",
     },
-    aiSuggest: {
-      feature: "AI field suggestions",
-      free: "—",
-      account: "Yes, daily cap",
-      pass: "Yes",
-    },
-    poa: {
-      feature: "Drafted Plan of Action: root cause, corrective actions, preventive measures",
-      free: "—",
-      account: "—",
-      pass: "Yes",
-    },
+    poa: { feature: "Response from your confirmed facts", free: "—", account: "—", pass: "Yes" },
     critic: {
-      feature: "Critic review that flags weak spots before you submit",
+      feature: "Draft checks for missing information",
       free: "—",
       account: "—",
       pass: "Yes",
     },
-    replyAnalysis: {
-      feature: "Amazon-reply analysis",
-      free: "—",
-      account: "—",
-      pass: "Yes",
-    },
-    devices: { feature: "Cloud sync, up to 5 devices", free: "—", account: "—", pass: "Yes" },
-    refund: { feature: "7-day refund", free: "—", account: "—", pass: "Yes" },
+    devices: { feature: "Encrypted backup & restore", free: "—", account: "—", pass: "Yes" },
   },
   trust: {
     title: "Built so you can check it yourself",
@@ -195,16 +154,16 @@ export const PRICING = {
       desc: "The draft is yours to edit; you submit it in Seller Central.",
     },
     localFirst: {
-      label: "Decoded in your browser",
-      desc: "Open DevTools while decoding: no notice text leaves your machine.",
+      label: "Nothing sent to Amazon",
+      desc: "AppealDeck analyzes the notice. You control what you submit.",
     },
     vault: {
       label: "Encrypted on your device",
-      desc: "AES-GCM 256 with a passphrase only you know.",
+      desc: "Encrypted storage with optional passphrase protection.",
     },
     refund: {
       label: "7-day refund",
-      desc: "Email the receipt address within 7 days. No questions.",
+      desc: "Request a refund within 7 days. Read the full policy before buying.",
     },
   },
   samplePoa: {
@@ -214,104 +173,157 @@ export const PRICING = {
     title: "Sample Plan of Action",
   },
   cta: "Get the Appeal Pass",
-  faqTitle: "Frequently asked questions",
-  purchaseTitle: "Get your Appeal Pass",
+  faqTitle: "A few questions before you decide.",
+  purchaseTitle: "Ready to prepare your response?",
   expectationsTitle: "What to expect",
 } as const;
 
 export const FOUNDER_NOTE: { name: string; location: string; text: string } | null = null;
 
+export type FaqItem = {
+  id: string;
+  q: string;
+  a: string;
+  detail?: string;
+  link?: { label: string; href: string };
+};
+
 export const FAQ = {
-  title: "Frequently asked questions",
-  description:
-    "How the decoder works, what the Appeal Pass includes, how your documents are protected, and how refunds work.",
+  title: "Questions, answered.",
+  description: "Choose a topic. Get a clear answer. Decide your next step.",
   items: [
     {
-      q: "Is AppealDeck part of Amazon?",
-      a: "No. AppealDeck is an independent service run by Jhangir Hussain, trading as Hawlton, in Pakistan. It is not affiliated with, endorsed by, or sponsored by Amazon. We use the Amazon name only to describe the notices our software reads and the appeals it drafts. We never log in to Seller Central and never submit anything to Amazon for you.",
+      id: "start-free",
+      q: "What can I do for free?",
+      a: "Decode your notice and organize your case before you decide to pay.",
+      detail:
+        "Keep the request, files, notes and replies together. Guest work stays in this browser session. Sign in to move it to your account vault on this device.",
+      link: { label: "Try the free decoder", href: "/decode" },
     },
     {
-      q: "What does the Appeal Pass add?",
-      a: "A guided interview that asks what Amazon expects answered, an evidence checklist for your violation type, a drafted Plan of Action in the structure Amazon reads (root cause, corrective actions, preventive measures), a critic review that flags weak spots, and an encrypted vault for your documents. You edit the draft and submit it yourself.",
-    },
-    {
+      id: "decode",
       q: "How does the decoder work?",
-      a: "It reads your notice locally, identifies the violation type, pulls out every date and the deadlines they imply, and gives you a do-now and do-not list for that case type. Nothing you paste leaves your browser.",
+      a: "It turns the notice into a short brief: the likely issue, stated time windows and next steps.",
+      detail:
+        "Your notice is sent to AppealDeck for analysis. Check the result against your current notice and response page; you can correct the case before confirming it.",
     },
     {
-      q: "How accurate is the draft?",
-      a: "It is built from the facts in your notice and the evidence you provide, and the critic flags anything vague, unsupported or template-like before you submit. Review it as you would any draft — you know your business best.",
+      id: "time",
+      q: "How long does preparing a case take?",
+      a: "Decoding takes a moment. The rest depends on the facts and records you need to gather.",
+      detail:
+        "Work through one task at a time and save each review. Sign in before leaving a guest session if you want to keep its work in your account vault.",
     },
     {
+      id: "independence",
+      q: "Is AppealDeck part of Amazon?",
+      a: "No. AppealDeck is an independent service operated by Hawlton in Pakistan.",
+      detail:
+        "We are not affiliated with or endorsed by Amazon. We do not access your Seller Central account or submit appeals for you.",
+      link: { label: "About the service", href: "/terms#independence" },
+    },
+    {
+      id: "review",
+      q: "What should I check in the response?",
+      a: "Check every fact, file name and page reference against your original records and the current request.",
+      detail:
+        "The workspace uses your saved wording and flags missing information. These checks help you review the response; they do not authenticate documents or verify your claims.",
+    },
+    {
+      id: "outcome",
       q: "Will this get my account reinstated?",
-      a: "Amazon decides every appeal, and nobody outside Amazon can promise a result. What you control is the quality of the appeal: addressing every violation the notice names, backing each claim with evidence, and showing a prevention plan Amazon can verify. AppealDeck is built to get those three things right — and to stop you sending a rushed appeal that spends an attempt.",
+      a: "Amazon decides the outcome and the review time.",
+      detail:
+        "AppealDeck helps you organize evidence and prepare a factual response. An Appeal Pass pays for that preparation. We do not promise reinstatement.",
     },
     {
-      q: "What are the deadlines?",
-      a: "The decoder shows every date in your notice and the deadlines they imply: the appeal window (90 days when the notice does not state one) and the point where a funds appeal becomes available (around 60 days after deactivation). Where a window is ambiguous it says so, so you can act on the earliest date.",
+      id: "deadlines",
+      q: "Can I rely on the deadline shown?",
+      a: "Confirm the exact date in your current notice and Account Health.",
+      detail:
+        "The decoder highlights detected time windows. A window without a verified starting date is not an exact deadline.",
     },
     {
-      q: "What is the encrypted vault for?",
-      a: "Keep evidence contents encrypted on your device with AES-256-GCM. Your browser unlocks them automatically unless you add a passphrase. Appeal Pass holders can upload a backup protected by a backup passphrase and restore it on another device. File names, tags and case references remain visible metadata; we do not receive the content decryption key.",
+      id: "submit",
+      q: "Who submits the response?",
+      a: "You review and submit through the official channel in the current request.",
+      detail:
+        "AppealDeck never signs in or submits for you. Record what you sent in History so it stays with that attempt.",
     },
     {
+      id: "replies",
+      q: "What if Amazon asks for more information?",
+      a: "Add the reply in History, then review it as the next request.",
+      detail:
+        "You can open a new revision and recheck the evidence. Your earlier submitted wording and file references stay unchanged.",
+    },
+    {
+      id: "files",
+      q: "Where are my files saved?",
+      a: "Original files are encrypted in your vault on this device.",
+      detail:
+        "Preparing a workspace response sends case text and file references to AppealDeck, not the originals. A passphrase-protected backup can be uploaded with an Appeal Pass; backup metadata such as file names remains visible.",
+      link: { label: "Read about data storage", href: "/privacy#what-we-collect" },
+    },
+    {
+      id: "processing",
+      q: "What leaves my browser?",
+      a: "Your notice goes to AppealDeck when you decode it. Response preparation sends the relevant case text and file references.",
+      detail:
+        "Workspace responses use your confirmed wording. Optional AI suggestions and the older interview drafting flow can send text to Google Gemini. Original evidence files are not sent for drafting.",
+      link: { label: "How processing works", href: "/privacy#how-we-use" },
+    },
+    {
+      id: "pass",
+      q: "What does the Appeal Pass add?",
+      a: "Response preparation and review for one eligible case, plus encrypted backup support.",
+      detail:
+        "The pass is $199 once, with no subscription. Start by reviewing your request. Cases needing professional help do not offer self-serve drafting.",
+    },
+    {
+      id: "refund",
       q: "What is your refund policy?",
-      a: "A 7-day refund, no questions asked, as long as the Appeal Pass has not been redeemed. Email the receipt address within 7 days. Details on the Refund page.",
+      a: "You can request a refund within 7 days of purchase.",
+      detail:
+        "Send the receipt to the address on the Refund page. Read the full policy and digital-delivery consent before buying.",
+      link: { label: "Read the refund policy", href: "/refund" },
     },
-    {
-      q: "Do you submit my appeal to Amazon?",
-      a: "You do — in Seller Central, where Amazon expects it. AppealDeck prepares the plan and the evidence checklist; you stay in control of your account and never share your login.",
-    },
-    {
-      q: "How long does it take?",
-      a: "Decoding is immediate. The guided interview takes as long as you need to gather your facts and documents — most of that time is finding invoices, not typing. The draft and critic review follow as soon as the interview is complete.",
-    },
-    {
-      q: "What if Amazon replies with more questions?",
-      a: "Paste the reply into your dashboard. AppealDeck classifies it, extracts what Amazon is asking for, and updates your case so the next submission answers exactly that.",
-    },
-    {
-      q: "What is free, and what needs an account?",
-      a: "Decoding, deadlines, the do-now list and the first interview steps are free with no account, saved on this device. Sign in, still free, to add documents to your encrypted vault, see how complete your case file is and use AI field suggestions. The Appeal Pass drafts and reviews the Plan of Action and adds cloud sync.",
-    },
-  ] as const,
+  ] as const satisfies readonly FaqItem[],
   cta: {
-    title: "Have a notice in front of you?",
-    desc: "Paste it into the free decoder for an answer about your own case.",
+    title: "Start with the notice in front of you.",
+    desc: "See what is being asked before deciding whether you need a pass.",
     link: "Decode my notice — free",
   },
   groups: [
     {
-      name: "Pricing",
-      items: [
-        "What is free, and what needs an account?",
-        "What does the Appeal Pass add?",
-        "How long does it take?",
-        "What is your refund policy?",
-      ],
+      id: "start",
+      name: "Getting started",
+      hint: "Your first steps",
+      items: ["start-free", "decode", "time", "independence"],
     },
-    { name: "Decoding", items: ["How does the decoder work?", "How accurate is the draft?"] },
-    { name: "Deadlines", items: ["What are the deadlines?"] },
-    { name: "Vault", items: ["What is the encrypted vault for?"] },
     {
-      name: "Submitting",
-      items: [
-        "Is AppealDeck part of Amazon?",
-        "Do you submit my appeal to Amazon?",
-        "Will this get my account reinstated?",
-        "What if Amazon replies with more questions?",
-      ],
+      id: "response",
+      name: "Your response",
+      hint: "Review, submit & follow up",
+      items: ["review", "outcome", "deadlines", "submit", "replies"],
     },
+    {
+      id: "privacy",
+      name: "Files & privacy",
+      hint: "Storage and processing",
+      items: ["files", "processing"],
+    },
+    { id: "pass", name: "Pass & refunds", hint: "What you pay for", items: ["pass", "refund"] },
   ] as const,
 } as const;
 
-export type FaqItem = (typeof FAQ.items)[number];
-
-export function faqByGroup(): { name: string; items: FaqItem[] }[] {
-  const byQ = new Map(FAQ.items.map((i) => [i.q, i]));
-  return FAQ.groups.map((g) => ({
-    name: g.name,
-    items: g.items.map((q) => byQ.get(q)).filter((i): i is FaqItem => i !== undefined),
+export function faqByGroup(): { id: string; name: string; hint: string; items: FaqItem[] }[] {
+  const byId = new Map<string, FaqItem>(FAQ.items.map((item) => [item.id, item]));
+  return FAQ.groups.map((group) => ({
+    ...group,
+    items: group.items
+      .map((id) => byId.get(id))
+      .filter((item): item is FaqItem => item !== undefined),
   }));
 }
 

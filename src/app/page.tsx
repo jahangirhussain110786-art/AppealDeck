@@ -1,6 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, FileSearch, FileText, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  FileSearch,
+  FileText,
+  ShieldCheck,
+  FolderOpen,
+  History,
+  LockKeyhole,
+  ClipboardCheck,
+  CircleDollarSign,
+  Send,
+} from "lucide-react";
+import { IconTile } from "@/components/workspace/WorkspaceVisuals";
 import { MarketingShell } from "@/components/MarketingShell";
 import { SectionHeading } from "@/components/SectionHeading";
 import { HeroArtifact } from "@/components/marketing/HeroArtifact";
@@ -12,10 +24,8 @@ import { SHARED } from "@/content/shared";
 import { AccentWord } from "@/components/ui/accent-word";
 import { splitAccent } from "@/lib/splitAccent";
 
-// One accent word per the approved mockup headline (AM-22/V3) — "today." in
-// "Understand your Amazon notice today." Falls back to plain text if the copy
-// ever changes and no longer contains this exact phrase.
-const HERO_ACCENT = splitAccent(HOME.hero.headline, "today.");
+// Keep the accent tied to the outcome in the headline.
+const HERO_ACCENT = splitAccent(HOME.hero.headline, "clearer path");
 
 export const metadata: Metadata = {
   title: SHARED.metadata.titleDefault,
@@ -95,12 +105,10 @@ function HowItWorksSection() {
           const Icon = step.icon;
           return (
             <li key={step.title}>
-              <Card className="p-6">
+              <Card className="h-full p-6">
                 <div className="flex items-center gap-3">
-                  <span className="grid size-8 place-items-center rounded-md bg-primary/10 text-sm font-semibold tabular-nums text-primary">
-                    {i + 1}
-                  </span>
-                  <Icon className="size-5 text-muted-foreground" />
+                  <IconTile icon={Icon} tone={i === 0 ? "info" : i === 1 ? "warning" : "primary"} />
+                  <span className="ml-auto font-mono text-sm text-muted-foreground">0{i + 1}</span>
                 </div>
                 <p className="mt-5 text-base font-semibold text-foreground">{step.title}</p>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
@@ -114,6 +122,32 @@ function HowItWorksSection() {
 }
 
 function IncludedSection() {
+  const features = [
+    {
+      icon: FileSearch,
+      title: "Notice brief",
+      desc: "Issue, stated deadlines and next actions.",
+      tone: "info" as const,
+    },
+    {
+      icon: FolderOpen,
+      title: "Evidence desk",
+      desc: "Original files linked to the actual request.",
+      tone: "warning" as const,
+    },
+    {
+      icon: ClipboardCheck,
+      title: "Response review",
+      desc: "Your confirmed facts, ready for your final check.",
+      tone: "primary" as const,
+    },
+    {
+      icon: History,
+      title: "Case history",
+      desc: "Submitted wording and replies, kept together.",
+      tone: "info" as const,
+    },
+  ];
   return (
     <section className="py-16 sm:py-20">
       <SectionHeading
@@ -122,12 +156,16 @@ function IncludedSection() {
         description={HOME.included.sub}
       />
       <ul className="mt-10 grid gap-3 sm:grid-cols-2">
-        {Object.values(PRICING.rows).map((row) => (
+        {features.map(({ icon, title, desc, tone }) => (
           <li
-            key={row.feature}
-            className="rounded-md border border-border/70 bg-surface-2 p-4 text-sm text-foreground"
+            key={title}
+            className="flex items-start gap-4 rounded-xl border border-border/70 bg-surface-2/60 p-5 text-sm text-foreground"
           >
-            {row.feature}
+            <IconTile icon={icon} tone={tone} />
+            <div>
+              <h3 className="font-semibold">{title}</h3>
+              <p className="mt-1 text-muted-foreground">{desc}</p>
+            </div>
           </li>
         ))}
       </ul>
@@ -142,14 +180,18 @@ function ProofSection() {
     PRICING.trust.vault,
     PRICING.trust.refund,
   ];
+  const icons = [Send, ShieldCheck, LockKeyhole, CircleDollarSign];
   return (
     <section className="py-16 sm:py-20">
       <SectionHeading eyebrow={HOME.proof.eyebrow} title={HOME.proof.title} />
       <div className="mt-10 grid gap-4 sm:grid-cols-2">
-        {items.map((item) => (
-          <Card key={item.label} className="p-5">
-            <p className="text-sm font-medium text-foreground">{item.label}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
+        {items.map((item, i) => (
+          <Card key={item.label} className="flex items-start gap-4 p-5">
+            <IconTile icon={icons[i] ?? ShieldCheck} />
+            <div>
+              <p className="text-sm font-medium text-foreground">{item.label}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
+            </div>
           </Card>
         ))}
       </div>

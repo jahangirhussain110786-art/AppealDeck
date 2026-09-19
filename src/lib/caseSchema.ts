@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WorkspaceSchema } from "./workspaceSchema";
 
 export const ViolationKindSchema = z.enum([
   "INAUTHENTIC_DOCUMENTS",
@@ -25,6 +26,7 @@ const EvidenceKindSchema = z.enum([
 ]);
 const narrative = z.string().max(12000);
 export const CaseDataSchema = z.object({
+  workspace: WorkspaceSchema.optional(),
   id: CaseIdSchema,
   kind: ViolationKindSchema,
   createdAt: z.string().datetime().optional(),

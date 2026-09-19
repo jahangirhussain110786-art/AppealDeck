@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("Access ladder — signed-out interview, gate, case preview", () => {
   test("signed out: an answer at step one survives a reload", async ({ page }) => {
-    await page.goto("/case?kind=POLICY");
+    await page.goto("/case?mode=classic&kind=POLICY");
     await expect(page.getByText("What happened?", { exact: true })).toBeVisible();
 
     await page.getByPlaceholder("Type your answer...").fill("A supplier mix-up on one ASIN.");
@@ -13,10 +13,8 @@ test.describe("Access ladder — signed-out interview, gate, case preview", () =
     await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
   });
 
-  test("signed out: reaching the first document step shows the sign-in gate", async ({
-    page,
-  }) => {
-    await page.goto("/case?kind=POLICY");
+  test("signed out: reaching the first document step shows the sign-in gate", async ({ page }) => {
+    await page.goto("/case?mode=classic&kind=POLICY");
     await expect(page.getByText("What happened?", { exact: true })).toBeVisible();
 
     await page.getByPlaceholder("Type your answer...").fill("A supplier mix-up on one ASIN.");
@@ -36,7 +34,9 @@ test.describe("Access ladder — signed-out interview, gate, case preview", () =
     // between prior appeals and the first document step. It's optional but the
     // Continue button still requires non-empty text (a separate, pre-existing
     // behavior, not part of this visual pass) — answer it to reach the gate.
-    await expect(page.getByText("Preventing this from happening again", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Preventing this from happening again", { exact: true }),
+    ).toBeVisible();
     await page
       .getByPlaceholder("Type your answer...")
       .fill("Added a second reviewer on listing edits.");
@@ -66,7 +66,9 @@ test.describe("Access ladder — signed-out interview, gate, case preview", () =
     await page.getByRole("button", { name: "Decode", exact: true }).click();
 
     await expect(page.getByText("What this case will need", { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Start your case/i })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Open case workspace", exact: true }),
+    ).toBeVisible();
   });
 
   test("signed out: dashboard shows the empty state with no draft", async ({ page }) => {
@@ -75,7 +77,7 @@ test.describe("Access ladder — signed-out interview, gate, case preview", () =
   });
 
   test("signed out: dashboard shows the draft summary once a case exists", async ({ page }) => {
-    await page.goto("/case?kind=POLICY");
+    await page.goto("/case?mode=classic&kind=POLICY");
     await expect(page.getByText("What happened?", { exact: true })).toBeVisible();
     await page.getByPlaceholder("Type your answer...").fill("A supplier mix-up on one ASIN.");
     await page.getByTestId("interview-continue").click();

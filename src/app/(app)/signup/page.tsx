@@ -53,9 +53,9 @@ export default function SignupPage() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) router.replace("/dashboard");
+      if (user) router.replace(next);
     });
-  }, [router]);
+  }, [router, next]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -119,7 +119,7 @@ export default function SignupPage() {
       subtitle={showContinue ? AUTH.signup.subtitleContinue : AUTH.signup.subtitle}
       footerPrompt={AUTH.signup.footer.prompt}
       footerAction={AUTH.signup.footer.action}
-      footerHref="/login"
+      footerHref={nextParam ? `/login?next=${encodeURIComponent(next)}` : "/login"}
     >
       <div className="w-full">
         <GoogleButton
@@ -134,7 +134,9 @@ export default function SignupPage() {
             <SuccessBanner message={message} />
             <p className="mt-2 text-sm text-muted-foreground">{AUTH.signup.messages.sentDetail}</p>
             <Button asChild size="lg" className="mt-4 w-full">
-              <a href="/login">{AUTH.signup.messages.backToSignIn}</a>
+              <a href={nextParam ? `/login?next=${encodeURIComponent(next)}` : "/login"}>
+                {AUTH.signup.messages.backToSignIn}
+              </a>
             </Button>
           </>
         ) : (

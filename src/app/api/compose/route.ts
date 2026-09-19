@@ -12,6 +12,7 @@ import { checkBreaker, recordBreaker, fingerprintForRequest } from "@/lib/breake
 import { composePoaWithLlm, applyLlmSections } from "@/lib/llm/composePoaLlm";
 
 import { CaseDataSchema } from "@/lib/caseSchema";
+import { workspaceCanCompose } from "@/core/workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,14 @@ export async function POST(req: NextRequest) {
   }
 
   const { caseData, attemptNumber = 1 } = parsed.data;
+  if (caseData.workspace && !workspaceCanCompose(caseData.workspace))
+    return NextResponse.json(
+      {
+        error:
+          "Confirm a supported response route before drafting. This request may need clarification or professional review.",
+      },
+      { status: 422 },
+    );
   if (isSeverityGated(caseData.kind))
     return NextResponse.json(
       { error: "This case requires professional help. Self-serve drafting is unavailable." },
@@ -112,7 +121,9 @@ async function composeDraft(
 ): Promise<PoaDraft> {
   const deterministic = composePoa(data, attemptNumber);
 
-  if (!isGeminiConfigured()) {
+  // Workspace responses retain the seller's confirmed wording and exact evidence references.
+  // The legacy rewrite prompt is specific to POA sections and must not rewrite document responses.
+  if (data.workspace || !isGeminiConfigured()) {
     return deterministic;
   }
 

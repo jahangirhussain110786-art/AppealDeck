@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { ShieldCheck, Unlock } from "lucide-react";
+import { IconTile } from "@/components/workspace/WorkspaceVisuals";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -295,9 +296,10 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <h2 className="mb-2 text-lg font-semibold">{APP.vault.create.title}</h2>
+    <Card className="w-full max-w-form">
+      <CardContent className="p-5 sm:p-6">
+        <IconTile icon={ShieldCheck} className="mb-4" />
+        <h2 className="mb-2 font-accent text-2xl font-medium">{APP.vault.create.title}</h2>
         <p className="mb-4 text-sm text-muted-foreground">{APP.vault.create.body}</p>
 
         <Alert variant="warning" className="mb-4">
@@ -344,7 +346,7 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
           </div>
           <Button onClick={handleInit} disabled={!canSubmit}>
             {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
             ) : (
               <ShieldCheck className="size-4" />
             )}
@@ -386,9 +388,10 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <h2 className="mb-2 text-lg font-semibold">{APP.vault.unlock.title}</h2>
+    <Card className="w-full max-w-form">
+      <CardContent className="p-5 sm:p-6">
+        <IconTile icon={ShieldCheck} className="mb-4" />
+        <h2 className="mb-2 font-accent text-2xl font-medium">{APP.vault.unlock.title}</h2>
         <p className="mb-4 text-sm text-muted-foreground">{APP.vault.unlock.desc}</p>
         <div className="flex flex-col gap-3">
           <div>
@@ -415,7 +418,11 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
             )}
           </div>
           <Button onClick={handleUnlock} disabled={passphrase.length < 8 || busy}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlock className="size-4" />}
+            {busy ? (
+              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
+            ) : (
+              <Unlock className="size-4" />
+            )}
             {busy ? APP.vault.unlock.submitting : APP.vault.unlock.submit}
           </Button>
         </div>
@@ -463,9 +470,10 @@ function VaultDeviceRelockForm({ vault, onDone }: VaultDeviceRelockProps) {
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <h2 className="mb-2 text-lg font-semibold">{APP.access.setPassphrase.title}</h2>
+    <Card className="w-full max-w-form">
+      <CardContent className="p-5 sm:p-6">
+        <IconTile icon={ShieldCheck} className="mb-4" />
+        <h2 className="mb-2 font-accent text-2xl font-medium">{APP.access.setPassphrase.title}</h2>
         <p className="mb-4 text-sm text-muted-foreground">{APP.access.setPassphrase.body}</p>
 
         <div className="flex flex-col gap-3">
@@ -501,7 +509,7 @@ function VaultDeviceRelockForm({ vault, onDone }: VaultDeviceRelockProps) {
           )}
           <Button onClick={handleRelock} disabled={!canSubmit}>
             {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
             ) : (
               <ShieldCheck className="size-4" />
             )}
@@ -517,8 +525,8 @@ export function VaultEmptyState() {
   return (
     <EmptyState
       icon={FileText}
-      title="No evidence yet"
-      description="Add supplier invoices, brand authorizations, and other documents. Evidence grounds your Plan of Action and must be attached before submission."
+      title={APP.vault.teachingEmpty.title}
+      description={APP.vault.teachingEmpty.description}
       action={<></>}
     />
   );

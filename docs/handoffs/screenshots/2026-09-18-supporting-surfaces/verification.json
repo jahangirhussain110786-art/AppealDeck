@@ -1,0 +1,1012 @@
+{
+  "report": [
+    {
+      "name": "vault-access",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "vault-access",
+      "theme": "light",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-access",
+      "theme": "light",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-access",
+      "theme": "light",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-access",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "not-found",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "not-found",
+      "theme": "light",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "not-found",
+      "theme": "light",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "not-found",
+      "theme": "light",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "not-found",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "classic-case",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "classic-case",
+      "theme": "light",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "classic-case",
+      "theme": "light",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "classic-case",
+      "theme": "light",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "classic-case",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-backup",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "vault-backup",
+      "theme": "light",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-backup",
+      "theme": "light",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-backup",
+      "theme": "light",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-backup",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-security",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "vault-security",
+      "theme": "light",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-security",
+      "theme": "light",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-security",
+      "theme": "light",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-security",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "billing",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "billing",
+      "theme": "light",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "billing",
+      "theme": "light",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "billing",
+      "theme": "light",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "billing",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "login",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "login",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "login",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "login",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "login",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "signup",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "signup",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "signup",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "signup",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "signup",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "forgot-password",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "forgot-password",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "forgot-password",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "forgot-password",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "forgot-password",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "privacy",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "privacy",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "privacy",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "privacy",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "privacy",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "terms",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "terms",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "terms",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "terms",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "terms",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "refund",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "refund",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "refund",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "refund",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "refund",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-access",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "vault-access",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-access",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-access",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-access",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "not-found",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "not-found",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "not-found",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "not-found",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "not-found",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "classic-case",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "classic-case",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "classic-case",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "classic-case",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "classic-case",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-files",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "vault-files",
+      "theme": "dark",
+      "width": 320,
+      "overflow": true,
+      "details": [
+        {
+          "tag": "SECTION",
+          "classes": "min-w-0 space-y-4",
+          "text": "Original filesEvidence kindSupplier invoiceBrand authorizationRights o"
+        },
+        {
+          "tag": "H2",
+          "classes": "text-base font-semibold",
+          "text": "Original files"
+        },
+        {
+          "tag": "DIV",
+          "classes": "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+          "text": "Evidence kindSupplier invoiceBrand authorizationRights owner retractio"
+        },
+        {
+          "tag": "DIV",
+          "classes": "flex flex-1 flex-col gap-3 sm:flex-row sm:items-center",
+          "text": "Evidence kindSupplier invoiceBrand authorizationRights owner retractio"
+        },
+        {
+          "tag": "DIV",
+          "classes": "relative max-w-sm flex-1",
+          "text": ""
+        },
+        {
+          "tag": "INPUT",
+          "classes": "flex w-full rounded-md border border-input bg-surface-1 text-sm text-foreground shadow-inset transition-[border-color,box-shadow] duration-[var(--dur-fast)] placeholder:text-muted-foreground/80 hover:border-foreground/25 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive/20 h-10 px-3 py-2 pl-8 pr-9",
+          "text": ""
+        },
+        {
+          "tag": "DIV",
+          "classes": "relative",
+          "text": "Evidence kindSupplier invoiceBrand authorizationRights owner retractio"
+        },
+        {
+          "tag": "SELECT",
+          "classes": "flex w-full rounded-md border border-input bg-surface-1 text-sm text-foreground shadow-inset transition-[border-color,box-shadow] duration-[var(--dur-fast)] placeholder:text-muted-foreground/80 hover:border-foreground/25 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive/20 h-10 appearance-none px-3 pr-9 sm:w-56",
+          "text": "Evidence kindSupplier invoiceBrand authorizationRights owner retractio"
+        }
+      ]
+    },
+    {
+      "name": "vault-files",
+      "theme": "dark",
+      "width": 390,
+      "overflow": true,
+      "details": [
+        {
+          "tag": "SECTION",
+          "classes": "min-w-0 space-y-4",
+          "text": "Original filesEvidence kindSupplier invoiceBrand authorizationRights o"
+        },
+        {
+          "tag": "H2",
+          "classes": "text-base font-semibold",
+          "text": "Original files"
+        },
+        {
+          "tag": "DIV",
+          "classes": "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+          "text": "Evidence kindSupplier invoiceBrand authorizationRights owner retractio"
+        },
+        {
+          "tag": "DIV",
+          "classes": "flex flex-1 flex-col gap-3 sm:flex-row sm:items-center",
+          "text": "Evidence kindSupplier invoiceBrand authorizationRights owner retractio"
+        },
+        {
+          "tag": "DIV",
+          "classes": "relative max-w-sm flex-1",
+          "text": ""
+        },
+        {
+          "tag": "INPUT",
+          "classes": "flex w-full rounded-md border border-input bg-surface-1 text-sm text-foreground shadow-inset transition-[border-color,box-shadow] duration-[var(--dur-fast)] placeholder:text-muted-foreground/80 hover:border-foreground/25 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive/20 h-10 px-3 py-2 pl-8 pr-9",
+          "text": ""
+        },
+        {
+          "tag": "DIV",
+          "classes": "relative",
+          "text": "Evidence kindSupplier invoiceBrand authorizationRights owner retractio"
+        },
+        {
+          "tag": "SELECT",
+          "classes": "flex w-full rounded-md border border-input bg-surface-1 text-sm text-foreground shadow-inset transition-[border-color,box-shadow] duration-[var(--dur-fast)] placeholder:text-muted-foreground/80 hover:border-foreground/25 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive aria-[invalid=true]:ring-destructive/20 h-10 appearance-none px-3 pr-9 sm:w-56",
+          "text": "Evidence kindSupplier invoiceBrand authorizationRights owner retractio"
+        }
+      ]
+    },
+    {
+      "name": "vault-files",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-files",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-backup",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "vault-backup",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-backup",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-backup",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-backup",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-security",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "vault-security",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-security",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-security",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "vault-security",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "billing",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "billing",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "billing",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "billing",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "billing",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "reset-password",
+      "theme": "dark",
+      "violations": []
+    },
+    {
+      "name": "reset-password",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "reset-password",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "reset-password",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "reset-password",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "details": []
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "name": "signup",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "signup",
+      "theme": "light",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "name": "signup",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "name": "signup",
+      "theme": "light",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "name": "signup",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "name": "forgot-password",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "forgot-password",
+      "theme": "light",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "name": "forgot-password",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "name": "forgot-password",
+      "theme": "light",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "name": "forgot-password",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "name": "privacy",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "privacy",
+      "theme": "light",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "name": "privacy",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "name": "privacy",
+      "theme": "light",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "name": "privacy",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "name": "terms",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "terms",
+      "theme": "light",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "name": "terms",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "name": "terms",
+      "theme": "light",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "name": "terms",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "name": "refund",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "refund",
+      "theme": "light",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "name": "refund",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "name": "refund",
+      "theme": "light",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "name": "refund",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "name": "vault-files",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "vault-files",
+      "theme": "light",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "name": "vault-files",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "name": "vault-files",
+      "theme": "light",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "name": "vault-files",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "name": "vault-locked",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "vault-locked",
+      "theme": "light",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "name": "vault-locked",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "name": "vault-locked",
+      "theme": "light",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "name": "vault-locked",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "name": "reset-password",
+      "theme": "light",
+      "violations": []
+    },
+    {
+      "name": "reset-password",
+      "theme": "light",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "name": "reset-password",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "name": "reset-password",
+      "theme": "light",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "name": "reset-password",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    }
+  ],
+  "errors": [
+    {
+      "message": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByPlaceholder('Type your answer...') to be visible\u001b[22m\n"
+    }
+  ]
+}

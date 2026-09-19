@@ -34,8 +34,14 @@ export const APP = {
     },
     vaultSignedOut: {
       title: "Your encrypted evidence vault",
-      desc: "The vault stores your supplier invoices, brand authorizations and other case documents encrypted on your device (AES-GCM). It opens automatically once you sign in — no passphrase to remember, unless you choose to add one from the vault.",
+      desc: "Sign in to check your vault access. An Appeal Pass opens file management and encrypted backup; you can organize evidence in your case for free.",
       cta: "Sign in to unlock",
+      back: "Back to your case",
+    },
+    vaultNoPass: {
+      title: "Your case files have a place here.",
+      desc: "Keep organizing evidence in your case for free. An Appeal Pass adds this file library, backup and recovery tools.",
+      cta: "View pass details",
       back: "Back to your case",
     },
     casePreview: {
@@ -50,7 +56,7 @@ export const APP = {
     },
     composeGate: {
       title: "Unlock the drafted plan",
-      body: "Your case file is saved. The Appeal Pass drafts the Plan of Action from it, reviews the draft with the critic, and adds cloud sync for your vault.",
+      body: "Prepare a response from your saved facts, check for missing information, and back up your vault. You review and submit the final response.",
       price: "$199, once, for this case",
       activating: "Activating your Appeal Pass. Your case is saved.",
       activatingHint: "This usually takes a few seconds after checkout.",
@@ -331,18 +337,27 @@ export const APP = {
   },
   billing: {
     title: "Billing",
-    subtitle: "Your Appeal Pass purchase and license status.",
+    eyebrow: "Account tools",
+    subtitle: "Check your pass, manage devices and find payment support.",
+    statusLabel: "Access",
+    planName: "Appeal Pass",
+    dateUnavailable: "Not recorded",
+    continue: "Open your dashboard",
+    supportTitle: "Receipts & support",
+    supportDesc:
+      "Paddle processes payments. Use your receipt for purchase details and the refund policy for next steps.",
+    policyLink: "Privacy & data",
     active: {
       title: "Appeal Pass — active",
       planLabel: "Plan",
       purchasedLabel: "Purchased",
       receiptText:
-        "Receipts and subscription management are handled by Paddle, our merchant of record.",
+        "Your pass covers one eligible case. Check that case before preparing a response.",
     },
     inactive: {
-      title: "No active plan",
-      desc: "You have not purchased the Appeal Pass yet.",
-      cta: "Buy the Appeal Pass",
+      title: "No active Appeal Pass",
+      desc: "You can still decode a notice and organize your case for free.",
+      cta: "View pass details",
     },
     deviceCap: {
       title: "Active devices",
@@ -352,6 +367,9 @@ export const APP = {
       noneDesc:
         "No active devices recorded yet. Your current device will appear here once you have used AppealDeck.",
       loading: "Loading devices…",
+      loadError: "Couldn't load your devices",
+      loadErrorDesc: "Your device list is unavailable. Try again to see current access.",
+      retry: "Try again",
       thisDevice: "This device",
       revokeOwnTooltip: "Sign out instead",
     },
@@ -362,28 +380,60 @@ export const APP = {
       confirm: "Revoke device",
       cancel: "Cancel",
     },
-    refundLink: "Request a refund",
+    refundLink: "Refund policy & contact",
   },
   vault: {
-    title: "Your encrypted evidence",
-    subtitle:
-      "Files you upload here are encrypted on your device. By default the key is held only in this browser — add a passphrase below if you want one.",
+    title: "Your evidence library",
+    eyebrow: "Workspace tools",
+    subtitle: "Find original files, manage backups and choose how your vault unlocks.",
+    tabs: { files: "Files", backup: "Backup", security: "Security" },
+    localLabel: "Encrypted on this device",
+    libraryTitle: "Original files",
+    addTitle: "Add a file",
+    addDescription:
+      "Choose a document type, then add the original file. Review what it supports in your case.",
+    loadError: "Couldn't load your files. Try refreshing the library.",
+    loading: "Loading files…",
+    backup: {
+      title: "Keep a recovery copy",
+      description:
+        "Create an encrypted cloud backup for this account. It includes all cases and files in this vault.",
+      disclosure:
+        "File contents are encrypted. Filenames, tags, file types and case references are included as visible metadata.",
+      passphraseLabel: "Backup passphrase",
+      passphraseHint: "At least 8 characters",
+      passphraseHelp:
+        "Keep this passphrase for recovery on another device. Automatic unlock here stays enabled.",
+      save: "Back up now",
+      working: "Working…",
+      restoreTitle: "Restore a backup",
+      restoreDescription:
+        "Restore needs an empty vault. Existing files are preserved if restore cannot proceed.",
+      restorePassphrase: "Restore passphrase",
+      restore: "Restore latest cloud backup",
+      legacyTitle: "Recover older local files",
+      legacyDescription:
+        "An older shared vault is on this browser. Recover it only if the files belong to you. The original is preserved.",
+      legacyAction: "Recover my older local files",
+    },
     cryptoDetails:
-      "Envelope v{version}, AES-GCM 256-bit, 12-byte IV, optional associated data. Key model: by default, a non-extractable device key generated in this browser wraps a random data key. Choosing a passphrase instead derives the wrapping key with PBKDF2-SHA-256 (310,000 iterations) — either way, the key material never leaves this device. Cloud sync uploads ciphertext only.",
-    envelopeCaption:
-      "Envelope v{version} · AES-GCM 256-bit · PBKDF2-SHA-256, 310,000 iterations · your key never leaves this device",
+      "File contents use AES-GCM 256-bit encryption (envelope v{version}). Automatic unlock uses a key held by this browser. Passphrase mode uses PBKDF2-SHA-256 with 310,000 iterations. Cloud backups include an encrypted copy of the content key plus visible file metadata; the backup passphrase is not uploaded.",
+    envelopeCaption: "Envelope v{version} · AES-GCM 256-bit file encryption",
     teachingEmpty: {
       title: "No evidence yet",
       description:
-        "Add supplier invoices, brand authorizations, and other documents. Evidence grounds your Plan of Action and must be attached before submission.",
+        "Add the original records requested in your notice. Then link and review them in your case.",
       action: "Choose a file",
     },
     recordCount: "{count} record(s)",
     totalSize: "Total: {size}",
     encryptedBadge: "Encrypted",
-    evidenceKindLabel: "Evidence kind",
+    evidenceKindLabel: "Document type",
+    filterLabel: "Filter by document type",
+    allTypes: "All document types",
     evidenceKindPlaceholder: "Select evidence kind",
-    caseRecordsHidden: "Case file and logs are stored separately and open automatically here.",
+    caseRecordsHidden:
+      "Case notes and history are in your dashboard. This library shows original files.",
     actions: {
       refresh: "Refresh",
       sync: "Sync to cloud",
@@ -399,7 +449,7 @@ export const APP = {
     deleteConfirm: {
       title: "Delete {name}?",
       description:
-        "This permanently deletes the encrypted record from your device and the cloud. This action cannot be undone.",
+        "This deletes the file from this device. Existing cloud backups are not changed. You cannot undo local deletion.",
       confirm: "Delete permanently",
       cancel: "Cancel",
     },

@@ -16,8 +16,9 @@ import {
   FileBox,
   Search,
   X,
-  Info,
   KeyRound,
+  FolderOpen,
+  Upload,
   Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,9 @@ import { EmptyState } from "@/components/EmptyState";
 import { VaultDoorIllustration } from "@/components/illustrations/VaultDoorIllustration";
 import { APP } from "@/content/app";
 import type { EvidenceKind } from "@/core/evidenceModel";
-import { LocalFirstBadge } from "@/components/LocalFirstBadge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { IconTile, DetailDisclosure } from "@/components/workspace/WorkspaceVisuals";
 import { VaultGate } from "@/components/VaultGate";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -87,6 +90,9 @@ function evidenceKindLabel(kind: EvidenceKind): string {
 
 export default function VaultView({ userId }: { userId: string }) {
   const vault = useVault();
+  const [gateRevision, setGateRevision] = React.useState(0);
+  const [fileLoading, setFileLoading] = React.useState(true);
+  const [fileError, setFileError] = React.useState(false);
   const [items, setItems] = React.useState<VaultListItem[]>([]);
   const [backupPassphrase, setBackupPassphrase] = React.useState("");
   const [recoveryPassphrase, setRecoveryPassphrase] = React.useState("");
@@ -111,9 +117,16 @@ export default function VaultView({ userId }: { userId: string }) {
   const [previewText, setPreviewText] = React.useState<string | null>(null);
 
   const refresh = React.useCallback(async () => {
-    const list = await vault.list(filterKind !== "all" ? { evidenceKind: filterKind } : undefined);
-    setItems(list);
-  }, [vault, filterKind]);
+    setFileLoading(true);
+    setFileError(false);
+    try {
+      setItems(await vault.list());
+    } catch {
+      setFileError(true);
+    } finally {
+      setFileLoading(false);
+    }
+  }, [vault]);
 
   const refreshMode = React.useCallback(async () => {
     const meta = await vault.rawMeta();
@@ -132,10 +145,17 @@ export default function VaultView({ userId }: { userId: string }) {
         const initialized = await vault.isInitialized();
         if (!cancelled && initialized) {
           const list = await vault.list();
-          if (!cancelled) setItems(list);
+          if (!cancelled) {
+            setItems(list);
+            setFileLoading(false);
+          }
           if (!cancelled) await refreshMode();
         }
       } catch (e) {
+        if (!cancelled) {
+          setFileError(true);
+          setFileLoading(false);
+        }
         toast.error(APP.dashboard.toasts.vaultOpenFailed, {
           description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
         });
@@ -149,6 +169,7 @@ export default function VaultView({ userId }: { userId: string }) {
   const onLock = () => {
     vault.lock();
     setItems([]);
+    setGateRevision((value) => value + 1);
   };
 
   const handleProtectSubmit = async () => {
@@ -364,6 +385,7 @@ export default function VaultView({ userId }: { userId: string }) {
 
   return (
     <VaultGate
+      key={gateRevision}
       vault={vault}
       deviceMode
       autoUnlock
@@ -375,352 +397,438 @@ export default function VaultView({ userId }: { userId: string }) {
     >
       {() => (
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-end">
-            <div className="flex items-center">
-              <LocalFirstBadge />
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex items-center rounded p-1 text-muted-foreground hover:text-foreground">
-                      <Info className="size-4" aria-hidden />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-xs">
-                    {APP.vault.cryptoDetails.replace("{version}", String(VAULT_ENVELOPE_VERSION))}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-
-          <Card className="space-y-3 p-4">
-            <h2 className="text-base font-semibold">Backup and recovery</h2>
-            <p className="text-sm text-muted-foreground">
-              File contents are encrypted. Filenames, tags, file types and case references are
-              included as metadata. Restore requires an empty vault and preserves existing files if
-              it cannot proceed.
-            </p>
-            {keyMode === "device" && (
-              <div className="space-y-2">
-                <Label htmlFor="backup-passphrase">Backup passphrase</Label>
-                <PasswordInput
-                  id="backup-passphrase"
-                  value={backupPassphrase}
-                  onChange={(e) => setBackupPassphrase(e.target.value)}
-                  placeholder="At least 8 characters"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Keep this passphrase to restore on another device. Automatic unlock on this device
-                  stays enabled.
-                </p>
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="restore-passphrase">Restore passphrase</Label>
-              <PasswordInput
-                id="restore-passphrase"
-                value={recoveryPassphrase}
-                onChange={(e) => setRecoveryPassphrase(e.target.value)}
-              />
-            </div>
-            <Button
-              variant="outline"
-              disabled={busy || recoveryPassphrase.length < 8}
-              onClick={() => void restore()}
-            >
-              Restore latest cloud backup
-            </Button>
-            {legacyAvailable && (
-              <div className="space-y-2">
-                <p className="text-sm">
-                  An older shared vault remains on this browser. Recover it only if these are your
-                  files; the original will be preserved.
-                </p>
-                <Button
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "I confirm the older files on this browser belong to me. Copy them into my empty account vault?",
-                      )
-                    )
-                      void restore(true);
-                  }}
-                >
-                  Recover my older local files
-                </Button>
-              </div>
-            )}
-          </Card>
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-surface-2 px-3 py-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <KeyRound className="size-3.5" aria-hidden />
-              {keyMode === "passphrase"
-                ? APP.vault.security.passphraseModeLabel
-                : APP.vault.security.deviceModeLabel}
-            </span>
-            {keyMode === "passphrase" ? (
-              <Button variant="outline" size="sm" onClick={() => setShowSwitchDialog(true)}>
-                {APP.vault.security.switchCta}
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" onClick={() => setShowProtectDialog(true)}>
-                {APP.vault.security.protectCta}
-              </Button>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative max-w-sm flex-1">
-                <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder={APP.vault.searchPlaceholder}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchTerm("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
-                    aria-label="Clear search"
-                  >
-                    <X className="size-3" />
-                  </button>
-                )}
-              </div>
-              <NativeSelect
-                aria-label={APP.vault.evidenceKindLabel}
-                value={filterKind}
-                onChange={(e) => setFilterKind(e.target.value as EvidenceKind | "all")}
-                className="sm:w-56"
+          <Tabs defaultValue="files" className="min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <TabsList
+                aria-label="Vault tools"
+                className="grid h-auto w-full grid-cols-3 gap-1 rounded-lg p-1 sm:w-auto"
               >
-                <option value="all">{APP.vault.evidenceKindLabel}</option>
-                {EVIDENCE_KINDS.map((k) => (
-                  <option key={k} value={k}>
-                    {APP.evidenceKinds[k]}
-                  </option>
-                ))}
-              </NativeSelect>
+                <TabsTrigger
+                  value="files"
+                  className="flex min-h-10 items-center justify-center gap-2"
+                >
+                  <FolderOpen className="size-4" aria-hidden />
+                  {APP.vault.tabs.files}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="backup"
+                  className="flex min-h-10 items-center justify-center gap-2"
+                >
+                  <Cloud className="size-4" aria-hidden />
+                  {APP.vault.tabs.backup}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="security"
+                  className="flex min-h-10 items-center justify-center gap-2"
+                >
+                  <Shield className="size-4" aria-hidden />
+                  {APP.vault.tabs.security}
+                </TabsTrigger>
+              </TabsList>
+              <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                <Lock className="size-3.5 text-primary" aria-hidden />
+                {APP.vault.localLabel}
+              </span>
             </div>
+            <TabsContent value="files" className="mt-5">
+              <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_19rem]">
+                <section className="min-w-0 space-y-4" aria-label={APP.vault.libraryTitle}>
+                  <h2 className="text-base font-semibold">{APP.vault.libraryTitle}</h2>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+                      <div className="relative min-w-0 max-w-sm flex-1">
+                        <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          type="search"
+                          placeholder={APP.vault.searchPlaceholder}
+                          aria-label={APP.vault.searchPlaceholder}
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-8 pr-9"
+                        />
+                        {searchTerm && (
+                          <button
+                            type="button"
+                            onClick={() => setSearchTerm("")}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 grid size-7 place-items-center rounded text-muted-foreground hover:text-foreground"
+                            aria-label="Clear search"
+                          >
+                            <X className="size-3" />
+                          </button>
+                        )}
+                      </div>
+                      <NativeSelect
+                        aria-label={APP.vault.filterLabel}
+                        value={filterKind}
+                        onChange={(e) => setFilterKind(e.target.value as EvidenceKind | "all")}
+                        className="sm:w-56"
+                      >
+                        <option value="all">{APP.vault.allTypes}</option>
+                        {EVIDENCE_KINDS.map((k) => (
+                          <option key={k} value={k}>
+                            {APP.evidenceKinds[k]}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={() => void refresh()}
-                      variant="outline"
-                      size="icon-sm"
-                      disabled={busy}
-                      aria-label={APP.vault.actions.refresh}
-                    >
-                      <RefreshCw className="size-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{APP.vault.actions.refresh}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={onSyncUp}
-                      variant="outline"
-                      size="icon-sm"
-                      disabled={busy}
-                      aria-label={APP.vault.actions.sync}
-                    >
-                      <Cloud className="size-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{APP.vault.actions.sync}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={onLock}
-                      variant="outline"
-                      size="icon-sm"
-                      aria-label={APP.vault.actions.lock}
-                    >
-                      <Lock className="size-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{APP.vault.actions.lock}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              onClick={() => void refresh()}
+                              variant="outline"
+                              size="icon-sm"
+                              disabled={busy || fileLoading}
+                              aria-label={APP.vault.actions.refresh}
+                            >
+                              <RefreshCw className="size-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{APP.vault.actions.refresh}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      {keyMode === "passphrase" && (
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                onClick={onLock}
+                                variant="outline"
+                                size="icon-sm"
+                                aria-label={APP.vault.actions.lock}
+                              >
+                                <Lock className="size-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{APP.vault.actions.lock}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  </div>
 
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>
-              {filteredItems.length === displayItems.length ? (
-                <span data-tn>{displayItems.length}</span>
-              ) : (
-                <span>
-                  <span data-tn>{filteredItems.length}</span> of{" "}
-                  <span data-tn>{displayItems.length}</span>
-                </span>
-              )}{" "}
-              record{displayItems.length === 1 ? "" : "s"}
-            </span>
-            <span className="tabular-nums">{formatBytes(totalBytes)} total</span>
-          </div>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>
+                      {filteredItems.length === displayItems.length ? (
+                        <span data-tn>{displayItems.length}</span>
+                      ) : (
+                        <span>
+                          <span data-tn>{filteredItems.length}</span> of{" "}
+                          <span data-tn>{displayItems.length}</span>
+                        </span>
+                      )}{" "}
+                      record{displayItems.length === 1 ? "" : "s"}
+                    </span>
+                    <span className="tabular-nums">{formatBytes(totalBytes)} total</span>
+                  </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="evidence-kind-select">{APP.vault.evidenceKindLabel}</Label>
-            <NativeSelect
-              id="evidence-kind-select"
-              value={selectedEvidenceKind}
-              onChange={(e) => setSelectedEvidenceKind(e.target.value as EvidenceKind)}
-            >
-              {EVIDENCE_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {APP.evidenceKinds[k]}
-                </option>
-              ))}
-            </NativeSelect>
-          </div>
+                  {fileLoading ? (
+                    <div role="status" aria-label={APP.vault.loading} className="space-y-3">
+                      <Skeleton className="h-24 w-full" />
+                      <Skeleton className="h-24 w-full" />
+                    </div>
+                  ) : fileError ? (
+                    <Alert variant="warning">
+                      <AlertDescription>
+                        {APP.vault.loadError}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-3 block"
+                          onClick={() => void refresh()}
+                        >
+                          {APP.vault.actions.refresh}
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  ) : displayItems.length === 0 ? (
+                    <Card className="p-6">
+                      <CardContent className="flex flex-col items-center gap-3 pt-0 text-center">
+                        <VaultDoorIllustration size={52} />
+                        <p className="text-base font-semibold text-foreground">
+                          {APP.vault.teachingEmpty.title}
+                        </p>
+                        <p className="max-w-sm text-sm text-muted-foreground">
+                          {APP.vault.teachingEmpty.description}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ) : filteredItems.length === 0 ? (
+                    <Card className="p-6">
+                      <CardContent className="pt-0">
+                        <EmptyState
+                          icon={FileText}
+                          title={APP.vault.noResults}
+                          description={
+                            searchTerm
+                              ? `${APP.vault.noResultsDesc} "${searchTerm}"`
+                              : APP.vault.noResultsDesc
+                          }
+                          action={
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSearchTerm("");
+                                setFilterKind("all");
+                              }}
+                            >
+                              {APP.vault.clearSearch}
+                            </Button>
+                          }
+                        />
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <ul className="flex flex-col gap-2">
+                      <AnimatePresence initial={false}>
+                        {filteredItems.map((it) => (
+                          <motion.li
+                            key={it.id}
+                            layout
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            <Card className="flex flex-col items-stretch gap-3 rounded-row p-4 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="flex min-w-0 items-center gap-3">
+                                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-info/10 text-info">
+                                  {mimeTypeToIcon(it.mimeType)}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                                    <span className="break-all">{it.name}</span>
+                                    {it.evidenceKind && <EvidenceStatusBadge status="present" />}
+                                    <Badge variant="outline">{APP.vault.encryptedBadge}</Badge>
+                                  </div>
+                                  <div className="mt-1 break-words text-xs leading-relaxed tabular-nums text-muted-foreground">
+                                    {it.mimeType} · {formatBytes(it.sizeBytes)} ·{" "}
+                                    <span data-tn>{formatDateTime(it.createdAt)}</span>
+                                    {it.evidenceKind
+                                      ? ` · ${APP.evidenceKinds[it.evidenceKind as EvidenceKind] ?? evidenceKindLabel(it.evidenceKind as EvidenceKind)}`
+                                      : ""}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex shrink-0 items-center justify-end gap-1">
+                                <TooltipProvider delayDuration={200}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon-sm"
+                                        variant="ghost"
+                                        onClick={() => void openPreview(it)}
+                                        aria-label={`${APP.vault.actions.view} ${it.name}`}
+                                      >
+                                        <Eye className="size-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{APP.vault.actions.view}</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <TooltipProvider delayDuration={200}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon-sm"
+                                        variant="ghost"
+                                        onClick={() => void onDownload(it.id)}
+                                        aria-label={`${APP.vault.actions.download} ${it.name}`}
+                                      >
+                                        <Download className="size-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{APP.vault.actions.download}</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <TooltipProvider delayDuration={200}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon-sm"
+                                        variant="ghost"
+                                        className="text-muted-foreground hover:text-destructive"
+                                        onClick={() => setDeleteTarget(it)}
+                                        aria-label={`${APP.vault.actions.delete} ${it.name}`}
+                                      >
+                                        <Trash2 className="size-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{`${APP.vault.actions.delete} ${it.name}`}</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            </Card>
+                          </motion.li>
+                        ))}
+                      </AnimatePresence>
+                    </ul>
+                  )}
 
-          <FileDropZone onFile={onAddFile} disabled={busy} />
+                  <p className="text-xs text-muted-foreground">{APP.vault.caseRecordsHidden}</p>
+                </section>
+                <aside className="min-w-0 rounded-xl border border-border/80 bg-card p-5 lg:sticky lg:top-20">
+                  <div className="mb-4 flex items-center gap-3">
+                    <IconTile icon={Upload} tone="info" />
+                    <h2 className="text-base font-semibold">{APP.vault.addTitle}</h2>
+                  </div>
+                  <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
+                    {APP.vault.addDescription}
+                  </p>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="evidence-kind-select">{APP.vault.evidenceKindLabel}</Label>
+                      <NativeSelect
+                        id="evidence-kind-select"
+                        value={selectedEvidenceKind}
+                        onChange={(e) => setSelectedEvidenceKind(e.target.value as EvidenceKind)}
+                      >
+                        {EVIDENCE_KINDS.map((k) => (
+                          <option key={k} value={k}>
+                            {APP.evidenceKinds[k]}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    </div>
 
-          {displayItems.length === 0 ? (
-            <Card className="p-6">
-              <CardContent className="flex flex-col items-center gap-3 pt-0 text-center">
-                <VaultDoorIllustration size={52} />
-                <p className="text-base font-semibold text-foreground">
-                  {APP.vault.teachingEmpty.title}
+                    <FileDropZone onFile={onAddFile} disabled={busy} />
+                  </div>
+                </aside>
+              </div>
+            </TabsContent>
+            <TabsContent value="backup" className="mt-5 space-y-4">
+              <div className="grid items-start gap-5 md:grid-cols-2">
+                <Card className="space-y-4 p-5 sm:p-6">
+                  <IconTile icon={Cloud} tone="info" />
+                  <h2 className="text-lg font-semibold">{APP.vault.backup.title}</h2>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {APP.vault.backup.description}
+                  </p>
+                  <p className="rounded-lg bg-surface-2 p-3 text-xs leading-relaxed text-muted-foreground">
+                    {APP.vault.backup.disclosure}
+                  </p>
+                  {keyMode === "device" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="backup-passphrase">{APP.vault.backup.passphraseLabel}</Label>
+                      <PasswordInput
+                        id="backup-passphrase"
+                        autoComplete="new-password"
+                        value={backupPassphrase}
+                        onChange={(e) => setBackupPassphrase(e.target.value)}
+                        placeholder={APP.vault.backup.passphraseHint}
+                      />
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        {APP.vault.backup.passphraseHelp}
+                      </p>
+                    </div>
+                  )}
+                  <Button
+                    onClick={onSyncUp}
+                    disabled={
+                      busy || !keyMode || (keyMode === "device" && backupPassphrase.length < 8)
+                    }
+                    className="h-auto min-h-11 whitespace-normal py-2"
+                  >
+                    <Cloud className="size-4" aria-hidden />
+                    {busy ? APP.vault.backup.working : APP.vault.backup.save}
+                  </Button>
+                </Card>
+                <Card className="space-y-4 p-5 sm:p-6">
+                  <IconTile icon={Download} />
+                  <h2 className="text-lg font-semibold">{APP.vault.backup.restoreTitle}</h2>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {APP.vault.backup.restoreDescription}
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="restore-passphrase">{APP.vault.backup.restorePassphrase}</Label>
+                    <PasswordInput
+                      id="restore-passphrase"
+                      autoComplete="current-password"
+                      value={recoveryPassphrase}
+                      onChange={(e) => setRecoveryPassphrase(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    disabled={busy || recoveryPassphrase.length < 8}
+                    onClick={() => void restore()}
+                    className="h-auto min-h-11 whitespace-normal py-2"
+                  >
+                    {busy ? APP.vault.backup.working : APP.vault.backup.restore}
+                  </Button>
+                </Card>
+              </div>
+              {legacyAvailable && (
+                <DetailDisclosure title={APP.vault.backup.legacyTitle}>
+                  <p>{APP.vault.backup.legacyDescription}</p>
+                  <Button
+                    variant="outline"
+                    className="mt-4 h-auto min-h-11 whitespace-normal py-2"
+                    disabled={busy}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "I confirm the older files on this browser belong to me. Copy them into my empty account vault?",
+                        )
+                      )
+                        void restore(true);
+                    }}
+                  >
+                    {APP.vault.backup.legacyAction}
+                  </Button>
+                </DetailDisclosure>
+              )}
+            </TabsContent>
+            <TabsContent value="security" className="mt-5">
+              <Card className="max-w-tool space-y-5 p-5 sm:p-6">
+                <div className="flex items-center gap-3">
+                  <IconTile icon={KeyRound} />
+                  <h2 className="text-lg font-semibold">{APP.vault.tabs.security}</h2>
+                </div>
+                <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+                  {keyMode === "passphrase"
+                    ? APP.vault.security.passphraseModeDesc
+                    : APP.vault.security.deviceModeDesc}
                 </p>
-                <p className="max-w-sm text-sm text-muted-foreground">
-                  {APP.vault.teachingEmpty.description}
-                </p>
-              </CardContent>
-            </Card>
-          ) : filteredItems.length === 0 ? (
-            <Card className="p-6">
-              <CardContent className="pt-0">
-                <EmptyState
-                  icon={FileText}
-                  title={APP.vault.noResults}
-                  description={
-                    searchTerm
-                      ? `${APP.vault.noResultsDesc} "${searchTerm}"`
-                      : APP.vault.noResultsDesc
-                  }
-                  action={
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border/70 bg-surface-2/50 p-4 text-sm text-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <KeyRound className="size-3.5" aria-hidden />
+                    {keyMode === "passphrase"
+                      ? APP.vault.security.passphraseModeLabel
+                      : APP.vault.security.deviceModeLabel}
+                  </span>
+                  {keyMode === "passphrase" ? (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        setSearchTerm("");
-                        setFilterKind("all");
-                      }}
+                      className="h-auto min-h-10 whitespace-normal py-2"
+                      onClick={() => setShowSwitchDialog(true)}
                     >
-                      {APP.vault.clearSearch}
+                      {APP.vault.security.switchCta}
                     </Button>
-                  }
-                />
-              </CardContent>
-            </Card>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              <AnimatePresence initial={false}>
-                {filteredItems.map((it) => (
-                  <motion.li
-                    key={it.id}
-                    layout
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <Card className="flex items-center justify-between gap-3 rounded-row p-4">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="grid size-9 shrink-0 place-items-center rounded-md bg-surface-2 text-muted-foreground">
-                          {mimeTypeToIcon(it.mimeType)}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 truncate text-sm font-medium">
-                            <span className="truncate font-mono">{it.name}</span>
-                            {it.evidenceKind && <EvidenceStatusBadge status="present" />}
-                            <Badge variant="outline">{APP.vault.encryptedBadge}</Badge>
-                          </div>
-                          <div className="font-mono text-xs tabular-nums text-muted-foreground">
-                            {it.mimeType} · {formatBytes(it.sizeBytes)} ·{" "}
-                            <span data-tn>{formatDateTime(it.createdAt)}</span>
-                            {it.evidenceKind
-                              ? ` · ${APP.evidenceKinds[it.evidenceKind as EvidenceKind] ?? evidenceKindLabel(it.evidenceKind as EvidenceKind)}`
-                              : ""}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <TooltipProvider delayDuration={200}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon-sm"
-                                variant="ghost"
-                                onClick={() => void openPreview(it)}
-                                aria-label={APP.vault.actions.view}
-                              >
-                                <Eye className="size-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{APP.vault.actions.view}</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider delayDuration={200}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon-sm"
-                                variant="ghost"
-                                onClick={() => void onDownload(it.id)}
-                                aria-label={APP.vault.actions.download}
-                              >
-                                <Download className="size-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{APP.vault.actions.download}</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider delayDuration={200}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon-sm"
-                                variant="ghost"
-                                className="text-muted-foreground hover:text-destructive"
-                                onClick={() => setDeleteTarget(it)}
-                                aria-label={`${APP.vault.actions.delete} ${it.name}`}
-                              >
-                                <Trash2 className="size-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{`${APP.vault.actions.delete} ${it.name}`}</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </Card>
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ul>
-          )}
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-auto min-h-10 whitespace-normal py-2"
+                      onClick={() => setShowProtectDialog(true)}
+                    >
+                      {APP.vault.security.protectCta}
+                    </Button>
+                  )}
+                </div>
 
-          <p className="text-xs text-muted-foreground">{APP.vault.caseRecordsHidden}</p>
-          <p className="flex items-center gap-1.5 font-mono text-xs tabular-nums text-muted-foreground">
-            <Shield className="size-3.5 shrink-0" aria-hidden />
-            {APP.vault.envelopeCaption.replace("{version}", String(VAULT_ENVELOPE_VERSION))}
-          </p>
+                <DetailDisclosure title={APP.vault.howEncrypted}>
+                  <p>
+                    {APP.vault.cryptoDetails.replace("{version}", String(VAULT_ENVELOPE_VERSION))}
+                  </p>
+                </DetailDisclosure>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
           <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
             <DialogContent>

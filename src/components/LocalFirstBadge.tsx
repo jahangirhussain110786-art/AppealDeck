@@ -5,7 +5,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { SITE_URL } from "@/lib/urls";
 
-export function LocalFirstBadge({ className }: { className?: string }) {
+export function LocalFirstBadge({
+  className,
+  processing = "browser",
+}: {
+  className?: string;
+  processing?: "browser" | "server";
+}) {
   const host = new URL(SITE_URL).hostname;
   return (
     <TooltipProvider delayDuration={200}>
@@ -18,12 +24,15 @@ export function LocalFirstBadge({ className }: { className?: string }) {
             )}
           >
             <ShieldCheck className="h-3.5 w-3.5 text-success" aria-hidden />
-            Decoded in your browser. Nothing sent
+            {processing === "server"
+              ? "Analyzed by AppealDeck. Nothing sent to Amazon"
+              : "Decoded in your browser. Nothing sent"}
           </span>
         </TooltipTrigger>
         <TooltipContent className="max-w-xs text-xs">
-          How to verify: open DevTools to the Network tab while decoding. You should see zero
-          requests to {host}.
+          {processing === "server"
+            ? "Your notice is sent to AppealDeck’s decode endpoint for analysis. This does not send a response or sign in to Seller Central."
+            : `How to verify: open DevTools to the Network tab while decoding. You should see zero requests to ${host}.`}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Lock } from "lucide-react";
+import { Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/EmptyState";
+import { IconTile } from "@/components/workspace/WorkspaceVisuals";
+import { APP } from "@/content/app";
 
 export function VaultLockedState({
   title,
@@ -21,21 +22,24 @@ export function VaultLockedState({
   backLabel: string;
 }) {
   return (
-    <EmptyState
-      icon={Lock}
-      titleAs="h1"
-      title={title}
-      description={description}
-      action={
-        <div className="flex flex-wrap justify-center gap-2">
-          <Button asChild>
-            <Link href={ctaHref}>{ctaLabel}</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={backHref}>{backLabel}</Link>
-          </Button>
-        </div>
-      }
-    />
+    <section className="workspace-hero rounded-xl border border-border/80 p-6 sm:p-10">
+      <IconTile icon={Lock} tone="info" />
+      <p className="mt-6 text-eyebrow uppercase text-primary">{APP.vault.eyebrow}</p>
+      <h1 className="mt-2 font-accent text-h2 font-medium text-foreground">{title}</h1>
+      <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Button asChild className="h-auto min-h-11 whitespace-normal py-2">
+          <Link href={ctaHref}>
+            {ctaLabel}
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={backHref}>{backLabel}</Link>
+        </Button>
+      </div>
+    </section>
   );
 }

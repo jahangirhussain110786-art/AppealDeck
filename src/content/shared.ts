@@ -19,8 +19,7 @@ export const SHARED = {
     profileMenu: "Account menu",
   },
   footer: {
-    tagline:
-      "AppealDeck by Hawlton. Plain-English notice decoding, deadlines, and a drafted Plan of Action you submit yourself in Seller Central.",
+    tagline: "Understand the notice. Organize the evidence. Prepare your response.",
     nav: {
       privacy: "Privacy",
       terms: "Terms",
@@ -38,19 +37,21 @@ export const SHARED = {
     copyright: "© {year} Hawlton",
   },
   expectations: {
-    weDo: "What AppealDeck does",
-    weDoNot: "What stays in your hands",
+    title: "Clear support. You stay in control.",
+    eyebrow: "How we help",
+    weDo: "Inside your workspace",
+    weDoNot: "In your hands",
   },
   metadata: {
-    titleDefault: "AppealDeck — Amazon notice decoder and Plan of Action drafts",
+    titleDefault: "AppealDeck — Your Amazon case workspace",
     description:
-      "Understand your Amazon deactivation or policy notice in plain English, see your deadlines, and draft a Plan of Action you review and submit yourself. Free decoder. $199 one-time Appeal Pass.",
-    titleDecode: "Decode your Amazon notice, free and in your browser — AppealDeck",
+      "Decode your Amazon notice, organize original evidence, and prepare a factual response. Track submissions and replies in one case workspace. Start free.",
+    titleDecode: "Decode your Amazon notice, free — AppealDeck",
     descriptionDecode:
-      "Paste your Amazon notice and read it in plain English: case type, deadlines, and a do-now list. It runs in your browser.",
+      "Understand the detected issue, stated time windows and next steps. Your notice is analyzed by AppealDeck; nothing is sent to Amazon.",
     titlePricing: "Appeal Pass — $199 one-time — AppealDeck",
     descriptionPricing:
-      "One payment per case: guided interview, evidence checklist, drafted Plan of Action, critic review and an encrypted vault. 7-day refund.",
+      "Start with a free case workspace. An Appeal Pass adds response preparation and encrypted backup for one eligible case. $199 once. Read the 7-day refund policy.",
     titleFaq: "FAQ — AppealDeck",
     descriptionFaq:
       "How the decoder works, what the Appeal Pass includes, how your documents are protected, and how refunds work.",
@@ -61,9 +62,9 @@ export const SHARED = {
   navSkip: "Skip to main content",
   tocHeading: "Contents",
   lastUpdated: "Last updated:",
-  consentPrompt: "Select the consent to continue",
+  consentPrompt: "Review delivery consent to continue",
   offline: {
     title: "You are offline",
-    desc: "Decoding and your vault work without a connection. Drafting, critique and sync need one and will fail until you are back online.",
+    desc: "Your unlocked local vault is available. Decoding, response preparation and cloud backup need an internet connection.",
   },
 } as const;

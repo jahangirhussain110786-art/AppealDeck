@@ -1,4 +1,5 @@
 import type { ViolationKind } from "./index";
+import { composeWorkspace, workspaceGaps } from "./workspace";
 import type { DocumentType } from "./readiness";
 import {
   composerModeFor,
@@ -68,6 +69,8 @@ export const NARRATIVE_GAP_MESSAGE =
   "One or both narrative sections (Root Cause, Preventive Measures) need more specific detail before this draft is credible — see those sections above for which one.";
 
 export function composePoa(data: CaseFileData, attemptNumber: number = 1): PoaDraft {
+  if (data.workspace)
+    return composeWorkspace({ kind: data.kind, workspace: data.workspace }, attemptNumber);
   const mode = composerModeFor(data);
   const docType = defaultDocumentType(data.kind);
   const complete = isRequiredComplete(data);
@@ -205,6 +208,13 @@ function buildEvidenceAttachedSection(data: CaseFileData): PoaSection | null {
 
 export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
   const findings: CriticFinding[] = [];
+  if (data.workspace) {
+    for (const message of workspaceGaps(data.workspace))
+      findings.push({ severity: "warning", code: "WORKSPACE_GAP", message });
+    checkBannedLanguage(draft, findings);
+    checkSeverityGate(draft, data, findings);
+    return { findings, passed: !findings.some((f) => f.severity === "error") };
+  }
 
   checkUnattestedClaims(draft, data, findings);
   checkEmptyEvidenceSlots(draft, data, findings);

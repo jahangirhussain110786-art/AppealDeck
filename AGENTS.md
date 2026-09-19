@@ -2,6 +2,12 @@
 
 # AppealDeck Project Context
 
+> **18 Sep 2026 supporting pages:** Vault, billing/devices, account forms, legal navigation, classic interview/composer headers and fallback states now follow the workspace design. See [the supporting-pages handoff](docs/handoffs/2026-09-18-supporting-surfaces-refinement.md) and [FAQ refinement](docs/handoffs/2026-09-18-faq-expectations-refinement.md). These remain local changes, not a deployment.
+
+> **18 Sep 2026 visual refinement:** The case workspace, Decode, dashboard and homepage now use concise copy, icon navigation, document tiles, real case counts and expandable guidance. See [the visual refinement handoff](docs/handoffs/2026-09-18-workspace-visual-refinement.md) for scope, screenshots and verification. This is local implementation; no deployment occurred.
+
+> **18 Sep 2026 workspace implementation:** The founder approved the prototype flow and requested the existing app design system for implementation. See [the workspace handoff](docs/handoffs/2026-09-18-case-workspace-implementation.md) for the local request/evidence/response/history journey, compatibility and verification. This is an initial implementation, not deployment or completion of the full product blueprint.
+
 ## Current Project State
 
 - **Last updated:** 11 Sep 2026 (corrected — this line was frozen at 8 Sep for five sessions' worth of work). Since 8 Sep: the UI/UX polish pass + its fix pass (AA-30, done), the AM-21 access-and-continuity pass (no-account → free-account → Appeal Pass ladder, five-slot header, browser-key drafts with passphrase relock — AA-33, done), the visual refresh v3 (brand mark, tokens v3, hero-as-product — AA-32, done), and an 11 Sep full-repo audit + fix pass (AA-31 composer critic rules, AA-21 EF-5 outcome schema, D10 analytics wiring, a dozen stale planning docs corrected — see `docs/handoffs/2026-09-11-full-repo-audit-guidebook.md` and `CLAUDE.md` §4 for the detailed session-by-session log this file doesn't duplicate). Current gates: typecheck 0, lint 0, lint:copy PASS, vitest 362/362 in 39 files, build 32+ routes.

@@ -48,6 +48,7 @@ vi.mock("@/lib/devices", () => ({
 }));
 
 import { POST } from "../compose/route";
+import { newWorkspace } from "@/core/workspace";
 
 function makeReq(body: unknown): NextRequest {
   return new Request("http://localhost:3000/api/compose", {
@@ -65,6 +66,26 @@ beforeEach(() => {
 });
 
 describe("/api/compose license + auth gates", () => {
+  it("rejects a forged workspace route before claiming a pass", async () => {
+    getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
+    const res = await POST(
+      makeReq({
+        caseData: {
+          id: "case",
+          kind: "UNKNOWN",
+          workspace: {
+            ...newWorkspace(),
+            notice: "Your account is linked to another account. Please submit the records.",
+            formInstructions: "Upload documents",
+            confirmed: true,
+            protocol: "documents",
+          },
+        },
+      }),
+    );
+    expect(res.status).toBe(422);
+    expect(isLicenseActiveMock).not.toHaveBeenCalled();
+  });
   it("returns 401 JSON when unauthenticated", async () => {
     getApiUserMock.mockResolvedValue(null);
     const res = await POST(

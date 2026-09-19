@@ -18,7 +18,7 @@ export type LegalDoc = "privacy" | "terms" | "refund";
 
 export const LEGAL = {
   lastUpdated: {
-    privacy: "2026-09-11",
+    privacy: "2026-09-18",
     terms: "2026-09-10",
     refund: "2026-09-11",
   },
@@ -29,7 +29,7 @@ export const LEGAL = {
         id: "what-we-collect",
         title: "What we collect",
         body: [
-          "We collect only the information needed to operate the service. During decode, your notice text stays in your browser and is never uploaded.",
+          "When you decode a notice, its text is sent to AppealDeck for analysis. Preparing a response sends your case text and document references to AppealDeck. Original evidence files are not uploaded for these actions.",
           "When you create an account or buy the Appeal Pass, Paddle collects the payment and billing information. We receive a licence record (email, plan, status) via a Paddle webhook.",
           "Evidence contents are encrypted in your browser. If you choose cloud backup, encrypted contents and unencrypted metadata (including file names, tags, types, case references and content hashes) are uploaded to Supabase Storage. A backup passphrase protects the content key; we do not receive that passphrase.",
           "Before sign-in, interview drafts are encrypted with a secret held for that tab session. Closing the session or clearing browser data can make them unrecoverable. Signing in on that tab transfers the draft into your account vault after it is unlocked, preserving existing cases. Account vaults unlock automatically by default; you can add passphrase protection.",
@@ -41,7 +41,7 @@ export const LEGAL = {
         body: [
           "To recognize you across sessions, keep your licence active, and sync your encrypted vault.",
           "To send you a receipt and account-related email (billing lifecycle). We do not send marketing email by default.",
-          "To draft your Plan of Action, we send your notice text and case answers to Google's Gemini paid tier only — never the free tier, which trains on submitted data. The draft is returned to you and the submitted text is deleted once your case no longer needs it.",
+          "Workspace response preparation uses your saved wording and document references. Optional AI suggestions and the older interview drafting flow can send relevant notice text and answers to Google Gemini. Original evidence files are not sent for drafting. AI data handling depends on the provider's applicable terms and service configuration.",
           "To count usage against Paddle and Upstash free tiers for abuse protection.",
           "To measure how many visitors reach each step of the free decoder and the Appeal Pass, using a cookieless analytics tool (Plausible or Umami) that counts page visits without collecting personal data or setting cross-site identifiers.",
         ],
@@ -58,16 +58,16 @@ export const LEGAL = {
         title: "Cookies and local storage",
         body: [
           "We use one essential cookie for your session and one to remember your colour-theme choice. You can delete both at any time.",
-          "The case file is stored encrypted in your browser's IndexedDB vault. Account vaults use a browser-held key by default, with optional passphrase protection. Drafting and AI suggestions send the relevant case text to our server and AI provider as described above.",
+          "The case file is stored encrypted in your browser's IndexedDB vault. Account vaults use a browser-held key by default, with optional passphrase protection. Decoding and response preparation send relevant text to our server. AI-enabled actions may also send text to the AI provider as described above.",
         ],
       },
       {
         id: "retention",
         title: "How long we keep it",
         body: [
-          "Notice text and case answers submitted for drafting are deleted once your case no longer needs them, or sooner if you ask.",
+          "Decode and response requests are processed by the app server. These endpoints do not save a separate copy of your case text in the account database. Hosting and optional AI services handle request data under their own retention terms.",
           "Licence records (email, plan, status) are kept for as long as needed for billing, entitlement, and accounting.",
-          "Your case file and vault contents stay in your browser until you delete them — we never hold a copy.",
+          "Your working case and vault contents stay in your browser until you delete them. If you choose cloud backup, an encrypted copy and visible metadata are stored separately; deleting local files does not automatically delete that backup.",
         ],
       },
       {
@@ -220,7 +220,7 @@ export const LEGAL = {
     titleTerms: "Terms — AppealDeck",
     titleRefund: "Refunds & withdrawal — AppealDeck",
     descriptionPrivacy:
-      "Local-first decoding, no-cookie analytics, Paddle billing, and encrypted vault storage. No data sold.",
+      "How notice processing, optional AI, payments and encrypted case storage work in AppealDeck.",
     descriptionTerms:
       "AppealDeck decodes notices and drafts POAs for you to submit yourself. No automation, no outcome promises.",
     descriptionRefund:

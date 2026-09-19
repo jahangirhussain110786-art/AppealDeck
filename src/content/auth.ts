@@ -4,8 +4,8 @@
 export const AUTH = {
   login: {
     title: "Sign in",
-    subtitle: "Your case, evidence and draft, in one place.",
-    subtitleContinue: "Your answers are saved on this device. Sign in to keep them and continue.",
+    subtitle: "Continue with your case, files and response.",
+    subtitleContinue: "Sign in on this tab to keep your guest case and continue.",
     google: "Continue with Google",
     divider: "or sign in with email",
     fields: {
@@ -16,7 +16,7 @@ export const AUTH = {
     messages: {
       notConfigured: "Auth is not configured.",
       magicSent: "Check your email for a sign-in link.",
-      togglePassword: "Use a magic link instead",
+      togglePassword: "Email me a sign-in link instead",
       toggleMagic: "Use password instead",
       submitPassword: "Sign in",
       submitMagic: "Email me a sign-in link",
@@ -29,8 +29,8 @@ export const AUTH = {
   },
   signup: {
     title: "Create your account",
-    subtitle: "Decode for free, or activate an Appeal Pass to draft your Plan of Action.",
-    subtitleContinue: "Your answers are saved on this device. Sign in to keep them and continue.",
+    subtitle: "Keep your case in an account vault on this device. Creating an account is free.",
+    subtitleContinue: "Create an account on this tab to keep your guest case and continue.",
     google: "Continue with Google",
     divider: "or sign up with email",
     fields: {
@@ -96,16 +96,10 @@ export const AUTH = {
       action: "Sign in",
     },
   },
-  // AM-22/V3b — the auth split-screen preview panel. Sample-data content, never
-  // a real case: the caption is a D6 honesty requirement, not decoration.
   preview: {
-    urlBar: "appealdeck.com/dashboard",
-    eyebrow: "Your case",
-    appealWindowLabel: "Appeal window",
-    poaLabel: "Plan of Action",
-    poaStatus: "Draft in progress · 4 of 6 sections",
-    doNowLabel: "Do now",
-    doNowItem: "Attach a supplier invoice for the flagged ASIN",
-    caption: "A preview with sample data — your dashboard, once signed in, shows your own case.",
+    eyebrow: "Your case workspace",
+    title: "One place for your next step.",
+    description:
+      "Understand the request. Organize your evidence. Prepare a response you can review.",
   },
 } as const;

@@ -11,5 +11,29 @@ export async function withCaseEvidence(vault: Vault, file: CaseFile): Promise<Ca
     const kind = key as EvidenceKind;
     evidenceSlots[kind] = { ...evidenceSlots[kind], present: present.has(key) };
   }
-  return { ...file, evidenceSlots };
+  const workspace = file.workspace
+    ? {
+        ...file.workspace,
+        requirements: file.workspace.requirements.map((r) => {
+          const linked = records.find(
+            (record) =>
+              record.kind === "document" &&
+              record.id === r.recordId &&
+              record.plaintextHash === r.contentHash &&
+              record.name === r.filename,
+          );
+          return linked
+            ? r
+            : {
+                ...r,
+                status: r.status === "reviewed" ? ("needed" as const) : r.status,
+                recordId: undefined,
+                filename: undefined,
+                contentHash: undefined,
+                page: undefined,
+              };
+        }),
+      }
+    : undefined;
+  return { ...file, evidenceSlots, ...(workspace ? { workspace } : {}) };
 }

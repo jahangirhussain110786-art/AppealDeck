@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Ban, Check, RefreshCw } from "lucide-react";
+import { ArrowRight, Ban, Check, FileSearch, FolderOpen, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -14,14 +15,14 @@ import { DeadlineChipList } from "@/components/DeadlineChip";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { CopyButton } from "@/components/CopyButton";
 import { OfflineNotice } from "@/components/OfflineNotice";
-import { CasePreview } from "@/components/CasePreview";
-import { AnnotationCard } from "@/components/AnnotationCard";
-import { JourneyProgress } from "@/components/JourneyProgress";
+import { DetailDisclosure, IconTile, VIEW_ICONS } from "@/components/workspace/WorkspaceVisuals";
 import { guidanceFor } from "@/core/guidance";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
 import { buildNoticeAnnotations } from "@/lib/decodeAnnotations";
-import { stashPendingDeadlines } from "@/lib/pendingDeadlines";
+import { stashPendingNotice } from "@/lib/pendingNotice";
+import { WORKSPACE } from "@/content/workspace";
+import { proposedRequirements } from "@/core/workspace";
 import { DECODE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { APP } from "@/content/app";
@@ -131,17 +132,18 @@ export default function DecodeClient() {
   }
 
   return (
-    <div className="flex flex-col gap-8 py-12">
+    <div className="flex flex-col gap-6 py-8 sm:py-10">
       <OfflineNotice />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-h1 text-foreground">{DECODE.pageTitle}</h1>
+          <p className="mb-2 text-eyebrow uppercase text-primary">Notice decoder</p>
+          <h1 className="font-accent text-h1 text-foreground">{DECODE.pageTitle}</h1>
           <p className="mt-2 max-w-prose text-base text-muted-foreground">
             {DECODE.pageDescription}
           </p>
         </div>
         <div className="flex w-full items-center justify-between gap-3">
-          <LocalFirstBadge className="hidden sm:inline-flex" />
+          <LocalFirstBadge processing="server" className="hidden sm:inline-flex" />
           {status === "result" && (
             <Button type="button" variant="outline" size="sm" onClick={handleReset}>
               {DECODE.decodeAnotherButton}
@@ -190,7 +192,10 @@ export default function DecodeClient() {
               </Alert>
             )}
 
-            <div className="flex items-center gap-3">
+            <p className="text-xs text-muted-foreground">
+              Your notice is sent to AppealDeck for analysis. Nothing is sent to Amazon.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
               <Button type="submit" size="lg" disabled={status === "loading" || !canSubmit}>
                 {status === "loading" && <RefreshCw className="animate-spin" />}
                 {DECODE.submitButton}
@@ -244,7 +249,11 @@ function ResultView({
     () => buildNoticeAnnotations(text, result.kind, DECODE.annotations),
     [text, result.kind],
   );
-  const hasAnnotations = annotations.length > 0;
+  const records = useMemo(
+    () => proposedRequirements({ notice: text, formInstructions: "" }),
+    [text],
+  );
+  const carryNotice = () => stashPendingNotice(text, result.deadlines);
 
   return (
     <motion.div
@@ -256,131 +265,163 @@ function ResultView({
         show: { opacity: 1, transition: { staggerChildren: STAGGER } },
       }}
     >
-      <JourneyProgress stage="decode" kind={result.kind} />
-
-      <div className={hasAnnotations ? "grid items-start gap-4 lg:grid-cols-[1.6fr_1fr]" : ""}>
-        <div className="flex flex-col gap-4">
-          <Card>
-            <CardContent className="space-y-4 pt-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <SeverityBadge severity={severity} />
-                  <CaseStateBadge kind={result.kind} />
-                  <h2 className="text-h3 text-foreground">{guidance.title}</h2>
-                </div>
-                <CopyButton text={guidance.summary} label={DECODE.result.copySummary} />
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <Card className="overflow-hidden">
+          <CardHeader className="flex-row items-start gap-3 border-b border-border/60 bg-surface-2/50">
+            <IconTile icon={FileSearch} tone="info" />
+            <div className="min-w-0 space-y-2">
+              <p className="text-eyebrow uppercase text-muted-foreground">Notice brief</p>
+              <h2 className="text-xl font-semibold leading-snug text-foreground">
+                {guidance.title}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                <SeverityBadge severity={severity} />
+                <CaseStateBadge kind={result.kind} className="text-foreground" />
               </div>
-
-              <p className="text-base leading-relaxed text-muted-foreground">{guidance.summary}</p>
-
-              {result.deadlines.length > 0 && (
-                <div className="border-t border-border/70 pt-4">
-                  <p className="text-eyebrow uppercase text-muted-foreground">
-                    {DECODE.result.deadlinesTitle}
-                  </p>
-                  <div className="mt-2">
-                    <DeadlineChipList deadlines={result.deadlines} />
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <CtaAfterResult result={result} guidance={guidance} />
-        </div>
-
-        {hasAnnotations && (
-          <div className="flex flex-col gap-4">
-            <p className="text-eyebrow uppercase text-muted-foreground">
-              {DECODE.result.whatThisMeans}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-5">
+            <p className="text-sm leading-relaxed text-muted-foreground">{guidance.summary}</p>
+            {result.deadlines.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {DECODE.result.deadlinesTitle}
+                </p>
+                <DeadlineChipList deadlines={result.deadlines} />
+              </div>
+            )}
+            <CopyButton text={guidance.summary} label={DECODE.result.copySummary} />
+          </CardContent>
+        </Card>
+        <Card className="workspace-hero border-primary/20">
+          <CardHeader>
+            <p className="text-eyebrow uppercase text-primary">Next / Your case</p>
+            <CardTitle className="font-accent text-2xl font-normal">
+              Turn the notice into a plan.
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Your notice and deadlines come with you.
             </p>
-            {annotations.map((a) => (
-              <AnnotationCard key={a.id} tag={a.tag} heading={a.heading} body={a.body} />
-            ))}
-            <Button size="lg" className="justify-center" asChild>
-              <a
-                href={`/case?kind=${result.kind}`}
-                onClick={() => stashPendingDeadlines(result.deadlines)}
-              >
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button asChild className="w-full">
+              <Link href={`/case?kind=${result.kind}&view=overview`} onClick={carryNotice}>
                 {DECODE.result.startPoaCta}
                 <ArrowRight className="size-4" aria-hidden />
-              </a>
+              </Link>
             </Button>
-          </div>
-        )}
+            <nav aria-label="Case workspace views" className="grid grid-cols-4 gap-1">
+              {Object.entries(WORKSPACE.tabs).map(([view, label]) => {
+                const Icon = VIEW_ICONS[view] ?? FileSearch;
+                return (
+                  <Link
+                    key={view}
+                    href={`/case?kind=${result.kind}&view=${view}`}
+                    onClick={carryNotice}
+                    className="flex min-w-0 flex-col items-center gap-2 rounded-lg py-3 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Icon className="size-5 text-primary" aria-hidden />
+                    {label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <p className="border-t border-primary/15 pt-3 text-xs text-muted-foreground">
+              Free to organize · You control submission
+            </p>
+          </CardContent>
+        </Card>
       </div>
-
+      {result.severityGated && (
+        <Alert variant="warning">
+          <AlertTitle>Professional review needed</AlertTitle>
+          <AlertDescription>
+            {guidance.severityNote ??
+              "This case needs professional help. A self-serve draft is not available."}
+          </AlertDescription>
+        </Alert>
+      )}
+      <div className="grid items-start gap-4 md:grid-cols-2">
+        {[
+          {
+            label: DECODE.result.doNow,
+            items: guidance.triage.doNow,
+            icon: Check,
+            tone: "primary" as const,
+          },
+          {
+            label: DECODE.result.doNot,
+            items: guidance.triage.doNot,
+            icon: Ban,
+            tone: "warning" as const,
+          },
+        ].map(({ label, items, icon, tone }) => (
+          <Card key={label} className="p-5">
+            <div className="mb-3 flex items-center gap-3">
+              <IconTile icon={icon} tone={tone} />
+              <h3 className="text-sm font-semibold text-foreground">{label}</h3>
+            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">{items[0]}</p>
+            {items.length > 1 && (
+              <DetailDisclosure
+                title={`${items.length - 1} more ${label === DECODE.result.doNow ? "actions" : "precautions"}`}
+                className="mt-3 border-0 bg-surface-2/60"
+              >
+                <ul className="list-disc space-y-2 pl-4">
+                  {items.slice(1).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </DetailDisclosure>
+            )}
+          </Card>
+        ))}
+      </div>
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{DECODE.result.whatToDoTitle}</CardTitle>
+        <CardHeader className="flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <IconTile icon={FolderOpen} tone="warning" />
+            <div>
+              <CardTitle>{APP.access.casePreview.title}</CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Detected in your notice · Confirm against the current response page
+              </p>
+            </div>
+          </div>
+          <span className="font-mono text-2xl text-foreground">{records.length}</span>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-md border border-border/70 bg-surface-2 p-4">
-            <p className="text-eyebrow uppercase text-success">{DECODE.result.doNow}</p>
-            <ul className="mt-2 space-y-1.5">
-              {guidance.triage.doNow.map((d, i) => (
-                <li key={`now-${i}`} className="flex gap-2 text-sm text-foreground">
-                  <Check className="mt-0.5 size-4 shrink-0 text-success" />
-                  {d}
-                </li>
+        <CardContent>
+          {records.length ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {records.map((record) => (
+                <DetailDisclosure key={record.label} title={record.label}>
+                  <p className="mb-2 text-xs uppercase tracking-wide">Source in your notice</p>
+                  <blockquote className="border-l-2 border-info/40 pl-3">
+                    {record.sourceQuote}
+                  </blockquote>
+                </DetailDisclosure>
               ))}
-            </ul>
-          </div>
-          <div className="rounded-md border border-border/70 bg-surface-2 p-4">
-            <p className="text-eyebrow uppercase text-warning">{DECODE.result.doNot}</p>
-            <ul className="mt-2 space-y-1.5">
-              {guidance.triage.doNot.map((d, i) => (
-                <li key={`not-${i}`} className="flex gap-2 text-sm text-foreground">
-                  <Ban className="mt-0.5 size-4 shrink-0 text-warning" />
-                  {d}
-                </li>
-              ))}
-            </ul>
-          </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No specific records detected. Check the notice and response page before adding tasks.
+            </p>
+          )}
         </CardContent>
       </Card>
-
-      <CasePreview kind={result.kind} />
-      <Button asChild size="lg">
-        <a
-          href={`/case?kind=${result.kind}`}
-          onClick={() => stashPendingDeadlines(result.deadlines)}
-        >
-          {APP.access.casePreview.startCta}
-        </a>
-      </Button>
+      {annotations.length > 0 && (
+        <DetailDisclosure title="Understand the wording in your notice">
+          <div className="grid gap-4 pt-2 sm:grid-cols-2">
+            {annotations.map((a) => (
+              <div key={a.id} className="space-y-2 border-l-2 border-info/30 pl-3">
+                <p className="text-xs font-medium text-info">{a.tag}</p>
+                <h3 className="font-medium text-foreground">{a.heading}</h3>
+                <p>{a.body}</p>
+              </div>
+            ))}
+          </div>
+        </DetailDisclosure>
+      )}
     </motion.div>
-  );
-}
-
-function CtaAfterResult({
-  result,
-  guidance,
-}: {
-  result: DecodeResponse;
-  guidance: ReturnType<typeof guidanceFor>;
-}) {
-  if (result.severityGated) {
-    return (
-      <Alert variant="info">
-        <AlertTitle>Severity-gated case type</AlertTitle>
-        <AlertDescription>
-          {guidance.severityNote ??
-            "This case is routed to professional help. A self-serve draft is not available."}
-        </AlertDescription>
-      </Alert>
-    );
-  }
-  return (
-    <div className="rounded-md border border-border/70 bg-surface-2 p-5">
-      <p className="text-sm font-medium text-foreground">{DECODE.result.ctaTitle}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{DECODE.result.ctaDesc}</p>
-      <div className="mt-3 flex items-center gap-3">
-        <Button size="sm" asChild>
-          <a href="/pricing">{SHARED.cta}</a>
-        </Button>
-        <span className="text-xs text-muted-foreground">{DECODE.result.ctaNote}</span>
-      </div>
-    </div>
   );
 }

@@ -7,10 +7,13 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const type = searchParams.get("type");
   const explicitNext = searchParams.get("next");
+  const continueTo = searchParams.get("continue");
 
   let next = safeNext(explicitNext, origin);
   if (type === "recovery") {
-    next = "/reset-password";
+    next = continueTo
+      ? `/reset-password?next=${encodeURIComponent(safeNext(continueTo, origin))}`
+      : "/reset-password";
   }
 
   if (code) {

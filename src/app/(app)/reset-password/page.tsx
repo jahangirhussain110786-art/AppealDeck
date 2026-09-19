@@ -12,6 +12,8 @@ import {
 import { PasswordInput } from "@/components/ui/password-input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { APP_URL } from "@/lib/urls";
+import { safeNext } from "@/lib/safeNext";
 import { AUTH } from "@/content/auth";
 import type { AuthStatus } from "@/components/AuthCard";
 
@@ -25,6 +27,7 @@ export default function ResetPasswordPage() {
 
 function ResetPasswordPageInner() {
   const searchParams = useSearchParams();
+  const next = safeNext(searchParams.get("next"), APP_URL);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -160,7 +163,7 @@ function ResetPasswordPageInner() {
 
         {status === "done" && (
           <Button asChild size="lg" className="mt-4 w-full">
-            <a href="/dashboard">{AUTH.resetPassword.success.button}</a>
+            <a href={next}>{AUTH.resetPassword.success.button}</a>
           </Button>
         )}
       </div>

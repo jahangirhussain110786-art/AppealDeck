@@ -14,7 +14,7 @@ export interface ParsedNotice {
 const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   [
     "INAUTHENTIC_DOCUMENTS",
-    /inauthentic|not authentic|could not verify|documentation we could not verify/i,
+    /inauthentic|not authentic|(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)/i,
   ],
   ["RELATED_ACCOUNT", /related[\s-]?account/i],
   [
@@ -23,7 +23,10 @@ const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   ],
   ["LISTING", /listing[\s-]?(?:policy|violation|removed|closed)|detail[\s-]?page policy/i],
   ["FUNDS", /disbursement|funds? (?:is|are|under) (?:on hold|under review)|disbursement-appeals/i],
-  ["POLICY", /policy (?:violation|compliance)|repeated policy violations/i],
+  [
+    "POLICY",
+    /policy (?:violation|compliance)|repeated policy violations|violations of (?:our |Amazon(?:'s)? )?policies/i,
+  ],
 ];
 
 export function parseNotice(raw: string): ParsedNotice {
@@ -34,6 +37,7 @@ export function parseNotice(raw: string): ParsedNotice {
   const legacySeventeenDay = /17\s*days/i.test(raw);
   const windows = new Set<number>();
   const patterns = [
+    /\byou (?:can|may) appeal within\s+(\d{1,3})\s+days?\b/gi,
     /\b(?:submit|file|send)\b[^.!?;\n]{0,65}?\b(?:appeal|plan of action)\b[^.!?;\n]{0,40}?\bwithin\s+(\d{1,3})\s+days?\b/gi,
     /\b(?:you have|within)\s+(?:exactly\s+)?(\d{1,3})\s+days?\b[^.!?;\n]{0,60}?\bto\s+(?:appeal|submit (?:an? |your |a )?(?:appeal|plan of action))\b/gi,
     /\bappeal\s+(?:window|deadline)\s*(?:is|of|:)?\s*(\d{1,3})\s+days?\b/gi,

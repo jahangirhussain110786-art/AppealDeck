@@ -189,9 +189,15 @@ export function guidanceFor(kind: ViolationKind): KindGuidance {
   return KIND_GUIDANCE[kind];
 }
 
+export interface ExpectationItem {
+  kind: "notice" | "records" | "response" | "review" | "submit" | "privacy";
+  title: string;
+  description: string;
+}
+
 export interface GlobalExpectations {
-  whatWeDo: string[];
-  whatWeDoNot: string[];
+  whatWeDo: ExpectationItem[];
+  whatWeDoNot: ExpectationItem[];
   typicalNote: string;
 }
 
@@ -199,17 +205,41 @@ export const POLICY_CHECKED_ON = "2026-09-04" as const;
 
 export const GLOBAL_EXPECTATIONS: GlobalExpectations = {
   whatWeDo: [
-    "Decode your Amazon notice into plain English, locally in your browser.",
-    "Surface the deadlines and the do-now / do-not triage list for your case type.",
-    "Draft a Plan of Action grounded in your notice and your evidence (Appeal Pass only).",
-    "Help you present a stronger, honest appeal that you review and submit yourself.",
+    {
+      kind: "notice",
+      title: "Understand the request",
+      description: "See the issue, stated time windows and next steps.",
+    },
+    {
+      kind: "records",
+      title: "Keep the evidence together",
+      description: "Link original files to the request and record what they support.",
+    },
+    {
+      kind: "response",
+      title: "Prepare a factual response",
+      description: "Use your confirmed facts. An Appeal Pass is required for eligible cases.",
+    },
   ],
   whatWeDoNot: [
-    "You submit the appeal yourself in Seller Central (Amazon's seller dashboard); we never log in to your account.",
-    "Amazon makes every decision; we make your case as clear and well-evidenced as it can be.",
-    "Your notice text is decoded in your browser and is not used for training.",
+    {
+      kind: "review",
+      title: "Check before you send",
+      description: "Review the wording, original records and current response instructions.",
+    },
+    {
+      kind: "submit",
+      title: "You control submission",
+      description: "Submit through the official channel. We never access your Amazon account.",
+    },
+    {
+      kind: "privacy",
+      title: "Know what is shared",
+      description:
+        "Decoding sends your notice to AppealDeck. Original files stay in your vault unless you choose a backup.",
+    },
   ],
-  typicalNote: "Amazon makes the final decision on every appeal; review times vary.",
+  typicalNote: "Amazon decides the outcome. Review times vary.",
 };
 
 export function allGuidanceStrings(): string[] {
@@ -223,8 +253,8 @@ export function allGuidanceStrings(): string[] {
     }
   }
   out.push(
-    ...GLOBAL_EXPECTATIONS.whatWeDo,
-    ...GLOBAL_EXPECTATIONS.whatWeDoNot,
+    ...GLOBAL_EXPECTATIONS.whatWeDo.flatMap((item) => [item.title, item.description]),
+    ...GLOBAL_EXPECTATIONS.whatWeDoNot.flatMap((item) => [item.title, item.description]),
     GLOBAL_EXPECTATIONS.typicalNote,
   );
   return out;

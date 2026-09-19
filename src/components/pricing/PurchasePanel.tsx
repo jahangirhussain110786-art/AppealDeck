@@ -99,7 +99,7 @@ export function PurchasePanel() {
             consent={consent}
             priceId={priceId}
             size="lg"
-            className="flex-1"
+            className="h-auto min-h-11 flex-1 whitespace-normal py-2"
             variant="default"
             customerEmail={email}
             onCompleted={handleCompleted}
@@ -107,14 +107,19 @@ export function PurchasePanel() {
             {PRICING.cta}
           </CheckoutButton>
         ) : (
-          <Button variant="outline" size="lg" className="flex-1" disabled>
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-auto min-h-11 flex-1 whitespace-normal py-2"
+            disabled
+          >
             {SHARED.consentPrompt}
           </Button>
         )}
 
         <Dialog>
           <DialogTrigger asChild>
-            <Button type="button" variant="link">
+            <Button type="button" variant="link" className="whitespace-normal text-left">
               <FileText className="h-4 w-4" />
               {PRICING.samplePoa.trigger}
             </Button>

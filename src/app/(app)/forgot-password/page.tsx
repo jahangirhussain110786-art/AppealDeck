@@ -1,17 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthShell, SubmitButton, StatusMessage, SuccessBanner } from "@/components/AuthCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { APP_URL } from "@/lib/urls";
+import { safeNext } from "@/lib/safeNext";
 import { AUTH } from "@/content/auth";
 import type { AuthStatus } from "@/components/AuthCard";
 
 export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ForgotPasswordPageInner />
+    </Suspense>
+  );
+}
+
+function ForgotPasswordPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const next = safeNext(nextParam, APP_URL);
+  const loginHref = nextParam ? `/login?next=${encodeURIComponent(next)}` : "/login";
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<AuthStatus>("idle");
   const [message, setMessage] = useState("");
@@ -20,9 +33,9 @@ export default function ForgotPasswordPage() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) router.replace("/dashboard");
+      if (user) router.replace(next);
     });
-  }, [router]);
+  }, [router, next]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,7 +49,9 @@ export default function ForgotPasswordPage() {
     setMessage("");
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${APP_URL}/auth/callback?next=/reset-password`,
+      redirectTo: nextParam
+        ? `${APP_URL}/auth/callback?next=/reset-password&continue=${encodeURIComponent(next)}`
+        : `${APP_URL}/auth/callback?next=/reset-password`,
     });
 
     if (error) {
@@ -55,7 +70,7 @@ export default function ForgotPasswordPage() {
       subtitle={AUTH.forgotPassword.subtitle}
       footerPrompt={AUTH.forgotPassword.footer.prompt}
       footerAction={AUTH.forgotPassword.footer.action}
-      footerHref="/login"
+      footerHref={loginHref}
     >
       <div className="w-full">
         {status === "sent" ? (
@@ -90,7 +105,7 @@ export default function ForgotPasswordPage() {
           <div className="mt-4 space-y-3">
             <p className="text-sm text-muted-foreground">{AUTH.forgotPassword.success.whatToDo}</p>
             <Button asChild size="lg" className="w-full">
-              <a href="/login">{AUTH.forgotPassword.success.backToSignIn}</a>
+              <a href={loginHref}>{AUTH.forgotPassword.success.backToSignIn}</a>
             </Button>
           </div>
         )}

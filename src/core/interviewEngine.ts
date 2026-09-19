@@ -47,6 +47,7 @@ export interface StepAnswer {
 }
 
 export interface CaseFile {
+  workspace?: import("./workspace").Workspace;
   /**
    * Real, permanent identifier for this case (14 Sep 2026 multi-case fix) — a vault can now hold
    * more than one case, so nothing may assume "the one case" implicitly by name anymore.

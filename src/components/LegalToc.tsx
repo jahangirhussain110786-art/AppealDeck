@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { SHARED } from "@/content/shared";
+import { List, ChevronDown } from "lucide-react";
 
 export function LegalToc({ sections }: { sections: { id: string; title: string }[] }) {
   const [activeId, setActiveId] = useState<string | null>(sections[0]?.id ?? null);
@@ -27,31 +28,47 @@ export function LegalToc({ sections }: { sections: { id: string; title: string }
     return () => observer.disconnect();
   }, [sections]);
 
+  const links = (
+    <ul className="space-y-1">
+      {sections.map((s, index) => {
+        const active = s.id === activeId;
+        return (
+          <li key={s.id}>
+            <a
+              href={`#${s.id}`}
+              aria-current={active ? "location" : undefined}
+              className={cn(
+                "flex min-h-10 items-start gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                active
+                  ? "bg-primary/10 text-foreground"
+                  : "text-muted-foreground hover:bg-surface-2 hover:text-foreground",
+              )}
+            >
+              <span className="pt-0.5 font-mono text-xs text-muted-foreground" aria-hidden>
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              {s.title}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  );
   return (
-    <nav className="hidden lg:block" aria-label="On-page">
-      <div className="sticky top-20 space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">{SHARED.tocHeading}</p>
-        <ul className="space-y-1.5">
-          {sections.map((s) => {
-            const active = s.id === activeId;
-            return (
-              <li key={s.id}>
-                <a
-                  href={`#${s.id}`}
-                  aria-current={active ? "true" : undefined}
-                  className={cn(
-                    "block border-l-2 pl-3 text-sm transition-colors",
-                    active
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {s.title}
-                </a>
-              </li>
-            );
-          })}
-        </ul>
+    <nav className="lg:sticky lg:top-20" aria-label="On-page">
+      <details className="group rounded-xl border border-border/80 bg-card p-4 lg:hidden">
+        <summary className="flex min-h-6 cursor-pointer list-none items-center gap-2 text-sm font-medium [&::-webkit-details-marker]:hidden">
+          <List className="size-4 text-primary" aria-hidden /> {SHARED.tocHeading}
+          <ChevronDown className="ml-auto size-4 group-open:rotate-180" aria-hidden />
+        </summary>
+        <div className="mt-3">{links}</div>
+      </details>
+      <div className="hidden space-y-3 rounded-xl border border-border/80 bg-card p-3 lg:block">
+        <p className="flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <List className="size-4" aria-hidden />
+          {SHARED.tocHeading}
+        </p>
+        {links}
       </div>
     </nav>
   );

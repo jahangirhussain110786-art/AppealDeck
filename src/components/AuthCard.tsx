@@ -1,11 +1,10 @@
 "use client";
 
-import { Loader2, CheckCircle2, Clock, FileText } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { LogoMark } from "@/components/Logo";
+import { HeroArtifact } from "@/components/marketing/HeroArtifact";
 import { AUTH } from "@/content/auth";
 import type { ReactNode } from "react";
 
@@ -27,101 +26,49 @@ export function AuthShell({
   children: ReactNode;
 }) {
   return (
-    <div className="grid min-h-[calc(100svh-4rem)] lg:grid-cols-2">
-      <main id="main" className="mx-auto flex w-full max-w-form flex-1 items-center px-4 py-12">
+    <div className="grid overflow-hidden rounded-xl border border-border/80 bg-card shadow-card lg:grid-cols-2">
+      <div className="mx-auto flex w-full max-w-form items-center p-5 sm:p-8 lg:p-10">
         <div className="w-full">
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-start">
             <LogoMark size={36} />
-            <h1 className="mt-4 text-h3 text-foreground">{title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+            <h1 className="mt-4 font-accent text-h2 font-medium text-foreground">{title}</h1>
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
+              {subtitle}
+            </p>
           </div>
-          <Card className="mt-6 animate-fade-in shadow-elevated">
-            <CardContent className="p-8">
-              {children}
-              <p className="mt-6 text-center text-sm text-muted-foreground">
-                {footerPrompt}{" "}
-                <a
-                  href={footerHref}
-                  className="text-primary underline underline-offset-4 hover:text-primary/80"
-                >
-                  {footerAction}
-                </a>
-              </p>
-            </CardContent>
-          </Card>
+          <div className="mt-6">
+            {children}
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              {footerPrompt}{" "}
+              <a
+                href={footerHref}
+                className="text-primary underline underline-offset-4 hover:text-primary/80"
+              >
+                {footerAction}
+              </a>
+            </p>
+          </div>
         </div>
-      </main>
+      </div>
       <AuthPreviewPanel />
     </div>
   );
 }
 
-/**
- * Right-side split-screen panel (AM-22/V3b) — a framed, labelled preview of
- * the signed-in dashboard, standing in for a real product screenshot until
- * the dashboard itself is rebuilt in this visual language (see the handoff
- * §2.8). Sample data only; the caption says so explicitly — this is a real
- * user's sign-in page, never imply the preview is their own case. Hidden
- * below `lg` so the auth form stays full-width and unhurried on mobile.
- */
 function AuthPreviewPanel() {
-  const p = AUTH.preview;
   return (
-    <div className="relative hidden overflow-hidden bg-surface-inverse p-14 lg:flex lg:items-center lg:justify-center">
-      <div
-        aria-hidden="true"
-        className="absolute -right-40 -top-44 size-[620px] rounded-full bg-primary/25 blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute -bottom-52 -left-36 size-[520px] rounded-full bg-info/15 blur-3xl"
-      />
-      <Card className="relative z-10 w-full max-w-[440px] overflow-hidden rounded-xl border-white/10 bg-surface-1/95 shadow-elevated dark">
-        <div className="flex items-center gap-2 border-b border-border/70 px-3.5 py-3">
-          <span className="size-2.5 rounded-full bg-destructive/70" />
-          <span className="size-2.5 rounded-full bg-warning/70" />
-          <span className="size-2.5 rounded-full bg-success/70" />
-          <span className="ml-2 flex-1 truncate rounded-md bg-muted px-2.5 py-1 text-[11.5px] text-muted-foreground">
-            {p.urlBar}
-          </span>
-        </div>
-        <CardContent className="space-y-4 p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-eyebrow uppercase text-muted-foreground">{p.eyebrow}</span>
-            <Badge variant="warning">Low severity</Badge>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-3 rounded-row border border-border/70 p-3">
-              <div className="grid size-8 shrink-0 place-items-center rounded-md bg-success/15 text-success">
-                <Clock className="size-4" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-foreground">{p.appealWindowLabel}</div>
-                <div className="text-xs tabular-nums text-muted-foreground">
-                  22 Sep 2026 · in 17 days
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 rounded-row border border-border/70 p-3">
-              <div className="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
-                <FileText className="size-4" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-foreground">{p.poaLabel}</div>
-                <div className="text-xs text-muted-foreground">{p.poaStatus}</div>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-row border border-border/70 bg-muted/40 p-3">
-            <div className="text-eyebrow uppercase text-success">{p.doNowLabel}</div>
-            <p className="mt-1.5 text-xs text-foreground/90">{p.doNowItem}</p>
-          </div>
-        </CardContent>
-      </Card>
-      <p className="absolute bottom-10 z-10 max-w-[360px] text-center text-xs text-muted-foreground/70">
-        {p.caption}
-      </p>
-    </div>
+    <aside className="workspace-hero hidden min-w-0 flex-col justify-center gap-8 border-l border-border/70 p-8 lg:flex">
+      <div>
+        <p className="text-eyebrow uppercase text-primary">{AUTH.preview.eyebrow}</p>
+        <h2 className="mt-3 font-accent text-3xl font-medium text-foreground">
+          {AUTH.preview.title}
+        </h2>
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground">
+          {AUTH.preview.description}
+        </p>
+      </div>
+      <HeroArtifact />
+    </aside>
   );
 }
 
@@ -139,7 +86,7 @@ export function GoogleButton({
       type="button"
       variant="outline"
       size="lg"
-      className="mt-6 w-full"
+      className="h-auto min-h-11 w-full whitespace-normal py-3"
       onClick={onClick}
       disabled={disabled}
     >
@@ -189,8 +136,15 @@ export function GoogleIcon({ className }: { className?: string }) {
 
 export function SubmitButton({ status, label }: { status: AuthStatus; label: string }) {
   return (
-    <Button type="submit" size="lg" className="w-full" disabled={status === "loading"}>
-      {status === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
+    <Button
+      type="submit"
+      size="lg"
+      className="h-auto min-h-11 w-full whitespace-normal py-3"
+      disabled={status === "loading"}
+    >
+      {status === "loading" && (
+        <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
+      )}
       {label}
     </Button>
   );

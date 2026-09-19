@@ -6,7 +6,7 @@ test("separate guest tabs cannot purge each other's in-progress case", async ({
   page,
   context,
 }) => {
-  await page.goto("/case?kind=POLICY");
+  await page.goto("/case?mode=classic&kind=POLICY");
   await page
     .getByPlaceholder("Type your answer...")
     .fill("A supplier review step was missing from our process.");
@@ -25,7 +25,7 @@ test("guest case survives sign-in and remains private after sign-out", async ({ 
     "Dev authentication fixture required",
   );
   test.setTimeout(90000);
-  await page.goto("/case?kind=POLICY");
+  await page.goto("/case?mode=classic&kind=POLICY");
   await page
     .getByPlaceholder("Type your answer...")
     .fill("A supplier review step was missing from our process.");
@@ -52,7 +52,7 @@ test("guest case survives sign-in and remains private after sign-out", async ({ 
   await page.goto("/dashboard");
   await expect(page.getByText("No case on this device yet", { exact: true })).toBeVisible();
   // Return with a new guest draft after this account already has an older case.
-  await page.goto("/case?kind=POLICY");
+  await page.goto("/case?mode=classic&kind=POLICY");
   await page
     .getByPlaceholder("Type your answer...")
     .fill("A second case has a different supplier review gap.");

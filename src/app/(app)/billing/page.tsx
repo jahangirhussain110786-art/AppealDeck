@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { CheckCircle2, CreditCard } from "lucide-react";
+import { CheckCircle2, CreditCard, ArrowRight, ReceiptText, ArrowUpRight } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { isLicenseActive, fetchLicenseForUser } from "@/lib/license";
+import { fetchLicenseForUser } from "@/lib/license";
 import { formatDate } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageIntro } from "@/components/PageIntro";
+import { IconTile } from "@/components/workspace/WorkspaceVisuals";
 import { DeviceManager } from "@/components/DeviceManager";
 import { APP } from "@/content/app";
 
@@ -13,30 +15,55 @@ export const dynamic = "force-dynamic";
 export default async function BillingPage() {
   const user = await requireUser("/billing");
 
-  const active = await isLicenseActive(user.id);
-  const license = await fetchLicenseForUser(user?.id);
+  const license = await fetchLicenseForUser(user.id);
+  const active = license.status === "active";
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-h2 text-foreground">{APP.billing.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{APP.billing.subtitle}</p>
-        </div>
-      </div>
+      <PageIntro
+        icon={CreditCard}
+        eyebrow={APP.billing.eyebrow}
+        title={APP.billing.title}
+        description={APP.billing.subtitle}
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/dashboard">
+              {APP.billing.continue}
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </Button>
+        }
+      />
 
       <Card>
-        <CardContent className="pt-5">
+        <CardContent className="p-5 sm:p-6">
           {active ? (
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
+              <IconTile icon={CheckCircle2} />
               <div>
                 <h2 className="font-medium text-foreground">{APP.billing.active.title}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {APP.billing.active.planLabel}: {license.plan} ·{" "}
-                  {APP.billing.active.purchasedLabel}{" "}
-                  <span data-tn>{license.createdAt ? formatDate(license.createdAt) : ""}</span>
-                </p>
+                <dl className="my-5 grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-xs text-muted-foreground">
+                      {APP.billing.active.planLabel}
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium">
+                      {license.plan === "appeal_pass"
+                        ? APP.billing.planName
+                        : license.plan?.replace(/_/g, " ")}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-foreground">
+                      {APP.billing.active.purchasedLabel}
+                    </dt>
+                    <dd className="mt-1 font-mono text-sm">
+                      {license.createdAt
+                        ? formatDate(license.createdAt)
+                        : APP.billing.dateUnavailable}
+                    </dd>
+                  </div>
+                </dl>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {APP.billing.active.receiptText}
                 </p>
@@ -58,18 +85,33 @@ export default async function BillingPage() {
 
       {active ? <DeviceManager /> : null}
 
-      {active && (
-        <Card>
-          <CardContent className="pt-5">
-            <Link
-              href="/refund"
-              className="text-sm text-muted-foreground hover:text-foreground underline"
-            >
-              {APP.billing.refundLink}
-            </Link>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardContent className="flex items-start gap-4 p-5 sm:p-6">
+          <IconTile icon={ReceiptText} tone="info" />
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold">{APP.billing.supportTitle}</h2>
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
+              {APP.billing.supportDesc}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+              <Link
+                href="/refund"
+                className="inline-flex min-h-9 items-center gap-2 rounded-sm text-sm underline"
+              >
+                {APP.billing.refundLink}
+                <ArrowUpRight className="size-4" aria-hidden />
+              </Link>
+              <Link
+                href="/privacy"
+                className="inline-flex min-h-9 items-center gap-2 rounded-sm text-sm underline"
+              >
+                {APP.billing.policyLink}
+                <ArrowUpRight className="size-4" aria-hidden />
+              </Link>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

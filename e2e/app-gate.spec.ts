@@ -40,7 +40,10 @@ test.describe("App gate — unauthenticated pages and APIs", () => {
 
   test("login keeps next", async ({ page }) => {
     await page.goto("/login?next=/case");
-    await expect(page.locator("text=Your answers are saved on this device")).toBeVisible();
+    await expect(
+      page.getByText("Sign in on this tab to keep your guest case and continue.", { exact: true }),
+    ).toBeVisible();
+    expect(new URL(page.url()).searchParams.get("next")).toBe("/case");
   });
 
   test("POST /api/interview requires auth (401 JSON)", async ({ request }) => {

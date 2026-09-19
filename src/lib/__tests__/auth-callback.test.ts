@@ -96,6 +96,28 @@ describe("/auth/callback route", () => {
     expect(res.headers.get("location")).toBe("http://localhost/dashboard");
   });
 
+  it("threads a recovery ?continue= into /reset-password so the original destination survives", async () => {
+    const res = await GET(
+      makeReq(
+        "http://localhost/auth/callback?code=abc&type=recovery&next=/reset-password&continue=/case%3Fview%3Dresponse",
+      ) as unknown as Request,
+    );
+    expect(res.headers.get("location")).toBe(
+      "http://localhost/reset-password?next=" + encodeURIComponent("/case?view=response"),
+    );
+  });
+
+  it("ignores an unsafe ?continue= on recovery and falls back to plain /reset-password", async () => {
+    const res = await GET(
+      makeReq(
+        "http://localhost/auth/callback?code=abc&type=recovery&continue=https://evil.com",
+      ) as unknown as Request,
+    );
+    expect(res.headers.get("location")).toBe(
+      "http://localhost/reset-password?next=" + encodeURIComponent("/dashboard"),
+    );
+  });
+
   it("allows same-origin /vault redirect", async () => {
     const res = await GET(
       makeReq("http://localhost/auth/callback?code=abc&next=/vault") as unknown as Request,

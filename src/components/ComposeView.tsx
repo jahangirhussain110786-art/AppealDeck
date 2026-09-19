@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { AlertCircle, ArrowLeft, FileText, Loader2, ShieldAlert } from "lucide-react";
+import { PageIntro } from "@/components/PageIntro";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -98,6 +100,7 @@ function ComposeSkeleton() {
 }
 
 function ComposeInner({ vault }: { vault: Vault }) {
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>({ kind: "loading" });
   const [editedSections, setEditedSections] = useState<Record<number, string>>({});
   const [retrying, setRetrying] = useState(false);
@@ -116,6 +119,10 @@ function ComposeInner({ vault }: { vault: Vault }) {
       const file = await loadCaseFile(vault);
       if (!file) {
         safeUpdate({ kind: "empty" });
+        return;
+      }
+      if (file.workspace) {
+        router.replace("/case?view=response");
         return;
       }
       const log = await loadCaseLog(vault);
@@ -180,7 +187,7 @@ function ComposeInner({ vault }: { vault: Vault }) {
     return () => {
       cancelled = true;
     };
-  }, [vault, update]);
+  }, [vault, update, router]);
 
   useEffect(() => {
     void run();
@@ -405,7 +412,8 @@ function ComposeInner({ vault }: { vault: Vault }) {
 
       <HonestExpectationsCard
         summary={GLOBAL_EXPECTATIONS.typicalNote}
-        whatToDo={[...GLOBAL_EXPECTATIONS.whatWeDo, ...GLOBAL_EXPECTATIONS.whatWeDoNot]}
+        weDo={GLOBAL_EXPECTATIONS.whatWeDo}
+        weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
       />
     </div>
   );
@@ -423,12 +431,12 @@ export default function ComposeView() {
             {APP.compose.backButton}
           </Link>
         </Button>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-h2 text-foreground">{APP.compose.title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{APP.compose.subtitle}</p>
-          </div>
-        </div>
+        <PageIntro
+          icon={FileText}
+          eyebrow={APP.case.guidedInterview}
+          title={APP.compose.title}
+          description={APP.compose.subtitle}
+        />
       </div>
 
       <VaultGate vault={vault} deviceMode autoUnlock>

@@ -84,7 +84,9 @@ test.describe("Auth gate", () => {
   test("login page exposes Google + magic-link + forgot + create-account", async ({ page }) => {
     await page.goto("/login");
     await expect(page.getByRole("button", { name: /continue with google/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /use a magic link/i })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Email me a sign-in link instead", exact: true }),
+    ).toBeVisible();
     await expect(page.getByRole("link", { name: /forgot/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /create an account/i })).toBeVisible();
   });

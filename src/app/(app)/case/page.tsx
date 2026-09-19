@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { ClipboardList } from "lucide-react";
+import { PageIntro } from "@/components/PageIntro";
+import { DetailDisclosure } from "@/components/workspace/WorkspaceVisuals";
 import { getOptionalUser } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { InterviewFlow } from "@/components/InterviewFlow";
 import { CasePreview } from "@/components/CasePreview";
 import { APP } from "@/content/app";
+import { CaseWorkspace } from "@/components/workspace/CaseWorkspace";
 
 type ViolationKind =
   | "INAUTHENTIC_DOCUMENTS"
@@ -35,7 +39,7 @@ function isValidKind(value: string | undefined): value is ViolationKind {
 export default async function CasePage({
   searchParams,
 }: {
-  searchParams: Promise<{ kind?: string }>;
+  searchParams: Promise<{ kind?: string; mode?: string; view?: string }>;
 }) {
   const params = await searchParams;
   const user = await getOptionalUser();
@@ -43,31 +47,38 @@ export default async function CasePage({
   const hasPass = user ? await isLicenseActive(user.id) : false;
   const initialKind = isValidKind(params.kind) ? params.kind : undefined;
 
+  if (params.mode !== "classic")
+    return (
+      <CaseWorkspace
+        signedIn={signedIn}
+        hasPass={hasPass}
+        initialKind={initialKind}
+        initialView={params.view}
+      />
+    );
+
   return (
     <div className="space-y-6 lg:grid lg:grid-cols-[1fr_20rem] lg:items-start lg:gap-8 lg:space-y-0">
       <div className="space-y-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-h2 text-foreground">{APP.case.title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{APP.case.subtitle}</p>
-          </div>
-        </div>
+        <PageIntro
+          icon={ClipboardList}
+          eyebrow={APP.case.guidedInterview}
+          title={APP.case.title}
+          description={APP.case.subtitle}
+        />
 
         <div className="flex items-center gap-2">
           <h2 className="text-h3 text-foreground">{APP.case.guidedInterview}</h2>
           <Badge variant="secondary">{APP.interview.engineBadge}</Badge>
         </div>
 
-        <div className="rounded-md border border-border/70 bg-surface-2 p-4">
-          <p className="text-eyebrow uppercase text-muted-foreground">
-            {APP.case.howItWorks.title}
-          </p>
-          <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+        <DetailDisclosure title={APP.case.howItWorks.title}>
+          <ul className="list-disc space-y-2 pl-4">
             <li>{APP.case.howItWorks.bullet1}</li>
             <li>{APP.case.howItWorks.bullet2}</li>
             <li>{APP.case.howItWorks.bullet3}</li>
           </ul>
-        </div>
+        </DetailDisclosure>
 
         <InterviewFlow signedIn={signedIn} hasPass={hasPass} initialKind={initialKind} />
       </div>

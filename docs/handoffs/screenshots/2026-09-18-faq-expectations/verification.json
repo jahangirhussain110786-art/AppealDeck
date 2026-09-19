@@ -1,0 +1,197 @@
+{
+  "report": [
+    {
+      "route": "/faq",
+      "theme": "light",
+      "topic": "Getting started",
+      "violations": []
+    },
+    {
+      "route": "/faq",
+      "theme": "light",
+      "topic": "Your response",
+      "violations": []
+    },
+    {
+      "route": "/faq",
+      "theme": "light",
+      "topic": "Files & privacy",
+      "violations": []
+    },
+    {
+      "route": "/faq",
+      "theme": "light",
+      "topic": "Pass & refunds",
+      "violations": []
+    },
+    {
+      "route": "/faq",
+      "theme": "light",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "route": "/faq",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/faq",
+      "theme": "light",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/faq",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/pricing",
+      "theme": "light",
+      "topic": "Getting started",
+      "violations": []
+    },
+    {
+      "route": "/pricing",
+      "theme": "light",
+      "topic": "Your response",
+      "violations": []
+    },
+    {
+      "route": "/pricing",
+      "theme": "light",
+      "topic": "Files & privacy",
+      "violations": []
+    },
+    {
+      "route": "/pricing",
+      "theme": "light",
+      "topic": "Pass & refunds",
+      "violations": []
+    },
+    {
+      "route": "/pricing",
+      "theme": "light",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "route": "/pricing",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/pricing",
+      "theme": "light",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/pricing",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/faq",
+      "theme": "dark",
+      "topic": "Getting started",
+      "violations": []
+    },
+    {
+      "route": "/faq",
+      "theme": "dark",
+      "topic": "Your response",
+      "violations": []
+    },
+    {
+      "route": "/faq",
+      "theme": "dark",
+      "topic": "Files & privacy",
+      "violations": []
+    },
+    {
+      "route": "/faq",
+      "theme": "dark",
+      "topic": "Pass & refunds",
+      "violations": []
+    },
+    {
+      "route": "/faq",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "route": "/faq",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/faq",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/faq",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "route": "/pricing",
+      "theme": "dark",
+      "topic": "Getting started",
+      "violations": []
+    },
+    {
+      "route": "/pricing",
+      "theme": "dark",
+      "topic": "Your response",
+      "violations": []
+    },
+    {
+      "route": "/pricing",
+      "theme": "dark",
+      "topic": "Files & privacy",
+      "violations": []
+    },
+    {
+      "route": "/pricing",
+      "theme": "dark",
+      "topic": "Pass & refunds",
+      "violations": []
+    },
+    {
+      "route": "/pricing",
+      "theme": "dark",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "route": "/pricing",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "route": "/pricing",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "route": "/pricing",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false
+    }
+  ],
+  "errors": []
+}

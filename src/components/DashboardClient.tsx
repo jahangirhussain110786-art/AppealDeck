@@ -60,6 +60,7 @@ import { formatDate, formatBytes } from "@/lib/format";
 import type { LicenseSummary } from "@/lib/license";
 import type { EvidenceKind } from "@/core";
 import { cn } from "@/lib/utils";
+import { WorkspaceSummary } from "@/components/workspace/WorkspaceSummary";
 
 interface ReplyAnalysis {
   category: ReplyCategory;
@@ -386,6 +387,18 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
       );
     }
 
+    if (caseFile.workspace)
+      return (
+        <WorkspaceSummary
+          file={caseFile}
+          cases={cases}
+          onSelect={(id) => {
+            void setActiveCaseId(vault, id)
+              .then(loadFromVault)
+              .catch(() => toast.error("Could not switch cases"));
+          }}
+        />
+      );
     const draftLog: CaseLog = caseLog ?? {
       state: caseFile.state,
       attemptCount: caseFile.attemptCount,
@@ -479,6 +492,18 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
           );
         }
 
+        if (caseFile.workspace)
+          return (
+            <WorkspaceSummary
+              file={caseFile}
+              cases={cases}
+              onSelect={(id) => {
+                void setActiveCaseId(vault, id)
+                  .then(loadFromVault)
+                  .catch(() => toast.error("Could not switch cases"));
+              }}
+            />
+          );
         const currentLog: CaseLog = caseLog ?? {
           state: caseFile.state,
           attemptCount: caseFile.attemptCount,

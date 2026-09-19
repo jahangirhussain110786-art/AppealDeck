@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
+import { FilePenLine } from "lucide-react";
+import { IconTile } from "@/components/workspace/WorkspaceVisuals";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -82,12 +84,15 @@ export function ComposeGate({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-h2">{APP.access.composeGate.title}</CardTitle>
+      <CardHeader className="workspace-hero gap-3 border-b border-border/70">
+        <IconTile icon={FilePenLine} tone="info" />
+        <CardTitle className="font-accent text-h2 font-medium">
+          {APP.access.composeGate.title}
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-5">
         <p className="text-sm text-muted-foreground">{APP.access.composeGate.body}</p>
-        <p className="text-2xl font-semibold tabular-nums text-foreground">
+        <p className="font-mono text-xl font-medium tabular-nums text-foreground">
           {APP.access.composeGate.price}
         </p>
         <ConsentRow checked={consent} onCheckedChange={setConsent} idPrefix="compose-eu-consent" />
@@ -97,13 +102,19 @@ export function ComposeGate({
             consent={consent}
             priceId={priceId}
             size="lg"
+            className="h-auto min-h-11 whitespace-normal py-3"
             customerEmail={email ?? undefined}
             onCompleted={startPolling}
           >
             {PRICING.cta}
           </CheckoutButton>
         ) : (
-          <Button size="lg" variant="outline" disabled>
+          <Button
+            size="lg"
+            variant="outline"
+            className="h-auto min-h-11 whitespace-normal py-3"
+            disabled
+          >
             {SHARED.consentPrompt}
           </Button>
         )}

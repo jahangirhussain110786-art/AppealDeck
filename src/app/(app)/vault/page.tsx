@@ -3,6 +3,8 @@ import { isLicenseActive } from "@/lib/license";
 import { VaultLockedState } from "@/components/VaultLockedState";
 import VaultView from "@/components/VaultView";
 import { APP } from "@/content/app";
+import { FolderLock } from "lucide-react";
+import { PageIntro } from "@/components/PageIntro";
 
 export const dynamic = "force-dynamic";
 
@@ -30,10 +32,10 @@ export default async function VaultPage() {
     return (
       <div className="mx-auto flex w-full max-w-tool flex-col gap-4 py-10">
         <VaultLockedState
-          title={APP.access.vaultSignedOut.title}
-          description={APP.access.vaultSignedOut.desc}
+          title={APP.access.vaultNoPass.title}
+          description={APP.access.vaultNoPass.desc}
           ctaHref="/pricing"
-          ctaLabel={APP.access.vaultSignedOut.cta}
+          ctaLabel={APP.access.vaultNoPass.cta}
           backHref="/case"
           backLabel={APP.access.vaultSignedOut.back}
         />
@@ -42,13 +44,13 @@ export default async function VaultPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-tool flex-col gap-4 py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-h2 text-foreground">{APP.vault.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{APP.vault.subtitle}</p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageIntro
+        icon={FolderLock}
+        eyebrow={APP.vault.eyebrow}
+        title={APP.vault.title}
+        description={APP.vault.subtitle}
+      />
       <VaultView userId={user.id} />
     </div>
   );

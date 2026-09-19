@@ -134,7 +134,7 @@ function LoginPageInner() {
       subtitle={showContinue ? AUTH.login.subtitleContinue : AUTH.login.subtitle}
       footerPrompt={AUTH.login.footer.prompt}
       footerAction={AUTH.login.footer.action}
-      footerHref="/signup"
+      footerHref={nextParam ? `/signup?next=${encodeURIComponent(next)}` : "/signup"}
     >
       <div className="w-full">
         <GoogleButton
@@ -175,7 +175,11 @@ function LoginPageInner() {
                   {AUTH.login.fields.password}
                 </label>
                 <a
-                  href="/forgot-password"
+                  href={
+                    nextParam
+                      ? `/forgot-password?next=${encodeURIComponent(next)}`
+                      : "/forgot-password"
+                  }
                   className="text-xs text-muted-foreground underline underline-offset-4 hover:text-primary"
                 >
                   {AUTH.login.fields.forgot}

@@ -1,9 +1,19 @@
 import type { Metadata } from "next";
-import { Check, Lock, MonitorSmartphone, RotateCcw, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  Check,
+  Lock,
+  MonitorSmartphone,
+  RotateCcw,
+  ShieldCheck,
+  FileSearch,
+  MessagesSquare,
+} from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
-import { SectionHeading } from "@/components/SectionHeading";
+import { IconTile } from "@/components/workspace/WorkspaceVisuals";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -17,7 +27,6 @@ import { PurchasePanel } from "@/components/pricing/PurchasePanel";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { GLOBAL_EXPECTATIONS } from "@/core/guidance";
 import { PRICING } from "@/content/marketing";
-import { LEGAL } from "@/content/legal";
 import { SHARED } from "@/content/shared";
 import { cn } from "@/lib/utils";
 
@@ -37,13 +46,7 @@ const TRUST_ITEMS = [
   { icon: RotateCcw, ...PRICING.trust.refund },
 ];
 
-const PASS_ONLY_ROWS = [
-  PRICING.rows.poa,
-  PRICING.rows.critic,
-  PRICING.rows.replyAnalysis,
-  PRICING.rows.devices,
-  PRICING.rows.refund,
-];
+const PASS_ONLY_ROWS = [PRICING.rows.poa, PRICING.rows.critic, PRICING.rows.devices];
 
 function ValueCell({ value }: { value: string }) {
   if (value === "Yes") {
@@ -63,18 +66,34 @@ function ValueCell({ value }: { value: string }) {
 export default function PricingPage() {
   return (
     <MarketingShell>
-      <section className="grid gap-12 py-16 lg:grid-cols-[1fr_24rem] lg:py-24">
+      <section className="grid items-center gap-8 py-10 sm:py-14 lg:grid-cols-[1fr_24rem] lg:gap-16">
         <div>
-          <p className="text-eyebrow uppercase text-primary">{PRICING.pass}</p>
-          <h1 className="mt-4 text-h1 text-foreground">{PRICING.headline}</h1>
-          <p className="mt-4 text-lg text-muted-foreground">{PRICING.subline}</p>
+          <IconTile icon={FileSearch} tone="info" />
+          <p className="mt-5 text-eyebrow uppercase text-primary">Start with the request</p>
+          <h1 className="mt-3 max-w-[20ch] font-accent text-h1 text-foreground">
+            {PRICING.headline}
+          </h1>
+          <p className="mt-4 max-w-prose text-base leading-relaxed text-muted-foreground">
+            {PRICING.subline}
+          </p>
+          <Button asChild className="mt-6">
+            <Link href="/decode">
+              Start with a free decode
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </Button>
+          <p className="mt-3 text-xs text-muted-foreground">
+            No payment needed to understand the request.
+          </p>
         </div>
 
         <Card className="rounded-xl border-primary/30 shadow-elevated">
           <CardContent className="pt-6">
             <p className="text-eyebrow uppercase text-primary">{PRICING.pass}</p>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-display tabular-nums text-foreground">{PRICING.price}</span>
+              <span className="font-mono text-4xl font-medium tabular-nums tracking-tight text-foreground">
+                {PRICING.price}
+              </span>
               <span className="text-sm text-muted-foreground">{PRICING.priceNote}</span>
             </div>
             <p className="mt-4 text-eyebrow uppercase text-muted-foreground">{PRICING.included}</p>
@@ -86,17 +105,18 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <Button asChild size="lg" className="mt-6 w-full">
+            <Button asChild size="lg" variant="outline" className="mt-6 w-full">
               <a href="#purchase">{PRICING.jumpToPurchase}</a>
             </Button>
             <p className="mt-3 text-center text-xs text-muted-foreground">
-              {PRICING.trust.submit.desc}
+              No subscription · One eligible case
             </p>
           </CardContent>
         </Card>
       </section>
 
       <section className="pb-16">
+        <h2 className="mb-5 text-lg font-semibold text-foreground">Choose the access you need</h2>
         <div className="overflow-x-auto">
           <Card className="overflow-hidden p-0">
             <Table>
@@ -134,9 +154,7 @@ export default function PricingPage() {
           {TRUST_ITEMS.map((item) => (
             <Card key={item.label} className="p-5">
               <div className="flex items-start gap-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
-                  <item.icon className="size-5" />
-                </span>
+                <IconTile icon={item.icon} tone={item.icon === RotateCcw ? "warning" : "primary"} />
                 <div>
                   <p className="text-sm font-medium text-foreground">{item.label}</p>
                   <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
@@ -148,10 +166,16 @@ export default function PricingPage() {
       </section>
 
       <section className="pb-16 sm:pb-20">
-        <SectionHeading title={PRICING.faqTitle} />
-        <Card className="mt-6 px-6">
-          <FaqAccordion />
-        </Card>
+        <div className="mb-6 flex items-center gap-3">
+          <IconTile icon={MessagesSquare} tone="info" />
+          <div>
+            <p className="text-eyebrow uppercase text-muted-foreground">Quick answers</p>
+            <h2 className="mt-1 font-accent text-2xl font-medium text-foreground sm:text-3xl">
+              {PRICING.faqTitle}
+            </h2>
+          </div>
+        </div>
+        <FaqAccordion />
       </section>
 
       <section id="purchase" className="pb-16 sm:pb-20">
@@ -166,8 +190,10 @@ export default function PricingPage() {
         />
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>{PRICING.purchaseTitle}</CardTitle>
-            <CardDescription>{LEGAL.consent.deliveryNote}</CardDescription>
+            <CardTitle className="text-lg">{PRICING.purchaseTitle}</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Start your case and confirm the request first. Your pass applies to that case.
+            </p>
           </CardHeader>
           <CardContent>
             <PurchasePanel />
