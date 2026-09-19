@@ -63,7 +63,7 @@ export const APP = {
       stillWaiting:
         "Your payment went through but the activation has not arrived yet. Check again in a moment, or open Billing.",
       checkAgain: "Check again",
-      signInToActivate: "Sign in with the email you used at checkout to activate your Appeal Pass.",
+      signInToActivate: "Sign in first — an Appeal Pass is tied to your account and one case.",
     },
     aiSignedOut: "Sign in to enable field suggestions.",
   },

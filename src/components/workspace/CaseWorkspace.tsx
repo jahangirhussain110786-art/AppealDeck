@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VaultGate } from "@/components/VaultGate";
+import { PageIntro } from "@/components/PageIntro";
 import { InterviewFlow } from "@/components/InterviewFlow";
 import { RequestReview } from "./RequestReview";
 import { EvidenceReview } from "./EvidenceReview";
@@ -608,35 +609,32 @@ function WorkspaceInner({
   };
   return (
     <div className="space-y-5">
-      <header className="workspace-hero flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border/80 px-5 py-5 sm:px-6">
-        <div className="max-w-2xl">
-          <p className="mb-1.5 text-eyebrow uppercase text-primary">
-            Case workspace · {w.marketplace === "US" ? "Amazon US" : "Marketplace to confirm"}
-          </p>
-          <h1 className="font-accent text-3xl tracking-tight text-foreground sm:text-4xl">
-            {C.title}
-          </h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">{C.subtitle}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary" className="font-mono">
-            R{w.revision}
-            <span className="sr-only"> · Revision {w.revision}</span>
-          </Badge>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={busy}
-            onClick={() => setNewCasePrompt(true)}
-          >
-            <Plus className="mr-2 h-4 w-4" aria-hidden />
-            New case
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href="/dashboard">All cases</Link>
-          </Button>
-        </div>
-      </header>
+      <PageIntro
+        icon={FileSearch}
+        eyebrow={`Case workspace · ${w.marketplace === "US" ? "Amazon US" : "Marketplace to confirm"}`}
+        title={C.title}
+        description={C.subtitle}
+        actions={
+          <>
+            <Badge variant="secondary" className="font-mono">
+              R{w.revision}
+              <span className="sr-only"> · Revision {w.revision}</span>
+            </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={() => setNewCasePrompt(true)}
+            >
+              <Plus className="mr-2 h-4 w-4" aria-hidden />
+              New case
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/dashboard">All cases</Link>
+            </Button>
+          </>
+        }
+      />
       {w.decodedNoticeHash && !w.confirmed && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-1 text-sm">
           <Check className="size-4 shrink-0 text-primary" aria-hidden />

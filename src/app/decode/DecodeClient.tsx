@@ -296,7 +296,7 @@ function ResultView({
         <Card className="workspace-hero border-primary/20">
           <CardHeader>
             <p className="text-eyebrow uppercase text-primary">Next / Your case</p>
-            <CardTitle className="font-accent text-2xl font-normal">
+            <CardTitle className="font-accent text-2xl font-medium">
               Turn the notice into a plan.
             </CardTitle>
             <p className="text-sm text-muted-foreground">

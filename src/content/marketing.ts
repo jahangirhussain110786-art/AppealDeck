@@ -10,7 +10,8 @@ export const HOME = {
       "Understand the request. Organize your evidence. Prepare a factual response—all in one case workspace.",
     primaryCta: "Decode my notice — free",
     secondaryCta: "See the Appeal Pass",
-    reassuranceLine: "Start free. No Seller Central login needed. You submit the response.",
+    reassuranceLine:
+      "For Amazon US, English-language notices. Start free — no Seller Central login, you submit the response.",
     artwork: {
       label: "Decoded notice",
       srOnly:

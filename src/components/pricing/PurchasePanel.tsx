@@ -21,13 +21,27 @@ import { useSessionState } from "@/lib/useSessionState";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { pollLicenseStatus } from "@/lib/licensePoll";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
+import { getBrowserVault } from "@/lib/vault/browser";
+import { loadCaseFile } from "@/lib/caseStore";
+import { openVaultForVisitor } from "@/lib/vault/visitor";
+import { workspaceCanCompose } from "@/core/workspace";
 
 type CompletionPhase = "idle" | "activating" | "timeout";
+type CaseCheck =
+  | { status: "checking" }
+  | { status: "none" }
+  | { status: "ineligible"; label: string }
+  | { status: "ok"; label: string };
+
+function caseCheckLabel(kind: string, id: string): string {
+  return `${kind.toLowerCase().replaceAll("_", " ")} · #${id.slice(0, 6)}`;
+}
 
 export function PurchasePanel() {
   const [consent, setConsent] = useState(false);
   const [phase, setPhase] = useState<CompletionPhase>("idle");
   const [email, setEmail] = useState<string | undefined>(undefined);
+  const [caseCheck, setCaseCheck] = useState<CaseCheck>({ status: "checking" });
   const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
   const sessionState = useSessionState();
   const router = useRouter();
@@ -39,6 +53,42 @@ export function PurchasePanel() {
       setEmail(data.session?.user?.email ?? undefined);
     });
   }, []);
+
+  useEffect(() => {
+    if (sessionState !== "signed-in") {
+      setCaseCheck({ status: "none" });
+      return;
+    }
+    let alive = true;
+    void (async () => {
+      const vault = getBrowserVault();
+      try {
+        if (!(await openVaultForVisitor(vault))) {
+          if (alive) setCaseCheck({ status: "none" });
+          return;
+        }
+        const file = await loadCaseFile(vault);
+        if (!alive) return;
+        if (!file) {
+          setCaseCheck({ status: "none" });
+          return;
+        }
+        const label = caseCheckLabel(file.kind, file.id);
+        setCaseCheck(
+          file.workspace && !workspaceCanCompose(file.workspace)
+            ? { status: "ineligible", label }
+            : { status: "ok", label },
+        );
+      } catch {
+        if (alive) setCaseCheck({ status: "none" });
+      } finally {
+        await vault.close();
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [sessionState]);
 
   const handleCompleted = useCallback(() => {
     if (sessionState !== "signed-in") return;
@@ -77,6 +127,12 @@ export function PurchasePanel() {
     );
   }
 
+  const blocked =
+    sessionState === "signed-in" &&
+    (caseCheck.status === "checking" ||
+      caseCheck.status === "none" ||
+      caseCheck.status === "ineligible");
+
   return (
     <div className="space-y-6">
       <ConsentRow checked={consent} onCheckedChange={setConsent} />
@@ -93,8 +149,33 @@ export function PurchasePanel() {
         </p>
       )}
 
+      {sessionState === "signed-in" && caseCheck.status === "ok" && (
+        <p className="text-xs text-muted-foreground">
+          This Pass will cover your active case: {caseCheck.label}.
+        </p>
+      )}
+
+      {sessionState === "signed-in" && caseCheck.status === "none" && (
+        <p className="text-xs text-muted-foreground">
+          Start your case before buying a Pass — each Pass covers one case.{" "}
+          <Link href="/case" className="text-primary underline underline-offset-4">
+            Start your case
+          </Link>
+        </p>
+      )}
+
+      {sessionState === "signed-in" && caseCheck.status === "ineligible" && (
+        <p className="text-xs text-muted-foreground">
+          Your active case ({caseCheck.label}) does not currently need a drafted response — confirm
+          its response route in the case workspace first.{" "}
+          <Link href="/case" className="text-primary underline underline-offset-4">
+            Open your case
+          </Link>
+        </p>
+      )}
+
       <div className="flex flex-col gap-3 sm:flex-row">
-        {consent ? (
+        {consent && !blocked ? (
           <CheckoutButton
             consent={consent}
             priceId={priceId}
@@ -113,7 +194,7 @@ export function PurchasePanel() {
             className="h-auto min-h-11 flex-1 whitespace-normal py-2"
             disabled
           >
-            {SHARED.consentPrompt}
+            {blocked && consent ? "Resolve your case first" : SHARED.consentPrompt}
           </Button>
         )}
 

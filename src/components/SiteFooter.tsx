@@ -50,6 +50,7 @@ export function SiteFooter() {
             { href: "/privacy", label: SHARED.footer.nav.privacy },
             { href: "/terms", label: SHARED.footer.nav.terms },
             { href: "/refund", label: SHARED.footer.nav.refund },
+            { href: "/privacy#contact", label: SHARED.footer.nav.support },
           ]}
         />
       </div>

@@ -25,6 +25,7 @@ export const SHARED = {
       terms: "Terms",
       refund: "Refund",
       faq: "FAQ",
+      support: "Support",
     },
     neverSubmits:
       "You submit your appeal yourself in Seller Central. AppealDeck never logs in to your account.",

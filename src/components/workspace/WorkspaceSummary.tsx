@@ -134,7 +134,7 @@ export function WorkspaceSummary({
             <IconTile icon={FileSearch} tone="info" />
             <Badge variant="secondary">{PROTOCOL_LABELS[w.protocol]}</Badge>
           </div>
-          <CardTitle className="pt-3 font-accent text-3xl font-normal">
+          <CardTitle className="pt-3 font-accent text-3xl font-medium">
             Your case, at a glance
           </CardTitle>
           <p className="text-sm text-muted-foreground">

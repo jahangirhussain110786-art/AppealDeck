@@ -119,7 +119,12 @@ export function CheckoutButton({
       const response = await fetch("/api/checkout/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ caseId: file.id, kind: file.kind, consent }),
+        body: JSON.stringify({
+          caseId: file.id,
+          kind: file.kind,
+          consent,
+          workspace: file.workspace,
+        }),
       });
       const data = await response.json();
       if (!response.ok)

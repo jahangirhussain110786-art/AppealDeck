@@ -6,11 +6,17 @@ import { CaseIdSchema, ViolationKindSchema } from "@/lib/caseSchema";
 import { isSeverityGated } from "@/core";
 import { LEGAL } from "@/content/legal";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
+import { WorkspaceSchema } from "@/lib/workspaceSchema";
+import { workspaceCanCompose } from "@/core/workspace";
 
 const Body = z.object({
   caseId: CaseIdSchema,
   kind: ViolationKindSchema,
   consent: z.literal(true),
+  // The vault-held case is browser-only — the server never otherwise sees its content, so the
+  // client sends this one case's current workspace so eligibility can be checked before payment,
+  // the same way /api/compose already does at draft time.
+  workspace: WorkspaceSchema.optional(),
 });
 export async function POST(req: NextRequest) {
   const user = await getApiUser();
@@ -27,6 +33,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "This case requires professional help; an Appeal Pass is not offered." },
       { status: 403 },
+    );
+  if (parsed.data.workspace && !workspaceCanCompose(parsed.data.workspace))
+    return NextResponse.json(
+      {
+        error:
+          "This case does not currently need a drafted response. Confirm its response route in the case workspace before buying a Pass for it.",
+      },
+      { status: 422 },
     );
   const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
   if (!supabaseAdmin || !priceId)
