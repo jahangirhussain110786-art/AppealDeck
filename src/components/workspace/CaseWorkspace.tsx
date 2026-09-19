@@ -49,6 +49,7 @@ import { addFileToVault } from "@/lib/vault/addFileToVault";
 import { withCaseEvidence } from "@/lib/caseEvidence";
 import { loadCaseFile, saveCaseFile, loadCaseLog, saveCaseLog } from "@/lib/caseStore";
 import { WorkspaceSchema } from "@/lib/workspaceSchema";
+import { buildCaseExport } from "@/lib/workspaceExport";
 import {
   evidenceNoteKey,
   HISTORY_REPLY_KEY,
@@ -285,7 +286,7 @@ function WorkspaceInner({
   /**
    * Debounced autosave for in-progress field text into the encrypted, vault-backed
    * `Workspace.draft` map, so edits survive route changes (including the sign-in
-   * redirect), reloads and tab closes — not just an explicit "Save" click.
+   * redirect), reloads and tab closes, not only an explicit "Save" click.
    */
   const flushDraftKey = useCallback((key: string) => {
     const timer = draftTimers.current.get(key);
@@ -1027,7 +1028,10 @@ function WorkspaceInner({
                   onSave={(updated) => {
                     cancelDraftFields(RESPONSE_DRAFT_KEYS);
                     return commit(
-                      () => ({ ...updated, draft: withoutDraftKeys(updated.draft, RESPONSE_DRAFT_KEYS) }),
+                      () => ({
+                        ...updated,
+                        draft: withoutDraftKeys(updated.draft, RESPONSE_DRAFT_KEYS),
+                      }),
                       "Saved the seller’s response facts.",
                     );
                   }}
@@ -1239,7 +1243,7 @@ function WorkspaceInner({
                     className="mt-5"
                     variant="outline"
                     onClick={() => {
-                      const text = `${C.title}\n\n${w.notice}\n\nResponse-page instructions:\n${w.formInstructions}\n\nSeller’s explanation:\n${w.explanation}\n\nUnresolved items:\n${gaps.join("\n")}\n\nThese are case notes, not a submitted response.`;
+                      const text = buildCaseExport(file, w);
                       const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
                       const a = document.createElement("a");
                       a.href = url;

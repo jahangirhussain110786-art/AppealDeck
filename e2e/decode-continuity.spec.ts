@@ -145,13 +145,9 @@ test("a decoded notice opens the workspace while retaining an older interview", 
     .click();
   await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(SAMPLE_NOTICE_TEXT);
   await page.goto("/dashboard");
-  const selector = page.getByLabel("Current case");
-  await expect(selector.locator("option")).toHaveCount(2);
-  const current = await selector.inputValue();
-  const ids = await selector
-    .locator("option")
-    .evaluateAll((nodes) => nodes.map((n) => (n as HTMLOptionElement).value));
-  await selector.selectOption(ids.find((id) => id !== current)!);
+  const cases = page.getByRole("region", { name: "Your cases" }).getByRole("button");
+  await expect(cases).toHaveCount(2);
+  await cases.filter({ hasNotText: "Current" }).click();
   await page.goto("/case");
   await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
 });

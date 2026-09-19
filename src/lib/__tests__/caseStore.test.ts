@@ -13,6 +13,7 @@ import {
   deleteCaseFile,
   listCases,
   getActiveCaseId,
+  setCaseArchived,
 } from "@/lib/caseStore";
 import type { CaseFile } from "@/core/interviewEngine";
 import { createCaseFile } from "@/core/interviewEngine";
@@ -233,6 +234,49 @@ describe("caseStore", () => {
       expect(await loadCaseFile(v)).toBeNull();
       expect(await getActiveCaseId(v)).toBeNull();
       expect(await listCases(v)).toEqual([]);
+    });
+
+    it("setCaseArchived marks a case archived without touching its file or log", async () => {
+      const file = createCaseFile("POLICY");
+      await saveCaseFile(v, file);
+      await saveCaseLog(v, { state: "DECODED", attemptCount: 0 });
+
+      await setCaseArchived(v, file.id, true);
+      expect((await listCases(v)).find((c) => c.id === file.id)?.archived).toBe(true);
+      expect((await loadCaseFile(v))?.id).toBe(file.id);
+      expect(await loadCaseLog(v)).toEqual({ state: "DECODED", attemptCount: 0 });
+
+      await setCaseArchived(v, file.id, false);
+      expect((await listCases(v)).find((c) => c.id === file.id)?.archived).toBe(false);
+    });
+
+    it("re-saving an archived case's file does not silently un-archive it", async () => {
+      const file = createCaseFile("POLICY");
+      await saveCaseFile(v, file);
+      await setCaseArchived(v, file.id, true);
+
+      file.rootCause = "A later edit to an archived case";
+      await saveCaseFile(v, file);
+
+      expect((await listCases(v)).find((c) => c.id === file.id)?.archived).toBe(true);
+    });
+
+    it("setCaseArchived rejects an id that isn't in the case index", async () => {
+      await expect(setCaseArchived(v, "does-not-exist", true)).rejects.toThrow();
+    });
+
+    it("loadCaseLog(vault, caseId) reads a specific case's log regardless of which is active", async () => {
+      const caseA = createCaseFile("POLICY");
+      await saveCaseFile(v, caseA);
+      await saveCaseLog(v, { state: "DECODED", attemptCount: 1 });
+
+      const caseB = createCaseFile("FUNDS");
+      await saveCaseFile(v, caseB);
+      await saveCaseLog(v, { state: "REMEDIATION", attemptCount: 2 });
+
+      expect(await loadCaseLog(v, caseA.id)).toEqual({ state: "DECODED", attemptCount: 1 });
+      expect(await loadCaseLog(v, caseB.id)).toEqual({ state: "REMEDIATION", attemptCount: 2 });
+      expect(await loadCaseLog(v)).toEqual({ state: "REMEDIATION", attemptCount: 2 });
     });
   });
 });

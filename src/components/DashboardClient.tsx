@@ -20,6 +20,7 @@ import {
   loadCaseFile,
   listCases,
   setActiveCaseId,
+  setCaseArchived,
 } from "@/lib/caseStore";
 import { withCaseEvidence } from "@/lib/caseEvidence";
 import type { CaseIndexEntry } from "@/lib/caseStore";
@@ -361,6 +362,32 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     }
   };
 
+  const saveWorkspaceLog = async (log: CaseLog) => {
+    try {
+      await saveCaseLog(vault, log);
+      await loadFromVault();
+      return true;
+    } catch (e) {
+      toast.error(APP.dashboard.toasts.saveReplyFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
+      });
+      return false;
+    }
+  };
+
+  const archiveCase = async (id: string, archived: boolean) => {
+    try {
+      await setCaseArchived(vault, id, archived);
+      await loadFromVault();
+      return true;
+    } catch (e) {
+      toast.error(APP.dashboard.toasts.deleteFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
+      });
+      return false;
+    }
+  };
+
   if (!signedIn) {
     if (!caseFile) {
       return (
@@ -392,6 +419,9 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
         <WorkspaceSummary
           file={caseFile}
           cases={cases}
+          log={caseLog}
+          onSaveLog={saveWorkspaceLog}
+          onArchive={archiveCase}
           onSelect={(id) => {
             void setActiveCaseId(vault, id)
               .then(loadFromVault)
@@ -497,6 +527,9 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
             <WorkspaceSummary
               file={caseFile}
               cases={cases}
+              log={caseLog}
+              onSaveLog={saveWorkspaceLog}
+              onArchive={archiveCase}
               onSelect={(id) => {
                 void setActiveCaseId(vault, id)
                   .then(loadFromVault)

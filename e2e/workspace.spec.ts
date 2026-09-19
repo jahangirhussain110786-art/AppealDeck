@@ -135,13 +135,9 @@ test("switching views retains unfinished text and a separate case preserves save
   await page.getByRole("button", { name: "Create separate case" }).click();
   await expect(page.getByLabel("Amazon notice", { exact: true })).toBeEmpty();
   await page.goto("/dashboard");
-  await expect(page.getByLabel("Current case").locator("option")).toHaveCount(2);
-  const options = await page
-    .getByLabel("Current case")
-    .locator("option")
-    .evaluateAll((nodes) => nodes.map((n) => (n as HTMLOptionElement).value));
-  const current = await page.getByLabel("Current case").inputValue();
-  await page.getByLabel("Current case").selectOption(options.find((id) => id !== current)!);
+  const cases = page.getByRole("region", { name: "Your cases" }).getByRole("button");
+  await expect(cases).toHaveCount(2);
+  await cases.filter({ hasNotText: "Current" }).click();
   await page.getByRole("link", { name: "Continue your case" }).click();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   await expect(page.getByLabel("Your factual explanation")).toHaveValue(
@@ -203,7 +199,7 @@ test("starting from Decode carries the notice into a separate case", async ({ pa
   await page.getByRole("link", { name: "Open case workspace", exact: true }).click();
   await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(nextNotice);
   await page.goto("/dashboard");
-  await expect(page.getByLabel("Current case").locator("option")).toHaveCount(2);
+  await expect(page.getByRole("region", { name: "Your cases" }).getByRole("button")).toHaveCount(2);
 });
 
 test("authenticated workspace preserves the exact response through submission and a new reply", async ({

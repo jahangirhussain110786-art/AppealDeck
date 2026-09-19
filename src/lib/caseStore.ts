@@ -28,6 +28,9 @@ export interface CaseIndexEntry {
   id: string;
   kind: ViolationKind;
   createdAt: string;
+  /** True once the seller has archived this case from the case list (see `setCaseArchived`).
+   * The case file and log are untouched — archiving only changes how the case list displays it. */
+  archived?: boolean;
 }
 
 export interface CaseLog {
@@ -59,6 +62,11 @@ export interface CaseLog {
   /** True once the seller has responded (either way) to the opt-in outcome-sharing prompt for
    * this case, so it's asked at most once per terminal reply. */
   outcomePromptResolved?: boolean;
+  /**
+   * What the seller says happened with this case, recorded by their own explicit choice — never
+   * inferred, never verified against Amazon. Always presented to the seller as self-reported.
+   */
+  resolution?: { status: "reinstated" | "rejected" | "withdrawn"; at: string };
 }
 
 async function findRecordId(vault: Vault, name: string, caseId: string): Promise<string | null> {
@@ -122,12 +130,30 @@ async function writeCaseIndex(vault: Vault, index: CaseIndexEntry[]): Promise<vo
   });
 }
 
+/** Merges rather than replaces, so a plain re-save of the case file (which never knows about
+ * `archived`) can't silently un-archive a case the seller archived earlier. */
 async function upsertCaseIndexEntry(vault: Vault, entry: CaseIndexEntry): Promise<void> {
   const index = await readCaseIndex(vault);
   const next = index.some((e) => e.id === entry.id)
-    ? index.map((e) => (e.id === entry.id ? entry : e))
+    ? index.map((e) => (e.id === entry.id ? { ...e, ...entry } : e))
     : [...index, entry];
   await writeCaseIndex(vault, next);
+}
+
+/** Archives or reopens a case from the case list without touching its file or log. */
+export async function setCaseArchived(
+  vault: Vault,
+  caseId: string,
+  archived: boolean,
+): Promise<void> {
+  await vault.atomic(async () => {
+    const index = await readCaseIndex(vault);
+    if (!index.some((e) => e.id === caseId)) throw new Error("Case not found");
+    await writeCaseIndex(
+      vault,
+      index.map((e) => (e.id === caseId ? { ...e, archived } : e)),
+    );
+  });
 }
 
 async function removeCaseIndexEntry(vault: Vault, caseId: string): Promise<void> {
@@ -268,8 +294,8 @@ export async function saveCaseLog(vault: Vault, log: CaseLog): Promise<void> {
   });
 }
 
-export async function loadCaseLog(vault: Vault): Promise<CaseLog | null> {
-  const caseId = await resolveActiveCaseId(vault);
+export async function loadCaseLog(vault: Vault, requestedCaseId?: string): Promise<CaseLog | null> {
+  const caseId = requestedCaseId ?? (await resolveActiveCaseId(vault));
   if (!caseId) return null;
   const id = await findRecordId(vault, CASE_LOG_NAME, caseId);
   if (!id) return null;
