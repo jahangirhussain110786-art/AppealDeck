@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { FileText } from "lucide-react";
 import { APP } from "@/content/app";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ensureStoragePersistence } from "@/lib/vault/persistence";
 
 type Phase =
   | { kind: "loading" }
@@ -151,6 +152,13 @@ export function VaultGate({
       cancelled = true;
     };
   }, [vault, deviceMode, autoUnlock]);
+
+  // A waiting case sits untouched for weeks; unpersisted IndexedDB can be evicted
+  // in that window and there is no server copy. Ask once per unlocked session.
+  React.useEffect(() => {
+    if (phase.kind !== "unlocked") return;
+    void ensureStoragePersistence();
+  }, [phase.kind]);
 
   React.useEffect(() => {
     if (phase.kind !== "unlocked") return;

@@ -20,6 +20,7 @@ import {
   FolderOpen,
   Upload,
   Shield,
+  HardDrive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getBrowserVault, pushVaultToCloud, pullVaultFromCloud } from "@/lib/vault/browser";
+import { storagePersistenceState, type StoragePersistence } from "@/lib/vault/persistence";
 import { FileDropZone } from "@/components/FileDropZone";
 import { VAULT_ENVELOPE_VERSION } from "@/core/vault/envelope";
 import type { Vault, VaultListItem } from "@/core/vault/vault";
@@ -91,6 +93,7 @@ function evidenceKindLabel(kind: EvidenceKind): string {
 export default function VaultView({ userId }: { userId: string }) {
   const vault = useVault();
   const [gateRevision, setGateRevision] = React.useState(0);
+  const [persistence, setPersistence] = React.useState<StoragePersistence | null>(null);
   const [fileLoading, setFileLoading] = React.useState(true);
   const [fileError, setFileError] = React.useState(false);
   const [items, setItems] = React.useState<VaultListItem[]>([]);
@@ -132,6 +135,17 @@ export default function VaultView({ userId }: { userId: string }) {
     const meta = await vault.rawMeta();
     setKeyMode(meta?.mode.kind ?? null);
   }, [vault]);
+
+  // Report, rather than assume, whether this browser will keep the vault while a case waits.
+  React.useEffect(() => {
+    let cancelled = false;
+    void storagePersistenceState().then((state) => {
+      if (!cancelled) setPersistence(state);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -820,6 +834,28 @@ export default function VaultView({ userId }: { userId: string }) {
                     </Button>
                   )}
                 </div>
+
+                {persistence ? (
+                  <div className="space-y-1.5 rounded-lg border border-border/70 bg-surface-2/50 p-4 text-sm">
+                    <p className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                      <HardDrive className="size-3.5" aria-hidden />
+                      {APP.vault.security.storageLabel}
+                    </p>
+                    <p
+                      className={
+                        persistence === "persisted"
+                          ? "max-w-prose leading-relaxed text-muted-foreground"
+                          : "max-w-prose leading-relaxed text-warning"
+                      }
+                    >
+                      {persistence === "persisted"
+                        ? APP.vault.security.storagePersisted
+                        : persistence === "not-persisted"
+                          ? APP.vault.security.storageNotPersisted
+                          : APP.vault.security.storageUnknown}
+                    </p>
+                  </div>
+                ) : null}
 
                 <DetailDisclosure title={APP.vault.howEncrypted}>
                   <p>

@@ -520,6 +520,13 @@ export const APP = {
       switchSuccess: "Automatic unlock restored",
       switchSuccessDesc: "No passphrase is needed on this device from now on.",
       switchError: "Could not switch to automatic unlock.",
+      storageLabel: "Browser storage",
+      storagePersisted:
+        "This browser has marked your vault as protected, so it is not cleared automatically while you wait for a reply.",
+      storageNotPersisted:
+        "This browser has not marked your vault as protected. It can clear saved data when storage runs low, or after a stretch without visits. Keep a downloaded backup while you wait.",
+      storageUnknown:
+        "This browser does not report whether saved data is protected from automatic clearing. Keep a downloaded backup while you wait.",
     },
     preview: {
       title: "Preview — {name}",

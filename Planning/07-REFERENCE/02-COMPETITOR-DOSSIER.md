@@ -36,7 +36,7 @@
 |---|---|
 | Product | Web app: Suspension Notice Decoder, Appeal Letter Generator, Appeal Strength Scorer (0–100), Response Analyzer, Case Management, 94 violation-category knowledge bases. |
 | Pricing | **Free unlimited notice analysis** · Starter $79.99/mo · Pro $199/mo · Enterprise custom. Token billing: new letter ≈25 tokens, chat ≈5, revision ≈15; top-up $34.99/1K tokens. |
-| Transparency | Publishes a **23% win rate** — transparent and low; it validates our honest-expectations posture and shows the market's real base rate. Never mock it; never counter it with an invented number. |
+| Transparency | **WITHDRAWN — re-verified 21 Sep 2026.** They previously published a **23% win rate**, cited here as the market's real base rate. That number is no longer on the site; the current wording is "No tool can guarantee reinstatement — Amazon's decisions are final," and they position on price instead ("less than 4% of a single professional appeal service"). **Consequence: there is now no published honest base rate anywhere in this market. Do not cite 23% in any copy, and do not replace it with an estimate.** Free tier is now up to 10 notice analyses per day. |
 | Weaknesses | Web-only: no in-page Seller Central presence. Subscription-only. No local-first vault, no deadline tracking, no encrypted case storage. |
 
 **Copyability: MEDIUM.** Their free decoder lane is where our web decoder lands — they own the SEO position today, which is why shipping the web decoder at week 4–5 matters. Their 94-category taxonomy and scoring rubric would take them nowhere new against us; our extension surface and vault have no equivalent in their architecture.
