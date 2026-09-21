@@ -279,7 +279,7 @@ export const FAQ = {
       q: "What does the Appeal Pass add?",
       a: "Response preparation and review for one eligible case, plus encrypted backup support.",
       detail:
-        "The pass is $249 once, with no subscription. Start by reviewing your request. Cases needing professional help do not offer self-serve drafting.",
+        "The pass is $249 once, with no subscription, for one case. It covers every revision of that case — if Amazon replies and you need to prepare another response, that stays part of the same pass, with no extra charge and no time limit. A different case needs its own pass. Start by reviewing your request. Cases needing professional help do not offer self-serve drafting.",
     },
     {
       id: "refund",

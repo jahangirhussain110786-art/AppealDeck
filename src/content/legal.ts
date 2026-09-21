@@ -128,6 +128,7 @@ export const LEGAL = {
         body: [
           "Subject to your compliance, we grant you a limited, non-exclusive, non-transferable right to use the Free decoder and, with an active Appeal Pass, the drafting features.",
           "The Free decoder is available to everyone. Appeal Pass features require a valid licence key and an eligible Amazon notice type.",
+          "One Appeal Pass licence is tied to one case. It covers every revision you prepare for that case, including a response to a later reply from Amazon, with no additional charge and no expiry date. A separate notice or a different case requires its own Appeal Pass.",
         ],
       },
       {
