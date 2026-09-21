@@ -112,7 +112,7 @@ export const PRICING = {
   headline: "Understand your case before you pay.",
   subline:
     "Start with a free notice brief and case workspace. Choose an Appeal Pass when you need to prepare a response for an eligible case.",
-  price: "$199",
+  price: "$249",
   priceNote: "One-time. One case.",
   included: "Included",
   jumpToPurchase: "See pass details",
@@ -256,7 +256,7 @@ export const FAQ = {
       q: "What if Amazon asks for more information?",
       a: "Add the reply in History, then review it as the next request.",
       detail:
-        "You can open a new revision and recheck the evidence. Your earlier submitted wording and file references stay unchanged.",
+        "You can open a new revision and recheck the evidence. Your earlier submitted wording and file references stay unchanged, so you can see exactly what you sent last time before you send anything again.",
     },
     {
       id: "files",
@@ -279,7 +279,7 @@ export const FAQ = {
       q: "What does the Appeal Pass add?",
       a: "Response preparation and review for one eligible case, plus encrypted backup support.",
       detail:
-        "The pass is $199 once, with no subscription. Start by reviewing your request. Cases needing professional help do not offer self-serve drafting.",
+        "The pass is $249 once, with no subscription. Start by reviewing your request. Cases needing professional help do not offer self-serve drafting.",
     },
     {
       id: "refund",

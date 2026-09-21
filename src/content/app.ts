@@ -57,7 +57,7 @@ export const APP = {
     composeGate: {
       title: "Unlock the drafted plan",
       body: "Prepare a response from your saved facts, check for missing information, and back up your vault. You review and submit the final response.",
-      price: "$199, once, for this case",
+      price: "$249, once, for this case",
       activating: "Activating your Appeal Pass. Your case is saved.",
       activatingHint: "This usually takes a few seconds after checkout.",
       stillWaiting:

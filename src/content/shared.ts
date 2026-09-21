@@ -50,9 +50,9 @@ export const SHARED = {
     titleDecode: "Decode your Amazon notice, free — AppealDeck",
     descriptionDecode:
       "Understand the detected issue, stated time windows and next steps. Your notice is analyzed by AppealDeck; nothing is sent to Amazon.",
-    titlePricing: "Appeal Pass — $199 one-time — AppealDeck",
+    titlePricing: "Appeal Pass — $249 one-time — AppealDeck",
     descriptionPricing:
-      "Start with a free case workspace. An Appeal Pass adds response preparation and encrypted backup for one eligible case. $199 once. Read the 7-day refund policy.",
+      "Start with a free case workspace. An Appeal Pass adds response preparation and encrypted backup for one eligible case. $249 once. Read the 7-day refund policy.",
     titleFaq: "FAQ — AppealDeck",
     descriptionFaq:
       "How the decoder works, what the Appeal Pass includes, how your documents are protected, and how refunds work.",

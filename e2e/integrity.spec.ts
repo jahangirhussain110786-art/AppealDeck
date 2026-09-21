@@ -75,5 +75,5 @@ test("guest case survives sign-in and remains private after sign-out", async ({ 
     }),
   );
   await page.goto("/compose");
-  await expect(page.getByText("$199", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("$249", { exact: false }).first()).toBeVisible();
 });

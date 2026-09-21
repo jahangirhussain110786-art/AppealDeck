@@ -31,7 +31,7 @@ for (const path of ["/faq", "/pricing"]) {
     ).toHaveAttribute("href", "/privacy#how-we-use");
 
     await page.getByRole("tab", { name: "Pass & refunds", exact: true }).click();
-    await expect(page.getByText(/The pass is \$199 once, with no subscription/)).toBeVisible();
+    await expect(page.getByText(/The pass is \$249 once, with no subscription/)).toBeVisible();
     await page.getByRole("button", { name: "What is your refund policy?", exact: true }).click();
     await expect(
       page.getByText("You can request a refund within 7 days of purchase.", { exact: true }),
