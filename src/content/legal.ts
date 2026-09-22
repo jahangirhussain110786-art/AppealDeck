@@ -19,7 +19,7 @@ export type LegalDoc = "privacy" | "terms" | "refund";
 export const LEGAL = {
   lastUpdated: {
     privacy: "2026-09-22",
-    terms: "2026-09-10",
+    terms: "2026-09-22",
     refund: "2026-09-11",
   },
   privacy: {
@@ -35,7 +35,7 @@ export const LEGAL = {
           "When you create an account or buy the Appeal Pass, Paddle collects the payment and billing information. We receive a licence record (email, plan, status) via a Paddle webhook.",
           "Evidence contents are encrypted in your browser. If you choose cloud backup, encrypted contents and unencrypted metadata (including file names, tags, types, case references and content hashes) are uploaded to Supabase Storage. A backup passphrase protects the content key; we do not receive that passphrase.",
           "If you turn on email reminders for a case, we store the reminder date you chose, the case type, and an identifier for that case, so we can email you when the date arrives. Nothing else about the case is sent: not your notice, your evidence, your draft, or any note you have written. Turning reminders off for a case deletes that record.",
-          "Before sign-in, interview drafts are encrypted with a secret held for that tab session. Closing the session or clearing browser data can make them unrecoverable. Signing in on that tab transfers the draft into your account vault after it is unlocked, preserving existing cases. Account vaults unlock automatically by default; you can add passphrase protection.",
+          "Before sign-in, your case is encrypted with a secret held for that tab session. Closing the session or clearing browser data can make it unrecoverable. Signing in on that tab transfers the case into your account vault after it is unlocked, preserving existing cases. Account vaults unlock automatically by default; you can add passphrase protection.",
         ],
       },
       {
@@ -44,7 +44,14 @@ export const LEGAL = {
         body: [
           "To recognize you across sessions, keep your licence active, and sync your encrypted vault.",
           "To send you a receipt and account-related email (billing lifecycle). We do not send marketing email by default.",
-          "Workspace response preparation uses your saved wording and document references. Optional AI suggestions and the older interview drafting flow can send relevant notice text and answers to Google Gemini. Drafting never sends your files — only a document check does, and only for the file you asked us to check. AI data handling depends on the provider's applicable terms and service configuration.",
+          /*
+            22 Sep 2026. This paragraph described two things that no longer exist: optional AI
+            field suggestions and the guided-interview drafting flow, both removed the same day
+            with the classic interview. A privacy policy that overstates what leaves the device is
+            not dangerous the way understating would be, but it is inaccurate — and accuracy is
+            the entire basis on which this product asks to be trusted with a supplier invoice.
+          */
+          "Workspace response preparation uses your saved wording and document references. Preparing a response sends your notice text and the wording you wrote to Google Gemini. Drafting never sends your files — only a document check does, and only for the file you asked us to check.",
           "To count usage against Paddle and Upstash free tiers for abuse protection.",
           "To measure how many visitors reach each step of the free decoder and the Appeal Pass, using a cookieless analytics tool (Plausible or Umami) that counts page visits without collecting personal data or setting cross-site identifiers.",
         ],
@@ -68,7 +75,16 @@ export const LEGAL = {
         id: "retention",
         title: "How long we keep it",
         body: [
-          "Decode, response and document-check requests are processed by the app server. These endpoints do not save a separate copy of your case text or of a checked document in the account database — there is no upload store here, and a checked file exists only for the length of that one request. Hosting and optional AI services handle request data under their own retention terms.",
+          "Decode, response and document-check requests are processed by the app server. These endpoints do not save a separate copy of your case text or of a checked document in the account database — there is no upload store here, and a checked file exists only for the length of that one request.",
+          /*
+            22 Sep 2026. Replaces "handle request data under their own retention terms", which was
+            true but told a seller nothing. Both facts are verified against Google's own paid-tier
+            documentation and are worth stating for opposite reasons: the first is the reassuring
+            one, and the second is a real window during which a supplier invoice exists on someone
+            else's servers. Naming it is the point — a seller deciding whether to upload an invoice
+            cannot weigh a retention period we decline to describe.
+          */
+          "What Google does with what we send: on the paid tier we use, Google states it does not use prompts or responses to improve its products, and logs them for up to 55 days solely to detect abuse of its service. If Google changes those terms, this page changes with them.",
           "Licence records (email, plan, status) are kept for as long as needed for billing, entitlement, and accounting.",
           "Your working case and vault contents stay in your browser until you delete them. If you choose cloud backup, an encrypted copy and visible metadata are stored separately; deleting local files does not automatically delete that backup.",
         ],
@@ -114,6 +130,15 @@ export const LEGAL = {
         title: "Basis of the service",
         body: [
           "AppealDeck decodes Amazon suspension notices and drafts a Plan of Action for you to review and submit yourself. We do not log in to Seller Central. We do not submit on your behalf. We do not promise reinstatement.",
+          /*
+            22 Sep 2026. This sentence was written in `legal/terms.md` and in
+            `legal/withdrawal-consent.md`, but `/terms` renders from this file, where it had never
+            been added — so the disclaimer existed in the repository and nowhere a seller could
+            read it. The FTC's 2025 order against DoNotPay turns on claims that software performs
+            like a lawyer, and the standard there is evidence rather than good intentions, which
+            makes saying the opposite plainly the cheapest protection available.
+          */
+          "AppealDeck is software, not a law firm and not a substitute for one. Nothing here is legal advice, and we do not claim that this software performs the work of a lawyer, a consultant or a professional appeal writer. If your situation needs legal judgement, get a qualified professional.",
           "All content is provided as-is, without warranties of any kind. Your use of the service is at your own discretion.",
         ],
       },

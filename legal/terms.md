@@ -4,6 +4,13 @@
      gating, liability cap, a changes clause) in the 11 Sep 2026 full-repo audit — see
      docs/DECISIONS.md. Treat this file as the original authoring record, not the source of
      truth; edit src/content/legal.ts for anything that must actually change. -->
+<!-- CORRECTION added 22 Sep 2026: the "parity" claimed above was not complete. The sentence
+     below stating that AppealDeck is not legal advice was never carried into
+     src/content/legal.ts, so for eleven days it existed here and on no page a seller could
+     read. Found by the legal-boundaries research
+     (docs/handoffs/2026-09-22-legal-boundaries-research.md) and added to the rendered Terms the
+     same day. The lesson is in the banner above: a claim of parity between a draft and the live
+     copy is worth nothing unless someone diffs them. -->
 
 # Terms of Service — AppealDeck
 
