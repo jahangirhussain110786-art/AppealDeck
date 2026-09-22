@@ -388,6 +388,50 @@ v1.0 §14.3–14.4 mentions `minSupportedVersion` and config-driven selectors as
 
 **A note on the §1 index table:** it stops at AM-17 — AM-18 through AM-25 were never added to it. That gap is pre-existing and is left as-is rather than half-corrected by adding a single AM-26 row; the per-amendment sections in §3 remain the authoritative record.
 
+### AM-27 — The extension is paste-only: DOM-harvest and the injector are removed from scope (founder decision, 22 Sep 2026)
+
+**This is not a deviation from D3. It is the branch D3 always named.** D3 reads "paste-mode primary;
+DOM-harvest gated on BSA §19 read; injector last-or-never", and `00-DECISION/03-GATES-AND-KILL-CRITERIA.md`
+pre-agreed the outcome as **K8**: *"any credible reading that DOM-harvest or the injector violates
+the Agent Policy → de-scope to paste-only extension; cancel the injector."* The gate has now been
+answered and the founder has taken that branch. No locked decision is reopened.
+
+**What answered it.** Amazon's Agent Policy took effect **4 March 2026**, and prohibits browser
+automation and Seller Central scraping (`docs/handoffs/2026-09-22-legal-boundaries-research.md` §4).
+DOM-harvest is reading Seller Central's page content programmatically, which is what "scraping"
+describes; the injector writes into that page, which is browser automation. The two gated features
+are the two things the policy names.
+
+**Why it matters more than a feature call.** The Agent Policy binds the **seller**, not the tool.
+The customer is someone whose account is already deactivated and who is trying to get it back — so
+a tool that breaches the agreement they are personally bound by hands a drowning person a heavier
+rock. That is the opposite of what this product is for, and it is the reason this is a removal
+rather than a deferral.
+
+**What changes:** nothing in the codebase — the extension was never started. The two modes are
+struck from the plan so a later session cannot pick them up, in the same way the 19 Sep register
+kept carrying local OCR after the founder had already replaced it with server-side reading.
+
+**What does not change:** **paste-mode remains the primary and now the only extension architecture**,
+exactly as D3 always had it. The seller copies their notice and pastes it, which is what they do on
+the website today. Full functionality, zero page access.
+
+**Two consequences worth recording.**
+
+1. **Check 17 is satisfied, by its own terms.** That hard gate says *"A paste-only build with no
+   DOM-reading features may pass this check by confirming that scope in writing."* This amendment is
+   that confirmation. **B-08** (retrieve the full BSA §19 text from behind a seller login) therefore
+   stops blocking the extension. It remains worth doing for a different reason: it is the one place
+   the legal-boundaries research rests on reporting rather than the source.
+2. **The no-access position becomes an asset, not merely a constraint.** Since 4 March every appeal
+   writer choosing tools has had to ask what each one does to a client's account. AppealDeck's
+   answer is that it has no access at all — it cannot log in, cannot read the page and holds no
+   credentials. AM-26 exists to build a product strong enough to impress a professional; this is
+   one of the strongest single sentences available for that, and building DOM-harvest would have
+   traded it away to save a seller one copy-paste.
+
+**No AA item.** There is nothing to build; the work is deleting two lines from a plan.
+
 ## 4. Facts in v1.0 that are RETIRED (do not repeat anywhere)
 
 | v1.0 statement                                                  | Status                                                                        |
