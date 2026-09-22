@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileDropZone } from "@/components/FileDropZone";
 import { CopyButton } from "@/components/CopyButton";
+import { DocumentCheckPanel } from "@/components/DocumentCheckPanel";
+import type { CheckOutcome } from "@/lib/documentChecks/runCheck";
 import type { Requirement } from "@/core/workspace";
 import type { VaultListItem } from "@/core/vault/vault";
 import { WORKSPACE as C } from "@/content/workspace";
@@ -24,6 +26,9 @@ export function EvidenceReview({
   onRemove,
   onUpload,
   onDownload,
+  checkOutcome,
+  checking,
+  onCheck,
 }: {
   item: Requirement;
   records: VaultListItem[];
@@ -34,6 +39,14 @@ export function EvidenceReview({
   onRemove: (reason: string) => Promise<boolean>;
   onUpload: (file: File) => Promise<boolean>;
   onDownload: (id: string) => void;
+  /**
+   * AA-41 integration fix. Document checking was originally wired only into `EvidenceSlotPanel`,
+   * which mounts in the classic-interview path — so the workspace, the primary journey, could not
+   * reach it at all. Optional so the classic path and the dev gallery are unaffected.
+   */
+  checkOutcome?: CheckOutcome | null;
+  checking?: boolean;
+  onCheck?: () => void;
 }) {
   const [note, setNote] = useState(draftNote ?? item.note);
   const [page, setPage] = useState(String(item.page ?? 1));
@@ -251,6 +264,14 @@ export function EvidenceReview({
             </Button>
           </div>
         </details>
+        {/* AA-41: only offered once a file is actually linked to this requirement. */}
+        {onCheck && item.recordId && (
+          <DocumentCheckPanel
+            outcome={checkOutcome ?? null}
+            busy={Boolean(checking)}
+            onCheck={onCheck}
+          />
+        )}
         {showRequest && (
           <div className="space-y-3 rounded-lg border border-border bg-surface-2 p-4">
             <h3 className="font-medium">Request to the record issuer</h3>

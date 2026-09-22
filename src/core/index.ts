@@ -80,6 +80,16 @@ export { determineResponseType, splitClauses, RESPONSE_TYPE_LABELS };
 export type { ResponseType, ResponseTypeResult, ResponseTypeMatch };
 export { extractEntities, entitiesOfKind, ENTITY_LABELS };
 export type { EntityKind, ExtractedEntity };
+export {
+  buildFactsLedger,
+  entriesFromEntities,
+  entriesFromDocumentCheck,
+  entriesFromSeller,
+  describeSource,
+  describeContradiction,
+  FACT_STATUS_LABELS,
+} from "./factsLedger";
+export type { Fact, FactEntry, FactSource, FactStatus, FactsLedger } from "./factsLedger";
 export { assessNovelty, shouldWarnBeforeSubmit } from "./submissionNovelty";
 export type { NoveltyResult, NoveltyVerdict, PriorSubmission } from "./submissionNovelty";
 export {

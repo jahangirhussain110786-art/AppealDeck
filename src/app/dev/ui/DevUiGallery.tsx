@@ -45,6 +45,8 @@ import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { ClockBriefCard } from "@/components/ClockBriefCard";
 import { DocumentCheckPanel } from "@/components/DocumentCheckPanel";
 import { buildClockBrief, requirementsFor } from "@/core";
+import { FactsLedgerCard } from "@/components/FactsLedgerCard";
+import { buildFactsLedger } from "@/core/factsLedger";
 import { buildDocumentCheck } from "@/core/documentCheck";
 import type { CheckOutcome } from "@/lib/documentChecks/runCheck";
 import { VerifiedStamp } from "@/components/VerifiedStamp";
@@ -620,6 +622,45 @@ export function DevUiGallery() {
             </Badge>
           </div>
         </Card>
+      </Section>
+
+      {/* Facts ledger: built with the real core function so the contradiction path is exercised. */}
+      <Section title="Facts ledger">
+        <div className="grid gap-4 md:grid-cols-2">
+          <FactsLedgerCard
+            ledger={buildFactsLedger([
+              {
+                label: "supplier business name",
+                value: "Acme Trading Ltd",
+                source: { kind: "seller", field: "supplier business name" },
+              },
+              {
+                label: "supplier business name",
+                value: "Acme Ltd",
+                source: { kind: "document", filename: "invoice-acme.pdf", field: "supplier" },
+              },
+              {
+                label: "ASIN",
+                value: "B08N5WRWNW",
+                source: { kind: "notice", quote: "ASIN B08N5WRWNW", start: 0, end: 10 },
+              },
+            ])}
+          />
+          <FactsLedgerCard
+            ledger={buildFactsLedger([
+              {
+                label: "Case ID",
+                value: "8823471905",
+                source: { kind: "notice", quote: "Case ID: 8823471905", start: 0, end: 10 },
+              },
+              {
+                label: "Case ID",
+                value: "8823471905",
+                source: { kind: "seller", field: "Case ID" },
+              },
+            ])}
+          />
+        </div>
       </Section>
 
       {/* AA-41: the document check in each of its shapes. Needs a Pass and a real file in a vault

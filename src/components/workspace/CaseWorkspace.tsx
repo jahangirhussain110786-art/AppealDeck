@@ -25,6 +25,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VaultGate } from "@/components/VaultGate";
 import { VerificationChecklistCard } from "@/components/VerificationChecklistCard";
+import { FactsLedgerCard } from "@/components/FactsLedgerCard";
 import { PageIntro } from "@/components/PageIntro";
 import { InterviewFlow } from "@/components/InterviewFlow";
 import { RequestReview } from "./RequestReview";
@@ -37,8 +38,17 @@ import {
   computeDeadlines,
   serializeDeadlines,
   parseNotice,
+  extractEntities,
+  type EvidenceKind,
   type ViolationKind,
 } from "@/core";
+import {
+  buildFactsLedger,
+  entriesFromEntities,
+  entriesFromSeller,
+  entriesFromDocumentCheck,
+} from "@/core/factsLedger";
+import { runDocumentCheck, type CheckOutcome } from "@/lib/documentChecks/runCheck";
 import {
   addWorkspaceEvent,
   applyWorkspaceReply,
@@ -195,6 +205,9 @@ function WorkspaceInner({
   const [newSource, setNewSource] = useState("");
   const [replyText, setReplyText] = useState("");
   const [dirtyKeys, setDirtyKeys] = useState<Set<string>>(new Set());
+  // AA-41 in the workspace: results keyed by vault record id, in memory only.
+  const [docChecks, setDocChecks] = useState<Record<string, CheckOutcome>>({});
+  const [checkingId, setCheckingId] = useState<string | null>(null);
   const draftTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const draftPending = useRef<Map<string, string | undefined>>(new Map());
   const draftCaseId = useRef<Map<string, string>>(new Map());
@@ -447,6 +460,37 @@ function WorkspaceInner({
       setBusy(false);
     }
   };
+  /**
+   * AA-41. Maps a requirement's linked file to the evidence kind Amazon asks for, so the reading is
+   * checked against the right requirement list. Falls back to `other` rather than refusing — a
+   * seller who linked a file to a requirement we cannot map still deserves a legibility check.
+   */
+  const runCheckFor = async (req: Requirement) => {
+    const recordId = req.recordId;
+    if (!recordId) return;
+    setCheckingId(recordId);
+    try {
+      const { record, bytes } = await vault.get(recordId);
+      const outcome = await runDocumentCheck({
+        kind: fileRef.current?.kind ?? "UNKNOWN",
+        evidenceKind: (record.evidenceKind as EvidenceKind | undefined) ?? "other",
+        bytes,
+        mimeType: record.mimeType || "application/octet-stream",
+      });
+      setDocChecks((prev) => ({ ...prev, [recordId]: outcome }));
+    } catch {
+      setDocChecks((prev) => ({
+        ...prev,
+        [recordId]: {
+          kind: "unavailable",
+          message: "We could not open that file from your vault. Your document is unchanged.",
+        },
+      }));
+    } finally {
+      setCheckingId(null);
+    }
+  };
+
   const download = async (id: string) => {
     try {
       const { record, bytes } = await vault.get(id);
@@ -600,6 +644,29 @@ function WorkspaceInner({
   const w = file.workspace;
   const route = routeWorkspace(w);
   const gated = isSeverityGated(file.kind) || route.protocol === "specialist";
+
+  /**
+   * AA-41/AA-42 carry-forward: the facts ledger.
+   *
+   * Assembled from the three sources that are actually available here — the decoder's entities from
+   * the seller's own notice, the notes the seller wrote against each requirement, and whatever
+   * document checks have been run in this session. Checks stay in memory on purpose (AA-41): a
+   * stale reading shown beside a replaced file would be worse than asking for a re-run.
+   */
+  const ledger = buildFactsLedger([
+    ...entriesFromEntities(extractEntities(w.notice)),
+    ...entriesFromSeller(
+      Object.fromEntries(w.requirements.filter((r) => r.note.trim()).map((r) => [r.label, r.note])),
+    ),
+    ...Object.entries(docChecks).flatMap(([recordId, outcome]) => {
+      if (outcome.kind !== "fields") return [];
+      const filename =
+        w.requirements.find((r) => r.recordId === recordId)?.filename ??
+        records.find((rec) => rec.id === recordId)?.name ??
+        "an uploaded document";
+      return entriesFromDocumentCheck(filename, outcome.result);
+    }),
+  ]);
   const gaps = workspaceGaps(w);
   const next = w.requirements.find((r) => r.status !== "reviewed");
   const awaiting = file.state === "SUBMITTED" && !w.replies.some((r) => !r.applied);
@@ -1029,8 +1096,13 @@ function WorkspaceInner({
                   }
                   onUpload={(f) => upload(r.id, f)}
                   onDownload={(id) => void download(id)}
+                  checkOutcome={r.recordId ? (docChecks[r.recordId] ?? null) : null}
+                  checking={checkingId === r.recordId}
+                  onCheck={r.recordId ? () => void runCheckFor(r) : undefined}
                 />
               ))}
+              {/* The ledger sits after the evidence, because it is the comparison across it. */}
+              <FactsLedgerCard ledger={ledger} />
             </TabsContent>
             <TabsContent forceMount value="response" className="mt-5 data-[state=inactive]:hidden">
               {gated ? (

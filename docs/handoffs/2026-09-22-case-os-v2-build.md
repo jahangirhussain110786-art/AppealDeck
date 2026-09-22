@@ -9,7 +9,7 @@
 
 ## Resume pointer
 
-**Next task: the facts ledger with provenance** (carried forward from AA-41), then the founder sign-offs below. AA-39, AA-40, AA-41, AA-42 and AA-43 are built; AA-41 and AA-42 stay unticked in the amendments file until the ledger lands.
+**AA-39 through AA-43 are complete.** Next is the founder sign-off list at the end of this file, and the two items that always needed a human (migrations, `RESEND_API_KEY`).
 
 ---
 
@@ -181,7 +181,31 @@ Playwright and Lighthouse were **not** run for this paperwork step; no UI change
 
 **Gates:** tsc 0 · lint 0 · lint:copy PASS (caught a banned soft word in one of my own comments again) · format:check 0 · **vitest 720/720 in 73 files** (from 681/70) · build 0, clean `.next`.
 
-**Carried forward, still open:** the **facts ledger with provenance** from AA-41's line. Document reading now produces per-field findings and the manifest records provenance for files, but there is no single ledger of confirmed facts with sources spanning the whole case. **AA-41 and AA-42 both remain unticked in the amendments file** until it lands.
+**Carried forward at the time of the AA-42 commit, since closed** — see the next section.
+
+### Facts ledger with provenance — the last AA-41 carry-forward
+
+**Done 22 Sep 2026.** Verified in a browser.
+
+By this point the product knew things about a case from four separate places — what the seller typed, what the decoder pulled out of the notice, what a document check read off an invoice, and what Amazon said in a reply — held in four different shapes and **never compared**. So it could hold "supplier: Acme Trading Ltd" from the seller's own answer and "supplier business name: Acme Ltd" from the invoice it had itself just read, and say nothing. An appeal whose narrative contradicts its own exhibit is one of the cheapest ways to fail, and it is invisible to the seller precisely because they wrote one half months before uploading the other.
+
+**Built:** `src/core/factsLedger.ts` (pure) with adapters for all three live sources, and `FactsLedgerCard` in the workspace's Evidence tab. Three rules, each enforced by a test:
+
+1. **Every fact carries its source.** A fact with no provenance cannot be entered — that is what makes this a record rather than an opinion.
+2. **A contradiction is reported, never resolved.** `Fact.value` is deliberately **absent** on a contradiction; both values are shown with their sources, and the wording names them and stops. The product has no standing to decide whether the invoice or the seller's memory is right.
+3. **Nothing is inferred.** Matching is whitespace-and-case only, deliberately *not* fuzzy: "Acme Ltd" and "Acme Limited" really are different answers on a legal document, and silently merging them would hide the exact class of error being looked for. A test pins this.
+
+Corroboration counts **distinct source kinds**, so the seller's own answer recorded twice is not two sources.
+
+**Discovered — a real integration gap in my own AA-41 work.** `DocumentCheckPanel` had been wired only into `EvidenceSlotPanel`, which mounts in `NextStepsView` → `ComposeView` — the **classic interview** path. The workspace, which is the primary journey, uses `EvidenceReview` and therefore **could not reach document checking at all**. Found while looking for where the ledger's document facts would come from. Fixed here: `EvidenceReview` gained the panel (optional props, so the classic path and the gallery are untouched) and `CaseWorkspace` now owns the check state and runner. Without this, AA-41's headline capability would have shipped unreachable from the journey most sellers use.
+
+**Boundary stated honestly:** document-check facts are in memory for the session (AA-41's deliberate choice — a stale reading beside a replaced file is worse than a re-run), so a contradiction involving a document appears in the ledger card but is **not** added to `workspaceGaps`. A partial gap check that could not see the most valuable source would be worse than none. The card carries a warning alert where the seller is actually looking.
+
+**Browser verification:** all three states rendered from the real `buildFactsLedger` — a contradiction naming both values and both sources with no agreed value shown, a single-source fact, and a corroborated fact reading "Two sources agree · Read from your Amazon notice · You told us this".
+
+**Gates:** tsc 0 · lint 0 · lint:copy PASS · format:check 0 · **vitest 737/737 in 74 files** (from 720/73) · build 0, clean `.next`.
+
+**AA-41 and AA-42 can now be ticked** in the amendments file — every item named in their lines is built.
 
 ### AA-42 — original scope note
 
