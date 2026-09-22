@@ -1,16 +1,11 @@
 import { z } from "zod";
+import { PROTOCOLS } from "@/core/workspace";
 
 const id = z.string().min(1).max(100);
 const text = z.string().max(12000);
 const noticeText = z.string().max(50000);
-const protocol = z.enum([
-  "documents",
-  "operational",
-  "dispute",
-  "information",
-  "clarification",
-  "specialist",
-]);
+// Derived from core's PROTOCOL_LABELS (AA-39) so a new protocol is accepted here automatically.
+const protocol = z.enum(PROTOCOLS);
 const attachment = z.object({
   recordId: id,
   filename: z.string().min(1).max(500),

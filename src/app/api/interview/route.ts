@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
+import { VIOLATION_KINDS } from "@/core/violationKinds";
 import { createCaseFile, nextStep, applyAnswer, interviewProgress } from "@/core/interviewEngine";
 import type { CaseFile, StepAnswer } from "@/core/interviewEngine";
 import { rateLimitInterview, tooManyRequestsResponse } from "@/lib/ratelimit";
@@ -11,15 +12,8 @@ const MAX_CASEFILE_BYTES = 200_000;
 
 export const dynamic = "force-dynamic";
 
-const ViolationKinds = [
-  "INAUTHENTIC_DOCUMENTS",
-  "RELATED_ACCOUNT",
-  "POLICY",
-  "INTELLECTUAL_PROPERTY",
-  "LISTING",
-  "FUNDS",
-  "UNKNOWN",
-] as const;
+// Derived from core rather than restated, so taxonomy v2 kinds are accepted here (AA-39).
+const ViolationKinds = VIOLATION_KINDS;
 
 const CaseFileSchema = CaseDataSchema;
 

@@ -10,10 +10,21 @@ export interface Classification {
   confidence: Confidence;
 }
 
+/**
+ * First match wins, so this is ordered most-specific to most-generic. POLICY stays last because its
+ * pattern ("violations of our policies") appears inside notices of almost every other family.
+ * AA-39 inserted the four taxonomy-v2 kinds by specificity: PRODUCT_SAFETY high because a safety
+ * notice carries obligations the seller must not miss while reading it as an ordinary policy strike,
+ * PERFORMANCE_METRIC below the conduct kinds because a metric notice often also quotes policy text.
+ */
 const PRIORITY: ReadonlyArray<ViolationKind> = [
   "INAUTHENTIC_DOCUMENTS",
+  "PRODUCT_SAFETY",
   "RELATED_ACCOUNT",
   "INTELLECTUAL_PROPERTY",
+  "RESTRICTED_PRODUCT",
+  "VERIFICATION",
+  "PERFORMANCE_METRIC",
   "LISTING",
   "FUNDS",
   "POLICY",

@@ -75,8 +75,14 @@ describe("/api/compose license + auth gates", () => {
           kind: "UNKNOWN",
           workspace: {
             ...newWorkspace(),
-            notice: "Your account is linked to another account. Please submit the records.",
-            formInstructions: "Upload documents",
+            // AA-39: was a related-account notice, which only counted as "forged" because D6's
+            // gate had drifted to send every related-account case to "specialist". Once that was
+            // narrowed to what D6 actually names, this notice routed to "documents" legitimately
+            // and the test began failing at the license check (403) instead of the route check —
+            // which would have been "fixed" by flipping the expectation, deleting the guarantee
+            // that route validation runs BEFORE the pass is claimed. Rebuilt as a real mismatch.
+            notice: "Please submit a Plan of Action explaining the root cause.",
+            formInstructions: "Corrective actions and prevention",
             confirmed: true,
             protocol: "documents",
           },

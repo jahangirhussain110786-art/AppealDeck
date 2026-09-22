@@ -10,8 +10,12 @@
 **Last updated:** 31 Aug 2026 (draft)
 **Controller:** Jhangir Hussain, trading as "AppealDeck by Hawlton" (individual seller, Pakistan). Contact: hello@appealdeck.app (once the domain is live).
 
-## 1. Our model: local-first by default
-AppealDeck is built local-first. Your pasted Amazon notices, decoded facts, and drafted Plans of Action are stored **in your own browser** (encrypted via the Web Crypto API in IndexedDB) and are **not uploaded to us by default**. We cannot read your case vault.
+> **SUPERSEDED — historical draft, not published.** The privacy notice actually served at `/privacy` is generated from `src/content/legal.ts`, not from this file. This draft was written on 31 Aug 2026 and diverged from the shipped product; it is kept only as a record of the original intent. **Do not treat any statement here as a current product claim, and never "correct" the live page to match this file.** Corrected 22 Sep 2026 (AM-26) — see below.
+
+## 1. Our model: local-first for evidence files
+AppealDeck stores your case file, decoded facts, drafted Plans of Action and uploaded evidence **in your own browser**, encrypted via the Web Crypto API in IndexedDB.
+
+**Correction (22 Sep 2026).** The original wording of this section claimed your notice text was "not uploaded to us by default" and that "we cannot read your case vault." Both were wrong about the shipped product: notice text has always been sent to our server for decoding and response preparation, and on to Google Gemini for AI-assisted drafting — which the live notice at `/privacy` discloses correctly and always has. Under AM-26 the product will additionally read uploaded business documents in order to check them against what Amazon requested; the live notice is updated in the same commit that ships that capability (AA-43 blocks AA-41). What remains true and is not changing: AppealDeck never signs in to Seller Central, never submits anything to Amazon for you, and never sees your vault passphrase.
 
 ## 2. When data leaves your device
 - **Paid POA drafting.** When you purchase an Appeal Pass, the notice text you submit is sent to our backend so we can call Google's Gemini **paid tier** to draft your POA. We never use a free/training tier for customer data. Draft output is returned to you; the submitted text is retained only as long as needed to serve and support your case, then deleted on request.

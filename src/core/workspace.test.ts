@@ -50,10 +50,12 @@ describe("request routing", () => {
       "Upload documents",
       "specialist",
     ],
+    // AA-39: was "clarification" — a dead end for the exact seller this product is for. Verification
+    // is now a route of its own, with its own guidance and evidence requirements.
     [
       "Please complete identity verification by providing government-issued identification.",
       "Upload documents",
-      "clarification",
+      "verification",
     ],
     [
       "Please submit a Plan of Action explaining the root cause.",
@@ -80,10 +82,24 @@ describe("request routing", () => {
       "Upload documents",
       "specialist",
     ],
+    // AA-39: was "specialist". D6 gates fabricated documents, fraud and child safety — it has never
+    // named related accounts. The blanket block was implementation drift (found 21 Sep 2026) and
+    // made the product decline to help a seller whose notice plainly asks for records.
     [
       "Your selling account is linked to another account with an unresolved issue.",
       "Submit documents",
-      "specialist",
+      "documents",
+    ],
+    // AA-39: the three response families that previously had no home at all.
+    [
+      "Please complete the questionnaire below so we can review your account.",
+      "Answer the following questions",
+      "questionnaire",
+    ],
+    [
+      "Please acknowledge that you have read the policy before we continue.",
+      "Confirm that you understand",
+      "acknowledgement",
     ],
   ])(
     "routes observable requests without forcing an appeal: %s",

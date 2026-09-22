@@ -27,7 +27,7 @@ import { DECODE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { APP } from "@/content/app";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
-import type { ViolationKind } from "@/core";
+import { ENTITY_LABELS, type ViolationKind, type ResponseType, type ExtractedEntity } from "@/core";
 import type { DeadlineLike } from "@/components/DeadlineChip";
 
 /** Wire shape of `/api/decode`: `dueAt` arrives as an ISO string, not a `Date`. */
@@ -36,6 +36,15 @@ type DecodeResponse = {
   confidence: "deterministic" | "llm-needed";
   deadlines: DeadlineLike[];
   severityGated: boolean;
+  /** AA-39. Optional on the wire so a cached response from before this shipped still renders. */
+  responseType?: {
+    type: ResponseType;
+    label: string;
+    reason: string;
+    competing: string[];
+    matches: Array<{ quote: string; start: number; end: number }>;
+  };
+  entities?: ExtractedEntity[];
 };
 
 type Status = "empty" | "loading" | "error" | "result";
@@ -143,7 +152,7 @@ export default function DecodeClient() {
           </p>
         </div>
         <div className="flex w-full items-center justify-between gap-3">
-          <LocalFirstBadge processing="server" className="hidden sm:inline-flex" />
+          <LocalFirstBadge className="hidden sm:inline-flex" />
           {status === "result" && (
             <Button type="button" variant="outline" size="sm" onClick={handleReset}>
               {DECODE.decodeAnotherButton}
@@ -282,6 +291,66 @@ function ResultView({
           </CardHeader>
           <CardContent className="space-y-4 pt-5">
             <p className="text-sm leading-relaxed text-muted-foreground">{guidance.summary}</p>
+            {/*
+              AA-39: the decision, placed above the deadlines because it changes what the seller
+              does, not merely when. `UNDETERMINED` is shown as prominently as any other answer —
+              "we could not tell, go and check the form" is a real result, not a failure to hide.
+            */}
+            {result.responseType && (
+              <div className="space-y-2 rounded-lg border border-border bg-surface-2/40 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {DECODE.result.responseTypeTitle}
+                </p>
+                <p className="text-base font-semibold text-foreground">
+                  {result.responseType.label}
+                </p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {result.responseType.reason}
+                </p>
+                {result.responseType.competing.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {DECODE.result.responseTypeAlsoSeen}: {result.responseType.competing.join(", ")}
+                  </p>
+                )}
+                {result.responseType.matches.length > 0 && (
+                  <div className="space-y-1 pt-1">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {DECODE.result.responseTypeSourceTitle}
+                    </p>
+                    {result.responseType.matches.map((m) => (
+                      <blockquote
+                        key={`${m.start}-${m.end}`}
+                        className="border-l-2 border-primary/40 pl-3 text-xs italic text-muted-foreground"
+                      >
+                        {m.quote}
+                      </blockquote>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {result.entities && result.entities.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {DECODE.result.entitiesTitle}
+                </p>
+                <ul className="flex flex-wrap gap-2">
+                  {result.entities.map((e) => (
+                    <li
+                      key={`${e.kind}-${e.start}`}
+                      className="inline-flex items-baseline gap-1.5 rounded-md border border-border bg-surface-2/60 px-2 py-1 text-xs"
+                    >
+                      <span className="text-muted-foreground">{ENTITY_LABELS[e.kind]}</span>
+                      <span className="font-mono tabular-nums text-foreground">{e.value}</span>
+                      {e.ambiguous && (
+                        <span className="text-warning">{DECODE.result.entitiesAmbiguous}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground">{DECODE.result.entitiesNote}</p>
+              </div>
+            )}
             {result.deadlines.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

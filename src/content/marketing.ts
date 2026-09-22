@@ -87,6 +87,15 @@ export const DECODE = {
     errorHint: "Paste the full Amazon notice and try again.",
     whatThisMeans: "What this means",
     startPoaCta: "Open case workspace",
+    // AA-39: the decoder's actual decision. Phrased as what Amazon asked for, never as advice
+    // about what will work — the honest-expectations rule in D6 applies to this block too.
+    responseTypeTitle: "What Amazon is asking for",
+    responseTypeAlsoSeen: "Also found in this notice",
+    responseTypeSourceTitle: "Where we read that",
+    entitiesTitle: "Details we found in your notice",
+    entitiesNote:
+      "Taken word for word from the text you pasted. Check each one before you rely on it.",
+    entitiesAmbiguous: "Date order unclear — check this one",
   },
   /**
    * Annotation-card body copy (AM-22/V5, per Decode.dc.html) — the heading quotes the

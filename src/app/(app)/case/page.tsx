@@ -7,33 +7,16 @@ import { isLicenseActive } from "@/lib/license";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { isViolationKind, type ViolationKind } from "@/core";
 import { InterviewFlow } from "@/components/InterviewFlow";
 import { CasePreview } from "@/components/CasePreview";
 import { APP } from "@/content/app";
 import { CaseWorkspace } from "@/components/workspace/CaseWorkspace";
 
-type ViolationKind =
-  | "INAUTHENTIC_DOCUMENTS"
-  | "RELATED_ACCOUNT"
-  | "POLICY"
-  | "INTELLECTUAL_PROPERTY"
-  | "LISTING"
-  | "FUNDS"
-  | "UNKNOWN";
-
+// AA-39: this page used to restate the kind union and a matching literal array, both of which
+// silently drifted from core. `?kind=VERIFICATION` would have been dropped as invalid.
 function isValidKind(value: string | undefined): value is ViolationKind {
-  return (
-    value !== undefined &&
-    [
-      "INAUTHENTIC_DOCUMENTS",
-      "RELATED_ACCOUNT",
-      "POLICY",
-      "INTELLECTUAL_PROPERTY",
-      "LISTING",
-      "FUNDS",
-      "UNKNOWN",
-    ].includes(value)
-  );
+  return isViolationKind(value);
 }
 
 export default async function CasePage({

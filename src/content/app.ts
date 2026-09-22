@@ -74,6 +74,10 @@ export const APP = {
     INTELLECTUAL_PROPERTY: "Intellectual property",
     LISTING: "Listing violation",
     FUNDS: "Funds hold",
+    VERIFICATION: "Identity or business verification",
+    PERFORMANCE_METRIC: "Account performance metrics",
+    PRODUCT_SAFETY: "Product safety",
+    RESTRICTED_PRODUCT: "Restricted or prohibited product",
     UNKNOWN: "Unknown / other",
   },
   evidenceKinds: {

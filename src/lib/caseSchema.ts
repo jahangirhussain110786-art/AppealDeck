@@ -1,15 +1,10 @@
 import { z } from "zod";
+import { VIOLATION_KINDS } from "@/core/violationKinds";
 import { WorkspaceSchema } from "./workspaceSchema";
 
-export const ViolationKindSchema = z.enum([
-  "INAUTHENTIC_DOCUMENTS",
-  "RELATED_ACCOUNT",
-  "POLICY",
-  "INTELLECTUAL_PROPERTY",
-  "LISTING",
-  "FUNDS",
-  "UNKNOWN",
-]);
+// Derived from core's VIOLATION_KINDS so a new taxonomy member cannot be accepted by the type
+// system while being rejected at the schema boundary (AA-39).
+export const ViolationKindSchema = z.enum(VIOLATION_KINDS);
 export const CaseIdSchema = z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/);
 const EvidenceKindSchema = z.enum([
   "supplier_invoice",

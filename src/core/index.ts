@@ -1,24 +1,31 @@
 export const CORE_VERSION = "0.1.0" as const;
 
-export type ViolationKind =
-  | "INAUTHENTIC_DOCUMENTS"
-  | "RELATED_ACCOUNT"
-  | "POLICY"
-  | "INTELLECTUAL_PROPERTY"
-  | "LISTING"
-  | "FUNDS"
-  | "UNKNOWN";
-
-export const SEVERITY_GATED: ReadonlySet<ViolationKind> = new Set(["INAUTHENTIC_DOCUMENTS"]);
-
-export function isSeverityGated(kind: ViolationKind): boolean {
-  return SEVERITY_GATED.has(kind);
-}
+/**
+ * Taxonomy v2 (AM-26 / AA-39, 22 Sep 2026). The first four members are the original set; the
+ * last four were added because notices in those families had no home — they fell through to
+ * POLICY or UNKNOWN and then to a "please clarify" dead end, which is the behaviour the founder
+ * named. Adding a kind here is deliberately expensive: TypeScript forces every exhaustive map
+ * (KIND_GUIDANCE, EVIDENCE_MATRIX, CASE_STATE_LABEL) to gain a real entry, so a new category
+ * cannot ship without the guidance and evidence requirements that make it useful.
+ */
+// The taxonomy lives in its own module so schema validators can import it without pulling the
+// barrel (see the note at the top of ./violationKinds). Re-exported here to keep `@/core` complete.
+export {
+  VIOLATION_KINDS,
+  isViolationKind,
+  SEVERITY_GATED,
+  isSeverityGated,
+} from "./violationKinds";
+export type { ViolationKind } from "./violationKinds";
 
 import { parseNotice } from "./noticeParser";
 import type { ParsedNotice } from "./noticeParser";
 import { classifyStage1 } from "./classifier";
 import type { Classification } from "./classifier";
+import { determineResponseType, splitClauses, RESPONSE_TYPE_LABELS } from "./responseType";
+import type { ResponseType, ResponseTypeResult, ResponseTypeMatch } from "./responseType";
+import { extractEntities, entitiesOfKind, ENTITY_LABELS } from "./entities";
+import type { EntityKind, ExtractedEntity } from "./entities";
 import { computeDeadlines, isIndefiniteHold, serializeDeadlines } from "./deadlinesModel";
 import type { Deadline } from "./deadlinesModel";
 import { FIXTURES, FIXTURE_KINDS } from "./fixtures";
@@ -69,6 +76,10 @@ export { parseNotice };
 export type { ParsedNotice } from "./noticeParser";
 export { classifyStage1 };
 export type { Classification, Confidence } from "./classifier";
+export { determineResponseType, splitClauses, RESPONSE_TYPE_LABELS };
+export type { ResponseType, ResponseTypeResult, ResponseTypeMatch };
+export { extractEntities, entitiesOfKind, ENTITY_LABELS };
+export type { EntityKind, ExtractedEntity };
 export { computeDeadlines, isIndefiniteHold, serializeDeadlines };
 export type { Deadline, DeadlineKind, DeadlineInput, SerializedDeadline } from "./deadlinesModel";
 export { FIXTURES, FIXTURE_KINDS };
@@ -155,12 +166,25 @@ export interface DecodeOptions {
   noticeReceivedAt: Date;
   deactivatedAt?: Date;
   aha?: boolean;
+  /**
+   * Text of the response form the seller is looking at, when they have it. Often the only place the
+   * actual request appears — the notice says an account was deactivated, the form says what to send.
+   */
+  formInstructions?: string;
 }
 
 export interface DecodeResult {
   parsed: ParsedNotice;
   classification: Classification;
   deadlines: Deadline[];
+  /**
+   * AA-39: what Amazon is asking the seller to DO. Previously absent — the decoder could name the
+   * problem and the deadline but never the required response, which is the decision that actually
+   * determines whether an appeal survives.
+   */
+  responseType: ResponseTypeResult;
+  /** AA-39: identifiers pulled from the notice, each carrying the span it came from. */
+  entities: ExtractedEntity[];
 }
 
 export function runDecode(raw: string, opts: DecodeOptions): DecodeResult {
@@ -173,5 +197,11 @@ export function runDecode(raw: string, opts: DecodeOptions): DecodeResult {
     kind: classification.kind,
     aha: opts.aha,
   });
-  return { parsed, classification, deadlines };
+  return {
+    parsed,
+    classification,
+    deadlines,
+    responseType: determineResponseType(raw, opts.formInstructions ?? ""),
+    entities: extractEntities(raw),
+  };
 }

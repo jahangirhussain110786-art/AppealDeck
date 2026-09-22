@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { runDecode, isSeverityGated } from "@/core";
+import { runDecode, isSeverityGated, RESPONSE_TYPE_LABELS } from "@/core";
 
 export const dynamic = "force-dynamic";
 
@@ -63,5 +63,18 @@ export async function POST(req: NextRequest) {
     // presenting a deadline computed from today's date as the seller's actual deadline.
     deadlines: result.deadlines.map((deadline) => ({ ...deadline, dueAt: null })),
     severityGated: isSeverityGated(result.classification.kind),
+    // AA-39: the decision itself. Without this the free decoder can still only describe a notice,
+    // which is the part Amazon's own Seller Assistant now does for nothing.
+    responseType: {
+      type: result.responseType.type,
+      label: RESPONSE_TYPE_LABELS[result.responseType.type],
+      reason: result.responseType.reason,
+      competing: result.responseType.competing.map((t) => RESPONSE_TYPE_LABELS[t]),
+      // Only the notice's own spans are meaningful to the caller; form-instruction matches carry
+      // -1 offsets because the form text is not what the page is highlighting.
+      matches: result.responseType.matches.filter((m) => m.start >= 0).slice(0, 5),
+    },
+    // Capped so a pathological notice cannot return an unbounded payload.
+    entities: result.entities.slice(0, 60),
   });
 }

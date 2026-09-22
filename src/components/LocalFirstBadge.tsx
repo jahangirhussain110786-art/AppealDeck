@@ -3,16 +3,20 @@
 import { ShieldCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { SITE_URL } from "@/lib/urls";
 
-export function LocalFirstBadge({
-  className,
-  processing = "browser",
-}: {
-  className?: string;
-  processing?: "browser" | "server";
-}) {
-  const host = new URL(SITE_URL).hostname;
+/**
+ * AM-26 (22 Sep 2026): this badge previously had a `processing="browser"` variant reading
+ * "Decoded in your browser. Nothing sent", whose tooltip invited the reader to verify it in
+ * DevTools by observing "zero requests" to our host. That check would have FAILED — decoding has
+ * always been a server round-trip (`/api/decode`). The variant was only ever rendered in the dev
+ * gallery, so no visitor was shown it, but it was a false claim one prop away from a real page and
+ * is removed rather than left as a trap. The remaining text is accurate today and stays accurate
+ * after AA-41 adds document reading, because it is a claim about Amazon, not about our server.
+ *
+ * The file name is kept for import stability; "local-first" now means evidence files stay in the
+ * browser vault, not that processing is local. See AM-26 in the amendments file.
+ */
+export function LocalFirstBadge({ className }: { className?: string }) {
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>
@@ -24,15 +28,12 @@ export function LocalFirstBadge({
             )}
           >
             <ShieldCheck className="h-3.5 w-3.5 text-success" aria-hidden />
-            {processing === "server"
-              ? "Analyzed by AppealDeck. Nothing sent to Amazon"
-              : "Decoded in your browser. Nothing sent"}
+            Analyzed by AppealDeck. Nothing sent to Amazon
           </span>
         </TooltipTrigger>
         <TooltipContent className="max-w-xs text-xs">
-          {processing === "server"
-            ? "Your notice is sent to AppealDeck’s decode endpoint for analysis. This does not send a response or sign in to Seller Central."
-            : `How to verify: open DevTools to the Network tab while decoding. You should see zero requests to ${host}.`}
+          Your notice is sent to AppealDeck’s decode endpoint for analysis. This does not send a
+          response or sign in to Seller Central.
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

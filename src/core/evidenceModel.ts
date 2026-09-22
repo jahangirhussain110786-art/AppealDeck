@@ -178,6 +178,141 @@ const POLICY: EvidenceRequirement[] = [
   },
 ];
 
+// --- Taxonomy v2 (AA-39 / AM-26, 22 Sep 2026) ----------------------------------------------------
+
+const VERIFICATION: EvidenceRequirement[] = [
+  {
+    kind: "identity_doc",
+    required: true,
+    fields: [
+      "full name exactly as registered on the seller account",
+      "registered address matching the account",
+      "expiry date still in the future",
+      "document fully in frame, all four corners visible",
+    ],
+    disqualifiers: [
+      "expired document",
+      "cropped, rotated, or partially obscured scan",
+      "a name or address that differs from the seller account",
+      "any retouching, annotation, or re-typing of the document",
+    ],
+    whyAmazonWantsIt:
+      "Verification checks that the person operating the account is who the account says they are. Amazon compares the document against the registered details, so a mismatch fails even when the document itself is genuine.",
+  },
+  {
+    kind: "sourcing_doc",
+    required: false,
+    fields: ["business registration or utility bill showing the same registered address"],
+    disqualifiers: ["a document issued to a different entity or address"],
+    whyAmazonWantsIt:
+      "A second document from an independent source corroborates the business details when the primary identity document alone is not conclusive.",
+  },
+];
+
+const PERFORMANCE_METRIC: EvidenceRequirement[] = [
+  {
+    kind: "metric_export",
+    required: true,
+    fields: [
+      "the exact metric named in the notice, and its stated figure",
+      "the target figure the notice quotes",
+      "an export of the individual orders inside the measured window",
+      "the identified cause per affected order (carrier, supplier, ASIN, date range)",
+    ],
+    disqualifiers: [
+      "a summary rate without the underlying orders",
+      "an apology or explanation in place of the numbers",
+    ],
+    whyAmazonWantsIt:
+      "A metric notice is arithmetic. Amazon wants to see that you can identify which specific orders produced the number, because that is the only thing that shows the cause is actually understood.",
+  },
+  {
+    kind: "sop_document",
+    required: false,
+    fields: ["the changed operational step", "when the change took effect"],
+    disqualifiers: [
+      "a promise to reach a target figure by a date",
+      "a generic commitment to improve",
+    ],
+    whyAmazonWantsIt:
+      "The rate recovers only as the reporting window rolls forward. Showing the operational change, with the date it started, is what demonstrates the defects have stopped being produced.",
+  },
+];
+
+const PRODUCT_SAFETY: EvidenceRequirement[] = [
+  {
+    kind: "disposal_or_recall_proof",
+    required: true,
+    fields: [
+      "what happened to the affected inventory",
+      "the affected ASIN(s) and quantity",
+      "date the product stopped being sold and shipped",
+    ],
+    disqualifiers: ["a statement of intent without a date or a quantity"],
+    whyAmazonWantsIt:
+      "A safety notice is about the product still in circulation, not only about the listing. Amazon wants to see that the affected units are accounted for.",
+  },
+  {
+    kind: "other",
+    required: true,
+    fields: [
+      "test report or compliance certificate for the product",
+      "the standard or regulation it was tested against",
+      "the issuing laboratory or body",
+    ],
+    disqualifiers: [
+      "a supplier's own assurance with no test document behind it",
+      "a certificate for a different model or variant",
+    ],
+    whyAmazonWantsIt:
+      "Compliance documentation is what distinguishes a product that meets the standard from one that is merely claimed to.",
+  },
+  {
+    kind: "sop_document",
+    required: false,
+    fields: ["the check added before a product of this type is listed again"],
+    disqualifiers: ["generic quality language without a named check"],
+    whyAmazonWantsIt:
+      "It shows the same category of product cannot reach the catalogue again without the compliance step.",
+  },
+];
+
+const RESTRICTED_PRODUCT: EvidenceRequirement[] = [
+  {
+    kind: "listing_fix_proof",
+    required: true,
+    fields: [
+      "the flagged ASIN(s)",
+      "evidence the listing is closed or removed",
+      "the specific restriction the notice cited",
+    ],
+    disqualifiers: [
+      "a listing relisted under a changed title or category",
+      "'we will remove it' without the removal shown",
+    ],
+    whyAmazonWantsIt:
+      "For a restricted item the first question is whether it is still being offered. Amazon wants the listing state, not an intention.",
+  },
+  {
+    kind: "brand_authorization",
+    required: false,
+    fields: [
+      "the approval or category authorization, if the item is restricted rather than banned",
+    ],
+    disqualifiers: ["an approval issued to a different seller account or entity"],
+    whyAmazonWantsIt:
+      "Some categories are sellable with approval. Where you actually hold it, that document is the whole answer; where you do not, saying so plainly is better than arguing.",
+  },
+  {
+    kind: "sop_document",
+    required: false,
+    fields: ["the catalogue check that screens restricted categories before listing"],
+    disqualifiers: ["a commitment to 'check policies' with no named step"],
+    whyAmazonWantsIt:
+      "It addresses the rest of the catalogue, which is the question Amazon asks next.",
+  },
+];
+
 const UNKNOWN: EvidenceRequirement[] = [];
 
 export const EVIDENCE_MATRIX: Readonly<Record<ViolationKind, readonly EvidenceRequirement[]>> = {
@@ -187,6 +322,10 @@ export const EVIDENCE_MATRIX: Readonly<Record<ViolationKind, readonly EvidenceRe
   LISTING: LISTING,
   FUNDS: FUNDS,
   POLICY: POLICY,
+  VERIFICATION: VERIFICATION,
+  PERFORMANCE_METRIC: PERFORMANCE_METRIC,
+  PRODUCT_SAFETY: PRODUCT_SAFETY,
+  RESTRICTED_PRODUCT: RESTRICTED_PRODUCT,
   UNKNOWN: UNKNOWN,
 };
 

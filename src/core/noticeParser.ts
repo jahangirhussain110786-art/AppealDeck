@@ -21,6 +21,27 @@ const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
     "INTELLECTUAL_PROPERTY",
     /intellectual property|trademark|counter[\s-]?notification|rights owner|infringement/i,
   ],
+  // AA-39 taxonomy v2. Each pattern below is deliberately narrow: a false positive here sends a
+  // seller down the wrong response route, which is the exact failure this work exists to stop.
+  [
+    "PRODUCT_SAFETY",
+    /product safety|safety (?:complaint|incident|concern)|product recall|recall(?:ed)? product|recall notice|unsafe product|hazardous (?:material|product|good)/i,
+  ],
+  [
+    "RESTRICTED_PRODUCT",
+    /restricted product|prohibited product|restricted[\s-]?products? policy|not (?:permitted|allowed) (?:for sale|to be sold|on)/i,
+  ],
+  [
+    // Identity/business verification only. Authenticity-of-documents wording is INAUTHENTIC_DOCUMENTS
+    // and is matched above; "INFORM" is never matched as a bare word because Amazon notices routinely
+    // open with "we are writing to inform you".
+    "VERIFICATION",
+    /identity verification|verify your identity|could not verify your identity|video (?:call|interview|verification)|INFORM Consumers Act|INFORM Act|re-?certif(?:y|ication)|certification page|verify your business (?:information|details)|business verification/i,
+  ],
+  [
+    "PERFORMANCE_METRIC",
+    /order defect rate|\bODR\b|late shipment rate|\bLSR\b|valid tracking rate|\bVTR\b|pre-?fulfil?l?ment cancel(?:lation)? rate|cancellation rate|on-?time delivery rate/i,
+  ],
   ["LISTING", /listing[\s-]?(?:policy|violation|removed|closed)|detail[\s-]?page policy/i],
   ["FUNDS", /disbursement|funds? (?:is|are|under) (?:on hold|under review)|disbursement-appeals/i],
   [

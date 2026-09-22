@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { VIOLATION_KINDS } from "@/core/violationKinds";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { rateLimitExtractField, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { callGemini, withGeminiBreaker } from "@/lib/llm/gemini";
@@ -12,17 +13,9 @@ const ExtractFieldBody = z.object({
 });
 
 const ExtractFieldSuggestions = z.object({
-  suggestedKind: z
-    .enum([
-      "INAUTHENTIC_DOCUMENTS",
-      "RELATED_ACCOUNT",
-      "POLICY",
-      "INTELLECTUAL_PROPERTY",
-      "LISTING",
-      "FUNDS",
-      "UNKNOWN",
-    ])
-    .optional(),
+  // Derived from core (AA-39) — both here and in the JSON schema sent to the model below, so the
+  // model is told about a new kind and the validator accepts it in the same change.
+  suggestedKind: z.enum(VIOLATION_KINDS).optional(),
   suggestedSeverity: z.enum(["low", "medium", "high", "critical"]).optional(),
   suggestedTimelineSummary: z.string().max(280).optional(),
 });
@@ -32,15 +25,7 @@ const RESPONSE_JSON_SCHEMA = {
   properties: {
     suggestedKind: {
       type: "string",
-      enum: [
-        "INAUTHENTIC_DOCUMENTS",
-        "RELATED_ACCOUNT",
-        "POLICY",
-        "INTELLECTUAL_PROPERTY",
-        "LISTING",
-        "FUNDS",
-        "UNKNOWN",
-      ],
+      enum: [...VIOLATION_KINDS],
     },
     suggestedSeverity: {
       type: "string",

@@ -64,6 +64,113 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       ],
     },
   },
+  // --- Taxonomy v2 (AA-39 / AM-26, 22 Sep 2026) --------------------------------------------------
+  // These four families previously fell through to POLICY or UNKNOWN and then to a "please clarify"
+  // dead end. Each entry says what the family actually is, what the seller can usefully do, and what
+  // to avoid. The shared four `doNot` lines are repeated verbatim from the other kinds on purpose:
+  // they are the panic-hour mistakes that apply regardless of notice type.
+  VERIFICATION: {
+    title: "Identity or business verification",
+    summary:
+      "Amazon is asking you to prove who you are or that your business details are genuine — an identity document, a video call, or a certification page such as the INFORM Consumers Act re-certification. This is a verification process, not a policy appeal, and a Plan of Action is usually the wrong response to it.",
+    whatToDo: [
+      "Re-read the notice for the exact document or step named, and follow that step rather than writing an appeal.",
+      "Check that the name and address on your documents match your Seller Central account exactly — a mismatch is the most common reason verification fails.",
+      "Make sure any photograph or scan is fully in frame, in focus, and unexpired before you submit it.",
+      "If a video call is required, book the earliest slot you can genuinely attend, and have the original documents physically with you.",
+    ],
+    triage: {
+      doNow: [
+        "Find the exact document or step the notice names before doing anything else.",
+        "Check the spelling of your name and address against your account and your documents.",
+        "Submit the original, unedited document — never a cropped, annotated, or re-typed version.",
+      ],
+      doNot: [
+        "Do not open a new seller account to dodge this action.",
+        "Do not hand over your Seller Central credentials to anyone.",
+        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not pay for reinstatement services that promise an outcome.",
+        "Do not edit, retouch, or re-type a document to make it look tidier — an altered identity document is treated as a forged one.",
+      ],
+    },
+  },
+  PERFORMANCE_METRIC: {
+    title: "Account performance metrics",
+    summary:
+      "A measured rate on your account — order defect rate, late shipment rate, valid tracking rate or cancellation rate — has crossed Amazon's target. This is arithmetic rather than a judgement about your conduct, which means the response is a concrete operational plan, not an argument.",
+    whatToDo: [
+      "Find the exact metric and the exact figure named in the notice, and compare it against the stated target.",
+      "Export the underlying orders so you can see which specific orders caused the number, rather than generalizing.",
+      "Identify the operational cause (a carrier, a supplier, a product, a date range) and say which one it was.",
+      "Describe the change you have already made, and what the metric should look like once it works through the reporting window.",
+    ],
+    triage: {
+      doNow: [
+        "Write down the exact metric and figure from the notice before you write anything else.",
+        "Export the affected orders and look for the pattern — a single carrier or ASIN is a common cause.",
+        "Fix the operational cause first; the metric cannot recover while it is still producing defects.",
+      ],
+      doNot: [
+        "Do not open a new seller account to dodge this action.",
+        "Do not hand over your Seller Central credentials to anyone.",
+        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not pay for reinstatement services that promise an outcome.",
+        "Do not promise a target figure by a specific date — metrics move on a reporting window you do not control.",
+      ],
+    },
+  },
+  PRODUCT_SAFETY: {
+    title: "Product safety",
+    summary:
+      "Amazon has flagged a safety concern, complaint, or recall affecting one of your products. Safety notices carry obligations beyond reinstatement — there may be customers holding the item right now — so the handling of the product matters as much as the response.",
+    whatToDo: [
+      "Stop selling and stop shipping the affected item before you do anything else.",
+      "Establish whether a formal recall, a safety complaint, or a documentation request is involved — they are different processes.",
+      "Gather the compliance paperwork for the product: test reports, certificates, and the supplier's own safety documentation.",
+      "Describe what happens to the affected inventory, and to customers who already received it.",
+    ],
+    severityNote:
+      "Safety matters can carry legal duties outside Amazon, including reporting obligations in some countries. Where a notice involves injury or a formal recall, qualified advice is worth more than a faster appeal.",
+    triage: {
+      doNow: [
+        "Stop selling and shipping the affected product now, before preparing any response.",
+        "Collect the product's compliance documents — test reports, certificates, supplier safety paperwork.",
+        "Decide and state what happens to the remaining inventory.",
+      ],
+      doNot: [
+        "Do not open a new seller account to dodge this action.",
+        "Do not hand over your Seller Central credentials to anyone.",
+        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not pay for reinstatement services that promise an outcome.",
+        "Do not keep the listing active while you appeal — continuing to sell a flagged product undermines everything the response says.",
+      ],
+    },
+  },
+  RESTRICTED_PRODUCT: {
+    title: "Restricted or prohibited product",
+    summary:
+      "A product you listed falls under Amazon's restricted or prohibited categories. The question is usually whether the item is allowed at all, and if so whether you hold the approval required to sell it — which makes this a question of category rules rather than of conduct.",
+    whatToDo: [
+      "Identify the exact ASINs named and the specific restriction the notice cites.",
+      "Establish whether the item is prohibited outright or restricted pending approval — the two have different answers.",
+      "If approval exists and you hold it, gather that documentation; if you do not hold it, say so plainly and remove the listing.",
+      "Check the rest of your catalogue for the same issue before Amazon does.",
+    ],
+    triage: {
+      doNow: [
+        "Remove or close the flagged listings before preparing a response.",
+        "Find the specific restriction named in the notice and read the policy it points to.",
+        "Audit your remaining catalogue for other items under the same restriction.",
+      ],
+      doNot: [
+        "Do not open a new seller account to dodge this action.",
+        "Do not hand over your Seller Central credentials to anyone.",
+        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not pay for reinstatement services that promise an outcome.",
+        "Do not relist the item under a different title or category — that reads as evasion, not a correction.",
+      ],
+    },
+  },
   POLICY: {
     title: "Policy compliance violation",
     summary:

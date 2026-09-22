@@ -88,11 +88,18 @@ describe("/api/checkout/intent eligibility gate", () => {
     expect(insertMock).not.toHaveBeenCalled();
   });
 
+  // AA-39 note: this test previously used a related-account notice, which routed to "specialist"
+  // and so mismatched the claimed "documents". Once D6's gate was narrowed to what D6 actually
+  // names, that notice began routing to "documents" legitimately and the scenario stopped being a
+  // forgery at all — the assertion would have been "fixed" by flipping it to 200, silently gutting
+  // the check. It is rebuilt here as a real mismatch instead: the notice unambiguously asks for a
+  // Plan of Action while the caller claims a document response. The routed protocol is composable,
+  // so this isolates the forgery check rather than re-testing composability (covered above).
   it("rejects a forged protocol the same way /api/compose does", async () => {
     const w = {
       ...newWorkspace(),
-      notice: "Your account is linked to another account. Please submit the records.",
-      formInstructions: "Upload documents",
+      notice: "Please submit a Plan of Action explaining the root cause.",
+      formInstructions: "Corrective actions and prevention",
       confirmed: true,
       protocol: "documents" as const,
     };

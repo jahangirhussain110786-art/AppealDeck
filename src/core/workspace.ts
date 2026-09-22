@@ -1,15 +1,44 @@
 import type { CaseFile } from "./interviewEngine";
 import type { PoaDraft } from "./composer";
+import { determineResponseType } from "./responseType";
+import type { ResponseType } from "./responseType";
 
+/**
+ * AA-39 (AM-26) added `verification`, `questionnaire` and `acknowledgement`. Before that, a notice
+ * asking for any of the three fell through to `clarification` — a dead end that told a seller in a
+ * crisis to go and work it out for themselves. Each new protocol still carries guidance, a
+ * requirement list and a deadline; what differs is whether drafting prose is the right output.
+ */
 export const PROTOCOL_LABELS = {
   documents: "Document response",
   operational: "Operational Plan of Action",
+  questionnaire: "Questionnaire response",
+  acknowledgement: "Acknowledgement",
+  verification: "Identity or business verification",
   dispute: "Disputed allegation",
   information: "Informational update",
   clarification: "Clarification needed",
   specialist: "Professional review",
 } as const;
 export type Protocol = keyof typeof PROTOCOL_LABELS;
+
+/**
+ * Tuple form for schema validators, so adding a protocol above cannot leave `workspaceSchema.ts`
+ * silently rejecting it — the same class of drift AA-39 found across six copies of the kind list.
+ */
+export const PROTOCOLS = Object.keys(PROTOCOL_LABELS) as [Protocol, ...Protocol[]];
+
+/**
+ * Protocols where producing written text is the correct output. `verification` is deliberately
+ * excluded: those requests are answered by submitting a named document or attending a call, and
+ * offering a draft there would encourage a seller to send prose where Amazon wants a passport scan.
+ */
+export const COMPOSABLE_PROTOCOLS: ReadonlyArray<Protocol> = [
+  "documents",
+  "operational",
+  "questionnaire",
+  "acknowledgement",
+];
 export type Requirement = {
   id: string;
   label: string;
@@ -128,29 +157,41 @@ export function routeWorkspace(
         "An earlier confirmed request in this case requires professional review. A later reply does not remove that requirement.",
     };
   const text = `${w.notice}\n${w.formInstructions}`;
+  /**
+   * D6 severity gating, and nothing beyond it. The 21 Sep 2026 commercial review established that
+   * this test had silently grown to cover product safety, related accounts and every intellectual-
+   * property notice — categories D6 never named — which made the product refuse to help the sellers
+   * it was built for. D6 gates exactly three things: fabricated documents, fraud, and child safety.
+   * Widening this again requires a founder decision and an amendment, not a regex edit.
+   */
   if (
-    /\b(forged|falsified|fabricated|manipulated|altered|inauthentic)\s+(documents?|invoices?)|\b(fraud|child safety|product safety|recall|related account|linked to another account|intellectual property|trademark infringement|copyright infringement)\b/i.test(
+    /\b(forged|falsified|fabricated|manipulated|altered)\s+(documents?|invoices?)|\b(fraud|child safety)\b/i.test(
       text,
     )
   )
     return {
       protocol: "specialist",
-      reason: "The notice includes a sensitive allegation that needs professional review.",
+      reason:
+        "The notice alleges fabricated documents, fraud, or a child-safety matter. We do not prepare responses to these, because getting one wrong carries consequences a draft cannot undo — this needs qualified help.",
     };
   if (w.marketplace !== "US")
     return {
       protocol: "clarification",
       reason: "This workspace currently supports English-language Amazon US requests.",
     };
+  /**
+   * Verification now has a home of its own. It used to land in `clarification` with an instruction
+   * to go and read Seller Central, which is the dead end AM-26 point 2 exists to remove.
+   */
   if (
-    /\b(identity verification|video (?:call|interview)|government.issued (?:ID|identification)|funds? (?:disbursement|withheld))\b/i.test(
+    /\b(identity verification|verify your identity|video (?:call|interview)|government.issued (?:ID|identification)|INFORM Consumers Act|re-?certif(?:y|ication))\b/i.test(
       text,
     )
   )
     return {
-      protocol: "clarification",
+      protocol: "verification",
       reason:
-        "This request needs a verification or specialist process outside the supported response routes. Follow the current instructions in Seller Central.",
+        "This is a verification request, not a policy appeal. Amazon wants to confirm who you are or that your business details are genuine, so the answer is the specific document or step it names — a Plan of Action is the wrong response here and can delay things.",
     };
   if (w.position === "dispute")
     return {
@@ -166,59 +207,39 @@ export function routeWorkspace(
           ? "Add the full notice and what the current response page asks you to provide."
           : "Add what the current response page asks you to provide to confirm the route.",
     };
-  const clauses = text
-    .split(/\n|(?<=[.!?])\s+/)
-    .filter((s) => !/\b(do not|don't|not required|no need to)\b/i.test(s));
-  const requested = clauses.join("\n");
-  const operational =
-    /\b(provide|submit|send|explain|describe)\b[^\n.!?]{0,180}\b(plan of action|root cause|corrective actions)\b/i.test(
-      requested,
-    ) ||
-    w.formInstructions
-      .split(/\n|(?<=[.!?])\s+/)
-      .some(
-        (s) =>
-          !/\b(do not|don't|not required|previous|earlier)\b/i.test(s) &&
-          /\b(plan of action|root cause|corrective actions)\b/i.test(s),
-      );
-  const documents =
-    /\b(provide|submit|upload|send|include|request(?:ed|ing)?)\b[^\n.!?]{0,180}\b(invoice|document|record|proof|certificate|sales report|order report|metrics? report|letter of authorization|authori[sz]ation letter|listing screenshot)s?\b/i.test(
-      requested,
-    );
-  const informational =
-    /\b(no (?:further|additional) (?:information|action|documents?).{0,30}(?:required|requested|needed)|(?:still|remains?|currently) under review)\b/i.test(
-      text,
-    );
-  if (informational && !documents && !operational)
-    return {
-      protocol: "information",
-      reason:
-        "The update indicates review is ongoing or requests no further action. Confirm this against the case page.",
-    };
-  if (operational)
-    return {
-      protocol: "operational",
-      reason:
-        "The supplied instructions explicitly mention a Plan of Action or its operational sections.",
-    };
-  if (documents)
-    return {
-      protocol: "documents",
-      reason: "The supplied instructions explicitly request supporting records.",
-    };
-  return {
-    protocol: "clarification",
-    reason:
-      "The requested response is unclear. Check the exact form or contact Account Health support before preparing a response.",
-  };
+  /**
+   * AA-39: the route is now decided by `determineResponseType`, the same function `/decode` uses,
+   * rather than by a second set of regexes maintained here. Two copies of this logic had already
+   * drifted apart, which meant the free decoder and the workspace could tell one seller two
+   * different things about the same notice.
+   */
+  const decision = determineResponseType(w.notice, w.formInstructions);
+  return { protocol: PROTOCOL_FOR_RESPONSE_TYPE[decision.type], reason: decision.reason };
 }
+
+/** Heading used for the seller's written answer, per protocol. `operational` is handled separately
+ * because it is the only one with three distinct sections. */
+const RESPONSE_HEADING: Partial<Record<Protocol, string>> = {
+  documents: "Response to the document request",
+  questionnaire: "Answers to Amazon's questions",
+  acknowledgement: "Your acknowledgement",
+};
+
+const PROTOCOL_FOR_RESPONSE_TYPE: Record<ResponseType, Protocol> = {
+  PLAN_OF_ACTION: "operational",
+  SUPPORTING_DOCUMENTS: "documents",
+  QUESTIONNAIRE: "questionnaire",
+  ACKNOWLEDGEMENT: "acknowledgement",
+  NO_ACTION_REQUESTED: "information",
+  UNDETERMINED: "clarification",
+};
 
 export function workspaceGaps(w: Workspace): string[] {
   const gaps: string[] = [];
   const route = routeWorkspace(w);
   if (!w.confirmed || route.protocol !== w.protocol)
     gaps.push("Confirm the requested route against the notice and form.");
-  if (!["documents", "operational"].includes(route.protocol)) gaps.push(route.reason);
+  if (!COMPOSABLE_PROTOCOLS.includes(route.protocol)) gaps.push(route.reason);
   if (!w.requirementsConfirmed)
     gaps.push("Confirm that the list covers every item requested by the notice and form.");
   if (w.protocol === "documents" && !w.requirements.length)
@@ -255,7 +276,7 @@ export function workspaceGaps(w: Workspace): string[] {
 
 export function workspaceCanCompose(w: Workspace): boolean {
   return (
-    ["documents", "operational"].includes(routeWorkspace(w).protocol) &&
+    COMPOSABLE_PROTOCOLS.includes(routeWorkspace(w).protocol) &&
     w.confirmed &&
     routeWorkspace(w).protocol === w.protocol
   );
@@ -267,6 +288,8 @@ export function composeWorkspace(
 ): PoaDraft {
   const w = file.workspace;
   const gaps = workspaceGaps(w);
+  // AA-39: each composable protocol gets its own heading. A questionnaire answered under a heading
+  // that says "response to the document request" reads as though the seller misunderstood the ask.
   const sections =
     w.protocol === "operational"
       ? [
@@ -274,7 +297,7 @@ export function composeWorkspace(
           { heading: "Corrective Actions", body: w.correctiveActions },
           { heading: "Preventive Measures", body: w.preventiveMeasures },
         ]
-      : [{ heading: "Response to the document request", body: w.explanation }];
+      : [{ heading: RESPONSE_HEADING[w.protocol] ?? "Your response", body: w.explanation }];
   sections.push({
     heading: "Supporting records",
     body:

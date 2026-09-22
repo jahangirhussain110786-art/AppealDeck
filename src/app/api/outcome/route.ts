@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { VIOLATION_KINDS } from "@/core/violationKinds";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
 import { rateLimitOutcome, tooManyRequestsResponse } from "@/lib/ratelimit";
@@ -13,15 +14,9 @@ export const dynamic = "force-dynamic";
 // abuse guard (a real customer, rate-limited); the row written contains nothing that identifies
 // who sent it.
 const OutcomeBody = z.object({
-  kind: z.enum([
-    "FUNDS",
-    "INAUTHENTIC_DOCUMENTS",
-    "INTELLECTUAL_PROPERTY",
-    "LISTING",
-    "POLICY",
-    "RELATED_ACCOUNT",
-    "UNKNOWN",
-  ]),
+  // Derived from core so a taxonomy-v2 case can still report its outcome (AA-39). The kind is a
+  // coarse category and carries nothing identifying, which is why it is safe to store.
+  kind: z.enum(VIOLATION_KINDS),
   marketplace: z.string().trim().min(1).max(40).default("unknown"),
   docType: z.enum(["poa", "ip_dispute", "funds_appeal", "listing_appeal", "followup_nudge"]),
   attempts: z.number().int().min(1).max(20),
