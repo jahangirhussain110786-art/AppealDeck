@@ -169,7 +169,10 @@ export const PRICING = {
     },
     vault: {
       label: "Encrypted on your device",
-      desc: "Encrypted storage with optional passphrase protection.",
+      // AA-43: the label is about storage and remains true — files are stored encrypted in the
+      // browser. The description now says plainly when one leaves, so "on your device" cannot be
+      // read as "never goes anywhere" once document checking exists.
+      desc: "Encrypted storage with optional passphrase protection. A file is sent for checking only when you ask us to check it.",
     },
     refund: {
       label: "7-day refund",

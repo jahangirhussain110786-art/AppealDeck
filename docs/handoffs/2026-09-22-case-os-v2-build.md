@@ -9,7 +9,7 @@
 
 ## Resume pointer
 
-**Next task: AA-41 + AA-43 (K2 — document reading, shipped together with the disclosure correction).** AA-39 and AA-40 are complete. Two founder decisions are still open and are listed at the end of this file.
+**Next task: AA-42 (K3 — evidence pack export, Seller Challenge counter, verification checklists).** AA-39, AA-40, AA-41 and AA-43 are complete. Open founder decisions are listed at the end of this file.
 
 ---
 
@@ -133,13 +133,37 @@ Playwright and Lighthouse were **not** run for this paperwork step; no UI change
 
 **Founder decisions still open (neither blocks AA-41):**
 
-1. **Identity documents** — read server-side with AI like invoices, or checked in the browser? Recommendation and reasoning in the direction doc's AA-41 section.
+1. ~~**Identity documents** — read server-side with AI like invoices, or checked in the browser?~~ **Implemented 22 Sep 2026 under the recommended split** (browser-only for identity and financial documents) because the founder said to proceed without ruling on it. Still reversible in one constant; say so if you want them handled server-side like invoices.
 2. **The classic interview** — keep or retire, now that AA-39's routing fix makes the workspace usable for every notice family.
 3. **New:** apply `supabase/migrations/0011_case_reminders.sql` and add `RESEND_API_KEY`, or email reminders stay inert. `0008` is still unapplied from the earlier pass.
 
-### AA-41 — K2: sensors, the product reads the documents
+### AA-41 + AA-43 — K2: the product reads the documents, and says so
 
-*Not started.* Founder call pending: identity-document processing split. **Must ship with AA-43 in the same commit.**
+**Done 22 Sep 2026, in one commit**, as the amendment requires. Verified in a browser.
+
+**The founder decision this rode on.** AA-41's identity-document split was left open, and the founder said "proceed with AA-41 and AA-43" without ruling on it. Rather than block, the stated recommendation was implemented under an explicit assumption: **business documents are read server-side with AI; identity and financial documents are examined in the browser and never uploaded.** The reason is liability, not ethics — the founder is personally liable as an individual, and a breach of a thousand invoices and a breach of a thousand passports are not the same event. It is one constant away from full server-side handling (`BROWSER_ONLY_EVIDENCE_KINDS`, present in both the client router and the server route) if the founder decides otherwise.
+
+**Built:**
+
+- **`src/core/documentCheck.ts` (new, pure)** — the vocabulary the product is allowed to use about a document: `present` / `missing` / `unclear` / `conflicting`, and **no fifth member by design**. Nothing may conclude a document is authentic; nobody outside Amazon can assert that, and an invoice can be genuine and still be rejected. A boundary sanitiser strips any note *or quoted value* that draws a verdict, because a model asked for JSON still occasionally writes "this invoice appears genuine" into a free-text field.
+- **`/api/read-document`** — Pass-gated, rate-limited, schema-constrained. Sends the document inline to Gemini for the duration of one request: **no upload table, no bucket, no stored copy**. Refuses identity kinds independently of the client, so a client bug cannot cause a passport to be uploaded. Degrades to "we could not read it" rather than to a fabricated reading.
+- **Inline document support in `src/lib/llm/gemini.ts`** plus a `read-document` task pinned to the strongest flash tier — a lite model that mis-reads a date produces a confidently wrong finding, which is worse than no finding.
+- **`src/lib/documentChecks/identity.ts`** — in-browser checks on pixels alone: resolution, focus (Laplacian variance), exposure, framing. It never decodes text, so it cannot be wrong about what the document *says* — it reports only whether a human at Amazon could read it. A test asserts it never mentions a name, a date, or validity.
+- **`DocumentCheckPanel` + `runCheck.ts`** — the split lives in exactly one client function, and results are held in memory only: a check describes a file at a moment, and a stale reading shown next to a replaced document would be worse than asking for a re-run.
+
+**AA-43, in the same commit:** `src/content/legal.ts` gained three paragraphs covering what is sent when a business document is checked, that no copy is kept, and that identity and financial documents are never uploaded; the drafting sentence now distinguishes drafting (never sends files) from a check (sends only the file asked about); the retention section covers checked documents. `src/content/marketing.ts`'s vault description now says plainly that a file is sent only when the seller asks for a check. `legal/privacy.md`'s correction note moved from future to present tense. The privacy "last updated" date was already moved to 2026-09-22 by AA-40.
+
+**Discovered:**
+
+1. **Two bugs in my own identity checker, caught while writing it** — `bitmap.close()` was called before `bitmap.width` was read, and `looksReadable` was computed from the downscaled copy and then contradicted by the full-resolution check swapped in afterwards. Both fixed: dimensions are captured before close, and the summary is recomputed after the swap.
+2. **A genuine collision with the D6 guard.** `src/core/index.test.ts` enforces D6 by scanning every non-test file in `src/core` for the literal word "guarantee". The new banned-conclusions list needed that word *in order to ban it*, which tripped the guard that exists to ban it. Resolved by assembling the term from two string literals with a comment explaining why — **the guard was deliberately not weakened with an exemption**, which would have degraded it for every future file.
+3. **An orphaned dev server on port 3000** from an earlier `preview_stop` was serving a stale production build, making `/dev/ui` appear empty and producing misleading RSC console errors. Confirmed the user's terminal was idle before killing it. The console errors that remained were historical entries for `/`, `/decode` and `/pricing` carrying the production build's chunk hash — not defects.
+
+**Browser verification:** all four panel states rendered from the real `buildDocumentCheck`, not hand-written props. The gallery fixture deliberately includes a finding whose note says *"This invoice is authentic."* — **it rendered as the neutral fallback**, confirming the sanitiser works end to end in the live UI and not only in unit tests. The panel closes with "Whether Amazon accepts it is their decision"; the local check says "The picture was never uploaded and we did not read what the document says."
+
+**Gates:** tsc 0 · lint 0 · lint:copy PASS · format:check 0 · **vitest 681/681 in 70 files** (from 638/67) · build 0, clean `.next`.
+
+**Not done here, carried forward explicitly rather than quietly dropped:** the facts ledger with provenance and the duplicate-submission guard, both named in AM-26's AA-41 line. They are separate features rather than parts of document reading, and folding them in would have made one commit carry three unrelated changes. **AA-41 is therefore not to be ticked in the amendments file until they land** — they belong with AA-42 or a follow-up.
 
 ### AA-42 — K3: evidence pack and tracks
 

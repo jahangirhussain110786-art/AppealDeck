@@ -22,6 +22,8 @@ import { getBrowserVault } from "@/lib/vault/browser";
 import type { EvidenceKind, ViolationKind } from "@/core";
 import { requirementsFor, allKinds, lettersForEvidenceKind } from "@/core";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
+import { runDocumentCheck, type CheckOutcome } from "@/lib/documentChecks/runCheck";
+import { DocumentCheckPanel } from "@/components/DocumentCheckPanel";
 import { APP } from "@/content/app";
 
 export interface EvidenceSlotState {
@@ -106,6 +108,45 @@ export function EvidenceSlotPanel({
   priorityKinds?: EvidenceKind[];
 }) {
   const { slots, unlocked, busy, refresh, onUpload, required } = useEvidenceSlots(kind, vault);
+
+  /**
+   * AA-41. Results are keyed by vault record id and held in memory only — a check describes a file
+   * at a moment in time, and persisting a stale reading next to a document the seller has since
+   * replaced would be worse than asking them to run it again.
+   */
+  const [checks, setChecks] = React.useState<Record<string, CheckOutcome>>({});
+  const [checking, setChecking] = React.useState<string | null>(null);
+
+  // The hook resolves the same fallback; resolving it once here keeps `check` independent of
+  // whether a shared vault was passed in.
+  const activeVault = React.useMemo(() => vault ?? getBrowserVault(), [vault]);
+
+  const check = React.useCallback(
+    async (recordId: string, evidenceKind: EvidenceKind) => {
+      setChecking(recordId);
+      try {
+        const { record, bytes } = await activeVault.get(recordId);
+        const outcome = await runDocumentCheck({
+          kind,
+          evidenceKind,
+          bytes,
+          mimeType: record.mimeType || "application/octet-stream",
+        });
+        setChecks((prev) => ({ ...prev, [recordId]: outcome }));
+      } catch {
+        setChecks((prev) => ({
+          ...prev,
+          [recordId]: {
+            kind: "unavailable",
+            message: "We could not open that file from your vault. Your document is unchanged.",
+          },
+        }));
+      } finally {
+        setChecking(null);
+      }
+    },
+    [activeVault, kind],
+  );
   const [letterDialogKind, setLetterDialogKind] = React.useState<EvidenceKind | null>(null);
   const letterTemplate = letterDialogKind ? lettersForEvidenceKind(letterDialogKind)[0] : undefined;
 
@@ -208,6 +249,16 @@ export function EvidenceSlotPanel({
                     disabled={busy}
                     onPick={(file) => onUpload(req.kind, file)}
                   />
+                )}
+                {/* AA-41: reading the file is only offered once there is a file to read. */}
+                {present && slot?.vaultRecordId && (
+                  <div className="mt-3 w-full">
+                    <DocumentCheckPanel
+                      outcome={checks[slot.vaultRecordId] ?? null}
+                      busy={checking === slot.vaultRecordId}
+                      onCheck={() => void check(slot.vaultRecordId!, req.kind)}
+                    />
+                  </div>
                 )}
               </li>
             );

@@ -104,6 +104,24 @@ export const APP = {
     openVault: "Open the vault",
     priorityBadge: "Amazon asked for this in their reply",
     requestTemplate: "Get a request template",
+    /**
+     * AA-41. Every string here describes the document and stops. None of them may say a file is
+     * authentic, valid or acceptable — that is Amazon's call and nobody else's, and the check
+     * model enforces the same rule on anything the AI writes.
+     */
+    check: {
+      action: "Check this document",
+      checking: "Reading your document…",
+      resultTitle: "What we could read",
+      serverNote:
+        "This file was sent to be read against what Amazon asked for, and no copy was kept.",
+      localNote:
+        "Checked on this device. The picture was never uploaded and we did not read what the document says.",
+      localTitle: "How the picture looks",
+      recheck: "Check again",
+      noVerdict: "This describes your document only. Whether Amazon accepts it is their decision.",
+      failed: "Could not check that document",
+    },
     requestDialog: {
       description:
         "AppealDeck never sends anything on your behalf. Copy this, fill in the brackets, and send it yourself.",

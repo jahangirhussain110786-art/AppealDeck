@@ -29,7 +29,9 @@ export const LEGAL = {
         id: "what-we-collect",
         title: "What we collect",
         body: [
-          "When you decode a notice, its text is sent to AppealDeck for analysis. Preparing a response sends your case text and document references to AppealDeck. Original evidence files are not uploaded for these actions.",
+          "When you decode a notice, its text is sent to AppealDeck for analysis. Preparing a response sends your case text and document references to AppealDeck. Uploading a file does not, by itself, send it anywhere.",
+          "If you ask us to check a business document — an invoice, an authorization letter, a sales report, a listing screenshot or a certificate — that document is sent to AppealDeck and on to Google Gemini, so its contents can be read against what Amazon asked you for. It is used for that one request and we do not keep a copy. This happens only when you ask for a check on that specific file.",
+          "Identity and financial documents are treated differently. Passports, national identity cards, driving licences and bank statements are never uploaded for checking. Those are examined on your own device, in your browser, and we look only at whether the picture is large enough, sharp enough, well lit and fully in frame — we do not read what the document says.",
           "When you create an account or buy the Appeal Pass, Paddle collects the payment and billing information. We receive a licence record (email, plan, status) via a Paddle webhook.",
           "Evidence contents are encrypted in your browser. If you choose cloud backup, encrypted contents and unencrypted metadata (including file names, tags, types, case references and content hashes) are uploaded to Supabase Storage. A backup passphrase protects the content key; we do not receive that passphrase.",
           "If you turn on email reminders for a case, we store the reminder date you chose, the case type, and an identifier for that case, so we can email you when the date arrives. Nothing else about the case is sent: not your notice, your evidence, your draft, or any note you have written. Turning reminders off for a case deletes that record.",
@@ -42,7 +44,7 @@ export const LEGAL = {
         body: [
           "To recognize you across sessions, keep your licence active, and sync your encrypted vault.",
           "To send you a receipt and account-related email (billing lifecycle). We do not send marketing email by default.",
-          "Workspace response preparation uses your saved wording and document references. Optional AI suggestions and the older interview drafting flow can send relevant notice text and answers to Google Gemini. Original evidence files are not sent for drafting. AI data handling depends on the provider's applicable terms and service configuration.",
+          "Workspace response preparation uses your saved wording and document references. Optional AI suggestions and the older interview drafting flow can send relevant notice text and answers to Google Gemini. Drafting never sends your files — only a document check does, and only for the file you asked us to check. AI data handling depends on the provider's applicable terms and service configuration.",
           "To count usage against Paddle and Upstash free tiers for abuse protection.",
           "To measure how many visitors reach each step of the free decoder and the Appeal Pass, using a cookieless analytics tool (Plausible or Umami) that counts page visits without collecting personal data or setting cross-site identifiers.",
         ],
@@ -66,7 +68,7 @@ export const LEGAL = {
         id: "retention",
         title: "How long we keep it",
         body: [
-          "Decode and response requests are processed by the app server. These endpoints do not save a separate copy of your case text in the account database. Hosting and optional AI services handle request data under their own retention terms.",
+          "Decode, response and document-check requests are processed by the app server. These endpoints do not save a separate copy of your case text or of a checked document in the account database — there is no upload store here, and a checked file exists only for the length of that one request. Hosting and optional AI services handle request data under their own retention terms.",
           "Licence records (email, plan, status) are kept for as long as needed for billing, entitlement, and accounting.",
           "Your working case and vault contents stay in your browser until you delete them. If you choose cloud backup, an encrypted copy and visible metadata are stored separately; deleting local files does not automatically delete that backup.",
         ],

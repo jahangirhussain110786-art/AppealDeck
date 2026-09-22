@@ -43,7 +43,10 @@ import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { DeadlineChipList } from "@/components/DeadlineChip";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { ClockBriefCard } from "@/components/ClockBriefCard";
-import { buildClockBrief } from "@/core";
+import { DocumentCheckPanel } from "@/components/DocumentCheckPanel";
+import { buildClockBrief, requirementsFor } from "@/core";
+import { buildDocumentCheck } from "@/core/documentCheck";
+import type { CheckOutcome } from "@/lib/documentChecks/runCheck";
 import { VerifiedStamp } from "@/components/VerifiedStamp";
 import { Stepper } from "@/components/Stepper";
 import { Logo, LogoMark } from "@/components/Logo";
@@ -619,6 +622,24 @@ export function DevUiGallery() {
         </Card>
       </Section>
 
+      {/* AA-41: the document check in each of its shapes. Needs a Pass and a real file in a vault
+          to exercise for real, so this is where the rendering is reviewed without credentials. */}
+      <Section title="Document check (AA-41)">
+        <div className="grid gap-4 md:grid-cols-2">
+          <DocumentCheckPanel busy={false} onCheck={() => {}} outcome={demoFieldsOutcome()} />
+          <DocumentCheckPanel busy={false} onCheck={() => {}} outcome={demoImageOutcome()} />
+          <DocumentCheckPanel
+            busy={false}
+            onCheck={() => {}}
+            outcome={{
+              kind: "unavailable",
+              message: "We could not reach the checker. Your document and your case are unchanged.",
+            }}
+          />
+          <DocumentCheckPanel busy onCheck={() => {}} outcome={null} />
+        </div>
+      </Section>
+
       {/* AA-40: the clock brief in each of its four states. The dashboard needs a signed-in vault,
           so this is where the card is reviewed without credentials. */}
       <Section title="Clock brief (AA-40)">
@@ -631,6 +652,71 @@ export function DevUiGallery() {
       </Section>
     </main>
   );
+}
+
+/** Uses the real `buildDocumentCheck`, so the gallery exercises the sanitiser rather than bypassing
+ * it — note the deliberately non-compliant note on the second finding. */
+function demoFieldsOutcome(): CheckOutcome {
+  const fields = requirementsFor("INAUTHENTIC_DOCUMENTS").find(
+    (r) => r.kind === "supplier_invoice",
+  )!.fields;
+  return {
+    kind: "fields",
+    result: buildDocumentCheck("INAUTHENTIC_DOCUMENTS", "supplier_invoice", [
+      {
+        field: fields[0]!,
+        status: "present",
+        observed: "Acme Trading Ltd",
+        note: "The supplier business name is printed at the top of page 1.",
+      },
+      {
+        field: fields[2]!,
+        status: "missing",
+        note: "This invoice is authentic.",
+      },
+      {
+        field: fields[3]!,
+        status: "unclear",
+        note: "The date is partly cut off at the edge of the scan.",
+      },
+    ]),
+  };
+}
+
+function demoImageOutcome(): CheckOutcome {
+  return {
+    kind: "image",
+    report: {
+      looksReadable: false,
+      checks: [
+        {
+          id: "resolution",
+          status: "ok",
+          label: "Size",
+          detail: "2048 by 1536 pixels — large enough for small print to stay legible.",
+        },
+        {
+          id: "sharpness",
+          status: "warn",
+          label: "Focus",
+          detail:
+            "The image looks soft or out of focus. Rest the document on a flat surface and retake it.",
+        },
+        {
+          id: "exposure",
+          status: "ok",
+          label: "Lighting",
+          detail: "Lighting looks even enough to read.",
+        },
+        {
+          id: "framing",
+          status: "ok",
+          label: "Framing",
+          detail: "All four edges appear to be inside the frame.",
+        },
+      ],
+    },
+  };
 }
 
 /** Builds a brief from day offsets, using the real core function rather than hand-written props. */

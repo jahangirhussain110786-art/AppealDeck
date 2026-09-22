@@ -18,13 +18,22 @@ const MAX_OUTPUT_TOKENS = 512;
  * code changes. The default model covers anything not in the table.
  */
 export type LlmTask =
-  "extract-field" | "critique-poa" | "phrase-engine-output" | "triage-router" | "draft-poa-section";
+  | "extract-field"
+  | "critique-poa"
+  | "phrase-engine-output"
+  | "triage-router"
+  | "draft-poa-section"
+  | "read-document";
 
 const TASK_MODELS: Record<LlmTask, string> = {
   "extract-field": "gemini-3.5-flash",
   "critique-poa": "gemini-3.5-flash",
   "phrase-engine-output": "gemini-3.5-flash-lite",
   "triage-router": "gemini-flash-lite-latest",
+  // AA-41: reading a scanned invoice is the hardest perception task in the product — a lite model
+  // that mis-reads a date or a supplier name produces a confidently wrong finding, which is worse
+  // than no finding at all. Deliberately the strongest flash tier.
+  "read-document": "gemini-3.5-flash",
   // A real generation task (full sections of prose), not a cheap classify/extract call —
   // deliberately the strongest flash tier available, not the lite models above.
   "draft-poa-section": "gemini-3.5-flash",
@@ -47,9 +56,26 @@ export function getGeminiModel(task?: LlmTask): string {
 
 export type GeminiRole = "system" | "user" | "model";
 
+/**
+ * AA-41: a document the model should read, sent inline rather than uploaded to a file store.
+ *
+ * Inline means the bytes exist only for the duration of one request — we never hold a copy, which
+ * is the smallest footprint that still lets the model see an invoice. Size is capped by the caller
+ * (`/api/read-document`), because base64 inflates by a third and a large scan would otherwise be
+ * rejected by the upstream with an unhelpful error.
+ */
+export type GeminiInlineDocument = {
+  /** Base64 without the `data:` prefix. */
+  data: string;
+  /** e.g. "application/pdf", "image/jpeg", "image/png". */
+  mimeType: string;
+};
+
 export type GeminiMessage = {
   role: GeminiRole;
   text: string;
+  /** Attached to this message as additional parts. Only meaningful on a `user` message. */
+  documents?: GeminiInlineDocument[];
 };
 
 export type GeminiCallInput = {
@@ -128,7 +154,17 @@ export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResu
   const system = input.messages.find((m) => m.role === "system");
   const contents = input.messages
     .filter((m) => m.role !== "system")
-    .map((m) => ({ role: m.role === "model" ? "model" : "user", parts: [{ text: m.text }] }));
+    .map((m) => ({
+      role: m.role === "model" ? "model" : "user",
+      // AA-41: the text part stays first so the instruction is read before the document, which is
+      // what the model's own prompting guidance recommends for document questions.
+      parts: [
+        { text: m.text },
+        ...(m.documents ?? []).map((d) => ({
+          inlineData: { mimeType: d.mimeType, data: d.data },
+        })),
+      ],
+    }));
 
   const generationConfig: Record<string, unknown> = {
     temperature: input.temperature ?? 0.2,

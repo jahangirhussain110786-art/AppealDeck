@@ -1,0 +1,218 @@
+/**
+ * AA-41 (AM-26): the product reads the seller's uploaded document.
+ *
+ * Founder direction, 22 Sep 2026: _"we are not selling the vault, we are selling solution... to
+ * help them we need to read their files, we need to get help via API AI, wherever needed."_
+ *
+ * TWO THINGS THIS ROUTE WILL NOT DO, both deliberate:
+ *
+ * 1. **It will not accept an identity document.** Passports, national ID cards, driving licences
+ *    and bank statements are refused here and checked in the browser instead
+ *    (`src/lib/documentChecks/identity.ts`). The reason is liability, not ethics: the founder is
+ *    personally liable as an individual in Pakistan, and a breach of a thousand invoices and a
+ *    breach of a thousand passports are not the same event. Nobody needs a language model to tell
+ *    a seller their passport photo is blurry. This is the AI assistant's recommendation under
+ *    AM-26 / AA-41, adopted because the founder said to proceed without ruling on it — it is one
+ *    constant away from server-side handling if they decide otherwise.
+ * 2. **It will not store the document.** The bytes exist for the duration of one request. There is
+ *    no upload table, no bucket, and no `sent_at` row — nothing here writes the document anywhere.
+ *
+ * Disclosure for both lives in `src/content/legal.ts`, updated in the same commit (AA-43).
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
+import { isLicenseActive } from "@/lib/license";
+import { rateLimitExtractField, tooManyRequestsResponse } from "@/lib/ratelimit";
+import { callGemini, withGeminiBreaker } from "@/lib/llm/gemini";
+import { VIOLATION_KINDS } from "@/core/violationKinds";
+import { buildDocumentCheck, type FieldFinding } from "@/core/documentCheck";
+import { requirementsFor } from "@/core/evidenceModel";
+
+export const dynamic = "force-dynamic";
+
+/**
+ * Handled in the browser, never sent here. Kept as data rather than a comment so the refusal is
+ * testable and cannot drift away from the client's routing.
+ */
+export const BROWSER_ONLY_EVIDENCE_KINDS = ["identity_doc", "financial_instrument_doc"] as const;
+
+/** Base64 inflates by ~33%, so this is roughly a 7 MB original — comfortably above a scanned
+ * multi-page invoice and well below the point where the upstream rejects the request. */
+const MAX_BASE64_BYTES = 9_500_000;
+
+const ACCEPTED_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
+
+const Body = z.object({
+  kind: z.enum(VIOLATION_KINDS),
+  evidenceKind: z.string().min(1).max(64),
+  mimeType: z.enum(ACCEPTED_MIME),
+  /** Base64 without the data: prefix. */
+  data: z.string().min(1).max(MAX_BASE64_BYTES),
+});
+
+const FindingSchema = z.object({
+  field: z.string().min(1).max(200),
+  status: z.enum(["present", "missing", "unclear", "conflicting"]),
+  observed: z.string().max(500).optional(),
+  note: z.string().max(500),
+});
+
+const ModelResponse = z.object({ findings: z.array(FindingSchema).max(40) });
+
+const RESPONSE_JSON_SCHEMA = {
+  type: "object",
+  properties: {
+    findings: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          field: { type: "string" },
+          status: { type: "string", enum: ["present", "missing", "unclear", "conflicting"] },
+          observed: { type: "string" },
+          note: { type: "string" },
+        },
+        required: ["field", "status", "note"],
+      },
+    },
+  },
+  required: ["findings"],
+} as const;
+
+const SYSTEM_PROMPT = [
+  "You read a business document an Amazon seller has uploaded and report, field by field, what is legible in it.",
+  "",
+  "You are NOT judging the document. You must never state or imply that a document is authentic, genuine, valid, verified, fake or forged — nobody outside Amazon can determine that, and a seller acting on such a claim would be harmed by it. Report only what you can see.",
+  "",
+  "For each field you are given:",
+  "- 'present' — the field is legible and answers the requirement. Quote what you read in 'observed'.",
+  "- 'missing' — the field is genuinely not in the document.",
+  "- 'unclear' — something is there but you cannot read it, or it is ambiguous. Use this rather than guessing.",
+  "- 'conflicting' — two parts of the document disagree with each other.",
+  "",
+  "Never invent a value. If you cannot quote it from the document, the status is 'unclear', not 'present'.",
+  "Write each note as one plain sentence describing the document. Never predict whether Amazon will accept it.",
+].join("\n");
+
+export async function handleReadDocument(req: NextRequest): Promise<Response> {
+  const user = await getApiUser();
+  if (!user) return unauthorizedJsonResponse();
+
+  // Reading documents is Appeal Pass work: it is the expensive, high-value part of preparing a
+  // response, and it runs a paid model against a whole file.
+  if (!(await isLicenseActive(user.id))) {
+    return NextResponse.json(
+      { error: "An Appeal Pass is required to check documents." },
+      { status: 402 },
+    );
+  }
+
+  const rate = await rateLimitExtractField(user);
+  if (!rate.success) return tooManyRequestsResponse(rate);
+
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  const parsed = Body.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid body." },
+      { status: 400 },
+    );
+  }
+
+  const { kind, evidenceKind, mimeType, data } = parsed.data;
+
+  if ((BROWSER_ONLY_EVIDENCE_KINDS as readonly string[]).includes(evidenceKind)) {
+    return NextResponse.json(
+      {
+        error:
+          "Identity and financial documents are checked on your own device and are never uploaded.",
+        browserOnly: true,
+      },
+      { status: 422 },
+    );
+  }
+
+  const requirement = requirementsFor(kind).find((r) => r.kind === evidenceKind);
+  if (!requirement) {
+    return NextResponse.json(
+      { error: "That document type is not one Amazon asks for on this case." },
+      { status: 400 },
+    );
+  }
+
+  const result = await callGemini({
+    task: "read-document",
+    messages: [
+      { role: "system", text: SYSTEM_PROMPT },
+      {
+        role: "user",
+        text: [
+          `Document type: ${requirement.kind}.`,
+          "Report on exactly these fields, using the field names verbatim:",
+          ...requirement.fields.map((f) => `- ${f}`),
+          "",
+          "Return JSON only.",
+        ].join("\n"),
+        documents: [{ data, mimeType }],
+      },
+    ],
+    temperature: 0,
+    maxOutputTokens: 2048,
+    responseJsonSchema: RESPONSE_JSON_SCHEMA,
+  });
+
+  if (!result.ok) {
+    // Degrades to "we could not read it", never to a fabricated reading. The seller's own manual
+    // review of the requirement list still works exactly as before.
+    return NextResponse.json(
+      {
+        ok: false,
+        reason: "unavailable",
+        message:
+          result.reason === "not_configured"
+            ? "Document reading is not switched on."
+            : "We could not read that document. Nothing about your case has changed.",
+      },
+      { status: 200 },
+    );
+  }
+
+  let json: unknown;
+  try {
+    const text = result.text.trim();
+    json = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
+  } catch {
+    return NextResponse.json(
+      { ok: false, reason: "unavailable", message: "We could not read that document." },
+      { status: 200 },
+    );
+  }
+
+  const validated = ModelResponse.safeParse(json);
+  if (!validated.success) {
+    return NextResponse.json(
+      { ok: false, reason: "unavailable", message: "We could not read that document." },
+      { status: 200 },
+    );
+  }
+
+  // `buildDocumentCheck` is what enforces the vocabulary: it strips any note or quote that draws a
+  // conclusion, and re-adds requirements the model omitted as `missing`.
+  const check = buildDocumentCheck(
+    kind,
+    evidenceKind as never,
+    validated.data.findings as FieldFinding[],
+  );
+
+  return NextResponse.json({ ok: true, check });
+}
+
+export const POST = withGeminiBreaker(handleReadDocument);
