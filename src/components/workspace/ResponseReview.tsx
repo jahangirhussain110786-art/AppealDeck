@@ -1,4 +1,5 @@
 "use client";
+import * as React from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, FileCheck2, FilePenLine, CircleDot } from "lucide-react";
@@ -15,6 +16,8 @@ import { workspaceCanCompose, workspaceGaps, type Workspace } from "@/core/works
 import type { CaseFile } from "@/core/interviewEngine";
 import type { Vault } from "@/core/vault/vault";
 import type { CriticResult, PoaDraft } from "@/core/composer";
+import { assessNovelty, shouldWarnBeforeSubmit } from "@/core/submissionNovelty";
+import { formatDate } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
 
 export type WorkspaceResponse = { rendered: string; draft: PoaDraft; critique: CriticResult };
@@ -56,6 +59,11 @@ export function ResponseReview({
   const [reviewed, setReviewed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [receipt, setReceipt] = useState("");
+  // AA-42: compares the rendered response against everything already recorded on this case.
+  const novelty = React.useMemo(
+    () => (result ? assessNovelty(result.rendered, w.submissions) : null),
+    [result, w.submissions],
+  );
   useEffect(() => {
     setReviewed(false);
     setSubmitted(false);
@@ -259,6 +267,31 @@ export function ResponseReview({
               Download the linked originals from Evidence and attach them individually as the
               response form requires. Copying does not record a submission.
             </p>
+            {/*
+              AA-42: the duplicate-submission guard, placed where the seller is about to record a
+              submission rather than buried in a checklist. It warns and explains; it never
+              disables the button, because there are real cases where resending is correct and the
+              decision is the seller's.
+            */}
+            {novelty && shouldWarnBeforeSubmit(novelty) && (
+              <Alert variant="warning">
+                <AlertTitle>This looks like what you already sent</AlertTitle>
+                <AlertDescription>
+                  {novelty.message}
+                  {novelty.comparedTo && (
+                    <span className="mt-2 block text-xs">
+                      Compared against the response you recorded on{" "}
+                      {formatDate(novelty.comparedTo.at)} · {Math.round(novelty.similarity * 100)}%
+                      of this draft appeared there already
+                      {novelty.addedSentences > 0
+                        ? ` · ${novelty.addedSentences} new sentence${novelty.addedSentences === 1 ? "" : "s"}`
+                        : ""}
+                      .
+                    </span>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
             {result.draft.mode.mode === "full-draft" &&
               result.critique.passed &&
               gaps.length === 0 && (

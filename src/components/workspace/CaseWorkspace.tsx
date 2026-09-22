@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VaultGate } from "@/components/VaultGate";
+import { VerificationChecklistCard } from "@/components/VerificationChecklistCard";
 import { PageIntro } from "@/components/PageIntro";
 import { InterviewFlow } from "@/components/InterviewFlow";
 import { RequestReview } from "./RequestReview";
@@ -57,6 +58,7 @@ import { withCaseEvidence } from "@/lib/caseEvidence";
 import { loadCaseFile, saveCaseFile, loadCaseLog, saveCaseLog } from "@/lib/caseStore";
 import { WorkspaceSchema } from "@/lib/workspaceSchema";
 import { buildCaseExport } from "@/lib/workspaceExport";
+import { buildEvidenceManifest, manifestFilename } from "@/lib/evidencePack";
 import {
   evidenceNoteKey,
   HISTORY_REPLY_KEY,
@@ -71,6 +73,20 @@ import { importDecodedNotice } from "@/lib/importDecodedNotice";
 import type { Vault, VaultListItem } from "@/core/vault/vault";
 import { formatDate } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
+
+/**
+ * Shared by the two text downloads below — one blob-URL lifecycle rather than two copies of it.
+ * Named `downloadText` because `download` is already taken inside the component for fetching an
+ * original file out of the vault.
+ */
+function downloadText(text: string, filename: string): void {
+  const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 function Loading() {
   return (
@@ -1022,6 +1038,14 @@ function WorkspaceInner({
                   <AlertTitle>Professional review needed</AlertTitle>
                   <AlertDescription>{C.unsupported}</AlertDescription>
                 </Alert>
+              ) : route.protocol === "verification" ? (
+                /*
+                  AA-42: a verification case gets a preparation checklist instead of a drafting
+                  surface. Before AA-39 these landed in "please clarify" with nothing at all; giving
+                  them a composer would be worse still, because it would invite a seller to write an
+                  appeal when Amazon asked for a passport.
+                */
+                <VerificationChecklistCard notice={`${w.notice}\n${w.formInstructions}`} />
               ) : (
                 <ResponseReview
                   key={`${file.id}-${w.revision}-${w.explanation}-${w.correctiveActions}-${w.preventiveMeasures}`}
@@ -1264,21 +1288,56 @@ function WorkspaceInner({
                       </ol>
                     </DetailDisclosure>
                   )}
-                  <Button
-                    className="mt-5"
-                    variant="outline"
-                    onClick={() => {
-                      const text = buildCaseExport(file, w);
-                      const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = "appealdeck-case-notes.txt";
-                      a.click();
-                      setTimeout(() => URL.revokeObjectURL(url), 1000);
-                    }}
-                  >
-                    Download case notes
-                  </Button>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        downloadText(buildCaseExport(file, w), "appealdeck-case-notes.txt")
+                      }
+                    >
+                      Download case notes
+                    </Button>
+                    {/*
+                      AA-42: the manifest is the independent record — every file with its content
+                      hash, and the hash captured at the moment each attachment was sent. It is what
+                      lets a seller prove months later that the file they still hold is the file
+                      they sent, which is the one thing Amazon's own tooling will never give them.
+                    */}
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        void (async () => {
+                          try {
+                            const records = (await vault.list({ caseId: file.id })).filter(
+                              (r) => r.kind !== "case",
+                            );
+                            downloadText(
+                              buildEvidenceManifest({
+                                file,
+                                workspace: w,
+                                records: records.map((r) => ({
+                                  filename: r.name,
+                                  mimeType: r.mimeType,
+                                  sizeBytes: r.sizeBytes,
+                                  contentHash: r.plaintextHash,
+                                  addedAt: r.createdAt,
+                                  answers: w.requirements.find((q) => q.recordId === r.id)?.label,
+                                  page: w.requirements.find((q) => q.recordId === r.id)?.page,
+                                })),
+                              }),
+                              manifestFilename(file.id),
+                            );
+                          } catch {
+                            setError(
+                              "Could not build the manifest. Your case and files are unchanged.",
+                            );
+                          }
+                        })()
+                      }
+                    >
+                      Download evidence manifest
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

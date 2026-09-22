@@ -9,7 +9,7 @@
 
 ## Resume pointer
 
-**Next task: AA-42 (K3 — evidence pack export, Seller Challenge counter, verification checklists).** AA-39, AA-40, AA-41 and AA-43 are complete. Open founder decisions are listed at the end of this file.
+**Next task: the facts ledger with provenance** (carried forward from AA-41), then the founder sign-offs below. AA-39, AA-40, AA-41, AA-42 and AA-43 are built; AA-41 and AA-42 stay unticked in the amendments file until the ledger lands.
 
 ---
 
@@ -165,7 +165,25 @@ Playwright and Lighthouse were **not** run for this paperwork step; no UI change
 
 **Not done here, carried forward explicitly rather than quietly dropped:** the facts ledger with provenance and the duplicate-submission guard, both named in AM-26's AA-41 line. They are separate features rather than parts of document reading, and folding them in would have made one commit carry three unrelated changes. **AA-41 is therefore not to be ticked in the amendments file until they land** — they belong with AA-42 or a follow-up.
 
-### AA-42 — K3: evidence pack and tracks
+### AA-42 — K3: evidence pack and tracks (plus the two AA-41 carry-forwards)
+
+**Done 22 Sep 2026.**
+
+**Built:**
+
+- **`src/core/submissionNovelty.ts` (new, pure)** — the duplicate-submission guard, and the piece with the most direct harm-reduction value in this pass. `noveltyRequired(attemptCount)` had been telling sellers a resubmission "needs new information" **without ever looking at the text**, so pasting the identical appeal back in passed the check. It now compares, reports how much of the draft already appeared and what changed, and surfaces as a warning in `ResponseReview` exactly where the seller is about to record a submission. **It never disables the button** — there are real cases where resending is correct, and the decision is the seller's.
+- **`src/lib/evidencePack.ts` (new)** — the evidence manifest: every file with its size, type, date and **content hash**, the requirement each one answers, and the hash captured *at the moment each attachment was sent*. This is the independent record the 21 Sep commercial review identified as the only durable differentiator — it lets a seller prove months later that the file they still hold is the file they sent, which Amazon's own tooling will never give them. Plain text, no archive dependency: the seller already has their files; what was missing was the index.
+- **`src/core/verificationTrack.ts` (new, pure) + `VerificationChecklistCard`** — the verification track now gets a preparation checklist instead of a drafting surface, because verification has nothing to draft. It reads the flavour (document / video call / INFORM / unspecified) from the seller's own notice, orders steps cheapest-first, and marks the ones that cause most failures. `unspecified` says "go and check the response page" rather than inventing steps.
+
+**The design correction worth recording.** The novelty comparison's first version used a Dice coefficient and got two realistic cases wrong — it rated a four-sentence appeal plus one added line as a "revision", and a genuine rewrite sharing two sentences as "new". A symmetric measure answers "how alike are these two texts", which is not the seller's question. The seller's question is **"how much of what I am about to send did I already send"**, so the measure is now asymmetric: the share of the *draft's* sentences that already appeared. That also correctly flags a short response whose every sentence is lifted from a longer earlier one — a case the symmetric score rated as barely similar.
+
+**Deliberately NOT built: the Seller Challenge token counter.** It is named in AA-42's line, and skipping it is a judgement, not an oversight. A counter would have to be self-reported — Amazon does not tell us how many challenges a seller has used, and the rules (3 per 180 days, AHA only, listing-level, a successful challenge frees the slot, a failed one replenishes after six months) mean a stale or mistaken count is worse than none. Showing "you have 2 left" as though it were authoritative, for something only Amazon can know, is exactly the class of invented certainty D6 rejects, and it is the same failure mode as the approval-odds feature that was rejected on 19 Sep. The rules themselves are already surfaced honestly in the deadline label (`deadlinesModel.ts`), which is what a seller actually needs. **Reopen only with a founder decision** about presenting self-reported counts.
+
+**Gates:** tsc 0 · lint 0 · lint:copy PASS (caught a banned soft word in one of my own comments again) · format:check 0 · **vitest 720/720 in 73 files** (from 681/70) · build 0, clean `.next`.
+
+**Carried forward, still open:** the **facts ledger with provenance** from AA-41's line. Document reading now produces per-field findings and the manifest records provenance for files, but there is no single ledger of confirmed facts with sources spanning the whole case. **AA-41 and AA-42 both remain unticked in the amendments file** until it lands.
+
+### AA-42 — original scope note
 
 *Not started.*
 

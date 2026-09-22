@@ -12,6 +12,11 @@ import {
   READINESS_COPY,
 } from "@/core";
 import type { CaseFileData, EvidenceKind } from "@/core";
+import {
+  assessNovelty,
+  shouldWarnBeforeSubmit,
+  type PriorSubmission,
+} from "@/core/submissionNovelty";
 import { APP } from "@/content/app";
 
 interface ChecklistItem {
@@ -29,6 +34,12 @@ interface BeforeYouSubmitChecklistProps {
   draftText: string;
   /** Whether the critic passed the draft. */
   allChecked: boolean;
+  /**
+   * AA-42: everything already sent on this case. When supplied, the novelty row stops being a
+   * reminder keyed on the attempt number and becomes a real comparison of the words. Optional so
+   * existing call sites that have no submission history keep working unchanged.
+   */
+  priorSubmissions?: readonly PriorSubmission[];
 }
 
 function fill(template: string, vars: Record<string, string | number>): string {
@@ -51,6 +62,7 @@ export function BeforeYouSubmitChecklist({
   attemptCount,
   draftText,
   allChecked,
+  priorSubmissions,
 }: BeforeYouSubmitChecklistProps) {
   const copy = APP.compose.checklist;
 
@@ -59,7 +71,16 @@ export function BeforeYouSubmitChecklist({
   const notAccepted = readiness.disqualifiedPresent.map(evidenceLabel);
   const evidenceComplete = missing.length === 0 && notAccepted.length === 0;
   const templatePhrases = hasTemplatePhrases(draftText);
-  const needsNovelty = noveltyRequired(attemptCount);
+  /**
+   * AA-42. With history we compare the actual words; without it we fall back to the old
+   * attempt-count reminder. The comparison is strictly better when available: a seller who changed
+   * nothing but the formatting used to pass this row, because the counter alone was satisfied.
+   */
+  const novelty =
+    priorSubmissions && priorSubmissions.length > 0
+      ? assessNovelty(draftText, priorSubmissions)
+      : null;
+  const needsNovelty = novelty ? shouldWarnBeforeSubmit(novelty) : noveltyRequired(attemptCount);
 
   const evidenceDetail = evidenceComplete
     ? fill(copy.evidenceComplete, { count: requiredKinds(caseFile.kind).length })
@@ -90,7 +111,13 @@ export function BeforeYouSubmitChecklist({
       id: "novelty",
       label: fill(copy.items.novelty, { n: attemptCount + 1 }),
       checked: !needsNovelty,
-      detail: needsNovelty ? expectationsCopy("REVISION") : copy.noveltyFirst,
+      // The comparison's own message explains what it found and what to do about it, which is more
+      // use than the generic revision copy — so it wins whenever a comparison was possible.
+      detail: novelty
+        ? novelty.message
+        : needsNovelty
+          ? expectationsCopy("REVISION")
+          : copy.noveltyFirst,
     },
     {
       id: "submit_yourself",

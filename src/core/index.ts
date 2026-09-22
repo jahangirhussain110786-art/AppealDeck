@@ -80,6 +80,22 @@ export { determineResponseType, splitClauses, RESPONSE_TYPE_LABELS };
 export type { ResponseType, ResponseTypeResult, ResponseTypeMatch };
 export { extractEntities, entitiesOfKind, ENTITY_LABELS };
 export type { EntityKind, ExtractedEntity };
+export { assessNovelty, shouldWarnBeforeSubmit } from "./submissionNovelty";
+export type { NoveltyResult, NoveltyVerdict, PriorSubmission } from "./submissionNovelty";
+export {
+  verificationChecklist,
+  verificationFlavour,
+  VERIFICATION_FLAVOUR_LABELS,
+} from "./verificationTrack";
+export type { VerificationFlavour, VerificationStep } from "./verificationTrack";
+export {
+  buildDocumentCheck,
+  summarizeCheck,
+  sanitizeNote,
+  containsBannedConclusion,
+  FINDING_LABELS,
+} from "./documentCheck";
+export type { DocumentCheckResult, FieldFinding, FindingStatus } from "./documentCheck";
 export {
   buildClockBrief,
   clockItemsForCase,
