@@ -12,7 +12,7 @@ export type RateLimitResult = {
 let _compose: Ratelimit | null = null;
 let _interview: Ratelimit | null = null;
 let _analyzeReply: Ratelimit | null = null;
-let _extractField: Ratelimit | null = null;
+let _documentRead: Ratelimit | null = null;
 let _outcome: Ratelimit | null = null;
 
 function hasUpstashEnv(): boolean {
@@ -70,21 +70,21 @@ function getAnalyzeReplyLimiter(): Ratelimit | null {
   return _analyzeReply;
 }
 
-function getExtractFieldLimiter(): Ratelimit | null {
+function getDocumentReadLimiter(): Ratelimit | null {
   if (!hasUpstashEnv()) return null;
-  if (!_extractField) {
+  if (!_documentRead) {
     const redis = new Redis({
       url: process.env.UPSTASH_REDIS_REST_URL!,
       token: process.env.UPSTASH_REDIS_REST_TOKEN!,
     });
-    _extractField = new Ratelimit({
+    _documentRead = new Ratelimit({
       redis,
       limiter: Ratelimit.fixedWindow(20, "1 d"),
       analytics: true,
-      prefix: "ratelimit:extract-field",
+      prefix: "ratelimit:read-document",
     });
   }
-  return _extractField;
+  return _documentRead;
 }
 
 function getOutcomeLimiter(): Ratelimit | null {
@@ -186,8 +186,8 @@ export async function rateLimitOutcome(user: AppUser): Promise<RateLimitResult> 
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
 
-export async function rateLimitExtractField(user: AppUser): Promise<RateLimitResult> {
-  const limiter = getExtractFieldLimiter();
+export async function rateLimitDocumentRead(user: AppUser): Promise<RateLimitResult> {
+  const limiter = getDocumentReadLimiter();
   if (!limiter) {
     return {
       success: process.env.NODE_ENV !== "production",

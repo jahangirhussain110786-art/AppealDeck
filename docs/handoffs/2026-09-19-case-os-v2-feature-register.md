@@ -2,6 +2,48 @@
 
 19 September 2026 · Companion to the [direction doc](2026-09-19-case-os-v2-direction.md). Numbers 1–70 match the founder's pasted conversation and the 18 Sep decisions file (`docs/product/2026-09-18-feature-decisions.md`); 71–96 are additions from this pass.
 
+> **STATUS, 22 Sep 2026 — read this before using the table below.** The *Code today* column was
+> grep-verified at `a3fc0ac` and is now wrong for roughly a third of the rows: AM-26 was ratified on
+> 22 Sep and AA-39…AA-43 shipped the K0 kernel, most of K1, and the highest-value K2 items. What is
+> built, struck and held is recorded in `CLAUDE.md` §4; this file is kept as the reasoning behind
+> each decision, not as a to-do list.
+>
+> **Struck from the plan (do not build):**
+> - **#1, #2, #25, #30 — local in-browser OCR.** Superseded by the founder's 22 Sep instruction that
+>   the product reads the seller's documents server-side ("we are not selling the vault, we are
+>   selling solution"). Shipped as `/api/read-document` + `src/lib/documentChecks/`. Leaving these
+>   rows live invites someone to add ~15 MB of Tesseract that duplicates the server.
+> - **#90 — per-document cloud-extraction consent.** Contradicts the same instruction and the
+>   blanket disclosure already shipped as AA-43.
+> - **#48 — RAG on 10k approved POAs.** This file's own note says no lawful corpus exists. That is
+>   Never, not Later.
+> - **#92 — real 2026 reply-letter corpus, and #59's dependence on it.** Needs redacted,
+>   permissioned letters from real sellers. The founder has no seller access (AM-26), so this is
+>   unbuildable on current inputs, not merely deferred. Revive if appeal writers join.
+> - **#8, #61, #63 — SP-API, Account Health cross-check, post-reinstatement monitoring.** D7, and
+>   each needs API approval on a seller account in good standing. Formally out of v1.
+> - **#66, #67, #68 — expert marketplace, social proof, affiliate/white-label.** Downstream of
+>   having customers; business-model items, not product.
+>
+> **Held, with the trigger that revives each:**
+> - **#74 Seller Challenge track** → a real case that qualifies. It is Account Health Assurance only
+>   (AHR ≥250 for six months, Professional plan); a panicking deactivated seller rarely qualifies.
+> - **#53 PDF output, #89 evidence versioning** → a real user hitting the need. Weight for unproven
+>   demand until then.
+> - **#38, #49, #19, #20, #44, #81** (SOP generator, word counts, task dependencies, coaching,
+>   questions drawer) → **the first appeal-writer review.** These are precisely the things a
+>   professional will tell us the right shape of; building them blind is guessing, and recruiting
+>   that professional is the plan AM-26 exists to serve.
+> - **#85 merged home** → after the first deploy, judged against a live product.
+>
+> **Next, in order:** deploy · #87 scam/not-Amazon track · #86 multi-issue notices · #91 "have you
+> already replied?" · the legal-boundaries research that has been unowned since 19 Sep.
+>
+> **Retired from AM-21 rather than rebuilt:** the AI field-suggestion half of AA-33. Its endpoint
+> returned a graded `low|medium|high|critical` severity — the exact thing #7 below rejects — and
+> AA-39's `determineResponseType` plus `clock.ts` replaced it with something grounded in the
+> notice's own words. Deleted 22 Sep.
+
 **Columns.** *18 Sep* = the earlier decision (Keep / Adapt / Defer / Reject). *Code today* = grep-verified state at `a3fc0ac`: **E** exists, **P** partial, **N** none, with the file that proves it. *v2* = this pass's verdict: **Build** (as described), **Build-adapted** (need kept, mechanism changed for D6), **Later** (after pilot data), **Never** (with the replacement named). *Phase* = K0 kernel · K1 one journey + clock · K2 sensors · K3 pack + tracks · L later · — none. *Gap* = which §3 gap in the direction doc it belongs to.
 
 ## A. Understand — decoder as decision engine

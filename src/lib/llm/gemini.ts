@@ -18,15 +18,9 @@ const MAX_OUTPUT_TOKENS = 512;
  * code changes. The default model covers anything not in the table.
  */
 export type LlmTask =
-  | "extract-field"
-  | "critique-poa"
-  | "phrase-engine-output"
-  | "triage-router"
-  | "draft-poa-section"
-  | "read-document";
+  "critique-poa" | "phrase-engine-output" | "triage-router" | "draft-poa-section" | "read-document";
 
 const TASK_MODELS: Record<LlmTask, string> = {
-  "extract-field": "gemini-3.5-flash",
   "critique-poa": "gemini-3.5-flash",
   "phrase-engine-output": "gemini-3.5-flash-lite",
   "triage-router": "gemini-flash-lite-latest",

@@ -42,12 +42,4 @@ test.describe("/api routes (auth + validation)", () => {
     });
     expect(r.status()).toBe(401);
   });
-
-  test("POST /api/interview requires auth (401 JSON)", async ({ request }) => {
-    const r = await request.post("/api/interview", {
-      data: { action: "start", kind: "POLICY" },
-      maxRedirects: 0,
-    });
-    expect(r.status()).toBe(401);
-  });
 });

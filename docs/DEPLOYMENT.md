@@ -47,7 +47,7 @@ Set these for **Production**, **Preview**, and **Development** scopes (Vercel no
 
 | Variable                            | Purpose                                 | Notes                                  |
 | ----------------------------------- | --------------------------------------- | -------------------------------------- |
-| `GEMINI_MODEL_EXTRACT_FIELD`        | override model for `/api/extract-field` | defaults to `gemini-3.5-flash`         |
+| `GEMINI_MODEL_READ_DOCUMENT`        | override model for `/api/read-document` | defaults to `gemini-3.5-flash`         |
 | `GEMINI_MODEL_CRITIQUE_POA`         | override model for POA critique         | defaults to `gemini-3.5-flash`         |
 | `GEMINI_MODEL_PHRASE_ENGINE_OUTPUT` | override model for phrase engine        | defaults to `gemini-3.5-flash-lite`    |
 | `GEMINI_MODEL_TRIAGE_ROUTER`        | override model for triage routing       | defaults to `gemini-flash-lite-latest` |
@@ -111,7 +111,7 @@ Vercel Hobby has hard limits we already respect in `vercel.json` and the codebas
 
 | Limit                    | Hobby value                                  | Where we set it                         | Why                                                                                                                                       |
 | ------------------------ | -------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Function max duration    | 10s default; 30s on Hobby with `maxDuration` | `vercel.json` `functions.*.maxDuration` | Paddle webhook can take up to 10s for crypto signature + Supabase roundtrip; extract-field has 8s Gemini timeout in code so 15s is enough |
+| Function max duration    | 10s default; 30s on Hobby with `maxDuration` | `vercel.json` `functions.*.maxDuration` | Paddle webhook can take up to 10s for crypto signature + Supabase roundtrip; read-document has its own Gemini timeout in code |
 | Serverless function size | 50MB (unzipped)                              | not at risk                             | Our routes are <5MB each                                                                                                                  |
 | Build timeout            | 45 min                                       | not at risk                             | Builds take ~90s                                                                                                                          |
 | Edge function size       | 1MB                                          | not using Edge                          | All functions are Node.js                                                                                                                 |
@@ -137,7 +137,7 @@ After first deployment:
 3. Visit `https://appealdeck.com/login` — sign in with dev account.
 4. Visit `https://app.appealdeck.com/case` — should show Guided Interview (license-gated; dev user has the dev license row).
 5. In the interview, type into a `short_text` field, click "Suggest fields (AI)" — should return `ok:true` with real Gemini suggestions.
-6. Open browser DevTools → Network → trigger /api/extract-field. Response should be 200, not 503/429 (Upstash breaker is engaged but the spend cap is 240/day).
+6. Open browser DevTools → Network → attach a document in the case workspace to trigger /api/read-document. Response should be 200, not 503/429 (Upstash breaker is engaged but the spend cap is 240/day).
 7. Paddle webhook test: in Paddle dashboard → Notifications → test event → `transaction.completed` with a sandbox customer email. Check `licenses` table in Supabase for the new row.
 8. Run Lighthouse on `https://appealdeck.com/`: perf ≥ 0.9, a11y/bp/seo ≥ 0.95 (CI enforces this on every PR).
 

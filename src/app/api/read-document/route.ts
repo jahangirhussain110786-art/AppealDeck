@@ -24,7 +24,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
-import { rateLimitExtractField, tooManyRequestsResponse } from "@/lib/ratelimit";
+import { rateLimitDocumentRead, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { callGemini, withGeminiBreaker } from "@/lib/llm/gemini";
 import { VIOLATION_KINDS } from "@/core/violationKinds";
 import { buildDocumentCheck, type FieldFinding } from "@/core/documentCheck";
@@ -109,7 +109,7 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
     );
   }
 
-  const rate = await rateLimitExtractField(user);
+  const rate = await rateLimitDocumentRead(user);
   if (!rate.success) return tooManyRequestsResponse(rate);
 
   let raw: unknown;

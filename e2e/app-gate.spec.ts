@@ -46,24 +46,6 @@ test.describe("App gate — unauthenticated pages and APIs", () => {
     expect(new URL(page.url()).searchParams.get("next")).toBe("/case");
   });
 
-  test("POST /api/interview requires auth (401 JSON)", async ({ request }) => {
-    const r = await request.post("/api/interview", {
-      data: { action: "start", kind: "POLICY" },
-      maxRedirects: 0,
-    });
-    expect(r.status()).toBe(401);
-    expect((await r.json()).error).toBe("Unauthorized");
-  });
-
-  test("POST /api/extract-field requires auth (401 JSON)", async ({ request }) => {
-    const r = await request.post("/api/extract-field", {
-      data: { text: "any text" },
-      maxRedirects: 0,
-    });
-    expect(r.status()).toBe(401);
-    expect((await r.json()).error).toBe("Unauthorized");
-  });
-
   test("POST /api/compose requires auth (401 JSON)", async ({ request }) => {
     const r = await request.post("/api/compose", {
       data: { caseData: { kind: "POLICY" }, attemptNumber: 1 },

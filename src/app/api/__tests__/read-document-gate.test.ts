@@ -17,7 +17,7 @@ vi.mock("@/lib/license", () => ({
 }));
 
 vi.mock("@/lib/ratelimit", () => ({
-  rateLimitExtractField: (...args: unknown[]) => rateLimitMock(...args),
+  rateLimitDocumentRead: (...args: unknown[]) => rateLimitMock(...args),
   tooManyRequestsResponse: () =>
     new Response(JSON.stringify({ error: "Slow down" }), { status: 429 }),
 }));

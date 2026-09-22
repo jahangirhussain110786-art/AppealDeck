@@ -118,7 +118,7 @@ describe("per-task model selection", () => {
   const savedEnv: Record<string, string | undefined> = {};
   const KEYS = [
     "GEMINI_MODEL",
-    "GEMINI_MODEL_EXTRACT_FIELD",
+    "GEMINI_MODEL_READ_DOCUMENT",
     "GEMINI_MODEL_CRITIQUE_POA",
     "GEMINI_MODEL_PHRASE_ENGINE_OUTPUT",
     "GEMINI_MODEL_TRIAGE_ROUTER",
@@ -137,7 +137,7 @@ describe("per-task model selection", () => {
       savedEnv[k] = process.env[k];
       delete process.env[k];
     }
-    expect(getGeminiModel("extract-field")).toBe("gemini-3.5-flash");
+    expect(getGeminiModel("read-document")).toBe("gemini-3.5-flash");
     expect(getGeminiModel("critique-poa")).toBe("gemini-3.5-flash");
     expect(getGeminiModel("phrase-engine-output")).toBe("gemini-3.5-flash-lite");
     expect(getGeminiModel("triage-router")).toBe("gemini-flash-lite-latest");
@@ -149,9 +149,9 @@ describe("per-task model selection", () => {
       savedEnv[k] = process.env[k];
       delete process.env[k];
     }
-    process.env.GEMINI_MODEL_EXTRACT_FIELD = "gemini-3.5-flash-lite";
+    process.env.GEMINI_MODEL_READ_DOCUMENT = "gemini-3.5-flash-lite";
     process.env.GEMINI_MODEL_PHRASE_ENGINE_OUTPUT = "gemini-3.5-flash";
-    expect(getGeminiModel("extract-field")).toBe("gemini-3.5-flash-lite");
+    expect(getGeminiModel("read-document")).toBe("gemini-3.5-flash-lite");
     expect(getGeminiModel("phrase-engine-output")).toBe("gemini-3.5-flash");
     expect(getGeminiModel("critique-poa")).toBe("gemini-3.5-flash");
   });
@@ -161,8 +161,8 @@ describe("per-task model selection", () => {
       savedEnv[k] = process.env[k];
       delete process.env[k];
     }
-    process.env.GEMINI_MODEL_EXTRACT_FIELD = "   ";
-    expect(getGeminiModel("extract-field")).toBe("gemini-3.5-flash");
+    process.env.GEMINI_MODEL_READ_DOCUMENT = "   ";
+    expect(getGeminiModel("read-document")).toBe("gemini-3.5-flash");
   });
 
   it("explicit model in callGemini wins over the task default", async () => {
@@ -177,7 +177,7 @@ describe("per-task model selection", () => {
     })) as unknown as typeof fetch;
     globalThis.fetch = fetchMock;
     const result = await callGemini({
-      task: "extract-field",
+      task: "read-document",
       model: "gemini-3.5-flash-lite",
       messages: [{ role: "user", text: "hi" }],
     });
