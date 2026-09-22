@@ -16,6 +16,7 @@ import { workspaceCanCompose, workspaceGaps, type Workspace } from "@/core/works
 import type { CaseFile } from "@/core/interviewEngine";
 import type { Vault } from "@/core/vault/vault";
 import type { CriticResult, PoaDraft } from "@/core/composer";
+import { BeforeYouSubmitChecklist } from "@/components/BeforeYouSubmitChecklist";
 import { assessNovelty, shouldWarnBeforeSubmit } from "@/core/submissionNovelty";
 import { formatDate } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
@@ -267,6 +268,21 @@ export function ResponseReview({
               Download the linked originals from Evidence and attach them individually as the
               response form requires. Copying does not record a submission.
             </p>
+            {/*
+              Retiring the classic interview (22 Sep 2026): `BeforeYouSubmitChecklist` used to live
+              only in `ComposeView`, which was that path's drafting step. Removing the path without
+              bringing this across would have quietly cost the workspace its pre-submit review —
+              the placeholder check and the "you submit this yourself" line have no equivalent in
+              `workspaceGaps`. It is fed the workspace's own submission history, so its novelty row
+              is the real text comparison rather than the attempt-count reminder.
+            */}
+            <BeforeYouSubmitChecklist
+              caseFile={file}
+              attemptCount={w.submissions.length}
+              draftText={result.rendered}
+              allChecked={result.critique.passed}
+              priorSubmissions={w.submissions}
+            />
             {/*
               AA-42: the duplicate-submission guard, placed where the seller is about to record a
               submission rather than buried in a checklist. It warns and explains; it never

@@ -46,7 +46,8 @@ export function ComposeGate({
   if (phase === "active") {
     return (
       <Button asChild>
-        <Link href="/compose">Continue to your draft</Link>
+        {/* Points straight at the workspace's Response tab — `/compose` is a retired redirect. */}
+        <Link href="/case?view=response">Continue to your draft</Link>
       </Button>
     );
   }

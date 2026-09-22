@@ -1,22 +1,42 @@
 import { expect, test } from "@playwright/test";
 
+/**
+ * These tests guard product guarantees, not a particular screen. They were originally written
+ * against `/case?mode=classic` — the guided interview — which was retired on 22 Sep 2026. The
+ * guarantees did not go away with it, so the specs are rewritten to drive the case workspace, the
+ * only journey now, rather than deleted alongside the surface they happened to use.
+ *
+ * What is being guarded, and why it is worth the wall-clock these tests cost:
+ *  - a second browser tab must not destroy a guest's in-progress case (this project lost a case
+ *    file to exactly that race on 19 Sep 2026)
+ *  - a guest's work must survive signing in, and must not be visible after signing out
+ *  - the compose API must reject malformed and severity-gated payloads
+ */
+
 test.use({ trace: "off", video: "off" });
+
+/** The workspace autosaves drafts on a 900 ms debounce; this waits past it deterministically. */
+async function typeNoticeAndSave(page: import("@playwright/test").Page, text: string) {
+  await page.getByLabel("Amazon notice").fill(text);
+  // Blur so the field commits, then wait out the debounce plus a margin for the vault write.
+  await page.getByLabel("Amazon notice").blur();
+  await page.waitForTimeout(1500);
+}
 
 test("separate guest tabs cannot purge each other's in-progress case", async ({
   page,
   context,
 }) => {
-  await page.goto("/case?mode=classic&kind=POLICY");
-  await page
-    .getByPlaceholder("Type your answer...")
-    .fill("A supplier review step was missing from our process.");
-  await page.getByTestId("interview-continue").click();
-  await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
+  const notice = "A supplier review step was missing from our process.";
+  await page.goto("/case?kind=POLICY");
+  await typeNoticeAndSave(page, notice);
+
   const other = await context.newPage();
   await other.goto("/dashboard");
   await expect(other.getByText("No case on this device yet", { exact: true })).toBeVisible();
+
   await page.reload();
-  await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Amazon notice")).toHaveValue(notice);
 });
 
 test("guest case survives sign-in and remains private after sign-out", async ({ page }) => {
@@ -25,19 +45,21 @@ test("guest case survives sign-in and remains private after sign-out", async ({ 
     "Dev authentication fixture required",
   );
   test.setTimeout(90000);
-  await page.goto("/case?mode=classic&kind=POLICY");
-  await page
-    .getByPlaceholder("Type your answer...")
-    .fill("A supplier review step was missing from our process.");
-  await page.getByTestId("interview-continue").click();
-  await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
+
+  const firstNotice = "A supplier review step was missing from our process.";
+  await page.goto("/case?kind=POLICY");
+  await typeNoticeAndSave(page, firstNotice);
+
   await page.goto("/login");
   await page.getByLabel(/email/i).fill(process.env.DEV_LOGIN_EMAIL!);
   await page.getByLabel(/^password$/i).fill(process.env.DEV_LOGIN_PASSWORD!);
   await page.getByRole("button", { name: /^sign in$/i }).click();
   await expect(page).toHaveURL(/dashboard/);
+
   await page.goto("/case");
-  await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Amazon notice")).toHaveValue(firstNotice);
+
+  // The compose API's own guards, checked from a real signed-in session.
   const malformed = await page.request.post("/api/compose", {
     data: { caseData: { id: "test-case", kind: "POLICY", actionItems: [null] } },
   });
@@ -46,34 +68,21 @@ test("guest case survives sign-in and remains private after sign-out", async ({ 
     data: { caseData: { id: "test-case", kind: "INAUTHENTIC_DOCUMENTS" } },
   });
   expect(severe.status()).toBe(403);
+
   await page.getByRole("button", { name: /account|profile/i }).click();
   await page.getByRole("menuitem", { name: /sign out/i }).click();
   await expect(page).toHaveURL(/login/);
   await page.goto("/dashboard");
   await expect(page.getByText("No case on this device yet", { exact: true })).toBeVisible();
-  // Return with a new guest draft after this account already has an older case.
-  await page.goto("/case?mode=classic&kind=POLICY");
-  await page
-    .getByPlaceholder("Type your answer...")
-    .fill("A second case has a different supplier review gap.");
-  await page.getByTestId("interview-continue").click();
-  await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
+
+  // A new guest draft, started while the account already holds an older case.
+  await page.goto("/case?kind=POLICY");
+  await typeNoticeAndSave(page, "A second case has a different supplier review gap.");
+
   await page.goto("/login");
   await page.getByLabel(/email/i).fill(process.env.DEV_LOGIN_EMAIL!);
   await page.getByLabel(/^password$/i).fill(process.env.DEV_LOGIN_PASSWORD!);
   await page.getByRole("button", { name: /^sign in$/i }).click();
   await expect(page).toHaveURL(/dashboard/);
   await expect(page.getByLabel("Current case").locator("option")).toHaveCount(2);
-  await page.route("**/api/compose", (route) =>
-    route.fulfill({
-      status: 403,
-      contentType: "application/json",
-      body: JSON.stringify({
-        error: "An Appeal Pass is required for this case.",
-        code: "case_pass_required",
-      }),
-    }),
-  );
-  await page.goto("/compose");
-  await expect(page.getByText("$249", { exact: false }).first()).toBeVisible();
 });

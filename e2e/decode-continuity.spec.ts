@@ -15,7 +15,11 @@ async function decodeSample(page: Page) {
     expect.objectContaining({ dueAt: null, label: "Appeal window: 90 days from notice" }),
   );
   await expect(page.getByRole("navigation", { name: "Case workspace views" })).toBeVisible();
-  await expect(page.getByText("Supplier invoice", { exact: true })).toBeVisible();
+  // `.first()` added 22 Sep 2026: AA-39 gave the decode result a "Details we found in your notice"
+  // strip that also names the requested record, so this exact-text match now resolves to two
+  // elements and fails Playwright's strict mode. Both occurrences are correct; the assertion only
+  // cares that the decode result names the record at all.
+  await expect(page.getByText("Supplier invoice", { exact: true }).first()).toBeVisible();
 }
 
 for (const view of ["Overview", "Evidence", "Response", "History"]) {
@@ -129,25 +133,27 @@ test("re-entering the same decoded sample resumes edited work and creates no dup
   await expect(page.getByLabel("Current case")).toHaveCount(0);
 });
 
-test("a decoded notice opens the workspace while retaining an older interview", async ({
-  page,
-}) => {
-  await page.goto("/case?mode=classic&kind=POLICY");
-  await page
-    .getByPlaceholder("Type your answer...")
-    .fill("The saved legacy case concerns a separate supplier issue.");
-  await page.getByTestId("interview-continue").click();
-  await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
+test("a decoded notice starts a second case without destroying the first", async ({ page }) => {
+  // Rewritten 22 Sep 2026: the classic interview was retired, so the older case is now a workspace
+  // case rather than an interview one. The guarantee is unchanged and is the point of the test —
+  // starting a new case from a decode must never overwrite work already on the device.
+  const firstNotice = "The saved earlier case concerns a separate supplier issue.";
+  await page.goto("/case?kind=POLICY");
+  await page.getByLabel("Amazon notice").fill(firstNotice);
+  await page.getByLabel("Amazon notice").blur();
+  await page.waitForTimeout(1500);
+
   await decodeSample(page);
   await page
     .getByRole("navigation", { name: "Case workspace views" })
     .getByRole("link", { name: "Overview", exact: true })
     .click();
   await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(SAMPLE_NOTICE_TEXT);
+
   await page.goto("/dashboard");
   const cases = page.getByRole("region", { name: "Your cases" }).getByRole("button");
   await expect(cases).toHaveCount(2);
   await cases.filter({ hasNotText: "Current" }).click();
   await page.goto("/case");
-  await expect(page.getByText("Key dates", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Amazon notice")).toHaveValue(firstNotice);
 });

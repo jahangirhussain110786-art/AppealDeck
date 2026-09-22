@@ -27,7 +27,6 @@ import { VaultGate } from "@/components/VaultGate";
 import { VerificationChecklistCard } from "@/components/VerificationChecklistCard";
 import { FactsLedgerCard } from "@/components/FactsLedgerCard";
 import { PageIntro } from "@/components/PageIntro";
-import { InterviewFlow } from "@/components/InterviewFlow";
 import { RequestReview } from "./RequestReview";
 import { EvidenceReview } from "./EvidenceReview";
 import { ResponseReview, type WorkspaceResponse } from "./ResponseReview";
@@ -49,6 +48,7 @@ import {
   entriesFromDocumentCheck,
 } from "@/core/factsLedger";
 import { runDocumentCheck, type CheckOutcome } from "@/lib/documentChecks/runCheck";
+import { migrateLegacyCase, needsMigration, migrationSummary } from "@/core/legacyMigration";
 import {
   addWorkspaceEvent,
   applyWorkspaceReply,
@@ -110,12 +110,10 @@ function Loading() {
 
 export function CaseWorkspace({
   signedIn,
-  hasPass,
   initialKind,
   initialView,
 }: {
   signedIn: boolean;
-  hasPass: boolean;
   initialKind?: ViolationKind;
   initialView?: string;
 }) {
@@ -151,7 +149,6 @@ export function CaseWorkspace({
         <WorkspaceInner
           vault={v}
           signedIn={signedIn}
-          hasPass={hasPass}
           initialKind={initialKind}
           initialView={initialView}
         />
@@ -163,13 +160,11 @@ export function CaseWorkspace({
 function WorkspaceInner({
   vault,
   signedIn,
-  hasPass,
   initialKind,
   initialView,
 }: {
   vault: Vault;
   signedIn: boolean;
-  hasPass: boolean;
   initialKind?: ViolationKind;
   initialView?: string;
 }) {
@@ -208,6 +203,8 @@ function WorkspaceInner({
   // AA-41 in the workspace: results keyed by vault record id, in memory only.
   const [docChecks, setDocChecks] = useState<Record<string, CheckOutcome>>({});
   const [checkingId, setCheckingId] = useState<string | null>(null);
+  /** Set once when a pre-workspace case is migrated on open, so the change is explained. */
+  const [migrationNote, setMigrationNote] = useState<string | null>(null);
   const draftTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const draftPending = useRef<Map<string, string | undefined>>(new Map());
   const draftCaseId = useRef<Map<string, string>>(new Map());
@@ -243,6 +240,22 @@ function WorkspaceInner({
         if (!alive) return;
         setCurrent(displayed);
         setSaved(Boolean(existing || pendingNotice));
+
+        /**
+         * Retiring the classic interview: a case saved before the workspace existed is migrated
+         * here, on open, rather than waiting behind a button that no longer has a page to live on.
+         * `migrateLegacyCase` is lossless and idempotent, and the seller is told what moved.
+         */
+        if (needsMigration(displayed)) {
+          const summary = migrationSummary(displayed);
+          const migrated: CaseFile = { ...displayed, workspace: migrateLegacyCase(displayed) };
+          await saveCaseFile(vault, migrated);
+          if (!alive) return;
+          persisted.current = JSON.stringify(migrated.workspace);
+          setCurrent(migrated);
+          setSaved(true);
+          setMigrationNote(summary);
+        }
         setRecords(docs);
         setReplyText(displayed.workspace?.draft?.[HISTORY_REPLY_KEY] ?? "");
         setReady(true);
@@ -610,37 +623,16 @@ function WorkspaceInner({
         <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
-  if (!file.workspace)
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{C.title}</CardTitle>
-            <p className="text-sm text-muted-foreground">{C.legacy}</p>
-          </CardHeader>
-          <CardContent>
-            <Button
-              disabled={busy}
-              onClick={() =>
-                void commit(
-                  (w) => w,
-                  "Added the workspace; original interview answers were retained.",
-                )
-              }
-            >
-              Add workspace to this case
-              <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
-            </Button>
-          </CardContent>
-        </Card>
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        <InterviewFlow signedIn={signedIn} hasPass={hasPass} initialKind={file.kind} />
-      </div>
-    );
+  /**
+   * The classic interview is retired (founder direction, 22 Sep 2026), so there is no longer a
+   * second place for a workspace-less case to live. It used to sit here behind an "Add workspace"
+   * button with the interview underneath; now it migrates on open, in the background, carrying
+   * everything the seller wrote (`migrateLegacyCase`, which is lossless and idempotent).
+   *
+   * A spinner rather than a button: making a seller press "upgrade" to reach their own case is
+   * asking them to care about our internal history at the worst possible moment.
+   */
+  if (!file.workspace) return <Loading />;
   const w = file.workspace;
   const route = routeWorkspace(w);
   const gated = isSeverityGated(file.kind) || route.protocol === "specialist";
@@ -654,7 +646,10 @@ function WorkspaceInner({
    * stale reading shown beside a replaced file would be worse than asking for a re-run.
    */
   const ledger = buildFactsLedger([
-    ...entriesFromEntities(extractEntities(w.notice)),
+    // The draft is read first: `w.notice` only becomes populated when the seller confirms the
+    // request, so reading it alone left the ledger invisible for everyone who had typed their
+    // notice but not yet confirmed the route — which is most of the time they spend here.
+    ...entriesFromEntities(extractEntities(w.draft?.["request.notice"] ?? w.notice)),
     ...entriesFromSeller(
       Object.fromEntries(w.requirements.filter((r) => r.note.trim()).map((r) => [r.label, r.note])),
     ),
@@ -699,6 +694,13 @@ function WorkspaceInner({
   };
   return (
     <div className="space-y-5">
+      {/* Explains a case that has visibly changed shape since the seller last opened it. */}
+      {migrationNote && (
+        <Alert>
+          <AlertTitle>Your case moved into the workspace</AlertTitle>
+          <AlertDescription>{migrationNote}</AlertDescription>
+        </Alert>
+      )}
       <PageIntro
         icon={FileSearch}
         eyebrow={`Case workspace · ${w.marketplace === "US" ? "Amazon US" : "Marketplace to confirm"}`}

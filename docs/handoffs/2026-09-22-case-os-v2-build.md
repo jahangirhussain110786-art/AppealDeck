@@ -9,7 +9,30 @@
 
 ## Resume pointer
 
-**AA-39 through AA-43 are complete.** Next is the founder sign-off list at the end of this file, and the two items that always needed a human (migrations, `RESEND_API_KEY`).
+**AA-39 through AA-43 are complete, and the classic interview is retired** (founder direction, 22 Sep 2026). The workspace is the only journey. Next is the founder sign-off list at the end of this file, and the two items that always needed a human (migrations, `RESEND_API_KEY`).
+
+### Retiring the classic interview — one journey
+
+**Done 22 Sep 2026.** Founder: _"retire the classic interview and properly make sure our workspace system is fully functional, well stronger in all means."_
+
+**What was removed:** `InterviewFlow.tsx`, `ComposeView.tsx`, `NextStepsView.tsx` and its test (~2,000 lines). `/case?mode=classic` no longer renders a second product; `/compose` is a redirect to `/case?view=response`, keeping `requireUser("/compose")` so signed-out visitors still land on `/login?next=/compose` — two e2e tests assert exactly that, and a bookmark should not become a dead end.
+
+**What was protected first, because retiring without it would have destroyed seller work:**
+
+- **A lossless migration (`src/core/legacyMigration.ts`, pure, 15 tests).** The old "Add workspace to this case" button carried **two** fields — `rootCause` and `preventiveMeasures` — and silently dropped `timelineEvents` and `actionItems`. That was survivable while the interview still held them; with the interview gone it would have deleted a seller's dated account of what happened and their whole corrective-action list. The migration now carries all four, **keeps completed and planned actions in separate labelled sections** (conflating them is what the composer's critic exists to stop), and is idempotent because it runs on open rather than behind a button. The seller is told what moved.
+- **`BeforeYouSubmitChecklist` moved into the workspace.** It lived only in `ComposeView`. Its placeholder check and "you submit this yourself" line have no equivalent in `workspaceGaps`, so removing the classic path without moving it would have quietly cost the workspace its pre-submit review. It now also receives the workspace's submission history, so its novelty row is the real text comparison rather than the attempt-count reminder.
+- **Three e2e specs rewritten, not deleted.** `access.spec.ts`, `integrity.spec.ts` and one `decode-continuity.spec.ts` test drove the product through `?mode=classic`. They guard **product** guarantees — a second tab must not purge a guest's case (this project lost one to that race on 19 Sep), guest work must survive sign-in and be invisible after sign-out, a decode must not overwrite an existing case. Deleting them alongside the surface they happened to use would have dropped the guarantees silently. All now drive the workspace.
+
+**Discovered:**
+
+1. **The facts ledger was invisible in normal use.** It read `w.notice`, which is only populated once the seller *confirms* the request — so for the whole period a seller is typing their notice, the ledger showed nothing. Found by using the product in a browser, not by a test. Now reads the draft first.
+2. **A correction to this session's own earlier reporting.** The AA-40 entry below records "9 pre-existing Playwright failures… axe colour-contrast". That was wrong, and the error was mine: **8 of the 9 were a strict-mode locator ambiguity introduced by AA-39**, whose new "Details we found in your notice" strip made `getByText("Supplier invoice", {exact: true})` resolve to two elements in a shared helper. Verified by stashing this session's work and re-running `decode-continuity.spec.ts:87` on the pre-change code, where it fails with `strict mode violation`, not a contrast error. I had inspected only one failure (`workspace.spec.ts:64`, which genuinely was contrast) and generalised from it. The locator is fixed; **the contrast violation is real but surfaces order-dependently** and no longer fails a clean run.
+
+**Playwright after this work:** **71 passed · 1 failed · 3 skipped** (serial), down from 9 failures. The one failure is `workspace.spec.ts:64`, which passes alone and passes with its whole file — cross-file order dependence, this project's documented flake pattern.
+
+**Gates:** tsc 0 · lint 0 · lint:copy PASS · format:check 0 · **vitest 747/747 in 74 files** · build 0, clean `.next`.
+
+**Verified in a browser:** `/case` loads the workspace directly for a signed-out visitor; `?mode=classic` returns 200 with no interview markup; a typed notice survives a reload; the facts ledger shows the ASIN and Case ID pulled from that notice.
 
 ---
 
