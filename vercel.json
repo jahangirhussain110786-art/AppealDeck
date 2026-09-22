@@ -43,12 +43,19 @@
     },
     "src/app/api/jobs/purchase-emails/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/jobs/case-reminders/route.ts": {
+      "maxDuration": 60
     }
   },
   "crons": [
     {
       "path": "/api/jobs/purchase-emails",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/jobs/case-reminders",
+      "schedule": "0 8 * * *"
     }
   ]
 }
