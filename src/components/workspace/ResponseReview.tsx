@@ -12,11 +12,17 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CopyButton } from "@/components/CopyButton";
 import { ComposeGate } from "@/components/ComposeGate";
-import { workspaceCanCompose, workspaceGaps, type Workspace } from "@/core/workspace";
+import {
+  totalAttempts,
+  workspaceCanCompose,
+  workspaceGaps,
+  type Workspace,
+} from "@/core/workspace";
 import type { CaseFile } from "@/core/interviewEngine";
 import type { Vault } from "@/core/vault/vault";
 import type { CriticResult, PoaDraft } from "@/core/composer";
 import { BeforeYouSubmitChecklist } from "@/components/BeforeYouSubmitChecklist";
+import { IssuesRaised } from "./IssuesRaised";
 import { assessNovelty, shouldWarnBeforeSubmit } from "@/core/submissionNovelty";
 import { formatDate } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
@@ -167,6 +173,16 @@ export function ResponseReview({
           >
             Save response facts
           </Button>
+          {/*
+            #86: the confirmation sits with the response text, because that is where a seller can
+            actually check whether both issues were covered. `workspaceGaps` requires it, so the
+            case cannot be reported ready while one is unanswered.
+          */}
+          <IssuesRaised
+            workspace={w}
+            busy={busy}
+            onConfirm={(confirmed) => void onSave({ ...w, issuesConfirmed: confirmed })}
+          />
           {!supported ? (
             <Alert variant="info">
               <AlertTitle>Organize your notes first</AlertTitle>
@@ -278,7 +294,7 @@ export function ResponseReview({
             */}
             <BeforeYouSubmitChecklist
               caseFile={file}
-              attemptCount={w.submissions.length}
+              attemptCount={totalAttempts(w)}
               draftText={result.rendered}
               allChecked={result.critique.passed}
               priorSubmissions={w.submissions}

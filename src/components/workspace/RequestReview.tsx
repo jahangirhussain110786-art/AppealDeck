@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { DetailDisclosure, IconTile } from "./WorkspaceVisuals";
+import { PriorAttempts } from "./PriorAttempts";
+import { IssuesRaised } from "./IssuesRaised";
 import { PROTOCOL_LABELS, routeWorkspace, type Workspace } from "@/core/workspace";
 import { WORKSPACE as C } from "@/content/workspace";
 import { DECODE } from "@/content/marketing";
@@ -18,12 +20,16 @@ export function RequestReview({
   workspace,
   busy,
   onSave,
+  onCommitWorkspace,
   draft,
   onDraftChange,
 }: {
   workspace: Workspace;
   busy: boolean;
+  /** Confirms the route. Only the fields a route confirmation may change survive it. */
   onSave: (w: Workspace) => Promise<boolean>;
+  /** Saves the workspace as given. Needed by anything on this step that changes another field. */
+  onCommitWorkspace: (w: Workspace) => Promise<boolean>;
   draft?: Record<string, string>;
   onDraftChange: (key: string, value: string | undefined) => void;
 }) {
@@ -182,6 +188,14 @@ export function RequestReview({
             </details>
           </div>
         </div>
+        {/* #86: named here so a seller learns on the first screen that two things must be answered. */}
+        <IssuesRaised workspace={workspace} />
+        {/*
+          #91: asked in the first step, because a seller who has already been refused once needs a
+          different response, not a differently-formatted one — and that changes the plan rather
+          than decorating it. Saved through the same `onSave` as everything else here.
+        */}
+        <PriorAttempts workspace={workspace} busy={busy} onSave={onCommitWorkspace} />
         <div className="flex flex-wrap gap-3">
           <Button
             disabled={busy || value.notice.trim().length < 30}

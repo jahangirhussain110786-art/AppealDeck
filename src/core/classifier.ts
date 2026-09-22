@@ -17,7 +17,7 @@ export interface Classification {
  * notice carries obligations the seller must not miss while reading it as an ordinary policy strike,
  * PERFORMANCE_METRIC below the conduct kinds because a metric notice often also quotes policy text.
  */
-const PRIORITY: ReadonlyArray<ViolationKind> = [
+export const KIND_PRIORITY: ReadonlyArray<ViolationKind> = [
   "INAUTHENTIC_DOCUMENTS",
   "PRODUCT_SAFETY",
   "RELATED_ACCOUNT",
@@ -31,7 +31,7 @@ const PRIORITY: ReadonlyArray<ViolationKind> = [
 ];
 
 export function classifyStage1(parsed: ParsedNotice): Classification {
-  for (const kind of PRIORITY) {
+  for (const kind of KIND_PRIORITY) {
     if (parsed.kindHints.includes(kind)) {
       return { kind, severityGated: isSeverityGated(kind), confidence: "deterministic" };
     }

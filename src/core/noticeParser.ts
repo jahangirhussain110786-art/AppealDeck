@@ -11,7 +11,11 @@ export interface ParsedNotice {
   windowAmbiguous: boolean;
 }
 
-const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
+/**
+ * Exported for `noticeIssues.ts` (#86), which needs the same table to name every issue a notice
+ * raises. A second copy would be exactly the drift AA-39 found across six copies of the kind list.
+ */
+export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   [
     "INAUTHENTIC_DOCUMENTS",
     /inauthentic|not authentic|(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)/i,

@@ -3,12 +3,19 @@ import {
   applyWorkspaceReply,
   composeWorkspace,
   newWorkspace,
+  priorAttempts,
   proposedRequirements,
+  recordPriorAttempt,
+  removePriorAttempt,
   routeWorkspace,
+  totalAttempts,
   workspaceCanCompose,
   workspaceGaps,
   type Workspace,
 } from "./workspace";
+import { assessNovelty, shouldWarnBeforeSubmit } from "./submissionNovelty";
+import { noveltyRequired } from "./caseState";
+import { WorkspaceSchema } from "@/lib/workspaceSchema";
 import { composePoa, critiquePoa } from "./composer";
 import { createCaseFile } from "./interviewEngine";
 import { CaseDataSchema } from "@/lib/caseSchema";
@@ -251,5 +258,122 @@ describe("response and provenance", () => {
     expect(CaseDataSchema.parse(file).workspace).toEqual(file.workspace);
     file.workspace.requirements[0].page = -1;
     expect(CaseDataSchema.safeParse(file).success).toBe(false);
+  });
+});
+
+/**
+ * #91. A seller usually finds this product after appealing once or twice alone and being
+ * rejected. Until these landed, the product counted only what it had recorded itself, so a third
+ * attempt was treated as a first and every rule that depends on the attempt number was wrong.
+ */
+describe("attempts made before this case existed", () => {
+  const withNotice = (): Workspace => ({
+    ...newWorkspace(),
+    notice: "Your account was deactivated. Submit a Plan of Action.",
+    protocol: "operational",
+  });
+
+  it("counts a prior attempt as an attempt", () => {
+    const w = recordPriorAttempt(withNotice(), {
+      at: "2026-09-01T00:00:00.000Z",
+      text: "My first appeal, which Amazon rejected.",
+    });
+    expect(totalAttempts(w)).toBe(1);
+    expect(priorAttempts(w)).toHaveLength(1);
+  });
+
+  it("makes the next response subject to the novelty requirement", () => {
+    const fresh = withNotice();
+    expect(noveltyRequired(totalAttempts(fresh))).toBe(false);
+
+    const afterTwo = recordPriorAttempt(
+      recordPriorAttempt(fresh, { at: "2026-09-01T00:00:00.000Z", text: "First try." }),
+      { at: "2026-09-08T00:00:00.000Z", text: "Second try." },
+    );
+    // The seller is now on attempt three; sending the same thing again is the
+    // best-evidenced way to be refused.
+    expect(noveltyRequired(totalAttempts(afterTwo))).toBe(true);
+  });
+
+  it("gives the duplicate-submission guard something to compare against", () => {
+    const sent = "We have removed the listing and retrained the team on condition grading.";
+    const w = recordPriorAttempt(withNotice(), { at: "2026-09-01T00:00:00.000Z", text: sent });
+
+    const resubmitted = assessNovelty(sent, w.submissions);
+    expect(resubmitted.verdict).toBe("identical");
+    expect(shouldWarnBeforeSubmit(resubmitted)).toBe(true);
+
+    const rewritten = assessNovelty(
+      "The supplier invoice for order 111-2223334-5556667 is attached, and it names the manufacturer directly.",
+      w.submissions,
+    );
+    expect(shouldWarnBeforeSubmit(rewritten)).toBe(false);
+  });
+
+  it("accepts an attempt the seller can no longer produce the text of", () => {
+    const w = recordPriorAttempt(withNotice(), { at: "2026-09-01T00:00:00.000Z", text: "   " });
+    // The count is the part that matters; an empty text simply gives the guard nothing to
+    // compare, which is honest rather than invented.
+    expect(totalAttempts(w)).toBe(1);
+    expect(priorAttempts(w)[0]!.text).toBe("");
+    expect(assessNovelty("A completely new response.", w.submissions).verdict).toBe("new");
+  });
+
+  it("marks a prior attempt so it can never be mistaken for one drafted here", () => {
+    const w = recordPriorAttempt(withNotice(), { at: "2026-09-01T00:00:00.000Z", text: "Sent." });
+    const entry = w.submissions[0]!;
+    expect(entry.source).toBe("prior");
+    expect(entry.revision).toBe(0);
+    expect(entry.receipt).toBe("");
+  });
+
+  it("records what happened in the case history", () => {
+    const w = recordPriorAttempt(withNotice(), { at: "2026-09-01T00:00:00.000Z", text: "Sent." });
+    expect(w.history.at(-1)!.message).toMatch(/before this case/i);
+  });
+
+  it("removes only a prior attempt, never a real submission", () => {
+    const w = recordPriorAttempt(withNotice(), { at: "2026-09-01T00:00:00.000Z", text: "Sent." });
+    const real = {
+      ...w,
+      submissions: [
+        ...w.submissions,
+        {
+          id: "real-1",
+          at: "2026-09-20T00:00:00.000Z",
+          revision: 1,
+          protocol: "operational" as const,
+          text: "Recorded here.",
+          receipt: "",
+          attachments: [],
+        },
+      ],
+    };
+    expect(removePriorAttempt(real, "real-1").submissions).toHaveLength(2);
+    const cleaned = removePriorAttempt(real, w.submissions[0]!.id);
+    expect(cleaned.submissions).toHaveLength(1);
+    expect(cleaned.submissions[0]!.id).toBe("real-1");
+  });
+
+  it("falls back to a fixed epoch rather than inventing a date", () => {
+    const w = recordPriorAttempt(withNotice(), { at: "  ", text: "Sent, date forgotten." });
+    expect(w.submissions[0]!.at).toBe(new Date(0).toISOString());
+  });
+  /**
+   * The validator guards every vault write, and it strips keys it does not know. A prior attempt
+   * that does not survive it comes back looking like one drafted here — and the guard that should
+   * warn about resending goes quiet again.
+   */
+  it("survives the schema that guards every save", () => {
+    const w = recordPriorAttempt(
+      { ...newWorkspace(), notice: "x".repeat(40), protocol: "operational" },
+      { at: "2026-09-01T00:00:00.000Z", text: "What I sent the first time." },
+    );
+    const parsed = WorkspaceSchema.safeParse(w);
+    expect(parsed.success, JSON.stringify(parsed.error?.issues ?? [])).toBe(true);
+    const round = parsed.data!;
+    expect(round.submissions[0]!.source).toBe("prior");
+    expect(round.submissions[0]!.revision).toBe(0);
+    expect(priorAttempts(round as Workspace)).toHaveLength(1);
   });
 });

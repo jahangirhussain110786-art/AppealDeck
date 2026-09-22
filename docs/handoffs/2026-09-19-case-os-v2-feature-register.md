@@ -36,8 +36,11 @@
 >   that professional is the plan AM-26 exists to serve.
 > - **#85 merged home** → after the first deploy, judged against a live product.
 >
-> **Next, in order:** deploy · #87 scam/not-Amazon track · #86 multi-issue notices · #91 "have you
-> already replied?" · the legal-boundaries research that has been unowned since 19 Sep.
+> **Shipped 22 Sep:** #87 scam/not-Amazon track · #86 multi-issue notices · #91 "have you already
+> replied?". All three K0 correctness gaps are closed.
+>
+> **Next, in order:** **deploy** — it is now the only thing between this product and a reader ·
+> then the legal-boundaries research that has been unowned since 19 Sep, which gates outreach.
 >
 > **Retired from AM-21 rather than rebuilt:** the AI field-suggestion half of AA-33. Its endpoint
 > returned a graded `low|medium|high|critical` severity — the exact thing #7 below rejects — and

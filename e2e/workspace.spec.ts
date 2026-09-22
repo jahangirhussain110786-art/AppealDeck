@@ -264,3 +264,68 @@ test("authenticated workspace preserves the exact response through submission an
   await page.getByRole("tab", { name: "History", exact: true }).click();
   await expect(page.getByText(/Attempt 1 ·/)).toBeVisible();
 });
+
+/**
+ * #86 and #91. Both were added because the product was silently wrong about a real case — a
+ * second violation dropped on the floor, and a seller's earlier rejected attempts invisible to
+ * every rule that depends on them. Asserted end to end, because the recurring defect in this
+ * codebase has been code that shipped with nothing able to reach it.
+ */
+test("a notice raising two issues names both, and blocks a response that has answered one", async ({
+  page,
+}) => {
+  await page.goto("/case");
+  await page
+    .getByLabel("Amazon notice", { exact: true })
+    .fill(
+      [
+        "Your Amazon seller account has been deactivated.",
+        "We could not verify the authenticity of the invoices you supplied for the affected products.",
+        "Separately, your detail page policy violation for ASIN B0EXAMPLE1 remains unresolved.",
+        "Please provide the supplier invoice for the affected product.",
+      ].join("\n"),
+    );
+  await page.getByLabel("Current response instructions").fill("Upload the requested invoice.");
+  await page.getByRole("button", { name: "Confirm this route" }).click();
+
+  await page.getByRole("tab", { name: "Response", exact: true }).click();
+  const panel = page.getByRole("tabpanel", { name: "Response", exact: true });
+  await expect(panel.getByText("This notice raises more than one issue")).toBeVisible();
+  // Each issue is named, and quoted from the seller's own notice rather than asserted.
+  await expect(panel.getByText("Inauthentic documents", { exact: true })).toBeVisible();
+  await expect(panel.getByText("Listing violation", { exact: true })).toBeVisible();
+  await expect(panel.getByText(/detail page policy violation for ASIN B0EXAMPLE1/)).toBeVisible();
+
+  const confirm = panel.getByLabel("My response addresses every issue listed above.");
+  await expect(confirm).not.toBeChecked();
+  // `click()` then assert, not `check()`: the box is controlled by state that only updates once
+  // the vault write returns, and `check()` re-clicks while that is still in flight.
+  await confirm.click();
+  await expect(confirm).toBeChecked();
+});
+
+test("a response sent before finding us counts as an attempt", async ({ page }) => {
+  await page.goto("/case");
+  await page
+    .getByLabel("Amazon notice", { exact: true })
+    .fill("Your Amazon seller account has been deactivated. Please submit a Plan of Action.");
+
+  await page.getByRole("button", { name: "Yes, I already responded" }).click();
+  await page
+    .getByLabel("What did you send? (optional)")
+    .fill("We removed the listing and retrained the team.");
+  await page.getByRole("button", { name: "Record this response" }).click();
+
+  // It becomes a submission on the case, which is what makes the attempt count and the
+  // duplicate-response guard correct.
+  await expect(page.getByText(/Counted as an earlier attempt/)).toBeVisible();
+  // Appears both in the list on this step and in the case history, because it is a real
+  // submission on the case rather than a note beside it.
+  await expect(page.getByText(/We removed the listing and retrained the team/)).toHaveCount(2);
+  await expect(page.getByText("Wording not kept")).toHaveCount(0);
+
+  // It survives a reload, because an attempt the product forgets is an attempt it miscounts.
+  // The route was never confirmed here, so the request step is still the open one after reload.
+  await page.reload();
+  await expect(page.getByText(/Counted as an earlier attempt/)).toBeVisible();
+});

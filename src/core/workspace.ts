@@ -2,6 +2,8 @@ import type { CaseFile } from "./interviewEngine";
 import type { PoaDraft } from "./composer";
 import { determineResponseType } from "./responseType";
 import type { ResponseType } from "./responseType";
+import type { NoticeIssue } from "./noticeIssues";
+import { detectIssues, hasMultipleIssues } from "./noticeIssues";
 
 /**
  * AA-39 (AM-26) added `verification`, `questionnaire` and `acknowledgement`. Before that, a notice
@@ -63,6 +65,17 @@ export interface Workspace {
   professionalReviewRequired: boolean;
   requirementsConfirmed: boolean;
   requirements: Requirement[];
+  /**
+   * #86: every issue the notice raises, not only the one the case routes on. Optional so a case
+   * saved before this shipped still loads; populated when the seller confirms the route.
+   */
+  issues?: NoticeIssue[];
+  /**
+   * Set when the seller confirms their response covers every issue above. Mirrors
+   * `requirementsConfirmed`: the product will not call a response ready while a second issue the
+   * notice raised has gone unanswered, because that is refused for the part that was missed.
+   */
+  issuesConfirmed?: boolean;
   explanation: string;
   correctiveActions: string;
   preventiveMeasures: string;
@@ -82,6 +95,18 @@ export interface Workspace {
     text: string;
     receipt: string;
     attachments: Array<{ recordId: string; filename: string; contentHash: string; page: number }>;
+    /**
+     * #91: `"prior"` marks an attempt the seller made before they found AppealDeck. Absent means
+     * recorded through this product, which every row written before this shipped was, so the
+     * field is additive and an existing case still reads.
+     *
+     * Deliberately the same array rather than a parallel one: the attempt count, the
+     * duplicate-submission guard, the pre-submit checklist and the history all read
+     * `submissions`, and every one of them is wrong if a seller's earlier attempts are invisible
+     * to it. Putting them here makes all four correct at once instead of teaching each about a
+     * second list.
+     */
+    source?: "prior";
   }>;
   replies: Array<{ id: string; at: string; text: string; applied: boolean }>;
   /** Unsaved field text, autosaved to the vault so it survives navigation and sign-in. */
@@ -143,6 +168,15 @@ export function proposedRequirements(
       ? [{ id: crypto.randomUUID(), label, sourceQuote, status: "needed" as const, note: "" }]
       : [];
   });
+}
+
+/**
+ * #86: the issues a notice raises, ready to store on the case. Kept beside
+ * `proposedRequirements` because both answer "what does this notice actually say", and both must
+ * be recomputed whenever the notice text changes.
+ */
+export function proposedIssues(w: Pick<Workspace, "notice" | "formInstructions">): NoticeIssue[] {
+  return detectIssues(w.notice, w.formInstructions);
 }
 
 /** A bounded routing aid, never a claim about hidden platform decisions. */
@@ -234,6 +268,83 @@ const PROTOCOL_FOR_RESPONSE_TYPE: Record<ResponseType, Protocol> = {
   UNDETERMINED: "clarification",
 };
 
+/**
+ * #91: what the seller already sent, before they found this product.
+ *
+ * A seller usually arrives after appealing once or twice on their own and being rejected — that
+ * is what sends them looking for help. Until now the product could not know: the attempt count
+ * was `submissions.length`, which counts only what was recorded here, so a third attempt was
+ * treated as a first. Everything downstream inherited the mistake. `noveltyRequired()` never
+ * fired, so nobody was told the response has to differ from the one already refused. The
+ * duplicate-submission guard — built precisely because repeat-submission-without-change is the
+ * best-evidenced rejection cause in the research — had nothing to compare against. And the
+ * composer wrote as if this were a first appeal.
+ *
+ * The seller may not still have the text. That is fine and expected: the count alone fixes the
+ * attempt number and the novelty requirement, and an empty text simply gives the guard nothing to
+ * compare, which is honest rather than a guess.
+ */
+export interface PriorAttemptInput {
+  /** ISO timestamp the seller says they sent it. */
+  at: string;
+  /** What they sent, if they still have it. Empty is allowed and common. */
+  text: string;
+}
+
+/**
+ * Records an attempt made before this case existed. `revision: 0` marks it as predating the
+ * workspace's own first revision, so it can never be confused with something drafted here.
+ */
+export function recordPriorAttempt(w: Workspace, input: PriorAttemptInput): Workspace {
+  const at = input.at.trim() || new Date(0).toISOString();
+  return {
+    ...w,
+    submissions: [
+      ...w.submissions,
+      {
+        id: crypto.randomUUID(),
+        at,
+        revision: 0,
+        protocol: w.protocol,
+        text: input.text.trim(),
+        receipt: "",
+        attachments: [],
+        source: "prior",
+      },
+    ],
+    history: [
+      ...w.history,
+      {
+        id: crypto.randomUUID(),
+        at: new Date().toISOString(),
+        message: "Recorded a response sent before this case was created.",
+      },
+    ],
+  };
+}
+
+/** Removes a prior attempt the seller added by mistake. Never touches a real submission. */
+export function removePriorAttempt(w: Workspace, id: string): Workspace {
+  return {
+    ...w,
+    submissions: w.submissions.filter((s) => !(s.id === id && s.source === "prior")),
+  };
+}
+
+/** Attempts the seller made before this case existed. */
+export function priorAttempts(w: Workspace) {
+  return w.submissions.filter((s) => s.source === "prior");
+}
+
+/**
+ * Every attempt against this notice, whether it was sent through this product or before it. This
+ * is the number that decides whether a response has to differ from what was already refused, so
+ * it must not be `submissions.length` filtered to our own rows.
+ */
+export function totalAttempts(w: Workspace): number {
+  return w.submissions.length;
+}
+
 export function workspaceGaps(w: Workspace): string[] {
   const gaps: string[] = [];
   const route = routeWorkspace(w);
@@ -242,6 +353,15 @@ export function workspaceGaps(w: Workspace): string[] {
   if (!COMPOSABLE_PROTOCOLS.includes(route.protocol)) gaps.push(route.reason);
   if (!w.requirementsConfirmed)
     gaps.push("Confirm that the list covers every item requested by the notice and form.");
+  /*
+    #86: a notice that raises two issues is refused for the one the response missed, so a case is
+    not ready while a second issue is unaddressed. Only fires when more than one was actually
+    found — a single-issue notice behaves exactly as it always has.
+  */
+  if (hasMultipleIssues(w.issues ?? []) && !w.issuesConfirmed)
+    gaps.push(
+      `This notice raises ${(w.issues ?? []).length} separate issues. Confirm your response addresses each one.`,
+    );
   if (w.protocol === "documents" && !w.requirements.length)
     gaps.push("Add the requested document to your plan.");
   for (const r of w.requirements) {

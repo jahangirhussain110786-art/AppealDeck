@@ -67,6 +67,7 @@ import { addFileToVault } from "@/lib/vault/addFileToVault";
 import { withCaseEvidence } from "@/lib/caseEvidence";
 import { loadCaseFile, saveCaseFile, loadCaseLog, saveCaseLog } from "@/lib/caseStore";
 import { WorkspaceSchema } from "@/lib/workspaceSchema";
+import { proposedIssues, totalAttempts } from "@/core/workspace";
 import { buildCaseExport } from "@/lib/workspaceExport";
 import { buildEvidenceManifest, manifestFilename } from "@/lib/evidencePack";
 import {
@@ -553,7 +554,7 @@ function WorkspaceInner({
               replies: w.replies.filter((r) => !r.applied),
             },
           },
-          attemptNumber: Math.min(99, w.submissions.length + 1),
+          attemptNumber: Math.min(99, totalAttempts(w) + 1),
         }),
       });
       const data = await response.json();
@@ -681,6 +682,10 @@ function WorkspaceInner({
           (updated.confirmed && updated.protocol === "specialist"),
         requirementsConfirmed: false,
         requirements: old.requirements.length ? old.requirements : proposedRequirements(updated),
+        // #86: recomputed on every route confirmation, because the notice text may have changed
+        // and a second issue must not survive from a notice the seller has since replaced.
+        issues: proposedIssues(updated),
+        issuesConfirmed: false,
         submissions: old.submissions,
         replies: old.replies,
         history: old.history,
@@ -839,6 +844,15 @@ function WorkspaceInner({
                   workspace={w}
                   busy={busy}
                   onSave={confirmRequest}
+                  /*
+                    #91 needs a save that keeps the whole workspace. `confirmRequest` deliberately
+                    enumerates the fields a route confirmation may change and re-uses `old` for the
+                    rest — including `submissions` — so putting a recorded prior attempt through it
+                    would drop it on the way to the vault.
+                  */
+                  onCommitWorkspace={(updated) =>
+                    commit(() => updated, "Recorded a response sent before this case was created.")
+                  }
                   draft={w.draft}
                   onDraftChange={setDraftField}
                 />
