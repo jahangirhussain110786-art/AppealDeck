@@ -170,6 +170,7 @@ export const APP = {
       GATED_PRO_HELP: "Requires professional help",
       INTAKE: "Intake in progress",
       REMEDIATION: "Evidence gathering",
+      WAITING_THIRD_PARTY: "Waiting on someone else",
       READY: "Ready to submit",
       SUBMITTED: "Submitted",
       AWAITING: "Awaiting response",
@@ -180,6 +181,44 @@ export const APP = {
       FOLLOW_UP: "Follow-up",
       ESCALATION: "Escalation",
       CLOSED: "Closed",
+    },
+    /**
+     * AA-40. Wording rule for this block: it reports dates the seller set, and says so. It never
+     * implies Amazon has been in touch, and never manufactures urgency — the overdue line states a
+     * fact and stops. D6's honest-expectations rule applies to nudges as much as to sales copy.
+     */
+    clock: {
+      titleOverdue: "Past your own follow-up date",
+      titleDue: "Due today",
+      titleUpcoming: "Coming up",
+      titleClear: "Nothing is due",
+      clearBody:
+        "No follow-up dates are set for this case. If you are waiting on Amazon or on a supplier, set a date so this page can tell you when it arrives.",
+      newSinceLastVisit: "New since you were last here",
+      /** Short row-level marker. The header already carries the full phrase, so repeating it on
+       * every row reads as a stutter rather than as emphasis. */
+      newBadgeShort: "New",
+      sinceNote: "Based on dates you set. Amazon does not notify us about your case.",
+      waitingTitle: "Waiting on someone else",
+      waitingDescription:
+        "Record who you are waiting on, so a stalled case reads as waiting rather than unfinished.",
+      waitingPartyLabel: "Who you are waiting on",
+      waitingPartyPlaceholder: "My supplier",
+      waitingFollowUpLabel: "Chase them on",
+      waitingClear: "No longer waiting",
+      waitingSince: "Waiting since",
+      waitingSaved: "Saved who you are waiting on",
+      waitingCleared: "Cleared the waiting note",
+      waitingSaveFailed: "Could not save that. Your case is unchanged.",
+      emailTitle: "Email me when a date arrives",
+      emailBody:
+        "We can email you when a follow-up date you set arrives. Only the date and the case type leave your device — never your notice, your evidence, or your draft.",
+      emailOn: "Email reminders are on for this case",
+      emailOff: "Email reminders are off",
+      emailEnable: "Email me for this case",
+      emailDisable: "Turn off email for this case",
+      emailSignedOut: "Sign in to get an email when a date arrives.",
+      emailFailed: "Could not change email reminders. Nothing else has changed.",
     },
     replyCard: {
       title: "Amazon replied?",

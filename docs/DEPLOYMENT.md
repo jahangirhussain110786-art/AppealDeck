@@ -70,6 +70,8 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
    - Site URL: `https://appealdeck.com`
    - Redirect URLs: `<origin>/auth/callback` for the current single host (the `vercel.app` URL now, the apex later) + `http://localhost:3000/auth/callback` (dev only). No `app.` entry unless the split is switched on.
 2. Supabase dashboard → SQL Editor: confirm migrations `0001` through `0008` are applied. If not, copy each `supabase/migrations/*.sql` file and run in order. **`0008_outcome_events.sql` is new as of 11 Sep 2026** (the EF-5 opt-in outcome table) and has not yet been applied to any project — no AI session has direct SQL access, only the REST API, so this one needs a manual copy-paste into the SQL Editor same as the others. Until it's applied, `POST /api/outcome` fails closed (returns an error, writes nothing) rather than crashing.
+
+   **`0011_case_reminders.sql` is new as of 22 Sep 2026** (AA-40, the case-reminder rows that let a follow-up date reach a seller by email) and also needs a manual copy-paste, same as the others. Until it is applied, `POST /api/reminders` returns 503 and the dashboard tells the seller email reminders could not be changed — the reminder date itself still saves to their vault and still shows on the page, so nothing about their case is lost. The `/api/jobs/case-reminders` cron also needs `CRON_SECRET` (shared with the existing purchase-email job) and `RESEND_API_KEY`; without the key no reminder email is sent, and the feature stays visibly off rather than silently failing.
 3. Supabase dashboard → Settings → API: copy `URL`, `anon` key, `service_role` key to Vercel env.
 
 ## 5. Paddle production setup (founder action)

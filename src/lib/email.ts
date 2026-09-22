@@ -100,3 +100,74 @@ export async function sendPurchaseConfirmationEmail(
     throw new Error("Confirmation email delivery failed");
   }
 }
+
+export interface CaseReminderInput {
+  to: string;
+  /** Coarse violation kind. Never the notice text — see migration 0011's header. */
+  kindLabel: string;
+  /** ISO date the seller themselves chose. */
+  dueAt: string | Date;
+  /** Absolute URL back to the dashboard. */
+  dashboardUrl: string;
+  idempotencyKey?: string;
+}
+
+/**
+ * AA-40: the follow-up reminder email. Pure content builder, same pattern as the purchase email.
+ *
+ * Tone rules, which matter more here than anywhere else in the product. This email arrives
+ * unprompted at a person in a crisis, so it: states only the date they set, never implies Amazon
+ * has been in touch or that anything has changed, contains no deadline arithmetic we cannot stand
+ * behind, makes no prediction, and says plainly how to stop receiving it. A reminder that
+ * manufactures urgency would undo the honesty the rest of the product is built on.
+ */
+export function buildCaseReminderEmail(input: CaseReminderInput): BuiltEmail {
+  const dateLabel = formatLongDate(input.dueAt);
+  const subject = "The follow-up date you set has arrived";
+
+  const lines = [
+    `You asked us to remind you about your ${input.kindLabel} case${
+      dateLabel ? ` on ${dateLabel}` : ""
+    }. That date has arrived.`,
+    "",
+    "Nothing about your case has changed on our side — Amazon does not notify us, and we never sign in to your account. This is only the date you chose.",
+    "",
+    `Open your case: ${input.dashboardUrl}`,
+    "",
+    "To stop these, turn off email reminders for this case on your dashboard.",
+    "",
+    "AppealDeck by Hawlton",
+  ];
+
+  const text = lines.join("\n");
+  const html = `<div>${lines
+    .map((line) => (line === "" ? "<br />" : `<p>${escapeHtml(line)}</p>`))
+    .join("\n")}</div>`;
+
+  return { subject, html, text };
+}
+
+/** Sends a case reminder. Throws on failure so the caller can record it and retry. */
+export async function sendCaseReminderEmail(input: CaseReminderInput): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM ?? "AppealDeck <billing@appealdeck.com>";
+  if (!apiKey) throw new Error("Reminder email is not configured");
+
+  const { subject, html, text } = buildCaseReminderEmail(input);
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      signal: AbortSignal.timeout(5000),
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        ...(input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey } : {}),
+      },
+      body: JSON.stringify({ from, to: input.to, subject, html, text }),
+    });
+    if (!res.ok) throw new Error("Reminder email provider returned " + res.status);
+  } catch {
+    throw new Error("Reminder email delivery failed");
+  }
+}

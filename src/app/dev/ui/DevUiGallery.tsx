@@ -42,6 +42,8 @@ import { EvidenceStatusBadge } from "@/components/EvidenceStatusBadge";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { DeadlineChipList } from "@/components/DeadlineChip";
 import { LocalFirstBadge } from "@/components/LocalFirstBadge";
+import { ClockBriefCard } from "@/components/ClockBriefCard";
+import { buildClockBrief } from "@/core";
 import { VerifiedStamp } from "@/components/VerifiedStamp";
 import { Stepper } from "@/components/Stepper";
 import { Logo, LogoMark } from "@/components/Logo";
@@ -616,7 +618,33 @@ export function DevUiGallery() {
           </div>
         </Card>
       </Section>
+
+      {/* AA-40: the clock brief in each of its four states. The dashboard needs a signed-in vault,
+          so this is where the card is reviewed without credentials. */}
+      <Section title="Clock brief (AA-40)">
+        <div className="grid gap-4 md:grid-cols-2">
+          <ClockBriefCard brief={demoBrief([-4, 2])} />
+          <ClockBriefCard brief={demoBrief([0])} />
+          <ClockBriefCard brief={demoBrief([5, 12])} />
+          <ClockBriefCard brief={demoBrief([])} />
+        </div>
+      </Section>
     </main>
+  );
+}
+
+/** Builds a brief from day offsets, using the real core function rather than hand-written props. */
+function demoBrief(offsets: number[]) {
+  const now = Date.now();
+  return buildClockBrief(
+    offsets.map((days, i) => ({
+      caseId: `demo-${i}`,
+      kind: "POLICY" as const,
+      state: "AWAITING" as const,
+      reminderAt: new Date(now + days * 86_400_000).toISOString(),
+      lastSeenAt: new Date(now - 5 * 86_400_000).toISOString(),
+    })),
+    now,
   );
 }
 

@@ -9,7 +9,7 @@
 
 ## Resume pointer
 
-**Next task: AA-40 (K1 — one journey, and the clock speaks first).** AA-39 is complete and verified in a browser. The honesty corrections the founder asked for on 22 Sep are done and are recorded below under "Honesty pass".
+**Next task: AA-41 + AA-43 (K2 — document reading, shipped together with the disclosure correction).** AA-39 and AA-40 are complete. Two founder decisions are still open and are listed at the end of this file.
 
 ---
 
@@ -105,9 +105,37 @@ Playwright and Lighthouse were **not** run for this paperwork step; no UI change
 
 **Not done in this task, by design:** Playwright and Lighthouse were not re-run (deferred to the end of the pass); screenshots not captured — the desktop window state blocked the capture, and the browser verification above is recorded as text instead.
 
-### AA-40 — K1: one journey, and the clock speaks first
+### AA-40 — K1: the clock speaks first
 
-*Not started.* Founder call pending: retire the classic interview or keep it. Email half needs `RESEND_API_KEY`.
+**Done 22 Sep 2026.** Verified in a browser via the dev gallery (the dashboard needs a signed-in vault, and this session does not type passwords).
+
+**Built:**
+
+- **`src/core/clock.ts` (new, pure)** — decides what is due and what came due while the seller was away. Takes `now` as a parameter rather than calling `Date.now()`, so every case is directly testable. Four urgency bands (overdue / today / soon / scheduled) on whole UTC calendar days, so a date is not "1 day away" at one minute past midnight. Terminal cases produce nothing — chasing a seller about a case they have already won is what makes a product feel automated rather than attentive.
+- **`WAITING_THIRD_PARTY` case state** — a case blocked on a supplier or rights owner previously sat in "Evidence gathering", which reads as the seller not having done their homework. It now has its own state, its own next-best-action, and a `waitingOn` record (party, since, follow-up date) that feeds the clock.
+- **`ClockBriefCard`** — the first thing on the dashboard. Four states, all reviewed in the dev gallery.
+- **`lastSeenAt` on the case log** — stamped once per visit and only *after* the brief is computed against the previous value, guarded by a ref because StrictMode double-invokes effects and this project has already lost a case file to that exact race (`InterviewFlow.tsx`, 19 Sep 2026).
+- **The email half** — migration `0011_case_reminders.sql`, `src/lib/caseReminders.ts`, `POST/DELETE/GET /api/reminders`, the `/api/jobs/case-reminders` cron, and `buildCaseReminderEmail`. Opt-in per case. Inert until the founder applies `0011` and adds `RESEND_API_KEY`, the same way the purchase email was inert before its key.
+
+**The privacy decision inside AA-40, made explicitly rather than by accident:** email is the only channel that reaches a seller who is not on the site, and an email cannot be sent from a closed device. So a reminder row must exist server-side. It carries a due date, a coarse violation kind, and the vault's own opaque case id — no notice text, no evidence, no draft, no free text. It is opt-in per case, turning it off deletes the row, and `src/content/legal.ts` gained a sentence saying exactly this **in the same commit**, with the "last updated" date moved to 2026-09-22. AM-26 point 4 authorises the channel; the disclosure is not deferred to AA-43.
+
+**Tone contract on the reminder email, enforced by tests rather than by review:** this message arrives unprompted at someone whose livelihood is suspended. `caseReminderEmail.test.ts` asserts it states only the date the seller set, explicitly says nothing has changed and that Amazon does not notify us, contains no prediction or guarantee, contains no manufactured urgency ("urgent", "act now", "last chance"), says how to stop it, and escapes HTML so a label cannot inject markup.
+
+**Discovered:**
+
+1. **A copy defect the gate caught in my own comment** — `lint:copy` flagged a banned soft word ("just") inside a code comment. The gate scans comments, not only user-facing strings.
+2. **A stutter in the card, caught by reading the rendered page rather than the code** — the "New since you were last here" phrase appeared in the header *and* verbatim on every row. The row marker is now a short "New".
+3. **Nine pre-existing Playwright failures, confirmed not caused by this work.** `e2e/decode-continuity.spec.ts` (7) and `e2e/workspace.spec.ts` (2) fail an axe `color-contrast` check: #9fa195 on #434c49 = 3.38:1 against a 4.5:1 requirement, on a `bg-muted text-muted-foreground` revision badge. **Verified by stashing all of this session's work and re-running the same two tests on the clean checkout — both still failed**, so the cause predates AA-39/AA-40. Not fixed here: the colour system is founder-approved under AM-22, and a token change needs its own pass checking every muted-on-surface pairing in both themes. Spawned as a separate task with full reproduction detail.
+
+**Gates after AA-40:** tsc 0 · lint 0 · lint:copy PASS · format:check 0 · **vitest 638/638 in 67 files** (from 604/64) · build 0, clean `.next` · Playwright chromium **63 passed / 9 failed / 3 skipped**, all 9 failures pre-existing and verified as such.
+
+**Deliberately not done:** browser push notifications. Delivering one while the tab is closed needs a service worker, a push service and VAPID keys — real infrastructure — and a notification that only fires when the seller already has the page open does not "speak first" in any sense worth the name. Email does the job honestly; a half-working notification would not.
+
+**Founder decisions still open (neither blocks AA-41):**
+
+1. **Identity documents** — read server-side with AI like invoices, or checked in the browser? Recommendation and reasoning in the direction doc's AA-41 section.
+2. **The classic interview** — keep or retire, now that AA-39's routing fix makes the workspace usable for every notice family.
+3. **New:** apply `supabase/migrations/0011_case_reminders.sql` and add `RESEND_API_KEY`, or email reminders stay inert. `0008` is still unapplied from the earlier pass.
 
 ### AA-41 — K2: sensors, the product reads the documents
 

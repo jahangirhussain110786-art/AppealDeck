@@ -18,7 +18,7 @@ export type LegalDoc = "privacy" | "terms" | "refund";
 
 export const LEGAL = {
   lastUpdated: {
-    privacy: "2026-09-18",
+    privacy: "2026-09-22",
     terms: "2026-09-10",
     refund: "2026-09-11",
   },
@@ -32,6 +32,7 @@ export const LEGAL = {
           "When you decode a notice, its text is sent to AppealDeck for analysis. Preparing a response sends your case text and document references to AppealDeck. Original evidence files are not uploaded for these actions.",
           "When you create an account or buy the Appeal Pass, Paddle collects the payment and billing information. We receive a licence record (email, plan, status) via a Paddle webhook.",
           "Evidence contents are encrypted in your browser. If you choose cloud backup, encrypted contents and unencrypted metadata (including file names, tags, types, case references and content hashes) are uploaded to Supabase Storage. A backup passphrase protects the content key; we do not receive that passphrase.",
+          "If you turn on email reminders for a case, we store the reminder date you chose, the case type, and an identifier for that case, so we can email you when the date arrives. Nothing else about the case is sent: not your notice, your evidence, your draft, or any note you have written. Turning reminders off for a case deletes that record.",
           "Before sign-in, interview drafts are encrypted with a secret held for that tab session. Closing the session or clearing browser data can make them unrecoverable. Signing in on that tab transfers the draft into your account vault after it is unlocked, preserving existing cases. Account vaults unlock automatically by default; you can add passphrase protection.",
         ],
       },

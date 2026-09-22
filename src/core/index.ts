@@ -80,6 +80,21 @@ export { determineResponseType, splitClauses, RESPONSE_TYPE_LABELS };
 export type { ResponseType, ResponseTypeResult, ResponseTypeMatch };
 export { extractEntities, entitiesOfKind, ENTITY_LABELS };
 export type { EntityKind, ExtractedEntity };
+export {
+  buildClockBrief,
+  clockItemsForCase,
+  describeClockItem,
+  mostUrgent,
+  SOON_WINDOW_DAYS,
+} from "./clock";
+export type {
+  ClockBrief,
+  ClockItem,
+  ClockUrgency,
+  ClockSource,
+  ClockCaseInput,
+  ClockDeadline,
+} from "./clock";
 export { computeDeadlines, isIndefiniteHold, serializeDeadlines };
 export type { Deadline, DeadlineKind, DeadlineInput, SerializedDeadline } from "./deadlinesModel";
 export { FIXTURES, FIXTURE_KINDS };

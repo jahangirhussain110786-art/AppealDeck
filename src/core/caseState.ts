@@ -5,6 +5,13 @@ export type CaseState =
   | "GATED_PRO_HELP"
   | "INTAKE"
   | "REMEDIATION"
+  /**
+   * AA-40: the case is blocked on a third party — usually a supplier who has not sent an invoice,
+   * or a rights owner who has not answered a retraction request. Previously these cases sat in
+   * REMEDIATION looking like the seller was procrastinating, when in fact they were waiting on
+   * someone they do not control. Distinguishing the two changes what the product should say.
+   */
+  | "WAITING_THIRD_PARTY"
   | "READY"
   | "SUBMITTED"
   | "AWAITING"
@@ -25,6 +32,8 @@ export interface CaseStateContext {
   attemptCount: number;
   hasReply: boolean;
   reminderDue?: boolean;
+  /** AA-40: set when the seller has recorded that they are blocked on a third party. */
+  waitingOnThirdParty?: boolean;
   replyCategory?: ReplyCategory;
   fundsHeld: boolean;
   fundsEligible: boolean;
@@ -72,6 +81,19 @@ const TRANSITIONS: ReadonlyArray<Transition> = [
     priority: 90,
   },
   { to: "READY", guard: (ctx) => ctx.requiredComplete && !ctx.submitted, priority: 85 },
+  // AA-40: sits just above REMEDIATION, so a case blocked on a supplier is described as waiting
+  // rather than as unfinished homework. Below READY on purpose — if the evidence has actually
+  // arrived, the case is ready regardless of a stale waiting flag the seller forgot to clear.
+  {
+    to: "WAITING_THIRD_PARTY",
+    guard: (ctx) =>
+      !ctx.severityGated &&
+      !ctx.submitted &&
+      ctx.intakeComplete &&
+      !ctx.requiredComplete &&
+      ctx.waitingOnThirdParty === true,
+    priority: 82,
+  },
   {
     to: "REMEDIATION",
     guard: (ctx) =>
@@ -132,6 +154,10 @@ export function nextBestActions(state: CaseState, missingLabels: readonly string
       return missingLabels.length > 0
         ? [`Attach the required evidence: ${missingLabels.join(", ")}`]
         : ["Complete the required actions and attach evidence"];
+    case "WAITING_THIRD_PARTY":
+      return [
+        "You are waiting on someone else. Set a follow-up date and send the chase letter if it passes.",
+      ];
     case "READY":
       return ["Review and submit your Plan of Action"];
     case "SUBMITTED":

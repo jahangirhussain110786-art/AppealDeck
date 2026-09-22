@@ -35,6 +35,31 @@ export interface CaseIndexEntry {
 
 export interface CaseLog {
   reminderAt?: string;
+  /**
+   * AA-40: the seller has opted in to an email when `reminderAt` arrives. Opt-in per case, and the
+   * only thing that causes any case-related data to reach the server outside a decode or a draft.
+   * Absent or false means the reminder stays entirely on this device.
+   */
+  emailReminder?: boolean;
+  /**
+   * AA-40: when this case was last opened by the seller. Written on open, read before writing, so
+   * the dashboard can say what came due while they were away. Absent on a case never reopened.
+   */
+  lastSeenAt?: string;
+  /**
+   * AA-40: the case is blocked on a third party the seller does not control — a supplier who has
+   * not sent an invoice, a rights owner who has not answered. Recorded by the seller, never
+   * inferred: the product cannot know whether an email was actually sent.
+   */
+  waitingOn?: {
+    /** Free text, e.g. "my supplier" or "the rights owner". Shown back verbatim. */
+    party: string;
+    /** ISO date the seller started waiting. */
+    since: string;
+    /** ISO date to chase. Drives a clock item exactly like a reminder does. */
+    followUpAt?: string;
+    note?: string;
+  };
   state: CaseState;
   attemptCount: number;
   submittedAt?: string;
