@@ -1,5 +1,14 @@
 # Case OS v2 — second-opinion research pass: RESUME FILE (paused 19 Sep 2026, continue Mon 22 Sep 2026)
 
+> **CLOSED 22 Sep 2026.** Step 1 (adversarial verification) was done by the 21 Sep Phase 1 research.
+> Step 2 (legal boundaries) is done: `docs/handoffs/2026-09-22-legal-boundaries-research.md`.
+> Step 3's notice-corpus content was absorbed into AA-39 rather than written as its own document,
+> and the salvage digests remain the sourced record they were. Nothing here is outstanding.
+>
+> The one thing neither pass could retrieve is unchanged: **Amazon's own Agent Policy text and the
+> current BSA disputes clause**, both behind Seller Central. That is B-08, and the founder's seller
+> account is the way to close it.
+
 **Status:** research salvaged, NOT yet synthesised. No `src/` touched. No existing planning file edited. Nothing committed except this folder.
 
 ## What the founder asked (from `prompt-for-chatgpt.txt`, repo root)
