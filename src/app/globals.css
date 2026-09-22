@@ -49,6 +49,28 @@
     --input: 60 8% 86%;
     --ring: 161 64% 34%;
     --shadow: 160 23% 10%;
+
+    /* --- Reading-grade semantics (22 Sep 2026) ---
+       The tokens above are FILL values: the approved brand colours, used for solid
+       buttons, 5-10% tinted surfaces, borders and rings. They were never contrast-tuned
+       for the case they are most often used in — the same hue as small TEXT sitting on
+       its own tint (`bg-warning/10 text-warning`, every Badge variant, the workspace
+       IconTile). Measured against the real composited background, warning text read
+       3.86:1 and primary 4.01:1 against WCAG AA's 4.5:1 for normal text.
+
+       So text gets its own reading of each hue. Hue and saturation are held at the
+       approved values; only lightness moves, and only far enough to clear 4.5:1 on the
+       worst surface that pairing actually renders on (its 10% tint over `--muted`).
+       Fills are untouched, so nothing the founder signed off on changes colour.
+       `tailwind.config.ts` maps every `text-*` utility onto these; `--info-ink` and
+       `--destructive-ink` already cleared AA here and are kept only so the set is
+       complete and a later palette change has one obvious place to go.
+       Enforced by src/app/__tests__/contrast.test.ts. */
+    --primary-ink: 161 64% 27%;
+    --warning-ink: 30 90% 32%;
+    --success-ink: 152 58% 28%;
+    --info-ink: 221 72% 46%;
+    --destructive-ink: 0 68% 44%;
     --radius-sm: 0.375rem;
     --radius-md: 0.625rem;
     --radius-lg: 0.8125rem;
@@ -114,6 +136,16 @@
     --input: 160 13% 24%;
     --ring: 160 52% 62%;
     --shadow: 160 60% 2%;
+
+    /* Dark mode's brighter fills already read well as text — except destructive, which
+       at 60% lightness reached only 3.44:1 on its own tint over `--muted`, and info,
+       which sat at 4.52:1 with no margin. Those two are lifted; the rest match their
+       fill exactly, which is the honest result rather than a manufactured difference. */
+    --primary-ink: 160 52% 62%;
+    --warning-ink: 38 92% 62%;
+    --success-ink: 152 52% 55%;
+    --info-ink: 217 85% 69%;
+    --destructive-ink: 0 70% 69%;
     color-scheme: dark;
   }
 }

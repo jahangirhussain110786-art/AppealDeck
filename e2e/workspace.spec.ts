@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
+import { expectNoAxeViolations, WCAG_AA_TAGS } from "./axe";
 import { composePoa, critiquePoa, renderPoaText } from "../src/core/composer";
 
 const notice =
@@ -76,10 +76,7 @@ test("workspace persists a sourced evidence plan, waiting state and factual revi
   await expect(page.getByLabel("What does this record support or leave unclear?")).toHaveValue(
     /J-104/,
   );
-  expect(
-    (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
-      .violations,
-  ).toEqual([]);
+  await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
@@ -103,10 +100,7 @@ test("workspace persists a sourced evidence plan, waiting state and factual revi
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
   await page.emulateMedia({ colorScheme: "dark" });
   await expect(page.locator("html")).toHaveClass(/dark/);
-  expect(
-    (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
-      .violations,
-  ).toEqual([]);
+  await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
   await page.screenshot({
     path: "test-results/workspace-dark.png",
     fullPage: true,

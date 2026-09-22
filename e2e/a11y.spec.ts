@@ -1,42 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
-import { AxeBuilder } from "@axe-core/playwright";
+import { expectNoAxeViolations } from "./axe";
 
 /**
- * Wait until every element in the viewport that carries an inline opacity (framer-motion
- * entry fades) has reached opacity 1. axe measures colour contrast on the rendered pixels,
- * so a scan taken mid-fade reports blended foreground colours that never exist in the
- * palette (e.g. #aaabaf for text-foreground on white). Elements below the fold are ignored:
- * scroll-triggered animations stay at opacity 0 until they enter the viewport.
+ * These marketing and auth surfaces gate on serious + critical only; the app specs assert on
+ * every violation. The scan itself, including the entry-fade wait, lives in ./axe.ts.
  */
-async function waitForEntryAnimations(page: Page) {
-  await page.waitForFunction(() => {
-    const viewportHeight = window.innerHeight;
-    return Array.from(document.querySelectorAll<HTMLElement>('[style*="opacity"]')).every((el) => {
-      const rect = el.getBoundingClientRect();
-      const inViewport = rect.bottom > 0 && rect.top < viewportHeight;
-      return !inViewport || getComputedStyle(el).opacity === "1";
-    });
-  });
-}
-
 async function assertNoAxeViolations(page: Page, path: string) {
   await page.goto(path);
-  await waitForEntryAnimations(page);
-  const results = await new AxeBuilder({ page }).analyze();
-  const violations = results.violations.filter(
-    (v) => v.impact === "critical" || v.impact === "serious",
-  );
-  expect(
-    violations,
-    JSON.stringify(
-      violations.map((v) => ({
-        id: v.id,
-        impact: v.impact,
-        description: v.description,
-        nodes: v.nodes.map((n) => n.html),
-      })),
-    ),
-  ).toEqual([]);
+  await expectNoAxeViolations(page, { impacts: ["critical", "serious"] });
 }
 
 test.describe("Marketing + auth surfaces (axe-core, serious + critical)", () => {

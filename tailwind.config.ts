@@ -80,6 +80,40 @@ const config: Config = {
           inverse: "hsl(var(--surface-inverse) / <alpha-value>)",
         },
       },
+      /**
+       * Text is the one place a semantic colour has to be legible rather than merely
+       * on-brand, so `text-primary` / `text-warning` / `text-success` / `text-info` /
+       * `text-destructive` resolve to the reading-grade `--*-ink` values instead of the
+       * fill. `bg-*`, `border-*`, `ring-*` and `fill-*` are untouched and still render
+       * the approved brand colours.
+       *
+       * Done here rather than by editing ~118 call sites because the guarantee then
+       * holds for code nobody has written yet: a new `text-warning` is legible by
+       * construction. Each entry repeats its `foreground` key because a bare string
+       * would replace the whole colour object and break `text-primary-foreground`.
+       */
+      textColor: {
+        primary: {
+          DEFAULT: "hsl(var(--primary-ink) / <alpha-value>)",
+          foreground: "hsl(var(--primary-foreground) / <alpha-value>)",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning-ink) / <alpha-value>)",
+          foreground: "hsl(var(--warning-foreground) / <alpha-value>)",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success-ink) / <alpha-value>)",
+          foreground: "hsl(var(--success-foreground) / <alpha-value>)",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info-ink) / <alpha-value>)",
+          foreground: "hsl(var(--info-foreground) / <alpha-value>)",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive-ink) / <alpha-value>)",
+          foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
+        },
+      },
       borderRadius: {
         sm: "var(--radius-sm)",
         md: "var(--radius-md)",

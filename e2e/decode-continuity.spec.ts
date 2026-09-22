@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { SAMPLE_NOTICE_TEXT } from "../src/content/sampleNotice";
-import AxeBuilder from "@axe-core/playwright";
+import { expectNoAxeViolations, WCAG_AA_TAGS } from "./axe";
 
 async function decodeSample(page: Page) {
   await page.goto("/decode");
@@ -28,10 +28,7 @@ for (const view of ["Overview", "Evidence", "Response", "History"]) {
   }) => {
     await decodeSample(page);
     if (view === "Overview") {
-      expect(
-        (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
-          .violations,
-      ).toEqual([]);
+      await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
       await page.emulateMedia({ colorScheme: "dark" });
       await expect(page.locator("html")).toHaveClass(/dark/);
       await page.screenshot({
@@ -56,10 +53,7 @@ for (const view of ["Overview", "Evidence", "Response", "History"]) {
     await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(SAMPLE_NOTICE_TEXT);
     await expect(page.getByText("Review your decoded request", { exact: true })).toBeVisible();
     if (view === "Overview") {
-      expect(
-        (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze())
-          .violations,
-      ).toEqual([]);
+      await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
       await page.screenshot({
         path: "test-results/decode-workspace-import.png",
         fullPage: true,
