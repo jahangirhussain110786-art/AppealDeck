@@ -3,7 +3,15 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Ban, Check, FileSearch, FolderOpen, RefreshCw } from "lucide-react";
+import {
+  ArrowRight,
+  Ban,
+  Check,
+  FileSearch,
+  FolderOpen,
+  RefreshCw,
+  ShieldAlert,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -45,6 +53,8 @@ type DecodeResponse = {
     matches: Array<{ quote: string; start: number; end: number }>;
   };
   entities?: ExtractedEntity[];
+  /** #87. Optional on the wire so a response cached before this shipped still renders. */
+  authenticity?: Array<{ id: string; label: string; detail: string; match: string }>;
 };
 
 type Status = "empty" | "loading" | "error" | "result";
@@ -291,6 +301,40 @@ function ResultView({
           </CardHeader>
           <CardContent className="space-y-4 pt-5">
             <p className="text-sm leading-relaxed text-muted-foreground">{guidance.summary}</p>
+            {/*
+              #87: placed above the decision, because if this message is a forgery then nothing
+              below it matters and every minute spent answering it is spent helping a criminal.
+              It states no verdict — it cannot — and its only instruction is to go and look in
+              Seller Central, which is the one place that settles the question.
+            */}
+            {result.authenticity && result.authenticity.length > 0 && (
+              <Alert variant="warning">
+                <ShieldAlert aria-hidden />
+                <div className="space-y-3">
+                  <AlertTitle>{DECODE.result.authenticityTitle}</AlertTitle>
+                  <AlertDescription>{DECODE.result.authenticityLead}</AlertDescription>
+                  <div>
+                    <p className="text-eyebrow uppercase text-muted-foreground">
+                      {DECODE.result.authenticityFound}
+                    </p>
+                    <ul className="mt-2 space-y-2">
+                      {result.authenticity.map((signal) => (
+                        <li key={signal.id} className="text-sm">
+                          <span className="font-medium text-foreground">{signal.label}</span>
+                          <span className="block text-muted-foreground">{signal.detail}</span>
+                          <span className="mt-1 block break-words font-mono text-xs text-muted-foreground">
+                            {signal.match}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <AlertDescription className="font-medium">
+                    {DECODE.result.authenticityAction}
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
             {/*
               AA-39: the decision, placed above the deadlines because it changes what the seller
               does, not merely when. `UNDETERMINED` is shown as prominently as any other answer —

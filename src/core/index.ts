@@ -77,6 +77,12 @@ export type { ParsedNotice } from "./noticeParser";
 export { classifyStage1 };
 export type { Classification, Confidence } from "./classifier";
 export { determineResponseType, splitClauses, RESPONSE_TYPE_LABELS };
+export { assessNoticeAuthenticity } from "./noticeAuthenticity";
+export type {
+  AuthenticityAssessment,
+  AuthenticitySignal,
+  AuthenticitySignalId,
+} from "./noticeAuthenticity";
 export type { ResponseType, ResponseTypeResult, ResponseTypeMatch };
 export { extractEntities, entitiesOfKind, ENTITY_LABELS };
 export type { EntityKind, ExtractedEntity };

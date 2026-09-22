@@ -1,13 +1,16 @@
 "use client";
-import { useState } from "react";
-import { ArrowRight, Check, FileSearch, FileText, Signpost } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowRight, Check, FileSearch, FileText, ShieldAlert, Signpost } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { DetailDisclosure, IconTile } from "./WorkspaceVisuals";
 import { PROTOCOL_LABELS, routeWorkspace, type Workspace } from "@/core/workspace";
 import { WORKSPACE as C } from "@/content/workspace";
+import { DECODE } from "@/content/marketing";
+import { assessNoticeAuthenticity } from "@/core/noticeAuthenticity";
 
 const selectStyle =
   "h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -30,9 +33,35 @@ export function RequestReview({
     formInstructions: draft?.["request.formInstructions"] ?? workspace.formInstructions,
   });
   const route = routeWorkspace(value);
+  /*
+    #87: the same check the decode page runs, here as well, because a seller can paste a notice
+    straight into the workspace without ever visiting /decode. Recomputed as they type — a
+    forgery pasted here has to be caught before they start building a response to it.
+  */
+  const authenticity = useMemo(() => assessNoticeAuthenticity(value.notice), [value.notice]);
   const noticeField = (
     <div className="space-y-2">
       <Label htmlFor="workspace-notice">{C.notice}</Label>
+      {authenticity.worthChecking && (
+        <Alert variant="warning">
+          <ShieldAlert aria-hidden />
+          <div className="space-y-2">
+            <AlertTitle>{DECODE.result.authenticityTitle}</AlertTitle>
+            <AlertDescription>{DECODE.result.authenticityLead}</AlertDescription>
+            <ul className="space-y-2">
+              {authenticity.signals.map((signal) => (
+                <li key={signal.id} className="text-sm">
+                  <span className="font-medium text-foreground">{signal.label}</span>
+                  <span className="block text-muted-foreground">{signal.detail}</span>
+                </li>
+              ))}
+            </ul>
+            <AlertDescription className="font-medium">
+              {DECODE.result.authenticityAction}
+            </AlertDescription>
+          </div>
+        </Alert>
+      )}
       <Textarea
         id="workspace-notice"
         value={value.notice}

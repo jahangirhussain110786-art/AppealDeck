@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { runDecode, isSeverityGated, RESPONSE_TYPE_LABELS } from "@/core";
+import { runDecode, isSeverityGated, RESPONSE_TYPE_LABELS, assessNoticeAuthenticity } from "@/core";
 
 export const dynamic = "force-dynamic";
 
@@ -76,5 +76,8 @@ export async function POST(req: NextRequest) {
     },
     // Capped so a pathological notice cannot return an unbounded payload.
     entities: result.entities.slice(0, 60),
+    // #87: things worth checking before the seller acts on this message. Never a verdict — see
+    // src/core/noticeAuthenticity.ts. Empty for the overwhelming majority of real notices.
+    authenticity: assessNoticeAuthenticity(text).signals,
   });
 }

@@ -96,6 +96,20 @@ export const DECODE = {
     entitiesNote:
       "Taken word for word from the text you pasted. Check each one before you rely on it.",
     entitiesAmbiguous: "Date order unclear — check this one",
+    /**
+     * #87: the scam-suspect card. Every word here is chosen to avoid a verdict. A newly
+     * deactivated seller is the most phishable person online, and a message arriving at that
+     * moment may be a forgery — but authenticity cannot be settled from pasted text, so
+     * the product points at what is worth checking and sends them to the one place that can
+     * settle it. Never "this is a scam", never "this looks genuine": both invent certainty, and
+     * here either one could do real harm.
+     */
+    authenticityTitle: "Check this message before you act on it",
+    authenticityLead:
+      "We cannot tell you whether a message really came from Amazon. These are the things in it worth checking first.",
+    authenticityAction:
+      "Open Seller Central yourself and look at Account Health. A genuine notice appears in your account — you never have to trust the message to find it.",
+    authenticityFound: "What we noticed",
   },
   /**
    * Annotation-card body copy (AM-22/V5, per Decode.dc.html) — the heading quotes the

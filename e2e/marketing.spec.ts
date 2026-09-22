@@ -59,6 +59,53 @@ test.describe("Marketing site (public)", () => {
     await expect(main.getByText("This page hit an error")).toHaveCount(0);
   });
 
+  /**
+   * #87. A newly deactivated seller is the most phishable person online, and this is the one
+   * feature where being silently unwired would do real harm rather than merely lose value — so
+   * the wiring is asserted end to end, not only the pure function in core.
+   */
+  test("a message asking for a fee and a password is questioned before the decision", async ({
+    page,
+  }) => {
+    await page.goto("/decode");
+    await page
+      .getByRole("textbox", { name: /notice/i })
+      .first()
+      .fill(
+        [
+          "Subject: Amazon Seller Performance - account deactivation notice",
+          "",
+          "Your Amazon seller account has been deactivated following a policy review of your listings.",
+          "To restore your selling privileges, pay the reinstatement fee of $250.",
+          "Submit your appeal at https://amaz0n-seller-appeal.com/restore and reply to",
+          "seller-performance@amazon-support-team.net with your password to verify ownership.",
+          "For faster resolution contact our specialist on WhatsApp.",
+        ].join("\n"),
+      );
+    await page.getByRole("button", { name: "Decode", exact: true }).click();
+
+    const main = page.locator("main");
+    await expect(main.getByText("Check this message before you act on it")).toBeVisible();
+    await expect(main.getByText("This message mentions a payment")).toBeVisible();
+    await expect(main.getByText("amaz0n-seller-appeal.com")).toBeVisible();
+    // It points at Seller Central and reaches no verdict of its own.
+    await expect(
+      main.getByText(/Open Seller Central yourself and look at Account Health/),
+    ).toBeVisible();
+    await expect(main.getByText(/is a scam|fraudulent|is genuine/i)).toHaveCount(0);
+  });
+
+  test("a genuine notice is not questioned", async ({ page }) => {
+    await page.goto("/decode");
+    await page.getByRole("button", { name: "Try a sample notice" }).click();
+    await page.getByRole("button", { name: "Decode", exact: true }).click();
+    await expect(page.locator("main").getByRole("heading", { level: 2 }).first()).toBeVisible();
+    // The cost of crying wolf here is a seller who delays answering a real deactivation.
+    await expect(
+      page.locator("main").getByText("Check this message before you act on it"),
+    ).toHaveCount(0);
+  });
+
   test("privacy + terms + refund pages are reachable", async ({ page }) => {
     for (const slug of ["/privacy", "/terms", "/refund"]) {
       const r = await page.goto(slug);
