@@ -25,13 +25,16 @@ function CaseList({
   cases,
   activeId,
   busy,
+  switching,
   onSelect,
   onReopen,
 }: {
   cases: CaseIndexEntry[];
   activeId: string;
   busy: boolean;
-  onSelect: (id: string) => void;
+  /** Id of the case a switch is currently in flight for, so the row can say so. */
+  switching: string | null;
+  onSelect: (id: string) => Promise<void>;
   onReopen: (id: string) => void;
 }) {
   const active = cases.filter((c) => !c.archived);
@@ -47,7 +50,7 @@ function CaseList({
             key={c.id}
             disabled={busy}
             aria-current={c.id === activeId ? "true" : undefined}
-            onClick={() => onSelect(c.id)}
+            onClick={() => void onSelect(c.id)}
             className="flex w-full items-center justify-between gap-3 rounded-lg border border-border/70 bg-card/60 px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2 disabled:opacity-60"
           >
             <span className="min-w-0">
@@ -56,7 +59,11 @@ function CaseList({
                 Started {formatDate(c.createdAt)}
               </span>
             </span>
-            {c.id === activeId && <Badge variant="secondary">Current</Badge>}
+            {switching === c.id ? (
+              <Badge variant="secondary">Opening…</Badge>
+            ) : (
+              c.id === activeId && <Badge variant="secondary">Current</Badge>
+            )}
           </button>
         ))}
         {archived.length > 0 && (
@@ -105,11 +112,15 @@ export function WorkspaceSummary({
   file: CaseFile;
   cases: CaseIndexEntry[];
   log: CaseLog | null;
-  onSelect: (id: string) => void;
+  onSelect: (id: string) => Promise<void>;
   onSaveLog: (log: CaseLog) => Promise<boolean>;
   onArchive: (id: string, archived: boolean) => Promise<boolean>;
 }) {
   const [busy, setBusy] = useState(false);
+  // Switching cases writes to the vault. Until that returns the list is disabled and the row says
+  // what is happening, so the seller is not left clicking a list that looks inert — and cannot
+  // start a second switch over the top of the first.
+  const [switching, setSwitching] = useState<string | null>(null);
   const w = file.workspace!;
   const gaps = workspaceGaps(w);
   return (
@@ -118,12 +129,18 @@ export function WorkspaceSummary({
         <CaseList
           cases={cases}
           activeId={file.id}
-          busy={busy}
-          onSelect={onSelect}
+          busy={busy || switching !== null}
+          switching={switching}
+          onSelect={(id) => {
+            setSwitching(id);
+            return onSelect(id).finally(() => setSwitching(null));
+          }}
           onReopen={(id) => {
             setBusy(true);
             void onArchive(id, false)
-              .then((ok) => ok && onSelect(id))
+              .then(async (ok) => {
+                if (ok) await onSelect(id);
+              })
               .finally(() => setBusy(false));
           }}
         />

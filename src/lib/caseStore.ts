@@ -10,6 +10,53 @@ export const CASE_FILE_NAME = "case_file";
 export const CASE_LOG_NAME = "case_log";
 const ACTIVE_CASE_POINTER_NAME = "active_case_pointer";
 const CASE_INDEX_NAME = "case_index";
+const PENDING_ACTIVE_CASE_KEY = "appealdeck-pending-active-case";
+
+/**
+ * Which case the seller just chose, recorded synchronously so the choice survives a navigation
+ * that outruns the vault write (22 Sep 2026 fix).
+ *
+ * The durable pointer lives in the vault, and writing it is asynchronous: `vault.atomic` has to
+ * find, delete and re-add an encrypted record in IndexedDB. Selecting a case in the dashboard's
+ * case list started that write and returned immediately, so a seller who clicked a case and then
+ * clicked Case in the header within the same breath loaded the case they had just switched away
+ * from — and could then edit the wrong case, in a product whose whole promise is not losing their
+ * work. Under load this is not rare: it reproduces in 2 of 3 runs of
+ * `decode-continuity.spec.ts:130` at four workers.
+ *
+ * `sessionStorage` is written synchronously, so the intent is already durable when navigation
+ * begins. It is a short-lived marker of intent, never a second source of truth: the next
+ * resolution adopts it into the vault pointer and any pointer write clears it, so a vault and a
+ * marker can never disagree for longer than one read. Per-tab by nature, which is correct — a
+ * case switch in one tab is not an instruction to the others.
+ */
+function markPendingActiveCase(caseId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(PENDING_ACTIVE_CASE_KEY, caseId);
+  } catch {
+    // Storage unavailable (private browsing, quota). The vault write still runs; the seller
+    // simply loses the protection against outrunning it. Never block a case switch over this.
+  }
+}
+
+function readPendingActiveCase(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.sessionStorage.getItem(PENDING_ACTIVE_CASE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingActiveCase(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(PENDING_ACTIVE_CASE_KEY);
+  } catch {
+    // Nothing to do — a marker we cannot clear is re-validated on every read anyway.
+  }
+}
 
 /**
  * The single fixed id every vault used before multi-case support (14 Sep 2026 fix) — every
@@ -130,6 +177,12 @@ async function writeActivePointer(vault: Vault, caseId: string): Promise<void> {
     data: JSON.stringify({ caseId }),
     kind: "case",
   });
+  // Only now. Clearing the marker before this point drops the safety net while the vault is still
+  // mid-write: this function deletes the old pointer before adding the new one, and a navigation
+  // that lands in that window leaves a vault with no pointer at all and nothing left to recover
+  // the seller's choice from. Cleared last, whichever path wrote the pointer — including
+  // `saveCaseFile`, so starting a new case still cannot be undone by a marker for an older one.
+  clearPendingActiveCase();
 }
 
 async function readCaseIndex(vault: Vault): Promise<CaseIndexEntry[]> {
@@ -196,6 +249,21 @@ async function removeCaseIndexEntry(vault: Vault, caseId: string): Promise<void>
  * record is moved, deleted, or re-keyed to do this.
  */
 async function resolveActiveCaseId(vault: Vault): Promise<string | null> {
+  // A switch whose vault write was outrun by navigation is completed here, before anything reads
+  // the pointer. Validated against the index first: a marker naming a case this vault does not
+  // have is discarded rather than allowed to strand the seller on nothing.
+  const pending = readPendingActiveCase();
+  if (pending) {
+    // Validated against a real case file — the same check `setActiveCaseId` makes — not merely
+    // against the index. A marker naming a case this vault cannot actually load is discarded
+    // rather than allowed to strand the seller on nothing.
+    if (await findRecordId(vault, CASE_FILE_NAME, pending)) {
+      await writeActivePointer(vault, pending);
+      return pending;
+    }
+    clearPendingActiveCase();
+  }
+
   const pointed = await readActivePointer(vault);
   if (pointed) return pointed;
 
@@ -250,6 +318,14 @@ export async function getActiveCaseId(vault: Vault): Promise<string | null> {
 }
 
 export async function setActiveCaseId(vault: Vault, caseId: string): Promise<void> {
+  // Synchronous, and deliberately before the first `await`: by the time this returns to the click
+  // handler the choice is already recorded, so a navigation that beats the vault write still
+  // lands on the case the seller picked.
+  markPendingActiveCase(caseId);
+  // The marker is deliberately left in place if this throws. A failure here is either a case that
+  // does not exist — which the next resolution validates and discards on its own — or a vault
+  // write that did not land, which is exactly the case the marker is for: dropping it would turn
+  // a recoverable failure into a silently wrong case. The caller surfaces the error.
   await vault.atomic(async () => {
     if (!(await findRecordId(vault, CASE_FILE_NAME, caseId))) throw new Error("Case not found");
     await writeActivePointer(vault, caseId);

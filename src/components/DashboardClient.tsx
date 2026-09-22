@@ -462,10 +462,13 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
           log={caseLog}
           onSaveLog={saveWorkspaceLog}
           onArchive={archiveCase}
-          onSelect={(id) => {
-            void setActiveCaseId(vault, id)
-              .then(loadFromVault)
-              .catch(() => toast.error("Could not switch cases"));
+          onSelect={async (id) => {
+            try {
+              await setActiveCaseId(vault, id);
+              await loadFromVault();
+            } catch {
+              toast.error("Could not switch cases");
+            }
           }}
         />
       );
@@ -570,10 +573,13 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
               log={caseLog}
               onSaveLog={saveWorkspaceLog}
               onArchive={archiveCase}
-              onSelect={(id) => {
-                void setActiveCaseId(vault, id)
-                  .then(loadFromVault)
-                  .catch(() => toast.error("Could not switch cases"));
+              onSelect={async (id) => {
+                try {
+                  await setActiveCaseId(vault, id);
+                  await loadFromVault();
+                } catch {
+                  toast.error("Could not switch cases");
+                }
               }}
             />
           );

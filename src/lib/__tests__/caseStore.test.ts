@@ -1,6 +1,6 @@
 import "fake-indexeddb/auto";
 import { webcrypto } from "node:crypto";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Vault } from "@/core/vault/vault";
 import { VaultDB } from "@/core/vault/db";
 import {
@@ -13,6 +13,7 @@ import {
   deleteCaseFile,
   listCases,
   getActiveCaseId,
+  setActiveCaseId,
   setCaseArchived,
 } from "@/lib/caseStore";
 import type { CaseFile } from "@/core/interviewEngine";
@@ -277,6 +278,121 @@ describe("caseStore", () => {
       expect(await loadCaseLog(v, caseA.id)).toEqual({ state: "DECODED", attemptCount: 1 });
       expect(await loadCaseLog(v, caseB.id)).toEqual({ state: "REMEDIATION", attemptCount: 2 });
       expect(await loadCaseLog(v)).toEqual({ state: "REMEDIATION", attemptCount: 2 });
+    });
+  });
+  /**
+   * The case switch that outran its own vault write (22 Sep 2026 fix).
+   *
+   * Writing the active-case pointer means finding, deleting and re-adding an encrypted record,
+   * so it is not instant. A seller who picked a case and navigated in the same breath used to
+   * land on the case they had just left, and could then edit the wrong one. The choice is now
+   * recorded synchronously in `sessionStorage` and adopted on the next read.
+   */
+  describe("a case switch that is outrun by navigation", () => {
+    /** The literal key the fix writes. Hardcoded, like LEGACY_CASE_ID above, so the test proves
+     *  against the real string rather than against the module's own private constant. */
+    const PENDING_KEY = "appealdeck-pending-active-case";
+    let map: Map<string, string>;
+
+    beforeEach(() => {
+      map = new Map<string, string>();
+      const storage = {
+        getItem: (k: string) => map.get(k) ?? null,
+        setItem: (k: string, v: string) => map.set(k, v),
+        removeItem: (k: string) => map.delete(k),
+      };
+      vi.stubGlobal("window", { sessionStorage: storage });
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("records the choice before its first await, so navigation cannot beat it", async () => {
+      const caseA = createCaseFile("POLICY");
+      await saveCaseFile(v, caseA);
+      const caseB = createCaseFile("FUNDS");
+      await saveCaseFile(v, caseB);
+
+      // Deliberately not awaited: this is the instant the browser starts navigating away.
+      const inFlight = setActiveCaseId(v, caseA.id);
+      expect(map.get(PENDING_KEY)).toBe(caseA.id);
+      await inFlight;
+    });
+
+    it("resolves to the chosen case when the write never landed", async () => {
+      const caseA = createCaseFile("POLICY");
+      await saveCaseFile(v, caseA);
+      const caseB = createCaseFile("FUNDS");
+      await saveCaseFile(v, caseB);
+      expect(await getActiveCaseId(v)).toBe(caseB.id);
+
+      // The switch was recorded, then the page went away before the vault write completed.
+      map.set(PENDING_KEY, caseA.id);
+
+      expect(await getActiveCaseId(v)).toBe(caseA.id);
+      expect((await loadCaseFile(v))?.id).toBe(caseA.id);
+      // Adopted into the vault, so the marker has done its job and is gone.
+      expect(map.has(PENDING_KEY)).toBe(false);
+      expect(await getActiveCaseId(v)).toBe(caseA.id);
+    });
+
+    it("discards a marker naming a case this vault does not have", async () => {
+      const caseB = createCaseFile("FUNDS");
+      await saveCaseFile(v, caseB);
+      map.set(PENDING_KEY, "a-case-from-some-other-vault");
+
+      expect(await getActiveCaseId(v)).toBe(caseB.id);
+      expect(map.has(PENDING_KEY)).toBe(false);
+    });
+
+    it("lets a newly started case win over a stale marker", async () => {
+      const caseA = createCaseFile("POLICY");
+      await saveCaseFile(v, caseA);
+      map.set(PENDING_KEY, caseA.id);
+
+      const caseC = createCaseFile("LISTING");
+      await saveCaseFile(v, caseC);
+
+      expect(await getActiveCaseId(v)).toBe(caseC.id);
+    });
+
+    it("does not act on a marker for a case that has no file", async () => {
+      const caseA = createCaseFile("POLICY");
+      await saveCaseFile(v, caseA);
+
+      await expect(setActiveCaseId(v, "does-not-exist")).rejects.toThrow();
+      // The failed switch may leave its marker; what matters is that resolution refuses it and
+      // the seller stays on a real case rather than being moved to nothing.
+      expect(await getActiveCaseId(v)).toBe(caseA.id);
+      expect(map.has(PENDING_KEY)).toBe(false);
+    });
+
+    /**
+     * The hazard this fix originally shipped with. `writeActivePointer` deletes the old pointer
+     * before adding the new one, so a write that dies part-way leaves a vault with no pointer at
+     * all. Clearing the marker before that write completed — which is what the first version of
+     * this fix did — threw away the only remaining record of the seller's choice.
+     */
+    it("keeps the marker when the pointer write dies part-way, so the next read repairs it", async () => {
+      const caseA = createCaseFile("POLICY");
+      await saveCaseFile(v, caseA);
+      const caseB = createCaseFile("FUNDS");
+      await saveCaseFile(v, caseB);
+
+      const realAddString = v.addString.bind(v);
+      const spy = vi
+        .spyOn(v, "addString")
+        .mockRejectedValueOnce(new Error("page went away mid-write"));
+
+      await expect(setActiveCaseId(v, caseA.id)).rejects.toThrow();
+      expect(map.get(PENDING_KEY)).toBe(caseA.id);
+
+      spy.mockRestore();
+      void realAddString;
+      // Next read: the marker still names the seller's choice, so it is honoured and repaired.
+      expect(await getActiveCaseId(v)).toBe(caseA.id);
+      expect(map.has(PENDING_KEY)).toBe(false);
     });
   });
 });
