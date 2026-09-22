@@ -44,6 +44,27 @@ describe("the rendered Terms page", () => {
   it("makes no promise about the outcome", () => {
     expect(terms).toMatch(/do not promise reinstatement/i);
   });
+
+  /**
+   * Writing an Amazon appeal is not practising law, because an Amazon appeal is a private
+   * contractual dispute rather than a court or administrative proceeding. The edge is real,
+   * though: Amazon's agreement ends its escalation path in arbitration, and a seller refused
+   * twice is exactly who starts looking there. A non-lawyer cannot file an arbitration demand,
+   * appear as counsel, or claim privilege — so the boundary has to be stated, not assumed.
+   */
+  it("says where the service stops, by name", () => {
+    expect(terms).toMatch(/arbitration/i);
+    expect(terms).toMatch(/demand letters?/i);
+    expect(terms).toMatch(/court filings?/i);
+  });
+
+  /**
+   * A seller may assume that telling a paid service what went wrong protects it the way telling a
+   * lawyer would. It does not, and nobody would think to ask.
+   */
+  it("says nothing told to it is privileged", () => {
+    expect(terms).toMatch(/privileged/i);
+  });
 });
 
 describe("the rendered Privacy page", () => {

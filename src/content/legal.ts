@@ -167,6 +167,31 @@ export const LEGAL = {
         ],
       },
       {
+        /*
+          22 Sep 2026, from the legal-boundaries research (§2 and §7 item 2).
+
+          Writing an Amazon appeal is not practising law, because an Amazon appeal is a private
+          contractual dispute rather than a court or administrative proceeding. That is the
+          distinction the whole category rests on — and it has an edge. Amazon's own agreement ends
+          its escalation path in arbitration, and a seller who has been refused twice is exactly
+          the person who starts looking down that path. A non-lawyer cannot file an arbitration
+          demand, appear as counsel, or claim privilege over what they were told, so the honest
+          thing is to say where this stops before a seller assumes otherwise.
+
+          The privilege point is here because nobody would think to ask. A seller describing what
+          went wrong with their account may assume that describing it to a paid service protects
+          it the way describing it to a lawyer would. It does not, and finding that out later is
+          the kind of surprise this product exists not to cause.
+        */
+        id: "scope",
+        title: "Where this service stops",
+        body: [
+          "AppealDeck helps you answer Amazon through Amazon's own channels — the appeal or response page in Seller Central, and any reply that follows. That is the whole of what it does.",
+          "It does not help with arbitration, demand letters, pre-arbitration notices, court filings, or any other legal step against Amazon. If your case reaches that point, you need a lawyer, and we would rather say so here than let you find out later.",
+          "Nothing you tell us is legally privileged. A conversation with a lawyer is protected in ways a conversation with a software company is not, and you should assume anything you write into AppealDeck could be seen if it were ever demanded in a legal process.",
+        ],
+      },
+      {
         id: "restriction",
         title: "What you must not do",
         body: [
