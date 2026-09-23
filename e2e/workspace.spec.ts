@@ -329,3 +329,49 @@ test("a response sent before finding us counts as an attempt", async ({ page }) 
   await page.reload();
   await expect(page.getByText(/Counted as an earlier attempt/)).toBeVisible();
 });
+
+/**
+ * B-03. Until 23 Sep 2026 applying an Amazon reply reset every requirement to "needed", so a
+ * seller who had reviewed their invoice redid that review on every round — and the median real
+ * case is multi-round. Asserted end to end because this codebase's recurring defect is code that
+ * shipped with nothing able to reach it, and because the unit test cannot see the confirm step.
+ */
+test("an Amazon reply keeps the evidence a seller already reviewed, and says so before applying", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await configure(page);
+  await reviewEvidence(page);
+
+  await page.getByRole("tab", { name: "History", exact: true }).click();
+  await page
+    .getByLabel("Add Amazon’s next reply")
+    .fill(
+      "Thank you for your response. Please provide the sales report for the affected product, showing the relevant sales period.",
+    );
+  await page.getByRole("button", { name: "Save reply for review" }).click();
+
+  // The delta, before anything is applied: the invoice is untouched by this reply, the sales
+  // report is new, and the seller sees both with Amazon's own sentence attached.
+  const delta = page.getByText("What this reply changes", { exact: true }).locator("..");
+  await expect(page.getByText("Kept as reviewed", { exact: true })).toBeVisible();
+  await expect(page.getByText("New in this reply", { exact: true })).toBeVisible();
+  await expect(page.getByText("Asked for again", { exact: true })).toHaveCount(0);
+  await expect(delta).toBeVisible();
+
+  await page.getByRole("button", { name: "Use reply for a new revision" }).click();
+
+  // The regression this feature exists to prevent. Asserted on the two status badges rather than
+  // on the labels: the facts ledger legitimately repeats "Supplier invoice" in the same panel, so
+  // a label locator is ambiguous while the statuses say exactly what is being claimed — the
+  // invoice is still reviewed, and only the newly added record needs work.
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
+  await expect(evidence.getByText("Reviewed by you", { exact: true })).toHaveCount(1);
+  await expect(evidence.getByText("Needs review", { exact: true })).toHaveCount(1);
+  // The seller's own note survived with it. `.first()` is well defined, not incidental:
+  // `computeReplyDelta` returns existing requirements before anything the reply adds.
+  await expect(
+    page.getByLabel("What does this record support or leave unclear?").first(),
+  ).toHaveValue(/J-104/);
+});

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   applyWorkspaceReply,
+  computeReplyDelta,
+  replyDeltaCounts,
   composeWorkspace,
   newWorkspace,
   priorAttempts,
@@ -20,29 +22,7 @@ import { composePoa, critiquePoa } from "./composer";
 import { createCaseFile } from "./caseFile";
 import { CaseDataSchema } from "@/lib/caseSchema";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
-
-export function documentWorkspace(): Workspace {
-  const w = {
-    ...newWorkspace(),
-    notice: "Please provide the supplier invoice for the affected product.",
-    formInstructions: "Upload the invoice and explain the product mapping.",
-    protocol: "documents" as const,
-    confirmed: true,
-    requirementsConfirmed: true,
-    explanation:
-      "The supplied invoice identifies our product by its manufacturer product code and records the purchase.",
-  };
-  w.requirements = proposedRequirements(w).map((r) => ({
-    ...r,
-    status: "reviewed",
-    recordId: "file-1",
-    filename: "invoice.pdf",
-    contentHash: "hash-1",
-    page: 2,
-    note: "Product code J-104 appears on the invoice line.",
-  }));
-  return w;
-}
+import { documentWorkspace } from "./workspace.fixture";
 
 describe("request routing", () => {
   it.each([
@@ -246,7 +226,12 @@ describe("response and provenance", () => {
     expect(w).toEqual(frozen);
     expect(next.submissions).toEqual(frozen.submissions);
     expect(next.previousRequests[0].notice).toBe(frozen.notice);
-    expect(next.requirements[0].status).toBe("needed");
+    // B-03, 23 Sep 2026: this line used to assert `"needed"`, which contradicted the test's own
+    // name. The reply asks for a sales report and says nothing about the invoice, so the reviewed
+    // invoice is kept — with its vault record, hash, page and the seller's note intact.
+    expect(next.requirements[0].status).toBe("reviewed");
+    expect(next.requirements[0].recordId).toBe("file-1");
+    expect(next.requirements[0].note).toBe(frozen.requirements[0].note);
     expect(next.confirmed).toBe(false);
     expect(next.revision).toBe(2);
     expect(applyWorkspaceReply(next, "reply-1")).toBe(next);
@@ -375,5 +360,103 @@ describe("attempts made before this case existed", () => {
     expect(round.submissions[0]!.source).toBe("prior");
     expect(round.submissions[0]!.revision).toBe(0);
     expect(priorAttempts(round as Workspace)).toHaveLength(1);
+  });
+});
+
+/**
+ * B-03, the reply delta. Until 23 Sep 2026 an Amazon reply reset every requirement to "needed",
+ * so a seller redid their whole evidence review on each round — and the median real case is
+ * multi-round, so the product was most useless exactly where it promised to save the most labour.
+ */
+describe("reply delta", () => {
+  function withReply(w: Workspace, text: string): Workspace {
+    w.replies.push({ id: "reply-1", at: new Date().toISOString(), text, applied: false });
+    return w;
+  }
+
+  it("keeps a reviewed requirement the reply does not mention, with the seller's work attached", () => {
+    const w = withReply(documentWorkspace(), "Please provide the sales report for this product.");
+    const delta = computeReplyDelta(w, "reply-1")!;
+    const invoice = delta.items.find((i) => i.requirement.label === "Supplier invoice")!;
+    expect(invoice.change).toBe("carried");
+    expect(invoice.requirement.status).toBe("reviewed");
+    expect(invoice.requirement.recordId).toBe("file-1");
+    expect(invoice.requirement.contentHash).toBe("hash-1");
+    expect(invoice.requirement.page).toBe(2);
+    expect(invoice.requirement.note).toBe(w.requirements[0]!.note);
+  });
+
+  it("reopens a reviewed requirement Amazon asks for again, quoting the reply", () => {
+    const w = withReply(
+      documentWorkspace(),
+      "The document you sent was not sufficient. Please provide the supplier invoice again.",
+    );
+    const delta = computeReplyDelta(w, "reply-1")!;
+    const invoice = delta.items.find((i) => i.requirement.label === "Supplier invoice")!;
+    expect(invoice.change).toBe("reopened");
+    expect(invoice.requirement.status).toBe("needed");
+    // Anchored to Amazon's own words, never paraphrased — the rule everywhere else in this model.
+    expect(invoice.replyQuote).toContain("supplier invoice");
+    expect(w.notice).toContain(invoice.requirement.sourceQuote.slice(0, 0));
+    // The linked file survives a reopen: the seller may well re-use it with a better explanation.
+    expect(invoice.requirement.recordId).toBe("file-1");
+  });
+
+  it("adds a requirement the reply raises for the first time", () => {
+    const w = withReply(documentWorkspace(), "Please provide the sales report for this product.");
+    const delta = computeReplyDelta(w, "reply-1")!;
+    const added = delta.items.filter((i) => i.change === "added");
+    expect(added).toHaveLength(1);
+    expect(added[0]!.requirement.label).toBe("Sales or performance record");
+    expect(added[0]!.requirement.status).toBe("needed");
+    expect(added[0]!.replyQuote).toContain("sales report");
+  });
+
+  it("leaves an unreviewed requirement outstanding whether or not the reply repeats it", () => {
+    const base = documentWorkspace();
+    base.requirements = base.requirements.map((r) => ({ ...r, status: "needed" as const }));
+    const w = withReply(base, "Please provide the sales report for this product.");
+    const delta = computeReplyDelta(w, "reply-1")!;
+    const invoice = delta.items.find((i) => i.requirement.label === "Supplier invoice")!;
+    // Amazon not repeating a request does not withdraw it, and we must not imply that it does.
+    expect(invoice.change).toBe("outstanding");
+    expect(invoice.requirement.status).toBe("needed");
+  });
+
+  it("counts the outcomes for the summary the seller confirms against", () => {
+    const w = withReply(
+      documentWorkspace(),
+      "Please provide the supplier invoice again and add the sales report.",
+    );
+    const counts = replyDeltaCounts(computeReplyDelta(w, "reply-1")!);
+    expect(counts).toEqual({ reopened: 1, added: 1, outstanding: 0, carried: 0 });
+  });
+
+  it("returns nothing for an unknown or already-applied reply", () => {
+    const w = withReply(documentWorkspace(), "Please provide the sales report.");
+    expect(computeReplyDelta(w, "nope")).toBeNull();
+    const applied = applyWorkspaceReply(w, "reply-1");
+    expect(computeReplyDelta(applied, "reply-1")).toBeNull();
+  });
+
+  it("applies exactly what the delta proposed, and survives the schema that guards every save", () => {
+    const w = withReply(
+      documentWorkspace(),
+      "Please provide the supplier invoice again and add the sales report.",
+    );
+    const delta = computeReplyDelta(w, "reply-1")!;
+    const next = applyWorkspaceReply(w, "reply-1");
+    // Compared on everything the seller is shown, not on `id`: a newly added requirement gets a
+    // fresh uuid from `proposedRequirements()` on each call, so the preview and the applied copy
+    // differ there and nowhere else. Asserting deep equality would pin the uuid, not the promise.
+    const shape = (rs: typeof next.requirements) =>
+      rs.map((r) => ({ label: r.label, status: r.status, recordId: r.recordId }));
+    expect(shape(next.requirements)).toEqual(shape(delta.requirements));
+    expect(next.revision).toBe(w.revision + 1);
+    // The 22 Sep lesson: the validator strips keys it does not know, so a shape that never meets
+    // it in a test is a shape that silently loses fields on the way to the vault.
+    const parsed = WorkspaceSchema.safeParse(next);
+    expect(parsed.success, JSON.stringify(parsed.error?.issues ?? [])).toBe(true);
+    expect(parsed.data!.requirements).toHaveLength(delta.requirements.length);
   });
 });

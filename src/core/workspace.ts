@@ -458,10 +458,104 @@ export function addWorkspaceEvent(w: Workspace, message: string): Workspace {
   };
 }
 
+/**
+ * B-03, the reply delta. What each requirement becomes when an Amazon reply starts a new revision.
+ *
+ * Until 23 Sep 2026 this step reset **every** requirement to `"needed"`, so a seller redid their
+ * entire evidence review each time Amazon replied. The median real case is multi-round, which made
+ * the product most useless exactly where it promised to save the most labour.
+ *
+ * Four outcomes, and each means one thing:
+ *
+ * - `reopened` — you marked it reviewed and Amazon is asking for it **again**. This is the one that
+ *   matters, and it is also the only honest reading of "conflict": a second request for something
+ *   already supplied usually means it was rejected or was not enough. Status returns to `needed`.
+ * - `added` — the reply asks for something this case did not have.
+ * - `outstanding` — still not reviewed, so nothing changes whether the reply repeats it or not.
+ *   Amazon declining to repeat a request does not withdraw it, and we must not imply it does.
+ * - `carried` — reviewed, and this reply does not mention it. **Kept reviewed.** This is the work
+ *   that used to be destroyed.
+ *
+ * Matching is by label, because `proposedRequirements()` issues a fresh `id` on every call, and the
+ * existing requirement carries the seller's real work — the linked vault record, the filename, the
+ * content hash, the page and their note. Those ride through untouched on every outcome.
+ */
+export type ReplyChange = "reopened" | "added" | "outstanding" | "carried";
+
+export interface ReplyDeltaItem {
+  change: ReplyChange;
+  /** The requirement as it will stand once this delta is applied. */
+  requirement: Requirement;
+  /** The reply's own sentence that raised it, verbatim, when the reply raised it at all. */
+  replyQuote?: string;
+}
+
+export interface ReplyDelta {
+  replyId: string;
+  items: ReplyDeltaItem[];
+  /** The requirement list the workspace will hold. Order: existing first, then anything new. */
+  requirements: Requirement[];
+}
+
+export function computeReplyDelta(w: Workspace, replyId: string): ReplyDelta | null {
+  const reply = w.replies.find((r) => r.id === replyId);
+  if (!reply || reply.applied) return null;
+
+  const asked = proposedRequirements({ notice: reply.text, formInstructions: "" });
+  const askedByLabel = new Map(asked.map((r) => [r.label.toLowerCase(), r]));
+  const items: ReplyDeltaItem[] = [];
+  const matched = new Set<string>();
+
+  for (const existing of w.requirements) {
+    const key = existing.label.toLowerCase();
+    const askedAgain = askedByLabel.get(key);
+    if (askedAgain) matched.add(key);
+    if (existing.status === "reviewed" && askedAgain) {
+      items.push({
+        change: "reopened",
+        // The source quote moves to the reply's wording, because that is the request now open.
+        requirement: { ...existing, status: "needed", sourceQuote: askedAgain.sourceQuote },
+        replyQuote: askedAgain.sourceQuote,
+      });
+    } else if (existing.status === "reviewed") {
+      items.push({ change: "carried", requirement: { ...existing } });
+    } else {
+      items.push({
+        change: "outstanding",
+        requirement: askedAgain
+          ? { ...existing, sourceQuote: askedAgain.sourceQuote }
+          : { ...existing },
+        replyQuote: askedAgain?.sourceQuote,
+      });
+    }
+  }
+
+  for (const a of asked) {
+    if (matched.has(a.label.toLowerCase())) continue;
+    items.push({ change: "added", requirement: a, replyQuote: a.sourceQuote });
+  }
+
+  return { replyId, items, requirements: items.map((i) => i.requirement) };
+}
+
+/** How many of each outcome a delta holds — for the summary a seller confirms against. */
+export function replyDeltaCounts(delta: ReplyDelta): Record<ReplyChange, number> {
+  const counts: Record<ReplyChange, number> = {
+    reopened: 0,
+    added: 0,
+    outstanding: 0,
+    carried: 0,
+  };
+  for (const item of delta.items) counts[item.change] += 1;
+  return counts;
+}
+
 /** Confirmed reply revisions preserve every earlier submission and file reference. */
 export function applyWorkspaceReply(w: Workspace, replyId: string): Workspace {
   const reply = w.replies.find((r) => r.id === replyId);
   if (!reply || reply.applied) return w;
+  const delta = computeReplyDelta(w, replyId);
+  const counts = delta ? replyDeltaCounts(delta) : null;
   const updated = {
     ...w,
     previousRequests: [
@@ -479,11 +573,13 @@ export function applyWorkspaceReply(w: Workspace, replyId: string): Workspace {
     confirmed: false,
     requirementsConfirmed: false,
     formInstructions: "",
-    requirements: w.requirements.map((r) => ({ ...r, status: "needed" as const })),
+    requirements: delta ? delta.requirements : w.requirements,
     replies: w.replies.map((r) => (r.id === replyId ? { ...r, applied: true } : r)),
   };
   return addWorkspaceEvent(
     updated,
-    "Started a new revision from the reply. Review the current response form and evidence requirements.",
+    counts
+      ? `Started a new revision from the reply. Asked for again: ${counts.reopened}. New in this reply: ${counts.added}. Still on your list: ${counts.outstanding}. Kept as reviewed: ${counts.carried}. Review the current response form.`
+      : "Started a new revision from the reply. Review the current response form and evidence requirements.",
   );
 }

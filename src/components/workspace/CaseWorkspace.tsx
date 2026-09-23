@@ -30,6 +30,7 @@ import { PageIntro } from "@/components/PageIntro";
 import { RequestReview } from "./RequestReview";
 import { EvidenceReview } from "./EvidenceReview";
 import { ResponseReview, type WorkspaceResponse } from "./ResponseReview";
+import { ReplyDeltaReview } from "./ReplyDeltaReview";
 import { DetailDisclosure, IconTile, VIEW_ICONS } from "./WorkspaceVisuals";
 import { createCaseFile, type CaseFile } from "@/core/caseFile";
 import {
@@ -1297,9 +1298,15 @@ function WorkspaceInner({
                       </DetailDisclosure>
                       {!r.applied && (
                         <>
+                          {/*
+                            B-03: the delta is shown before the revision starts, so "confirm before
+                            applying" is literal. It is recomputed from the authoritative workspace
+                            inside the commit below rather than passed down from here, so a stale
+                            preview can never be the thing that gets written.
+                          */}
+                          <ReplyDeltaReview workspace={w} replyId={r.id} />
                           <p className="text-xs text-muted-foreground">
-                            Use this reply as the new request and recheck the evidence. Earlier
-                            submissions stay unchanged.
+                            Use this reply as the new request. Earlier submissions stay unchanged.
                           </p>
                           <Button
                             disabled={busy}

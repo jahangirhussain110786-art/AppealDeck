@@ -39,6 +39,24 @@ export const WORKSPACE = {
     weak: "This draft is thin. Work through the notes below before you copy it.",
   },
   waitingHelp: "Ask the issuer for the missing records. Continue other tasks while you wait.",
+  // B-03. Until 23 Sep 2026 a reply reset every requirement, so the seller redid the whole
+  // evidence review each round. This is what they now see before confirming. Each line describes
+  // a state of their own case and says nothing about how Amazon will treat the next response.
+  replyDelta: {
+    title: "What this reply changes",
+    help: "Your earlier work is kept. Review this, then start the revision.",
+    none: "This reply does not name any records. Read it and check the response page yourself.",
+    reopened: {
+      label: "Asked for again",
+      help: "You marked this reviewed and this reply asks for it again. Your file stays linked.",
+    },
+    added: { label: "New in this reply", help: "This case did not have this record before." },
+    outstanding: { label: "Still on your list", help: "Not reviewed yet. Nothing has changed." },
+    carried: {
+      label: "Kept as reviewed",
+      help: "This reply does not mention it. Your review, note and linked file are unchanged.",
+    },
+  },
   legacy:
     "Your existing interview and records are preserved. You can continue that interview or add the new workspace to this case.",
   unsupported:

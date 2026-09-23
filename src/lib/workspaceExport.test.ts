@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildCaseExport } from "./workspaceExport";
 import { createCaseFile } from "@/core/caseFile";
-import { documentWorkspace } from "@/core/workspace.test";
+import { documentWorkspace } from "@/core/workspace.fixture";
 
 describe("buildCaseExport", () => {
   it("includes the notice, response facts, evidence plan, submissions and replies in full", () => {
