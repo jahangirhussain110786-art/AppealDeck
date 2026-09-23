@@ -429,4 +429,52 @@ tsc 0 · lint 0 · lint:copy PASS · lint:sources PASS · lint:reachability PASS
 **765/765 in 73 files** · build clean, `/support` static · Playwright `CI=1 --retries=0` **78 passed
 · 0 failed · 3 skipped**.
 
-**Wave 1 is closed. Wave 2 remains: B-03 done; B-02, B-05 (+A-05's deeper half), B-01, B-06.**
+---
+
+## 13. Wave 2 closed — B-01, B-02, B-05, B-06
+
+**B-01 found a real gap in its first run.** Sixteen fixtures, four per taxonomy-v2 family, sourced
+from the notice wording in the 19 Sep salvage research. A **gated-category notice** — listings pulled
+because the category is restricted to qualified sellers — matched nothing and fell through to
+`UNKNOWN`, the "please clarify" dead end AA-39 exists to remove. Pattern widened, kept narrow.
+
+**B-02's adversarial fixture caught exactly what it was built to catch.** A refusal quoting the
+seller's own plan back — *"You wrote: 'Once these actions are complete, your account is now
+active'… We do not have enough information"* — was reported as **reinstated**, because the analyser
+returned the first matching rule and stopped. Telling a deactivated seller they are back is the
+worst thing this code can do: they stop answering and the window closes. A refusal now beats
+reinstatement language, and the result says `ambiguous` rather than claiming certainty. The
+resolution is deliberately narrow — only a final refusal or a request for more information
+overrides, and only over reinstatement.
+
+**B-05 — the union.** `proposedRequirements` never consulted `evidenceModel.ts`, so a record Amazon
+did not spell out was never raised, and Amazon routinely does not spell it out. The list is now the
+notice's own ∪ the matrix's *required* records for the violation, each carrying `source`. An
+inferred record is shown as ours in plain words, not a blockquote, and `workspaceGaps` no longer
+demands a notice quote for it — which would have shown a seller a fault in their own text that was
+actually ours.
+
+**B-06 — the override.** The decoded kind was set once and read-only forever. It stopped being
+cosmetic the moment B-05 landed: the kind now decides which unspoken records get raised, on top of
+the guidance and the severity gate, so one wrong reading produced three wrong answers. The
+correction is **additive by construction** — nothing a seller has already reviewed is removed for
+telling us we were wrong.
+
+### Two process notes worth keeping
+
+- **The reachability gate caught my own new file**, and a *third* laundering route with it:
+  `fixtures.ts` has no product consumer and passed only because `core/index.ts` re-exports it. A
+  fixture corpus is test support by definition, so it is named in the exemption rather than left for
+  a re-export to vouch for.
+- **Both e2e tests added for the workspace surface had a real race**, found by reading the failure
+  rather than calling it flaky: they reloaded or navigated before the vault write landed, so under
+  parallel load the data simply was not there. Fixed with a save-confirmation wait; two consecutive
+  clean full runs.
+
+### Gates
+
+tsc 0 · lint 0 · lint:copy PASS · lint:sources PASS · lint:reachability PASS · format 0 · vitest
+**781/781 in 74 files** · build clean · Playwright `CI=1 --retries=0` **79 passed · 0 failed ·
+3 skipped**.
+
+**Waves 1 and 2 are closed.** What remains is wave 3 and the deferred list in §6.
