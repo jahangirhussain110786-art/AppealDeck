@@ -348,3 +348,46 @@ test file imports another (checked).
 
 **A-13 note for whoever builds it:** the §7 core/lib scan must not flag `*.fixture.ts` as an
 unreachable module. It is test support, and test files are excluded from counting as importers.
+
+---
+
+## 11. The workspace surface — A-01, A-02, A-03, A-05, A-06, built as one thing
+
+Built as one surface rather than five errands, because *what does this case need, why do they want
+it, how do I get it, and what if I can't* is one question. `src/core/requirementGuidance.ts` is the
+bridge; `RequirementGuidance.tsx` is what a seller sees.
+
+**A-02/A-03 is the one that mattered.** A requirement could only be "here it is" or "I'm waiting",
+so a seller who genuinely could not obtain a compliant invoice — the most common dead end in this
+product — had no way to say so, and `workspaceGaps` told them forever to "review and link evidence".
+`Requirement` now has a `cannot_obtain` state carrying the reason in their own words and which
+predefined alternative they chose. The gap becomes a *named* gap, the draft stays a working draft
+because the evidence really is missing, and the response states it under its own heading — a reader
+must never mistake a declared gap for a supplied record.
+
+**A-01 had two separate reasons for never firing**, and neither was visible from reading the code.
+It read `actionItems`, which only the retired interview could mark done; rewired to the workspace's
+corrective actions it *still* did not fire, because `critiquePoa`'s workspace branch returns before
+reaching it — and since 22 Sep that branch is every case.
+
+### The finding this pass turned up
+
+**`EVIDENCE_MATRIX.UNKNOWN` is an empty array, and a case started by typing a notice straight into
+`/case` is `UNKNOWN`.** The entire evidence matrix — EF-1's central asset — was invisible on the
+most ordinary path into the product. Found by the e2e test for this feature, not by reading the
+code. There is now a fallback to the record's canonical description, scoped deliberately to
+unclassified cases: when a case *is* classified and its matrix does not name the record, silence is
+the honest answer, because another violation's sentence would put a wrong reason on screen (the
+identity-document sentence talks about funds release, which reads as nonsense on a verification
+case).
+
+**Still open, and not what this was:** B-05, the union that raises a requirement Amazon did not
+spell out, is unbuilt. This only connects the records a notice actually names.
+
+### Gates
+
+tsc 0 · lint 0 · lint:copy PASS · lint:sources PASS · lint:reachability PASS · format 0 · vitest
+**765/765 in 73 files** (18 new, arithmetic exact) · build clean · Playwright `CI=1 --retries=0`
+**76 passed · 0 failed · 3 skipped**.
+
+**Wave 1 now has one item left: A-13**, plus B-22 and B-13.
