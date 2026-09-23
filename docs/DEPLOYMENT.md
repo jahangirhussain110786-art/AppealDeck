@@ -79,7 +79,7 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
 ## 5. Paddle production setup (founder action)
 
 1. Paddle dashboard → Catalog → create 2 products:
-   - **Appeal Pass** (one-time, $199)
+   - **Appeal Pass** (one-time, $249 — flat, worldwide, no country tiering; 21 Sep 2026 commercial reset)
    - **Guardian Subscription** (monthly, TBD)
 2. For each product, create a price. Copy the `pri_...` IDs into the env vars above.
 3. Paddle dashboard → Developer tools → Authentication: copy the live client token.
