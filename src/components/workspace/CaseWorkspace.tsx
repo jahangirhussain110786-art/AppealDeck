@@ -38,6 +38,7 @@ import {
   computeDeadlines,
   serializeDeadlines,
   parseNotice,
+  kindForConfirmedNotice,
   extractEntities,
   type EvidenceKind,
   type ViolationKind,
@@ -312,7 +313,12 @@ function WorkspaceInner({
     update: (w: Workspace) => Workspace,
     message?: string,
     state?: CaseFile["state"],
-    opts?: { silent?: boolean; deadlines?: CaseFile["deadlines"]; kind?: ViolationKind },
+    opts?: {
+      silent?: boolean;
+      deadlines?: CaseFile["deadlines"];
+      kind?: ViolationKind;
+      kindSetBy?: CaseFile["kindSetBy"];
+    },
   ): Promise<boolean> => {
     const run = commitQueue.current.then(() => runCommit(update, message, state, opts));
     // The chain must survive a rejection, or one failure would strand every later save.
@@ -327,7 +333,12 @@ function WorkspaceInner({
     // B-06: `kind` joins `deadlines` as a file-level field a commit may change. It is not
     // cosmetic — it drives severity gating, the evidence-matrix union and the per-record guidance,
     // so a seller who cannot correct it is stuck with three wrong answers derived from one.
-    opts?: { silent?: boolean; deadlines?: CaseFile["deadlines"]; kind?: ViolationKind },
+    opts?: {
+      silent?: boolean;
+      deadlines?: CaseFile["deadlines"];
+      kind?: ViolationKind;
+      kindSetBy?: CaseFile["kindSetBy"];
+    },
   ) => {
     if (!fileRef.current) return false;
     // Restored rather than cleared in `finally`. `generate` and the new-case action hold this flag
@@ -354,6 +365,7 @@ function WorkspaceInner({
         state: state ?? (current.state === "SUBMITTED" ? "REVISION" : current.state),
         ...(opts?.deadlines !== undefined ? { deadlines: opts.deadlines } : {}),
         ...(opts?.kind !== undefined ? { kind: opts.kind } : {}),
+        ...(opts?.kindSetBy !== undefined ? { kindSetBy: opts.kindSetBy } : {}),
       };
       await vault.atomic(async () => {
         const disk = await loadCaseFile(vault);
@@ -837,6 +849,28 @@ function WorkspaceInner({
   const awaiting = file.state === "SUBMITTED" && !w.replies.some((r) => !r.applied);
   const confirmRequest = async (updated: Workspace) => {
     cancelDraftFields(REQUEST_DRAFT_KEYS);
+    /*
+      The classification wire-up, 23 Sep 2026. Until now only `/decode` ever classified a notice, so
+      a case started by typing one straight in here stayed `UNKNOWN` — the most ordinary path in the
+      product carried an empty evidence matrix, no violation-specific reasons, and needed fallbacks
+      in two places to show guidance at all. `kindForConfirmedNotice` states the rules: a seller's
+      own correction is final, an unplaceable notice never downgrades a known kind, and otherwise
+      the notice decides.
+
+      The kind is read before the requirements are built, because B-05's matrix union depends on it.
+      Deadlines are deliberately *not* computed here: `/decode` dates a stated window from the
+      moment of decoding, which is wrong in the dangerous direction for a notice received days ago,
+      and repeating that here would spread it to every typed case.
+    */
+    const current = fileRef.current;
+    const previousKind = current?.kind ?? "UNKNOWN";
+    const kind = current
+      ? kindForConfirmedNotice(
+          current,
+          parseNotice(`${updated.notice}\n${updated.formInstructions}`),
+        )
+      : previousKind;
+    const kindChanged = kind !== previousKind;
     const ok = await commit(
       (old) => ({
         ...old,
@@ -850,11 +884,15 @@ function WorkspaceInner({
           old.professionalReviewRequired ||
           (updated.confirmed && updated.protocol === "specialist"),
         requirementsConfirmed: false,
-        // B-05: `file.kind` unions the evidence matrix in, so a record this violation family
-        // nearly always needs is raised even when the notice never spells it out.
-        requirements: old.requirements.length
-          ? old.requirements
-          : proposedRequirements(updated, file.kind),
+        // B-05: the kind unions the evidence matrix in, so a record this violation family nearly
+        // always needs is raised even when the notice never spells it out. A kind that changed on
+        // a re-confirmation is applied additively, exactly as the seller's own correction is — a
+        // reviewed record is never removed because we read the notice again.
+        requirements: !old.requirements.length
+          ? proposedRequirements(updated, kind)
+          : kindChanged
+            ? requirementsAfterKindChange(old.requirements, kind)
+            : old.requirements,
         // #86: recomputed on every route confirmation, because the notice text may have changed
         // and a second issue must not survive from a notice the seller has since replaced.
         issues: proposedIssues(updated),
@@ -864,8 +902,12 @@ function WorkspaceInner({
         history: old.history,
         draft: withoutDraftKeys(old.draft, REQUEST_DRAFT_KEYS),
       }),
-      "Saved the notice and reviewed response route.",
+      // Said in the case history, so a reading we made is visible as ours and can be corrected.
+      kindChanged
+        ? `Saved the notice and reviewed response route. We read it as: ${APP.violationKinds[kind]}.`
+        : "Saved the notice and reviewed response route.",
       "INTAKE",
+      kindChanged ? { kind } : undefined,
     );
     if (ok) setReviewRequest(false);
     return ok;
@@ -1032,7 +1074,9 @@ function WorkspaceInner({
                       }),
                       C.kindOverride.applied.replace("{kind}", APP.violationKinds[next]),
                       undefined,
-                      { kind: next },
+                      // Marked as the seller's, so the classification that now runs on every route
+                      // confirmation never overwrites a correction they made on purpose.
+                      { kind: next, kindSetBy: "seller" },
                     )
                   }
                   /*

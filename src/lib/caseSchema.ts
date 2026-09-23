@@ -24,6 +24,9 @@ export const CaseDataSchema = z.object({
   workspace: WorkspaceSchema.optional(),
   id: CaseIdSchema,
   kind: ViolationKindSchema,
+  // Stripped here, a seller's correction would look like our own classification the next time a
+  // case passed through this schema — and the next confirmation would overwrite it.
+  kindSetBy: z.literal("seller").optional(),
   createdAt: z.string().datetime().optional(),
   state: z
     .enum([

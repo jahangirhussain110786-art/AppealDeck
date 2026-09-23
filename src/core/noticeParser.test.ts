@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseNotice } from "./noticeParser";
-import { classifyStage1 } from "./classifier";
+import { classifyStage1, kindForConfirmedNotice } from "./classifier";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 describe("verification context", () => {
   it("classifies the public sample as policy and retains its stated appeal window", () => {
@@ -74,5 +74,52 @@ describe("appeal deadline context", () => {
       parseNotice("You have 17 days from the date of this notice to submit a Plan of Action.")
         .statedWindowDays,
     ).toBe(17);
+  });
+});
+
+/**
+ * The classification wire-up, 23 Sep 2026. Only `/decode` ever classified a notice, so one typed
+ * straight into `/case` left the case `UNKNOWN` for good. These pin the three rules that make it
+ * safe to classify on every route confirmation.
+ */
+describe("kindForConfirmedNotice", () => {
+  const authenticity = parseNotice(
+    "We received complaints that items you are offering are not authentic. Provide supplier invoices.",
+  );
+  const unplaceable = parseNotice("Your account may be closed. Please explain yourself.");
+
+  it("classifies a typed notice that the case had no reading for", () => {
+    expect(kindForConfirmedNotice({ kind: "UNKNOWN" }, authenticity)).toBe("INAUTHENTIC");
+  });
+
+  it("never overwrites a kind the seller chose themselves", () => {
+    // Otherwise the correction control would undo itself on the next save.
+    expect(kindForConfirmedNotice({ kind: "POLICY", kindSetBy: "seller" }, authenticity)).toBe(
+      "POLICY",
+    );
+  });
+
+  it("does not downgrade a known kind to UNKNOWN when the notice cannot be placed", () => {
+    expect(kindForConfirmedNotice({ kind: "FUNDS" }, unplaceable)).toBe("FUNDS");
+  });
+
+  it("lets the notice decide over a kind that came from a link rather than the evidence", () => {
+    expect(kindForConfirmedNotice({ kind: "POLICY" }, authenticity)).toBe("INAUTHENTIC");
+  });
+
+  /**
+   * The reason this could not be wired before today. Until the taxonomy split, this notice
+   * classified as `INAUTHENTIC_DOCUMENTS`, and classifying it on confirmation would have routed the
+   * most common Amazon case straight into the permanent "we cannot help" gate.
+   */
+  it("does not route an ordinary authenticity complaint into the severity gate", () => {
+    const kind = kindForConfirmedNotice({ kind: "UNKNOWN" }, authenticity);
+    expect(classifyStage1(authenticity).severityGated).toBe(false);
+    expect(kind).not.toBe("INAUTHENTIC_DOCUMENTS");
+  });
+
+  it("still gates an allegation that the records were fabricated", () => {
+    const fabricated = parseNotice("We determined that the invoices you supplied were falsified.");
+    expect(kindForConfirmedNotice({ kind: "UNKNOWN" }, fabricated)).toBe("INAUTHENTIC_DOCUMENTS");
   });
 });

@@ -53,6 +53,16 @@ export interface CaseFile {
    * honestly rather than assume it is always present.
    */
   deadlines?: SerializedDeadline[];
+  /**
+   * Set to `"seller"` when the seller chose `kind` themselves through the correction control.
+   *
+   * Added 23 Sep 2026 with the classification wire-up. A notice typed into `/case` is now
+   * classified each time its route is confirmed, which would otherwise quietly overwrite a seller
+   * who had already told us we read it wrong — making the correction mechanism undo itself on the
+   * next save. A seller's own choice is the one reading this product never second-guesses.
+   * Absent means the kind came from us (a decode, a classification, or the `?kind=` link).
+   */
+  kindSetBy?: "seller";
 }
 
 export function createCaseFile(kind: ViolationKind): CaseFile {

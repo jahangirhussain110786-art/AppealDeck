@@ -190,7 +190,13 @@ export function RequestReview({
           B-06: beside the suggested route, because both answer "did you read my notice correctly"
           and a seller who disagrees with one usually disagrees with the other.
         */}
-        <KindOverride kind={kind} busy={busy} onChange={onKindChange} />
+        {/*
+          Keyed by the kind so it remounts when the kind changes underneath it. Its select holds
+          `useState(kind)`, which only reads the prop once — so if our classification changed the
+          kind while this was open, the select would default to the old one, and applying it would
+          revert our reading and record that as the seller's choice.
+        */}
+        <KindOverride key={kind} kind={kind} busy={busy} onChange={onKindChange} />
         <div className="flex items-start gap-3 rounded-lg bg-info/5 p-4 ring-1 ring-inset ring-info/15">
           <Signpost className="mt-0.5 size-5 shrink-0 text-info" aria-hidden />
           <div className="min-w-0 flex-1">

@@ -41,3 +41,31 @@ export function classifyStage1(parsed: ParsedNotice): Classification {
   }
   return { kind: "UNKNOWN", severityGated: false, confidence: "llm-needed" };
 }
+
+/**
+ * The violation kind a case should carry once its notice is confirmed in the workspace.
+ *
+ * Added 23 Sep 2026. Only `/decode` ever classified a notice; one typed straight into `/case` —
+ * the ordinary way in — left the case `UNKNOWN` for good unless the seller corrected it by hand.
+ * `UNKNOWN`'s evidence matrix is empty, so those cases raised no unspoken records, showed no
+ * violation-specific reasons, and needed fallbacks in two places just to show guidance at all.
+ * It stayed that way because classifying used to be dangerous: until D split the taxonomy, an
+ * ordinary "items are not authentic" notice classified straight into the permanent severity gate.
+ *
+ * Three rules, each preventing a specific way this could go wrong:
+ *
+ * 1. **A seller's own choice is final.** If they corrected the kind, we never overwrite it — or the
+ *    correction would undo itself on the next save.
+ * 2. **Never downgrade to `UNKNOWN`.** A notice we cannot place says nothing about the kind, so an
+ *    existing reading (from a decode, or a `?kind=` link) is kept rather than thrown away.
+ * 3. **Otherwise the notice decides**, over a `?kind=` link or an earlier reading, because the
+ *    notice is the evidence and a link is only where the seller happened to click.
+ */
+export function kindForConfirmedNotice(
+  current: { kind: ViolationKind; kindSetBy?: "seller" },
+  parsed: ParsedNotice,
+): ViolationKind {
+  if (current.kindSetBy === "seller") return current.kind;
+  const read = classifyStage1(parsed).kind;
+  return read === "UNKNOWN" ? current.kind : read;
+}

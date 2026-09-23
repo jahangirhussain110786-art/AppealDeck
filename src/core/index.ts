@@ -20,7 +20,7 @@ export type { ViolationKind } from "./violationKinds";
 
 import { parseNotice } from "./noticeParser";
 import type { ParsedNotice } from "./noticeParser";
-import { classifyStage1 } from "./classifier";
+import { classifyStage1, kindForConfirmedNotice } from "./classifier";
 import type { Classification } from "./classifier";
 import { determineResponseType, splitClauses, RESPONSE_TYPE_LABELS } from "./responseType";
 import type { ResponseType, ResponseTypeResult, ResponseTypeMatch } from "./responseType";
@@ -74,7 +74,7 @@ import {
 
 export { parseNotice };
 export type { ParsedNotice } from "./noticeParser";
-export { classifyStage1 };
+export { classifyStage1, kindForConfirmedNotice };
 export type { Classification, Confidence } from "./classifier";
 export { determineResponseType, splitClauses, RESPONSE_TYPE_LABELS };
 export { assessNoticeAuthenticity } from "./noticeAuthenticity";

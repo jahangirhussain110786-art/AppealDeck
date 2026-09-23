@@ -423,6 +423,53 @@ test("an Amazon reply keeps the evidence a seller already reviewed, and says so 
  * was called only by the interview step engine retired on 22 Sep 2026. This test exists because
  * that is the defect this codebase keeps repeating, and a unit test cannot see it.
  */
+/**
+ * The classification wire-up, 23 Sep 2026. Only `/decode` ever classified a notice, so one typed
+ * straight into `/case` left the case `UNKNOWN` — and `UNKNOWN`'s evidence matrix is empty, so
+ * B-05's union could never raise a record the notice left unsaid on the most ordinary way in.
+ *
+ * This notice names an invoice and nothing else. A policy case nearly always needs the metric
+ * export too, and raising that unprompted is the expertise being sold: it can only appear here if
+ * the notice was classified on confirmation.
+ */
+test("a notice typed into the workspace is classified, and a seller's correction is kept", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await page.goto("/case");
+  await page
+    .getByLabel("Amazon notice", { exact: true })
+    .fill(
+      "Your account has been deactivated for repeated policy violations. Please provide the supplier invoice for the affected product.",
+    );
+  await page.getByLabel("Current response instructions").fill("Upload the requested invoice.");
+  await page.getByRole("button", { name: "Confirm this route" }).click();
+
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
+  await expect(evidence.getByText("Sales or performance record", { exact: true })).toBeVisible();
+  // Raised by us, and said so — never presented as a request Amazon made.
+  await expect(evidence.getByText("We added this", { exact: true })).toBeVisible();
+
+  // The reading is recorded as ours, so it can be seen and corrected.
+  await page.getByRole("tab", { name: "History", exact: true }).click();
+  await expect(page.getByText(/We read it as: Policy violation\./)).toBeVisible();
+
+  // A seller's own correction survives the next confirmation instead of being re-classified.
+  await page.getByRole("tab", { name: "Overview", exact: true }).click();
+  await page.getByRole("button", { name: "Review the request" }).click();
+  await page.getByRole("button", { name: "Is this the right issue?" }).click();
+  await page.getByLabel("The issue on this notice").selectOption("FUNDS");
+  await page.getByRole("button", { name: "Use this issue instead" }).click();
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Confirm this route" }).click();
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: "Review the request" }).click();
+  await expect(page.getByText("Funds hold", { exact: true })).toBeVisible();
+});
+
 test("a seller can see why a record is wanted, ask for it, and say when they cannot get it", async ({
   page,
 }) => {
