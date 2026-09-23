@@ -317,6 +317,30 @@ function checkNovelty(draft: PoaDraft, findings: CriticFinding[]): void {
   }
 }
 
+/*
+  What a time *promise* looks like, as opposed to a duration.
+
+  This was `/\d{1,2}\s*(hours?|days?)/` — any number beside a unit of time. The critic runs over the
+  seller's own Plan of Action, where dated and timed actions are exactly what Amazon asks for, so it
+  told sellers to delete their strongest sentences: "we now audit inventory every 30 days" and "we
+  reviewed the last 30 days of orders" were both reported as promises that "cannot be promised".
+
+  Narrowed on 23 Sep 2026 to the two shapes the rule exists to stop: a timeline attached to the
+  *outcome* ("reinstated within 48 hours"), and a timeline attached to *Amazon's* action ("Amazon
+  will respond in 2 days"). A duration describing what the seller did, or now does, is a fact.
+*/
+const DURATION = String.raw`(?:within|in|after)\s+\d{1,3}\s*(?:business\s+)?(?:hours?|days?)`;
+const OUTCOME = String.raw`(?:reinstat\w*|reactivat\w*|restor(?:e|ed|ation)|back online|unsuspend\w*)`;
+const AMAZON_ACTS = String.raw`\bAmazon\b[^.!?\n]{0,30}?\b(?:will|should|would|to)\s+(?:respond|repl(?:y|ies)|review|decide|approve|reinstate)\w*\b`;
+const TIME_PROMISE = new RegExp(
+  [
+    String.raw`\b${OUTCOME}\b[^.!?\n]{0,40}?\b${DURATION}\b`,
+    String.raw`\b${DURATION}\b[^.!?\n]{0,40}?\b${OUTCOME}\b`,
+    String.raw`${AMAZON_ACTS}[^.!?\n]{0,30}?\b${DURATION}\b`,
+  ].join("|"),
+  "i",
+);
+
 const BANNED_PATTERNS: ReadonlyArray<{ pattern: RegExp; code: string; message: string }> = [
   {
     pattern: /\bguarantee\b/i,
@@ -329,7 +353,7 @@ const BANNED_PATTERNS: ReadonlyArray<{ pattern: RegExp; code: string; message: s
     message: "Remove reinstatement promises — no tool can promise outcomes.",
   },
   {
-    pattern: /\d{1,2}\s*(hours?|days?)\b/i,
+    pattern: TIME_PROMISE,
     code: "BANNED_TIME_PROMISE",
     message: "Remove time promises — response times vary and cannot be promised.",
   },

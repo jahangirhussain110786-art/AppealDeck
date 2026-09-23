@@ -17,6 +17,34 @@ const RESOLUTION_LABEL: Record<NonNullable<CaseLog["resolution"]>["status"], str
 const selectStyle =
   "h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto";
 
+type ResolutionStatus = NonNullable<CaseLog["resolution"]>["status"];
+
+/**
+ * The log to write when the seller picks an outcome, or `null` when nothing would change.
+ *
+ * Pulled out of the `onChange` handler on 23 Sep 2026 so the rule is a tested function rather
+ * than inline spread arithmetic, because inline spread arithmetic is where it broke: choosing
+ * "Still waiting on Amazon" built a log without `resolution` and then merged it back over the
+ * original with `{ ...current, ...rest }`. `rest` merely lacked the key, so the spread changed
+ * nothing and the recorded outcome stayed. A seller who recorded "rejected" by mistake could never
+ * take it back.
+ *
+ * Clearing is done by leaving the key out of a log built from scratch, never by merging.
+ */
+export function logWithOutcome(
+  current: CaseLog,
+  choice: ResolutionStatus | "pending",
+  at: string,
+): CaseLog | null {
+  if (choice === "pending") {
+    if (!current.resolution) return null;
+    const { resolution: _cleared, ...rest } = current;
+    return rest;
+  }
+  if (current.resolution?.status === choice) return null;
+  return { ...current, resolution: { status: choice, at } };
+}
+
 /**
  * A workspace case has no server-side record of what Amazon ultimately decided — the seller is
  * the only source. This gives that an explicit, honestly-labelled place to live (never implied to
@@ -42,14 +70,16 @@ export function CaseOutcome({
   const current: CaseLog = log ?? { state: file.state, attemptCount: w.submissions.length };
   const resolution = current.resolution;
 
-  const save = async (patch: Partial<CaseLog>) => {
+  /** Writes the log exactly as given. Clearing a field means passing a log without it. */
+  const write = async (next: CaseLog) => {
     setSaving(true);
     try {
-      await onSaveLog({ ...current, ...patch });
+      await onSaveLog(next);
     } finally {
       setSaving(false);
     }
   };
+  const save = (patch: Partial<CaseLog>) => write({ ...current, ...patch });
 
   return (
     <Card>
@@ -80,19 +110,12 @@ export function CaseOutcome({
             disabled={busy || saving}
             value={resolution?.status ?? "pending"}
             onChange={(e) => {
-              const value = e.target.value;
-              if (value === "pending") {
-                if (!current.resolution) return;
-                const { resolution: _drop, ...rest } = current;
-                void save(rest);
-                return;
-              }
-              void save({
-                resolution: {
-                  status: value as NonNullable<CaseLog["resolution"]>["status"],
-                  at: new Date().toISOString(),
-                },
-              });
+              const next = logWithOutcome(
+                current,
+                e.target.value as ResolutionStatus | "pending",
+                new Date().toISOString(),
+              );
+              if (next) void write(next);
             }}
           >
             <option value="pending">Still waiting on Amazon</option>

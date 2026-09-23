@@ -50,6 +50,13 @@ export interface FactEntry {
   /** The value exactly as the source gave it. */
   value: string;
   source: FactSource;
+  /**
+   * True when the label names one of possibly several things — an ASIN, an order, a date —
+   * rather than a single answer for the whole case. Added 23 Sep 2026: grouped by label alone, a
+   * notice naming two ASINs became one fact with two values and was reported as a contradiction.
+   * A list is not a disagreement.
+   */
+  multiValued?: boolean;
 }
 
 export interface Fact {
@@ -101,6 +108,38 @@ export function buildFactsLedger(entries: readonly FactEntry[]): FactsLedger {
     const distinct = new Set(list.map((e) => comparable(e.value)));
     const label = list[0]!.label;
 
+    /*
+      A label that names one of several things collects its values instead of comparing them.
+      Different values here are different items — two ASINs, a deactivation date and a deadline —
+      so there is nothing for them to disagree about. Each value is listed once, and the fact is
+      corroborated when some value was reported by two different kinds of source, which is the
+      same test a single-valued fact uses.
+    */
+    if (list.some((e) => e.multiValued)) {
+      const seen = new Set<string>();
+      const unique = list.filter((e) => {
+        const key = `${comparable(e.value)}|${e.source.kind}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      const kindsPerValue = new Map<string, Set<string>>();
+      for (const e of unique) {
+        const v = comparable(e.value);
+        if (!kindsPerValue.has(v)) kindsPerValue.set(v, new Set());
+        kindsPerValue.get(v)!.add(e.source.kind);
+      }
+      const corroborated = [...kindsPerValue.values()].some((kinds) => kinds.size > 1);
+      facts.push({
+        label,
+        status: corroborated ? "corroborated" : "recorded",
+        entries: unique,
+        // One value is an agreed value; several are a list, and the card shows them as one.
+        ...(distinct.size === 1 ? { value: unique[0]!.value.trim() } : {}),
+      });
+      continue;
+    }
+
     if (distinct.size > 1) {
       facts.push({ label, status: "contradicted", entries: list });
       continue;
@@ -125,19 +164,29 @@ export function buildFactsLedger(entries: readonly FactEntry[]): FactsLedger {
 export function entriesFromEntities(entities: readonly ExtractedEntity[]): FactEntry[] {
   return entities
     .filter((e) => e.kind !== "requested_record")
-    .map((e) => ({
-      label: ENTITY_FACT_LABELS[e.kind] ?? e.kind,
-      value: e.value,
-      source: { kind: "notice" as const, quote: e.quote, start: e.start, end: e.end },
-    }));
+    .map((e) => {
+      const known = ENTITY_FACT_LABELS[e.kind];
+      return {
+        label: known?.label ?? e.kind,
+        value: e.value,
+        source: { kind: "notice" as const, quote: e.quote, start: e.start, end: e.end },
+        ...(known?.multiValued ? { multiValued: true } : {}),
+      };
+    });
 }
 
-const ENTITY_FACT_LABELS: Record<string, string> = {
-  asin: "ASIN",
-  order_id: "Order ID",
-  case_id: "Case ID",
-  date: "Date in the notice",
-  amount: "Amount in the notice",
+/**
+ * Cardinality lives beside the labels it describes, so a label cannot be added without deciding
+ * whether it names one thing or a list of things. Only the case ID names one thing: a notice can
+ * list several ASINs, several orders, a deactivation date alongside a deadline, and an amount held
+ * alongside an amount disbursed, and none of those is a disagreement.
+ */
+const ENTITY_FACT_LABELS: Record<string, { label: string; multiValued: boolean }> = {
+  asin: { label: "ASIN", multiValued: true },
+  order_id: { label: "Order ID", multiValued: true },
+  case_id: { label: "Case ID", multiValued: false },
+  date: { label: "Date in the notice", multiValued: true },
+  amount: { label: "Amount in the notice", multiValued: true },
 };
 
 /**

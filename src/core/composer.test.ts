@@ -434,3 +434,44 @@ describe("renderPoaText", () => {
     expect(text).not.toContain("NOT READY TO SUBMIT");
   });
 });
+
+/**
+ * M, 23 Sep 2026. `BANNED_TIME_PROMISE` matched `/\d{1,2}\s*(hours?|days?)/` — any number next to
+ * a unit of time. The critic runs over the seller's own Plan of Action, where dated and timed
+ * actions are exactly what Amazon asks for, so it told sellers to delete the strongest sentences
+ * they had: "we now audit inventory every 30 days" was reported as a promise that "cannot be
+ * promised".
+ *
+ * The rule exists to stop a promise about *Amazon's* timeline or *the outcome* — "reinstated
+ * within 48 hours", "Amazon will respond in 2 days". A duration describing what the seller did or
+ * now does is a fact, and usually the most useful one in the document.
+ */
+describe("time-promise rule", () => {
+  const flagged = (body: string) => {
+    const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
+    const draft = composePoa(data);
+    draft.sections[0].body = body;
+    return critiquePoa(draft, data).findings.some((f) => f.code === "BANNED_TIME_PROMISE");
+  };
+
+  it.each([
+    "We expect our account to be reinstated within 48 hours.",
+    "Please reactivate our account in 2 days.",
+    "Amazon will respond within 3 days.",
+    "We hope Amazon will review this in 24 hours.",
+    "Our account should be back online in 5 days.",
+  ])("flags a promise about Amazon's timeline or the outcome: %s", (body) => {
+    expect(flagged(body)).toBe(true);
+  });
+
+  it.each([
+    "We reviewed the last 30 days of orders for the affected ASIN.",
+    "We now audit inventory every 30 days.",
+    "Our team responds to all buyer messages within 24 hours.",
+    "Within 7 days of the complaint we removed the listing.",
+    "Amazon asked us to provide invoices within 30 days.",
+    "We completed staff training over 5 days.",
+  ])("leaves a factual duration alone: %s", (body) => {
+    expect(flagged(body)).toBe(false);
+  });
+});

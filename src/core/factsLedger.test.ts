@@ -186,3 +186,66 @@ describe("wording", () => {
     }
   });
 });
+
+/**
+ * G, 23 Sep 2026. Facts were grouped by label, and every ASIN the decoder found was labelled
+ * "ASIN" — so a notice naming two products produced one fact with two values, marked
+ * `contradicted`, and the seller was told "Your case records more than one answer for ASIN …
+ * Check which is correct before you do." Amazon routinely lists every affected ASIN. The same
+ * held for order IDs, dates (a notice carries both a deactivation date and a deadline) and amounts
+ * (held and disbursed).
+ *
+ * A list is not a disagreement. The card whose whole purpose is being trustworthy was crying wolf
+ * on most real notices, which is how a real contradiction gets ignored when one finally appears.
+ */
+describe("multi-valued facts", () => {
+  const twoAsins =
+    "Your listings for ASIN B08N5WRWNW and ASIN B07XJ8C8F5 have been removed for a policy violation.";
+
+  it("does not call two ASINs in one notice a contradiction", () => {
+    const ledger = buildFactsLedger(entriesFromEntities(extractEntities(twoAsins)));
+    expect(ledger.contradictions).toEqual([]);
+    const asin = ledger.facts.find((f) => f.label === "ASIN")!;
+    expect(asin.status).not.toBe("contradicted");
+    // Both are still shown — silence about the list would be its own kind of wrong.
+    expect(asin.entries.map((e) => e.value).sort()).toEqual(["B07XJ8C8F5", "B08N5WRWNW"]);
+  });
+
+  it("does not call a deactivation date and a deadline a contradiction", () => {
+    const ledger = buildFactsLedger(
+      entriesFromEntities(
+        extractEntities(
+          "Your account was deactivated on 2026-09-01. Submit your appeal by 2026-10-01.",
+        ),
+      ),
+    );
+    expect(ledger.contradictions).toEqual([]);
+  });
+
+  it("lists each value once, however often the notice repeats it", () => {
+    const ledger = buildFactsLedger(
+      entriesFromEntities(
+        extractEntities("ASIN B08N5WRWNW is affected. We removed ASIN B08N5WRWNW from sale."),
+      ),
+    );
+    const asin = ledger.facts.find((f) => f.label === "ASIN")!;
+    expect(asin.entries).toHaveLength(1);
+  });
+
+  /**
+   * The rule must not have been deleted to make the tests above pass. A label that names one
+   * thing for the whole case — the case ID — still contradicts when two sources disagree.
+   */
+  it("still flags two different values for a label that names one thing", () => {
+    const entries: FactEntry[] = [
+      { label: "Case ID", value: "1234567890", source: { kind: "seller", field: "case" } },
+      {
+        label: "Case ID",
+        value: "9876543210",
+        source: { kind: "notice", quote: "9876543210", start: 0, end: 10 },
+      },
+    ];
+    const ledger = buildFactsLedger(entries);
+    expect(ledger.contradictions.map((f) => f.label)).toEqual(["Case ID"]);
+  });
+});
