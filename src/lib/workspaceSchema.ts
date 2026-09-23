@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PROTOCOLS } from "@/core/workspace";
+import { PROTOCOLS, EVIDENCE_KINDS } from "@/core/workspace";
 import { VIOLATION_KINDS } from "@/core/violationKinds";
 
 const id = z.string().min(1).max(100);
@@ -42,6 +42,10 @@ const requirement = z.object({
   // requirement loses the revision its quote belongs to on the next save, and the reply-round
   // regression this fix removes comes straight back the first time the workspace round-trips.
   sourceRevision: z.number().int().min(1).max(999).optional(),
+  // J: the typed evidence kind. Stripped here, a requirement loses its identity on the first save
+  // and falls back to matching its label — which is the exact fragility the field replaces, and
+  // would quietly reinstate the duplicate-on-kind-change bug for any renamed record.
+  evidenceKind: z.enum(EVIDENCE_KINDS).optional(),
 });
 export const WorkspaceSchema = z
   .object({

@@ -9,8 +9,8 @@
  *
  * This module is the bridge, and it is deliberately one module rather than five wirings: a seller
  * asking "what is this, why do they want it, how do I get it, and what if I can't" is asking one
- * question. `evidenceKindForRequirement` connects the workspace's own requirement labels to the
- * evidence matrix; everything below reads from the existing sources rather than restating them.
+ * question. `requirementEvidenceKind` connects a workspace requirement to the evidence matrix;
+ * everything below reads from the existing sources rather than restating them.
  *
  * Nothing here is generated, and nothing predicts what Amazon will do.
  */
@@ -18,7 +18,7 @@ import { requirementsFor, EVIDENCE_MATRIX } from "./evidenceModel";
 import type { EvidenceKind, EvidenceRequirement } from "./evidenceModel";
 import { lettersForEvidenceKind } from "./letters";
 import type { LetterTemplate } from "./letters";
-import { evidenceKindForRequirement } from "./workspace";
+import { requirementEvidenceKind, type Requirement } from "./workspace";
 import type { ViolationKind } from "./index";
 
 export interface RequirementAlternative {
@@ -108,10 +108,16 @@ function canonicalRequirement(kind: EvidenceKind): EvidenceRequirement | undefin
  * than no sentence.
  */
 export function requirementGuidance(
-  label: string,
+  /**
+   * The requirement itself, not its label. Taking a string meant guidance was recovered by matching
+   * a display name, which silently returned nothing for six of the model's eleven kinds and would
+   * have broken for any record a seller renamed. `requirementEvidenceKind` prefers the stored kind
+   * and falls back to the label for cases saved before that field existed.
+   */
+  requirement: Pick<Requirement, "label"> & Partial<Pick<Requirement, "evidenceKind">>,
   violationKind: ViolationKind,
 ): RequirementGuidance | undefined {
-  const evidenceKind = evidenceKindForRequirement(label);
+  const evidenceKind = requirementEvidenceKind(requirement);
   if (!evidenceKind) return undefined;
   const own = requirementsFor(violationKind).find((r) => r.kind === evidenceKind);
   /*

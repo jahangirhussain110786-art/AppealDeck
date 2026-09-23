@@ -83,6 +83,19 @@ export type Requirement = {
    */
   source?: "notice" | "matrix" | "seller";
   /**
+   * Which `EvidenceKind` this record is an instance of, stored rather than re-derived.
+   *
+   * Added 23 Sep 2026. The kind used to be recovered by matching the label back through a five-
+   * entry table, so six of the model's eleven kinds resolved to nothing: their guidance was
+   * unreachable, and the "already covered" check could not see them, which duplicated them every
+   * time a violation kind was re-applied. A display string is not an identifier, and the day a
+   * seller renames a record — or the label map is reworded — is the day the link silently breaks.
+   *
+   * Optional because cases saved before today have none; `requirementEvidenceKind` falls back to
+   * the label for those.
+   */
+  evidenceKind?: EvidenceKind;
+  /**
    * Which request revision `sourceQuote` was taken from. Only meaningful for `"notice"`.
    *
    * Added 23 Sep 2026. `applyWorkspaceReply` replaces `notice` with the reply's text and clears
@@ -219,6 +232,17 @@ export const EVIDENCE_KIND_LABELS: Readonly<Record<EvidenceKind, string>> = {
   other: "Other requested record",
 };
 
+/**
+ * Tuple form for `workspaceSchema.ts`, derived from the map above exactly as `PROTOCOLS` is derived
+ * from `PROTOCOL_LABELS`. A hand-written copy is what AA-39 found in six places and what the schema
+ * silently rejects when it falls behind; `EVIDENCE_KIND_LABELS` is `Record<EvidenceKind, string>`,
+ * so TypeScript already forces it to be complete.
+ */
+export const EVIDENCE_KINDS = Object.keys(EVIDENCE_KIND_LABELS) as [
+  EvidenceKind,
+  ...EvidenceKind[],
+];
+
 const CANDIDATE_PATTERNS: ReadonlyArray<{ pattern: RegExp; evidenceKind: EvidenceKind }> = [
   { pattern: /\binvoices?\b/i, evidenceKind: "supplier_invoice" },
   {
@@ -247,13 +271,46 @@ export const REQUIREMENT_CANDIDATES: ReadonlyArray<{
 }> = CANDIDATE_PATTERNS.map((c) => ({ ...c, label: EVIDENCE_KIND_LABELS[c.evidenceKind] }));
 
 /**
- * The evidence kind a requirement is an instance of, or undefined for one the seller added by
- * hand. Undefined is a normal answer, not a failure: a hand-added requirement still works, it just
- * has no matrix guidance behind it, and the UI shows nothing rather than guessing.
+ * Every label the model can produce, reversed back to its kind.
+ *
+ * Built from `EVIDENCE_KIND_LABELS` (all eleven kinds) rather than `REQUIREMENT_CANDIDATES` (the
+ * five the parser can spot in prose). Those are different jobs, and conflating them cost six kinds
+ * their guidance and made `covered` blind to them — so re-applying a violation kind raised a
+ * record the plan already held. Finding a request in a sentence is a parsing problem; identifying a
+ * record is an identity problem.
+ */
+const KIND_BY_LABEL: ReadonlyMap<string, EvidenceKind> = new Map(
+  (Object.entries(EVIDENCE_KIND_LABELS) as Array<[EvidenceKind, string]>).map(([kind, label]) => [
+    label.toLowerCase(),
+    kind,
+  ]),
+);
+
+/**
+ * The evidence kind a requirement's label names, or undefined for one the seller worded themselves.
+ * Undefined is a normal answer, not a failure: a hand-added requirement still works, it just has no
+ * matrix guidance behind it, and the UI shows nothing rather than guessing.
+ *
+ * Prefer `requirementEvidenceKind` when you hold the requirement — the stored field survives a
+ * seller renaming the record, and this lookup does not.
  */
 export function evidenceKindForRequirement(label: string): EvidenceKind | undefined {
-  return REQUIREMENT_CANDIDATES.find((c) => c.label.toLowerCase() === label.toLowerCase())
-    ?.evidenceKind;
+  return KIND_BY_LABEL.get(label.trim().toLowerCase());
+}
+
+/**
+ * The evidence kind of a requirement: what it was created as, falling back to what its label says.
+ *
+ * The stored field is the answer and the label is the legacy path. A human-readable string was
+ * doing the work of an identifier here, which meant a record's identity depended on nobody ever
+ * editing its name and on the label map never being reworded — neither of which is a property this
+ * model should rely on. Requirements saved before the field existed still resolve through the
+ * fallback, so nothing needs migrating.
+ */
+export function requirementEvidenceKind(
+  r: Pick<Requirement, "label"> & Partial<Pick<Requirement, "evidenceKind">>,
+): EvidenceKind | undefined {
+  return r.evidenceKind ?? evidenceKindForRequirement(r.label);
 }
 
 /** Suggest only record names present in an explicit request; seller confirms coverage. */
@@ -276,7 +333,7 @@ export function proposedRequirements(
         /\b(provide|submit|upload|send|include|request(?:ed|ing)?)\b/i.test(s) &&
         !/\b(do not|don't|not required|no need to|no additional)\b/i.test(s),
     );
-  const named = REQUIREMENT_CANDIDATES.flatMap(({ pattern, label }) => {
+  const named = REQUIREMENT_CANDIDATES.flatMap(({ pattern, label, evidenceKind }) => {
     const sourceQuote = sources.find((s) => pattern.test(s));
     return sourceQuote
       ? [
@@ -288,6 +345,7 @@ export function proposedRequirements(
             note: "",
             source: "notice" as const,
             sourceRevision: w.revision,
+            evidenceKind,
           },
         ]
       : [];
@@ -308,7 +366,7 @@ export function proposedRequirements(
     plain statement that we raised it, never a quote — inventing an Amazon sentence for a record
     Amazon never mentioned is the exact dishonesty this model exists to prevent.
   */
-  const covered = new Set(named.map((r) => evidenceKindForRequirement(r.label)));
+  const covered = new Set(named.map(requirementEvidenceKind));
   const inferred = requirementsFor(violationKind)
     .filter((r) => r.required && !covered.has(r.kind))
     .map((r) => ({
@@ -318,6 +376,7 @@ export function proposedRequirements(
       status: "needed" as const,
       note: "",
       source: "matrix" as const,
+      evidenceKind: r.kind,
     }));
   return [...named, ...inferred];
 }
@@ -397,7 +456,7 @@ export function requirementsAfterKindChange(
   existing: readonly Requirement[],
   nextKind: ViolationKind,
 ): Requirement[] {
-  const covered = new Set(existing.map((r) => evidenceKindForRequirement(r.label)));
+  const covered = new Set(existing.map(requirementEvidenceKind));
   const added = requirementsFor(nextKind)
     .filter((r) => r.required && !covered.has(r.kind))
     .map((r) => ({
@@ -407,6 +466,7 @@ export function requirementsAfterKindChange(
       status: "needed" as const,
       note: "",
       source: "matrix" as const,
+      evidenceKind: r.kind,
     }));
   return [...existing, ...added];
 }
@@ -778,7 +838,15 @@ export function computeReplyDelta(w: Workspace, replyId: string): ReplyDelta | n
     formInstructions: "",
     revision: nextRevision,
   });
-  const askedByLabel = new Map(asked.map((r) => [r.label.toLowerCase(), r]));
+  /*
+    Matched on the typed evidence kind where both sides have one, falling back to the label.
+    B-03 matched on the label alone because `proposedRequirements` issues a fresh id per call while
+    the existing requirement carries the seller's real work — that reasoning still holds, but a
+    display string is a poor key: rename a record and Amazon asking for it again would read as a
+    brand-new requirement, silently orphaning the file and note already attached to it.
+  */
+  const keyFor = (r: Requirement) => requirementEvidenceKind(r) ?? r.label.toLowerCase();
+  const askedByLabel = new Map(asked.map((r) => [keyFor(r), r]));
   const items: ReplyDeltaItem[] = [];
   const matched = new Set<string>();
 
@@ -791,7 +859,7 @@ export function computeReplyDelta(w: Workspace, replyId: string): ReplyDelta | n
   const held = (existing: Requirement) => existing.sourceRevision ?? w.revision;
 
   for (const existing of w.requirements) {
-    const key = existing.label.toLowerCase();
+    const key = keyFor(existing);
     const askedAgain = askedByLabel.get(key);
     if (askedAgain) matched.add(key);
     if (existing.status === "reviewed" && askedAgain) {
@@ -823,7 +891,7 @@ export function computeReplyDelta(w: Workspace, replyId: string): ReplyDelta | n
   }
 
   for (const a of asked) {
-    if (matched.has(a.label.toLowerCase())) continue;
+    if (matched.has(keyFor(a))) continue;
     items.push({ change: "added", requirement: a, replyQuote: a.sourceQuote });
   }
 

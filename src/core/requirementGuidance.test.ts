@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { requirementGuidance, alternativesFor } from "./requirementGuidance";
-import { REQUIREMENT_CANDIDATES, evidenceKindForRequirement } from "./workspace";
+import {
+  REQUIREMENT_CANDIDATES,
+  evidenceKindForRequirement,
+  EVIDENCE_KIND_LABELS,
+} from "./workspace";
 import { requirementsFor } from "./evidenceModel";
 
 /**
@@ -22,11 +26,34 @@ describe("requirement guidance", () => {
 
   it("returns nothing for a requirement the seller added by hand", () => {
     // Undefined is a normal answer. Inventing guidance for an unknown record is the failure mode.
-    expect(requirementGuidance("A record I typed myself", "INAUTHENTIC_DOCUMENTS")).toBeUndefined();
+    expect(
+      requirementGuidance({ label: "A record I typed myself" }, "INAUTHENTIC_DOCUMENTS"),
+    ).toBeUndefined();
+  });
+
+  /**
+   * J, 23 Sep 2026. Guidance used to be found by matching the label against the five patterns the
+   * parser can spot in notice prose, so six of the model's eleven kinds reached nothing at all —
+   * a seller on a funds case asking "what does a compliant bank record have to show" got silence,
+   * and the silence was indistinguishable from "we have nothing to say".
+   */
+  it("reaches every evidence kind, not only the five the parser can detect in prose", () => {
+    for (const [kind, label] of Object.entries(EVIDENCE_KIND_LABELS)) {
+      expect(requirementGuidance({ label }, "UNKNOWN")?.evidenceKind, label).toBe(kind);
+    }
+  });
+
+  it("prefers the stored kind, so renaming a record does not sever its guidance", () => {
+    const renamed = { label: "Acme invoice (scan 3)", evidenceKind: "supplier_invoice" as const };
+    expect(requirementGuidance(renamed, "INAUTHENTIC_DOCUMENTS")?.evidenceKind).toBe(
+      "supplier_invoice",
+    );
+    // Without the stored kind the same label reaches nothing, which is what used to happen.
+    expect(requirementGuidance({ label: renamed.label }, "INAUTHENTIC_DOCUMENTS")).toBeUndefined();
   });
 
   it("gives the supplier invoice its matrix sentence, its disqualifiers and its letter", () => {
-    const g = requirementGuidance("Supplier invoice", "INAUTHENTIC_DOCUMENTS")!;
+    const g = requirementGuidance({ label: "Supplier invoice" }, "INAUTHENTIC_DOCUMENTS")!;
     expect(g.evidenceKind).toBe("supplier_invoice");
     expect(g.whyAmazonWantsIt).toBe(
       requirementsFor("INAUTHENTIC_DOCUMENTS").find((r) => r.kind === "supplier_invoice")
@@ -42,7 +69,7 @@ describe("requirement guidance", () => {
     // is UNKNOWN. Without the fallback the entire matrix is invisible on the most ordinary path
     // into the product — the "built and unreachable" failure this whole pass exists to end.
     expect(requirementsFor("UNKNOWN")).toHaveLength(0);
-    const g = requirementGuidance("Supplier invoice", "UNKNOWN")!;
+    const g = requirementGuidance({ label: "Supplier invoice" }, "UNKNOWN")!;
     expect(g.whyAmazonWantsIt).toBeTruthy();
     expect(g.disqualifiers.join(" ")).toMatch(/pro-forma/i);
   });
@@ -52,7 +79,9 @@ describe("requirement guidance", () => {
     // identity-document sentence talks about funds release, which reads as nonsense elsewhere.
     const kind = "PERFORMANCE_METRIC" as const;
     expect(requirementsFor(kind).some((r) => r.kind === "supplier_invoice")).toBe(false);
-    expect(requirementGuidance("Supplier invoice", kind)!.whyAmazonWantsIt).toBeUndefined();
+    expect(
+      requirementGuidance({ label: "Supplier invoice" }, kind)!.whyAmazonWantsIt,
+    ).toBeUndefined();
   });
 
   it("always offers a way forward, and states what each path costs", () => {

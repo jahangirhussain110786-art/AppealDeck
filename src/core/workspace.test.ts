@@ -13,6 +13,9 @@ import {
   routeWorkspace,
   sourceQuoteResolves,
   requestTextForRevision,
+  evidenceKindForRequirement,
+  requirementEvidenceKind,
+  EVIDENCE_KIND_LABELS,
   MATRIX_SOURCE_NOTE,
   SELLER_SOURCE_NOTE,
   totalAttempts,
@@ -815,5 +818,85 @@ describe("source provenance across revisions", () => {
     expect(
       sourceQuoteResolves(w, { source: "notice", sourceQuote: "   ", sourceRevision: 1 }),
     ).toBe(false);
+  });
+});
+
+/**
+ * J, 23 Sep 2026. `evidenceKindForRequirement` resolved a requirement back to its `EvidenceKind` by
+ * matching its label against `REQUIREMENT_CANDIDATES` — the five patterns that detect a request in
+ * notice text. But the model defines **eleven** kinds, so six of them resolved to `undefined`.
+ *
+ * Two consequences, both silent. Guidance (why Amazon wants it, what disqualifies it, the letter
+ * that helps obtain it, the alternatives) was unreachable for those six. And `covered` — the set
+ * that stops the matrix re-raising a record already on the plan — contained `undefined` in their
+ * place, so re-applying a violation kind added them a second time.
+ *
+ * The cause is one conflation: finding a request in prose and identifying a record are different
+ * jobs, and the narrow list was doing both.
+ */
+describe("evidence kind resolution", () => {
+  it("resolves every label the model can produce, not just the five it can detect in prose", () => {
+    const unresolved = Object.entries(EVIDENCE_KIND_LABELS).filter(
+      ([kind, label]) => evidenceKindForRequirement(label) !== kind,
+    );
+    expect(unresolved).toEqual([]);
+  });
+
+  it("does not duplicate a record when a violation kind is applied twice", () => {
+    const once = requirementsAfterKindChange([], "FUNDS");
+    const twice = requirementsAfterKindChange(once, "FUNDS");
+    expect(twice.map((r) => r.label).sort()).toEqual(once.map((r) => r.label).sort());
+  });
+
+  it("does not re-raise a record the notice already named", () => {
+    const w = {
+      notice: "Please provide your supplier invoice for the affected product.",
+      formInstructions: "",
+      revision: 1,
+    };
+    const labels = proposedRequirements(w, "INAUTHENTIC_DOCUMENTS").map((r) => r.label);
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  it("carries a typed evidence kind rather than relying on the label being unchanged", () => {
+    const inferred = requirementsAfterKindChange([], "FUNDS");
+    for (const r of inferred) expect(r.evidenceKind).toBeDefined();
+    // The typed field wins, so a seller renaming a record does not sever its guidance.
+    const renamed = { ...inferred[0]!, label: "Whatever I call this locally" };
+    expect(requirementEvidenceKind(renamed)).toBe(inferred[0]!.evidenceKind);
+  });
+
+  it("still resolves a requirement saved before the typed field existed", () => {
+    expect(requirementEvidenceKind({ label: EVIDENCE_KIND_LABELS.financial_instrument_doc })).toBe(
+      "financial_instrument_doc",
+    );
+  });
+});
+
+/**
+ * The same "a label is not an identifier" fix, applied to the reply delta. B-03 matched an existing
+ * requirement to one the reply asks for by comparing labels, which works only while nobody edits a
+ * record's name — and a seller renaming "Supplier invoice" to something they recognise would have
+ * made Amazon's repeat request look like a brand-new requirement, orphaning the file, note and
+ * page reference already attached to it.
+ */
+describe("reply delta matches on identity, not display text", () => {
+  it("reopens a renamed record when Amazon asks for it again", () => {
+    const w = documentWorkspace();
+    w.requirements = w.requirements.map((r) => ({ ...r, label: "Acme invoice (scan 3)" }));
+    w.replies.push({
+      id: "reply-1",
+      at: new Date().toISOString(),
+      text: "The document you sent was not sufficient. Please provide the supplier invoice again.",
+      applied: false,
+    });
+    const delta = computeReplyDelta(w, "reply-1")!;
+    // One item, not two: the rename did not create a duplicate alongside the seller's real work.
+    expect(delta.items).toHaveLength(1);
+    const item = delta.items[0]!;
+    expect(item.change).toBe("reopened");
+    expect(item.requirement.label).toBe("Acme invoice (scan 3)");
+    expect(item.requirement.recordId).toBe("file-1");
+    expect(item.requirement.contentHash).toBe("hash-1");
   });
 });

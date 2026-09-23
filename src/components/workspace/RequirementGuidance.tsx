@@ -37,7 +37,7 @@ export function RequirementGuidance({
   busy: boolean;
   onChange: (value: Requirement) => Promise<boolean>;
 }) {
-  const guidance = requirementGuidance(item.label, violationKind);
+  const guidance = requirementGuidance(item, violationKind);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState(item.declined?.reason ?? "");
   const [choice, setChoice] = useState<string | undefined>(item.declined?.alternativeId);
