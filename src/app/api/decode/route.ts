@@ -54,14 +54,31 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const result = runDecode(text, { noticeReceivedAt: new Date() });
+  // No receipt date passed. This was `new Date()`, which counted every stated window from the
+  // moment of decoding; the `dueAt: null` guard below kept that from ever reaching the seller, at
+  // the cost of also discarding a real date. The notice's own header date is now used when it has
+  // one; otherwise the window is described as running from the day it was received.
+  const result = runDecode(text, {});
 
   return NextResponse.json({
     kind: result.classification.kind,
     confidence: result.classification.confidence,
-    // Decode has no confirmed receipt/deactivation date. Preserve stated windows without
-    // presenting a deadline computed from today's date as the seller's actual deadline.
-    deadlines: result.deadlines.map((deadline) => ({ ...deadline, dueAt: null })),
+    /*
+      A date is only sent when it was counted from a date the notice itself carries.
+
+      This used to null every `dueAt`, because the call above passed `new Date()` and a window
+      counted from the moment of decoding must never be shown as the seller's deadline. That guard
+      was right, but blunt: it also threw away a real date the notice stated in its own header, and
+      the chip then said "Date not stated" beside a notice that plainly gives ninety days.
+
+      Kept as a guard rather than dropped, now precise instead of blanket. `startsOn` is set only when
+      the start came from the notice, so a regression that reintroduced a made-up start date would
+      still never reach the seller as a countdown.
+    */
+    deadlines: result.deadlines.map((deadline) => ({
+      ...deadline,
+      dueAt: deadline.startsOn ? deadline.dueAt : null,
+    })),
     severityGated: isSeverityGated(result.classification.kind),
     // AA-39: the decision itself. Without this the free decoder can still only describe a notice,
     // which is the part Amazon's own Seller Assistant now does for nothing.

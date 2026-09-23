@@ -74,15 +74,33 @@ function DeadlineChipContent({ deadline, now }: { deadline: DeadlineLike; now: D
       <Icon className={cn("size-4 shrink-0", toneIconColor[tone])} aria-hidden />
       <div className="flex flex-col text-left">
         <span className="font-medium text-foreground">{deadline.label}</span>
-        <span className="tabular-nums text-muted-foreground">
-          {formatDate(dueAt) || "Date not stated"} · {formatRelativeDays(dueAt, now)}
-        </span>
+        {/*
+          The notice says how long, not since when. Shown as a plain instruction rather than
+          "Date not stated", which would read as though Amazon had given no window at all — and
+          rather than a countdown, which would need a start date we do not have.
+        */}
+        {deadline.startsOnReceipt && !dueAt ? (
+          <span className="text-muted-foreground">From the day you received this notice</span>
+        ) : (
+          <span className="tabular-nums text-muted-foreground">
+            {formatDate(dueAt) || "Date not stated"} · {formatRelativeDays(dueAt, now)}
+          </span>
+        )}
       </div>
     </div>
   );
 }
 
-function caveatFor(kind: Deadline["kind"]): string | null {
+function caveatFor(deadline: DeadlineLike): string | null {
+  const kind = deadline.kind;
+  // Where to find the start date, pointed at the notice's own date rather than the day the seller
+  // happened to open it — a window counted from a later day would end later than Amazon's does.
+  if (kind === "appeal_window" && deadline.startsOnReceipt) {
+    return "Check the date on Amazon's email or in Account Health. The window runs from that day.";
+  }
+  if (kind === "appeal_window" && deadline.startsOn) {
+    return "Counted from the date shown on your notice.";
+  }
   if (kind === "funds_review") {
     return "Typical, not automatic. The 90-day checkpoint is a review, not an automatic release.";
   }
@@ -100,7 +118,7 @@ function caveatFor(kind: Deadline["kind"]): string | null {
 
 export function DeadlineChip({ deadline, now, className }: DeadlineChipProps) {
   const at = useMemo(() => now ?? new Date(), [now]);
-  const caveat = caveatFor(deadline.kind);
+  const caveat = caveatFor(deadline);
 
   const inner = (
     <div className={cn("inline-flex items-center", className)}>

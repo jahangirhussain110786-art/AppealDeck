@@ -11,8 +11,14 @@ async function decodeSample(page: Page) {
   await page.getByRole("button", { name: "Decode", exact: true }).click();
   const result = await (await decoded).json();
   expect(result).toMatchObject({ kind: "POLICY", severityGated: false });
+  // The sample carries no header date, so the window is stated relative to receipt rather than
+  // dated. Before 23 Sep 2026 this read "90 days from notice" beside "Date not stated".
   expect(result.deadlines).toContainEqual(
-    expect.objectContaining({ dueAt: null, label: "Appeal window: 90 days from notice" }),
+    expect.objectContaining({
+      dueAt: null,
+      label: "Appeal window: 90 days",
+      startsOnReceipt: true,
+    }),
   );
   await expect(page.getByRole("navigation", { name: "Case workspace views" })).toBeVisible();
   // `.first()` added 22 Sep 2026: AA-39 gave the decode result a "Details we found in your notice"
@@ -150,4 +156,61 @@ test("a decoded notice starts a second case without destroying the first", async
   await cases.filter({ hasNotText: "Current" }).click();
   await page.goto("/case");
   await expect(page.getByLabel("Amazon notice")).toHaveValue(firstNotice);
+});
+
+/**
+ * 23 Sep 2026, founder direction: use the date only when the notice itself carries it, otherwise say
+ * the window runs from the day it was received — and never invent one. These check what the seller
+ * actually reads, because the defect was in what reached the screen.
+ */
+test("a window is dated from the notice's own header, and described plainly when there is none", async ({
+  page,
+}) => {
+  const decode = async (text: string) => {
+    await page.goto("/decode");
+    await page.locator("#notice").fill(text);
+    const decoded = page.waitForResponse(
+      (r) => r.url().endsWith("/api/decode") && r.request().method() === "POST",
+    );
+    await page.getByRole("button", { name: "Decode", exact: true }).click();
+    return (await decoded).json();
+  };
+
+  // A copied email carries its date. The window is counted from it, and the date shown can be
+  // checked against the seller's own inbox.
+  const dated = await decode(
+    [
+      "From: Amazon Seller Performance",
+      "Date: Tue, 1 Sep 2026 09:12:00 -0700",
+      "Subject: Your Amazon selling account",
+      "",
+      "Your Amazon seller account has been deactivated for repeated policy violations.",
+      "You may appeal within 30 days. Submit your Plan of Action through Account Health in Seller Central.",
+    ].join("\n"),
+  );
+  expect(dated.deadlines).toContainEqual(
+    expect.objectContaining({
+      label: "Appeal window: 30 days from 1 Sep 2026",
+      startsOn: "2026-09-01",
+      dueAt: "2026-10-01T00:00:00.000Z",
+    }),
+  );
+  await expect(page.getByText("Appeal window: 30 days from 1 Sep 2026")).toBeVisible();
+
+  // The same notice without its header. The length is still shown; the start is not invented.
+  const undated = await decode(
+    [
+      "Your Amazon seller account has been deactivated for repeated policy violations.",
+      "You may appeal within 30 days. Submit your Plan of Action through Account Health in Seller Central.",
+    ].join("\n"),
+  );
+  expect(undated.deadlines).toContainEqual(
+    expect.objectContaining({
+      label: "Appeal window: 30 days",
+      dueAt: null,
+      startsOnReceipt: true,
+    }),
+  );
+  await expect(page.getByText("From the day you received this notice")).toBeVisible();
+  await expect(page.getByText("Date not stated")).toHaveCount(0);
 });

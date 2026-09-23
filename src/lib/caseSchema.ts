@@ -98,6 +98,14 @@ export const CaseDataSchema = z.object({
         dueAt: z.string().datetime().nullable(),
         label: z.string().max(1000),
         isIndefinite: z.boolean().optional(),
+        // Stripped here, a window counted from an unknown receipt date would come back looking
+        // like one with no stated length at all, and the seller would be told "confirm the date
+        // in Account Health" instead of "30 days from the day you received this notice".
+        startsOn: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+        startsOnReceipt: z.boolean().optional(),
       }),
     )
     .max(20)

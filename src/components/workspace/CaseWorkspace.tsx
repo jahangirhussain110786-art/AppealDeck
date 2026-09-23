@@ -858,19 +858,21 @@ function WorkspaceInner({
       the notice decides.
 
       The kind is read before the requirements are built, because B-05's matrix union depends on it.
-      Deadlines are deliberately *not* computed here: `/decode` dates a stated window from the
-      moment of decoding, which is wrong in the dangerous direction for a notice received days ago,
-      and repeating that here would spread it to every typed case.
+
+      Deadlines are computed here too, since the same day. They were held back at first because
+      `/decode` counted a stated window from the moment of decoding — wrong in the dangerous
+      direction for a notice received days earlier — and repeating that here would have spread it
+      to every typed case. That is fixed at the source: a window is counted from the notice's own
+      header date when it carries one, and otherwise described as running from the day the seller
+      received it, with no invented countdown. So a typed notice now shows its window like a decoded
+      one, instead of "no confirmed deadline recorded" beside a notice that states thirty days.
     */
     const current = fileRef.current;
     const previousKind = current?.kind ?? "UNKNOWN";
-    const kind = current
-      ? kindForConfirmedNotice(
-          current,
-          parseNotice(`${updated.notice}\n${updated.formInstructions}`),
-        )
-      : previousKind;
+    const parsed = parseNotice(`${updated.notice}\n${updated.formInstructions}`);
+    const kind = current ? kindForConfirmedNotice(current, parsed) : previousKind;
     const kindChanged = kind !== previousKind;
+    const deadlines = serializeDeadlines(computeDeadlines({ parsed, kind }));
     const ok = await commit(
       (old) => ({
         ...old,
@@ -907,7 +909,7 @@ function WorkspaceInner({
         ? `Saved the notice and reviewed response route. We read it as: ${APP.violationKinds[kind]}.`
         : "Saved the notice and reviewed response route.",
       "INTAKE",
-      kindChanged ? { kind } : undefined,
+      kindChanged ? { kind, deadlines } : { deadlines },
     );
     if (ok) setReviewRequest(false);
     return ok;
@@ -1559,9 +1561,11 @@ function WorkspaceInner({
                               // — the case's deadlines were frozen at the original notice and
                               // would otherwise keep showing a now-irrelevant (possibly already
                               // expired) date after this revision starts.
+                              // No `noticeReceivedAt`: this was `new Date()`, which counted the
+                              // reply's window from the moment it was applied rather than from when
+                              // Amazon sent it. The reply's own header date is used if it has one.
                               const recomputed = serializeDeadlines(
                                 computeDeadlines({
-                                  noticeReceivedAt: new Date(),
                                   parsed: parseNotice(r.text),
                                   kind: file.kind,
                                 }),
@@ -1758,7 +1762,10 @@ function WorkspaceInner({
                               ? `${d.label} — no countdown to track`
                               : d.dueAt
                                 ? `${d.label}: ${formatDate(d.dueAt)}`
-                                : `${d.label} · confirm the date in Account Health`,
+                                : d.startsOnReceipt
+                                  ? // Amazon gave the length; the notice did not carry its date.
+                                    `${d.label}, from the day you received this notice`
+                                  : `${d.label} · confirm the date in Account Health`,
                           )
                           .join(" · ")
                       : "No confirmed deadline recorded. Check your current notice."}

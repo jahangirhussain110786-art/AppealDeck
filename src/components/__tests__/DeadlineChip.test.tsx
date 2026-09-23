@@ -67,3 +67,46 @@ describe("DeadlineChip", () => {
     expect(html).toContain("5 Nov 2026");
   });
 });
+
+/**
+ * 23 Sep 2026. When the notice gives a window's length but not its date, the chip fell through to
+ * "Date not stated", which reads as though Amazon had set no window at all. On the reply path, where
+ * nothing discarded the computed date, it showed a countdown counted from the moment the reply was
+ * applied. It now says what is true.
+ */
+describe("a window whose start date is not in the notice", () => {
+  const unknownStart = {
+    kind: "appeal_window" as const,
+    dueAt: null,
+    label: "Appeal window: 30 days",
+    startsOnReceipt: true,
+  };
+
+  it("says the window runs from the day the notice was received", () => {
+    const html = renderToStaticMarkup(<DeadlineChip now={NOW} deadline={unknownStart} />);
+    expect(html).toContain("Appeal window: 30 days");
+    expect(html).toContain("From the day you received this notice");
+  });
+
+  it("does not suggest Amazon gave no window, or show a countdown it cannot know", () => {
+    const html = renderToStaticMarkup(<DeadlineChip now={NOW} deadline={unknownStart} />);
+    expect(html).not.toContain("Date not stated");
+    expect(html).not.toMatch(/in \d+ days|\d+ days ago|today|tomorrow/i);
+  });
+
+  it("still shows the date and countdown when the notice did carry its date", () => {
+    const html = renderToStaticMarkup(
+      <DeadlineChip
+        now={NOW}
+        deadline={{
+          kind: "appeal_window",
+          dueAt: "2026-10-03T00:00:00.000Z",
+          label: "Appeal window: 30 days from 3 Sep 2026",
+          startsOn: "2026-09-03",
+        }}
+      />,
+    );
+    expect(html).toContain("3 Sep 2026");
+    expect(html).not.toContain("From the day you received this notice");
+  });
+});

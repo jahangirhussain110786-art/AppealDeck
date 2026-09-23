@@ -470,6 +470,28 @@ test("a notice typed into the workspace is classified, and a seller's correction
   await expect(page.getByText("Funds hold", { exact: true })).toBeVisible();
 });
 
+/**
+ * 23 Sep 2026. A notice typed into the workspace never had its deadline computed, because the only
+ * way to compute one counted from the moment of decoding. So a notice plainly stating thirty days
+ * sat beside "No confirmed deadline recorded". With the start taken from the notice or described
+ * relative to receipt, it is now safe to show — and it is shown.
+ */
+test("a notice typed into the workspace shows its window, counted honestly", async ({ page }) => {
+  await page.goto("/case");
+  await page
+    .getByLabel("Amazon notice", { exact: true })
+    .fill(
+      "Your account has been deactivated for repeated policy violations. You may appeal within 30 days. Please provide the supplier invoice.",
+    );
+  await page.getByLabel("Current response instructions").fill("Upload the requested invoice.");
+  await page.getByRole("button", { name: "Confirm this route" }).click();
+  const context = page.getByRole("complementary", { name: "Case context" });
+  await expect(context).toContainText(
+    "Appeal window: 30 days, from the day you received this notice",
+  );
+  await expect(context).not.toContainText("No confirmed deadline recorded");
+});
+
 test("a seller can see why a record is wanted, ask for it, and say when they cannot get it", async ({
   page,
 }) => {

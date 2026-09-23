@@ -1,6 +1,7 @@
 import type { ViolationKind } from "./index";
 import type { ParsedNotice } from "./noticeParser";
 import { isSeverityGated } from "./violationKinds";
+import { formatDay } from "./noticeDate";
 
 export type DeadlineKind =
   | "appeal_window"
@@ -16,20 +17,62 @@ export interface Deadline {
   dueAt: Date | null;
   label: string;
   isIndefinite?: boolean;
+  /**
+   * The calendar day this window is counted from (YYYY-MM-DD), when we actually know it — shown to
+   * the seller so they can check it against the date on their own email.
+   */
+  startsOn?: string;
+  /**
+   * The notice states how long the window is but not when it began. The window runs from the day
+   * the seller received the notice, and we say exactly that instead of inventing a date.
+   */
+  startsOnReceipt?: boolean;
 }
 
 export interface DeadlineInput {
-  noticeReceivedAt: Date;
+  /**
+   * The day the notice arrived, when the caller genuinely knows it. Optional since 23 Sep 2026:
+   * both production callers used to pass `new Date()`, which counted every window from the moment
+   * of decoding. Omit it unless it is known; the notice's own header date is used next, and failing
+   * that the window is described relative to receipt.
+   */
+  noticeReceivedAt?: Date;
   deactivatedAt?: Date;
   parsed: ParsedNotice;
   kind: ViolationKind;
   aha?: boolean;
+  /** Used only to reject a header date in the future, which no real notice has. */
+  now?: Date;
 }
 
 const DAY_MS = 86_400_000;
 
 function addDays(from: Date, days: number): Date {
   return new Date(from.getTime() + days * DAY_MS);
+}
+
+/** Midnight UTC on a YYYY-MM-DD calendar day. */
+function dayStart(isoDay: string): Date {
+  return new Date(`${isoDay}T00:00:00.000Z`);
+}
+
+function isoDayOf(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * The day a window is counted from, or null when we do not actually know it.
+ *
+ * A header date more than two days in the future is refused: no real notice is dated ahead, and
+ * accepting one would push the deadline later than it really is — the dangerous direction. Two days
+ * leaves room for time zones and nothing more.
+ */
+function windowStart(input: DeadlineInput): string | null {
+  if (input.noticeReceivedAt) return isoDayOf(input.noticeReceivedAt);
+  const stated = input.parsed.receivedOn;
+  if (!stated) return null;
+  const latest = addDays(input.now ?? new Date(), 2);
+  return dayStart(stated) > latest ? null : stated;
 }
 
 export function computeDeadlines(input: DeadlineInput): Deadline[] {
@@ -51,19 +94,35 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
     route, the case state, and the guidance for that kind.
   */
 
-  if (input.parsed.legacySeventeenDay && input.parsed.statedWindowDays === 17) {
-    out.push({
-      kind: "appeal_window",
-      dueAt: addDays(input.noticeReceivedAt, 17),
-      label:
-        "Stated 17-day window (LEGACY parse pattern — verify, never presented as current policy)",
-    });
-  } else if (input.parsed.statedWindowDays !== null) {
-    out.push({
-      kind: "appeal_window",
-      dueAt: addDays(input.noticeReceivedAt, input.parsed.statedWindowDays),
-      label: `Appeal window: ${input.parsed.statedWindowDays} days from notice`,
-    });
+  /*
+    When the window started. Corrected 23 Sep 2026: this was always `noticeReceivedAt`, and both
+    production callers passed `new Date()` — so every window was counted from the moment of the
+    call, which for a notice received twenty days ago ends twenty days late. `/api/decode` already
+    discarded those dates, so the decoder never showed one; applying an Amazon reply did not, and
+    stored a window counted from the click that the workspace then displayed as real. That is the
+    most expensive mistake this file can make, because the window is the part of a deactivation
+    that actually expires.
+
+    Founder direction the same day: use the date only if the notice itself carries it; otherwise say
+    the window runs from the day it was received, and never invent one. So: a date the caller really
+    knows, then the notice's own header date, then nothing — and "nothing" is stated plainly rather
+    than papered over with a countdown.
+  */
+  const start = windowStart(input);
+  const days = input.parsed.statedWindowDays;
+  const legacy = input.parsed.legacySeventeenDay && days === 17;
+
+  if (days !== null) {
+    const label = legacy
+      ? "Stated 17-day window (LEGACY parse pattern — verify, never presented as current policy)"
+      : start
+        ? `Appeal window: ${days} days from ${formatDay(start)}`
+        : `Appeal window: ${days} days`;
+    out.push(
+      start
+        ? { kind: "appeal_window", dueAt: addDays(dayStart(start), days), label, startsOn: start }
+        : { kind: "appeal_window", dueAt: null, label, startsOnReceipt: true },
+    );
   } else {
     out.push({
       kind: "appeal_window",
@@ -127,6 +186,8 @@ export interface SerializedDeadline {
   dueAt: string | null;
   label: string;
   isIndefinite?: boolean;
+  startsOn?: string;
+  startsOnReceipt?: boolean;
 }
 
 export function serializeDeadlines(deadlines: readonly Deadline[]): SerializedDeadline[] {

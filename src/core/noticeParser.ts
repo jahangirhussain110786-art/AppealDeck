@@ -1,5 +1,6 @@
 import type { ViolationKind } from "./index";
 import { DOCUMENT_FABRICATION } from "./violationKinds";
+import { receiptDateOf } from "./noticeDate";
 
 export interface ParsedNotice {
   raw: string;
@@ -10,6 +11,12 @@ export interface ParsedNotice {
   mentionsFundsAppeal: boolean;
   mentionsSellerChallenge: boolean;
   windowAmbiguous: boolean;
+  /**
+   * The day the notice was sent, as YYYY-MM-DD, when a header line in the pasted text states it —
+   * see `receiptDateOf`. Null otherwise, and null is the common, honest case: a stated window is
+   * then counted "from the day you received this notice" rather than from a date we made up.
+   */
+  receivedOn: string | null;
 }
 
 /**
@@ -100,5 +107,6 @@ export function parseNotice(raw: string): ParsedNotice {
     mentionsFundsAppeal,
     mentionsSellerChallenge,
     windowAmbiguous,
+    receivedOn: receiptDateOf(raw),
   };
 }

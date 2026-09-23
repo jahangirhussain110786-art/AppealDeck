@@ -202,7 +202,11 @@ export type {
 export { VAULT_ENVELOPE_VERSION } from "./vault/envelope";
 
 export interface DecodeOptions {
-  noticeReceivedAt: Date;
+  /**
+   * Only when genuinely known. Optional since 23 Sep 2026 — the decode route passed `new Date()`,
+   * counting every stated window from the moment of decoding. See `computeDeadlines`.
+   */
+  noticeReceivedAt?: Date;
   deactivatedAt?: Date;
   aha?: boolean;
   /**
