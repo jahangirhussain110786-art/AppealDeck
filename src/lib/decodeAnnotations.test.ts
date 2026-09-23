@@ -13,7 +13,7 @@ const copy: AnnotationCopy = {
 describe("buildNoticeAnnotations", () => {
   it("flags an unverifiable-authenticity phrase for an inauthentic-documents case", () => {
     const raw = "We could not verify the authenticity of your products.";
-    const annotations = buildNoticeAnnotations(raw, "INAUTHENTIC_DOCUMENTS", copy);
+    const annotations = buildNoticeAnnotations(raw, "INAUTHENTIC", copy);
     expect(annotations).toHaveLength(1);
     expect(annotations[0]).toMatchObject({ id: "unverifiable-claims", tag: "risky" });
     expect(raw.slice(annotations[0].start, annotations[0].end)).toBe(annotations[0].matchedText);
@@ -66,7 +66,7 @@ describe("buildNoticeAnnotations", () => {
       "State your root cause and corrective actions. " +
       "We could not verify the authenticity of your products. " +
       "Submit your appeal within 90 days.";
-    const annotations = buildNoticeAnnotations(raw, "INAUTHENTIC_DOCUMENTS", copy);
+    const annotations = buildNoticeAnnotations(raw, "INAUTHENTIC", copy);
     expect(annotations.length).toBeLessThanOrEqual(3);
     for (let i = 1; i < annotations.length; i++) {
       expect(annotations[i].start).toBeGreaterThanOrEqual(annotations[i - 1].end);
@@ -76,7 +76,7 @@ describe("buildNoticeAnnotations", () => {
   it("every match is a real, exact substring of the seller's own pasted text (D6 — never invented)", () => {
     const raw =
       "We could not verify the authenticity of your products. State your root cause and corrective actions.";
-    const annotations = buildNoticeAnnotations(raw, "INAUTHENTIC_DOCUMENTS", copy);
+    const annotations = buildNoticeAnnotations(raw, "INAUTHENTIC", copy);
     expect(annotations.length).toBeGreaterThan(0);
     for (const a of annotations) {
       expect(raw.slice(a.start, a.end)).toBe(a.matchedText);
@@ -105,7 +105,7 @@ describe("segmentNoticeText", () => {
   it("reassembles to the exact original text for a multi-annotation notice", () => {
     const raw =
       "We could not verify the authenticity of your products. State your root cause and corrective actions.";
-    const annotations = buildNoticeAnnotations(raw, "INAUTHENTIC_DOCUMENTS", copy);
+    const annotations = buildNoticeAnnotations(raw, "INAUTHENTIC", copy);
     const segments = segmentNoticeText(raw, annotations);
     expect(segments.map((s) => s.text).join("")).toBe(raw);
   });

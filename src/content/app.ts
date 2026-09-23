@@ -68,7 +68,8 @@ export const APP = {
     aiSignedOut: "Sign in to enable field suggestions.",
   },
   violationKinds: {
-    INAUTHENTIC_DOCUMENTS: "Inauthentic documents",
+    INAUTHENTIC_DOCUMENTS: "Falsified documents alleged",
+    INAUTHENTIC: "Inauthentic item complaint",
     RELATED_ACCOUNT: "Related account",
     POLICY: "Policy violation",
     INTELLECTUAL_PROPERTY: "Intellectual property",

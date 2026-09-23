@@ -1,5 +1,6 @@
 import type { ViolationKind } from "./index";
 import type { ParsedNotice } from "./noticeParser";
+import { isSeverityGated } from "./violationKinds";
 
 export type DeadlineKind =
   | "appeal_window"
@@ -34,20 +35,21 @@ function addDays(from: Date, days: number): Date {
 export function computeDeadlines(input: DeadlineInput): Deadline[] {
   const out: Deadline[] = [];
 
-  // Inauthentic-documents cases are severity-gated (routed to professional help, no self-serve
-  // draft) and don't resolve on a fixed timeline the way a standard appeal window does — showing
-  // a numeric countdown here would overstate a deadline that isn't real (D6). This replaces the
-  // generic appeal-window entry below rather than sitting alongside it.
-  if (isIndefiniteHold(input.kind)) {
-    return [
-      {
-        kind: "indefinite_hold",
-        dueAt: null,
-        label: "No fixed appeal window — routed to professional help",
-        isIndefinite: true,
-      },
-    ];
-  }
+  /*
+    There used to be a severity check here that `return`ed early, discarding everything below —
+    including a window Amazon had stated in their own notice. A seller whose notice said "you may
+    appeal within 30 days" was shown "No fixed appeal window — routed to professional help" and no
+    date at all, on a case the product had also declined to help with. Being told there is no
+    deadline when there is one is the most costly thing this file can do, because the window is the
+    part of a deactivation that actually expires.
+
+    Removed entirely on 23 Sep 2026 rather than narrowed. Whether AppealDeck will draft a response
+    is a decision about us; when the seller must reply is a fact about their notice. Nothing about
+    the second should depend on the first, so this function no longer takes severity into account
+    at all — and where the notice states no window, the ambiguous entry below already says so
+    honestly, for gated and ordinary cases alike. Gating is communicated where it belongs: the
+    route, the case state, and the guidance for that kind.
+  */
 
   if (input.parsed.legacySeventeenDay && input.parsed.statedWindowDays === 17) {
     out.push({
@@ -102,8 +104,15 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
   return out;
 }
 
+/**
+ * Whether this kind is one AppealDeck declines to draft a response for.
+ *
+ * It no longer affects any deadline — see `computeDeadlines`. Kept because callers legitimately ask
+ * the question, but renamed in meaning rather than left as "indefinite hold", which was never true:
+ * a gated notice can state a perfectly definite window, and one of the fixtures now does.
+ */
 export function isIndefiniteHold(kind: ViolationKind): boolean {
-  return kind === "INAUTHENTIC_DOCUMENTS";
+  return isSeverityGated(kind);
 }
 
 /**

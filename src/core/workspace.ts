@@ -5,6 +5,7 @@ import type { ResponseType } from "./responseType";
 import type { EvidenceKind } from "./evidenceModel";
 import { requirementsFor } from "./evidenceModel";
 import type { ViolationKind } from "./violationKinds";
+import { D6_GATED_ALLEGATION } from "./violationKinds";
 import type { NoticeIssue } from "./noticeIssues";
 import { detectIssues, hasMultipleIssues } from "./noticeIssues";
 
@@ -499,11 +500,9 @@ export function routeWorkspace(
    * it was built for. D6 gates exactly three things: fabricated documents, fraud, and child safety.
    * Widening this again requires a founder decision and an amendment, not a regex edit.
    */
-  if (
-    /\b(forged|falsified|fabricated|manipulated|altered)\s+(documents?|invoices?)|\b(fraud|child safety)\b/i.test(
-      text,
-    )
-  )
+  // The same rule the classifier gates on — see `D6_GATED_ALLEGATION`. It lived here as a literal
+  // and in `noticeParser` as a wider one, and the two disagreed about the most common case there is.
+  if (D6_GATED_ALLEGATION.test(text))
     return {
       protocol: "specialist",
       reason:

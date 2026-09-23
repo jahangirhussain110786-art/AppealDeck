@@ -18,7 +18,10 @@ export interface Classification {
  * PERFORMANCE_METRIC below the conduct kinds because a metric notice often also quotes policy text.
  */
 export const KIND_PRIORITY: ReadonlyArray<ViolationKind> = [
+  // A fabrication allegation outranks the ordinary complaint immediately below it, so a notice
+  // making both is classified — and gated — by the more serious one.
   "INAUTHENTIC_DOCUMENTS",
+  "INAUTHENTIC",
   "PRODUCT_SAFETY",
   "RELATED_ACCOUNT",
   "INTELLECTUAL_PROPERTY",

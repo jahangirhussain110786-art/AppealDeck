@@ -111,11 +111,34 @@ describe("caseState transitions", () => {
     expect(nextState(ctx, "AWAITING")).toBe("REJECTED");
   });
 
-  it("does not leave terminal states", () => {
+  it("does not leave states that record something that happened", () => {
     const ctx = baseCtx({ requiredComplete: true });
     expect(nextState(ctx, "APPROVED")).toBe("APPROVED");
     expect(nextState(ctx, "CLOSED")).toBe("CLOSED");
-    expect(nextState(ctx, "GATED_PRO_HELP")).toBe("GATED_PRO_HELP");
+  });
+
+  /**
+   * `GATED_PRO_HELP` used to be listed above, and that is what made the severity gate permanent.
+   * The early `isTerminal` return fired before any guard was consulted, so a case that had been
+   * gated could never leave — including after the seller corrected a misread notice through the
+   * B-06 override, which updated the kind and the requirements and then changed nothing.
+   *
+   * Being gated is a claim about what the notice alleges, not a record of something that happened.
+   * `APPROVED` and `CLOSED` are the latter, and they stay terminal.
+   */
+  it("stays gated while the allegation stands", () => {
+    const gated = baseCtx({ severityGated: true, kind: "INAUTHENTIC_DOCUMENTS" });
+    expect(nextState(gated, "GATED_PRO_HELP")).toBe("GATED_PRO_HELP");
+  });
+
+  it("leaves the gate when the case is corrected to a kind D6 does not gate", () => {
+    const corrected = baseCtx({ severityGated: false, kind: "INAUTHENTIC" });
+    expect(nextState(corrected, "GATED_PRO_HELP")).toBe("INTAKE");
+  });
+
+  it("does not reopen a gated case that was already submitted", () => {
+    const submitted = baseCtx({ severityGated: false, submitted: true, attemptCount: 1 });
+    expect(nextState(submitted, "GATED_PRO_HELP")).toBe("GATED_PRO_HELP");
   });
 });
 

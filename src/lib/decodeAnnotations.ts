@@ -46,7 +46,11 @@ export function buildNoticeAnnotations(
   const parsed = parseNotice(raw);
   const out: NoticeAnnotation[] = [];
 
-  if (kind === "INAUTHENTIC_DOCUMENTS" || parsed.kindHints.includes("INAUTHENTIC_DOCUMENTS")) {
+  // Both halves of the 23 Sep split. The phrase this annotates — "not authentic", "could not
+  // verify" — is the ordinary complaint's wording, so keying only on the gated kind would have made
+  // the annotation disappear from the exact notices it was written for.
+  const authenticity: ViolationKind[] = ["INAUTHENTIC", "INAUTHENTIC_DOCUMENTS"];
+  if (authenticity.includes(kind) || parsed.kindHints.some((k) => authenticity.includes(k))) {
     const m = findFirst(
       /inauthentic|not authentic|could not verify|documentation we could not verify/i,
       raw,

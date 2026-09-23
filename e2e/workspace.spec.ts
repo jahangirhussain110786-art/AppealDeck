@@ -292,7 +292,10 @@ test("a notice raising two issues names both, and blocks a response that has ans
   const panel = page.getByRole("tabpanel", { name: "Response", exact: true });
   await expect(panel.getByText("This notice raises more than one issue")).toBeVisible();
   // Each issue is named, and quoted from the seller's own notice rather than asserted.
-  await expect(panel.getByText("Inauthentic documents", { exact: true })).toBeVisible();
+  // "could not verify the authenticity of the invoices you supplied" is Amazon asking for records
+  // it could not confirm — not an allegation that those records were forged. Since the 23 Sep split
+  // those are separate kinds, and this one is the ordinary complaint the product exists to answer.
+  await expect(panel.getByText("Inauthentic item complaint", { exact: true })).toBeVisible();
   await expect(panel.getByText("Listing violation", { exact: true })).toBeVisible();
   await expect(panel.getByText(/detail page policy violation for ASIN B0EXAMPLE1/)).toBeVisible();
 

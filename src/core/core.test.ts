@@ -11,7 +11,7 @@ describe("noticeParser", () => {
     const p = parseNotice(FIXTURES.find((f) => f.id === "inauthentic-2-legacy")!.raw);
     expect(p.legacySeventeenDay).toBe(true);
     expect(p.statedWindowDays).toBe(17);
-    expect(p.kindHints).toContain("INAUTHENTIC_DOCUMENTS");
+    expect(p.kindHints).toContain("INAUTHENTIC");
   });
 
   it("flags an ambiguous window when no number is stated", () => {
@@ -117,17 +117,50 @@ describe("decode pipeline (runDecode)", () => {
     expect(res.deadlines.some((d) => d.kind === "funds_review")).toBe(true);
   });
 
-  it("routes severity-gated inauthentic straight to an indefinite hold (no appeal-window date)", () => {
-    const raw = FIXTURES.find((f) => f.id === "inauthentic-3")!.raw;
+  /*
+    Rewritten 23 Sep 2026. This used `inauthentic-3` — "we could not verify the authenticity of your
+    products" — as its example of a severity-gated case, which was the conflation in miniature: an
+    ordinary complaint standing in for a fabrication allegation. It then asserted that
+    `computeDeadlines` returns the indefinite-hold entry and nothing else, which is how the stated
+    appeal window came to be deleted from a seller's own notice.
+  */
+  it("states no window on a gated case whose notice states none", () => {
+    const raw = FIXTURES.find((f) => f.id === "falsified-documents-1")!.raw;
     const res = runDecode(raw, { noticeReceivedAt: new Date("2026-09-01") });
     expect(res.classification.severityGated).toBe(true);
     expect(isIndefiniteHold(res.classification.kind)).toBe(true);
-    // computeDeadlines() replaces the generic appeal-window entry with an explicit
-    // indefinite-hold one for this kind — no countdown is shown at all, never a null-dated one.
-    expect(res.deadlines.find((d) => d.kind === "appeal_window")).toBeUndefined();
-    expect(res.deadlines).toEqual([
-      expect.objectContaining({ kind: "indefinite_hold", dueAt: null, isIndefinite: true }),
-    ]);
+    // The same honest entry an ungated case gets when its notice names no window. Being gated
+    // changes what we will write for the seller; it does not change what their notice says.
+    expect(res.deadlines).toContainEqual(
+      expect.objectContaining({ kind: "appeal_window", dueAt: null }),
+    );
+    expect(res.deadlines.find((d) => d.kind === "indefinite_hold")).toBeUndefined();
+  });
+
+  /**
+   * The defect this replaced could cost a seller their case. Declining to draft a response is a
+   * decision about what we will do; the appeal window is a fact stated in Amazon's own notice, and
+   * deleting it told a gated seller there was no deadline when there was one. The two are now
+   * independent.
+   */
+  it("still shows the window a gated notice states, and does not contradict it", () => {
+    const raw = FIXTURES.find((f) => f.id === "falsified-documents-4")!.raw;
+    const res = runDecode(raw, { noticeReceivedAt: new Date("2026-09-01") });
+    expect(res.classification.severityGated).toBe(true);
+
+    const window = res.deadlines.find((d) => d.kind === "appeal_window");
+    expect(window?.dueAt?.toISOString().slice(0, 10)).toBe("2026-10-01");
+    // And no "no fixed window" note beside a window Amazon did state.
+    expect(res.deadlines.find((d) => d.kind === "indefinite_hold")).toBeUndefined();
+  });
+
+  it("does not gate, or blank the deadline of, an ordinary authenticity complaint", () => {
+    const raw = FIXTURES.find((f) => f.id === "inauthentic-2-legacy")!.raw;
+    const res = runDecode(raw, { noticeReceivedAt: new Date("2026-09-01") });
+    expect(res.classification.kind).toBe("INAUTHENTIC");
+    expect(res.classification.severityGated).toBe(false);
+    expect(res.deadlines.find((d) => d.kind === "indefinite_hold")).toBeUndefined();
+    expect(res.deadlines.find((d) => d.kind === "appeal_window")).toBeDefined();
   });
 });
 

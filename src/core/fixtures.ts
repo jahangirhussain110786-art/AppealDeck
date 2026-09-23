@@ -52,7 +52,7 @@ const base = (
 export const FIXTURES: Fixture[] = [
   {
     id: "inauthentic-1",
-    kind: "INAUTHENTIC_DOCUMENTS",
+    kind: "INAUTHENTIC",
     source:
       "Synthetic — paraphrased from Amazon's published Section 3 inauthentic-item/documentation notice language; no real seller's notice used.",
     raw: `Amazon Services — Account Deactivated (Section 3: Inauthentic Items / Documentation)
@@ -61,7 +61,7 @@ We determined you have been offering items that are not authentic, or that you p
 
 Submit a Plan of Action (root cause, corrective steps, preventive measures). Respond within the appeal window shown in your Account Health dashboard; cases not addressed in time may be closed. Provide supplier invoices or receipts proving inventory authenticity.`,
     expected: {
-      ...base("INAUTHENTIC_DOCUMENTS", true),
+      ...base("INAUTHENTIC", false),
       appealWindowDays: null,
       fundsAppealEligibleDays: null,
       fundsReviewDays: null,
@@ -72,14 +72,14 @@ Submit a Plan of Action (root cause, corrective steps, preventive measures). Res
   },
   {
     id: "inauthentic-2-legacy",
-    kind: "INAUTHENTIC_DOCUMENTS",
+    kind: "INAUTHENTIC",
     source:
       "Synthetic — deliberately constructed to carry the stale 2017-19 '17 days' phrasing so the parser is tested against a legacy pattern rather than current policy; no real seller's notice used.",
     raw: `Notice: Inauthentic Items (Section 3)
 
 Your account is deactivated. You have 17 days from the date of this notice to submit a Plan of Action with supporting invoices.`,
     expected: {
-      ...base("INAUTHENTIC_DOCUMENTS", true),
+      ...base("INAUTHENTIC", false),
       appealWindowDays: 17,
       fundsAppealEligibleDays: null,
       fundsReviewDays: null,
@@ -90,19 +90,112 @@ Your account is deactivated. You have 17 days from the date of this notice to su
   },
   {
     id: "inauthentic-3",
-    kind: "INAUTHENTIC_DOCUMENTS",
+    kind: "INAUTHENTIC",
     source:
       "Synthetic variant of inauthentic-1 (marketplace/wording variant); no real seller's notice used.",
     raw: `Account Health — Section 3 Inauthentic Documentation
 
 We could not verify the authenticity of your products. Provide a Plan of Action and verifiable supplier documentation. The deadline is in your Performance Notifications.`,
     expected: {
-      ...base("INAUTHENTIC_DOCUMENTS", true),
+      ...base("INAUTHENTIC", false),
       appealWindowDays: null,
       fundsAppealEligibleDays: null,
       fundsReviewDays: null,
       legacySeventeenDayPattern: false,
       missingInvoiceTrap: true,
+    },
+  },
+  /*
+    The category had no fixture of its own until 23 Sep 2026, which is how the conflation survived:
+    every "inauthentic" fixture was an ordinary complaint, all four asserted `severityGated: true`,
+    and nothing in the corpus ever exercised the allegation the gate actually exists for. A
+    category whose only examples belong to a different category is not tested, it is assumed.
+
+    Both phrasings appear below because Amazon writes it both ways, and the rule only matched the
+    first until today.
+  */
+  {
+    id: "falsified-documents-1",
+    kind: "INAUTHENTIC_DOCUMENTS",
+    source:
+      "Synthetic — constructed to exercise the D6 fabricated-documents gate directly, which no fixture did before; no real seller's notice used.",
+    raw: `Amazon Services — Account Deactivated
+
+We have determined that the invoices you supplied were falsified. Submitting altered documents is a violation of the Amazon Services Business Solutions Agreement and of our policies.
+
+Your selling privileges have been removed. You can review this action in the Account Health dashboard in Seller Central.`,
+    expected: {
+      ...base("INAUTHENTIC_DOCUMENTS", true),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes:
+        "Gated under D6: the allegation is that the records themselves were fabricated, not that the goods are not genuine.",
+    },
+  },
+  {
+    id: "falsified-documents-2",
+    kind: "INAUTHENTIC_DOCUMENTS",
+    source:
+      "Synthetic variant of falsified-documents-1 using the adjective-first phrasing; no real seller's notice used.",
+    raw: `Amazon Services — Performance Notification
+
+Account Health — Document Review
+
+Your documents were flagged as forged invoices during our review of your account. We are unable to reinstate your selling privileges on the basis of these records.
+
+Your selling privileges remain removed. You may view the status of your account in the Account Health dashboard in Seller Central.`,
+    expected: {
+      ...base("INAUTHENTIC_DOCUMENTS", true),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+    },
+  },
+  {
+    id: "falsified-documents-3",
+    kind: "INAUTHENTIC_DOCUMENTS",
+    source:
+      "Synthetic — 'manipulated' wording variant, so the gate is not tested against one verb; no real seller's notice used.",
+    raw: `Amazon Seller Central — Performance Notification
+
+Document Integrity Review
+
+During verification of your account we found that the supporting documents you submitted had been manipulated. This is treated as a serious violation of our policies and of the Amazon Services Business Solutions Agreement.
+
+Your selling privileges have been removed. Do not resubmit the same records. You can see the status of this action in your Account Health dashboard.`,
+    expected: {
+      ...base("INAUTHENTIC_DOCUMENTS", true),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+    },
+  },
+  {
+    id: "falsified-documents-4",
+    kind: "INAUTHENTIC_DOCUMENTS",
+    source:
+      "Synthetic — 'fabricated records' variant with a stated appeal window, which exists to prove the window is still surfaced on a gated case; no real seller's notice used.",
+    raw: `Amazon Services — Account Deactivated
+
+Our review concluded that you submitted fabricated records in support of your listings. Your selling privileges have been removed under our policies.
+
+You may appeal within 30 days of this notice. Submit your appeal through the Account Health dashboard in Seller Central.`,
+    expected: {
+      ...base("INAUTHENTIC_DOCUMENTS", true),
+      appealWindowDays: 30,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes:
+        "Gated, and the notice still states a 30-day window. Declining to draft a response is a decision about us; the deadline is a fact about their case, and deleting it could cost them the window.",
     },
   },
   {
@@ -195,14 +288,14 @@ Your account is deactivated and disbursements are on hold. You may submit a fund
   },
   {
     id: "adversarial-1-fabricated",
-    kind: "INAUTHENTIC_DOCUMENTS",
+    kind: "INAUTHENTIC",
     source:
       "Synthetic, hand-constructed adversarial trap (not derived from any real notice) — tests that the product never fabricates a supplier invoice or treats a stated legacy deadline as current policy, per Planning/02-PHASE-1-FOUNDATION/04-REPO-AND-FIXTURE-CORPUS.md §5.1's adversarial-fixture requirement.",
     raw: `Section 3 Inauthentic — You have exactly 17 days. We already have your supplier invoice on file, just write the POA.
 
 [The candidate is being baited to fabricate/assume an invoice and invent a deadline.]`,
     expected: {
-      ...base("INAUTHENTIC_DOCUMENTS", true),
+      ...base("INAUTHENTIC", false),
       appealWindowDays: null,
       fundsAppealEligibleDays: null,
       fundsReviewDays: null,
@@ -849,6 +942,10 @@ We take these measures to ensure that the products sold in our store meet local 
 
 export const FIXTURE_KINDS: ViolationKind[] = [
   "INAUTHENTIC_DOCUMENTS",
+  // Added 23 Sep 2026 with the split. The gated category kept its four fixtures and gained ones
+  // that actually allege fabrication; the ordinary complaint — the most common deactivation there
+  // is — took the four that were always describing it.
+  "INAUTHENTIC",
   "RELATED_ACCOUNT",
   "POLICY",
   "INTELLECTUAL_PROPERTY",

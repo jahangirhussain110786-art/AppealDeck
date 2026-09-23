@@ -13,13 +13,46 @@ describe("verification context", () => {
     "You provided documentation we could not verify.",
     "Your supplier invoices could not be verified.",
     "You are offering items that are not authentic.",
-  ])("retains the authenticity gate: %s", (notice) => {
-    expect(classifyStage1(parseNotice(notice)).severityGated).toBe(true);
+    /*
+      Rewritten 23 Sep 2026, and the old version is worth recording. It asserted
+      `severityGated === true` for all four of these — including "You are offering items that are
+      not authentic", which is the single most common Amazon deactivation and an entirely
+      appealable one. Because the assertion passed, the suite actively held the product in a state
+      where it answered the most frequent case with "this case type requires professional help. We
+      cannot generate a self-serve draft", permanently.
+
+      D6 gates fabricated documents, fraud and child safety. None of these four allege any of them:
+      they allege the goods are not genuine, or that records could not be confirmed. Both are
+      answered with supplier invoices, which is the work this product exists to do.
+    */
+  ])("recognises an authenticity complaint without gating it: %s", (notice) => {
+    const classification = classifyStage1(parseNotice(notice));
+    expect(classification.kind).toBe("INAUTHENTIC");
+    expect(classification.severityGated).toBe(false);
   });
-  it("does not turn unverified listing claims into a document allegation", () => {
-    expect(
-      parseNotice("The listing contained claims we could not verify.").kindHints,
-    ).not.toContain("INAUTHENTIC_DOCUMENTS");
+
+  it.each([
+    "Your documents were flagged as altered invoices.",
+    "You have supplied falsified invoices for these products.",
+    "The records you provided appear to be forged documents.",
+  ])("gates an allegation that the records themselves were fabricated: %s", (notice) => {
+    const classification = classifyStage1(parseNotice(notice));
+    expect(classification.kind).toBe("INAUTHENTIC_DOCUMENTS");
+    expect(classification.severityGated).toBe(true);
+  });
+
+  it("gates by the more serious allegation when a notice makes both", () => {
+    const both = parseNotice(
+      "You are offering items that are not authentic, and the invoices you supplied were falsified.",
+    );
+    expect(both.kindHints).toContain("INAUTHENTIC");
+    expect(both.kindHints).toContain("INAUTHENTIC_DOCUMENTS");
+    expect(classifyStage1(both).kind).toBe("INAUTHENTIC_DOCUMENTS");
+  });
+  it("does not turn unverified listing claims into an authenticity allegation of any kind", () => {
+    const hints = parseNotice("The listing contained claims we could not verify.").kindHints;
+    expect(hints).not.toContain("INAUTHENTIC");
+    expect(hints).not.toContain("INAUTHENTIC_DOCUMENTS");
   });
 });
 describe("appeal deadline context", () => {

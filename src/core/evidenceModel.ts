@@ -316,7 +316,12 @@ const RESTRICTED_PRODUCT: EvidenceRequirement[] = [
 const UNKNOWN: EvidenceRequirement[] = [];
 
 export const EVIDENCE_MATRIX: Readonly<Record<ViolationKind, readonly EvidenceRequirement[]>> = {
+  // Both point at the same list, and that is the honest answer rather than a shortcut: a
+  // fabrication allegation and an authenticity complaint are answered with the same records. What
+  // differs is whether this product will help draft the response, which is a severity question,
+  // not an evidence one.
   INAUTHENTIC_DOCUMENTS: INAUTHENTIC,
+  INAUTHENTIC: INAUTHENTIC,
   INTELLECTUAL_PROPERTY: IP,
   RELATED_ACCOUNT: RELATED_ACCOUNT,
   LISTING: LISTING,

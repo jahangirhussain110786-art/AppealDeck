@@ -14,7 +14,14 @@ export interface KindGuidance {
 }
 
 export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
-  INAUTHENTIC_DOCUMENTS: {
+  /*
+    Split 23 Sep 2026. Everything below used to sit under `INAUTHENTIC_DOCUMENTS` — including the
+    instruction to gather invoices and write a Plan of Action, which is advice for a case the seller
+    can actually work. That was the tell: the guidance described an ordinary complaint while the
+    category it lived in was severity-gated to professional help. It now sits with the ordinary
+    complaint, and `INAUTHENTIC_DOCUMENTS` says what a fabrication allegation really means.
+  */
+  INAUTHENTIC: {
     title: "Inauthentic items or unverifiable documentation",
     summary:
       "Amazon believes the products are not authentic, or the supplier documentation you provided could not be verified. This is the most evidence-sensitive suspension type.",
@@ -23,8 +30,6 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       "Write a Plan of Action covering root cause, corrective steps, and preventive measures — grounded in real documents.",
       "Never fabricate or assume an invoice you do not have. If documents are missing, say so and explain how you will obtain them.",
     ],
-    severityNote:
-      "Severity-gated: if authenticity cannot be evidenced, this is routed to professional help rather than a self-serve draft.",
     triage: {
       doNow: [
         "Gather verifiable supplier invoices or receipts for the flagged ASINs before writing the POA.",
@@ -37,6 +42,32 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
         "Do not send an instant one-line appeal that burns an attempt.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not fabricate, backdate, or assume an invoice document you do not have.",
+      ],
+    },
+  },
+  INAUTHENTIC_DOCUMENTS: {
+    title: "Allegation that documents were falsified",
+    summary:
+      "Amazon's notice says the records you supplied were forged, altered or fabricated. That is a different allegation from selling items Amazon believes are not genuine, and it is answered differently.",
+    whatToDo: [
+      "Read the notice carefully and identify exactly which document is being challenged.",
+      "Obtain the original from the issuer — the supplier, the bank, the certifying body — rather than resending what you already sent.",
+      "Get qualified help before responding. An answer that is wrong here is harder to undo than a late one.",
+    ],
+    severityNote:
+      "Severity-gated under D6: AppealDeck does not prepare a response to an allegation of falsified documents, fraud or child safety.",
+    triage: {
+      doNow: [
+        "Identify which specific document the notice challenges, and who issued it.",
+        "Ask the issuer for a clean original, sent directly, with their own contact details on it.",
+        "Speak to a qualified professional about the response before you send anything.",
+      ],
+      doNot: [
+        "Do not resend the challenged document unchanged.",
+        "Do not edit, retouch or re-type any document to make it look tidier.",
+        "Do not open a new seller account to dodge this action.",
+        "Do not hand over your Seller Central credentials to anyone.",
+        "Do not pay for reinstatement services that promise an outcome.",
       ],
     },
   },

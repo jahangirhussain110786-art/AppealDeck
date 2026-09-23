@@ -23,6 +23,21 @@
  */
 export const VIOLATION_KINDS = [
   "INAUTHENTIC_DOCUMENTS",
+  /**
+   * The ordinary inauthentic-item complaint, split out from `INAUTHENTIC_DOCUMENTS` on
+   * 23 Sep 2026 — and it is the most common Amazon deactivation there is.
+   *
+   * One kind was doing two jobs. `INAUTHENTIC_DOCUMENTS` matched `/inauthentic|not authentic/`, so
+   * "we received complaints about the authenticity of your items" — a routine, entirely appealable
+   * complaint answered with supplier invoices — landed in the category D6 severity-gates for
+   * *forged documents*. The seller was told "this case type requires professional help. We cannot
+   * generate a self-serve draft", permanently, on the single most common reason anyone arrives
+   * here. Four fixtures asserted `severityGated: true` and so pinned it in place.
+   *
+   * D6 gates fabricated documents, fraud and child safety. An allegation that goods are not
+   * genuine is none of those; it is the case this product was built for.
+   */
+  "INAUTHENTIC",
   "RELATED_ACCOUNT",
   "POLICY",
   "INTELLECTUAL_PROPERTY",
@@ -53,3 +68,41 @@ export const SEVERITY_GATED: ReadonlySet<ViolationKind> = new Set(["INAUTHENTIC_
 export function isSeverityGated(kind: ViolationKind): boolean {
   return SEVERITY_GATED.has(kind);
 }
+
+/**
+ * What D6 actually gates, as one regex both the classifier and the router read.
+ *
+ * `routeWorkspace` has had the narrow, correct version of this test since the 21 Sep 2026 review
+ * found the severity check had "silently grown" to cover product safety, related accounts and every
+ * IP notice. The classifier kept a wider one, so the two disagreed: the router correctly declined
+ * to call an ordinary authenticity complaint a specialist matter, while the classifier put it in a
+ * severity-gated category anyway. Two copies of a rule is how that happened, so there is now one.
+ *
+ * `DOCUMENT_FABRICATION` is the half that names a violation family — an allegation that the records
+ * themselves were forged. `D6_GATED_ALLEGATION` adds fraud and child safety, which are not evidence
+ * families but must still stop a self-serve draft.
+ */
+const FABRICATION_WORD = "forged|falsified|fabricated|manipulated|altered";
+const RECORD_WORD = "documents?|invoices?|records?";
+
+/**
+ * Both word orders, because Amazon writes it both ways: "falsified invoices" and "the invoices you
+ * supplied were falsified". The rule only ever matched the first, so the second classified as an
+ * ordinary complaint and would have been handed a self-serve draft — the precise outcome D6 exists
+ * to prevent, and a worse error than the reverse.
+ *
+ * This completes the existing rule rather than widening its scope. The standing instruction that
+ * widening the gate needs a founder decision is about *categories* — product safety, related
+ * accounts, intellectual property, all of which the 21 Sep review found had crept in and were
+ * removed. Recognising the same allegation phrased passively adds no category.
+ */
+export const DOCUMENT_FABRICATION = new RegExp(
+  `\\b(?:${FABRICATION_WORD})\\s+(?:${RECORD_WORD})\\b` +
+    `|\\b(?:${RECORD_WORD})\\b[^.!?\\n]{0,40}?\\b(?:were|was|are|is|appear(?:s)? to be|have been|had been)\\s+(?:${FABRICATION_WORD})\\b`,
+  "i",
+);
+
+export const D6_GATED_ALLEGATION = new RegExp(
+  `${DOCUMENT_FABRICATION.source}|\\b(?:fraud|child safety)\\b`,
+  "i",
+);

@@ -4,7 +4,8 @@ import type { ViolationKind } from "@/core";
 import { Badge } from "@/components/ui/badge";
 
 const CASE_STATE_LABEL: Record<ViolationKind, string> = {
-  INAUTHENTIC_DOCUMENTS: "Inauthentic docs",
+  INAUTHENTIC_DOCUMENTS: "Falsified docs alleged",
+  INAUTHENTIC: "Inauthentic items",
   RELATED_ACCOUNT: "Related account",
   POLICY: "Policy violation",
   INTELLECTUAL_PROPERTY: "IP complaint",
@@ -22,6 +23,9 @@ const CASE_STATE_VARIANT: Record<
   "default" | "secondary" | "outline" | "info" | "destructive" | "success" | "warning"
 > = {
   INAUTHENTIC_DOCUMENTS: "destructive",
+  // The ordinary complaint is serious but workable, so it does not borrow the colour reserved for
+  // the allegation this product declines to answer.
+  INAUTHENTIC: "warning",
   RELATED_ACCOUNT: "warning",
   POLICY: "default",
   INTELLECTUAL_PROPERTY: "default",

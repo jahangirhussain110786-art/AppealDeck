@@ -123,13 +123,37 @@ const TRANSITIONS: ReadonlyArray<Transition> = [
 ];
 
 export function nextState(ctx: CaseStateContext, current: CaseState): CaseState {
+  /*
+    A gate a correction cannot clear, fixed 23 Sep 2026.
+
+    `GATED_PRO_HELP` is terminal, and this early return fired **before** the guards below were
+    consulted — so once a case was gated, nothing could move it, including the seller telling us we
+    had read their notice wrong. The B-06 override updated the kind and the requirements and the
+    case stayed exactly where it was, which made the correction mechanism useless in the one place
+    it was most needed. Combined with the classifier treating every "inauthentic" notice as a
+    fabrication allegation, an ordinary and entirely appealable case could be permanently told
+    "we cannot generate a self-serve draft".
+
+    Being gated is a statement about what the notice alleges. When that stops being true, the case
+    is no longer gated. `APPROVED` and `CLOSED` stay genuinely terminal: those describe something
+    that has happened, not something we concluded.
+  */
+  if (current === "GATED_PRO_HELP" && !ctx.severityGated && !ctx.submitted) {
+    const recovered = firstMatchingState(ctx);
+    if (recovered) return recovered;
+  }
   if (isTerminal(current)) return current;
 
+  return firstMatchingState(ctx) ?? current;
+}
+
+/** The highest-priority transition whose guard holds, or undefined when none does. */
+function firstMatchingState(ctx: CaseStateContext): CaseState | undefined {
   const sorted = [...TRANSITIONS].sort((a, b) => b.priority - a.priority);
   for (const t of sorted) {
     if (t.guard(ctx)) return t.to;
   }
-  return current;
+  return undefined;
 }
 
 /**

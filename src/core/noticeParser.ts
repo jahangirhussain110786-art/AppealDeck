@@ -1,4 +1,5 @@
 import type { ViolationKind } from "./index";
+import { DOCUMENT_FABRICATION } from "./violationKinds";
 
 export interface ParsedNotice {
   raw: string;
@@ -16,8 +17,15 @@ export interface ParsedNotice {
  * raises. A second copy would be exactly the drift AA-39 found across six copies of the kind list.
  */
 export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
+  // The allegation that the records themselves were fabricated. Severity-gated under D6, and the
+  // only half of the old combined pattern that ever should have been. Read from one place so the
+  // classifier and `routeWorkspace` cannot drift apart again.
+  ["INAUTHENTIC_DOCUMENTS", DOCUMENT_FABRICATION],
+  // The ordinary complaint that goods are not genuine, or that supplied records could not be
+  // confirmed. Answered with supplier invoices; not gated. Listed after the fabrication pattern so
+  // a notice alleging both is classified by the more serious one (see `KIND_PRIORITY`).
   [
-    "INAUTHENTIC_DOCUMENTS",
+    "INAUTHENTIC",
     /inauthentic|not authentic|(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)/i,
   ],
   ["RELATED_ACCOUNT", /related[\s-]?account/i],

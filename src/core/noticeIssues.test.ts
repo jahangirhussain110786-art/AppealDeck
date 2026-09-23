@@ -13,7 +13,7 @@ const TWO_ISSUE_NOTICE = [
 describe("detectIssues", () => {
   it("keeps every issue a notice raises, not only the one the case routes on", () => {
     const issues = detectIssues(TWO_ISSUE_NOTICE);
-    expect(issues.map((i) => i.kind)).toEqual(["INAUTHENTIC_DOCUMENTS", "LISTING"]);
+    expect(issues.map((i) => i.kind)).toEqual(["INAUTHENTIC", "LISTING"]);
   });
 
   it("agrees with the classifier about which issue comes first", () => {
@@ -59,7 +59,7 @@ describe("detectIssues", () => {
         "Your documentation could not be verified.",
       ].join("\n"),
     );
-    expect(issues.filter((i) => i.kind === "INAUTHENTIC_DOCUMENTS")).toHaveLength(1);
+    expect(issues.filter((i) => i.kind === "INAUTHENTIC")).toHaveLength(1);
   });
 
   it("says nothing about an empty notice", () => {
@@ -84,7 +84,7 @@ describe("detectIssues", () => {
         "Your account also has repeated policy violations that remain unresolved.",
       ].join("\n"),
     );
-    expect(issues.map((i) => i.kind)).toEqual(["INAUTHENTIC_DOCUMENTS", "POLICY"]);
+    expect(issues.map((i) => i.kind)).toEqual(["INAUTHENTIC", "POLICY"]);
   });
 
   it("keeps two different issues named in one sentence", () => {
