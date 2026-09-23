@@ -412,6 +412,51 @@ export class Vault {
     return this.add(input);
   }
 
+  /**
+   * Takes a record decrypted out of another vault and stores it here under this vault's own key,
+   * keeping its identity — id, name, type, case, evidence kind, tags and dates.
+   *
+   * Added 23 Sep 2026 for the guest-to-account merge. Two vaults never share a key, so a record
+   * cannot be copied as ciphertext; it has to be re-encrypted. `add` would do that but mints a new
+   * id, and a case file points at its documents by id — from every requirement and every recorded
+   * submission — so a fresh id would leave each of those references dangling. Keeping the id makes
+   * them valid by construction, with nothing to remap and nothing to miss.
+   *
+   * The hash is recomputed from the bytes rather than trusted from the source, so a requirement's
+   * `contentHash` matching afterwards is a real check that the file came across unchanged.
+   *
+   * Idempotent: the same record adopted twice is written twice under the same id, so a merge that
+   * is interrupted and retried cannot duplicate anything.
+   */
+  async adoptRecord(source: VaultRecordInput, bytes: Uint8Array): Promise<VaultRecordInput> {
+    const dek = this.requireDek();
+    if (bytes.byteLength > MAX_RECORD_BYTES) {
+      throw new VaultCryptoError(
+        "INVALID_INPUT",
+        `Record exceeds max size of ${MAX_RECORD_BYTES} bytes`,
+      );
+    }
+    const envelope = await Dexie.waitFor(encryptBytes(this.provider, dek, bytes));
+    const hash = await Dexie.waitFor(sha256Base64(this.provider, bytes));
+    const record: VaultRecordInput = {
+      ...source,
+      ciphertext: envelope,
+      plaintextHash: `${PLAINTEXT_HASH_VERSION}.${hash}`,
+      sizeBytes: bytes.byteLength,
+      schemaVersion: VAULT_ENVELOPE_VERSION,
+    };
+    await this.db.records.put(record);
+    return record;
+  }
+
+  /** Removes this vault's database from the browser entirely, not just its contents. */
+  async destroy(): Promise<void> {
+    this.dek = null;
+    this.deviceKey = null;
+    this.db.close();
+    await this.db.delete();
+  }
+
   async get(id: string): Promise<{ record: VaultRecordInput; bytes: Uint8Array }> {
     const dek = this.requireDek();
     const record = await this.db.records.get(id);

@@ -101,9 +101,34 @@ export class ScopedBrowserVault extends Vault {
     });
     await this.merging;
   }
+  /**
+   * Moves a guest case into the signed-in account — the case, its log, **and its documents**.
+   *
+   * Corrected 23 Sep 2026. This copied the case file and the case log and stopped, so every
+   * document a seller attached before signing in stayed in the guest database. `forgetGuestVault()`
+   * then threw away the only secret able to decrypt it, without deleting the database: the files
+   * were unrecoverable and still sitting in the browser. The requirements came across intact, so
+   * the case went on naming each file by id, filename and hash — an attachment that could not be
+   * opened, checked or downloaded. AM-21 asks for sign-in at the first document step, so this was
+   * the designed path rather than an edge case; only returning sellers hit it, because a first
+   * sign-in goes through `copyIntoEmpty`, which copies everything.
+   *
+   * Order matters, and each step is there for a reason:
+   *
+   * 1. **Decrypt before the write transaction.** An IndexedDB transaction commits itself as soon as
+   *    it has nothing pending on its own database, so awaiting reads from a *different* database
+   *    inside it would end it early. Everything is read out first; the account's transaction only
+   *    writes.
+   * 2. **Case, log and documents in one transaction.** Either all of it lands or none of it does,
+   *    so a failure can never leave a case pointing at files that were not copied.
+   * 3. **Verify, then delete.** Each copied document is read back and its hash compared before the
+   *    guest database is removed. Until that passes, the guest data and its secret are left exactly
+   *    where they were, and the merge is retried on the next unlock.
+   */
   private async mergeGuestDraft() {
     const source = new Vault(globalThis.crypto, new VaultDB(this.pendingGuest!));
     await source.open();
+    let verified = false;
     try {
       if (!(await source.isInitialized())) {
         this.pendingGuest = undefined;
@@ -114,6 +139,14 @@ export class ScopedBrowserVault extends Vault {
       else await source.unlock(this.pendingGuestSecret ?? guestSecret());
       const file = await loadCaseFile(source);
       const log = await loadCaseLog(source);
+
+      const documents: Array<Awaited<ReturnType<Vault["get"]>>> = [];
+      if (file) {
+        for (const item of await source.list({ caseId: file.id })) {
+          if (item.kind === "document") documents.push(await source.get(item.id));
+        }
+      }
+
       if (file) {
         await this.atomic(async () => {
           const existing = await listCases(this);
@@ -121,12 +154,27 @@ export class ScopedBrowserVault extends Vault {
             await saveCaseFile(this, file);
             if (log) await saveCaseLog(this, log);
           } else await setActiveCaseId(this, file.id);
+          // Adopted whether or not the case was already here: a merge interrupted after an older
+          // version of this code copied the case would otherwise never bring its documents across.
+          for (const { record, bytes } of documents) await this.adoptRecord(record, bytes);
         });
       }
+
+      for (const { record } of documents) {
+        const copied = await this.get(record.id);
+        if (copied.record.plaintextHash !== record.plaintextHash) {
+          throw new Error(
+            `A document did not copy intact (${record.name}). Your guest copy has been kept.`,
+          );
+        }
+      }
+      verified = true;
       this.pendingGuest = undefined;
       forgetGuestVault();
     } finally {
-      await source.close();
+      // Only a verified merge removes the guest database; anything else leaves it for a retry.
+      if (verified) await source.destroy();
+      else await source.close();
     }
   }
   override open(): Promise<void> {
