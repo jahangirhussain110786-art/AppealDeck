@@ -390,4 +390,43 @@ tsc 0 · lint 0 · lint:copy PASS · lint:sources PASS · lint:reachability PASS
 **765/765 in 73 files** (18 new, arithmetic exact) · build clean · Playwright `CI=1 --retries=0`
 **76 passed · 0 failed · 3 skipped**.
 
-**Wave 1 now has one item left: A-13**, plus B-22 and B-13.
+---
+
+## 12. Wave 1 closed — A-13, B-22, B-13
+
+**B-22.** `/support` names the operator, gives an address, states **two business days**, and says
+what support *cannot* do: it cannot log in to Amazon, cannot say whether an appeal will be accepted,
+cannot verify a document, and cannot extend an Amazon deadline — so a seller must not wait on a
+reply here while theirs runs out. Those limits are the page, not a disclaimer bolted to it. The
+footer's "Support" link, which pointed at the privacy policy's contact anchor, now points at it.
+**Two founder items in `docs/DEPLOYMENT.md` §6a:** create the `support@appealdeck.com` mailbox, and
+change the window if two business days is not what can actually be held to — a stated window you
+miss is worse than a longer one you keep.
+
+**B-13.** Nightly encrypted dump of the rows only the server holds. It **refuses an empty dump** and
+**proves the file decrypts** before uploading, because a backup nobody has opened is not a backup,
+and it **fails loudly when the secrets are absent** rather than reporting success while writing
+nothing — that quiet success is the defect this repo has hit several times. Flags verified against
+the installed Supabase CLI. **A GitHub Action cannot be executed from here**, so the first real run
+is a founder step, written into §6a.
+
+**A-13, and it earned its keep immediately.** The gate now ignores dev-gallery references, checks
+`src/core` and `src/lib` for importers, and **does not count a mention inside a comment**. Running it
+found two more orphans:
+
+- **`EvidenceSlotPanel`** — its only live mention was another file's comment explaining why it had
+  been superseded, and it was the sole place the EF-4 letters ever rendered. Deleted. **It is also
+  the closest thing in the repo to B-05's union of the matrix with the notice's own list, so whoever
+  builds B-05 should read it first: `git show 8b0e4b3:src/components/EvidenceSlotPanel.tsx`.**
+- **`SignOutButton`** — orphaned when sign-out moved into the profile menu. Deleted.
+
+Four components stay gallery-only and now need a written reason to do so (`Stepper`, two
+illustrations, `kbd`, `separator`), the same pattern the Paddle webhook already used.
+
+### Gates
+
+tsc 0 · lint 0 · lint:copy PASS · lint:sources PASS · lint:reachability PASS · format 0 · vitest
+**765/765 in 73 files** · build clean, `/support` static · Playwright `CI=1 --retries=0` **78 passed
+· 0 failed · 3 skipped**.
+
+**Wave 1 is closed. Wave 2 remains: B-03 done; B-02, B-05 (+A-05's deeper half), B-01, B-06.**
