@@ -7,6 +7,7 @@ const copy: AnnotationCopy = {
   legacyWindow: "Confirm this window is still current.",
   ambiguousWindow: "Check your Account Health dashboard.",
   statedWindow: "Use the window written on this notice.",
+  statedDeadline: "This is the last day the notice gives.",
   clearStructure: "Structure your draft around these headings.",
 };
 
@@ -48,6 +49,17 @@ describe("buildNoticeAnnotations", () => {
       tag: "clear",
       matchedText: expect.stringMatching(/90\s*days/i),
     });
+  });
+
+  it("points at a last day the notice states, ahead of any window reading", () => {
+    const raw =
+      "Your appeal window shown in your account may vary. Submit your appeal by 1 October 2026.";
+    const annotations = buildNoticeAnnotations(raw, "POLICY", copy);
+    const stated = annotations.find((a) => a.id === "stated-deadline");
+    expect(stated).toMatchObject({ tag: "clear", matchedText: "1 October 2026" });
+    expect(raw.slice(stated!.start, stated!.end)).toBe("1 October 2026");
+    // The notice names its last day, so "doesn't state a fixed window" would be untrue.
+    expect(annotations.some((a) => a.id === "ambiguous-window")).toBe(false);
   });
 
   it("flags a clear document-response structure when the notice names root cause", () => {

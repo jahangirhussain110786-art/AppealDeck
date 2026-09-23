@@ -1,6 +1,7 @@
 import type { ViolationKind } from "./index";
 import { DOCUMENT_FABRICATION } from "./violationKinds";
-import { receiptDateOf } from "./noticeDate";
+import { receiptDateOf, statedDeadlineOf } from "./noticeDate";
+import type { StatedDeadline } from "./noticeDate";
 
 export interface ParsedNotice {
   raw: string;
@@ -17,6 +18,11 @@ export interface ParsedNotice {
    * then counted "from the day you received this notice" rather than from a date we made up.
    */
   receivedOn: string | null;
+  /**
+   * The last day to respond, when the notice gives it as a date ("appeal by 1 October 2026") —
+   * see `statedDeadlineOf`. Preferred over `statedWindowDays`, because it needs no start date.
+   */
+  statedDeadline: StatedDeadline | null;
 }
 
 /**
@@ -97,7 +103,10 @@ export function parseNotice(raw: string): ParsedNotice {
   const mentionsFunds = /disbursement|funds? (?:is|are|under) (?:on hold|under review)/i.test(raw);
   const mentionsFundsAppeal = /funds? appeal|disbursement-appeals/i.test(raw);
   const mentionsSellerChallenge = /seller challenge|account health assurance/i.test(raw);
-  const windowAmbiguous = statedWindowDays === null;
+  const receivedOn = receiptDateOf(raw);
+  const statedDeadline = statedDeadlineOf(raw, receivedOn);
+  // A notice that names its last day has a fixed window even when it states no length.
+  const windowAmbiguous = statedWindowDays === null && statedDeadline === null;
   return {
     raw,
     kindHints,
@@ -107,6 +116,7 @@ export function parseNotice(raw: string): ParsedNotice {
     mentionsFundsAppeal,
     mentionsSellerChallenge,
     windowAmbiguous,
-    receivedOn: receiptDateOf(raw),
+    receivedOn,
+    statedDeadline,
   };
 }

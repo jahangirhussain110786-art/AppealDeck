@@ -37,6 +37,7 @@ import {
   isSeverityGated,
   computeDeadlines,
   serializeDeadlines,
+  formatDay,
   parseNotice,
   kindForConfirmedNotice,
   extractEntities,
@@ -1760,12 +1761,18 @@ function WorkspaceInner({
                           .map((d) =>
                             d.isIndefinite
                               ? `${d.label} — no countdown to track`
-                              : d.dueAt
-                                ? `${d.label}: ${formatDate(d.dueAt)}`
-                                : d.startsOnReceipt
-                                  ? // Amazon gave the length; the notice did not carry its date.
-                                    `${d.label}, from the day you received this notice`
-                                  : `${d.label} · confirm the date in Account Health`,
+                              : d.dueOn
+                                ? // The day as the notice gives it; a stated date is already in
+                                  // its own label ("Appeal by 1 Oct 2026").
+                                  d.startsOn
+                                  ? `${d.label}, closes ${formatDay(d.dueOn)}`
+                                  : d.label
+                                : d.dueAt
+                                  ? `${d.label}: ${formatDate(d.dueAt)}`
+                                  : d.startsOnReceipt
+                                    ? // Amazon gave the length; the notice did not carry its date.
+                                      `${d.label}, from the day you received this notice`
+                                    : `${d.label} · confirm the date in Account Health`,
                           )
                           .join(" · ")
                       : "No confirmed deadline recorded. Check your current notice."}

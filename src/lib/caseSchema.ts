@@ -106,6 +106,12 @@ export const CaseDataSchema = z.object({
           .regex(/^\d{4}-\d{2}-\d{2}$/)
           .optional(),
         startsOnReceipt: z.boolean().optional(),
+        // Stripped here, a date the notice itself gave would be indistinguishable from one counted
+        // from a click, and `repairStoredDeadlines` would rightly discard it.
+        dueOn: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
       }),
     )
     .max(20)

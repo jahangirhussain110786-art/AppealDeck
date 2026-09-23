@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { receiptDateOf, formatDay } from "./noticeDate";
+import { receiptDateOf, statedDeadlineOf, formatDay } from "./noticeDate";
 
 /**
  * The receipt date is only ever read from the notice itself, and only when the notice states it
@@ -57,6 +57,91 @@ describe("receiptDateOf", () => {
     expect(
       receiptDateOf("Your account has been deactivated. You may appeal within 30 days."),
     ).toBeNull();
+  });
+});
+
+/**
+ * A last day the notice names as a date. The positives are the phrasings Amazon and email clients
+ * actually produce; the negatives are the dates a notice is full of that are not the seller's
+ * deadline. Every refusal falls back to the counted window, or to "confirm it in Account Health" —
+ * never to a date that might be the wrong one.
+ */
+describe("statedDeadlineOf", () => {
+  const day = (raw: string, sentOn: string | null = null) =>
+    statedDeadlineOf(raw, sentOn)?.day ?? null;
+
+  it.each([
+    ["by, day-month-year", "Please submit your appeal by 1 October 2026."],
+    ["no later than, month-day-year", "Submit a Plan of Action no later than October 1, 2026."],
+    ["on or before, with a weekday", "You must respond on or before Thursday, October 1, 2026."],
+    [
+      "an abbreviation with a full stop",
+      "To reactivate, submit an appeal by Oct. 1, 2026 11:59 PM PDT.",
+    ],
+    [
+      "an ordinal",
+      "If you do not appeal by the 1st of October 2026, your account stays deactivated.",
+    ],
+    ["an ISO date", "Reply before 2026-10-01 with the requested documents."],
+    ["the action after the date", "You have until 1 Oct 2026 to submit an appeal."],
+    ["an appeal deadline label", "Appeal deadline: October 1, 2026"],
+    [
+      "a clause between action and date",
+      "Please submit your appeal, including invoices, by 1 October 2026.",
+    ],
+  ])("reads %s", (_, raw) => {
+    expect(day(raw)).toBe("2026-10-01");
+  });
+
+  it("points at the date exactly as written, for the decoder to highlight", () => {
+    const raw = "Please submit your appeal by 1 October 2026.";
+    const found = statedDeadlineOf(raw, null)!;
+    expect(raw.slice(found.start, found.end)).toBe("1 October 2026");
+  });
+
+  it.each([
+    ["Amazon's own timetable", "We will review your appeal by 5 October 2026."],
+    ["money held", "If you do not appeal, funds will be held until 1 December 2026."],
+    ["a condition on a record", "Submit invoices dated before 1 March 2026 for the listed ASINs."],
+    ["the seller's history", "Your previous appeal was reviewed before 1 September 2026."],
+    ["a date with no responding in the sentence", "The listing was removed by 3 September 2026."],
+    ["an all-numeric date", "Please submit your appeal by 01/10/2026."],
+  ])("refuses %s", (_, raw) => {
+    expect(day(raw)).toBeNull();
+  });
+
+  it("refuses two different last days rather than choosing one", () => {
+    expect(
+      day("Submit your appeal by 1 October 2026. Reply no later than 5 October 2026."),
+    ).toBeNull();
+  });
+
+  it("accepts the same last day stated twice", () => {
+    expect(day("Submit your appeal by 1 October 2026. Appeal deadline: October 1, 2026")).toBe(
+      "2026-10-01",
+    );
+  });
+
+  it("places a date written without a year against the notice's own date", () => {
+    expect(day("Submit your appeal by October 1.", "2026-09-03")).toBe("2026-10-01");
+    // Across the new year: a notice sent in December naming "January 5" means next January.
+    expect(day("Submit your appeal by January 5.", "2026-12-20")).toBe("2027-01-05");
+  });
+
+  it("gives a yearless date no year when the notice carries no date of its own", () => {
+    expect(day("Submit your appeal by October 1.")).toBeNull();
+  });
+
+  it("refuses a last day that falls before the notice was sent", () => {
+    expect(day("Submit your appeal by 1 August 2026.", "2026-09-03")).toBeNull();
+  });
+
+  it("refuses an impossible day rather than rolling it into the next month", () => {
+    expect(day("Submit your appeal by 31 February 2027.")).toBeNull();
+  });
+
+  it("finds nothing in a notice that gives only a length", () => {
+    expect(day("You may appeal within 30 days.")).toBeNull();
   });
 });
 

@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { CalendarClock, CircleAlert, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { formatDate, formatRelativeDays } from "@/lib/format";
+import { daysUntilDay, formatDate, formatRelativeDays, formatRelativeToDay } from "@/lib/format";
+import { formatDay } from "@/core/noticeDate";
 import type { Deadline } from "@/core";
 
 type Tone = "neutral" | "warn" | "destructive" | "info";
@@ -21,12 +22,18 @@ function toDate(d: Date | string | null): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function toneFor(dueAt: Date | null, now: Date, kind: Deadline["kind"]): Tone {
+/** Days left: on the calendar when the notice gave the day, otherwise from the stored instant. */
+function daysLeft(deadline: DeadlineLike, dueAt: Date | null, now: Date): number | null {
+  if (deadline.dueOn) return daysUntilDay(deadline.dueOn, now);
+  if (!dueAt) return null;
+  return Math.round((dueAt.getTime() - now.getTime()) / 86_400_000);
+}
+
+function toneFor(days: number | null, kind: Deadline["kind"]): Tone {
   if (kind === "funds_review" || kind === "indefinite_hold") return "info";
   if (kind === "funds_appeal_eligible") return "info";
   if (kind === "seller_challenge") return "info";
-  if (!dueAt) return "neutral";
-  const days = Math.round((dueAt.getTime() - now.getTime()) / 86_400_000);
+  if (days === null) return "neutral";
   if (days < 0) return "destructive";
   if (days <= 3) return "warn";
   return "neutral";
@@ -61,7 +68,7 @@ const toneIconColor: Record<Tone, string> = {
 
 function DeadlineChipContent({ deadline, now }: { deadline: DeadlineLike; now: Date }) {
   const dueAt = toDate(deadline.dueAt);
-  const tone = toneFor(dueAt, now, deadline.kind);
+  const tone = toneFor(daysLeft(deadline, dueAt, now), deadline.kind);
   const Icon = toneIcon[tone];
   return (
     <div
@@ -81,6 +88,12 @@ function DeadlineChipContent({ deadline, now }: { deadline: DeadlineLike; now: D
         */}
         {deadline.startsOnReceipt && !dueAt ? (
           <span className="text-muted-foreground">From the day you received this notice</span>
+        ) : deadline.dueOn ? (
+          // The day as the notice gives it. Formatting `dueAt` instead would show the day before
+          // to anyone west of Greenwich, since it is midnight UTC on this day.
+          <span className="tabular-nums text-muted-foreground">
+            {formatDay(deadline.dueOn)} · {formatRelativeToDay(deadline.dueOn, now)}
+          </span>
         ) : (
           <span className="tabular-nums text-muted-foreground">
             {formatDate(dueAt) || "Date not stated"} · {formatRelativeDays(dueAt, now)}
@@ -100,6 +113,9 @@ function caveatFor(deadline: DeadlineLike): string | null {
   }
   if (kind === "appeal_window" && deadline.startsOn) {
     return "Counted from the date shown on your notice.";
+  }
+  if (kind === "appeal_window" && deadline.dueOn) {
+    return "The date your notice gives. If Account Health shows a different one, go by Account Health.";
   }
   if (kind === "funds_review") {
     return "Typical, not automatic. The 90-day checkpoint is a review, not an automatic release.";

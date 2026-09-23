@@ -27,6 +27,16 @@ export interface Deadline {
    * the seller received the notice, and we say exactly that instead of inventing a date.
    */
   startsOnReceipt?: boolean;
+  /**
+   * The calendar day the window closes (YYYY-MM-DD), set only when that day comes from the notice
+   * itself: a date it states outright, or a stated length counted from its own header date. Absent
+   * means `dueAt` is not grounded in the notice.
+   *
+   * Displayed in place of `dueAt`, which is midnight UTC on this day: formatted in the seller's own
+   * time zone that instant is the day before anywhere west of Greenwich, so a notice saying "by
+   * 1 October 2026" would have been shown to a US seller as 30 September.
+   */
+  dueOn?: string;
 }
 
 export interface DeadlineInput {
@@ -111,18 +121,33 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
   const start = windowStart(input);
   const days = input.parsed.statedWindowDays;
   const legacy = input.parsed.legacySeventeenDay && days === 17;
+  const stated = input.parsed.statedDeadline;
 
-  if (days !== null) {
+  /*
+    A notice that names its last day outright ("submit your appeal by 1 October 2026") is taken at
+    its word, ahead of any counted window: it needs no start date and no arithmetic, so it is the
+    most reliable deadline a notice can carry. Added 23 Sep 2026 — before this, such a notice was
+    shown as having no fixed window at all.
+  */
+  if (stated) {
+    out.push({
+      kind: "appeal_window",
+      dueAt: dayStart(stated.day),
+      label: `Appeal by ${formatDay(stated.day)}`,
+      dueOn: stated.day,
+    });
+  } else if (days !== null) {
     const label = legacy
       ? "Stated 17-day window (LEGACY parse pattern — verify, never presented as current policy)"
       : start
         ? `Appeal window: ${days} days from ${formatDay(start)}`
         : `Appeal window: ${days} days`;
-    out.push(
-      start
-        ? { kind: "appeal_window", dueAt: addDays(dayStart(start), days), label, startsOn: start }
-        : { kind: "appeal_window", dueAt: null, label, startsOnReceipt: true },
-    );
+    if (start) {
+      const dueAt = addDays(dayStart(start), days);
+      out.push({ kind: "appeal_window", dueAt, label, startsOn: start, dueOn: isoDayOf(dueAt) });
+    } else {
+      out.push({ kind: "appeal_window", dueAt: null, label, startsOnReceipt: true });
+    }
   } else {
     out.push({
       kind: "appeal_window",
@@ -188,8 +213,43 @@ export interface SerializedDeadline {
   isIndefinite?: boolean;
   startsOn?: string;
   startsOnReceipt?: boolean;
+  dueOn?: string;
 }
 
 export function serializeDeadlines(deadlines: readonly Deadline[]): SerializedDeadline[] {
   return deadlines.map((d) => ({ ...d, dueAt: d.dueAt ? d.dueAt.toISOString() : null }));
+}
+
+/**
+ * Corrects appeal-window dates a case saved before 23 Sep 2026 may still hold. Run on every case
+ * file as it is read, so no screen and no reminder sees the old value.
+ *
+ * Until `c9bb022` every production caller passed `new Date()` as the day a notice arrived, so a
+ * stored window was counted from the moment of a click — for a notice received twenty days
+ * earlier, twenty days late. `/api/decode` discarded those dates before they reached anyone;
+ * applying an Amazon reply did not, and saved one that the workspace showed as the seller's real
+ * deadline. The history of every caller was checked: none ever passed a date the seller gave.
+ *
+ * They are recognisable without guessing. Since that commit an appeal-window date is only ever
+ * stored with the day it was counted from (`startsOn`) or the day the notice names (`dueOn`); a
+ * date with neither was counted from a click. The true start cannot be recovered, so the date is
+ * dropped and the window described the way an undated notice's is — its length, running from the
+ * day the seller received the notice. The next confirmation of the case recomputes it from the
+ * notice text, header date and all.
+ *
+ * Windows saved between `c9bb022` and the day `dueOn` was added carry `startsOn`, and are genuine;
+ * they get the `dueOn` their `dueAt` already encodes, so they display on the right calendar day.
+ */
+export function repairStoredDeadlines(
+  deadlines: readonly SerializedDeadline[] | undefined,
+): SerializedDeadline[] | undefined {
+  if (!deadlines) return deadlines;
+  return deadlines.map((d) => {
+    if (d.kind !== "appeal_window" || !d.dueAt || d.dueOn) return d;
+    if (d.startsOn) return { ...d, dueOn: d.dueAt.slice(0, 10) };
+    // "Appeal window: 30 days from notice" — the old label, written when the start was assumed.
+    const label = d.label.replace(/ from notice$/, "");
+    const statesLength = /\b\d{1,3}[\s-]days?\b/i.test(label);
+    return { ...d, dueAt: null, label, ...(statesLength ? { startsOnReceipt: true } : {}) };
+  });
 }

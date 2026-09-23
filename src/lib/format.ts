@@ -25,7 +25,26 @@ export function formatRelativeDays(target: Date | string | null, now: Date): str
   if (!target) return "verify in your Account Health dashboard";
   const t = typeof target === "string" ? new Date(target) : target;
   const ms = t.getTime() - now.getTime();
-  const days = Math.round(ms / 86_400_000);
+  return describeDayCount(Math.round(ms / 86_400_000));
+}
+
+/**
+ * Whole calendar days from the seller's own today to a YYYY-MM-DD day. Counted on the calendar,
+ * not in hours: a deadline of "1 October" is "tomorrow" all through 30 September, wherever the
+ * seller is, rather than flipping part-way through the day.
+ */
+export function daysUntilDay(isoDay: string, now: Date): number {
+  const [y, m, d] = isoDay.split("-").map(Number);
+  const target = Date.UTC(y!, m! - 1, d!);
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((target - today) / 86_400_000);
+}
+
+export function formatRelativeToDay(isoDay: string, now: Date): string {
+  return describeDayCount(daysUntilDay(isoDay, now));
+}
+
+function describeDayCount(days: number): string {
   if (days > 1) return `in ${days} days`;
   if (days === 1) return "tomorrow";
   if (days === 0) return "today";

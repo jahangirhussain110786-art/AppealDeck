@@ -71,13 +71,14 @@ export async function POST(req: NextRequest) {
       was right, but blunt: it also threw away a real date the notice stated in its own header, and
       the chip then said "Date not stated" beside a notice that plainly gives ninety days.
 
-      Kept as a guard rather than dropped, now precise instead of blanket. `startsOn` is set only when
-      the start came from the notice, so a regression that reintroduced a made-up start date would
-      still never reach the seller as a countdown.
+      Kept as a guard rather than dropped, now precise instead of blanket. `dueOn` is set only when
+      the day comes from the notice — a date it states, or a length counted from its own header
+      date — so a regression that reintroduced a made-up start date would still never reach the
+      seller as a countdown.
     */
     deadlines: result.deadlines.map((deadline) => ({
       ...deadline,
-      dueAt: deadline.startsOn ? deadline.dueAt : null,
+      dueAt: deadline.dueOn ? deadline.dueAt : null,
     })),
     severityGated: isSeverityGated(result.classification.kind),
     // AA-39: the decision itself. Without this the free decoder can still only describe a notice,

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { afterAll, beforeAll, describe, it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { DeadlineChip, DeadlineChipList } from "@/components/DeadlineChip";
 
@@ -95,6 +95,7 @@ describe("a window whose start date is not in the notice", () => {
   });
 
   it("still shows the date and countdown when the notice did carry its date", () => {
+    // `dueOn` is what the model writes alongside a grounded date since 23 Sep 2026.
     const html = renderToStaticMarkup(
       <DeadlineChip
         now={NOW}
@@ -108,5 +109,50 @@ describe("a window whose start date is not in the notice", () => {
     );
     expect(html).toContain("3 Sep 2026");
     expect(html).not.toContain("From the day you received this notice");
+  });
+});
+
+/**
+ * 23 Sep 2026. A grounded deadline is stored as midnight UTC on its day. Formatted in the seller's
+ * own time zone, that instant is the previous evening anywhere west of Greenwich — so "by 1 October
+ * 2026" was shown to a US seller as 30 September. Run in Los Angeles to prove the chip shows the
+ * day the notice gives.
+ */
+describe("a deadline on a calendar day, seen from west of Greenwich", () => {
+  const originalTz = process.env.TZ;
+  beforeAll(() => {
+    process.env.TZ = "America/Los_Angeles";
+  });
+  afterAll(() => {
+    process.env.TZ = originalTz;
+  });
+
+  const stated = {
+    kind: "appeal_window" as const,
+    dueAt: "2026-10-01T00:00:00.000Z",
+    label: "Appeal by 1 Oct 2026",
+    dueOn: "2026-10-01",
+  };
+
+  it("really is the previous day in this zone, which is the hazard", () => {
+    expect(new Date(stated.dueAt).getDate()).toBe(30);
+  });
+
+  it("shows the day the notice gives, not the day before", () => {
+    const html = renderToStaticMarkup(
+      <DeadlineChip now={new Date("2026-09-23T15:00:00-07:00")} deadline={stated} />,
+    );
+    expect(html).toContain("1 Oct 2026");
+    expect(html).not.toContain("30 Sep 2026");
+    expect(html).toContain("in 8 days");
+  });
+
+  it("calls it tomorrow for the whole of the day before", () => {
+    for (const time of ["00:05", "12:00", "23:55"]) {
+      const html = renderToStaticMarkup(
+        <DeadlineChip now={new Date(`2026-09-30T${time}:00-07:00`)} deadline={stated} />,
+      );
+      expect(html, time).toContain("tomorrow");
+    }
   });
 });

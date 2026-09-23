@@ -18,6 +18,7 @@ export interface AnnotationCopy {
   legacyWindow: string;
   ambiguousWindow: string;
   statedWindow: string;
+  statedDeadline: string;
   clearStructure: string;
 }
 
@@ -68,7 +69,21 @@ export function buildNoticeAnnotations(
     }
   }
 
-  if (parsed.legacySeventeenDay) {
+  // A date the notice names as its last day outranks every window reading below, exactly as it does
+  // in `computeDeadlines` — the span is the parser's own, so the card points at the date it used.
+  const stated = parsed.statedDeadline;
+  if (stated) {
+    const text = raw.slice(stated.start, stated.end);
+    out.push({
+      id: "stated-deadline",
+      tag: "clear",
+      start: stated.start,
+      end: stated.end,
+      matchedText: text,
+      heading: `"${text}" — the last day this notice gives`,
+      body: copy.statedDeadline,
+    });
+  } else if (parsed.legacySeventeenDay) {
     const m = findFirst(/17\s*days?/i, raw);
     if (m) {
       out.push({

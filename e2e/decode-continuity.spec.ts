@@ -214,3 +214,37 @@ test("a window is dated from the notice's own header, and described plainly when
   await expect(page.getByText("From the day you received this notice")).toBeVisible();
   await expect(page.getByText("Date not stated")).toHaveCount(0);
 });
+
+/**
+ * 23 Sep 2026. A notice that names its last day was shown as having no fixed window, because only
+ * "within N days" was read. Run from Los Angeles because the date is stored as midnight UTC on its
+ * day, and the chip used to format that instant in the seller's own zone — the day before, anywhere
+ * west of Greenwich.
+ */
+test.describe("a last day the notice states as a date", () => {
+  test.use({ timezoneId: "America/Los_Angeles" });
+
+  test("is shown as the notice gives it, on the right day", async ({ page }) => {
+    await page.goto("/decode");
+    await page
+      .locator("#notice")
+      .fill(
+        [
+          "Your Amazon seller account has been deactivated for repeated policy violations.",
+          "Please submit your Plan of Action through Account Health in Seller Central by 1 October 2026.",
+        ].join("\n"),
+      );
+    const decoded = page.waitForResponse(
+      (r) => r.url().endsWith("/api/decode") && r.request().method() === "POST",
+    );
+    await page.getByRole("button", { name: "Decode", exact: true }).click();
+    const body = await (await decoded).json();
+
+    expect(body.deadlines).toContainEqual(
+      expect.objectContaining({ label: "Appeal by 1 Oct 2026", dueOn: "2026-10-01" }),
+    );
+    await expect(page.getByText("Appeal by 1 Oct 2026")).toBeVisible();
+    await expect(page.getByText(/^1 Oct 2026 ·/)).toBeVisible();
+    await expect(page.getByText(/30 Sep 2026/)).toHaveCount(0);
+  });
+});

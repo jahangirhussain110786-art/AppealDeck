@@ -5,6 +5,7 @@ import type { CaseFile } from "@/core/caseFile";
 import type { CaseState, ReplyCategory } from "@/core/caseState";
 import type { EvidenceKind } from "@/core/evidenceModel";
 import type { ViolationKind } from "@/core";
+import { repairStoredDeadlines } from "@/core/deadlinesModel";
 
 export const CASE_FILE_NAME = "case_file";
 export const CASE_LOG_NAME = "case_log";
@@ -369,10 +370,15 @@ export async function loadCaseFile(
   const parsed = JSON.parse(text) as CaseFile;
   // Pre-migration case files were written with no `id`/`createdAt` field at all — backfill both
   // rather than hand every caller an object that doesn't match the `CaseFile` type it's typed as.
+  // Deadlines saved before 23 Sep 2026 may carry a window counted from a click rather than from
+  // the notice. Corrected here, on the one read path, so no screen or reminder ever sees one — see
+  // `repairStoredDeadlines`. The corrected shape is written back by the next save.
+  const deadlines = repairStoredDeadlines(parsed.deadlines);
   return {
     ...parsed,
     id: parsed.id ?? caseId,
     createdAt: parsed.createdAt ?? new Date(0).toISOString(),
+    ...(deadlines ? { deadlines } : {}),
   };
 }
 

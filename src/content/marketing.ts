@@ -121,6 +121,8 @@ export const DECODE = {
       "Amazon doesn't say which claims. Name every specific product-condition claim on the flagged listings in your response, not a general statement.",
     statedWindow:
       "This notice states its own appeal window plainly. Other notices state different windows — always use the one written on the notice in front of you, and confirm it in your Account Health dashboard.",
+    statedDeadline:
+      "This notice names the last day to respond, so no counting is needed. Plan to submit well before it, and if Account Health shows a different date, go by Account Health.",
     legacyWindow:
       "Appeal windows have changed over time. Confirm the window shown in your Account Health dashboard before relying on the number in this notice.",
     ambiguousWindow:

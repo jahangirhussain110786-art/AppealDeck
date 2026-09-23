@@ -66,6 +66,40 @@ describe("caseStore", () => {
       expect(await loadCaseFile(v)).toBeNull();
     });
 
+    /*
+      A case saved before 23 Sep 2026 by applying an Amazon reply holds a window counted from the
+      click. This is the one read path, so the repair is proven here rather than only in the model:
+      a screen that loads the case must never receive the invented date.
+    */
+    it("drops an appeal-window date a case saved before 23 Sep 2026 counted from a click", async () => {
+      const file: CaseFile = {
+        ...createCaseFile("POLICY"),
+        deadlines: [
+          {
+            kind: "appeal_window",
+            dueAt: "2026-10-23T09:14:02.511Z",
+            label: "Appeal window: 30 days from notice",
+          },
+        ],
+      };
+      await saveCaseFile(v, file);
+      const loaded = await loadCaseFile(v);
+      expect(loaded?.deadlines).toEqual([
+        {
+          kind: "appeal_window",
+          dueAt: null,
+          label: "Appeal window: 30 days",
+          startsOnReceipt: true,
+        },
+      ]);
+    });
+
+    it("leaves a case with no deadlines without a deadlines field", async () => {
+      const file = createCaseFile("POLICY");
+      await saveCaseFile(v, file);
+      expect(await loadCaseFile(v)).not.toHaveProperty("deadlines");
+    });
+
     it("upserts: second save of the same case replaces the first record", async () => {
       const file1 = createCaseFile("POLICY");
       file1.rootCause = "Original root cause";

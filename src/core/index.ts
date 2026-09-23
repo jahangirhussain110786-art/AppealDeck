@@ -26,8 +26,14 @@ import { determineResponseType, splitClauses, RESPONSE_TYPE_LABELS } from "./res
 import type { ResponseType, ResponseTypeResult, ResponseTypeMatch } from "./responseType";
 import { extractEntities, entitiesOfKind, ENTITY_LABELS } from "./entities";
 import type { EntityKind, ExtractedEntity } from "./entities";
-import { computeDeadlines, isIndefiniteHold, serializeDeadlines } from "./deadlinesModel";
+import {
+  computeDeadlines,
+  isIndefiniteHold,
+  serializeDeadlines,
+  repairStoredDeadlines,
+} from "./deadlinesModel";
 import type { Deadline } from "./deadlinesModel";
+import { formatDay } from "./noticeDate";
 import { FIXTURES, FIXTURE_KINDS } from "./fixtures";
 import {
   KIND_GUIDANCE,
@@ -127,7 +133,7 @@ export type {
   ClockCaseInput,
   ClockDeadline,
 } from "./clock";
-export { computeDeadlines, isIndefiniteHold, serializeDeadlines };
+export { computeDeadlines, isIndefiniteHold, serializeDeadlines, repairStoredDeadlines, formatDay };
 export type { Deadline, DeadlineKind, DeadlineInput, SerializedDeadline } from "./deadlinesModel";
 export { FIXTURES, FIXTURE_KINDS };
 export type { Fixture, FixtureExpected } from "./fixtures";
