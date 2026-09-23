@@ -34,6 +34,10 @@ const requirement = z.object({
       at: z.string().min(1).max(40),
     })
     .optional(),
+  // B-05: without this the validator strips `source`, every matrix-inferred requirement comes back
+  // looking like one Amazon named, and `workspaceGaps` then demands a quote from the notice that
+  // was never there. The seller would see "check the source of the request" for a record we raised.
+  source: z.enum(["notice", "matrix"]).optional(),
 });
 export const WorkspaceSchema = z
   .object({

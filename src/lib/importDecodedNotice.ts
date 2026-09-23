@@ -26,7 +26,9 @@ export async function importDecodedNotice(
     }
     const workspace = { ...newWorkspace(), notice: pending.text, decodedNoticeHash: hash };
     workspace.protocol = routeWorkspace(workspace).protocol;
-    workspace.requirements = proposedRequirements(workspace);
+    // B-05: the decode already classified this notice, so the matrix can be unioned in from the
+    // first moment the case exists rather than waiting for the seller to notice what is missing.
+    workspace.requirements = proposedRequirements(workspace, kind);
     WorkspaceSchema.parse(workspace);
     const file = { ...createCaseFile(kind), workspace, deadlines: pending.deadlines };
     await saveCaseFile(vault, file);

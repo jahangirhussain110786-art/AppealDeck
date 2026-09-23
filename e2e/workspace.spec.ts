@@ -471,3 +471,38 @@ test("a Plan of Action asks the seller to stand behind the work they describe", 
     page.getByLabel(/I confirm each corrective action described above/),
   ).not.toBeChecked();
 });
+
+/**
+ * B-05 and B-06 together, because they only matter together. B-05 raises the record Amazon did not
+ * spell out — which is the expertise being sold — and it derives that from the violation kind, so
+ * B-06's ability to correct the kind is what stops one wrong reading producing a wrong record list,
+ * wrong guidance and a wrong severity gate with no way back. K12 pre-agreed the override and no
+ * mechanism was ever built.
+ */
+test("a seller can correct the issue we read, and we raise the records that issue needs", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await configure(page);
+
+  // The notice names an invoice and nothing else, and an unclassified case infers nothing.
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
+  await expect(evidence.getByText("Sales or performance record", { exact: true })).toHaveCount(0);
+
+  await page.getByRole("tab", { name: "Overview", exact: true }).click();
+  await page.getByRole("button", { name: "Review the request" }).click();
+  await page.getByRole("button", { name: "Is this the right issue?" }).click();
+  await page.getByLabel("The issue on this notice").selectOption("POLICY");
+  await page.getByRole("button", { name: "Use this issue instead" }).click();
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+
+  // The record this issue needs, which the notice never mentions, is now on the list — and it is
+  // labelled as ours rather than dressed up as something Amazon said.
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await expect(evidence.getByText("Sales or performance record", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("We added this", { exact: true })).toBeVisible();
+  await expect(evidence.getByText(/Your notice does not name this record/)).toBeVisible();
+  // And the record the notice did name is still there, untouched.
+  await expect(evidence.getByText("Supplier invoice", { exact: true }).first()).toBeVisible();
+});

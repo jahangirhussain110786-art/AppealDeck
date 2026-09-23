@@ -46,6 +46,25 @@ export const WORKSPACE = {
   // A-05/A-06/A-02, wired 23 Sep 2026. All three existed in `src/core` and were reachable by no
   // seller. Each string below describes the record or the seller's own choice, and none of them
   // says anything about what Amazon will decide.
+  // B-06. A seller — and more to the point, an appeal writer — will sometimes disagree with what
+  // the decoder read, and a tool an expert cannot correct is a tool an expert cannot use. The copy
+  // says what changes, because the correction is not cosmetic: it moves the guidance, the records
+  // we raise, and whether the case is routed to professional help.
+  kindOverride: {
+    title: "Is this the right issue?",
+    help: "We read your notice as the issue below. If that is wrong, change it. Nothing you have already reviewed is removed.",
+    label: "The issue on this notice",
+    apply: "Use this issue instead",
+    applied: "Issue changed to {kind}. Records this issue usually needs have been added.",
+    effect:
+      "This changes what we explain about each record and which records we raise. It does not delete anything.",
+  },
+  // B-05. A record we raised must never look like one Amazon named. This label is the whole of
+  // that promise on screen, so it says who raised it and stops.
+  inferred: {
+    badge: "We added this",
+    help: "Your notice does not name this record. Cases like yours are usually refused without it. Remove it if it does not apply.",
+  },
   guidance: {
     why: "Why Amazon asks for this",
     fields: "What a record like this has to show",

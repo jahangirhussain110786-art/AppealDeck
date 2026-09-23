@@ -75,6 +75,22 @@ describe("decoded notice continuity", () => {
     const file = await importDecodedNotice(vault, pending, "POLICY");
     clearPendingNotice(pending);
     expect((await loadCaseFile(vault))?.workspace?.notice).toBe(text);
-    expect(file.workspace?.requirements).toHaveLength(1);
+    /*
+      B-05, 23 Sep 2026: this asserted a length of 1 and now asserts the union. The notice names an
+      invoice; the matrix says a POLICY case is usually refused without a metric export, and the
+      notice never mentions one. Raising the record Amazon did not spell out is the point of the
+      feature, and the two are distinguishable by `source` so the seller can always tell which of
+      them came from their own notice.
+    */
+    const requirements = file.workspace!.requirements;
+    expect(requirements.map((r) => r.label).sort()).toEqual([
+      "Sales or performance record",
+      "Supplier invoice",
+    ]);
+    expect(requirements.find((r) => r.label === "Supplier invoice")!.source).toBe("notice");
+    const inferred = requirements.find((r) => r.label === "Sales or performance record")!;
+    expect(inferred.source).toBe("matrix");
+    // Never a sentence attributed to Amazon for something Amazon did not say.
+    expect(text).not.toContain(inferred.sourceQuote);
   });
 });

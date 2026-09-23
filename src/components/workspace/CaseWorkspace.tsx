@@ -55,6 +55,7 @@ import {
   applyWorkspaceReply,
   newWorkspace,
   proposedRequirements,
+  requirementsAfterKindChange,
   PROTOCOL_LABELS,
   routeWorkspace,
   workspaceCanCompose,
@@ -85,6 +86,7 @@ import { importDecodedNotice } from "@/lib/importDecodedNotice";
 import type { Vault, VaultListItem } from "@/core/vault/vault";
 import { formatDate } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
+import { APP } from "@/content/app";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 
 /**
@@ -283,7 +285,10 @@ function WorkspaceInner({
     update: (w: Workspace) => Workspace,
     message?: string,
     state?: CaseFile["state"],
-    opts?: { silent?: boolean; deadlines?: CaseFile["deadlines"] },
+    // B-06: `kind` joins `deadlines` as a file-level field a commit may change. It is not
+    // cosmetic — it drives severity gating, the evidence-matrix union and the per-record guidance,
+    // so a seller who cannot correct it is stuck with three wrong answers derived from one.
+    opts?: { silent?: boolean; deadlines?: CaseFile["deadlines"]; kind?: ViolationKind },
   ) => {
     if (saving.current || !fileRef.current) return false;
     saving.current = true;
@@ -305,6 +310,7 @@ function WorkspaceInner({
         workspace: next,
         state: state ?? (current.state === "SUBMITTED" ? "REVISION" : current.state),
         ...(opts?.deadlines !== undefined ? { deadlines: opts.deadlines } : {}),
+        ...(opts?.kind !== undefined ? { kind: opts.kind } : {}),
       };
       await vault.atomic(async () => {
         const disk = await loadCaseFile(vault);
@@ -688,7 +694,11 @@ function WorkspaceInner({
           old.professionalReviewRequired ||
           (updated.confirmed && updated.protocol === "specialist"),
         requirementsConfirmed: false,
-        requirements: old.requirements.length ? old.requirements : proposedRequirements(updated),
+        // B-05: `file.kind` unions the evidence matrix in, so a record this violation family
+        // nearly always needs is raised even when the notice never spells it out.
+        requirements: old.requirements.length
+          ? old.requirements
+          : proposedRequirements(updated, file.kind),
         // #86: recomputed on every route confirmation, because the notice text may have changed
         // and a second issue must not survive from a notice the seller has since replaced.
         issues: proposedIssues(updated),
@@ -847,10 +857,28 @@ function WorkspaceInner({
             >
               {!w.confirmed || reviewRequest ? (
                 <RequestReview
-                  key={`${file.id}-${w.revision}-${reviewRequest}`}
+                  key={`${file.id}-${w.revision}-${reviewRequest}-${file.kind}`}
                   workspace={w}
+                  kind={file.kind}
                   busy={busy}
                   onSave={confirmRequest}
+                  /*
+                    B-06: additive by construction. Rebuilding the list would delete records the
+                    seller has already reviewed and linked a file to — punishing them for telling
+                    us we read the notice wrong, which is the opposite of the point.
+                  */
+                  onKindChange={(next) =>
+                    commit(
+                      (old) => ({
+                        ...old,
+                        requirements: requirementsAfterKindChange(old.requirements, next),
+                        requirementsConfirmed: false,
+                      }),
+                      C.kindOverride.applied.replace("{kind}", APP.violationKinds[next]),
+                      undefined,
+                      { kind: next },
+                    )
+                  }
                   /*
                     #91 needs a save that keeps the whole workspace. `confirmRequest` deliberately
                     enumerates the fields a route confirmation may change and re-uses `old` for the

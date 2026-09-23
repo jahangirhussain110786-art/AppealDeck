@@ -9,6 +9,7 @@ import {
   proposedRequirements,
   recordPriorAttempt,
   removePriorAttempt,
+  requirementsAfterKindChange,
   routeWorkspace,
   totalAttempts,
   workspaceCanCompose,
@@ -581,5 +582,120 @@ describe("confirming corrective actions", () => {
     );
     expect(parsed.success, JSON.stringify(parsed.error?.issues ?? [])).toBe(true);
     expect(parsed.data!.correctiveActionsAttested?.at).toBe("2026-09-23T00:00:00.000Z");
+  });
+});
+
+/**
+ * B-05. `proposedRequirements` used five regexes on the notice and never consulted the evidence
+ * matrix, so a record Amazon did not spell out was never raised — and Amazon routinely does not
+ * spell it out. Knowing that an inauthenticity case needs a supplier invoice whether or not the
+ * notice says the word is what a seller pays an appeal writer for.
+ */
+describe("the union of the notice and the matrix", () => {
+  const notice = { notice: "Please provide the supplier invoice.", formInstructions: "" };
+
+  it("raises a required record the notice never names", () => {
+    const withoutKind = proposedRequirements(notice);
+    const withKind = proposedRequirements(notice, "POLICY");
+    expect(withoutKind.map((r) => r.label)).toEqual(["Supplier invoice"]);
+    expect(withKind.map((r) => r.label).sort()).toEqual([
+      "Sales or performance record",
+      "Supplier invoice",
+    ]);
+  });
+
+  it("marks what it inferred, and never attributes it to Amazon", () => {
+    const inferred = proposedRequirements(notice, "POLICY").find((r) => r.source === "matrix")!;
+    expect(inferred.source).toBe("matrix");
+    // The seller must always be able to tell Amazon's words from ours.
+    expect(notice.notice).not.toContain(inferred.sourceQuote);
+    expect(inferred.sourceQuote).toMatch(/not named in your notice/i);
+    const named = proposedRequirements(notice, "POLICY").find((r) => r.source === "notice")!;
+    expect(notice.notice).toContain(named.sourceQuote);
+  });
+
+  it("does not raise the same record twice when the notice already names it", () => {
+    // INAUTHENTIC_DOCUMENTS requires a supplier invoice, which this notice already asks for.
+    const all = proposedRequirements(notice, "INAUTHENTIC_DOCUMENTS");
+    expect(all.filter((r) => r.label === "Supplier invoice")).toHaveLength(1);
+    expect(all.find((r) => r.label === "Supplier invoice")!.source).toBe("notice");
+  });
+
+  it("raises only what the matrix calls required", () => {
+    // A matrix "optional" is a suggestion; putting one on a seller's list as an obligation would
+    // misrepresent it, and the list is what `requirementsConfirmed` asks them to stand behind.
+    const labels = proposedRequirements(notice, "POLICY").map((r) => r.label);
+    expect(labels).not.toContain("Written procedure");
+  });
+
+  it("does not ask for a notice quote it knows cannot exist", () => {
+    // `workspaceGaps` checks that a requirement's quote really appears in the seller's own text.
+    // An inferred record has no such sentence, and demanding one would show the seller a fault in
+    // their notice that is actually ours.
+    const w: Workspace = {
+      ...documentWorkspace(),
+      requirements: proposedRequirements(notice, "POLICY"),
+      notice: notice.notice,
+    };
+    expect(workspaceGaps(w).filter((g) => g.startsWith("Check the source"))).toEqual([]);
+  });
+
+  it("survives the schema that guards every save", () => {
+    const w = { ...documentWorkspace(), requirements: proposedRequirements(notice, "POLICY") };
+    const parsed = WorkspaceSchema.safeParse(w);
+    expect(parsed.success, JSON.stringify(parsed.error?.issues ?? [])).toBe(true);
+    // Stripped `source` would make an inferred record look like one Amazon named, and the gap
+    // check would then demand a quote from the notice that was never there.
+    expect(parsed.data!.requirements.some((r) => r.source === "matrix")).toBe(true);
+  });
+});
+
+/**
+ * B-06. K12 pre-agreed "classification-confidence display and user override verified working" as
+ * the response to a wrong-classification signal, and nothing was ever built. It stopped being
+ * cosmetic when B-05 made the violation kind decide which unspoken records get raised: one wrong
+ * reading then produced three wrong answers — the guidance, the record list and the severity gate.
+ */
+describe("correcting the decoded kind", () => {
+  it("adds what the new kind requires", () => {
+    const existing = proposedRequirements(
+      { notice: "Please provide the supplier invoice.", formInstructions: "" },
+      "INAUTHENTIC_DOCUMENTS",
+    );
+    const next = requirementsAfterKindChange(existing, "POLICY");
+    expect(next.map((r) => r.label)).toContain("Sales or performance record");
+    expect(next.find((r) => r.label === "Sales or performance record")!.source).toBe("matrix");
+  });
+
+  it("never removes a record the seller has already worked on", () => {
+    // The whole point. Rebuilding the list would delete reviewed records with a linked vault file
+    // and the seller's own note — punishing them for telling us we read the notice wrong.
+    const reviewed = documentWorkspace().requirements;
+    const next = requirementsAfterKindChange(reviewed, "PERFORMANCE_METRIC");
+    const invoice = next.find((r) => r.label === "Supplier invoice")!;
+    expect(invoice.status).toBe("reviewed");
+    expect(invoice.recordId).toBe("file-1");
+    expect(invoice.note).toBe(reviewed[0]!.note);
+    expect(next.length).toBeGreaterThanOrEqual(reviewed.length);
+  });
+
+  it("does not duplicate a record the list already has", () => {
+    const reviewed = documentWorkspace().requirements;
+    const next = requirementsAfterKindChange(reviewed, "INAUTHENTIC_DOCUMENTS");
+    expect(next.filter((r) => r.label === "Supplier invoice")).toHaveLength(1);
+  });
+
+  it("adds nothing for a kind the matrix says nothing about", () => {
+    const reviewed = documentWorkspace().requirements;
+    expect(requirementsAfterKindChange(reviewed, "UNKNOWN")).toHaveLength(reviewed.length);
+  });
+
+  it("produces a list the schema still accepts", () => {
+    const w = {
+      ...documentWorkspace(),
+      requirements: requirementsAfterKindChange(documentWorkspace().requirements, "POLICY"),
+    };
+    const parsed = WorkspaceSchema.safeParse(w);
+    expect(parsed.success, JSON.stringify(parsed.error?.issues ?? [])).toBe(true);
   });
 });

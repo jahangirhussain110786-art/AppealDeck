@@ -81,9 +81,22 @@ export function EvidenceReview({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <DetailDisclosure title="Why this record is requested">
-          <blockquote className="border-l-2 border-info/30 pl-3">{item.sourceQuote}</blockquote>
-        </DetailDisclosure>
+        {/*
+          B-05: a record Amazon named is shown as their sentence, quoted. A record we inferred from
+          the evidence matrix is shown as ours, and said so plainly. A seller in a crisis must
+          always be able to tell the two apart, and a blockquote around our own words would be the
+          quickest way to blur that.
+        */}
+        {item.source === "matrix" ? (
+          <div className="rounded-row border border-border/60 bg-surface-2 p-3">
+            <p className="text-sm font-medium text-foreground">{C.inferred.badge}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{C.inferred.help}</p>
+          </div>
+        ) : (
+          <DetailDisclosure title="Why this record is requested">
+            <blockquote className="border-l-2 border-info/30 pl-3">{item.sourceQuote}</blockquote>
+          </DetailDisclosure>
+        )}
         {item.recordId ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-surface-2 p-4">
             <div className="flex min-w-0 items-center gap-2">

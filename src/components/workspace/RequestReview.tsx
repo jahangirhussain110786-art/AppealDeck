@@ -14,23 +14,31 @@ import { WORKSPACE as C } from "@/content/workspace";
 import { DECODE } from "@/content/marketing";
 import { assessNoticeAuthenticity } from "@/core/noticeAuthenticity";
 import { stripInvisibleChars } from "@/lib/idNormalize";
+import { KindOverride } from "./KindOverride";
+import type { ViolationKind } from "@/core";
 
 const selectStyle =
   "h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 export function RequestReview({
   workspace,
+  kind,
   busy,
   onSave,
   onCommitWorkspace,
+  onKindChange,
   draft,
   onDraftChange,
 }: {
   workspace: Workspace;
+  /** B-06: what the decoder read, so the seller can say it is wrong. */
+  kind: ViolationKind;
   busy: boolean;
   /** Confirms the route. Only the fields a route confirmation may change survive it. */
   onSave: (w: Workspace) => Promise<boolean>;
   /** Saves the workspace as given. Needed by anything on this step that changes another field. */
   onCommitWorkspace: (w: Workspace) => Promise<boolean>;
+  /** B-06: corrects the violation kind and adds any records the new kind requires. */
+  onKindChange: (next: ViolationKind) => Promise<boolean>;
   draft?: Record<string, string>;
   onDraftChange: (key: string, value: string | undefined) => void;
 }) {
@@ -178,6 +186,11 @@ export function RequestReview({
             If no action is requested, say so. Leave out passwords and payment details.
           </p>
         </div>
+        {/*
+          B-06: beside the suggested route, because both answer "did you read my notice correctly"
+          and a seller who disagrees with one usually disagrees with the other.
+        */}
+        <KindOverride kind={kind} busy={busy} onChange={onKindChange} />
         <div className="flex items-start gap-3 rounded-lg bg-info/5 p-4 ring-1 ring-inset ring-info/15">
           <Signpost className="mt-0.5 size-5 shrink-0 text-info" aria-hidden />
           <div className="min-w-0 flex-1">

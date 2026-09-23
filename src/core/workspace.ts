@@ -3,6 +3,8 @@ import type { PoaDraft } from "./composer";
 import { determineResponseType } from "./responseType";
 import type { ResponseType } from "./responseType";
 import type { EvidenceKind } from "./evidenceModel";
+import { requirementsFor } from "./evidenceModel";
+import type { ViolationKind } from "./violationKinds";
 import type { NoticeIssue } from "./noticeIssues";
 import { detectIssues, hasMultipleIssues } from "./noticeIssues";
 
@@ -65,6 +67,16 @@ export type Requirement = {
    * declined item is not the same as a forgotten one (D6).
    */
   declined?: { reason: string; alternativeId?: string; at: string };
+  /**
+   * B-05, 23 Sep 2026. Where this requirement came from.
+   *
+   * `"notice"` (the default, and what every requirement was until now) means Amazon named it and
+   * `sourceQuote` is their sentence, verbatim. `"matrix"` means **we** raised it: the evidence
+   * matrix says this violation family nearly always needs it and the notice did not spell it out.
+   * Inferring the unspoken requirement is the expertise being sold, and marking it is what keeps
+   * that honest — a seller must always be able to tell Amazon's words from ours.
+   */
+  source?: "notice" | "matrix";
 };
 export interface Workspace {
   version: 1;
@@ -173,33 +185,46 @@ export function newWorkspace(): Workspace {
  * This is **not** B-05. The union with `evidenceModel.requirementsFor()` — raising a requirement
  * Amazon did not spell out — is still unbuilt. This only connects the ones the notice does name.
  */
-export const REQUIREMENT_CANDIDATES: ReadonlyArray<{
-  pattern: RegExp;
-  label: string;
-  evidenceKind: EvidenceKind;
-}> = [
-  { pattern: /\binvoices?\b/i, label: "Supplier invoice", evidenceKind: "supplier_invoice" },
+export const EVIDENCE_KIND_LABELS: Readonly<Record<EvidenceKind, string>> = {
+  supplier_invoice: "Supplier invoice",
+  brand_authorization: "Authorization letter",
+  rights_owner_retraction: "Rights-owner retraction",
+  identity_doc: "Requested identity record",
+  financial_instrument_doc: "Bank or financial record",
+  sourcing_doc: "Sourcing record",
+  listing_fix_proof: "Listing correction record",
+  disposal_or_recall_proof: "Disposal or recall record",
+  metric_export: "Sales or performance record",
+  sop_document: "Written procedure",
+  other: "Other requested record",
+};
+
+const CANDIDATE_PATTERNS: ReadonlyArray<{ pattern: RegExp; evidenceKind: EvidenceKind }> = [
+  { pattern: /\binvoices?\b/i, evidenceKind: "supplier_invoice" },
   {
     pattern: /\b(letter of authorization|authori[sz]ation letter|LOA)\b/i,
-    label: "Authorization letter",
     evidenceKind: "brand_authorization",
   },
   {
     pattern: /\b(identity document|government.issued (?:ID|identification))\b/i,
-    label: "Requested identity record",
     evidenceKind: "identity_doc",
   },
   {
     pattern: /\b(sales report|sales records?|order report|metrics? report)\b/i,
-    label: "Sales or performance record",
     evidenceKind: "metric_export",
   },
   {
     pattern: /\b(proof of (?:correction|changes)|listing screenshots?)\b/i,
-    label: "Listing correction record",
     evidenceKind: "listing_fix_proof",
   },
 ];
+
+/** Label comes from the one map, so a candidate and an inferred requirement can never disagree. */
+export const REQUIREMENT_CANDIDATES: ReadonlyArray<{
+  pattern: RegExp;
+  label: string;
+  evidenceKind: EvidenceKind;
+}> = CANDIDATE_PATTERNS.map((c) => ({ ...c, label: EVIDENCE_KIND_LABELS[c.evidenceKind] }));
 
 /**
  * The evidence kind a requirement is an instance of, or undefined for one the seller added by
@@ -214,6 +239,8 @@ export function evidenceKindForRequirement(label: string): EvidenceKind | undefi
 /** Suggest only record names present in an explicit request; seller confirms coverage. */
 export function proposedRequirements(
   w: Pick<Workspace, "notice" | "formInstructions">,
+  /** Omit on surfaces that must show only what Amazon actually said — see the union note below. */
+  violationKind?: ViolationKind,
 ): Requirement[] {
   const sources = `${w.notice}\n${w.formInstructions}`
     .split(/\n|(?<=[.!?])\s+/)
@@ -224,12 +251,89 @@ export function proposedRequirements(
         /\b(provide|submit|upload|send|include|request(?:ed|ing)?)\b/i.test(s) &&
         !/\b(do not|don't|not required|no need to|no additional)\b/i.test(s),
     );
-  return REQUIREMENT_CANDIDATES.flatMap(({ pattern, label }) => {
+  const named = REQUIREMENT_CANDIDATES.flatMap(({ pattern, label }) => {
     const sourceQuote = sources.find((s) => pattern.test(s));
     return sourceQuote
-      ? [{ id: crypto.randomUUID(), label, sourceQuote, status: "needed" as const, note: "" }]
+      ? [
+          {
+            id: crypto.randomUUID(),
+            label,
+            sourceQuote,
+            status: "needed" as const,
+            note: "",
+            source: "notice" as const,
+          },
+        ]
       : [];
   });
+  if (!violationKind) return named;
+
+  /*
+    B-05, the union the spec has asked for since EF-1: "requirement instances = the notice's own
+    list ∪ the reviewed matrix, each carrying ... source".
+
+    Until now `proposedRequirements` used the five regexes above and never consulted
+    `evidenceModel.ts`, so a record Amazon did not spell out was never raised — and Amazon routinely
+    does not spell it out. Knowing that an inauthenticity case needs a supplier invoice whether or
+    not the notice says the word is precisely what a seller pays an appeal writer for.
+
+    Only `required: true` entries, because a matrix "optional" is a suggestion and putting one on a
+    seller's list as an obligation would misrepresent it. Each carries `source: "matrix"` and a
+    plain statement that we raised it, never a quote — inventing an Amazon sentence for a record
+    Amazon never mentioned is the exact dishonesty this model exists to prevent.
+  */
+  const covered = new Set(named.map((r) => evidenceKindForRequirement(r.label)));
+  const inferred = requirementsFor(violationKind)
+    .filter((r) => r.required && !covered.has(r.kind))
+    .map((r) => ({
+      id: crypto.randomUUID(),
+      label: EVIDENCE_KIND_LABELS[r.kind],
+      sourceQuote: MATRIX_SOURCE_NOTE,
+      status: "needed" as const,
+      note: "",
+      source: "matrix" as const,
+    }));
+  return [...named, ...inferred];
+}
+
+/**
+ * What stands in for a quote on a requirement the notice never named. Deliberately not a sentence
+ * attributed to Amazon: `workspaceGaps` checks that a `"notice"` requirement's quote really appears
+ * in the seller's own text, and this one is exempt from that check precisely because it is ours.
+ */
+export const MATRIX_SOURCE_NOTE =
+  "Not named in your notice. Cases like this one are usually refused without it.";
+
+/**
+ * B-06: the requirement list after a seller corrects the decoded violation kind.
+ *
+ * **Additive, and deliberately so.** Rebuilding the list would delete records the seller has
+ * already reviewed, linked to a vault file and written a note about — punishing them for telling us
+ * we were wrong, which is the opposite of what a correction mechanism is for. Anything the new kind
+ * requires and the list does not have is added as `source: "matrix"`; nothing is removed. The
+ * existing "remove from current plan" flow is how a seller drops one that does not apply, and it
+ * asks for a reason, which an automatic sweep never could.
+ *
+ * K12 named "classification-confidence display and user override verified working" as the response
+ * to a wrong-classification signal, and there was no mechanism behind it. There is now, and it
+ * matters more than it did: since B-05 the kind also decides which unspoken records get raised.
+ */
+export function requirementsAfterKindChange(
+  existing: readonly Requirement[],
+  nextKind: ViolationKind,
+): Requirement[] {
+  const covered = new Set(existing.map((r) => evidenceKindForRequirement(r.label)));
+  const added = requirementsFor(nextKind)
+    .filter((r) => r.required && !covered.has(r.kind))
+    .map((r) => ({
+      id: crypto.randomUUID(),
+      label: EVIDENCE_KIND_LABELS[r.kind],
+      sourceQuote: MATRIX_SOURCE_NOTE,
+      status: "needed" as const,
+      note: "",
+      source: "matrix" as const,
+    }));
+  return [...existing, ...added];
 }
 
 /**
@@ -444,7 +548,13 @@ export function workspaceGaps(w: Workspace): string[] {
       !r.note.trim()
     )
       gaps.push(`Review and link evidence for: ${r.label}`);
-    if (!`${w.notice}\n${w.formInstructions}`.includes(r.sourceQuote) || !r.sourceQuote.trim())
+    // B-05: a matrix-inferred requirement has no Amazon sentence behind it and must not be asked
+    // for one. The check still runs on everything the notice named, which is where a quote that
+    // has drifted from the seller's own text is a real problem.
+    if (
+      r.source !== "matrix" &&
+      (!`${w.notice}\n${w.formInstructions}`.includes(r.sourceQuote) || !r.sourceQuote.trim())
+    )
       gaps.push(`Check the source of the request for: ${r.label}`);
   }
   if (w.explanation.trim().length < 40)
