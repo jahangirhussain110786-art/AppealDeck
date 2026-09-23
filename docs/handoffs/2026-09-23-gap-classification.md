@@ -286,3 +286,65 @@ cross-file flake did not reproduce).
 
 Also fixed in passing: **D-09**, `package.json`'s `filesystem:up` pointed at `V:\AppealDeck`, a repo
 that is not this one.
+
+---
+
+## 9. The three strikes, executed (founder-approved)
+
+**A-04 could not simply be deleted, which is why it survived the 22 Sep retirement.** `CaseFile` and
+`createCaseFile()` were never part of the interview and twenty-odd modules read them; they move to
+`src/core/caseFile.ts`, which is what they always were. What goes is the step engine around them.
+This also **closes AA-40's open classic-interview keep/retire question** — the founder answered it in
+substance on 22 Sep by retiring the surface.
+
+`alternativesFor()` — the two consultant-reviewed answers to "I can't get this document" — went with
+it rather than being parked uncalled in another module. **The A-02 rebuild recovers it from
+`git show 37d606b:src/core/interviewEngine.ts`**, and that pointer is also in `caseFile.ts`'s header.
+Keeping an unreachable copy "to be safe" would have recreated the exact disease this pass cures.
+
+Three of that file's 29 tests never tested the interview — they test the case record — so they moved
+to `caseFile.test.ts` rather than being dropped alongside the surface they shared a file with.
+
+**A-09** was verified superseded before deleting (`ResponseReview` has its own `CopyButton` path).
+**A-12** was a dead re-export claiming to be the home of a motion system that lives in
+`providers.tsx`. `Stepper` now owns its own progress shape, since a primitive kept deliberately as a
+gallery piece (A-10) should not borrow a type from a journey that no longer runs.
+
+---
+
+## 10. B-03 — the reply delta, built
+
+The largest unbuilt item in the register. Until today, applying an Amazon reply reset **every**
+requirement to `"needed"`: a seller who had read their invoice, recorded what it supports and linked
+it to the case lost all of it the moment Amazon wrote back — and again on the next round.
+
+Four outcomes, each meaning one thing — `reopened` (you marked it reviewed and Amazon is asking
+again; the only honest reading of "conflict"), `added`, `outstanding` (Amazon declining to repeat a
+request does not withdraw it), and `carried` (reviewed, unmentioned, **kept** — the work that used to
+be destroyed). Matching is by label, because `proposedRequirements()` issues a fresh id per call
+while the existing requirement carries the seller's real work; the vault record, filename, hash, page
+and note ride through untouched on all four, including a reopen.
+
+The delta renders **before** the revision starts, and is recomputed from the authoritative workspace
+on apply rather than passed down from the preview, so a stale preview can never be what gets written.
+
+One existing test asserted the old reset, on a line that contradicted its own name — "preserves …
+evidence when applying a new reply". It now asserts what the name always claimed.
+
+**Verified end to end**, not only in units: an unauthenticated e2e test reviews an invoice, adds a
+reply asking for a sales report, asserts the delta names it "Kept as reviewed" before applying, and
+asserts after applying that the invoice is still reviewed with the seller's note intact. Also walked
+in a browser, where the panel renders the right groups with Amazon's sentence quoted verbatim.
+
+### A defect found while checking the test count, and why it is recorded here
+
+The suite total moved by 14 when 7 tests were added. `workspaceExport.test.ts` imported
+`documentWorkspace` from `workspace.test.ts`, and importing one test file from another makes Vitest
+collect the imported file's suites **inside the importing file too** — so all 36 tests in
+`workspace.test.ts` ran twice. Nothing ever failed because of it, which is why it survived, and it
+made every suite total this project has quoted wrong by the size of that file. The fixture moves to
+`workspace.fixture.ts`; the honest total is **747**, not 769 with 29 duplicates inside it. No other
+test file imports another (checked).
+
+**A-13 note for whoever builds it:** the §7 core/lib scan must not flag `*.fixture.ts` as an
+unreachable module. It is test support, and test files are excluded from counting as importers.
