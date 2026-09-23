@@ -37,7 +37,11 @@ const requirement = z.object({
   // B-05: without this the validator strips `source`, every matrix-inferred requirement comes back
   // looking like one Amazon named, and `workspaceGaps` then demands a quote from the notice that
   // was never there. The seller would see "check the source of the request" for a record we raised.
-  source: z.enum(["notice", "matrix"]).optional(),
+  source: z.enum(["notice", "matrix", "seller"]).optional(),
+  // Added with `source`'s third member, and for the same reason: dropped here, a carried
+  // requirement loses the revision its quote belongs to on the next save, and the reply-round
+  // regression this fix removes comes straight back the first time the workspace round-trips.
+  sourceRevision: z.number().int().min(1).max(999).optional(),
 });
 export const WorkspaceSchema = z
   .object({

@@ -11,6 +11,10 @@ import {
   removePriorAttempt,
   requirementsAfterKindChange,
   routeWorkspace,
+  sourceQuoteResolves,
+  requestTextForRevision,
+  MATRIX_SOURCE_NOTE,
+  SELLER_SOURCE_NOTE,
   totalAttempts,
   workspaceCanCompose,
   workspaceGaps,
@@ -113,6 +117,7 @@ describe("request routing", () => {
     const sampleRecords = proposedRequirements({
       notice: SAMPLE_NOTICE_TEXT,
       formInstructions: "",
+      revision: 1,
     });
     expect(sampleRecords).toHaveLength(1);
     expect(sampleRecords[0].label).toBe("Supplier invoice");
@@ -123,6 +128,7 @@ describe("request routing", () => {
       proposedRequirements({
         notice: "Do not provide invoices for this request.",
         formInstructions: "",
+        revision: 1,
       }),
     ).toEqual([]);
   });
@@ -592,7 +598,11 @@ describe("confirming corrective actions", () => {
  * notice says the word is what a seller pays an appeal writer for.
  */
 describe("the union of the notice and the matrix", () => {
-  const notice = { notice: "Please provide the supplier invoice.", formInstructions: "" };
+  const notice = {
+    notice: "Please provide the supplier invoice.",
+    formInstructions: "",
+    revision: 1,
+  };
 
   it("raises a required record the notice never names", () => {
     const withoutKind = proposedRequirements(notice);
@@ -697,5 +707,113 @@ describe("correcting the decoded kind", () => {
     };
     const parsed = WorkspaceSchema.safeParse(w);
     expect(parsed.success, JSON.stringify(parsed.error?.issues ?? [])).toBe(true);
+  });
+});
+
+/**
+ * F + E, 23 Sep 2026. Two defects with one cause: the rule "a requirement's quote must appear in
+ * the notice" was written twice — once in `workspaceGaps` and once inline in the workspace UI's
+ * `changeRequirement` — and only the first copy was ever taught about the exceptions.
+ *
+ * The consequences were that a matrix-inferred record (B-05), a record the seller added themselves,
+ * and any record carried through a reply round (B-03) could all be displayed and described as
+ * needed, but could never be marked reviewed, waiting or unobtainable. The seller was told to
+ * "update the task's source to an exact sentence from the current notice" — an instruction with no
+ * satisfying answer, on records that were correct as they stood.
+ *
+ * These tests pin the rule, not the sentence, and the negative control at the end matters as much
+ * as the rest: the check still has to catch a quote that has genuinely drifted, or the fix has
+ * simply deleted the safeguard.
+ */
+describe("source provenance across revisions", () => {
+  function withReply(w: Workspace, text: string): Workspace {
+    w.replies.push({ id: "reply-1", at: new Date().toISOString(), text, applied: false });
+    return w;
+  }
+
+  it("resolves a record we inferred, which quotes no Amazon sentence by design", () => {
+    const w = documentWorkspace();
+    expect(sourceQuoteResolves(w, { source: "matrix", sourceQuote: MATRIX_SOURCE_NOTE })).toBe(
+      true,
+    );
+  });
+
+  it("resolves a record the seller added from their own knowledge of the case", () => {
+    const w = documentWorkspace();
+    expect(sourceQuoteResolves(w, { source: "seller", sourceQuote: SELLER_SOURCE_NOTE })).toBe(
+      true,
+    );
+  });
+
+  it("keeps a carried requirement resolvable after a reply replaces the notice", () => {
+    const w = withReply(documentWorkspace(), "Please provide the sales report for this product.");
+    const before = w.requirements.find((r) => r.label === "Supplier invoice")!;
+    const next = applyWorkspaceReply(w, "reply-1");
+
+    // The reply is now the notice, so the invoice's quote is no longer in the current request.
+    expect(next.notice).not.toContain(before.sourceQuote);
+
+    const carried = next.requirements.find((r) => r.label === "Supplier invoice")!;
+    expect(carried.status).toBe("reviewed");
+    expect(sourceQuoteResolves(next, carried)).toBe(true);
+    // And it is not reported as a defect in the seller's own text.
+    expect(workspaceGaps(next)).not.toContain(
+      "Check the source of the request for: Supplier invoice",
+    );
+  });
+
+  it("backfills the revision for a requirement saved before the field existed", () => {
+    const w = withReply(documentWorkspace(), "Please provide the sales report for this product.");
+    // Exactly the shape of a case stored before today: a real notice quote, no `sourceRevision`.
+    w.requirements = w.requirements.map(({ sourceRevision: _drop, ...rest }) => rest);
+    const next = applyWorkspaceReply(w, "reply-1");
+    const carried = next.requirements.find((r) => r.label === "Supplier invoice")!;
+    expect(carried.sourceRevision).toBe(1);
+    expect(sourceQuoteResolves(next, carried)).toBe(true);
+  });
+
+  it("points a reopened requirement at the reply that reopened it, not the old request", () => {
+    const w = withReply(
+      documentWorkspace(),
+      "The document you sent was not sufficient. Please provide the supplier invoice again.",
+    );
+    const next = applyWorkspaceReply(w, "reply-1");
+    const invoice = next.requirements.find((r) => r.label === "Supplier invoice")!;
+    expect(invoice.sourceRevision).toBe(next.revision);
+    expect(requestTextForRevision(next, invoice.sourceRevision!)).toContain(invoice.sourceQuote);
+    expect(sourceQuoteResolves(next, invoice)).toBe(true);
+  });
+
+  it("still holds the previous request, so an old quote can be checked rather than assumed", () => {
+    const w = withReply(documentWorkspace(), "Please provide the sales report for this product.");
+    const original = w.notice;
+    const next = applyWorkspaceReply(w, "reply-1");
+    expect(requestTextForRevision(next, 1)).toContain(original);
+    expect(requestTextForRevision(next, next.revision)).not.toContain(original);
+  });
+
+  /**
+   * The negative control. If this passes trivially the fix has removed the safeguard rather than
+   * scoping it: a requirement claiming to quote Amazon, whose quote is in no request we hold, is
+   * still a real problem worth surfacing.
+   */
+  it("still flags a notice quote that appears in no request revision", () => {
+    const w = documentWorkspace();
+    const invented = {
+      source: "notice" as const,
+      sourceQuote: "Amazon never wrote this sentence.",
+      sourceRevision: 1,
+    };
+    expect(sourceQuoteResolves(w, invented)).toBe(false);
+
+    w.requirements = [{ ...w.requirements[0]!, ...invented }];
+    expect(workspaceGaps(w)).toContain("Check the source of the request for: Supplier invoice");
+  });
+
+  it("treats an empty quote as unresolved rather than vacuously true", () => {
+    const w = documentWorkspace();
+    expect(
+      sourceQuoteResolves(w, { source: "notice", sourceQuote: "   ", sourceRevision: 1 }),
+    ).toBe(false);
   });
 });

@@ -271,7 +271,9 @@ function ResultView({
     [text, result.kind],
   );
   const records = useMemo(
-    () => proposedRequirements({ notice: text, formInstructions: "" }),
+    // Revision 1: no case exists yet, and a workspace started from this notice begins there. These
+    // records are a preview only — nothing here is saved until the seller starts a case.
+    () => proposedRequirements({ notice: text, formInstructions: "", revision: 1 }),
     [text],
   );
   const carryNotice = () => stashPendingNotice(text, result.deadlines);

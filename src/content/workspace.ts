@@ -23,7 +23,9 @@ export const WORKSPACE = {
   confirmRoute: "Confirm this route",
   allRequirements:
     "I checked the notice and response page, and this list covers all requested records.",
-  sourceHelp: "Use the exact sentence from your saved notice or response instructions.",
+  sourceLabel: "Where this came from (optional)",
+  sourceHelp:
+    "Paste the exact sentence if your notice or response page asks for this record. Leave it empty if you know the case needs it and Amazon did not say so — it will be recorded as yours, not theirs.",
   manualReview:
     "Review the original file and record what it supports. This is your factual review, not document authentication. Automatic text extraction is not available yet.",
   submitConfirm:
@@ -64,6 +66,10 @@ export const WORKSPACE = {
   inferred: {
     badge: "We added this",
     help: "Your notice does not name this record. Cases like yours are usually refused without it. Remove it if it does not apply.",
+  },
+  sellerAdded: {
+    badge: "You added this",
+    help: "Neither your notice nor our records named this one. It stays on your plan and is never described as something Amazon asked for.",
   },
   guidance: {
     why: "Why Amazon asks for this",

@@ -17,7 +17,7 @@
  */
 
 import type { CaseFile } from "@/core/caseFile";
-import type { Workspace } from "@/core/workspace";
+import type { Requirement, Workspace } from "@/core/workspace";
 import { formatDate } from "./format";
 
 export interface PackRecord {
@@ -72,16 +72,48 @@ export function buildEvidenceManifest(input: EvidencePackInput): string {
   });
   lines.push("");
 
-  lines.push(`== Requirements Amazon asked for (${workspace.requirements.length}) ==`);
-  if (workspace.requirements.length === 0) lines.push("(none recorded yet)");
-  for (const req of workspace.requirements) {
-    const linked = req.filename
-      ? `${req.filename}${req.page ? ` · page ${req.page}` : ""}`
-      : "none";
-    lines.push(`- ${req.label} [${req.status}] · file: ${linked}`);
-    lines.push(`  Requested because: ${req.sourceQuote}`);
+  /*
+    Split by provenance, 23 Sep 2026. This section was headed "Requirements Amazon asked for" and
+    listed every requirement under it — which stopped being true the moment B-05 began raising
+    records the notice never named, and would be wronger still now a seller can add their own. This
+    manifest is what a seller hands to a specialist or keeps as their own record of the case, so a
+    record we recommended being filed under Amazon's name is the one misstatement here that could
+    actually mislead someone downstream.
+
+    Each record still appears exactly once, and the "Requested because" line is only called that
+    where Amazon really did the requesting.
+  */
+  const REQUIREMENT_GROUPS = [
+    {
+      heading: "Requirements Amazon asked for",
+      reason: "Requested because",
+      match: (r: Requirement) => r.source !== "matrix" && r.source !== "seller",
+    },
+    {
+      heading: "Records AppealDeck recommended (not named in the notice)",
+      reason: "Recommended because",
+      match: (r: Requirement) => r.source === "matrix",
+    },
+    {
+      heading: "Records the seller added",
+      reason: "Added because",
+      match: (r: Requirement) => r.source === "seller",
+    },
+  ];
+  for (const group of REQUIREMENT_GROUPS) {
+    const items = workspace.requirements.filter(group.match);
+    if (items.length === 0 && group.heading !== REQUIREMENT_GROUPS[0]!.heading) continue;
+    lines.push(`== ${group.heading} (${items.length}) ==`);
+    if (items.length === 0) lines.push("(none recorded yet)");
+    for (const req of items) {
+      const linked = req.filename
+        ? `${req.filename}${req.page ? ` · page ${req.page}` : ""}`
+        : "none";
+      lines.push(`- ${req.label} [${req.status}] · file: ${linked}`);
+      lines.push(`  ${group.reason}: ${req.sourceQuote}`);
+    }
+    lines.push("");
   }
-  lines.push("");
 
   lines.push(`== What was sent, and when (${workspace.submissions.length}) ==`);
   if (workspace.submissions.length === 0) {

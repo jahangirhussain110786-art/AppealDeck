@@ -56,6 +56,8 @@ import {
   newWorkspace,
   proposedRequirements,
   requirementsAfterKindChange,
+  sourceQuoteResolves,
+  SELLER_SOURCE_NOTE,
   PROTOCOL_LABELS,
   routeWorkspace,
   workspaceCanCompose,
@@ -428,9 +430,18 @@ function WorkspaceInner({
 
   const changeRequirement = (value: Requirement) => {
     const current = fileRef.current?.workspace;
-    if (!current || !`${current.notice}\n${current.formInstructions}`.includes(value.sourceQuote)) {
+    /*
+      Was an inline `includes` against the current notice, which meant three kinds of requirement
+      could be shown but never actioned: one we inferred from the evidence matrix (its quote is
+      ours, and is not in the notice by definition), one the seller added themselves, and one
+      carried through a reply round (its quote belongs to the previous request). The seller was
+      told to "update the task's source to an exact sentence from the current notice" — an
+      instruction that cannot be followed when no such sentence exists. `sourceQuoteResolves` is
+      the same rule `workspaceGaps` applies, so the two can no longer disagree.
+    */
+    if (!current || !sourceQuoteResolves(current, value)) {
       setError(
-        "Update the task’s source to an exact sentence from the current notice or form before reviewing it.",
+        "Update the task’s source to an exact sentence from the request it came from before reviewing it.",
       );
       return Promise.resolve(false);
     }
@@ -1057,9 +1068,7 @@ function WorkspaceInner({
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="requirement-source">
-                          Exact request from your notice or form
-                        </Label>
+                        <Label htmlFor="requirement-source">{C.sourceLabel}</Label>
                         <Textarea
                           id="requirement-source"
                           maxLength={2000}
@@ -1070,19 +1079,28 @@ function WorkspaceInner({
                       </div>
                       <Button
                         variant="outline"
-                        disabled={
-                          busy ||
-                          !newLabel.trim() ||
-                          !newSource.trim() ||
-                          w.requirements.length >= 30
-                        }
+                        // The source box is no longer required: a record the seller knows the case
+                        // needs is worth recording whether or not Amazon put it in writing.
+                        disabled={busy || !newLabel.trim() || w.requirements.length >= 30}
                         onClick={async () => {
-                          if (!`${w.notice}\n${w.formInstructions}`.includes(newSource.trim())) {
-                            setError(
-                              "The source sentence must appear in the saved notice or form instructions. Review the request first.",
-                            );
-                            return;
-                          }
+                          /*
+                            This used to refuse the save outright unless the typed sentence appeared
+                            verbatim in the notice — so a seller or appeal writer who knew from
+                            experience that the case needed a record Amazon had not named could not
+                            write it down. Knowing the unnamed requirement is the expertise being
+                            sold, and the form blocked exactly that.
+
+                            Now the text decides provenance instead of permission: if it really is
+                            Amazon's sentence it is recorded as theirs, against the revision it came
+                            from; if it is not, it is recorded as the seller's own and never shown
+                            as a quotation. Nothing is attributed to Amazon that they did not write.
+                          */
+                          const typed = newSource.trim();
+                          // `includes("")` is true, so the length test is load-bearing: without it
+                          // an empty box would be recorded as an Amazon quotation.
+                          const fromNotice =
+                            typed.length > 0 &&
+                            `${w.notice}\n${w.formInstructions}`.includes(typed);
                           if (
                             await commit(
                               (old) => ({
@@ -1093,9 +1111,11 @@ function WorkspaceInner({
                                   {
                                     id: crypto.randomUUID(),
                                     label: newLabel.trim(),
-                                    sourceQuote: newSource.trim(),
+                                    sourceQuote: fromNotice ? typed : SELLER_SOURCE_NOTE,
                                     status: "needed",
                                     note: "",
+                                    source: fromNotice ? ("notice" as const) : ("seller" as const),
+                                    ...(fromNotice ? { sourceRevision: w.revision } : {}),
                                   },
                                 ],
                               }),

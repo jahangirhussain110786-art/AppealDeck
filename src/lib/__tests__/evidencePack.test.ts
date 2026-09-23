@@ -122,3 +122,72 @@ describe("manifestFilename", () => {
     expect(manifestFilename("///", new Date("2026-09-22T10:00:00Z"))).toContain("case");
   });
 });
+
+/**
+ * The manifest is what a seller hands to a specialist, or keeps as their own record of the case.
+ * Until 23 Sep 2026 it listed every requirement under one heading, "Requirements Amazon asked for"
+ * — which became untrue when B-05 started raising records the notice never named, and would have
+ * become untrue twice over when sellers gained the ability to add their own.
+ *
+ * Attributing our recommendation to Amazon in a document meant for a third party is the one
+ * misstatement here with a reader downstream who cannot check it.
+ */
+describe("manifest provenance", () => {
+  const mixed = {
+    ...newWorkspace(),
+    requirements: [
+      {
+        id: "r1",
+        label: "Supplier invoice",
+        sourceQuote: "Please provide your supplier invoice.",
+        status: "reviewed" as const,
+        note: "",
+        source: "notice" as const,
+        sourceRevision: 1,
+      },
+      {
+        id: "r2",
+        label: "Sales or performance record",
+        sourceQuote: "Not named in your notice.",
+        status: "needed" as const,
+        note: "",
+        source: "matrix" as const,
+      },
+      {
+        id: "r3",
+        label: "Freight forwarder receipt",
+        sourceQuote: "Added by you.",
+        status: "needed" as const,
+        note: "",
+        source: "seller" as const,
+      },
+    ],
+  };
+
+  it("counts only Amazon's own requests under Amazon's heading", () => {
+    const out = buildEvidenceManifest({ file, workspace: mixed, records: [] });
+    expect(out).toContain("== Requirements Amazon asked for (1) ==");
+    expect(out).toContain("== Records AppealDeck recommended (not named in the notice) (1) ==");
+    expect(out).toContain("== Records the seller added (1) ==");
+  });
+
+  it("puts each record under the heading that matches who raised it", () => {
+    const out = buildEvidenceManifest({ file, workspace: mixed, records: [] });
+    const amazonSection = out.slice(
+      out.indexOf("== Requirements Amazon asked for"),
+      out.indexOf("== Records AppealDeck recommended"),
+    );
+    expect(amazonSection).toContain("Supplier invoice");
+    expect(amazonSection).not.toContain("Sales or performance record");
+    expect(amazonSection).not.toContain("Freight forwarder receipt");
+    // And our own recommendation is never worded as a request from Amazon.
+    expect(out).toContain("Recommended because:");
+    expect(out).toContain("Added because:");
+  });
+
+  it("keeps the Amazon heading visible when they asked for nothing, and drops the empty rest", () => {
+    const out = buildEvidenceManifest({ file, workspace: newWorkspace(), records: [] });
+    expect(out).toContain("== Requirements Amazon asked for (0) ==");
+    expect(out).not.toContain("== Records the seller added");
+  });
+});

@@ -75,8 +75,28 @@ export type Requirement = {
    * matrix says this violation family nearly always needs it and the notice did not spell it out.
    * Inferring the unspoken requirement is the expertise being sold, and marking it is what keeps
    * that honest — a seller must always be able to tell Amazon's words from ours.
+   *
+   * `"seller"` added 23 Sep 2026 with the F+E fix. A seller or appeal writer must be able to record
+   * a record they know the case needs even when neither the notice nor our matrix named it —
+   * knowing the unnamed requirement is the whole of the expertise being sold, and until today the
+   * add-requirement form refused to save one. Like `"matrix"`, it claims no Amazon sentence.
    */
-  source?: "notice" | "matrix";
+  source?: "notice" | "matrix" | "seller";
+  /**
+   * Which request revision `sourceQuote` was taken from. Only meaningful for `"notice"`.
+   *
+   * Added 23 Sep 2026. `applyWorkspaceReply` replaces `notice` with the reply's text and clears
+   * `formInstructions`, so a requirement carried forward from the previous round still held a
+   * perfectly good quote from a request that was no longer the current one. Validation checked it
+   * against the new notice, failed, and both flagged the requirement and froze it — punishing the
+   * seller for Amazon having written back, which is precisely what B-03's "carried" outcome exists
+   * to prevent. The quote is now resolved against the revision it came from, which
+   * `previousRequests` has stored all along.
+   *
+   * Optional because cases saved before today have none; `sourceQuoteResolves` reads an absent
+   * value as the current revision, which is what it was when those requirements were created.
+   */
+  sourceRevision?: number;
 };
 export interface Workspace {
   version: 1;
@@ -238,7 +258,12 @@ export function evidenceKindForRequirement(label: string): EvidenceKind | undefi
 
 /** Suggest only record names present in an explicit request; seller confirms coverage. */
 export function proposedRequirements(
-  w: Pick<Workspace, "notice" | "formInstructions">,
+  /**
+   * `revision` is here so a named requirement records which request its quote came from. Callers
+   * that build a synthetic request (a reply being previewed) pass the revision that request will
+   * become, not the one it is replacing.
+   */
+  w: Pick<Workspace, "notice" | "formInstructions" | "revision">,
   /** Omit on surfaces that must show only what Amazon actually said — see the union note below. */
   violationKind?: ViolationKind,
 ): Requirement[] {
@@ -262,6 +287,7 @@ export function proposedRequirements(
             status: "needed" as const,
             note: "",
             source: "notice" as const,
+            sourceRevision: w.revision,
           },
         ]
       : [];
@@ -303,6 +329,55 @@ export function proposedRequirements(
  */
 export const MATRIX_SOURCE_NOTE =
   "Not named in your notice. Cases like this one are usually refused without it.";
+
+/** What stands in for a quote on a record the seller added from their own knowledge of the case. */
+export const SELLER_SOURCE_NOTE = "Added by you. Neither your notice nor our records named it.";
+
+/**
+ * The request text a given revision was written against, or `undefined` if we no longer hold it.
+ *
+ * The current revision is the live notice and form instructions; earlier ones come from
+ * `previousRequests`, which `applyWorkspaceReply` has been recording since B-03 and which nothing
+ * read until now.
+ */
+export function requestTextForRevision(
+  w: Pick<Workspace, "revision" | "notice" | "formInstructions" | "previousRequests">,
+  revision: number,
+): string | undefined {
+  if (revision === w.revision) return `${w.notice}\n${w.formInstructions}`;
+  const prior = w.previousRequests.find((p) => p.revision === revision);
+  return prior ? `${prior.notice}\n${prior.formInstructions}` : undefined;
+}
+
+/**
+ * Whether a requirement's stated source holds up — the single rule both the completeness check and
+ * the UI's write path use.
+ *
+ * One function rather than two copies of an `includes` test, because the two copies is exactly how
+ * this broke: `workspaceGaps` was taught about `source: "matrix"` on 23 Sep and `changeRequirement`
+ * was not, so an inferred record could be displayed, could be described as needed, and could never
+ * be marked reviewed, waiting or unobtainable. The rule and its exceptions now live in one place.
+ *
+ * Three cases:
+ *
+ * - **We raised it** (`matrix`) or **the seller raised it** (`seller`) — there is no Amazon sentence
+ *   to check, and demanding one is asking for something that cannot honestly exist.
+ * - **Amazon named it** — the quote must still appear in the request revision it was taken from,
+ *   which catches a quote that has drifted from the seller's own text.
+ * - **We no longer hold that revision** — treated as resolved. Blocking a seller because *our*
+ *   record of an old request is missing puts the cost of our gap on them, and the thing being
+ *   blocked is their own evidence work.
+ */
+export function sourceQuoteResolves(
+  w: Pick<Workspace, "revision" | "notice" | "formInstructions" | "previousRequests">,
+  r: Pick<Requirement, "source" | "sourceQuote" | "sourceRevision">,
+): boolean {
+  if (r.source === "matrix" || r.source === "seller") return true;
+  const quote = r.sourceQuote.trim();
+  if (!quote) return false;
+  const text = requestTextForRevision(w, r.sourceRevision ?? w.revision);
+  return text === undefined || text.includes(quote);
+}
 
 /**
  * B-06: the requirement list after a seller corrects the decoded violation kind.
@@ -548,14 +623,10 @@ export function workspaceGaps(w: Workspace): string[] {
       !r.note.trim()
     )
       gaps.push(`Review and link evidence for: ${r.label}`);
-    // B-05: a matrix-inferred requirement has no Amazon sentence behind it and must not be asked
-    // for one. The check still runs on everything the notice named, which is where a quote that
-    // has drifted from the seller's own text is a real problem.
-    if (
-      r.source !== "matrix" &&
-      (!`${w.notice}\n${w.formInstructions}`.includes(r.sourceQuote) || !r.sourceQuote.trim())
-    )
-      gaps.push(`Check the source of the request for: ${r.label}`);
+    // Shared with the UI's write path — see `sourceQuoteResolves`. This check used to inline its
+    // own `includes` test against the *current* notice only, which flagged every requirement
+    // carried through a reply round.
+    if (!sourceQuoteResolves(w, r)) gaps.push(`Check the source of the request for: ${r.label}`);
   }
   if (w.explanation.trim().length < 40)
     gaps.push(
@@ -695,10 +766,29 @@ export function computeReplyDelta(w: Workspace, replyId: string): ReplyDelta | n
   const reply = w.replies.find((r) => r.id === replyId);
   if (!reply || reply.applied) return null;
 
-  const asked = proposedRequirements({ notice: reply.text, formInstructions: "" });
+  /*
+    The revision this reply will become once applied. Every quote taken from the reply's own text
+    belongs to it, not to the request it replaces, and stamping it here is what lets a carried
+    requirement still resolve afterwards — `applyWorkspaceReply` moves the old notice into
+    `previousRequests` under `w.revision`, so both halves of the pair stay findable.
+  */
+  const nextRevision = w.revision + 1;
+  const asked = proposedRequirements({
+    notice: reply.text,
+    formInstructions: "",
+    revision: nextRevision,
+  });
   const askedByLabel = new Map(asked.map((r) => [r.label.toLowerCase(), r]));
   const items: ReplyDeltaItem[] = [];
   const matched = new Set<string>();
+
+  /*
+    A requirement saved before `sourceRevision` existed has a quote from the request that is current
+    right now, so that is what it is stamped with on the way past. Doing it here rather than in a
+    migration means the backfill happens exactly when the value stops being inferable — one step
+    later, the old notice is no longer the current one and the information is gone.
+  */
+  const held = (existing: Requirement) => existing.sourceRevision ?? w.revision;
 
   for (const existing of w.requirements) {
     const key = existing.label.toLowerCase();
@@ -708,17 +798,25 @@ export function computeReplyDelta(w: Workspace, replyId: string): ReplyDelta | n
       items.push({
         change: "reopened",
         // The source quote moves to the reply's wording, because that is the request now open.
-        requirement: { ...existing, status: "needed", sourceQuote: askedAgain.sourceQuote },
+        requirement: {
+          ...existing,
+          status: "needed",
+          sourceQuote: askedAgain.sourceQuote,
+          sourceRevision: nextRevision,
+        },
         replyQuote: askedAgain.sourceQuote,
       });
     } else if (existing.status === "reviewed") {
-      items.push({ change: "carried", requirement: { ...existing } });
+      items.push({
+        change: "carried",
+        requirement: { ...existing, sourceRevision: held(existing) },
+      });
     } else {
       items.push({
         change: "outstanding",
         requirement: askedAgain
-          ? { ...existing, sourceQuote: askedAgain.sourceQuote }
-          : { ...existing },
+          ? { ...existing, sourceQuote: askedAgain.sourceQuote, sourceRevision: nextRevision }
+          : { ...existing, sourceRevision: held(existing) },
         replyQuote: askedAgain?.sourceQuote,
       });
     }
