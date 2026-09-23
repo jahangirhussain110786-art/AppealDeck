@@ -375,3 +375,93 @@ test("an Amazon reply keeps the evidence a seller already reviewed, and says so 
     page.getByLabel("What does this record support or leave unclear?").first(),
   ).toHaveValue(/J-104/);
 });
+
+/**
+ * A-05 / A-06 / A-02. All three existed in src/core, were tested, were ticked off as delivered,
+ * and no seller could reach any of them: two rendered only in the dev-only gallery and the third
+ * was called only by the interview step engine retired on 22 Sep 2026. This test exists because
+ * that is the defect this codebase keeps repeating, and a unit test cannot see it.
+ */
+test("a seller can see why a record is wanted, ask for it, and say when they cannot get it", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await configure(page);
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
+
+  // A-05: the matrix sentence, on screen for the first time.
+  await expect(evidence.getByText("Why Amazon asks for this", { exact: false })).toBeVisible();
+  // A-06: the letter that asks the supplier for a compliant invoice.
+  await expect(
+    evidence.getByRole("group").filter({ hasText: "Supplier invoice request" }),
+  ).toBeVisible();
+  // The disqualifiers — the half sellers most often get wrong, and which nothing used to say.
+  await expect(evidence.getByText("What will not be accepted", { exact: true })).toBeVisible();
+
+  // A-02/A-03: the objection path. Before this there was no way to say "I can't get this".
+  await evidence.getByRole("button", { name: "I cannot obtain this record" }).click();
+  await expect(evidence.getByText("Change sourcing, and say so", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("What this costs you", { exact: false }).first()).toBeVisible();
+  await evidence
+    .getByLabel("Why can you not obtain it?")
+    .fill("The supplier closed in 2025 and no longer issues invoices of any kind.");
+  await evidence.getByRole("button", { name: "Choose this path" }).first().click();
+  await evidence.getByRole("button", { name: "Record that you cannot obtain this" }).click();
+  await expect(evidence.getByText("You cannot obtain this", { exact: true })).toBeVisible();
+
+  // The schema that guards every save strips keys it does not know, and has silently dropped two
+  // fields in this codebase before. A decline that does not survive a reload is a decline the
+  // seller has to make again.
+  await page.reload();
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await expect(evidence.getByText("You cannot obtain this", { exact: true })).toBeVisible();
+  await expect(evidence.getByText(/supplier closed in 2025/)).toBeVisible();
+});
+
+/**
+ * A-01, EF-2's attestation. The layer existed in readiness.ts and nothing in the product could
+ * write to it, so composer.ts's UNATTESTED_CLAIMS rule had never fired on a real case — and when
+ * it was rewired to the workspace it still did not fire, because critiquePoa's workspace branch
+ * returns before reaching it. Both were invisible without running the thing end to end.
+ */
+test("a Plan of Action asks the seller to stand behind the work they describe", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await page.goto("/case");
+  await page
+    .getByLabel("Amazon notice", { exact: true })
+    .fill(
+      "Your account has been deactivated. Please submit a Plan of Action explaining the root cause of the issue and the corrective actions you have taken.",
+    );
+  await page.getByLabel("Current response instructions").fill("Submit a Plan of Action.");
+  await page.getByRole("button", { name: "Confirm this route" }).click();
+  await page.getByRole("tab", { name: "Response", exact: true }).click();
+
+  const confirm = page.getByLabel(/I confirm each corrective action described above/);
+  // Nothing to stand behind yet, so there is nothing to tick.
+  await expect(confirm).toBeDisabled();
+  await page
+    .getByLabel("Corrective actions and their actual status")
+    .fill(
+      "We added a daily dispatch review on 16 September 2026, recorded by the warehouse owner.",
+    );
+  await expect(confirm).toBeEnabled();
+  await confirm.check();
+  await page.getByRole("button", { name: "Save response facts" }).click();
+
+  // It has to survive the validator that guards every vault write.
+  await page.reload();
+  await page.getByRole("tab", { name: "Response", exact: true }).click();
+  await expect(page.getByLabel(/I confirm each corrective action described above/)).toBeChecked();
+
+  // And an edit must clear it: an attestation that survives a rewrite is an attestation to text
+  // the seller never read, which is exactly what the copy under the box promises it is not.
+  await page
+    .getByLabel("Corrective actions and their actual status")
+    .fill("We changed something else entirely, and this sentence was never confirmed by anyone.");
+  await expect(
+    page.getByLabel(/I confirm each corrective action described above/),
+  ).not.toBeChecked();
+});

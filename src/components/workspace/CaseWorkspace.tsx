@@ -1102,6 +1102,7 @@ function WorkspaceInner({
                 <EvidenceReview
                   key={`${r.id}-${r.recordId}-${r.status}-${r.sourceQuote}`}
                   item={r}
+                  violationKind={file.kind}
                   records={records}
                   busy={busy}
                   draftNote={w.draft?.[evidenceNoteKey(r.id)]}

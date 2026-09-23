@@ -64,6 +64,7 @@ export function ResponseReview({
   const [preventiveMeasures, setPreventive] = useState(
     draft?.["response.preventiveMeasures"] ?? w.preventiveMeasures,
   );
+  const [attested, setAttested] = useState(Boolean(w.correctiveActionsAttested));
   const [reviewed, setReviewed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [receipt, setReceipt] = useState("");
@@ -80,7 +81,10 @@ export function ResponseReview({
   const dirty =
     explanation !== w.explanation ||
     correctiveActions !== w.correctiveActions ||
-    preventiveMeasures !== w.preventiveMeasures;
+    preventiveMeasures !== w.preventiveMeasures ||
+    // A-01: ticking the confirmation is itself a change worth saving. Without this the Save button
+    // stays disabled and the attestation never reaches the vault.
+    attested !== Boolean(w.correctiveActionsAttested);
   const gaps = workspaceGaps(w);
   const supported = workspaceCanCompose(w);
   return (
@@ -140,8 +144,39 @@ export function ResponseReview({
                       next === w.correctiveActions ? undefined : next,
                     );
                     setReviewed(false);
+                    // An attestation that survives an edit is an attestation to text the seller
+                    // never read. The copy under the box promises this, so it has to be true.
+                    setAttested(false);
                   }}
                 />
+                {/*
+                  A-01 (EF-2). The attestation layer was built in readiness.ts and reachable by
+                  nobody, so composer.ts's UNATTESTED_CLAIMS rule had never fired on a real case.
+                  Amazon treats a corrective-action claim it later finds untrue far more harshly
+                  than an incomplete appeal, which is why the seller confirms it themselves and why
+                  the copy says plainly that we cannot check it.
+                */}
+                <label className="flex items-start gap-3 text-sm">
+                  <input
+                    className="mt-1 h-4 w-4 accent-primary"
+                    type="checkbox"
+                    checked={attested}
+                    disabled={busy || !correctiveActions.trim()}
+                    onChange={(e) => {
+                      setAttested(e.target.checked);
+                      setReviewed(false);
+                    }}
+                  />
+                  {C.attestation.label}
+                </label>
+                {w.correctiveActionsAttested && attested && !dirty && (
+                  <p className="text-xs text-muted-foreground">
+                    {C.attestation.recorded.replace(
+                      "{date}",
+                      formatDate(w.correctiveActionsAttested.at),
+                    )}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="workspace-prevention">
@@ -169,7 +204,15 @@ export function ResponseReview({
             variant="outline"
             disabled={busy || !dirty}
             onClick={() =>
-              void onSave({ ...w, explanation, correctiveActions, preventiveMeasures })
+              void onSave({
+                ...w,
+                explanation,
+                correctiveActions,
+                preventiveMeasures,
+                correctiveActionsAttested: attested
+                  ? (w.correctiveActionsAttested ?? { at: new Date().toISOString() })
+                  : undefined,
+              })
             }
           >
             Save response facts

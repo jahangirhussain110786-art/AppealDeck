@@ -10,6 +10,10 @@ export const WORKSPACE = {
     needed: "Needs review",
     waiting: "Waiting for information",
     reviewed: "Reviewed by you",
+    // A-02/A-03. Named for what the seller told us, not for a judgement about them: the product
+    // does not decide whether a record is obtainable, and a seller in this state has done
+    // something honest, not failed at something.
+    cannot_obtain: "You cannot obtain this",
   },
   routeIntro: "Start with the actual request",
   routeHelp: "Add your notice, check the current request, then confirm your route.",
@@ -39,6 +43,38 @@ export const WORKSPACE = {
     weak: "This draft is thin. Work through the notes below before you copy it.",
   },
   waitingHelp: "Ask the issuer for the missing records. Continue other tasks while you wait.",
+  // A-05/A-06/A-02, wired 23 Sep 2026. All three existed in `src/core` and were reachable by no
+  // seller. Each string below describes the record or the seller's own choice, and none of them
+  // says anything about what Amazon will decide.
+  guidance: {
+    why: "Why Amazon asks for this",
+    fields: "What a record like this has to show",
+    disqualifiers: "What will not be accepted",
+    letters: "Ask for it",
+  },
+  // A-01, EF-2's attestation. The wording follows the spec's: it confirms the work is genuinely
+  // done, and it says plainly that AppealDeck cannot and does not verify any of it — because a
+  // seller could otherwise read the tick as the product having checked something.
+  attestation: {
+    label:
+      "I confirm each corrective action described above is genuinely complete, as written. AppealDeck cannot and does not verify this.",
+    recorded: "Confirmed by you on {date}. Editing this section clears the confirmation.",
+  },
+  cannotObtain: {
+    trigger: "I cannot obtain this record",
+    title: "You cannot obtain this record",
+    help: "Say why in your own words. The response states it as you write it, and does not claim a record you do not have.",
+    reasonLabel: "Why can you not obtain it?",
+    reasonPlaceholder: "For example: the supplier has closed and no longer issues invoices…",
+    alternatives: "What you can do instead",
+    consequence: "What this costs you",
+    choose: "Choose this path",
+    chosen: "Chosen",
+    confirm: "Record that you cannot obtain this",
+    reopen: "I can obtain it after all",
+    recorded:
+      "Recorded. Your response names this record as missing, in your words. The draft stays a working draft while evidence is missing.",
+  },
   // B-03. Until 23 Sep 2026 a reply reset every requirement, so the seller redid the whole
   // evidence review each round. This is what they now see before confirming. Each line describes
   // a state of their own case and says nothing about how Amazon will treat the next response.

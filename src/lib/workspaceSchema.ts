@@ -17,12 +17,23 @@ const requirement = z.object({
   id,
   label: z.string().min(1).max(500),
   sourceQuote: z.string().min(1).max(2000),
-  status: z.enum(["needed", "waiting", "reviewed"]),
+  status: z.enum(["needed", "waiting", "reviewed", "cannot_obtain"]),
   note: z.string().max(4000),
   recordId: id.optional(),
   filename: z.string().min(1).max(500).optional(),
   contentHash: z.string().min(1).max(200).optional(),
   page: z.number().int().min(1).max(10000).optional(),
+  // A-02: this validator strips keys it does not know, so a field added to `Requirement` and not
+  // added here is silently dropped on the way to the vault. That has already happened twice in
+  // this codebase (#91's `source`/`issues`), and a dropped decline would turn "I told you I can't
+  // get this" back into an unexplained blank the next time the case is opened.
+  declined: z
+    .object({
+      reason: z.string().min(1).max(1000),
+      alternativeId: z.string().max(100).optional(),
+      at: z.string().min(1).max(40),
+    })
+    .optional(),
 });
 export const WorkspaceSchema = z
   .object({
@@ -69,6 +80,10 @@ export const WorkspaceSchema = z
       .max(99),
     explanation: text,
     correctiveActions: text,
+    // A-01: added here in the same edit as the field itself. This validator strips what it does
+    // not know, and an attestation dropped on the way to the vault would leave the critic warning
+    // about claims the seller had in fact stood behind.
+    correctiveActionsAttested: z.object({ at: z.string().min(1).max(40) }).optional(),
     preventiveMeasures: text,
     history: z
       .array(z.object({ id, at: z.string().datetime(), message: z.string().max(2000) }))

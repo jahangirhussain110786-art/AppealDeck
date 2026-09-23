@@ -223,6 +223,10 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
     checkFutureTenseLanguage(draft, findings);
     checkBlameShifting(draft, findings);
     checkVagueTimePhrases(draft, findings);
+    // A-01: this branch returns early, so EF-2's attestation check never ran on a workspace case
+    // — which, since the classic interview was retired, is every case. The legacy `actionItems`
+    // half of it is a no-op here, because nothing on a workspace case marks one done.
+    checkUnattestedClaims(draft, data, findings);
     return { findings, passed: !findings.some((f) => f.severity === "error") };
   }
 
@@ -247,11 +251,32 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
   return { findings, passed };
 }
 
+/**
+ * EF-2's attestation check (A-01). Rewired to the workspace on 23 Sep 2026.
+ *
+ * It used to read `data.actionItems`, which only the retired interview's `applyAnswer` could ever
+ * set to `"done"` — so on every real case the list was empty and this rule had never once fired.
+ * The workspace's corrective-actions section is where a seller now states what they did, and that
+ * section is a set of claims about completed work: Amazon treats a claim it later finds untrue far
+ * more harshly than an incomplete appeal, which is the whole reason EF-2 asked for an attestation.
+ *
+ * A warning, never an error — the seller submits, and a hard block would be this product deciding
+ * it knows better than the person who did the work.
+ */
 function checkUnattestedClaims(
   _draft: PoaDraft,
   data: CaseFileData,
   findings: CriticFinding[],
 ): void {
+  const w = data.workspace;
+  if (w?.protocol === "operational" && w.correctiveActions.trim() && !w.correctiveActionsAttested) {
+    findings.push({
+      severity: "warning",
+      code: "UNATTESTED_CLAIMS",
+      message:
+        "Your corrective actions are not confirmed. Tick the confirmation under that section so this draft does not state completed work you have not stood behind.",
+    });
+  }
   const unattested = data.actionItems.filter((a) => a.status === "done" && !a.attestation);
   if (unattested.length > 0) {
     findings.push({

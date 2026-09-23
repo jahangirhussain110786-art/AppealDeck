@@ -2,6 +2,7 @@ import type { CaseFile } from "./caseFile";
 import type { PoaDraft } from "./composer";
 import { determineResponseType } from "./responseType";
 import type { ResponseType } from "./responseType";
+import type { EvidenceKind } from "./evidenceModel";
 import type { NoticeIssue } from "./noticeIssues";
 import { detectIssues, hasMultipleIssues } from "./noticeIssues";
 
@@ -45,12 +46,25 @@ export type Requirement = {
   id: string;
   label: string;
   sourceQuote: string;
-  status: "needed" | "waiting" | "reviewed";
+  /**
+   * `cannot_obtain` added 23 Sep 2026 (A-02/A-03). Until then the only answers a seller could give
+   * were "here it is" and "I'm waiting", so someone who genuinely cannot get a compliant invoice —
+   * the most common dead end in this product — had no way to say so and stayed blocked forever on
+   * a gap they could not clear. AM-17 called handling that objection the moment agencies earn
+   * their fee.
+   */
+  status: "needed" | "waiting" | "reviewed" | "cannot_obtain";
   note: string;
   recordId?: string;
   filename?: string;
   contentHash?: string;
   page?: number;
+  /**
+   * Why it cannot be obtained, in the seller's own words, and which of the predefined alternatives
+   * they chose. Recorded rather than inferred: the response has to state the gap honestly, and a
+   * declined item is not the same as a forgotten one (D6).
+   */
+  declined?: { reason: string; alternativeId?: string; at: string };
 };
 export interface Workspace {
   version: 1;
@@ -78,6 +92,17 @@ export interface Workspace {
   issuesConfirmed?: boolean;
   explanation: string;
   correctiveActions: string;
+  /**
+   * A-01 (EF-2's attestation), wired 23 Sep 2026. A Plan of Action's corrective-actions section is
+   * a set of claims about what the seller has actually done, and Amazon treats a claim it later
+   * finds untrue far more harshly than an incomplete appeal. The attestation layer was built in
+   * `readiness.ts` and reachable by nobody: the only code that could set it was the interview's
+   * `applyAnswer`, so `composer.ts`'s `UNATTESTED_CLAIMS` rule could never fire on any real case.
+   *
+   * Recorded with a timestamp, and cleared whenever the text changes — an attestation that
+   * survives an edit is an attestation to something the seller never read.
+   */
+  correctiveActionsAttested?: { at: string };
   preventiveMeasures: string;
   history: Array<{ id: string; at: string; message: string }>;
   previousRequests: Array<{
@@ -136,6 +161,56 @@ export function newWorkspace(): Workspace {
   };
 }
 
+/**
+ * The records this parser can name, each tied to the `EvidenceKind` it is an instance of.
+ *
+ * The pairing lives here, beside the only code that produces these labels, because the alternative
+ * is a second copy somewhere else that drifts — the mistake #86 was written to avoid when
+ * `noticeIssues.ts` was made to read `KIND_PATTERNS` rather than restate it. `evidenceKind` is what
+ * lets a workspace requirement reach the evidence matrix: why Amazon asks for it, what disqualifies
+ * it, which letter helps obtain it, and what the honest alternatives are if it cannot be obtained.
+ *
+ * This is **not** B-05. The union with `evidenceModel.requirementsFor()` — raising a requirement
+ * Amazon did not spell out — is still unbuilt. This only connects the ones the notice does name.
+ */
+export const REQUIREMENT_CANDIDATES: ReadonlyArray<{
+  pattern: RegExp;
+  label: string;
+  evidenceKind: EvidenceKind;
+}> = [
+  { pattern: /\binvoices?\b/i, label: "Supplier invoice", evidenceKind: "supplier_invoice" },
+  {
+    pattern: /\b(letter of authorization|authori[sz]ation letter|LOA)\b/i,
+    label: "Authorization letter",
+    evidenceKind: "brand_authorization",
+  },
+  {
+    pattern: /\b(identity document|government.issued (?:ID|identification))\b/i,
+    label: "Requested identity record",
+    evidenceKind: "identity_doc",
+  },
+  {
+    pattern: /\b(sales report|sales records?|order report|metrics? report)\b/i,
+    label: "Sales or performance record",
+    evidenceKind: "metric_export",
+  },
+  {
+    pattern: /\b(proof of (?:correction|changes)|listing screenshots?)\b/i,
+    label: "Listing correction record",
+    evidenceKind: "listing_fix_proof",
+  },
+];
+
+/**
+ * The evidence kind a requirement is an instance of, or undefined for one the seller added by
+ * hand. Undefined is a normal answer, not a failure: a hand-added requirement still works, it just
+ * has no matrix guidance behind it, and the UI shows nothing rather than guessing.
+ */
+export function evidenceKindForRequirement(label: string): EvidenceKind | undefined {
+  return REQUIREMENT_CANDIDATES.find((c) => c.label.toLowerCase() === label.toLowerCase())
+    ?.evidenceKind;
+}
+
 /** Suggest only record names present in an explicit request; seller confirms coverage. */
 export function proposedRequirements(
   w: Pick<Workspace, "notice" | "formInstructions">,
@@ -149,20 +224,7 @@ export function proposedRequirements(
         /\b(provide|submit|upload|send|include|request(?:ed|ing)?)\b/i.test(s) &&
         !/\b(do not|don't|not required|no need to|no additional)\b/i.test(s),
     );
-  const candidates: Array<[RegExp, string]> = [
-    [/\binvoices?\b/i, "Supplier invoice"],
-    [/\b(letter of authorization|authori[sz]ation letter|LOA)\b/i, "Authorization letter"],
-    [
-      /\b(identity document|government.issued (?:ID|identification))\b/i,
-      "Requested identity record",
-    ],
-    [
-      /\b(sales report|sales records?|order report|metrics? report)\b/i,
-      "Sales or performance record",
-    ],
-    [/\b(proof of (?:correction|changes)|listing screenshots?)\b/i, "Listing correction record"],
-  ];
-  return candidates.flatMap(([pattern, label]) => {
+  return REQUIREMENT_CANDIDATES.flatMap(({ pattern, label }) => {
     const sourceQuote = sources.find((s) => pattern.test(s));
     return sourceQuote
       ? [{ id: crypto.randomUUID(), label, sourceQuote, status: "needed" as const, note: "" }]
@@ -365,7 +427,15 @@ export function workspaceGaps(w: Workspace): string[] {
   if (w.protocol === "documents" && !w.requirements.length)
     gaps.push("Add the requested document to your plan.");
   for (const r of w.requirements) {
-    if (
+    if (r.status === "cannot_obtain" && r.declined?.reason.trim()) {
+      /*
+        A-02: a record the seller has told us they cannot obtain is still a gap — the evidence is
+        genuinely absent and the draft must stay a working draft. But it is an *acknowledged* gap,
+        and saying "review and link evidence" to someone who has already explained they cannot get
+        it is the dead end this feature exists to remove. The response names it in their words.
+      */
+      gaps.push(`Named as unobtainable, and stated in the response: ${r.label}`);
+    } else if (
       r.status !== "reviewed" ||
       !r.recordId ||
       !r.filename ||
@@ -426,6 +496,20 @@ export function composeWorkspace(
         .map((r) => `${r.filename}, page ${r.page}: ${r.note}`)
         .join("\n") || "No reviewed records linked.",
   });
+  /*
+    A-02: a record the seller cannot obtain is stated in the response, in their own words, rather
+    than left as a silent hole for Amazon to notice. Its own section, because a reader must not
+    mistake a declared gap for a supplied record — that is the distinction the whole feature turns
+    on, and the reason the decline is recorded rather than inferred.
+  */
+  const declined = w.requirements.filter(
+    (r) => r.status === "cannot_obtain" && r.declined?.reason.trim(),
+  );
+  if (declined.length)
+    sections.push({
+      heading: "Records I could not obtain",
+      body: declined.map((r) => `${r.label}: ${r.declined!.reason.trim()}`).join("\n"),
+    });
   if (gaps.length)
     sections.push({ heading: "Unresolved items — working notes", body: gaps.join("\n") });
   return {

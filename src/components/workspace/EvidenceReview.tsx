@@ -14,10 +14,13 @@ import { DocumentCheckPanel } from "@/components/DocumentCheckPanel";
 import type { CheckOutcome } from "@/lib/documentChecks/runCheck";
 import type { Requirement } from "@/core/workspace";
 import type { VaultListItem } from "@/core/vault/vault";
+import { RequirementGuidance } from "./RequirementGuidance";
+import type { ViolationKind } from "@/core";
 import { WORKSPACE as C } from "@/content/workspace";
 
 export function EvidenceReview({
   item,
+  violationKind,
   records,
   busy,
   draftNote,
@@ -31,6 +34,9 @@ export function EvidenceReview({
   onCheck,
 }: {
   item: Requirement;
+  /** Narrows the evidence-matrix guidance to this case: the same record is asked for different
+   * reasons by different violations, and the wrong sentence is worse than no sentence. */
+  violationKind: ViolationKind;
   records: VaultListItem[];
   busy: boolean;
   draftNote?: string;
@@ -223,6 +229,22 @@ export function EvidenceReview({
           </p>
         )}
         <DetailDisclosure title="How to review this file">{C.manualReview}</DetailDisclosure>
+        {/*
+          A-05 / A-06 / A-02: why Amazon asks, what a compliant record shows, what will not pass,
+          the letter that asks for it, and the honest path when it cannot be obtained. All of it
+          existed in src/core and no seller could reach any of it before 23 Sep 2026.
+        */}
+        <RequirementGuidance
+          item={item}
+          violationKind={violationKind}
+          busy={busy}
+          onChange={onChange}
+        />
+        {item.status === "cannot_obtain" && item.declined && (
+          <p className="text-xs text-muted-foreground">
+            Recorded {item.declined.at.slice(0, 10)}. Change it any time.
+          </p>
+        )}
         <details className="border-t border-border pt-3">
           <summary className="cursor-pointer text-sm font-medium">
             Correct this task or mark it no longer applicable

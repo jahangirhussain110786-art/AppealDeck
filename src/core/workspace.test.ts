@@ -460,3 +460,126 @@ describe("reply delta", () => {
     expect(parsed.data!.requirements).toHaveLength(delta.requirements.length);
   });
 });
+
+/**
+ * A-02 / A-03. Before 23 Sep 2026 the only answers a seller could give a requirement were "here it
+ * is" and "I'm waiting". Someone who genuinely could not obtain a compliant invoice — the most
+ * common dead end in this product — had no way to say so and stayed blocked on a gap they could
+ * never clear, with `workspaceGaps` telling them forever to "review and link evidence".
+ */
+describe("a record the seller cannot obtain", () => {
+  function declined(reason: string): Workspace {
+    const w = documentWorkspace();
+    w.requirements = w.requirements.map((r) => ({
+      ...r,
+      status: "cannot_obtain" as const,
+      declined: { reason, alternativeId: "sourcing_change", at: "2026-09-23T00:00:00.000Z" },
+    }));
+    return w;
+  }
+
+  it("is a named gap, not an instruction to do the impossible", () => {
+    const gaps = workspaceGaps(declined("The supplier closed in 2025 and issues no invoices."));
+    expect(gaps).toContain("Named as unobtainable, and stated in the response: Supplier invoice");
+    expect(gaps).not.toContain("Review and link evidence for: Supplier invoice");
+  });
+
+  it("still keeps the draft a working draft, because the evidence really is missing", () => {
+    const w = declined("The supplier closed in 2025 and issues no invoices.");
+    expect(composeWorkspace({ kind: "UNKNOWN", workspace: w }, 1).mode.mode).toBe("gap-draft");
+  });
+
+  it("states the gap in the seller's own words, in a section of its own", () => {
+    const reason = "The supplier closed in 2025 and issues no invoices.";
+    const draft = composeWorkspace({ kind: "UNKNOWN", workspace: declined(reason) }, 1);
+    const section = draft.sections.find((s) => s.heading === "Records I could not obtain")!;
+    // Its own heading, because a reader must never mistake a declared gap for a supplied record.
+    expect(section).toBeDefined();
+    expect(section.body).toContain(reason);
+    expect(draft.sections.find((s) => s.heading === "Supporting records")!.body).not.toContain(
+      reason,
+    );
+  });
+
+  it("does not add the section when nothing was declined", () => {
+    const draft = composeWorkspace({ kind: "UNKNOWN", workspace: documentWorkspace() }, 1);
+    expect(draft.sections.find((s) => s.heading === "Records I could not obtain")).toBeUndefined();
+  });
+
+  it("falls back to the ordinary gap when a decline carries no reason", () => {
+    const w = documentWorkspace();
+    w.requirements = w.requirements.map((r) => ({ ...r, status: "cannot_obtain" as const }));
+    // An empty decline is not an explanation, and must not buy the seller a softer message.
+    expect(workspaceGaps(w)).toContain("Review and link evidence for: Supplier invoice");
+  });
+
+  it("survives the schema that guards every save", () => {
+    // This validator strips keys it does not know, and that has already silently dropped two
+    // fields in this codebase (#91's `source` and `issues`). A dropped decline would turn "I told
+    // you I cannot get this" back into an unexplained blank the next time the case is opened.
+    const w = declined("The supplier closed in 2025 and issues no invoices.");
+    const parsed = WorkspaceSchema.safeParse(w);
+    expect(parsed.success, JSON.stringify(parsed.error?.issues ?? [])).toBe(true);
+    expect(parsed.data!.requirements[0]!.status).toBe("cannot_obtain");
+    expect(parsed.data!.requirements[0]!.declined?.reason).toContain("supplier closed");
+    expect(parsed.data!.requirements[0]!.declined?.alternativeId).toBe("sourcing_change");
+  });
+});
+
+/**
+ * A-01, EF-2's attestation. The layer existed in `readiness.ts` and nothing could write to it: the
+ * only code that set `status: "done"` was the interview's `applyAnswer`, so `UNATTESTED_CLAIMS` had
+ * never fired on a single real case. A Plan of Action's corrective-actions section is a set of
+ * claims about completed work, and Amazon treats a claim it later finds untrue far more harshly
+ * than an incomplete appeal.
+ */
+describe("confirming corrective actions", () => {
+  function operational(extra: Partial<Workspace> = {}): Workspace {
+    return {
+      ...documentWorkspace(),
+      protocol: "operational" as const,
+      explanation:
+        "The listing was suppressed because our dispatch check did not run on 12 September 2026.",
+      correctiveActions:
+        "We added a daily dispatch review on 16 September 2026, recorded by the warehouse owner.",
+      preventiveMeasures:
+        "The operations owner checks unresolved orders before the cutoff and records the review.",
+      ...extra,
+    };
+  }
+
+  it("warns when the draft states completed work nobody has stood behind", () => {
+    const file = { ...createCaseFile("POLICY"), workspace: operational() };
+    const findings = critiquePoa(composePoa(file), file).findings;
+    const claim = findings.find((f) => f.code === "UNATTESTED_CLAIMS");
+    expect(claim).toBeDefined();
+    // A warning, never an error: a hard block would be the product overruling the person who did
+    // the work. The seller submits, and D6 forbids us pretending otherwise.
+    expect(claim!.severity).toBe("warning");
+  });
+
+  it("stops warning once the seller confirms", () => {
+    const file = {
+      ...createCaseFile("POLICY"),
+      workspace: operational({ correctiveActionsAttested: { at: "2026-09-23T00:00:00.000Z" } }),
+    };
+    const findings = critiquePoa(composePoa(file), file).findings;
+    expect(findings.find((f) => f.code === "UNATTESTED_CLAIMS")).toBeUndefined();
+  });
+
+  it("says nothing on a route that has no corrective actions", () => {
+    // A document response makes no claims about completed work, so the check must stay silent
+    // rather than becoming noise on every draft.
+    const file = { ...createCaseFile("POLICY"), workspace: documentWorkspace() };
+    const findings = critiquePoa(composePoa(file), file).findings;
+    expect(findings.find((f) => f.code === "UNATTESTED_CLAIMS")).toBeUndefined();
+  });
+
+  it("survives the schema that guards every save", () => {
+    const parsed = WorkspaceSchema.safeParse(
+      operational({ correctiveActionsAttested: { at: "2026-09-23T00:00:00.000Z" } }),
+    );
+    expect(parsed.success, JSON.stringify(parsed.error?.issues ?? [])).toBe(true);
+    expect(parsed.data!.correctiveActionsAttested?.at).toBe("2026-09-23T00:00:00.000Z");
+  });
+});
