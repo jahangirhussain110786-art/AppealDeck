@@ -17,7 +17,7 @@ import { assessNovelty, shouldWarnBeforeSubmit } from "./submissionNovelty";
 import { noveltyRequired } from "./caseState";
 import { WorkspaceSchema } from "@/lib/workspaceSchema";
 import { composePoa, critiquePoa } from "./composer";
-import { createCaseFile } from "./interviewEngine";
+import { createCaseFile } from "./caseFile";
 import { CaseDataSchema } from "@/lib/caseSchema";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 

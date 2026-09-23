@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildCaseExport } from "./workspaceExport";
-import { createCaseFile } from "@/core/interviewEngine";
+import { createCaseFile } from "@/core/caseFile";
 import { documentWorkspace } from "@/core/workspace.test";
 
 describe("buildCaseExport", () => {

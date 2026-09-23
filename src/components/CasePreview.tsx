@@ -6,7 +6,7 @@ import { requirementsFor } from "@/core/evidenceModel";
 import type { EvidenceKind } from "@/core/evidenceModel";
 import type { ViolationKind } from "@/core";
 import { nextBestActions } from "@/core/caseState";
-import type { CaseFile } from "@/core/interviewEngine";
+import type { CaseFile } from "@/core/caseFile";
 
 interface CasePreviewProps {
   kind: ViolationKind;

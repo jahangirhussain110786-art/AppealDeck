@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { withCaseEvidence } from "./caseEvidence";
-import { createCaseFile } from "@/core/interviewEngine";
+import { createCaseFile } from "@/core/caseFile";
 import { newWorkspace } from "@/core/workspace";
 import type { Vault } from "@/core/vault/vault";
 

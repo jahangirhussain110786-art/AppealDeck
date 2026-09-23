@@ -2,7 +2,16 @@
 
 import { Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { InterviewProgress } from "@/core/interviewEngine";
+/**
+ * Local, because the step engine that used to define this was deleted on 23 Sep 2026 with the
+ * classic interview (A-04). The Stepper is kept deliberately as a gallery primitive with no
+ * current consumer — see `docs/handoffs/2026-09-23-gap-classification.md` A-10 — and a primitive
+ * should own the shape of its own props rather than borrow one from a journey that no longer runs.
+ */
+export interface StepperProgress {
+  current: number;
+  total: number;
+}
 
 export interface StepperStep {
   id: string;
@@ -14,7 +23,7 @@ export interface StepperStep {
 export interface StepperProps {
   steps: StepperStep[];
   currentId?: string;
-  progress?: InterviewProgress;
+  progress?: StepperProgress;
   className?: string;
 }
 

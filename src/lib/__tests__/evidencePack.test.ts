@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildEvidenceManifest, manifestFilename, type PackRecord } from "@/lib/evidencePack";
 import { newWorkspace } from "@/core/workspace";
-import type { CaseFile } from "@/core/interviewEngine";
+import type { CaseFile } from "@/core/caseFile";
 
 const file = { id: "case-1", kind: "INAUTHENTIC_DOCUMENTS" } as CaseFile;
 

@@ -1,4 +1,4 @@
-import type { CaseFile } from "@/core/interviewEngine";
+import type { CaseFile } from "@/core/caseFile";
 import type { Workspace } from "@/core/workspace";
 import { PROTOCOL_LABELS, workspaceGaps } from "@/core/workspace";
 import { formatDate } from "./format";

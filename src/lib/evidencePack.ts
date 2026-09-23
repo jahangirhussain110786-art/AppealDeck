@@ -16,7 +16,7 @@
  * Nothing here is generated or inferred. Every line comes from the vault's own records.
  */
 
-import type { CaseFile } from "@/core/interviewEngine";
+import type { CaseFile } from "@/core/caseFile";
 import type { Workspace } from "@/core/workspace";
 import { formatDate } from "./format";
 

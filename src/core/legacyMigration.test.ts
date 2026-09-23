@@ -6,7 +6,7 @@ import {
   MIGRATION_HEADINGS,
 } from "./legacyMigration";
 import { newWorkspace } from "./workspace";
-import type { CaseFile } from "./interviewEngine";
+import type { CaseFile } from "./caseFile";
 import type { ActionItem } from "./readiness";
 
 function legacyCase(over: Partial<CaseFile> = {}): CaseFile {

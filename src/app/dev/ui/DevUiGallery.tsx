@@ -475,7 +475,7 @@ export function DevUiGallery() {
                 { id: "review", label: "Review", state: "todo" },
               ]}
               currentId="timeline"
-              progress={{ current: 2, total: 4, pendingEvidence: 1 }}
+              progress={{ current: 2, total: 4 }}
             />
           </CardContent>
         </Card>

@@ -18,7 +18,7 @@ import {
   workspaceGaps,
   type Workspace,
 } from "@/core/workspace";
-import type { CaseFile } from "@/core/interviewEngine";
+import type { CaseFile } from "@/core/caseFile";
 import type { Vault } from "@/core/vault/vault";
 import type { CriticResult, PoaDraft } from "@/core/composer";
 import { BeforeYouSubmitChecklist } from "@/components/BeforeYouSubmitChecklist";

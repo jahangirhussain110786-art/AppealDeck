@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CaseDataSchema } from "./caseSchema";
-import { createCaseFile } from "@/core/interviewEngine";
+import { createCaseFile } from "@/core/caseFile";
 describe("case boundary schema", () => {
   it("preserves current identity, narrative, attestation and deadlines", () => {
     const file = {

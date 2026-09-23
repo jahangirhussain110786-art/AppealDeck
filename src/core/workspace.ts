@@ -1,4 +1,4 @@
-import type { CaseFile } from "./interviewEngine";
+import type { CaseFile } from "./caseFile";
 import type { PoaDraft } from "./composer";
 import { determineResponseType } from "./responseType";
 import type { ResponseType } from "./responseType";

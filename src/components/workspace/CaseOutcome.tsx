@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { CaseLog } from "@/lib/caseStore";
-import type { CaseFile } from "@/core/interviewEngine";
+import type { CaseFile } from "@/core/caseFile";
 import { formatDate } from "@/lib/format";
 
 const RESOLUTION_LABEL: Record<NonNullable<CaseLog["resolution"]>["status"], string> = {

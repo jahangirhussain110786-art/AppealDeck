@@ -18,7 +18,7 @@
  * because the first thing they will do is edit it.
  */
 
-import type { CaseFile } from "./interviewEngine";
+import type { CaseFile } from "./caseFile";
 import type { Workspace } from "./workspace";
 import { newWorkspace } from "./workspace";
 

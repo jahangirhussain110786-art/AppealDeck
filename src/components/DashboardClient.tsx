@@ -40,7 +40,7 @@ import {
 } from "@/core";
 import { buildOutcomeRecord, outcomeFromReplyCategory } from "@/core/outcomeModel";
 import { OutcomeShareCard } from "@/components/OutcomeShareCard";
-import type { CaseFile } from "@/core/interviewEngine";
+import type { CaseFile } from "@/core/caseFile";
 import type { CaseState, CaseStateContext, ReplyCategory } from "@/core/caseState";
 import { buildClockBrief, type ClockBrief } from "@/core";
 import { ClockBriefCard } from "@/components/ClockBriefCard";

@@ -180,16 +180,8 @@ export {
   lettersForEvidenceKind,
 };
 export type { LetterTemplate } from "./letters";
-export { createCaseFile, nextStep, applyAnswer, interviewProgress } from "./interviewEngine";
-export type {
-  StepKind,
-  InputType,
-  EnumOption,
-  InterviewStep,
-  StepAnswer,
-  CaseFile,
-  InterviewProgress,
-} from "./interviewEngine";
+export { createCaseFile } from "./caseFile";
+export type { CaseFile } from "./caseFile";
 export {
   composePoa,
   critiquePoa,

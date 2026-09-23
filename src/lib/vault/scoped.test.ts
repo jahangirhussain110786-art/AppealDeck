@@ -7,7 +7,7 @@ vi.mock("@/lib/supabase/client", () => ({
   createSupabaseBrowserClient: () => ({ auth: { getUser } }),
 }));
 import { ScopedBrowserVault, guestVaultName, forgetGuestVault } from "./scoped";
-import { createCaseFile } from "@/core/interviewEngine";
+import { createCaseFile } from "@/core/caseFile";
 import { saveCaseFile, listCases, loadCaseFile } from "@/lib/caseStore";
 import { ensureFreshGuestSession } from "./guestSession";
 const databases = new Set<string>();

@@ -16,8 +16,8 @@ import {
   setActiveCaseId,
   setCaseArchived,
 } from "@/lib/caseStore";
-import type { CaseFile } from "@/core/interviewEngine";
-import { createCaseFile } from "@/core/interviewEngine";
+import type { CaseFile } from "@/core/caseFile";
+import { createCaseFile } from "@/core/caseFile";
 import type { CaseLog } from "@/lib/caseStore";
 
 /** The literal every seller's vault used before multi-case support (14 Sep 2026) — real

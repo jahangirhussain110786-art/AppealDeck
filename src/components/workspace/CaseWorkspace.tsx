@@ -31,7 +31,7 @@ import { RequestReview } from "./RequestReview";
 import { EvidenceReview } from "./EvidenceReview";
 import { ResponseReview, type WorkspaceResponse } from "./ResponseReview";
 import { DetailDisclosure, IconTile, VIEW_ICONS } from "./WorkspaceVisuals";
-import { createCaseFile, type CaseFile } from "@/core/interviewEngine";
+import { createCaseFile, type CaseFile } from "@/core/caseFile";
 import {
   isSeverityGated,
   computeDeadlines,

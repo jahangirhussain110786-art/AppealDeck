@@ -1,4 +1,4 @@
-import { createCaseFile } from "@/core/interviewEngine";
+import { createCaseFile } from "@/core/caseFile";
 import { newWorkspace, proposedRequirements, routeWorkspace } from "@/core/workspace";
 import type { ViolationKind } from "@/core";
 import type { Vault } from "@/core/vault/vault";

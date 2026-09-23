@@ -1,7 +1,7 @@
 "use client";
 
 import type { Vault } from "@/core/vault/vault";
-import type { CaseFile } from "@/core/interviewEngine";
+import type { CaseFile } from "@/core/caseFile";
 import type { CaseState, ReplyCategory } from "@/core/caseState";
 import type { EvidenceKind } from "@/core/evidenceModel";
 import type { ViolationKind } from "@/core";

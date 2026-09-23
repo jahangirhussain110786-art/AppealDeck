@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PROTOCOL_LABELS, workspaceGaps } from "@/core/workspace";
-import type { CaseFile } from "@/core/interviewEngine";
+import type { CaseFile } from "@/core/caseFile";
 import type { CaseIndexEntry, CaseLog } from "@/lib/caseStore";
 import { formatDate } from "@/lib/format";
 
