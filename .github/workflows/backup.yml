@@ -1,0 +1,101 @@
+# B-13. Until 23 September 2026 there was no database backup of any kind.
+#
+# The vault is deliberately local-first and has no server copy by design, so this is not about
+# seller documents. It is about the rows only the server holds: `licenses` and per-case
+# entitlements — what a seller paid for — plus `outcome_events` and `case_reminders`. Losing the
+# licence table means every paying customer loses access to the case they bought, with no record
+# on this side of what they are owed. That is the one failure this project could not talk its way
+# out of, and the cost of it is not proportional to the size of this file.
+#
+# Specified in `Planning/02-PHASE-1-FOUNDATION/01-ACCOUNTS-AND-SERVICES.md` item 8 and never built.
+#
+# **This job fails when the secrets are absent, and that is deliberate.** A backup that reports
+# success while writing nothing is the exact defect this repository has now hit several times — an
+# unregistered cron, a route nothing called, a feature with no door. A red run the founder has to
+# act on is the honest signal. Until `SUPABASE_DB_URL` and `BACKUP_PASSPHRASE` are set, the nightly
+# run will fail; disabling this workflow in the GitHub UI to silence it is a decision to go without
+# backups, which is a reasonable one before launch and a bad one after it.
+#
+# Known limit, stated rather than glossed: the encrypted copy lives in GitHub Actions artifacts —
+# off-site from Supabase, which is the failure this guards against, but the same vendor as the
+# repository. A copy with an independent provider is better and is not free.
+
+name: Backup
+
+on:
+  schedule:
+    # 03:20 UTC daily. Off the hour on purpose: GitHub's scheduler is busiest exactly on it.
+    - cron: "20 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the secrets, loudly
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          missing=""
+          [ -z "$DB_URL" ] && missing="$missing SUPABASE_DB_URL"
+          [ -z "$PASSPHRASE" ] && missing="$missing BACKUP_PASSPHRASE"
+          if [ -n "$missing" ]; then
+            echo "::error::No backup was taken. Missing repository secret(s):$missing"
+            echo "See docs/DEPLOYMENT.md section 7 for how to set them."
+            exit 1
+          fi
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Dump the data
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: supabase db dump --db-url "$DB_URL" --data-only -f backup.sql
+
+      - name: Refuse to keep an empty dump
+        run: |
+          # A dump that succeeded and wrote almost nothing is the quiet failure worth catching:
+          # a wrong database, a role with no read access, or a connection that dropped mid-write.
+          size=$(wc -c < backup.sql)
+          echo "Dump size: ${size} bytes"
+          if [ "$size" -lt 1024 ]; then
+            echo "::error::Dump is ${size} bytes, which is too small to be a real backup."
+            exit 1
+          fi
+          # The tables whose loss cannot be recovered from anywhere else.
+          for table in licenses case_entitlements; do
+            grep -q "$table" backup.sql || echo "::warning::'$table' does not appear in the dump."
+          done
+
+      - name: Encrypt
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          gpg --batch --yes --symmetric --cipher-algo AES256 \
+            --passphrase "$PASSPHRASE" -o backup.sql.gpg backup.sql
+
+      - name: Prove it decrypts
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          # A backup nobody has ever restored is not a backup. This does not prove the rows are
+          # right, but it does prove the file is not corrupt and the passphrase in the secret is
+          # the one that opens it — the two ways a backup is usually discovered to be useless.
+          gpg --batch --yes --decrypt --passphrase "$PASSPHRASE" \
+            -o roundtrip.sql backup.sql.gpg
+          cmp backup.sql roundtrip.sql
+          echo "Round-trip verified."
+
+      - name: Remove the plaintext before anything is uploaded
+        run: rm -f backup.sql roundtrip.sql
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ github.run_id }}
+          path: backup.sql.gpg
+          # GitHub's maximum. Beyond this the copy has to live somewhere else.
+          retention-days: 90
+          if-no-files-found: error

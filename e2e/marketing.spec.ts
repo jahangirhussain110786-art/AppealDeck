@@ -112,6 +112,28 @@ test.describe("Marketing site (public)", () => {
       expect(r?.status() ?? 500).toBeLessThan(400);
     }
   });
+
+  /**
+   * B-22. The footer carried a "Support" label pointing at the privacy policy's contact anchor,
+   * because no support surface existed anywhere in `src/`. A professional evaluating a tool built
+   * by one person asks who is behind it and what happens when it breaks before anything else, and
+   * Phase 4's launch gate wants a response window that is stated and operationally real.
+   */
+  test("the footer's Support link reaches a page naming the operator and a reply window", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByRole("contentinfo").getByRole("link", { name: "Support" }).click();
+    await expect(page).toHaveURL(/\/support$/);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByText("Jhangir Hussain", { exact: false })).toBeVisible();
+    await expect(page.getByText("two business days", { exact: false })).toBeVisible();
+    await expect(page.getByRole("link", { name: "support@appealdeck.com" })).toBeVisible();
+    // The limits are the point, not the disclaimer: a seller must not wait on a reply here while
+    // their own deadline runs out.
+    await expect(page.getByText(/cannot extend, pause or appeal an Amazon deadline/)).toBeVisible();
+    await expect(page.getByText(/passwords, one-time codes or payment card details/)).toBeVisible();
+  });
 });
 
 test.describe("Auth gate", () => {

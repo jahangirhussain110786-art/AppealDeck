@@ -50,7 +50,9 @@ export function SiteFooter() {
             { href: "/privacy", label: SHARED.footer.nav.privacy },
             { href: "/terms", label: SHARED.footer.nav.terms },
             { href: "/refund", label: SHARED.footer.nav.refund },
-            { href: "/privacy#contact", label: SHARED.footer.nav.support },
+            // B-22: this pointed at the privacy policy's contact anchor, because no support
+            // surface existed anywhere in the product. It now points at one.
+            { href: "/support", label: SHARED.footer.nav.support },
           ]}
         />
       </div>

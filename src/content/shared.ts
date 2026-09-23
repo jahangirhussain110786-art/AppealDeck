@@ -53,6 +53,9 @@ export const SHARED = {
     titlePricing: "Appeal Pass — $249 one-time — AppealDeck",
     descriptionPricing:
       "Start with a free case workspace. An Appeal Pass adds response preparation and encrypted backup for one eligible case. $249 once. Read the 7-day refund policy.",
+    titleSupport: "Support — AppealDeck",
+    descriptionSupport:
+      "Who operates AppealDeck, how to reach them, how long a reply takes, and what support can and cannot do during an appeal.",
     titleFaq: "FAQ — AppealDeck",
     descriptionFaq:
       "How the decoder works, what the Appeal Pass includes, how your documents are protected, and how refunds work.",

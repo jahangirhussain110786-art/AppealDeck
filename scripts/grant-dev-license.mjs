@@ -50,7 +50,7 @@ if (selectError) {
 
 const { data: users, error: usersError } = await supabase.auth.admin.listUsers({ perPage: 1000 });
 if (usersError) throw usersError;
-const user = users.users.find(u => u.email?.toLowerCase() === EMAIL);
+const user = users.users.find((u) => u.email?.toLowerCase() === EMAIL);
 if (!user) throw new Error("Create the dev user before granting a license");
 const nowIso = new Date().toISOString();
 

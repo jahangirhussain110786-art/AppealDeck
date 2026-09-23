@@ -94,6 +94,36 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
 1. https://console.upstash.com → Create database (free tier, single region, closest to your Vercel region = `us-east-1`).
 2. Database details → REST API → copy the `UPSTASH_REDIS_REST_URL` (https form, NOT the rediss:// URL) and `UPSTASH_REDIS_REST_TOKEN` into Vercel.
 
+## 6a. Backups and the support address (founder action) — do these before the first sale
+
+**Two GitHub repository secrets** (Settings → Secrets and variables → Actions → New repository
+secret). Until both exist, `.github/workflows/backup.yml` **fails every night on purpose**: a backup
+job that reports success while writing nothing is the failure this is meant to prevent, so it is
+built to be noisy rather than quietly useless.
+
+| Secret | Where to get it | Why |
+|---|---|---|
+| `SUPABASE_DB_URL` | Supabase → Project Settings → Database → Connection string (URI), with the password filled in | The nightly `supabase db dump --data-only` reads through this. |
+| `BACKUP_PASSPHRASE` | Generate a long random string and **store it in your password manager, not in this repo** | The dump is encrypted with it. Lose it and the backups are unopenable — which is the same as having none. |
+
+Then run the workflow once by hand (Actions → Backup → Run workflow) and confirm it goes green. It
+verifies the dump is not empty and that the encrypted file decrypts with that passphrase, because a
+backup nobody has ever opened is not a backup.
+
+**What this protects:** `licenses`, per-case entitlements, `outcome_events` and `case_reminders` —
+the rows only the server holds. The vault is local-first and has no server copy by design, so no
+seller document is in scope. Losing the licence table means every paying customer loses access to
+the case they bought, with no record on this side of what they are owed.
+
+**To restore:** download the artifact, then
+`gpg --decrypt --passphrase '<passphrase>' -o backup.sql backup.sql.gpg` and replay it with `psql`
+against the target database.
+
+**Support address.** `/support` names `support@appealdeck.com` and states a reply window of two
+business days. Create that mailbox (or alias it to one you read) before the page is public, and
+change the window in `src/content/support.ts` if two business days is not what you can actually
+hold to. A stated window you miss is worse than a longer one you keep.
+
 ## 7. Deploy
 
 ```bash

@@ -54,7 +54,6 @@ import { Stepper } from "@/components/Stepper";
 import { Logo, LogoMark } from "@/components/Logo";
 import { SectionHeading } from "@/components/SectionHeading";
 import { HeroArtifact } from "@/components/marketing/HeroArtifact";
-import { EvidenceSlotPanel } from "@/components/EvidenceSlotPanel";
 import { ShieldCheckIllustration } from "@/components/illustrations/ShieldCheckIllustration";
 import { VaultDoorIllustration } from "@/components/illustrations/VaultDoorIllustration";
 import { MagnifierDocumentIllustration } from "@/components/illustrations/MagnifierDocumentIllustration";
@@ -514,10 +513,6 @@ export function DevUiGallery() {
             </Button>
           </div>
         </Card>
-      </Section>
-
-      <Section title="App surfaces - Evidence slot">
-        <EvidenceSlotPanel kind="POLICY" />
       </Section>
 
       <Section title="Composition">

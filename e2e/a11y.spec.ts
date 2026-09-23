@@ -27,6 +27,10 @@ test.describe("Marketing + auth surfaces (axe-core, serious + critical)", () => 
     await assertNoAxeViolations(page, "/faq");
   });
 
+  test("/support page has no serious or critical a11y violations", async ({ page }) => {
+    await assertNoAxeViolations(page, "/support");
+  });
+
   test("/privacy page has no serious or critical a11y violations", async ({ page }) => {
     await assertNoAxeViolations(page, "/privacy");
   });
