@@ -161,6 +161,42 @@ test("unsaved edits are never reported as saved, and survive the sign-in redirec
   );
 });
 
+/**
+ * C, 23 Sep 2026. The test above edits one field, and that is exactly why it passed while this was
+ * broken: the first save always ran.
+ *
+ * `commit` returned false when another save was in flight, and `flushDraftKey` had already deleted
+ * the edit from its pending map before awaiting that answer. Leaving the page flushes every pending
+ * field in one synchronous loop, so the first started a save and every other one was dropped with
+ * nothing left to retry it. The path it breaks is the sign-in redirect AM-21 deliberately routes
+ * sellers through — in the middle of writing, which is when losing their words costs most.
+ *
+ * Both fields are filled and the page is left inside the 900 ms debounce, so neither has saved on
+ * its own timer: the unmount flush is the only thing that can write them.
+ */
+test("every unsaved field survives leaving the page, not only the first one", async ({ page }) => {
+  await configure(page);
+  await page.reload();
+  await page.getByRole("button", { name: "Review the request" }).click();
+
+  const noticeText =
+    "Please provide the supplier invoice for the affected product. Also include the purchase order.";
+  const formText = "Upload the invoice and the purchase order, and explain the product mapping.";
+  await page.getByLabel("Amazon notice", { exact: true }).fill(noticeText);
+  await page.getByLabel("Current response instructions").fill(formText);
+
+  await page
+    .getByRole("complementary", { name: "Case context" })
+    .getByRole("link", { name: "Sign in" })
+    .click();
+  await expect(page).toHaveURL(/\/login\?next=/);
+  await page.goBack();
+  await page.getByRole("button", { name: "Review the request" }).click();
+
+  await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(noticeText);
+  await expect(page.getByLabel("Current response instructions")).toHaveValue(formText);
+});
+
 test("informational updates avoid a purchase flow and replies reopen the request", async ({
   page,
 }) => {

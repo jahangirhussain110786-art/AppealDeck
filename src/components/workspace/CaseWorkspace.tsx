@@ -284,7 +284,43 @@ function WorkspaceInner({
     };
   }, [vault, initialKind, setCurrent]);
 
-  const commit = async (
+  /**
+   * Every save runs, in the order it was asked for.
+   *
+   * `commit` used to open with `if (saving.current) return false`, so a save asked for while
+   * another was in flight was **dropped** — and `flushDraftKey` had already removed the edit from
+   * its pending map before awaiting that answer, with nothing to put it back. One field survived
+   * and the rest were gone.
+   *
+   * The unmount path made that the normal case rather than a rare one: leaving the page flushes
+   * every pending key in a synchronous loop, so the first started a save and every other one hit
+   * the guard and vanished. That path is the sign-in redirect AM-21 deliberately routes sellers
+   * through, in the middle of typing, which is the worst possible moment to lose their words.
+   *
+   * Serialising rather than dropping also keeps the optimistic-concurrency check below honest: it
+   * compares against `persisted.current`, which the previous save has finished updating by the time
+   * the next one starts.
+   *
+   * **The updater runs later than the call.** It receives the workspace as it stands once every
+   * earlier save has landed, which is the point — but it means an updater must never read anything
+   * mutable lazily. Read event values into a local before calling `commit`: the first version of
+   * this change broke the "this list covers all requested records" checkbox, because its updater
+   * read `e.target.checked` after React had reset the controlled input, and wrote `false`.
+   */
+  const commitQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const commit = (
+    update: (w: Workspace) => Workspace,
+    message?: string,
+    state?: CaseFile["state"],
+    opts?: { silent?: boolean; deadlines?: CaseFile["deadlines"]; kind?: ViolationKind },
+  ): Promise<boolean> => {
+    const run = commitQueue.current.then(() => runCommit(update, message, state, opts));
+    // The chain must survive a rejection, or one failure would strand every later save.
+    commitQueue.current = run.catch(() => undefined);
+    return run;
+  };
+
+  const runCommit = async (
     update: (w: Workspace) => Workspace,
     message?: string,
     state?: CaseFile["state"],
@@ -293,7 +329,11 @@ function WorkspaceInner({
     // so a seller who cannot correct it is stuck with three wrong answers derived from one.
     opts?: { silent?: boolean; deadlines?: CaseFile["deadlines"]; kind?: ViolationKind },
   ) => {
-    if (saving.current || !fileRef.current) return false;
+    if (!fileRef.current) return false;
+    // Restored rather than cleared in `finally`. `generate` and the new-case action hold this flag
+    // as their own guard; now that commits no longer bail out when it is set, a queued save that
+    // blindly cleared it would release someone else's guard halfway through their work.
+    const heldBefore = saving.current;
     saving.current = true;
     if (!opts?.silent) setBusy(true);
     setError("");
@@ -345,7 +385,7 @@ function WorkspaceInner({
       setError(e instanceof Error ? e.message : C.error);
       return false;
     } finally {
-      saving.current = false;
+      saving.current = heldBefore;
       if (!opts?.silent) setBusy(false);
     }
   };
@@ -364,8 +404,6 @@ function WorkspaceInner({
     if (!draftPending.current.has(key)) return;
     const value = draftPending.current.get(key);
     const scopedId = draftCaseId.current.get(key);
-    draftPending.current.delete(key);
-    draftCaseId.current.delete(key);
     const clear = () =>
       setDirtyKeys((s) => {
         if (!s.has(key)) return s;
@@ -373,19 +411,92 @@ function WorkspaceInner({
         next.delete(key);
         return next;
       });
+    const forget = () => {
+      draftPending.current.delete(key);
+      draftCaseId.current.delete(key);
+    };
     if (scopedId !== undefined && fileRef.current?.id !== scopedId) {
+      forget();
       clear();
       return;
     }
+    // Another action holds the workspace — `generate` reading a consistent snapshot, or a new case
+    // being created. A draft write landing mid-way would make `generate` report a changed document
+    // that did not change. The edit is still pending, so trying again shortly costs nothing; before
+    // the requeue fix below, deferring here would have been impossible because the edit was gone.
+    if (saving.current || uploading.current) {
+      draftTimers.current.set(
+        key,
+        setTimeout(() => flushDraftKey(key), 900),
+      );
+      return;
+    }
+    /*
+      The edit stays in `draftPending` until it is actually on disk. It used to be deleted here,
+      before the await, and the `.then` had no branch for a failed save — so a save that did not
+      happen took the seller's text with it and the "unsaved" indicator stayed on forever, pointing
+      at a value nothing would ever write.
+
+      On success it is dropped only if it still holds the value that was written: if the seller kept
+      typing during the save, the newer text is pending and the next flush owes them that write.
+    */
     void commit(
       (w) => ({ ...w, draft: withDraftValue(w.draft, key, value) }),
       undefined,
       undefined,
       { silent: true },
     ).then((ok) => {
-      if (ok && !draftPending.current.has(key)) clear();
+      if (!ok) return;
+      if (draftPending.current.get(key) === value) {
+        forget();
+        clear();
+      }
     });
     // commit's own behaviour is ref-driven and stable across renders; see its definition.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * Writes every pending field in a single save, for the moment the seller leaves the page.
+   *
+   * The unmount effect used to call `flushDraftKey` once per key in a synchronous loop, which
+   * started one save and queued the rest behind it. With the drop-guard gone none are lost any
+   * more, but a run of separate vault writes during teardown is still the wrong shape: each one
+   * re-reads the case, and the seller is already navigating. One write says the same thing.
+   */
+  const flushAllDraftKeys = useCallback(() => {
+    for (const timer of draftTimers.current.values()) clearTimeout(timer);
+    draftTimers.current.clear();
+
+    const caseId = fileRef.current?.id;
+    const entries: Array<[string, string | undefined]> = [];
+    for (const [key, value] of draftPending.current) {
+      const scopedId = draftCaseId.current.get(key);
+      // A key typed against a different case is dropped, exactly as the per-key flush does — it
+      // belongs to a case this vault write is not about.
+      if (scopedId !== undefined && caseId !== scopedId) continue;
+      entries.push([key, value]);
+    }
+    if (entries.length === 0) return;
+
+    void commit(
+      (w) => ({
+        ...w,
+        draft: entries.reduce((draft, [key, value]) => withDraftValue(draft, key, value), w.draft),
+      }),
+      undefined,
+      undefined,
+      { silent: true },
+    ).then((ok) => {
+      if (!ok) return;
+      for (const [key, value] of entries) {
+        if (draftPending.current.get(key) === value) {
+          draftPending.current.delete(key);
+          draftCaseId.current.delete(key);
+        }
+      }
+    });
+    // commit is ref-driven and stable across renders; see its definition.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -421,11 +532,12 @@ function WorkspaceInner({
   }, []);
 
   useEffect(() => {
-    const timers = draftTimers.current;
     return () => {
-      for (const key of Array.from(timers.keys())) flushDraftKey(key);
+      // Every pending field, in one write. The per-key loop that used to be here started one save
+      // and dropped the rest on the floor.
+      flushAllDraftKeys();
     };
-    // Flush on unmount only (e.g. navigating to sign-in); not on every flushDraftKey change.
+    // Flush on unmount only (e.g. navigating to sign-in); not on every callback identity change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1171,9 +1283,14 @@ function WorkspaceInner({
                       type="checkbox"
                       checked={w.requirementsConfirmed}
                       disabled={busy || !w.confirmed}
-                      onChange={(e) =>
-                        void commit((old) => ({ ...old, requirementsConfirmed: e.target.checked }))
-                      }
+                      onChange={(e) => {
+                        // Read now, not inside the updater. `commit` runs its updater after any
+                        // save already in flight, which is after this handler has returned — and
+                        // by then React has reset this controlled input to the saved value, so a
+                        // lazy `e.target.checked` reads `false` and the tick silently undoes itself.
+                        const confirmed = e.target.checked;
+                        void commit((old) => ({ ...old, requirementsConfirmed: confirmed }));
+                      }}
                     />
                     {C.allRequirements}
                   </label>
