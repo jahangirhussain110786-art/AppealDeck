@@ -5,8 +5,17 @@
  * evidence kind, whether a file is read on the server or examined in the browser — and it is the
  * only place that decision is made, so changing it is one edit rather than a hunt.
  *
- * The server route refuses identity kinds independently (`/api/read-document`), so a bug here
- * cannot cause a passport to be uploaded; the two agree by construction rather than by convention.
+ * Corrected 23 Sep 2026. This said the server "refuses identity kinds independently, so a bug here
+ * cannot cause a passport to be uploaded; the two agree by construction". Both halves were false.
+ * The server read the same `evidenceKind` out of the same request body, so it restated this file's
+ * claim rather than checking it — and the workspace was storing every upload as `"other"`, so the
+ * claim it restated was wrong. A passport attached to an identity requirement missed the branch
+ * below and was sent.
+ *
+ * What is true now: the caller derives the kind from the requirement Amazon actually asked for, and
+ * the server declines to read anything it cannot name, which is its own rule and not a mirror of
+ * this one. They agree because each is right separately, which is the only kind of agreement worth
+ * relying on.
  */
 
 import type { EvidenceKind, ViolationKind } from "@/core";
@@ -52,6 +61,16 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
           message:
             "We check identity documents on your own device, and we can only do that for a photo or a scan saved as an image. A PDF is fine to submit to Amazon — we simply cannot check it here.",
         };
+  }
+
+  // Refused here as well as on the server, so an unidentified document is never put on the wire at
+  // all. The server's own refusal is the backstop, not the first line.
+  if (input.evidenceKind === "other") {
+    return {
+      kind: "unavailable",
+      message:
+        "This record is not one of the document types we know how to check, so we have not read it. Review the original yourself and note what it shows.",
+    };
   }
 
   if (!SERVER_READABLE.includes(input.mimeType)) {

@@ -56,6 +56,7 @@ import {
   newWorkspace,
   proposedRequirements,
   requirementsAfterKindChange,
+  requirementEvidenceKind,
   sourceQuoteResolves,
   SELLER_SOURCE_NOTE,
   PROTOCOL_LABELS,
@@ -461,10 +462,26 @@ function WorkspaceInner({
     setBusy(true);
     const caseId = fileRef.current.id;
     try {
-      // Original documents are stored intact; attaching never means reviewed.
+      /*
+        The record is stored as the kind of record it actually is.
+
+        This was `evidenceKind: "other"`, hardcoded, on every upload — and `runCheckFor` then read
+        that value back to decide both what to check the document against and, more seriously,
+        whether it may leave the device at all. So a passport attached to an identity requirement
+        was filed as "other", missed the browser-only route, and was sent to the server; and every
+        other document was checked against a requirement list that did not describe it, which is
+        why the check reported "not one Amazon asks for on this case" about the very record Amazon
+        had asked for.
+
+        `requirementEvidenceKind` returns undefined for a record the seller worded themselves. That
+        is left undefined rather than coerced to "other": an unnamed document is one we cannot
+        promise is not sensitive, and saying so is the honest answer. Original documents are stored
+        intact; attaching never means reviewed.
+      */
+      const requirement = fileRef.current.workspace?.requirements.find((r) => r.id === id);
       const added = await addFileToVault(vault, uploadFile, {
         caseId,
-        evidenceKind: "other",
+        evidenceKind: requirement ? requirementEvidenceKind(requirement) : undefined,
       });
       const record = added.status === "added" ? added.record : added.existing;
       if (fileRef.current.id !== caseId) throw new Error("The active case changed.");
@@ -499,9 +516,16 @@ function WorkspaceInner({
     }
   };
   /**
-   * AA-41. Maps a requirement's linked file to the evidence kind Amazon asks for, so the reading is
-   * checked against the right requirement list. Falls back to `other` rather than refusing — a
-   * seller who linked a file to a requirement we cannot map still deserves a legibility check.
+   * AA-41. Checks a requirement's linked file against what Amazon asks for on that requirement.
+   *
+   * The kind comes from the requirement first and the stored record second. The requirement is the
+   * authority — it is what Amazon asked for — and reading the record alone meant a file attached
+   * before this was fixed, and therefore stored as `"other"`, would keep being checked as "other"
+   * forever. Falling back to the record covers a file linked from the vault rather than uploaded
+   * here.
+   *
+   * When neither names a kind the check does not happen and says so. There is deliberately no
+   * `?? "other"` here: that fallback is what let an unidentified document reach the network.
    */
   const runCheckFor = async (req: Requirement) => {
     const recordId = req.recordId;
@@ -509,9 +533,18 @@ function WorkspaceInner({
     setCheckingId(recordId);
     try {
       const { record, bytes } = await vault.get(recordId);
+      const evidenceKind =
+        requirementEvidenceKind(req) ?? (record.evidenceKind as EvidenceKind | undefined);
+      if (!evidenceKind) {
+        setDocChecks((prev) => ({
+          ...prev,
+          [recordId]: { kind: "unavailable", message: C.check.unnamed },
+        }));
+        return;
+      }
       const outcome = await runDocumentCheck({
         kind: fileRef.current?.kind ?? "UNKNOWN",
-        evidenceKind: (record.evidenceKind as EvidenceKind | undefined) ?? "other",
+        evidenceKind,
         bytes,
         mimeType: record.mimeType || "application/octet-stream",
       });

@@ -28,6 +28,10 @@ export const WORKSPACE = {
     "Paste the exact sentence if your notice or response page asks for this record. Leave it empty if you know the case needs it and Amazon did not say so — it will be recorded as yours, not theirs.",
   manualReview:
     "Review the original file and record what it supports. This is your factual review, not document authentication. Automatic text extraction is not available yet.",
+  check: {
+    unnamed:
+      "This record is not one of the document types we know how to check, so we have not read it. Review it yourself and note what it shows. Your file is unchanged and stayed on this device.",
+  },
   submitConfirm:
     "I have submitted this exact response and its selected files through the official channel.",
   finalReview:

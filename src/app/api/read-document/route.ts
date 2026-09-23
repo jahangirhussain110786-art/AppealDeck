@@ -28,7 +28,8 @@ import { rateLimitDocumentRead, tooManyRequestsResponse } from "@/lib/ratelimit"
 import { callGemini, withGeminiBreaker } from "@/lib/llm/gemini";
 import { VIOLATION_KINDS } from "@/core/violationKinds";
 import { buildDocumentCheck, type FieldFinding } from "@/core/documentCheck";
-import { requirementsFor } from "@/core/evidenceModel";
+import { requirementsFor, canonicalRequirementFor } from "@/core/evidenceModel";
+import type { EvidenceKind } from "@/core/evidenceModel";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,29 @@ export const dynamic = "force-dynamic";
  * testable and cannot drift away from the client's routing.
  */
 export const BROWSER_ONLY_EVIDENCE_KINDS = ["identity_doc", "financial_instrument_doc"] as const;
+
+/**
+ * The catch-all kind, refused here — added 23 Sep 2026, and the reason is worth stating plainly.
+ *
+ * This route's header said the client and server "agree by construction rather than by convention".
+ * That was not true: both read the same `evidenceKind` from the same request body, so the server's
+ * refusal was a restatement of the client's claim rather than a check on it. And the client was
+ * wrong — it stored every upload as `"other"` — which meant an identity document skipped the
+ * browser-only route, arrived here labelled `"other"`, and on the two violation families whose
+ * matrix defines an `"other"` requirement (`RELATED_ACCOUNT`, `PRODUCT_SAFETY`) was matched to that
+ * requirement and sent to the model.
+ *
+ * The client bug is fixed. This is the rule that does not depend on it: **we do not read a document
+ * we cannot name.** `"other"` means precisely that we cannot name it, so we cannot promise it is
+ * not a passport or a bank statement, and the honest response is to decline rather than to guess.
+ * It is the server's own reasoning about its own risk, so a future client bug cannot defeat it.
+ *
+ * The cost is real and small: two matrix entries use `"other"` for documents that deserve their own
+ * kinds — a compliance/test report on `PRODUCT_SAFETY` and proof of resolution on `RELATED_ACCOUNT`.
+ * Until they have them, those two are reviewed by the seller rather than read here. Giving them
+ * real kinds is the fix that restores the capability without reopening the hole.
+ */
+const UNNAMED_EVIDENCE_KIND = "other";
 
 /** Base64 inflates by ~33%, so this is roughly a 7 MB original — comfortably above a scanned
  * multi-page invoice and well below the point where the upstream rejects the request. */
@@ -140,7 +164,29 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
     );
   }
 
-  const requirement = requirementsFor(kind).find((r) => r.kind === evidenceKind);
+  if (evidenceKind === UNNAMED_EVIDENCE_KIND) {
+    return NextResponse.json(
+      {
+        error:
+          "We only read documents we can identify, and this record is not one of them. Nothing was read or sent on. Review the original yourself and note what it shows.",
+      },
+      { status: 422 },
+    );
+  }
+
+  /*
+    The `UNKNOWN` fallback, added 23 Sep 2026 alongside the fix that makes the evidence kind correct
+    in the first place. `EVIDENCE_MATRIX.UNKNOWN` is an empty array, and a case started by typing a
+    notice straight into `/case` is `UNKNOWN` — so this route refused every document on the most
+    ordinary path into the product, and refused it with "that document type is not one Amazon asks
+    for on this case" about a record the seller had been asked for by name.
+
+    Only the field list is borrowed, which is what this route uses: what a compliant invoice has to
+    show does not change with the violation that prompted the request.
+  */
+  const requirement =
+    requirementsFor(kind).find((r) => r.kind === evidenceKind) ??
+    (kind === "UNKNOWN" ? canonicalRequirementFor(evidenceKind as EvidenceKind) : undefined);
   if (!requirement) {
     return NextResponse.json(
       { error: "That document type is not one Amazon asks for on this case." },

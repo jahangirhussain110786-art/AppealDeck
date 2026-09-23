@@ -392,8 +392,21 @@ test("a seller can see why a record is wanted, ask for it, and say when they can
   await page.getByRole("tab", { name: "Evidence", exact: true }).click();
   const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
 
-  // A-05: the matrix sentence, on screen for the first time.
-  await expect(evidence.getByText("Why Amazon asks for this", { exact: false })).toBeVisible();
+  /*
+    A-05, the matrix content on screen. This asserted "Why Amazon asks for this" was visible, and it
+    was — with the wrong reason. This case is UNKNOWN (a notice typed straight into /case, which is
+    the ordinary path), so the sentence came from whichever violation declared that record first:
+    an identity record displayed the *related-account* explanation. The assertion passed because it
+    only checked that a heading existed.
+
+    `supplier_invoice` carries two different reasons across the matrix, so on an unclassified case
+    the honest answer is to describe the record and not attribute a motive. What must be shown and
+    what will not be accepted are properties of the record, and those still render.
+  */
+  await expect(
+    evidence.getByText("What a record like this has to show", { exact: true }),
+  ).toBeVisible();
+  await expect(evidence.getByText("Why Amazon asks for this", { exact: false })).toHaveCount(0);
   // A-06: the letter that asks the supplier for a compliant invoice.
   await expect(
     evidence.getByRole("group").filter({ hasText: "Supplier invoice request" }),

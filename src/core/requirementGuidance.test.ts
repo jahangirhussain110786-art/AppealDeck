@@ -5,7 +5,7 @@ import {
   evidenceKindForRequirement,
   EVIDENCE_KIND_LABELS,
 } from "./workspace";
-import { requirementsFor } from "./evidenceModel";
+import { requirementsFor, EVIDENCE_MATRIX } from "./evidenceModel";
 
 /**
  * A-05, A-06 and A-02 were each built, tested, ticked off as delivered, and reachable by no seller
@@ -70,8 +70,30 @@ describe("requirement guidance", () => {
     // into the product — the "built and unreachable" failure this whole pass exists to end.
     expect(requirementsFor("UNKNOWN")).toHaveLength(0);
     const g = requirementGuidance({ label: "Supplier invoice" }, "UNKNOWN")!;
-    expect(g.whyAmazonWantsIt).toBeTruthy();
+    expect(g.fields.length).toBeGreaterThan(0);
     expect(g.disqualifiers.join(" ")).toMatch(/pro-forma/i);
+  });
+
+  /**
+   * Corrected 23 Sep 2026 after watching this render. The fallback used to supply
+   * `whyAmazonWantsIt` too, and on an unclassified case an *identity* record displayed "Amazon
+   * needs to understand how the accounts are connected and whether the same operator is behind
+   * both" — because the first matrix entry naming `identity_doc` belongs to the related-account
+   * family. The previous version of this test asserted only that the sentence was truthy, so it
+   * passed while showing a seller a reason that had nothing to do with their case.
+   *
+   * What a record must contain is a property of the record. Why Amazon wants it is a property of
+   * the violation, and on an unclassified case we do not know the violation.
+   */
+  it("does not borrow another violation's reason on an unclassified case", () => {
+    const identity = requirementGuidance({ evidenceKind: "identity_doc", label: "x" }, "UNKNOWN")!;
+    expect(identity.whyAmazonWantsIt).toBeUndefined();
+    // The record is still described — silence about the reason is not silence about the record.
+    expect(identity.fields.length).toBeGreaterThan(0);
+
+    // And a classified case still gets its own violation's reason, unchanged.
+    const classified = requirementGuidance({ label: "Supplier invoice" }, "INAUTHENTIC_DOCUMENTS")!;
+    expect(classified.whyAmazonWantsIt).toBeTruthy();
   });
 
   it("stays silent when a classified case's matrix does not name the record", () => {
@@ -113,5 +135,48 @@ describe("requirement guidance", () => {
     // Continuing without the record is always available, because refusing to let a seller move on
     // is the behaviour this replaces.
     expect(alternativesFor("metric_export").map((a) => a.id)).toContain("decline_proceed");
+  });
+});
+
+/**
+ * The rule behind the fix above, stated as data rather than as a judgement: a reason is shown on an
+ * unclassified case only when every violation asking for that record gives the same reason. Chosen
+ * after measuring the matrix — most kinds carry several different reasons, so borrowing one is a
+ * guess far more often than not.
+ */
+describe("record-level reasons", () => {
+  it("shows a reason on an unclassified case only where the matrix agrees on it", () => {
+    const kinds = new Set<string>();
+    for (const list of Object.values(EVIDENCE_MATRIX)) for (const r of list) kinds.add(r.kind);
+
+    for (const kind of kinds) {
+      const reasons = new Set<string>();
+      for (const list of Object.values(EVIDENCE_MATRIX)) {
+        for (const r of list)
+          if (r.kind === kind && r.whyAmazonWantsIt) reasons.add(r.whyAmazonWantsIt);
+      }
+      const shown = requirementGuidance(
+        { evidenceKind: kind as never, label: "x" },
+        "UNKNOWN",
+      )?.whyAmazonWantsIt;
+      if (reasons.size === 1) expect(shown, kind).toBe([...reasons][0]);
+      else expect(shown, kind).toBeUndefined();
+    }
+  });
+
+  it("is not vacuous — the matrix really does disagree for most records", () => {
+    // If this ever fails because every kind agrees, the rule above has become a no-op and the
+    // simpler "always show it" would be correct again.
+    const disagreeing = new Set<string>();
+    const seen = new Map<string, Set<string>>();
+    for (const list of Object.values(EVIDENCE_MATRIX)) {
+      for (const r of list) {
+        if (!r.whyAmazonWantsIt) continue;
+        if (!seen.has(r.kind)) seen.set(r.kind, new Set());
+        seen.get(r.kind)!.add(r.whyAmazonWantsIt);
+      }
+    }
+    for (const [kind, reasons] of seen) if (reasons.size > 1) disagreeing.add(kind);
+    expect(disagreeing.size).toBeGreaterThan(0);
   });
 });

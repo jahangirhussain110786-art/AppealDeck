@@ -14,7 +14,7 @@
  *
  * Nothing here is generated, and nothing predicts what Amazon will do.
  */
-import { requirementsFor, EVIDENCE_MATRIX } from "./evidenceModel";
+import { requirementsFor, canonicalRequirementFor, sharedReasonFor } from "./evidenceModel";
 import type { EvidenceKind, EvidenceRequirement } from "./evidenceModel";
 import { lettersForEvidenceKind } from "./letters";
 import type { LetterTemplate } from "./letters";
@@ -85,18 +85,12 @@ export function alternativesFor(kind: EvidenceKind): RequirementAlternative[] {
   return alternatives;
 }
 
-/**
- * The first matrix entry that describes this record, in the matrix's own declaration order. Used
- * only for an unclassified case: it answers "what is this record and what must it show", which is
- * a property of the record rather than of any one violation.
- */
-function canonicalRequirement(kind: EvidenceKind): EvidenceRequirement | undefined {
-  for (const requirements of Object.values(EVIDENCE_MATRIX)) {
-    const match = requirements.find((r) => r.kind === kind);
-    if (match) return match;
-  }
-  return undefined;
-}
+/*
+  `canonicalRequirement` used to live here. It moved to `evidenceModel.ts` on 23 Sep 2026 when
+  `/api/read-document` turned out to need the same fallback for the same reason — the route refused
+  every document on an unclassified case, which is the most ordinary case there is. Two copies of a
+  matrix lookup is how this repo has drifted before; it now lives beside the matrix.
+*/
 
 /**
  * Guidance for a workspace requirement, or `undefined` when the seller added it by hand and it
@@ -132,12 +126,26 @@ export function requirementGuidance(
     silence is the honest answer — borrowing another violation's sentence would put a wrong reason
     on screen, and some are violation-coloured (the identity-document sentence talks about funds
     release, which would read as nonsense on a verification case).
+
+    **And the borrowed entry's `whyAmazonWantsIt` is never used**, corrected 23 Sep 2026 after
+    watching this render: an unclassified case showed "Amazon needs to understand how the accounts
+    are connected and whether the same operator is behind both" on an *identity* record, because the
+    first matrix entry naming `identity_doc` happens to be the related-account one. That is the
+    exact hazard the paragraph above describes, and scoping the fallback to `UNKNOWN` did not avoid
+    it — on `UNKNOWN` every borrowed sentence belongs to some other violation.
+
+    What a record must contain and what disqualifies it are properties of the record, so those are
+    safe to borrow. Why Amazon wants it is usually a property of the violation — measured, not
+    assumed: `identity_doc` carries three different reasons across the matrix and `sop_document`
+    five. `sharedReasonFor` gives the sentence only where every violation that asks for the record
+    gives the same one, so it is shown when it is true of the record and withheld when it would be
+    a guess.
   */
   const match: EvidenceRequirement | undefined =
-    own ?? (violationKind === "UNKNOWN" ? canonicalRequirement(evidenceKind) : undefined);
+    own ?? (violationKind === "UNKNOWN" ? canonicalRequirementFor(evidenceKind) : undefined);
   return {
     evidenceKind,
-    whyAmazonWantsIt: match?.whyAmazonWantsIt,
+    whyAmazonWantsIt: own?.whyAmazonWantsIt ?? sharedReasonFor(evidenceKind),
     fields: match?.fields ?? [],
     disqualifiers: match?.disqualifiers ?? [],
     letters: lettersForEvidenceKind(evidenceKind),

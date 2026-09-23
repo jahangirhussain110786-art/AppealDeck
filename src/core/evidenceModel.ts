@@ -333,6 +333,49 @@ export function requirementsFor(kind: ViolationKind): readonly EvidenceRequireme
   return EVIDENCE_MATRIX[kind];
 }
 
+/**
+ * The first matrix entry describing a record, in the matrix's own declaration order.
+ *
+ * `UNKNOWN`'s list is empty, and a case started by typing a notice straight into `/case` is
+ * `UNKNOWN` — the most ordinary way into this product. So anything that looks a record up by
+ * `requirementsFor(kind)` finds nothing on that path, however correct the record's kind is. That
+ * cost the guidance panel its content until 23 Sep, and it cost `/api/read-document` its entire
+ * function: the route refused every document on an unclassified case with "that document type is
+ * not one Amazon asks for on this case", about a record the seller had been asked for.
+ *
+ * Callers must scope this to `UNKNOWN`. What a record has to contain is a property of the record,
+ * so borrowing it is honest; **why Amazon wants it** is a property of the violation, and borrowing
+ * that would put a wrong reason on screen — the identity-document sentence talks about releasing
+ * funds, which reads as nonsense on a verification case.
+ */
+export function canonicalRequirementFor(kind: EvidenceKind): EvidenceRequirement | undefined {
+  for (const requirements of Object.values(EVIDENCE_MATRIX)) {
+    const match = requirements.find((r) => r.kind === kind);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+/**
+ * Why Amazon asks for a record, but only when every violation that asks for it gives the same
+ * reason — so the sentence is a property of the record and is true whatever the case turns out to
+ * be. Undefined when the reasons differ, which is the honest answer on an unclassified case.
+ *
+ * Added 23 Sep 2026 after an unclassified case displayed "Amazon needs to understand how the
+ * accounts are connected" on an *identity* record, because the fallback took the first matrix entry
+ * in declaration order and that one belongs to the related-account family. Measured rather than
+ * assumed before choosing this rule: `identity_doc` carries three different reasons across the
+ * matrix and `sop_document` five, so picking one is a guess roughly four times out of five.
+ */
+export function sharedReasonFor(kind: EvidenceKind): string | undefined {
+  const reasons = new Set<string>();
+  for (const requirements of Object.values(EVIDENCE_MATRIX)) {
+    for (const r of requirements)
+      if (r.kind === kind && r.whyAmazonWantsIt) reasons.add(r.whyAmazonWantsIt);
+  }
+  return reasons.size === 1 ? [...reasons][0] : undefined;
+}
+
 export function requiredKinds(kind: ViolationKind): EvidenceKind[] {
   return requirementsFor(kind)
     .filter((r) => r.required)
