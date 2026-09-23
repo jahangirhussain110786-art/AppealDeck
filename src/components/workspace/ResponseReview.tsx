@@ -24,6 +24,7 @@ import type { CriticResult, PoaDraft } from "@/core/composer";
 import { BeforeYouSubmitChecklist } from "@/components/BeforeYouSubmitChecklist";
 import { IssuesRaised } from "./IssuesRaised";
 import { assessNovelty, shouldWarnBeforeSubmit } from "@/core/submissionNovelty";
+import { computeDraftStrength, DRAFT_STRENGTH_TONE } from "@/lib/draftStrength";
 import { formatDate } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
 
@@ -258,6 +259,23 @@ export function ResponseReview({
             <pre className="whitespace-pre-wrap break-words rounded-lg border border-border bg-background p-5 font-sans text-sm leading-loose shadow-inset sm:p-8">
               {result.rendered}
             </pre>
+            {/*
+              A-07: `draft.mode.reason` above answers "is every required record here". A draft can
+              satisfy that and still be three blame-shifting sentences — which is exactly what the
+              founder reported on 12 Sep 2026 being shown as "Full draft". This says how the writing
+              reads, and the findings underneath it are what to do about that.
+            */}
+            {(() => {
+              const strength = computeDraftStrength(result.draft.mode, result.critique.findings);
+              return (
+                <Alert variant={DRAFT_STRENGTH_TONE[strength]}>
+                  <AlertDescription>
+                    <span className="font-medium text-foreground">{C.draftStrength.label}: </span>
+                    {C.draftStrength[strength]}
+                  </AlertDescription>
+                </Alert>
+              );
+            })()}
             {result.critique.findings.length > 0 && (
               <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                 {result.critique.findings.map((f, i) => (

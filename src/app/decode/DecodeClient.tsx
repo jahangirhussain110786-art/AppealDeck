@@ -26,6 +26,7 @@ import { OfflineNotice } from "@/components/OfflineNotice";
 import { DetailDisclosure, IconTile, VIEW_ICONS } from "@/components/workspace/WorkspaceVisuals";
 import { guidanceFor } from "@/core/guidance";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
+import { stripInvisibleChars } from "@/lib/idNormalize";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
 import { buildNoticeAnnotations } from "@/lib/decodeAnnotations";
 import { stashPendingNotice } from "@/lib/pendingNotice";
@@ -85,6 +86,7 @@ export default function DecodeClient() {
     const submitted = text.trim();
     setStatus("loading");
     setError(null);
+    trackFunnelEvent(FUNNEL_EVENTS.decoderSession);
     try {
       const res = await fetch("/api/decode", {
         method: "POST",
@@ -186,7 +188,7 @@ export default function DecodeClient() {
               id="notice"
               placeholder={DECODE.textarea.placeholder}
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => setText(stripInvisibleChars(e.target.value))}
               spellCheck={false}
               aria-describedby="notice-hint"
               className="min-h-[14rem] font-mono text-sm leading-relaxed"

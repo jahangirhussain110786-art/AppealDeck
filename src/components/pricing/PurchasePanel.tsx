@@ -92,7 +92,7 @@ export function PurchasePanel() {
 
   const handleCompleted = useCallback(() => {
     if (sessionState !== "signed-in") return;
-    trackFunnelEvent(FUNNEL_EVENTS.purchaseCompleted);
+    trackFunnelEvent(FUNNEL_EVENTS.passPurchased);
     setPhase("activating");
     void pollLicenseStatus()
       .then(() => router.push("/compose"))

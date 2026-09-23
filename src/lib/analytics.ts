@@ -8,13 +8,36 @@
 // licenses/outcome_events, and Upstash rate-limiter analytics. This module is only the four named
 // client-side funnel events.
 
-/** The exact four named funnel events D10 asks to measure, beyond the free pageview tracking
- * Plausible already does for "decoder session." Keep this list in sync with D10's wording. */
+/**
+ * The canonical funnel event names, verbatim from `Planning/06-OPERATIONS/03-ANALYTICS-AND-METRICS.md`
+ * §1, which states the requirement plainly: "use these strings verbatim in code, sheets, and
+ * conversation — renaming events later poisons every historical comparison."
+ *
+ * Corrected 23 Sep 2026 (B-12). This module previously shipped four events under invented
+ * title-case names ("Decode Completed", "Intake Started", "Purchase Completed", "Outcome Shared"),
+ * `intake_started` was defined but fired from nowhere, and `checkout_opened` — the step that tells
+ * a pricing problem apart from a checkout problem — did not exist at all. Renaming costs an hour
+ * today and is impossible after the first month of data, so it is done before any deploy.
+ *
+ * `decoder_session` and `decode_completed` are deliberately two events rather than one: the first
+ * fires on submit, the second when a classification is shown, so the gap between them is the API
+ * failure rate rather than something that has to be inferred.
+ *
+ * Not implemented here, with reasons: `nano_availability` and `decode_path` are the extension's
+ * supporting series and the extension has not started (B-27); `refund_requested` has no in-product
+ * trigger because refunds run by email under D8. All three keep their spec names for whoever adds
+ * them, and none is renamed here.
+ */
 export const FUNNEL_EVENTS = {
-  decodeCompleted: "Decode Completed",
-  intakeStarted: "Intake Started",
-  purchaseCompleted: "Purchase Completed",
-  outcomeShared: "Outcome Shared",
+  decoderSession: "decoder_session",
+  decodeCompleted: "decode_completed",
+  intakeStarted: "intake_started",
+  checkoutOpened: "checkout_opened",
+  passPurchased: "pass_purchased",
+  outcomeReported: "outcome_reported",
+  /** Web-only supplements, never replacements for the canonical six. */
+  gatedScreenShown: "gated_screen_shown",
+  poaGenerated: "poa_generated",
 } as const;
 
 export type FunnelEventName = (typeof FUNNEL_EVENTS)[keyof typeof FUNNEL_EVENTS];

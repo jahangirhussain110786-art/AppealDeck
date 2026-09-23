@@ -84,6 +84,7 @@ import { importDecodedNotice } from "@/lib/importDecodedNotice";
 import type { Vault, VaultListItem } from "@/core/vault/vault";
 import { formatDate } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
+import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 
 /**
  * Shared by the two text downloads below — one blob-URL lifecycle rather than two copies of it.
@@ -241,6 +242,11 @@ function WorkspaceInner({
         if (!alive) return;
         setCurrent(displayed);
         setSaved(Boolean(existing || pendingNotice));
+        // B-12: `intake_started` was defined in analytics.ts since 11 Sep 2026 and fired from
+        // nowhere, so step 3 of the funnel has always been empty. The workspace is the intake now
+        // that the classic interview is retired, and the honest trigger is a case that did not
+        // exist before this open — once per case, covering both a fresh start and a decode import.
+        if (!existing) trackFunnelEvent(FUNNEL_EVENTS.intakeStarted);
 
         /**
          * Retiring the classic interview: a case saved before the workspace existed is migrated

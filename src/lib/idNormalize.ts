@@ -30,6 +30,25 @@ export function normalizePastedId(raw: string): string {
 }
 
 /**
+ * Strips the same invisible paste artifacts from a block of pasted text, leaving every visible
+ * character, line break and space exactly where it was.
+ *
+ * Why this exists separately from `normalizePastedId` (23 Sep 2026): a notice pasted out of a mail
+ * client can carry a zero-width space *inside* an identifier, and `entities.ts`'s `\bB0[A-Z0-9]{8}\b`
+ * then matches nothing — verified, not assumed: "B08N5​WRWNW" extracts as `null` while the
+ * clean string extracts fine. The ASIN disappears with no error and the seller cannot tell. (A
+ * non-breaking space is harmless by comparison, because JavaScript's `\s` already matches it.)
+ *
+ * This must run where the text is *stored*, never inside the extractor: `entities.ts` guarantees
+ * `raw.slice(start, end) === value` so the UI can highlight the seller's own words, and sanitising
+ * after the spans are computed would slide every offset. Length-preserving alternatives were
+ * considered and rejected — a zero-width character left in place still defeats the match.
+ */
+export function stripInvisibleChars(raw: string): string {
+  return raw.replace(INVISIBLE_CHARS, "");
+}
+
+/**
  * ASIN shape check — 10 alphanumeric characters. Amazon ASINs conventionally start with "B0" in
  * most marketplaces, but not universally, so this only checks length/charset, never a stricter
  * pattern that could reject a genuinely valid ASIN.

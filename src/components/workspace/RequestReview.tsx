@@ -13,6 +13,7 @@ import { PROTOCOL_LABELS, routeWorkspace, type Workspace } from "@/core/workspac
 import { WORKSPACE as C } from "@/content/workspace";
 import { DECODE } from "@/content/marketing";
 import { assessNoticeAuthenticity } from "@/core/noticeAuthenticity";
+import { stripInvisibleChars } from "@/lib/idNormalize";
 
 const selectStyle =
   "h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -74,7 +75,9 @@ export function RequestReview({
         maxLength={50000}
         rows={7}
         onChange={(e) => {
-          const next = e.target.value;
+          // Sanitised here, at the point the notice is stored, because entities.ts guarantees
+          // raw.slice(start, end) === value and stripping later would slide every span.
+          const next = stripInvisibleChars(e.target.value);
           setValue({ ...value, notice: next });
           onDraftChange("request.notice", next === workspace.notice ? undefined : next);
         }}
@@ -163,7 +166,7 @@ export function RequestReview({
             placeholder="Paste the document requests or questions shown on the response page…"
             maxLength={12000}
             onChange={(e) => {
-              const next = e.target.value;
+              const next = stripInvisibleChars(e.target.value);
               setValue({ ...value, formInstructions: next });
               onDraftChange(
                 "request.formInstructions",

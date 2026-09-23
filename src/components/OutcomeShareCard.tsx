@@ -40,7 +40,7 @@ export function OutcomeShareCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(record),
       });
-      if (res.ok) trackFunnelEvent(FUNNEL_EVENTS.outcomeShared, { outcome: record.outcome });
+      if (res.ok) trackFunnelEvent(FUNNEL_EVENTS.outcomeReported, { outcome: record.outcome });
       await onResolved(res.ok);
     } catch {
       await onResolved(false);

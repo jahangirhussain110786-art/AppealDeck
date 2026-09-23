@@ -26,6 +26,18 @@ export const WORKSPACE = {
     "I have submitted this exact response and its selected files through the official channel.",
   finalReview:
     "I reviewed the facts, attachment names and page references against the current response form.",
+  // A-07 (classified 23 Sep 2026, built from founder feedback 12 Sep 2026): the completeness badge
+  // answers "is every required record here", which a thin, blame-shifting draft can satisfy while
+  // reading terribly. This second line is about the writing only. It describes the draft in front
+  // of the seller and never characterises what Amazon will do with it — same constraint as
+  // READINESS_COPY, and the reason none of these strings contains a likelihood.
+  draftStrength: {
+    label: "The writing itself",
+    strong: "Nothing flagged in how this draft reads.",
+    needs_work:
+      "Parts of this draft need work. The notes below are about the writing, not your records.",
+    weak: "This draft is thin. Work through the notes below before you copy it.",
+  },
   waitingHelp: "Ask the issuer for the missing records. Continue other tasks while you wait.",
   legacy:
     "Your existing interview and records are preserved. You can continue that interview or add the new workspace to this case.",

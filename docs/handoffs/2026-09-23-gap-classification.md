@@ -67,7 +67,7 @@ recorded here so it is not rediscovered. **DEFER** — right, and correctly not 
 | **A-05** `whyAmazonWantsIt` | **REBUILD**, rides B-05 | One honest sentence explaining why Amazon asks for a document is precisely the kind of thing a professional uses to judge whether a tool knows the domain. It arrives free once `proposedRequirements()` consults `evidenceModel.ts` (B-05), because the field is already on the matrix. |
 | **A-06** the three outreach letters | **REBUILD** — surface from `EvidenceReview` | Supplier-invoice request, rights-owner retraction, follow-up nudge. `letters.ts` is complete and tested. These are directly useful to an appeal writer *as a professional*, not only to a seller, which raises them under the new lens. |
 | **A-07** draft strength | **RESTORE** — wire into `ResponseReview` | The cheapest high-value item in the register. It was built from the founder's own 12 Sep complaint that a thin, blame-shifting draft displayed as "Full draft"; that complaint is still live in the shipped product. Do this first. |
-| **A-08** ID paste normaliser | **RESTORE** — wire into the notice and entity fields | Small, and it prevents a class of silent failure (a pasted ASIN with a zero-width character matching nothing). |
+| **A-08** ID paste normaliser | **Reclassified while building — see §8.2** | Classified RESTORE, then found on wiring it that the field it belongs in does not exist: entities are extracted from the notice and rendered read-only, and there is no ID input anywhere in `src/`. `normalizePastedId` is therefore **DEFERRED to B-06** (seller correction of entities), where a seller will actually type one. The hazard behind it turned out to be real, verified and separate, and is fixed — §8.2. |
 | **A-09** POA clipboard builder | **STRIKE — delete** | Genuinely superseded. `workspace/ResponseReview.tsx` uses `CopyButton` and has its own copy path; `buildClipboardText` was `/compose`'s. Verified this session — the register did not carry the evidence. |
 | **A-10** `Stepper` | **KEEP as a declared gallery primitive** | Not a lost feature — a generic UI primitive with no current consumer, which is what a component gallery is for. The defect is the *gate*, which cannot tell a deliberate gallery-only primitive from a feature that lost its door. Fix that in A-13 with an explicit allowlist entry and a reason, the same pattern already used for the Paddle webhook. |
 | **A-11** two illustrations | **KEEP the same way, or place them** | AM-22's V7 sweep — the one task of that pass never run — is what would have placed them. Either place them or allowlist them; both are honest, drifting is not. |
@@ -212,3 +212,77 @@ decides". Both are done in the commit that carries this file:
   card states "$199 one-time per case"; the card says $249. This is the same shape of defect as the
   missing "not legal advice" sentence found on 22 Sep: an authoring record that no longer matches
   what the buyer is shown, inside the one document whose whole job is proving what they were told.
+
+---
+
+## 8. Wave 1, first batch — built and verified the same day
+
+Four items chosen on one rule: they delete nothing, so none of them depends on the founder agreeing
+with a strike. The strikes (A-04, A-09, A-12) and the five-item workspace rebuild wait for that nod.
+
+### 8.1 A-07 — the draft-strength signal is on screen
+
+`computeDraftStrength` had been built, tested and unreachable since 12 September, and the founder's
+own complaint that produced it — a three-sentence, blame-shifting draft displayed as "Full draft" —
+stayed live in the shipped product for eleven days. It now renders in `ResponseReview` above the
+critic findings, as a second line that is explicitly about the writing rather than the evidence.
+
+The Alert tone moved out of the JSX into `DRAFT_STRENGTH_TONE`, so "every level has a tone and a
+copy string" is a test rather than something a person has to notice. A second test asserts none of
+the three strings mentions Amazon, approval, rejection, likelihood, chance or odds — the D6 line
+this feature is closest to crossing.
+
+### 8.2 A-08 — reclassified, and a real defect found underneath it
+
+Wiring `normalizePastedId` revealed it has nowhere to go: there is no ID input field in the product
+at all, because AA-39 extracts entities from the notice and renders them read-only. So the module is
+deferred to B-06.
+
+The hazard it was built for is real, and was verified rather than assumed: `entities.ts` matches
+ASINs with `\bB0[A-Z0-9]{8}\b`, and a zero-width space pasted inside an identifier — routine when
+copying out of a mail client — makes it match **nothing**. `"B08N5\u200BWRWNW"` extracts as `null`
+while the clean string extracts fine. The ASIN vanishes with no error and the seller cannot tell.
+Nothing in `src/` sanitised notice text.
+
+Fixed at the right layer: a new `stripInvisibleChars` runs where the notice is **stored** (both
+workspace fields and `/decode`), never inside the extractor, because `entities.ts` guarantees
+`raw.slice(start, end) === value` so the UI can highlight the seller's own words, and sanitising
+after the spans are computed would slide every offset.
+
+**Verified in a browser, not only in tests.** Pasting a notice with a zero-width space inside the
+ASIN into `/decode`: exactly one character dropped, every visible character untouched, and the
+decode result now shows `ASIN B08N5WRWNW` in "Details we found in your notice" — the entity that
+was previously lost in silence.
+
+### 8.3 B-12 — the funnel events now carry their canonical names
+
+Renamed to the spec's verbatim strings, and `checkout_opened` added — fired where the Paddle overlay
+actually opens rather than on the button click, so the gap between it and `pass_purchased` is
+abandonment at the payment step and not a locked vault or a rejected intent.
+
+**Found while doing it, and not in the register:** `intake_started` had been *defined* since 11
+September and fired from **nowhere**, so step 3 of the funnel would always have been empty. It now
+fires when a case that did not exist before is opened — once per case, covering both a fresh start
+and a decode import. Three events that have no honest trigger yet (`nano_availability`,
+`decode_path`, `refund_requested`) keep their spec names in a comment for whoever adds them.
+
+### 8.4 B-14 — the forbidden-sources gate exists
+
+`scripts/lint-forbidden-sources.mjs` + `npm run lint:sources`, wired into CI beside the reachability
+gate. It scans code and assets — not prose, because the documents that forbid the thing have to be
+able to name it.
+
+**It failed on its first run, on its own doc comment**, which is recorded in the script rather than
+worked around silently: the alternative, splitting the marker into fragments so the source never
+spells it, would have made the rule unreadable to the next person, and unreadability is how this
+rule went unenforced for a month. No other file in 341 matched.
+
+### Gates
+
+tsc 0 · lint 0 · lint:copy PASS · **lint:sources PASS (new)** · lint:reachability PASS ·
+format:check 0 · vitest **797/797 in 73 files** (up from 792; 5 new tests) · build 30 static pages ·
+Playwright `CI=1 --retries=0` **73 passed · 0 failed · 3 skipped** (baseline was 71/1/3 — the known
+cross-file flake did not reproduce).
+
+Also fixed in passing: **D-09**, `package.json`'s `filesystem:up` pointed at `V:\AppealDeck`, a repo
+that is not this one.

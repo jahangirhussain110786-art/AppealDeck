@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { computeDraftStrength } from "./draftStrength";
+import { computeDraftStrength, DRAFT_STRENGTH_TONE } from "./draftStrength";
+import { WORKSPACE } from "@/content/workspace";
 import type { ComposerMode, CriticFinding } from "@/core";
 
 const fullDraft: ComposerMode = { mode: "full-draft", reason: "complete" };
@@ -30,5 +31,22 @@ describe("computeDraftStrength", () => {
 
   it("is strong on a full draft with only info-level findings", () => {
     expect(computeDraftStrength(fullDraft, [finding("info")])).toBe("strong");
+  });
+
+  // Wiring this into ResponseReview on 23 Sep 2026 (A-07) is the whole point: it was built,
+  // tested and unreachable for eleven days while the founder's original complaint stayed live in
+  // the product. These two pin the render path so a level cannot be added without copy or a tone.
+  it("gives every level a tone", () => {
+    for (const level of ["strong", "needs_work", "weak"] as const) {
+      expect(DRAFT_STRENGTH_TONE[level]).toBeTruthy();
+    }
+  });
+
+  it("gives every level copy that states nothing about Amazon's decision", () => {
+    for (const level of ["strong", "needs_work", "weak"] as const) {
+      const copy = WORKSPACE.draftStrength[level];
+      expect(copy.length).toBeGreaterThan(0);
+      expect(copy).not.toMatch(/amazon|approv|reject|accept|likel|chance|odds/i);
+    }
   });
 });

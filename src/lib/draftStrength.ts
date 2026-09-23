@@ -10,6 +10,18 @@ import type { ComposerMode, CriticFinding } from "@/core";
  */
 export type DraftStrength = "strong" | "needs_work" | "weak";
 
+/**
+ * The Alert tone each level renders with. Here rather than inline in the JSX so that "every level
+ * has a tone and a copy string" is a test rather than a thing someone has to notice — the whole
+ * point of wiring this up on 23 Sep 2026 is that it had been built, tested and unreachable since
+ * 12 Sep, and nothing failed.
+ */
+export const DRAFT_STRENGTH_TONE = {
+  strong: "success",
+  needs_work: "info",
+  weak: "warning",
+} as const satisfies Record<DraftStrength, "success" | "info" | "warning">;
+
 export function computeDraftStrength(
   mode: ComposerMode,
   findings: readonly CriticFinding[],

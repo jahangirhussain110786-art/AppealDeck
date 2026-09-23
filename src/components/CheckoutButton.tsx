@@ -8,6 +8,7 @@ import { loadCaseFile } from "@/lib/caseStore";
 import { openVaultForVisitor } from "@/lib/vault/visitor";
 import type { Vault } from "@/core/vault/vault";
 import { APP } from "@/content/app";
+import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 
 declare global {
   interface Window {
@@ -131,6 +132,11 @@ export function CheckoutButton({
         throw new Error(
           response.status === 401 ? "Sign in before buying your case's Appeal Pass." : data.error,
         );
+      // B-12: fired here rather than on the button click, so the gap between this and
+      // `pass_purchased` is abandonment at the payment step and nothing else. A click that fails
+      // to reach Paddle (locked vault, no case, intent rejected) is a different problem and must
+      // not be counted as an opened checkout.
+      trackFunnelEvent(FUNNEL_EVENTS.checkoutOpened);
       window.Paddle.Checkout.open({
         items: [{ priceId: data.priceId }],
         customer: customerEmail ? { email: customerEmail } : undefined,
