@@ -32,8 +32,13 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
     /product safety|safety (?:complaint|incident|concern)|product recall|recall(?:ed)? product|recall notice|unsafe product|hazardous (?:material|product|good)/i,
   ],
   [
+    // The gated-category alternatives were added 23 Sep 2026 after B-01's fixtures found that a
+    // notice pulling listings because the category is restricted to approved sellers matched
+    // nothing and fell through to UNKNOWN — the "please clarify" dead end AA-39 exists to remove.
+    // Kept as narrow, distinctive phrases rather than a bare "approval": Amazon uses that word in
+    // routine contexts that have nothing to do with a restriction.
     "RESTRICTED_PRODUCT",
-    /restricted product|prohibited product|restricted[\s-]?products? policy|not (?:permitted|allowed) (?:for sale|to be sold|on)/i,
+    /restricted product|prohibited product|restricted[\s-]?products? policy|not (?:permitted|allowed) (?:for sale|to be sold|on)|restricted to (?:qualified|approved|pre-?approved) sellers?|(?:need|require)s? approval to (?:sell|list)/i,
   ],
   [
     // Identity/business verification only. Authenticity-of-documents wording is INAUTHENTIC_DOCUMENTS

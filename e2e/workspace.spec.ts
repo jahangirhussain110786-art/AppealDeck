@@ -360,6 +360,8 @@ test("an Amazon reply keeps the evidence a seller already reviewed, and says so 
   await expect(delta).toBeVisible();
 
   await page.getByRole("button", { name: "Use reply for a new revision" }).click();
+  // Same race as above: the revision is written to the vault before the tab switch means anything.
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
 
   // The regression this feature exists to prevent. Asserted on the two status badges rather than
   // on the labels: the facts ledger legitimately repeats "Supplier invoice" in the same panel, so
@@ -450,6 +452,10 @@ test("a Plan of Action asks the seller to stand behind the work they describe", 
   await expect(confirm).toBeEnabled();
   await confirm.check();
   await page.getByRole("button", { name: "Save response facts" }).click();
+  // Wait for the write to land before reloading. Without this the test races the vault and fails
+  // only under parallel load, which is indistinguishable from a flake until you read the failure:
+  // the checkbox comes back disabled because the corrective-action text never persisted.
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
 
   // It has to survive the validator that guards every vault write.
   await page.reload();

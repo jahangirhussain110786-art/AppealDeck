@@ -79,21 +79,53 @@ const RULES: ReadonlyArray<PatternRule> = [
   },
 ];
 
+/**
+ * Categories that directly contradict a reinstatement. If a message contains one of these *and*
+ * reinstatement language, the refusal is Amazon's and the reinstatement language is very often the
+ * seller's own, quoted back at them.
+ */
+const CONTRADICTS_REINSTATEMENT: ReadonlySet<ReplyCategory> = new Set([
+  "final_decision_negative",
+  "needs_more_information",
+]);
+
 export function analyzeReply(raw: string): AnalysisResult {
   const text = sampleText(raw);
+  const matches = RULES.filter((rule) => rule.patterns.some((re) => re.test(text)));
+  if (matches.length === 0) {
+    return { category: "unrecognized", extractedAsks: [], confidence: "rule" };
+  }
 
-  const extractedAsks: EvidenceKind[] = [];
+  /*
+    B-02, 23 Sep 2026. This used to return the first matching rule and stop, which meant a rejection
+    that quoted the seller's own plan back — "You wrote: 'Once these actions are complete, your
+    account is now active'... We do not have enough information" — was reported as **reinstated**.
+    Found by the adversarial fixture `05-CASE-OS-SPEC.md` §3 asked for by name, not by review.
 
-  for (const rule of RULES) {
-    if (rule.patterns.some((re) => re.test(text))) {
-      if (rule.evidenceKind && !extractedAsks.includes(rule.evidenceKind)) {
-        extractedAsks.push(rule.evidenceKind);
-      }
-      return { category: rule.category, extractedAsks, confidence: "rule" };
+    Telling a deactivated seller they are back is the most harmful thing this analyser can do: they
+    stop answering, and the window closes. So when reinstatement language appears alongside a
+    refusal, the refusal wins. The resolution is deliberately narrow — only these two categories
+    override, and only over `reinstated`, because a document request arriving with a genuine
+    reinstatement is not a contradiction and should not be second-guessed.
+  */
+  let chosen = matches[0]!;
+  let overridden = false;
+  if (chosen.category === "reinstated") {
+    const contradiction = matches.find((m) => CONTRADICTS_REINSTATEMENT.has(m.category));
+    if (contradiction) {
+      chosen = contradiction;
+      overridden = true;
     }
   }
 
-  return { category: "unrecognized", extractedAsks, confidence: "rule" };
+  const extractedAsks: EvidenceKind[] = chosen.evidenceKind ? [chosen.evidenceKind] : [];
+  // Reported honestly: the message carried two readings, and this is the safe one, not a certain
+  // one. `/api/analyze-reply` passes this through, so a caller can say so rather than assert.
+  return {
+    category: chosen.category,
+    extractedAsks,
+    confidence: overridden ? "ambiguous" : "rule",
+  };
 }
 
 function sampleText(raw: string): string {

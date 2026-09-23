@@ -506,6 +506,345 @@ Your selling account is deactivated and funds are under review. Submit a funds a
         "ADVERSARIAL: legacy 17-day bait + 'no documents' trap; do NOT present 17 days as current policy, do NOT skip evidence.",
     },
   },
+  // ---------------------------------------------------------------------------------------------
+  // B-01, 23 Sep 2026. Taxonomy v2 added VERIFICATION, PERFORMANCE_METRIC, PRODUCT_SAFETY and
+  // RESTRICTED_PRODUCT on 22 Sep and gave them zero fixtures, so classifier accuracy was unmeasured
+  // for four of the ten families. `core.test.ts` asserts every fixture classifies to its expected
+  // kind, so those four had nothing holding them honest. If a professional tries the product on a
+  // verification notice and it misclassifies, the demo is over before anything else is judged.
+  //
+  // Sourced from `docs/handoffs/2026-09-19-second-opinion-salvage/salvage-research_amazon-mechanics.md`,
+  // which recorded Amazon's own published notice and help-page wording per family. Every fixture is
+  // synthetic and paraphrased from that template language: no real seller's notice, forum post or
+  // document is reproduced.
+  // ---------------------------------------------------------------------------------------------
+  {
+    id: "verification-1-inform",
+    kind: "VERIFICATION",
+    source:
+      "Synthetic — paraphrased from Amazon's published INFORM Consumers Act verification wording (salvage research §3); no real seller's notice used.",
+    raw: `Action Required: Verify your seller information under the INFORM Consumers Act
+
+We are required to collect and verify certain information about high-volume third-party sellers. Our records show that the information on your account has not been verified.
+
+Failure to provide the information we need for verification by the date required may result in temporary deactivation of your selling account, as required by the INFORM Consumers Act. Go to the certification page in Seller Central and confirm your bank account, tax identity and business contact details.`,
+    expected: {
+      ...base("VERIFICATION", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes: "No stated window; the request is to re-certify, not to appeal a finding.",
+    },
+  },
+  {
+    id: "verification-2-video-call",
+    kind: "VERIFICATION",
+    source:
+      "Synthetic — paraphrased from Amazon's published video-verification scheduling wording (salvage research §22); no real seller's notice used.",
+    raw: `Identity verification required
+
+We need to verify your identity before your account can continue selling. Please schedule an appointment to complete your identity verification via video call within the next 7 days. This verification is required as an enhanced security measure.
+
+Bring the government-issued identification and the business documents shown on the scheduling page. If you do not schedule within the period given, your selling account may be deactivated.`,
+    expected: {
+      ...base("VERIFICATION", false),
+      appealWindowDays: 7,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes:
+        "The 7 days is a scheduling deadline, not an appeal window — the product must not present it as one.",
+    },
+  },
+  {
+    id: "verification-3-failed-call",
+    kind: "VERIFICATION",
+    source:
+      "Synthetic — paraphrased from Amazon's published post-video-call failure wording (salvage research §22); no real seller's notice used.",
+    raw: `Your account has been deactivated
+
+We regret to inform you that we could not verify your identity and the documents that you provided during the video call. Your account will be deactivated and you will no longer be eligible to sell on Amazon.
+
+If you believe this decision was made in error, reply with the requested identity documents and an explanation of any discrepancy between the documents and your account information.`,
+    expected: {
+      ...base("VERIFICATION", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes:
+        "Says 'could not verify ... the documents' but is an identity outcome, not an inventory-authenticity finding. A real boundary case between two families.",
+    },
+  },
+  {
+    id: "verification-4-business-details",
+    kind: "VERIFICATION",
+    source:
+      "Synthetic — paraphrased from Amazon's published business-verification request wording (salvage research §3, §22); no real seller's notice used.",
+    raw: `We need to verify your business information
+
+Your selling account is under review because we were unable to verify your business details against the documents on file. Please verify your business information by uploading a current business registration document and a bank statement showing the account holder name.
+
+Your account remains active while this review is open. If we do not receive the documents, selling privileges may be removed.`,
+    expected: {
+      ...base("VERIFICATION", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes: "Document request without a deactivation — the route is verification, not an appeal.",
+    },
+  },
+  {
+    id: "performance-1-odr",
+    kind: "PERFORMANCE_METRIC",
+    source:
+      "Synthetic — paraphrased from Amazon's published Order Defect Rate at-risk wording (salvage research §18); no real seller's notice used.",
+    raw: `Your account is at risk of deactivation
+
+Your Order Defect Rate is 2.11%; the target is 1%. The Order Defect Rate measures the orders with a defect as a proportion of your total orders in the period shown in Account Health.
+
+Submit a plan of action describing the root cause of the defects, the corrective actions you have taken, and the steps you will take to keep the metric below target.`,
+    expected: {
+      ...base("PERFORMANCE_METRIC", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes: "At risk, not yet deactivated. Documents are not the answer here; a metric plan is.",
+    },
+  },
+  {
+    id: "performance-2-late-shipment",
+    kind: "PERFORMANCE_METRIC",
+    source:
+      "Synthetic — paraphrased from Amazon's published Late Shipment Rate wording (salvage research §18); no real seller's notice used.",
+    raw: `Your account is at risk of deactivation
+
+Your Late Shipment Rate has exceeded the target for seller-fulfilled orders. Late Shipment Rate measures orders confirmed as shipped after the expected ship date.
+
+Review your handling times and shipping settings, then submit a plan describing what caused the late shipments and what you have changed.`,
+    expected: {
+      ...base("PERFORMANCE_METRIC", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes:
+        "Operational route: the evidence is metric data and process change, not supplier records.",
+    },
+  },
+  {
+    id: "performance-3-valid-tracking",
+    kind: "PERFORMANCE_METRIC",
+    source:
+      "Synthetic — paraphrased from Amazon's published Valid Tracking Rate wording (salvage research §18); no real seller's notice used.",
+    raw: `Valid Tracking Rate below target
+
+Your Valid Tracking Rate for seller-fulfilled orders is below the required target for one or more categories. Orders shipped without valid tracking may result in removal of the affected selling privileges.
+
+Provide a plan describing how you will confirm shipments with valid tracking numbers from an integrated carrier.`,
+    expected: {
+      ...base("PERFORMANCE_METRIC", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes: "Category-scoped metric; the response is a process commitment, not a document upload.",
+    },
+  },
+  {
+    id: "performance-4-cancellation",
+    kind: "PERFORMANCE_METRIC",
+    source:
+      "Synthetic — paraphrased from Amazon's published pre-fulfilment cancellation-rate wording (salvage research §18); no real seller's notice used.",
+    raw: `Pre-fulfillment cancellation rate above target
+
+Your pre-fulfillment cancellation rate exceeds the target for seller-fulfilled orders. This measures orders you cancelled before confirming shipment, as a proportion of total orders in the period.
+
+Explain the root cause of the cancellations, the corrective action already taken, and how you will keep inventory counts accurate.`,
+    expected: {
+      ...base("PERFORMANCE_METRIC", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes:
+        "Inventory-accuracy root cause; no deadline stated, which the product must not invent.",
+    },
+  },
+  {
+    id: "safety-1-recall",
+    kind: "PRODUCT_SAFETY",
+    source:
+      "Synthetic — paraphrased from Amazon's published safety-recall listing-removal wording (salvage research §20); no real seller's notice used.",
+    raw: `Removal of your listings due to a safety recall
+
+We have removed the listings shown below because the products are subject to a product recall. We take these measures to ensure that the products sold in our store are safe.
+
+Create a removal order for the affected inventory to be sent to an address of your choice. If the inventory is not removed within 30 days it will be disposed of in accordance with our Fulfillment by Amazon policies. Confirm that you have stopped selling the recalled units and describe how you identified the affected stock.`,
+    expected: {
+      ...base("PRODUCT_SAFETY", false),
+      appealWindowDays: 30,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes:
+        "The 30 days is an inventory-disposal deadline, not an appeal window. Presenting it as one is exactly the harm the deadline model exists to prevent.",
+    },
+  },
+  {
+    id: "safety-2-complaint",
+    kind: "PRODUCT_SAFETY",
+    source:
+      "Synthetic — paraphrased from Amazon's published product-safety complaint wording (salvage research §20); no real seller's notice used.",
+    raw: `Listing removed: product safety complaint
+
+We received a product safety complaint about the ASIN shown below and have removed the listing while we review it. Customer safety is the reason for this action.
+
+To have the listing considered for reinstatement, provide supporting documentation such as test reports or certificates of compliance from an accredited laboratory, and describe the checks you run before listing products in this category.`,
+    expected: {
+      ...base("PRODUCT_SAFETY", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes:
+        "Documents are requested, but they are compliance test reports, not supplier invoices.",
+    },
+  },
+  {
+    id: "safety-3-hazardous",
+    kind: "PRODUCT_SAFETY",
+    source:
+      "Synthetic — paraphrased from Amazon's published dangerous-goods wording (salvage research §20); no real seller's notice used.",
+    raw: `Hazardous material review: shipment held
+
+One or more of your products has been identified as a hazardous material and cannot be stored or shipped under its current classification. The affected inventory is held pending review.
+
+Submit the safety data sheet and an exemption sheet where one applies, and confirm the product's classification. Do not send further units of the affected products until the review is complete.`,
+    expected: {
+      ...base("PRODUCT_SAFETY", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes: "Inventory held rather than account deactivated; the ask is classification evidence.",
+    },
+  },
+  {
+    id: "safety-4-incident",
+    kind: "PRODUCT_SAFETY",
+    source:
+      "Synthetic — paraphrased from Amazon's published safety-incident wording (salvage research §20); no real seller's notice used.",
+    raw: `Safety incident reported for your product
+
+A safety incident has been reported for the product shown below. The listing is inactive while we assess the report.
+
+Tell us whether the affected units share a batch or manufacturing period, what you have done to contain the issue, and provide any supplier correspondence about the defect. Acknowledge that you have paused sales of the affected units.`,
+    expected: {
+      ...base("PRODUCT_SAFETY", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes: "Containment and batch traceability, plus an explicit acknowledgement step.",
+    },
+  },
+  {
+    id: "restricted-1-removal",
+    kind: "RESTRICTED_PRODUCT",
+    source:
+      "Synthetic — paraphrased from Amazon's published Restricted Products removal wording (salvage research §20); no real seller's notice used.",
+    raw: `Notification of Restricted Products Removal
+
+We have removed the listings shown below because they are not permitted for sale in our store under our Restricted Products policy.
+
+Review the policy for this category and confirm that you have removed comparable listings from your catalogue. If you believe the products are permitted, reply with the product details and the basis on which you believe they comply.`,
+    expected: {
+      ...base("RESTRICTED_PRODUCT", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes: "Listing-level removal with a dispute path; the account itself is not deactivated.",
+    },
+  },
+  {
+    id: "restricted-2-prohibited",
+    kind: "RESTRICTED_PRODUCT",
+    source:
+      "Synthetic — paraphrased from Amazon's published prohibited-product wording (salvage research §20); no real seller's notice used.",
+    raw: `Your listing has been removed: prohibited product
+
+The product shown below is a prohibited product and is not allowed to be sold in our store. Repeated listing of prohibited products may result in the removal of your selling privileges.
+
+Confirm that you understand the restriction and that comparable products have been removed from your catalogue.`,
+    expected: {
+      ...base("RESTRICTED_PRODUCT", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes: "Acknowledgement route: what Amazon asks for is a confirmation, not a document.",
+    },
+  },
+  {
+    id: "restricted-3-gated-category",
+    kind: "RESTRICTED_PRODUCT",
+    source:
+      "Synthetic — paraphrased from Amazon's published gated-category wording (salvage research §20); no real seller's notice used.",
+    raw: `Approval required: this product is restricted to qualified sellers
+
+The products shown below are currently restricted to qualified sellers and new applications are not being accepted for this category at this time. Your listings have been removed.
+
+You may reapply when applications reopen. Do not relist the affected products in the meantime.`,
+    expected: {
+      ...base("RESTRICTED_PRODUCT", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes:
+        "There is nothing to appeal: the honest answer is that no response reopens this, which the product has to be able to say.",
+    },
+  },
+  {
+    id: "restricted-4-regional-compliance",
+    kind: "RESTRICTED_PRODUCT",
+    source:
+      "Synthetic — paraphrased from Amazon's published regional-compliance removal wording (salvage research §20); no real seller's notice used.",
+    raw: `Your branded listings will be removed
+
+Your listings for the products shown below will be removed because they are not permitted for sale in this store without the local and regional documentation we require. You will be unable to create new listings for these products.
+
+We take these measures to ensure that the products sold in our store meet local and regional requirements. If you hold the compliance documentation required in this region, reply with it and the listings will be reviewed again.`,
+    expected: {
+      ...base("RESTRICTED_PRODUCT", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes: "Compliance documentation for a region, not proof of authenticity.",
+    },
+  },
 ];
 
 export const FIXTURE_KINDS: ViolationKind[] = [
@@ -515,4 +854,11 @@ export const FIXTURE_KINDS: ViolationKind[] = [
   "INTELLECTUAL_PROPERTY",
   "LISTING",
   "FUNDS",
+  // B-01: taxonomy v2's four families, added here the moment they had fixtures. A kind listed
+  // without four of them fails `fixtures.test.ts`, which is the point — that gate is what stops a
+  // family being added to the taxonomy and then left unmeasured, as these four were for a day.
+  "VERIFICATION",
+  "PERFORMANCE_METRIC",
+  "PRODUCT_SAFETY",
+  "RESTRICTED_PRODUCT",
 ];

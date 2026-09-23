@@ -79,8 +79,13 @@ const GALLERY_ONLY = new Map([
  *
  * Test-support files are excluded because tests are excluded from counting as importers, so a
  * fixture would otherwise always look dead.
+ *
+ * `fixtures.ts` is named here rather than left to the barrel. It holds the notice corpus and has no
+ * product consumer at all — it passes only because `core/index.ts` re-exports it, which is a third
+ * way to launder reachability and one this gate should not quietly depend on. A fixture corpus is
+ * test support by definition; saying so is better than letting a re-export vouch for it.
  */
-const MODULE_EXEMPT = /(\.fixture\.ts|\.d\.ts)$/;
+const MODULE_EXEMPT = /(\.fixture\.ts|[Ff]ixtures\.ts|\.d\.ts)$/;
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {

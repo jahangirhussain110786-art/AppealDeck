@@ -1,16 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { FIXTURES, FIXTURE_KINDS, type FixtureExpected } from "./fixtures";
-import { isSeverityGated } from "./index";
+import { isSeverityGated, VIOLATION_KINDS } from "./index";
 
-const validKinds = new Set<string>([
-  "INAUTHENTIC_DOCUMENTS",
-  "RELATED_ACCOUNT",
-  "POLICY",
-  "INTELLECTUAL_PROPERTY",
-  "LISTING",
-  "FUNDS",
-  "UNKNOWN",
-]);
+// Derived rather than restated. AA-39 found six hand-maintained copies of this list outside
+// `core/`, none of which TypeScript could check, so a kind could be added and silently rejected.
+// A seventh copy here would have had the same defect.
+const validKinds = new Set<string>(VIOLATION_KINDS);
 
 describe("fixture corpus", () => {
   it("has no duplicate fixture ids", () => {
