@@ -38,6 +38,24 @@ const BANNED_PATTERNS = [
   /\brevolutionary\b/i,
   /\bai-powered\b/i,
   /\binstantly\b/i,
+  // Added 23 Sep 2026. Two claims this project's own research had withdrawn were nevertheless
+  // shipping in `src/core/caseState.ts`, one of them rendered in the pre-submit checklist — the
+  // last thing a seller reads before submitting. This gate bans "guarantee" and "win rate" but knew
+  // nothing about either of these, so it was narrower than the rule it exists to enforce.
+  //
+  // "odds" and "chances" are predictions of Amazon's decision, which D6 forbids and which the FTC's
+  // DoNotPay order makes a substantiation question rather than a tone one. "Permanent lock" is the
+  // specific unsupported causal claim from `2026-09-21-phase-1-evidence-review.md` row 7 — banned by
+  // name because it had already propagated from a code comment into seller-facing copy once.
+  /\bodds\b/i,
+  /\bchances\b/i,
+  /permanent(?:ly)?[\s-]?lock(?:ed|s|out)?\b/i,
+  // Added in the same pass, an hour later, after the stripped-comment check surfaced a *third* copy
+  // of row 7's claim — this one in `submissionNovelty.ts`'s seller-facing message, phrased as
+  // "a documented way to run out of attempts". The first three patterns above did not match it.
+  // Banned by its own wording because the claim keeps reappearing in new words rather than old ones.
+  /\brun(?:ning|s)? out of attempts\b/i,
+  /\bexhaust(?:ing|s|ed)?\s+(?:your\s+|their\s+)?attempts\b/i,
 ];
 
 // banned soft list — warn-only (counts as hits for the gate)
@@ -97,10 +115,40 @@ function lineOf(text, idx) {
   return 1 + (text.slice(0, idx).split("\n").length - 1);
 }
 
+/**
+ * Blanks out whole-line comments, preserving line numbers so reported positions stay true.
+ *
+ * Added 23 Sep 2026, when this gate flagged the comments that explain why two withdrawn claims were
+ * removed. A gate that punishes recording *why* a claim was struck discourages exactly the record
+ * that stops it coming back — and in this case the claim had already propagated once from a code
+ * comment into seller-facing copy, so the note naming it is doing real work.
+ *
+ * Only whole-line comments. Seller-facing copy lives in string literals and JSX text, never in a
+ * comment, so nothing that ships to anyone stops being scanned.
+ */
+function withoutComments(text) {
+  let inBlock = false;
+  return text
+    .split("\n")
+    .map((line) => {
+      const t = line.trim();
+      if (inBlock) {
+        if (t.includes("*/")) inBlock = false;
+        return "";
+      }
+      if (t.startsWith("/*")) {
+        if (!t.includes("*/")) inBlock = true;
+        return "";
+      }
+      return t.startsWith("//") || t.startsWith("*") ? "" : line;
+    })
+    .join("\n");
+}
+
 function scanFile(file, patterns, allow, opts) {
   const rel = relPosix(file);
   if (isExcluded(rel)) return [];
-  const text = readFileSync(file, "utf8");
+  const text = withoutComments(readFileSync(file, "utf8"));
   const findings = [];
   const lines = text.split("\n");
   for (const re of patterns) {

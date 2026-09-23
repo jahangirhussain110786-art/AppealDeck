@@ -95,10 +95,34 @@ describe("assessNovelty", () => {
     expect(shouldWarnBeforeSubmit(r)).toBe(false);
   });
 
-  it("explains the risk in the identical message rather than only labelling it", () => {
+  it("explains the identical verdict rather than only labelling it", () => {
     const r = assessNovelty(APPEAL, [prior(APPEAL)]);
-    expect(r.message).toMatch(/run out of attempts/i);
-    expect(r.message).toMatch(/change what it says/i);
+    // What is true of the seller's own text — the only thing this module measures.
+    expect(r.message).toMatch(/word for word/i);
+    // And why it matters, so the warning is actionable rather than a bare label.
+    expect(r.message).toMatch(/answers what they asked|went unanswered/i);
+  });
+
+  /**
+   * This assertion replaces one that pinned the defect in place. The old test required the
+   * `identical` message to say repeated submissions "run out of attempts" — a claim
+   * `docs/handoffs/2026-09-21-phase-1-evidence-review.md` row 7 marks causality-unsupported, so the
+   * suite was enforcing the very thing the research had withdrawn.
+   *
+   * It now guards the property instead of the wording: no message predicts Amazon's decision. Same
+   * shape as `noticeAuthenticity`'s test that the output never reaches a verdict — a rule worth
+   * holding is worth holding as a test, because both of these claims had already escaped once.
+   */
+  it("predicts nothing about Amazon's decision in any message", () => {
+    const drafts = [APPEAL, `${APPEAL} extra.`, "Something completely different.", "   "];
+    for (const text of drafts) {
+      const { message } = assessNovelty(text, [prior(APPEAL)]);
+      expect(message).not.toMatch(/run out of attempts|exhaust/i);
+      expect(message).not.toMatch(/permanent(?:ly)?[\s-]?lock/i);
+      expect(message).not.toMatch(/\bodds\b|\bchances\b|likelihood/i);
+      expect(message).not.toMatch(/amazon (?:will|is likely|is unlikely|treats)/i);
+      expect(message).not.toMatch(/\bguarantee|\breject(?:s|ed|ion)\b|\bapprove/i);
+    }
   });
 
   it("never phrases a warning as a block", () => {

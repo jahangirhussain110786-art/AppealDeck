@@ -204,10 +204,29 @@ export function expectationsCopy(state: CaseState): string {
     case "AWAITING":
     case "SUBMITTED":
       return "Amazon typically responds within a variable window. There is no fixed response time.";
+    /*
+      Corrected 23 Sep 2026. These two lines carried claims this project's own research had already
+      withdrawn, and the first of them renders in `BeforeYouSubmitChecklist` — the last thing a
+      seller reads before submitting, and the moment they are most frightened.
+
+      "Repeated identical submissions risk a permanent lock" is marked **causality unsupported** in
+      `docs/handoffs/2026-09-21-phase-1-evidence-review.md` row 7: the only source is a four-year-old,
+      case-specific staff reply about invalid follow-up documents receiving no further response, which
+      is far narrower than a universal rule. That review's own instruction is to recommend comparison
+      with the previous submission "because it makes changed evidence visible, not because it predicts
+      an irreversible penalty".
+
+      "Self-serve odds decrease at later stages" is an efficacy claim with nothing behind it. §70 of
+      the same review lists rejection rates and successful outcomes among the things it does not
+      support, and the 22 Sep legal research records that unsubstantiated efficacy claims are exactly
+      what the FTC's DoNotPay order turns on.
+
+      Both now say what is true and useful, and predict nothing.
+    */
     case "REVISION":
-      return "Resubmissions must include new information or changed framing. Repeated identical submissions risk a permanent lock.";
+      return "Answer the specific request in Amazon's latest reply. Your response is compared against what you already sent, so you can see what has changed before you submit.";
     case "ESCALATION":
-      return "Each escalation stage should add new information. Self-serve odds decrease at later stages.";
+      return "Send something Amazon has not already seen. No one outside Amazon can tell you how a further attempt will be judged.";
     case "NO_RESPONSE":
       return "A follow-up is reasonable after your chosen reminder period.";
     default:

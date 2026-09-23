@@ -3,9 +3,14 @@
  *
  * `noveltyRequired(attemptCount)` already told a seller that a second attempt "needs new
  * information". It never looked at the text. A seller could paste the identical appeal back in and
- * the product would nod it through with a generic reminder — which matters, because resending the
- * same appeal is the documented route to exhausting attempts and, in the worst case, to a
- * permanent lock. This module actually compares.
+ * the product would nod it through with a generic reminder. This module actually compares.
+ *
+ * Why it compares, corrected 23 Sep 2026: this comment used to say resending the same appeal was
+ * "the documented route to exhausting attempts and, in the worst case, to a permanent lock". That
+ * causal claim is marked unsupported in `docs/handoffs/2026-09-21-phase-1-evidence-review.md` rows
+ * 7 and 70, and restating it here is how it kept propagating into seller-facing copy. The honest
+ * reason is the one that review gives: comparing against the previous submission makes changed
+ * evidence visible, which is useful whatever Amazon does next. It predicts no penalty.
  *
  * Two design rules:
  *
@@ -92,11 +97,23 @@ function recycledFraction(draft: readonly string[], prior: readonly string[]): n
   return draft.filter((s) => priorSet.has(s)).length / draft.length;
 }
 
+/*
+  Corrected 23 Sep 2026, and this is the third copy of the same withdrawn claim found in one pass.
+  The `identical` message said repeated submissions were "a documented way to run out of attempts",
+  which asserts documentation that `docs/handoffs/2026-09-21-phase-1-evidence-review.md` row 7 says
+  does not exist: the sole source is a four-year-old identity thread in which staff say *invalid
+  follow-up documents* may receive no further response. The `near-identical` message predicted how
+  Amazon would read the draft, which is an efficacy claim and not ours to make.
+
+  Both now describe the seller's own text — which is the only thing this module actually measures —
+  and leave Amazon's response unpredicted. Per the file's own design rule 1, resending unchanged is
+  sometimes correct, so the warning says that instead of implying a penalty.
+*/
 const MESSAGES: Record<NoveltyVerdict, string> = {
   identical:
-    "This is the same text you already sent. Amazon treats a repeated appeal as no new information, and repeated identical submissions are a documented way to run out of attempts. Change what it says before you send it.",
+    "This is the same text you already sent, word for word. If Amazon has replied since, nothing here answers what they asked. Resending unchanged is sometimes the right move — when a submission went unanswered — but it should be a decision, not an accident.",
   "near-identical":
-    "This is almost word for word what you already sent. Amazon is unlikely to read it as a new response. Add what has actually changed — a document you now hold, an action you have since completed, or a fact you did not include.",
+    "This is almost word for word what you already sent. Add what has actually changed — a document you now hold, an action you have since completed, or a fact you did not include.",
   revised:
     "This builds on what you sent before, which is what a revision should do. Check that the new parts answer what Amazon asked for in their reply.",
   new: "This is substantially different from anything you have sent on this case.",

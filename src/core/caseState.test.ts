@@ -9,8 +9,32 @@ import {
   isSubmitted,
   noveltyRequired,
   NOVELTY_REQUIRED_FROM_ATTEMPT,
+  type CaseState,
   type CaseStateContext,
 } from "./caseState";
+
+/**
+ * Written as the keys of a `Record<CaseState, 1>` rather than a plain array so that adding a state
+ * to the union fails typecheck until it is listed here. An array would silently leave the new
+ * state's copy unchecked, which is the shape of the bug this list exists to catch.
+ */
+const ALL_STATES = Object.keys({
+  DECODED: 1,
+  GATED_PRO_HELP: 1,
+  INTAKE: 1,
+  REMEDIATION: 1,
+  WAITING_THIRD_PARTY: 1,
+  READY: 1,
+  SUBMITTED: 1,
+  AWAITING: 1,
+  APPROVED: 1,
+  REJECTED: 1,
+  REVISION: 1,
+  NO_RESPONSE: 1,
+  FOLLOW_UP: 1,
+  ESCALATION: 1,
+  CLOSED: 1,
+} satisfies Record<CaseState, 1>) as CaseState[];
 
 const baseCtx = (overrides: Partial<CaseStateContext> = {}): CaseStateContext => ({
   kind: "POLICY",
@@ -187,8 +211,33 @@ describe("expectationsCopy", () => {
     expect(copy).not.toMatch(/\d+\s*(hour|day|minute)/i);
   });
 
-  it("REVISION copy warns about novelty", () => {
-    expect(expectationsCopy("REVISION")).toMatch(/new information/i);
+  it("REVISION copy points the seller at what has changed since their last submission", () => {
+    expect(expectationsCopy("REVISION")).toMatch(/what you already sent|what has changed/i);
+  });
+
+  /**
+   * Added 23 Sep 2026 with the correction to REVISION and ESCALATION. Two claims this project's own
+   * research had withdrawn were shipping here — one of them rendered in `BeforeYouSubmitChecklist`,
+   * the last thing a seller reads before submitting — and the suite had no assertion that could
+   * notice. The previous REVISION test pinned the old wording, so it passed throughout.
+   *
+   * This guards the rule rather than the sentence: D6 forbids predicting Amazon's decision, and the
+   * 22 Sep legal research records that unsubstantiated efficacy claims are what the FTC's DoNotPay
+   * order turns on. Every state's copy is checked, not just the two that were wrong, because the
+   * next one to drift will be a different state.
+   */
+  it("predicts nothing about Amazon's decision in any state's copy", () => {
+    for (const state of ALL_STATES) {
+      const copy = expectationsCopy(state);
+      if (!copy) continue;
+      expect(copy, state).not.toMatch(/permanent(?:ly)?[\s-]?lock/i);
+      expect(copy, state).not.toMatch(/\bodds\b|\bchances\b|likelihood/i);
+      expect(copy, state).not.toMatch(/run out of attempts|exhaust/i);
+      expect(copy, state).not.toMatch(/\bguarantee|\bwin rate\b|success rate/i);
+      expect(copy, state).not.toMatch(
+        /more likely|less likely|improve[sd]? your|reduce[sd]? your/i,
+      );
+    }
   });
 });
 
