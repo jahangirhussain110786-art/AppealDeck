@@ -63,6 +63,8 @@ export class Vault {
   private readonly provider: WebCryptoLike;
   private dek: CryptoKey | null = null;
   private deviceKey: CryptoKey | null = null;
+  /** The last `createdAt` this instance issued, in ms; see `add`. */
+  private lastCreatedMs = 0;
 
   constructor(provider: WebCryptoLike, db?: VaultDB) {
     this.provider = provider;
@@ -386,7 +388,13 @@ export class Vault {
     }
     const envelope = await Dexie.waitFor(encryptBytes(this.provider, dek, data));
     const hash = await Dexie.waitFor(sha256Base64(this.provider, data));
-    const now = new Date().toISOString();
+    // Strictly increasing within this vault. Records are ordered by `createdAt` (newest-first
+    // listing; `findByPlaintext` promises the oldest match), and two adds in one millisecond used
+    // to tie, leaving the order to random ids. Found 24 Sep 2026 when CI's faster runner flaked
+    // the "oldest record" test.
+    const nowMs = Math.max(Date.now(), this.lastCreatedMs + 1);
+    this.lastCreatedMs = nowMs;
+    const now = new Date(nowMs).toISOString();
     const record: VaultRecordInput = {
       id: cryptoRandomId(this.provider),
       kind: input.kind ?? "document",

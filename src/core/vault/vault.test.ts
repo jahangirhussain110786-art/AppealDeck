@@ -142,6 +142,21 @@ describe("Vault", () => {
     expect(found?.id).toBe(first.id);
   });
 
+  it("orders records added within the same millisecond by when they were added", async () => {
+    await v.initWithPassphrase("super-secret-pass");
+    const payload = new TextEncoder().encode("same instant");
+    const realNow = Date.now;
+    Date.now = () => 1_790_000_000_000;
+    try {
+      const first = await v.add({ name: "a.pdf", mimeType: "application/pdf", data: payload });
+      const second = await v.add({ name: "b.pdf", mimeType: "application/pdf", data: payload });
+      expect(second.createdAt > first.createdAt).toBe(true);
+      expect((await v.findByPlaintext(payload))?.id).toBe(first.id);
+    } finally {
+      Date.now = realNow;
+    }
+  });
+
   it("findByPlaintext accepts string input matching the same bytes", async () => {
     await v.initWithPassphrase("super-secret-pass");
     const rec = await v.add({ name: "x", mimeType: "text/plain", data: "payload" });
