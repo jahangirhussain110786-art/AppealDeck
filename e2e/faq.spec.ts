@@ -1,20 +1,27 @@
 import { expect, test } from "@playwright/test";
 
+/**
+ * A topic tab is named by everything it shows — the topic, then its hint on wider screens — so it
+ * is found by the words it starts with. It used to carry an aria-label of the topic alone, which
+ * Lighthouse flags: a voice-control user saying the words on screen could not reach it.
+ */
+const topic = (name: string) => new RegExp(`^${name}(?:\\s|$)`);
+
 for (const path of ["/faq", "/pricing"]) {
   test(`${path}: topics and answers work by keyboard and lead to the free decoder`, async ({
     page,
   }) => {
     await page.goto(path);
-    const start = page.getByRole("tab", { name: "Getting started", exact: true });
+    const start = page.getByRole("tab", { name: topic("Getting started") });
     await expect(start).toHaveAttribute("aria-selected", "true");
     await start.focus();
     await page.keyboard.press("ArrowRight");
-    await expect(page.getByRole("tab", { name: "Your response", exact: true })).toHaveAttribute(
+    await expect(page.getByRole("tab", { name: topic("Your response") })).toHaveAttribute(
       "aria-selected",
       "true",
     );
     await page.keyboard.press("ArrowRight");
-    await expect(page.getByRole("tab", { name: "Files & privacy", exact: true })).toHaveAttribute(
+    await expect(page.getByRole("tab", { name: topic("Files & privacy") })).toHaveAttribute(
       "aria-selected",
       "true",
     );
@@ -30,7 +37,7 @@ for (const path of ["/faq", "/pricing"]) {
       page.getByRole("link", { name: "How processing works", exact: true }),
     ).toHaveAttribute("href", "/privacy#how-we-use");
 
-    await page.getByRole("tab", { name: "Pass & refunds", exact: true }).click();
+    await page.getByRole("tab", { name: topic("Pass & refunds") }).click();
     await expect(page.getByText(/The pass is \$249 once, with no subscription/)).toBeVisible();
     await page.getByRole("button", { name: "What is your refund policy?", exact: true }).click();
     await expect(

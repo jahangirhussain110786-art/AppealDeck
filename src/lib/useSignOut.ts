@@ -18,6 +18,9 @@ export function useSignOut() {
   async function signOut() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
+      // A full page load on purpose, not router.push: the client Router Cache replayed a signed-in
+      // page after sign-out (11 Sep 2026), and only a hard navigation drops it.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.assign("/login");
       return;
     }
@@ -29,6 +32,8 @@ export function useSignOut() {
       return;
     }
     forgetGuestVault();
+    // See above: a hard navigation, so no cached signed-in page survives.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.assign("/login");
   }
 

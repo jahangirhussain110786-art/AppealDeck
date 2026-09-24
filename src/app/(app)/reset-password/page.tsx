@@ -59,7 +59,12 @@ function ResetPasswordPageInner() {
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    if (!supabase) return;
+    if (!supabase) {
+      // No auth backend means no session that could reset a password, so this form cannot work.
+      // Sent to sign-in like any other signed-out visitor, as useSignOut does in the same case.
+      window.location.href = "/login";
+      return;
+    }
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) {
         const error = searchParams.get("error");

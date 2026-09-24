@@ -126,7 +126,6 @@ export function CheckoutButton({
     // onCompleted is read fresh via the eventCallback closure at init time;
     // re-running this effect on every onCompleted identity change would
     // reload the Paddle script unnecessarily.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function openCheckout() {

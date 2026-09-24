@@ -6,9 +6,13 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-export function createSupabaseServerClient(): SupabaseClient | null {
+/**
+ * Async since the Next.js 16 upgrade (24 Sep 2026): `cookies()` returns a Promise from Next 15 on,
+ * and 16 removed the synchronous fallback, so every caller awaits this.
+ */
+export async function createSupabaseServerClient(): Promise<SupabaseClient | null> {
   if (!url || !anonKey) return null;
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   return createServerClient(url, anonKey, {
     cookies: {
       getAll() {

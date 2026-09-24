@@ -40,7 +40,9 @@ export function FaqAccordion() {
             <TabsTrigger
               key={group.id}
               value={group.id}
-              aria-label={group.name}
+              // No aria-label: it named the tab by its topic alone while the tab also shows a hint,
+              // and a voice-control user saying the words on screen could not reach it (Lighthouse
+              // label-content-name-mismatch, 24 Sep 2026). The name now comes from what is shown.
               className="flex h-full min-w-0 flex-col items-start gap-3 whitespace-normal rounded-xl border border-border/80 bg-card px-4 py-4 text-left shadow-card hover:bg-surface-2 data-[state=active]:border-primary/40 data-[state=active]:bg-primary/5 data-[state=active]:shadow-none"
             >
               <IconTile icon={topic.icon} tone={topic.tone} />
@@ -59,7 +61,8 @@ export function FaqAccordion() {
           className="mt-4 overflow-hidden rounded-xl border border-border/80 bg-card shadow-card"
         >
           <div className="flex items-center justify-between gap-3 border-b border-border/70 bg-surface-2/40 px-5 py-4 sm:px-6">
-            <h3 className="text-sm font-semibold text-foreground">{group.name}</h3>
+            {/* h2, not h3: the page goes h1 → this heading, and a skipped level fails heading-order. */}
+            <h2 className="text-sm font-semibold text-foreground">{group.name}</h2>
             <span className="text-xs text-muted-foreground">{group.items.length} questions</span>
           </div>
           <Accordion

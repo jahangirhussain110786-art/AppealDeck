@@ -27,7 +27,7 @@ function hostOf(req: NextRequest): string {
   return (req.headers.get("host") ?? "").split(":")[0]?.toLowerCase() ?? "";
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   if (SINGLE_HOST) return NextResponse.next();
 
   const host = hostOf(req);

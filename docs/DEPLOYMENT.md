@@ -60,7 +60,7 @@ See `.env.example` "NOT USED BY THE APP" section. The old plan added ~10 unused 
 
 ## 3. Domain setup (founder action) — single host, apex only
 
-**First deploy needs no custom domain.** Ship on the Vercel-provided `https://<project>.vercel.app` URL with `NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_MARKETING_HOST` set to it and `NEXT_PUBLIC_APP_HOST` / `NEXT_PUBLIC_APP_URL` **unset** — marketing, auth, and the app all serve from that one origin (single-host mode in `src/middleware.ts`).
+**First deploy needs no custom domain.** Ship on the Vercel-provided `https://<project>.vercel.app` URL with `NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_MARKETING_HOST` set to it and `NEXT_PUBLIC_APP_HOST` / `NEXT_PUBLIC_APP_URL` **unset** — marketing, auth, and the app all serve from that one origin (single-host mode in `src/proxy.ts`).
 
 When you own `appealdeck.com`, follow `AGENTS.md` → "Domain topology" (Vercel apex + `www` → env vars → Supabase redirect URL → Paddle webhook → smoke test). Do **not** add `app.appealdeck.com` unless a concrete need appears; the split is an env-var switch documented there.
 
@@ -199,9 +199,28 @@ If all 12 pass, and §6a's restore drill and §6b's billing check are done, you'
 
 **Pro ($20 per developer seat per month, checked 23 Sep 2026), from before the first paying customer.** The previous version of this section said Vercel's terms "permit it technically" to run a paid product on Hobby. They do not: Vercel's Hobby page states the plan is for non-commercial, personal use only. Hobby is fine for a private preview nobody pays for; the switch has to happen before checkout is live, not after the first sale.
 
-## 10a. Framework version (planned work, not yet done)
+## 10a. Framework version
 
-The app runs Next.js 14 (`package.json`: `^14.2.5`). Next.js's support policy (checked 23 Sep 2026) lists 14.x as unsupported: 16.x is Active LTS and 15.x is Maintenance LTS, receiving only critical fixes and security updates. No specific vulnerability is known here, but an unsupported framework stops receiving security patches. Upgrading is a pass of its own, because 15 changes how request data is read in server code and moves to React 19. Plan it before launch, not as a side change.
+**Upgraded 24 Sep 2026 to Next.js 16.3.6 and React 19** (from 14.2 and 18). 14.x was unsupported; 15.x was only on maintenance, and its window closes about two years after its October 2024 release, so 16 — the Active LTS line — was the only upgrade that would not need repeating within weeks. What changed:
+
+- `cookies()` is awaited (`src/lib/supabase/server.ts`), so `createSupabaseServerClient()` is async and every caller awaits it.
+- `src/middleware.ts` is `src/proxy.ts`, exporting `proxy` — Next.js 16's name for the same thing. It is still listed as "Proxy (Middleware)" in the build output.
+- `next lint` was removed in 16. ESLint 9 runs through its own CLI with a flat config (`eslint.config.mjs`); `npm run lint` is `eslint src`.
+- Builds use Turbopack, the new default. `tsconfig.json` now uses `"jsx": "react-jsx"` (set by Next), and `npm run typecheck` runs `next typegen` first so the generated route types exist on a fresh checkout.
+
+**Left for a separate pass, deliberately:** eslint-config-next 16 ships React Compiler readiness rules that flag 18 existing effects (mostly setState called once on mount) in the vault gate, the auth pages and checkout. Rewriting those changes behaviour in the flows that guard a seller's data and payment, so the four rules are switched off in `eslint.config.mjs` with the reason, rather than rewritten as a side effect of an upgrade.
+
+**Node.js 24.** `package.json` pins `"engines": { "node": "24.x" }`, which Vercel follows, and CI runs 24. CI ran Node 20 until this upgrade; Node 20 reached end of life in April 2026, and it also had no global `navigator`, which is why `persistence.test.ts` crashed on CI but not locally.
+
+**CI had been red since at least 23 Sep, unnoticed.** Fixed in the same pass, and each one was a real defect that only CI's environment (no `.env.local`, Linux, Node 20) exposed:
+
+- `requireUser` validated the return path against the raw `NEXT_PUBLIC_APP_URL`, which this guide tells you to leave unset. With it unset, every signed-out visitor sent to sign in from `/billing` or `/compose` came back to `/dashboard`. It now uses `APP_URL` from `src/lib/urls.ts`.
+- `/reset-password` did nothing when no auth backend was configured, leaving a form that could not work. It now sends the visitor to sign-in.
+- `/faq` scored 0.98 for accessibility: the topic tabs had an `aria-label` that left out their visible hint text, and the panel heading skipped from `h1` to `h3`.
+
+Watch the Actions tab after each push. A red CI that nobody reads is how three real defects survived for days.
+
+**On the first deploy after the upgrade,** a browser tab still open from the old build can send one navigation request the new server cannot parse ("The router state header was sent but could not be parsed", a 500). Reloading the tab clears it. Vercel's Skew Protection (Project → Settings → Advanced) prevents it for later deploys.
 
 ## 11. Rollback
 

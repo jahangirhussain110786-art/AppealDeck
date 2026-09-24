@@ -1,6 +1,12 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { ensureStoragePersistence, storagePersistenceState } from "./persistence";
 
+// Node gained a global `navigator` only in v21. On Node 20 — which CI ran until 24 Sep 2026 — this
+// file threw before a single test ran, and CI had been red on it for days. Create one if absent.
+if (typeof globalThis.navigator === "undefined") {
+  Object.defineProperty(globalThis, "navigator", { value: {}, configurable: true, writable: true });
+}
+
 const original = Object.getOwnPropertyDescriptor(globalThis.navigator, "storage");
 
 function setStorage(value: unknown) {
