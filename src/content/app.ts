@@ -111,7 +111,11 @@ export const APP = {
       checking: "Reading your document…",
       resultTitle: "What we could read",
       serverNote:
-        "This file was sent to be read against what Amazon asked for, and no copy was kept.",
+        "This file was sent to be read against what Amazon asked for, and no copy of it was kept. What we read is saved with your case, in your browser.",
+      // A check is saved with the case since 24 Sep 2026, so it can outlive the page it ran on.
+      savedOn: "Checked {date}.",
+      stale:
+        "Your notice or business details have changed since this check, so what it compared may be out of date. Check again to compare with what your case says now.",
       localNote:
         "Checked on this device. The picture was never uploaded and we did not read what the document says.",
       localTitle: "How the picture looks",

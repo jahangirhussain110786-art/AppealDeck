@@ -104,6 +104,9 @@ export const CaseDataSchema = z.object({
           .string()
           .regex(/^\d{4}-\d{2}-\d{2}$/)
           .optional(),
+        // 24 Sep 2026: a date the seller entered from Account Health. Stripped here, it would come
+        // back looking like one the notice stated, and be overwritten the next time it is read.
+        setBy: z.literal("seller").optional(),
       }),
     )
     .max(20)

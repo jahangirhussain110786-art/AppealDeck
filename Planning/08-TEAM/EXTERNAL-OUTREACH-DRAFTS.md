@@ -7,7 +7,7 @@
 
 Hi [Name],
 
-I'm a solo founder building AppealDeck — a decoder + Plan-of-Action drafting tool for suspended Amazon sellers ($199 one-time Appeal Pass). I'm not an appeals operator; I need a credible **quality floor** on the POA templates the product generates.
+I'm a solo founder building AppealDeck — a web app that decodes an Amazon notice, plans the evidence the case needs, checks the seller's documents against it, and helps them prepare their Plan of Action from facts they confirm ($249 one-time Appeal Pass per case). It never touches the seller's Amazon account. I'm not an appeals operator; I need a credible **quality floor** on the guidance and responses the product helps sellers prepare.
 
 I'd like to engage you for:
 - A one-time review of our POA drafting guidelines + 3 sample outputs (~[$500–$2,000]).

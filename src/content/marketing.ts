@@ -78,6 +78,11 @@ export const DECODE = {
     responseTypeTitle: "What Amazon is asking for",
     responseTypeAlsoSeen: "Also found in this notice",
     responseTypeSourceTitle: "Where we read that",
+    // B-10: the records list shows what the case will start with — what the notice names, and
+    // what a case like this needs that it does not name, each labelled with who raised it.
+    recordsNote:
+      "What your notice asks for, and what cases like yours usually need · Confirm against the current response page",
+    recordsSource: "Source in your notice",
     entitiesTitle: "Details we found in your notice",
     entitiesNote:
       "Taken word for word from the text you pasted. Check each one before you rely on it.",
@@ -288,7 +293,7 @@ export const FAQ = {
       // drafting flow) and left out the one thing that does reach an AI provider. Now says what
       // the privacy policy says, and legalDisclosures.test.ts holds the two together.
       detail:
-        "The only thing sent to an AI provider (Google Gemini) is a business document you ask us to check — read for that one request, not kept. Identity and bank documents are checked on your device and never uploaded.",
+        "The only things sent to an AI provider (Google Gemini) are a business document you ask us to check and a section of your response you ask us to improve the wording of — each used for that one request, not kept. Identity and bank documents are checked on your device and never uploaded.",
       link: { label: "How processing works", href: "/privacy#how-we-use" },
     },
     {

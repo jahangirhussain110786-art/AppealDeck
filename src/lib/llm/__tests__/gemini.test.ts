@@ -117,7 +117,7 @@ describe("callGemini request shape", () => {
 
 describe("per-task model selection", () => {
   const savedEnv: Record<string, string | undefined> = {};
-  const KEYS = ["GEMINI_MODEL", "GEMINI_MODEL_READ_DOCUMENT", "GEMINI_MODEL_DRAFT_POA_SECTION"];
+  const KEYS = ["GEMINI_MODEL", "GEMINI_MODEL_READ_DOCUMENT", "GEMINI_MODEL_IMPROVE_WORDING"];
 
   afterEach(() => {
     for (const k of KEYS) {
@@ -133,7 +133,7 @@ describe("per-task model selection", () => {
       delete process.env[k];
     }
     expect(getGeminiModel("read-document")).toBe("gemini-3.5-flash");
-    expect(getGeminiModel("draft-poa-section")).toBe("gemini-3.5-flash");
+    expect(getGeminiModel("improve-wording")).toBe("gemini-3.5-flash");
     expect(getGeminiModel()).toBe("gemini-3.5-flash");
   });
 
@@ -145,7 +145,7 @@ describe("per-task model selection", () => {
     process.env.GEMINI_MODEL_READ_DOCUMENT = "gemini-3.5-flash-lite";
     expect(getGeminiModel("read-document")).toBe("gemini-3.5-flash-lite");
     // An override for one task leaves the others on their defaults.
-    expect(getGeminiModel("draft-poa-section")).toBe("gemini-3.5-flash");
+    expect(getGeminiModel("improve-wording")).toBe("gemini-3.5-flash");
   });
 
   it("ignores empty-string env overrides", () => {
@@ -176,5 +176,29 @@ describe("per-task model selection", () => {
     expect(result.ok).toBe(true);
     const url = (fetchMock.mock.calls[0]?.[0] as string) ?? "";
     expect(url).toContain("/models/gemini-3.5-flash-lite:");
+  });
+});
+
+/**
+ * B-15 (24 Sep 2026): no code can tell a free-tier key from a paid one, so production refuses every
+ * Gemini call until the founder confirms the paid tier in writing.
+ */
+describe("the paid-tier switch", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("switches Gemini off in production until the paid tier is confirmed", () => {
+    vi.stubEnv("GEMINI_API_KEY", "test-key");
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("GEMINI_PAID_TIER_CONFIRMED", "");
+    expect(isGeminiConfigured()).toBe(false);
+    vi.stubEnv("GEMINI_PAID_TIER_CONFIRMED", "true");
+    expect(isGeminiConfigured()).toBe(true);
+  });
+
+  it("does not need the confirmation outside production", () => {
+    vi.stubEnv("GEMINI_API_KEY", "test-key");
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("GEMINI_PAID_TIER_CONFIRMED", "");
+    expect(isGeminiConfigured()).toBe(true);
   });
 });

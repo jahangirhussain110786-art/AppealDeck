@@ -71,6 +71,8 @@ The median real case is multi-round; an OS that goes silent after draft #1 is a 
 
 ## 4. The Guided Interview — the "chat" rebuilt as a finite step flow (founder hardening, 2 Sep 2026)
 
+> **Superseded 22 Sep 2026 (gap D-06):** the guided interview was retired and the case workspace is the only journey (`d9cb847`). This section and its items in the Definition of done describe a product that no longer exists. Sections 1 to 3 above (state machine, objection model, reply analyzer) remain authoritative.
+
 **Founder concern (second pass):** a 24/7 chat window reads as free AI chat — people will use it like a general assistant and burn cloud tokens for zero benefit. Correct. The fix is **structural, not policing**: rate-limiting an open chatbot is defense; not building a chatbot is design. The surface is exactly the founder's "subsequent conversation system": the OS asks → the seller submits, or declines with a reason → the engine analyzes → the next response window renders → until the case file is complete → the composer runs on the factually gained data.
 
 ### 4.1 Abuse-proof by construction — seven properties that make general chatting impossible

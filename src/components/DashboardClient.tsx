@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { deadlinesForDisplay } from "@/core/deadlinesModel";
 import {
   Send,
   FileText,
@@ -724,7 +725,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
                     {APP.dashboard.deadlines.noticeReceived} · {formatDate(noticeDate)}
                   </span>
                   {caseFile.deadlines && caseFile.deadlines.length > 0 ? (
-                    <DeadlineChipList deadlines={caseFile.deadlines} />
+                    <DeadlineChipList deadlines={deadlinesForDisplay(caseFile.deadlines)} />
                   ) : (
                     <DeadlineChip
                       deadline={{

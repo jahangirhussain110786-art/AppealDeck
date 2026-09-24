@@ -31,6 +31,7 @@ export const LEGAL = {
         body: [
           "When you decode a notice, its text is sent to AppealDeck for analysis. Preparing a response sends your case text and document references to AppealDeck. Uploading a file does not, by itself, send it anywhere.",
           "If you ask us to check a business document — an invoice, an authorization letter, a sales report, a listing screenshot or a certificate — that document is sent to AppealDeck and on to Google Gemini, so its contents can be read against what Amazon asked you for. It is used for that one request and we do not keep a copy. This happens only when you ask for a check on that specific file. With it we send the ASINs and case IDs from your notice, and any business details you entered in your case (your registered business name and address, and your suppliers), so our server can compare them with what the document shows; those are not sent to Google Gemini.",
+          'If you press "Improve the wording" on a section of your response, the text of that one section (and, for a questionnaire answer, Amazon\'s question) is sent to AppealDeck and on to Google Gemini, which suggests clearer wording. It is used for that one request and we do not keep a copy. The suggestion is shown beside your own text and nothing changes unless you choose it. A suggestion that adds or removes a date, number, identifier, address or name is discarded before you see it.',
           "Identity and financial documents are treated differently. Passports, national identity cards, driving licences and bank statements are never uploaded for checking. Those are examined on your own device, in your browser, and we look only at whether the picture is large enough, sharp enough, well lit and fully in frame — we do not read what the document says.",
           "When you create an account or buy the Appeal Pass, Paddle collects the payment and billing information. We receive a licence record (email, plan, status) via a Paddle webhook.",
           "Evidence contents are encrypted in your browser. If you choose cloud backup, encrypted contents and unencrypted metadata (including file names, tags, types, case references and content hashes) are uploaded to Supabase Storage. A backup passphrase protects the content key; we do not receive that passphrase.",
@@ -59,8 +60,12 @@ export const LEGAL = {
             overstating it is still an error, and this page is what a seller weighs before trusting
             us with an invoice. If AI drafting is ever switched on for workspace responses, this
             sentence must change in the same commit — `legalDisclosures.test.ts` pins it.
+
+            Later the same day: wording help shipped as a separate, opt-in step
+            (`/api/improve-wording`). Preparing the response itself still calls no model, so the
+            first sentence stands; the last now names the second thing a seller can choose to send.
           */
-          "Preparing a response is done on AppealDeck's server, from the wording you wrote and your document references. It is not sent to Google Gemini or any other AI provider, and it never includes your files. The only thing we send to an AI provider is a business document you ask us to check, as described above.",
+          "Preparing a response is done on AppealDeck's server, from the wording you wrote and your document references. It is not sent to Google Gemini or any other AI provider, and it never includes your files. The only things we send to an AI provider are a business document you ask us to check and a section you ask us to improve the wording of, each as described above.",
           "To count usage against Paddle and Upstash free tiers for abuse protection.",
           "To measure how many visitors reach each step of the free decoder and the Appeal Pass, using a cookieless analytics tool (Plausible or Umami) that counts page visits without collecting personal data or setting cross-site identifiers.",
         ],
@@ -69,7 +74,7 @@ export const LEGAL = {
         id: "international-transfers",
         title: "Where your data is processed",
         body: [
-          "Some processing happens outside Pakistan — Google (Gemini, which reads a business document when you ask us to check one) and Paddle (payments) both operate internationally, including the US and EU. Each is bound by its own data-processing agreement. We do not sell your data to anyone.",
+          "Some processing happens outside Pakistan — Google (Gemini, which reads a business document when you ask us to check one, and suggests wording for a section when you ask it to) and Paddle (payments) both operate internationally, including the US and EU. Each is bound by its own data-processing agreement. We do not sell your data to anyone.",
         ],
       },
       {
@@ -77,7 +82,7 @@ export const LEGAL = {
         title: "Cookies and local storage",
         body: [
           "We use one essential cookie for your session and one to remember your colour-theme choice. You can delete both at any time.",
-          "The case file is stored encrypted in your browser's IndexedDB vault. Account vaults use a browser-held key by default, with optional passphrase protection. Decoding and response preparation send relevant text to our server. Only a document check you ask for sends anything to the AI provider, as described above.",
+          "The case file is stored encrypted in your browser's IndexedDB vault. Account vaults use a browser-held key by default, with optional passphrase protection. Decoding and response preparation send relevant text to our server. Only a document check or a wording suggestion you ask for sends anything to the AI provider, as described above.",
         ],
       },
       {

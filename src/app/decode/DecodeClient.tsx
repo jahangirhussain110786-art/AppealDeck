@@ -278,8 +278,13 @@ function ResultView({
   const records = useMemo(
     // Revision 1: no case exists yet, and a workspace started from this notice begins there. These
     // records are a preview only — nothing here is saved until the seller starts a case.
-    () => proposedRequirements({ notice: text, formInstructions: "", revision: 1 }),
-    [text],
+    //
+    // B-10, 24 Sep 2026: with the decoded kind, exactly as `importDecodedNotice` builds the case.
+    // Without it this listed only what the notice spelled out, so the free decode showed fewer
+    // records than the case it opened — and hid the one thing it can show before asking for anything:
+    // that we know what a case like this needs even when Amazon does not say so.
+    () => proposedRequirements({ notice: text, formInstructions: "", revision: 1 }, result.kind),
+    [text, result.kind],
   );
   const carryNotice = () => stashPendingNotice(text, result.deadlines);
 
@@ -505,9 +510,7 @@ function ResultView({
             <IconTile icon={FolderOpen} tone="warning" />
             <div>
               <CardTitle>{APP.access.casePreview.title}</CardTitle>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Detected in your notice · Confirm against the current response page
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{DECODE.result.recordsNote}</p>
             </div>
           </div>
           <span className="font-mono text-2xl text-foreground">{records.length}</span>
@@ -517,10 +520,25 @@ function ResultView({
             <div className="grid gap-3 sm:grid-cols-2">
               {records.map((record) => (
                 <DetailDisclosure key={record.label} title={record.label}>
-                  <p className="mb-2 text-xs uppercase tracking-wide">Source in your notice</p>
-                  <blockquote className="border-l-2 border-info/40 pl-3">
-                    {record.sourceQuote}
-                  </blockquote>
+                  {record.source === "matrix" ? (
+                    // Ours, and said so in plain words — never a blockquote, which would read as a
+                    // sentence Amazon wrote.
+                    <>
+                      <Badge variant="secondary" size="sm" className="mb-2">
+                        {WORKSPACE.inferred.badge}
+                      </Badge>
+                      <p>{WORKSPACE.inferred.help}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mb-2 text-xs uppercase tracking-wide">
+                        {DECODE.result.recordsSource}
+                      </p>
+                      <blockquote className="border-l-2 border-info/40 pl-3">
+                        {record.sourceQuote}
+                      </blockquote>
+                    </>
+                  )}
                 </DetailDisclosure>
               ))}
             </div>

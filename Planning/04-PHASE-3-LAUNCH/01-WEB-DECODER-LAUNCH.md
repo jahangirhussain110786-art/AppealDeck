@@ -26,7 +26,7 @@
 | Output — deadlines | The stated appeal window parsed from the notice text (never assume a constant number of days); funds-appeal eligibility date = deactivation + 60 days (post-Oct-2024 rule); funds-review checkpoint at +90 days flagged as "not automatic". Rendered as concrete dates; offered as a downloadable .ics calendar file. Ongoing tracking with alarms stays extension-exclusive. |
 | Privacy | Notice text is processed for the decode and not retained server-side. State this on the page. |
 
-### 2.2 Paid composer ($199 Appeal Pass, per case)
+### 2.2 Paid composer ($249 Appeal Pass, per case)
 
 | Element | Spec |
 |---|---|
@@ -65,7 +65,7 @@ The consumer 14-day right of withdrawal applies to digital content sold to consu
 
 - Most first appeals fail — including appeals written by professionals charging $600–$5,000 per case (public prices verified 25 Aug 2026; `../07-REFERENCE/01-MARKET-EVIDENCE.md` §1.2). Verified consultant prices are the anchor; we promise process quality, never outcomes.
 - What genuinely improves odds: a complete, specific, honest POA grounded in your real facts and evidence; meeting the stated deadline; not resubmitting near-identical text.
-- What you get for $199: violation-specific intake, a drafted POA in Amazon's expected format, an adversarial quality review, unlimited redrafts for this one case.
+- What you get for $249: violation-specific intake, a drafted POA in Amazon's expected format, an adversarial quality review, unlimited redrafts for this one case.
 - 7-day no-questions refund. Not a law firm; not legal advice; you review and submit everything yourself.
 - The word "guarantee" and any success-rate claim are **banned** from this card and everywhere else. We publish win rates only if/when our own opt-in outcome data exists.
 
@@ -112,7 +112,7 @@ Rules for every page: no "guarantee", no win rates, no invented volumes, honest 
 ## 9. Actions
 
 - [ ] **1.** Compile the shared TS core for web; stand up `/decode` (free decoder, full spec §2.1) on staging. — **Owner:** AI assistant · **Cost:** $0 (labor) · **Deadline:** Week 4 · **Blocks:** everything below
-- [ ] **2.** Provision Cloudflare Pages (free, static site) + Supabase (free tier at start → Pro from first sustained sales); wire the `licenses` table and the Supabase Edge Functions: MoR webhook receiver (idempotent by event id), `verify-license`, `reason` LLM proxy. Vercel Pro is **not** provisioned — it is a fallback only if porting the donor Express backend proves necessary at M-5, decided then by the AI assistant + Founder and logged. — **Owner:** AI assistant (Founder pays) · **Cost:** $0–25/mo · **Deadline:** Week 4 · **Blocks:** checkout, composer
+- [ ] **2.** Provision Cloudflare Pages (free, static site) + Supabase (free tier at start → Pro from first sustained sales); wire the `licenses` table and the Supabase Edge Functions: MoR webhook receiver (idempotent by event id), `verify-license`, `reason` LLM proxy. Vercel Pro is **not** provisioned — it is a fallback only if porting the donor Express backend proves necessary at M-5, decided then by the AI assistant + Founder and logged. — **Owner:** AI assistant (Founder pays) · **Cost:** $0–25/mo · **Deadline:** Week 4 · **Blocks:** checkout, composer **Corrected 24 Sep 2026 (gap D-02):** superseded by the 4 Sep single-host decision. The app deploys on **Vercel Pro** as one Next.js origin; there are no Supabase Edge Functions. Follow `docs/DEPLOYMENT.md`.
 - [ ] **3.** Implement cloud cost ceiling + circuit breaker + per-device rate limits on `reason`; verify graceful rules-only degradation. **Free decoder does not go public before this exists** (decision D9). — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 4, before public decoder · **Blocks:** decoder go-live
 - [ ] **4.** Build checkout flow with EU consent mechanics (§4) in MoR sandbox; verify the consent checkbox blocks purchase when unticked and the receipt email restates consent. — **Owner:** AI assistant + Founder (MoR dashboard) · **Cost:** $0 · **Deadline:** Week 4–5 · **Blocks:** composer go-live
 - [ ] **5.** Implement server-side severity gating on the unlock endpoint + gated-type professional-help screen. — **Owner:** AI assistant · **Cost:** $0 · **Deadline:** Week 4 · **Blocks:** composer go-live (hard requirement — gated types must never be sellable, day one)
@@ -121,7 +121,7 @@ Rules for every page: no "guarantee", no win rates, no invented volumes, honest 
 - [ ] **8.** Install Plausible/Umami + backend event counters; verify every §7 event fires; verify by network inspection that no payload contains notice text. — **Owner:** AI assistant · **Cost:** $0–50/mo · **Deadline:** Week 4 · **Blocks:** week-5 metrics review
 - [ ] **9.** Run the pre-launch QA checklist (§10) end to end; fix everything red. — **Owner:** AI assistant executes, Founder verifies · **Cost:** $0 · **Deadline:** Week 4–5 · **Blocks:** go-live
 - [ ] **10.** Go-live sequence (§11). — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 4 (decoder) / Week 5 (composer) · **Blocks:** first revenue
-- [ ] **11.** ⚠ FOUNDER-DECISION — Price test: run $99 / $149 / $199 across the first ~20 sales, or hold $199 fixed. The $199 anchor is defended by verified consultant prices ($600–$5,000 per case, public prices verified 25 Aug 2026 — `../07-REFERENCE/01-MARKET-EVIDENCE.md` §1.2), but the SaaS field is squeezed from below (a competitor sells $199/**month**; another sells $11 one-shot drafts). Testing is legitimate; the founder picks the experiment design and the floor price before composer go-live. — **Owner:** Founder · **Cost:** $0 (foregone revenue only) · **Deadline:** before Week 5 composer go-live · **Blocks:** checkout price configuration
+- [ ] **11.** ⚠ FOUNDER-DECISION — Price test: run $99 / $149 / $199 across the first ~20 sales, or hold $199 fixed. The $199 anchor is defended by verified consultant prices ($600–$5,000 per case, public prices verified 25 Aug 2026 — `../07-REFERENCE/01-MARKET-EVIDENCE.md` §1.2), but the SaaS field is squeezed from below (a competitor sells $199/**month**; another sells $11 one-shot drafts). Testing is legitimate; the founder picks the experiment design and the floor price before composer go-live. — **Owner:** Founder · **Cost:** $0 (foregone revenue only) · **Deadline:** before Week 5 composer go-live · **Blocks:** checkout price configuration **Superseded 21 Sep 2026 (commercial reset; gap D-03): the price is $249 flat, worldwide, and no price test is planned.**
 
 ## 10. Pre-launch QA checklist (all must pass; Owner: AI assistant executes, Founder verifies; Cost $0; Deadline week 4–5; Blocks go-live)
 
@@ -142,8 +142,8 @@ Rules for every page: no "guarantee", no win rates, no invented volumes, honest 
 
 - [ ] DNS/SSL live on the production domain; staging noindex removed on production only.
 - [ ] Decoder public (week 4). Composer public only after actions 4, 5, 9, 11 complete (week 4–5).
-- [ ] MoR switched from sandbox to live; one real $199 test purchase by the founder end-to-end (buy → key → draft → refund via the 7-day path). This doubles as Gate-3 evidence (`../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`).
-- [ ] Analytics dashboards bookmarked; MoR dashboard bookmarked; error alerting (Cloudflare + Supabase) pointed at founder email.
+- [ ] MoR switched from sandbox to live; one real $249 test purchase by the founder end-to-end (buy → key → draft → refund via the 7-day path). This doubles as Gate-3 evidence (`../00-DECISION/03-GATES-AND-KILL-CRITERIA.md`).
+- [ ] Analytics dashboards bookmarked; MoR dashboard bookmarked; error alerting (Cloudflare + Supabase) pointed at founder email. **Corrected 24 Sep 2026 (gap D-02):** superseded by the 4 Sep single-host decision. The app deploys on **Vercel Pro** as one Next.js origin; there are no Supabase Edge Functions. Follow `docs/DEPLOYMENT.md`.
 - [ ] Community presence continues per `../02-PHASE-1-FOUNDATION/05-COMMUNITY-PRESENCE.md` — the decoder link may now be mentioned where contextually helpful; no launch "announcement" posts yet (that is the M-8 moment, see `./04-LAUNCH-DAY-CHECKLIST.md`).
 
 ## 12. Success metrics, weeks 5–8

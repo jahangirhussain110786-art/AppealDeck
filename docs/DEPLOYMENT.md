@@ -54,13 +54,14 @@ Added 24 Sep 2026. These were missing from this guide, so following it would hav
 | `EMAIL_FROM`                   | Sender for both emails                            | Defaults to `AppealDeck <billing@appealdeck.com>`; the domain must be verified in Resend. |
 | `CRON_SECRET`                  | Both daily jobs (`vercel.json` crons)             | A long random string. Without it both jobs refuse every call, so no email is ever sent.   |
 | `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` | Cookieless funnel analytics                       | The site's domain as registered in Plausible. Without it no event is sent.                |
+| `GEMINI_PAID_TIER_CONFIRMED`   | Document checks and wording help                  | Set to `true` only after §6b. In production every Gemini call is refused until it is set. |
 
 ### Optional
 
-| Variable                         | Purpose                                                   | Notes                          |
-| -------------------------------- | --------------------------------------------------------- | ------------------------------ |
-| `GEMINI_MODEL_READ_DOCUMENT`     | override the model for document checks                    | defaults to `gemini-3.5-flash` |
-| `GEMINI_MODEL_DRAFT_POA_SECTION` | override the model for AI section drafting (classic path) | defaults to `gemini-3.5-flash` |
+| Variable                       | Purpose                                | Notes                          |
+| ------------------------------ | -------------------------------------- | ------------------------------ |
+| `GEMINI_MODEL_READ_DOCUMENT`   | override the model for document checks | defaults to `gemini-3.5-flash` |
+| `GEMINI_MODEL_IMPROVE_WORDING` | override the model for wording help    | defaults to `gemini-3.5-flash` |
 
 Overrides exist only for tasks the app calls. The three earlier listed here (`CRITIQUE_POA`, `PHRASE_ENGINE_OUTPUT`, `TRIAGE_ROUTER`) belonged to tasks that were never called, and setting them did nothing; removed 24 Sep 2026.
 
@@ -161,6 +162,11 @@ does. Before any seller checks a real document:
 
 If the production project is not on a paid tier, the privacy policy is untrue until it is.
 
+4. Only then set `GEMINI_PAID_TIER_CONFIRMED=true` in Vercel (Production). Until it is set, the app
+   refuses every Gemini call in production — document checks and wording help say they are switched
+   off — so forgetting this step turns the features off instead of breaking the privacy promise. No
+   code can tell a free key from a paid one, which is why this is a written confirmation, not a check.
+
 ## 7. Deploy
 
 ```bash
@@ -202,8 +208,11 @@ After first deployment:
 10. **Refund and revocation**: refund that sandbox transaction in Paddle, then confirm the licence row changes status and the case's paid features lock again.
 11. **Reminder email**: on a signed-in case, set a follow-up date for today and turn email reminders on, then run the cron by hand (`curl -H "Authorization: Bearer $CRON_SECRET" https://appealdeck.com/api/jobs/case-reminders`) and confirm the email arrives. Needs `RESEND_API_KEY` and `CRON_SECRET`.
 12. **Support mailbox**: send a message to the address on `/support` and confirm you receive it.
+13. **Wording help** (24 Sep 2026): on a paid case, write a few sentences in the root cause box and press **Improve the wording**. A suggestion should appear beside your text, and nothing should change until you press **Use the suggested wording**. Needs `GEMINI_PAID_TIER_CONFIRMED=true` (§6b); without it the page says wording help is not available.
+14. **Saved document check** (24 Sep 2026): after step 6, reload the case. The check should still show, with the day it ran.
+15. **Uptime monitor** (24 Sep 2026): add one free HTTP monitor (Better Stack, UptimeRobot or similar) on `https://appealdeck.com/` that emails you when it stops answering. It sees only whether the page loads, never a seller's data. Error tracking (Sentry and the like) is deliberately not added: it would capture notice text unless scrubbed, which is a new place seller data would go and would need a privacy-policy line first.
 
-If all 12 pass, and §6a's restore drill and §6b's billing check are done, you're live.
+If all 15 pass, and §6a's restore drill and §6b's billing check are done, you're live.
 
 ## 10. Which Vercel plan
 

@@ -40,7 +40,7 @@ Retire: `public/apple-touch-icon.svg` (never linked, invalid attributes) and the
 {
   "name": "AppealDeck — Amazon suspension notice decoder",
   "short_name": "AppealDeck",
-  "description": "Decode your Amazon notice and draft a Plan of Action. Free decoder, $199 one-time Appeal Pass.",
+  "description": "Decode your Amazon notice for free, then prepare your response. $249 one-time Appeal Pass per case.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",

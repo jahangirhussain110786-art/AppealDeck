@@ -7,10 +7,6 @@ import { isLicenseActive, claimCasePass } from "@/lib/license";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { recordActivation, deviceErrorResponse, deriveFingerprintFromRequest } from "@/lib/devices";
-import { isGeminiConfigured, composeBreakerOptions } from "@/lib/llm/gemini";
-import { checkBreaker, recordBreaker, fingerprintForRequest } from "@/lib/breaker";
-import { composePoaWithLlm, applyLlmSections } from "@/lib/llm/composePoaLlm";
-
 import { CaseDataSchema } from "@/lib/caseSchema";
 import { workspaceCanCompose } from "@/core/workspace";
 
@@ -90,7 +86,7 @@ export async function POST(req: NextRequest) {
     );
   const data: CaseFileData = caseData;
 
-  const draft = await composeDraft(data, attemptNumber, req, user.id);
+  const draft = composeDraft(data, attemptNumber);
   const critique = critiquePoa(draft, data);
 
   return NextResponse.json({
@@ -107,45 +103,17 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Deterministic draft first, always — `composePoa()` never fails and never costs anything.
- * Only attempts the real AI-drafted rewrite (Task 4 / AM-23) when Gemini is configured and this
- * user's dedicated compose breaker allows it; any failure at any step (breaker closed, Gemini
- * down, malformed output, a rejected phrase) silently keeps the deterministic draft — this must
- * never be the difference between a seller getting a draft and getting an error page.
+ * Always deterministic. Preparing a response assembles the seller's own confirmed wording and exact
+ * evidence references and sends nothing to any AI provider — the privacy policy says so, and
+ * `legalDisclosures.test.ts` pins it.
+ *
+ * Until 24 Sep 2026 a legacy branch here rewrote Root Cause and Preventive Measures with Gemini
+ * (AM-23) for a case with no workspace. Every case has had a workspace since 22 Sep, so no seller
+ * could reach it, but a hand-built request without one could — which made the privacy sentence
+ * true only for the product's own screens. It is removed. AI help with wording is now a separate,
+ * opt-in step with a fact lock (`/api/improve-wording`), and its result is only ever what the seller
+ * chooses to keep in their own fields.
  */
-async function composeDraft(
-  data: CaseFileData,
-  attemptNumber: number,
-  req: NextRequest,
-  userId: string,
-): Promise<PoaDraft> {
-  const deterministic = composePoa(data, attemptNumber);
-
-  // Workspace responses retain the seller's confirmed wording and exact evidence references.
-  // The legacy rewrite prompt is specific to POA sections and must not rewrite document responses.
-  // The privacy policy states that preparing a response is not sent to any AI provider, which is
-  // true because of this line. Change it and `src/content/legal.ts` must change in the same commit
-  // — `legalDisclosures.test.ts` fails until it does.
-  if (data.workspace || !isGeminiConfigured()) {
-    return deterministic;
-  }
-
-  try {
-    const fingerprint = fingerprintForRequest(req, userId);
-    const check = await checkBreaker(composeBreakerOptions, fingerprint);
-    if (!check.allowed) {
-      return deterministic;
-    }
-
-    const llm = await composePoaWithLlm(data);
-    await recordBreaker(composeBreakerOptions, { ok: llm.ok, context: check.context });
-
-    if (!llm.ok) {
-      return deterministic;
-    }
-
-    return applyLlmSections(deterministic, data, llm.sections);
-  } catch {
-    return deterministic;
-  }
+function composeDraft(data: CaseFileData, attemptNumber: number): PoaDraft {
+  return composePoa(data, attemptNumber);
 }

@@ -587,3 +587,104 @@ export function summarizeCheck(result: DocumentCheckResult): string {
   if (notAssessed > 0) parts.push(`${notAssessed} we could not check here`);
   return `Of what Amazon named: ${parts.join(", ")}.`;
 }
+
+// --- Saved checks -------------------------------------------------------------------------------
+
+/** One readability check on a photo or scan of an identity document, examined on the device. */
+export type ImageCheckStatus = "ok" | "warn" | "unknown";
+
+export interface ImageCheck {
+  id: "resolution" | "sharpness" | "framing" | "exposure";
+  status: ImageCheckStatus;
+  label: string;
+  detail: string;
+}
+
+export interface IdentityImageReport {
+  checks: ImageCheck[];
+  /** True when nothing is flagged. Never means the document will be accepted. */
+  looksReadable: boolean;
+}
+
+/** The outcomes worth keeping. A check that could not run is never saved; it is simply re-run. */
+export type SavedCheckOutcome =
+  { kind: "fields"; result: DocumentCheckResult } | { kind: "image"; report: IdentityImageReport };
+
+/**
+ * A document check kept with the case (24 Sep 2026).
+ *
+ * Until then a check lived only in the page's memory, so a seller who paid, checked an invoice and
+ * came back the next day found the reading gone — along with the disagreements it had added to the
+ * facts ledger — and had to spend another paid reading to get it back. The reason given for keeping
+ * it in memory was that a stale reading shown beside a replaced file would be worse than a re-run.
+ * That is true, and it is handled here rather than by forgetting: a saved check belongs to one
+ * record and one content hash, so a replaced file never shows another file's reading, and it
+ * records which case details it was compared with, so a reading compared with details that have
+ * since changed is shown as such instead of being passed off as current.
+ */
+export interface SavedDocumentCheck {
+  recordId: string;
+  /** The file's content hash when checked. A different hash means a different file. */
+  contentHash?: string;
+  /** When the check ran, ISO 8601. */
+  at: string;
+  /** `checkContextKey` of the case details the reading was compared with. */
+  contextKey: string;
+  outcome: SavedCheckOutcome;
+}
+
+/**
+ * A stable key for the case details a reading is compared with. Two contexts with the same
+ * identifiers and business details give the same key whatever order they were collected in.
+ * Today's date is deliberately not part of it: the saved check shows the day it ran, and a date
+ * window is judged as of that day.
+ */
+export function checkContextKey(ctx: {
+  asins?: readonly string[];
+  referenceIds?: readonly string[];
+  business?: { name?: string; address?: string };
+  suppliers?: readonly string[];
+}): string {
+  const norm = (xs: readonly string[] | undefined) =>
+    [...new Set((xs ?? []).map((x) => x.trim().toLowerCase()).filter(Boolean))].sort();
+  return JSON.stringify([
+    norm(ctx.asins),
+    norm(ctx.referenceIds),
+    (ctx.business?.name ?? "").trim().toLowerCase(),
+    (ctx.business?.address ?? "").trim().toLowerCase().replace(/\s+/g, " "),
+    norm(ctx.suppliers),
+  ]);
+}
+
+/** The saved check for a record, if it is still about the file now linked there. */
+export function savedCheckFor(
+  saved: readonly SavedDocumentCheck[] | undefined,
+  recordId: string | undefined,
+  contentHash: string | undefined,
+): SavedDocumentCheck | undefined {
+  if (!recordId) return undefined;
+  const hit = saved?.find((c) => c.recordId === recordId);
+  if (!hit) return undefined;
+  // Both hashes known and different: the record now holds another file.
+  if (hit.contentHash && contentHash && hit.contentHash !== contentHash) return undefined;
+  return hit;
+}
+
+/** Most checks a case keeps. One per record, and a case holds at most 30 requirements. */
+export const MAX_SAVED_CHECKS = 30;
+
+/**
+ * Replaces the saved check for a record and drops any for records no longer linked to the case, so
+ * the list cannot grow with files the seller has since removed.
+ */
+export function withSavedCheck(
+  saved: readonly SavedDocumentCheck[] | undefined,
+  entry: SavedDocumentCheck,
+  linkedRecordIds: readonly string[],
+): SavedDocumentCheck[] {
+  const linked = new Set(linkedRecordIds);
+  return [
+    ...(saved ?? []).filter((c) => c.recordId !== entry.recordId && linked.has(c.recordId)),
+    entry,
+  ].slice(-MAX_SAVED_CHECKS);
+}

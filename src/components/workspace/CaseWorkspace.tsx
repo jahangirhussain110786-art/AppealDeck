@@ -32,6 +32,10 @@ import { RequestReview } from "./RequestReview";
 import { EvidenceReview } from "./EvidenceReview";
 import { ResponseReview, type WorkspaceResponse } from "./ResponseReview";
 import { ReplyDeltaReview } from "./ReplyDeltaReview";
+import { SellerDeadlineField } from "./SellerDeadlineField";
+import { ChangeOfApproach } from "./ChangeOfApproach";
+import { shouldOfferChangeOfApproach } from "@/core/escalation";
+import { deadlinesForDisplay, sellerDeadline, withSellerDeadlines } from "@/core/deadlinesModel";
 import { DetailDisclosure, IconTile, VIEW_ICONS } from "./WorkspaceVisuals";
 import { createCaseFile, type CaseFile } from "@/core/caseFile";
 import {
@@ -54,7 +58,13 @@ import {
   disagreementsFromDocumentCheck,
 } from "@/core/factsLedger";
 import { runDocumentCheck, type CheckOutcome } from "@/lib/documentChecks/runCheck";
-import { caseFactsForCheck, checkCaseDataFrom } from "@/lib/documentChecks/context";
+import { checkCaseDataForWorkspace } from "@/lib/documentChecks/context";
+import {
+  checkContextKey,
+  savedCheckFor,
+  withSavedCheck,
+  type SavedDocumentCheck,
+} from "@/core/documentCheck";
 import { migrateLegacyCase, needsMigration, migrationSummary } from "@/core/legacyMigration";
 import {
   addWorkspaceEvent,
@@ -336,6 +346,8 @@ function WorkspaceInner({
     state?: CaseFile["state"],
     opts?: {
       silent?: boolean;
+      /** Leave the case state alone: this change is bookkeeping, not a new response. */
+      keepState?: boolean;
       deadlines?: CaseFile["deadlines"];
       kind?: ViolationKind;
       kindSetBy?: CaseFile["kindSetBy"];
@@ -356,6 +368,7 @@ function WorkspaceInner({
     // so a seller who cannot correct it is stuck with three wrong answers derived from one.
     opts?: {
       silent?: boolean;
+      keepState?: boolean;
       deadlines?: CaseFile["deadlines"];
       kind?: ViolationKind;
       kindSetBy?: CaseFile["kindSetBy"];
@@ -383,7 +396,8 @@ function WorkspaceInner({
       const updated = {
         ...current,
         workspace: next,
-        state: state ?? (current.state === "SUBMITTED" ? "REVISION" : current.state),
+        state:
+          state ?? (current.state === "SUBMITTED" && !opts?.keepState ? "REVISION" : current.state),
         ...(opts?.deadlines !== undefined ? { deadlines: opts.deadlines } : {}),
         ...(opts?.kind !== undefined ? { kind: opts.kind } : {}),
         ...(opts?.kindSetBy !== undefined ? { kindSetBy: opts.kindSetBy } : {}),
@@ -690,26 +704,50 @@ function WorkspaceInner({
         return;
       }
       const ws = fileRef.current?.workspace;
+      // The ASINs and IDs Amazon named, from every request on the case, so an invoice is compared
+      // with the product Amazon asked about rather than judged in the abstract.
+      const caseData = ws ? checkCaseDataForWorkspace(ws) : undefined;
       const outcome = await runDocumentCheck({
         caseId: fileRef.current?.id ?? "",
         kind: fileRef.current?.kind ?? "UNKNOWN",
         evidenceKind,
         bytes,
         mimeType: record.mimeType || "application/octet-stream",
-        // The ASINs and IDs Amazon named, from every request on the case, so an invoice is compared
-        // with the product Amazon asked about rather than judged in the abstract.
-        caseData: ws
-          ? {
-              ...checkCaseDataFrom([
-                ws.notice,
-                ws.formInstructions,
-                ...ws.previousRequests.flatMap((p) => [p.notice, p.formInstructions]),
-              ]),
-              ...caseFactsForCheck(ws.caseFacts),
-            }
-          : undefined,
+        caseData,
       });
       setDocChecks((prev) => ({ ...prev, [recordId]: outcome }));
+      // Kept with the case (24 Sep 2026), so a paid reading survives a reload. A check that could
+      // not run is not saved — there is nothing to keep, and the seller simply tries again.
+      if (outcome.kind !== "unavailable") {
+        const entry: SavedDocumentCheck = {
+          recordId,
+          ...(req.contentHash ? { contentHash: req.contentHash } : {}),
+          at: new Date().toISOString(),
+          contextKey: checkContextKey(caseData ?? {}),
+          outcome,
+        };
+        const kept = await commit(
+          (old) => ({
+            ...old,
+            documentChecks: withSavedCheck(
+              old.documentChecks,
+              entry,
+              old.requirements.flatMap((r) => (r.recordId ? [r.recordId] : [])),
+            ),
+          }),
+          undefined,
+          undefined,
+          { silent: true, keepState: true },
+        );
+        // Once saved, the saved copy is what shows — with the day it ran, so the seller can see it
+        // is kept. Until then the reading shows from memory, so nothing waits on the vault.
+        if (kept)
+          setDocChecks((prev) => {
+            const next = { ...prev };
+            delete next[recordId];
+            return next;
+          });
+      }
     } catch {
       setDocChecks((prev) => ({
         ...prev,
@@ -770,6 +808,9 @@ function WorkspaceInner({
               previousRequests: [],
               submissions: [],
               replies: w.replies.filter((r) => !r.applied),
+              // Saved document readings are for the seller's own review and export; preparing the
+              // response does not use them, so they do not travel with it.
+              documentChecks: undefined,
             },
           },
           attemptNumber: Math.min(99, totalAttempts(w) + 1),
@@ -858,22 +899,39 @@ function WorkspaceInner({
    *
    * Assembled from the three sources that are actually available here — the decoder's entities from
    * the seller's own notice, the notes the seller wrote against each requirement, and whatever
-   * document checks have been run in this session. Checks stay in memory on purpose (AA-41): a
-   * stale reading shown beside a replaced file would be worse than asking for a re-run.
+   * document checks the case holds.
+   *
+   * Since 24 Sep 2026 a check is saved with the case (`SavedDocumentCheck`). A saved reading that
+   * was compared with different case details — the seller has since corrected their business
+   * address, say — is shown on its record as out of date and kept out of the ledger, because a
+   * disagreement computed against details that no longer hold is not a disagreement the case has.
    */
-  const checkedFiles = Object.entries(docChecks).flatMap(([recordId, outcome]) =>
-    outcome.kind === "fields"
+  const contextKeyNow = checkContextKey(checkCaseDataForWorkspace(w));
+  const checkShownFor = (
+    r: Requirement,
+  ): { outcome: CheckOutcome; at?: string; stale: boolean } | null => {
+    if (!r.recordId) return null;
+    const live = docChecks[r.recordId];
+    if (live) return { outcome: live, stale: false };
+    const saved = savedCheckFor(w.documentChecks, r.recordId, r.contentHash);
+    return saved
+      ? { outcome: saved.outcome, at: saved.at, stale: saved.contextKey !== contextKeyNow }
+      : null;
+  };
+  const checkedFiles = w.requirements.flatMap((r) => {
+    const shown = checkShownFor(r);
+    return shown && !shown.stale && shown.outcome.kind === "fields"
       ? [
           {
             filename:
-              w.requirements.find((r) => r.recordId === recordId)?.filename ??
-              records.find((rec) => rec.id === recordId)?.name ??
+              r.filename ??
+              records.find((rec) => rec.id === r.recordId)?.name ??
               "an uploaded document",
-            result: outcome.result,
+            result: shown.outcome.result,
           },
         ]
-      : [],
-  );
+      : [];
+  });
   const ledger = buildFactsLedger(
     [
       // The draft is read first: `w.notice` only becomes populated when the seller confirms the
@@ -921,7 +979,11 @@ function WorkspaceInner({
     const parsed = parseNotice(`${updated.notice}\n${updated.formInstructions}`);
     const kind = current ? kindForConfirmedNotice(current, parsed) : previousKind;
     const kindChanged = kind !== previousKind;
-    const deadlines = serializeDeadlines(computeDeadlines({ parsed, kind }));
+    // A date the seller entered from Account Health survives a re-read of the notice.
+    const deadlines = withSellerDeadlines(
+      serializeDeadlines(computeDeadlines({ parsed, kind })),
+      current?.deadlines,
+    );
     const ok = await commit(
       (old) => ({
         ...old,
@@ -1105,6 +1167,8 @@ function WorkspaceInner({
               value="overview"
               className="mt-5 space-y-5 data-[state=inactive]:hidden"
             >
+              {/* B-04: after two responses and another refusal, a different route, not a third copy. */}
+              {shouldOfferChangeOfApproach(w) && <ChangeOfApproach />}
               {!w.confirmed || reviewRequest ? (
                 <RequestReview
                   key={`${file.id}-${w.revision}-${reviewRequest}-${file.kind}`}
@@ -1442,7 +1506,9 @@ function WorkspaceInner({
                   }
                   onUpload={(f) => upload(r.id, f)}
                   onDownload={(id) => void download(id)}
-                  checkOutcome={r.recordId ? (docChecks[r.recordId] ?? null) : null}
+                  checkOutcome={checkShownFor(r)?.outcome ?? null}
+                  checkedAt={checkShownFor(r)?.at}
+                  checkStale={checkShownFor(r)?.stale ?? false}
                   checking={checkingId === r.recordId}
                   onCheck={r.recordId ? () => void runCheckFor(r) : undefined}
                 />
@@ -1645,11 +1711,16 @@ function WorkspaceInner({
                               // No `noticeReceivedAt`: this was `new Date()`, which counted the
                               // reply's window from the moment it was applied rather than from when
                               // Amazon sent it. The reply's own header date is used if it has one.
-                              const recomputed = serializeDeadlines(
-                                computeDeadlines({
-                                  parsed: parseNotice(r.text),
-                                  kind: file.kind,
-                                }),
+                              // A date the seller entered is theirs, not the reply's, so it is
+                              // kept; Amazon's new window, if the reply states one, sits beside it.
+                              const recomputed = withSellerDeadlines(
+                                serializeDeadlines(
+                                  computeDeadlines({
+                                    parsed: parseNotice(r.text),
+                                    kind: file.kind,
+                                  }),
+                                ),
+                                file.deadlines,
                               );
                               if (
                                 await commit(
@@ -1842,7 +1913,7 @@ function WorkspaceInner({
                   <p className="mb-1 text-xs font-semibold text-foreground">Time window</p>
                   <p className="text-xs leading-relaxed text-muted-foreground">
                     {file.deadlines?.length
-                      ? file.deadlines
+                      ? deadlinesForDisplay(file.deadlines)
                           .map((d) =>
                             d.isIndefinite
                               ? `${d.label} — no countdown to track`
@@ -1862,6 +1933,35 @@ function WorkspaceInner({
                           .join(" · ")
                       : "No confirmed deadline recorded. Check your current notice."}
                   </p>
+                  <SellerDeadlineField
+                    key={file.deadlines?.find((d) => d.setBy === "seller")?.dueOn ?? "none"}
+                    entered={file.deadlines?.find((d) => d.setBy === "seller")}
+                    busy={busy}
+                    onSave={(dueOn) =>
+                      commit(
+                        (old) => old,
+                        C.sellerDeadline.saved.replace("{date}", formatDay(dueOn)),
+                        undefined,
+                        {
+                          keepState: true,
+                          deadlines: [
+                            ...(fileRef.current?.deadlines ?? []).filter(
+                              (d) => d.setBy !== "seller",
+                            ),
+                            sellerDeadline(dueOn),
+                          ],
+                        },
+                      )
+                    }
+                    onRemove={() =>
+                      commit((old) => old, C.sellerDeadline.removed, undefined, {
+                        keepState: true,
+                        deadlines: (fileRef.current?.deadlines ?? []).filter(
+                          (d) => d.setBy !== "seller",
+                        ),
+                      })
+                    }
+                  />
                 </div>
               </div>
             </CardContent>

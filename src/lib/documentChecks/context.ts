@@ -12,7 +12,7 @@
  */
 
 import { extractEntities, entitiesOfKind } from "@/core/entities";
-import type { CaseFacts } from "@/core/workspace";
+import type { CaseFacts, Workspace } from "@/core/workspace";
 
 /** "Complaint ID: 1234567890" — the identifier rights-owner notices cite. */
 const COMPLAINT_ID = /\bcomplaint(?:\s*(?:id|number|no\.?|#))?\s*[:#]?\s*(\d{6,15})\b/gi;
@@ -59,5 +59,21 @@ export function caseFactsForCheck(
       ? { business: { ...(name ? { name } : {}), ...(address ? { address } : {}) } }
       : {}),
     ...(suppliers.length > 0 ? { suppliers } : {}),
+  };
+}
+
+/**
+ * Everything a check on this case is compared with: the identifiers from every request Amazon has
+ * sent on it, and the business details the seller stated. One function, so the check that runs and
+ * the test for whether a saved check is still current can never read the case differently.
+ */
+export function checkCaseDataForWorkspace(ws: Workspace): DocumentCheckCaseData {
+  return {
+    ...checkCaseDataFrom([
+      ws.notice,
+      ws.formInstructions,
+      ...ws.previousRequests.flatMap((p) => [p.notice, p.formInstructions]),
+    ]),
+    ...caseFactsForCheck(ws.caseFacts),
   };
 }

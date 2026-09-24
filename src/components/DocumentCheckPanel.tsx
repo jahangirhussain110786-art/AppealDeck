@@ -14,6 +14,7 @@ import { FINDING_LABELS, summarizeCheck, type FindingStatus } from "@/core/docum
 import type { CheckOutcome } from "@/lib/documentChecks/runCheck";
 import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/format";
 
 /**
  * AA-41: shows what was read from a seller's document.
@@ -27,8 +28,14 @@ export function DocumentCheckPanel({
   busy,
   onCheck,
   processing,
+  checkedAt,
+  stale,
 }: {
   outcome: CheckOutcome | null;
+  /** Set when this is a check saved with the case: when it ran. */
+  checkedAt?: string;
+  /** The saved check was compared with case details that have since changed. */
+  stale?: boolean;
   busy: boolean;
   onCheck: () => void;
   /** Where the file will be read, stated before the seller presses the button. */
@@ -45,7 +52,14 @@ export function DocumentCheckPanel({
               ? APP.evidenceSlots.check.recheck
               : APP.evidenceSlots.check.action}
         </Button>
+        {outcome && checkedAt && (
+          <span className="text-xs text-muted-foreground">
+            {APP.evidenceSlots.check.savedOn.replace("{date}", formatDateTime(checkedAt))}
+          </span>
+        )}
       </div>
+
+      {outcome && stale && <p className="text-sm text-warning">{APP.evidenceSlots.check.stale}</p>}
 
       {!outcome && processing && (
         <p className="text-xs text-muted-foreground">

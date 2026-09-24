@@ -13,20 +13,9 @@
  * image is good enough to be read by a human at Amazon.
  */
 
-export type ImageCheckStatus = "ok" | "warn" | "unknown";
-
-export interface ImageCheck {
-  id: "resolution" | "sharpness" | "framing" | "exposure";
-  status: ImageCheckStatus;
-  label: string;
-  detail: string;
-}
-
-export interface IdentityImageReport {
-  checks: ImageCheck[];
-  /** True when nothing is flagged. Never means the document will be accepted. */
-  looksReadable: boolean;
-}
+// Declared in core since 24 Sep 2026, so a saved check can be part of the case record.
+import type { ImageCheck, ImageCheckStatus, IdentityImageReport } from "@/core/documentCheck";
+export type { ImageCheck, ImageCheckStatus, IdentityImageReport };
 
 /** Below this, a scan of an A4 page or a card is too coarse for small print to survive. */
 const MIN_LONG_EDGE = 1000;

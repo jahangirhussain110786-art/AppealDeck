@@ -13,6 +13,7 @@ let _compose: Ratelimit | null = null;
 let _analyzeReply: Ratelimit | null = null;
 let _documentRead: Ratelimit | null = null;
 let _outcome: Ratelimit | null = null;
+let _wording: Ratelimit | null = null;
 
 function hasUpstashEnv(): boolean {
   return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
@@ -88,6 +89,25 @@ function getOutcomeLimiter(): Ratelimit | null {
   return _outcome;
 }
 
+function getWordingLimiter(): Ratelimit | null {
+  if (!hasUpstashEnv()) return null;
+  if (!_wording) {
+    const redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    });
+    // Wording help is asked for one section at a time and often more than once while a seller
+    // works, so the cap is higher than document reading's — and it is a short text call, not a file.
+    _wording = new Ratelimit({
+      redis,
+      limiter: Ratelimit.fixedWindow(40, "1 d"),
+      analytics: true,
+      prefix: "ratelimit:improve-wording",
+    });
+  }
+  return _wording;
+}
+
 export function isRateLimitEnabled(): boolean {
   return hasUpstashEnv();
 }
@@ -156,6 +176,25 @@ export async function rateLimitDocumentRead(user: AppUser): Promise<RateLimitRes
       success: process.env.NODE_ENV !== "production",
       limit: 20,
       remaining: 20,
+      reset: Date.now() + 86_400_000,
+    };
+  }
+  let r;
+  try {
+    r = await limiter.limit(user.id);
+  } catch {
+    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+  }
+  return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
+}
+
+export async function rateLimitWording(user: AppUser): Promise<RateLimitResult> {
+  const limiter = getWordingLimiter();
+  if (!limiter) {
+    return {
+      success: process.env.NODE_ENV !== "production",
+      limit: 40,
+      remaining: 40,
       reset: Date.now() + 86_400_000,
     };
   }

@@ -18,7 +18,7 @@ Everything below is the exact shape of that direction against the code at commit
 |---|---|---|---|
 | **T0 · No account** | Anyone | Decode; deadlines; do-now / do-not triage; the **case preview** (the evidence this notice type will need and the action checklist); the guided interview **up to the first document or action step**, saved on the device as they go; the dashboard showing that draft; Pricing; FAQ; legal pages | Browser only. Rules engine in the client. Nothing stored on our servers. |
 | **T1 · Free account** | Signed in | Everything in T0 plus: the passphrase-protected vault; document uploads; the rest of the interview (declines and honest alternatives, readiness as "case-file completeness"); dashboard with next actions; save and resume; **AI field suggestions** under a per-user daily cap | Auth row on Supabase; AI calls behind the existing daily spend cap and circuit breaker plus a per-user cap. Vault stays on the device. |
-| **T2 · Appeal Pass ($199, one case)** | Licensed | The composer: gap or full draft, critic review, before-you-submit checklist, copy and print; Amazon-reply analysis; cloud vault sync and up to 5 devices; 7-day refund | LLM drafting and the deliverable. Unchanged from today. |
+| **T2 · Appeal Pass ($249, one case)** | Licensed | The composer: gap or full draft, critic review, before-you-submit checklist, copy and print; Amazon-reply analysis; cloud vault sync and up to 5 devices; 7-day refund | LLM drafting and the deliverable. Unchanged from today. |
 
 Severity gating does not move: gated notice types are never sold at any step (D6). Nothing in D1–D10 is reopened; D10's funnel ("decode → intake started → purchase") finally has its middle step in front of the seller.
 
@@ -37,6 +37,8 @@ Rule: **every gate saves before it asks** (the draft is already in the vault whe
 ## 3. Header and signed-out pages
 
 ### 3.1 Header (both states, five slots)
+
+> **Superseded 12 Sep 2026 (AM-25; gap D-04):** the header has three slots, Decode, Dashboard and Vault. Case and Billing are no longer header slots. Acceptance item 3 in section 11 follows this change.
 
 | State | Left | Nav | Right |
 |---|---|---|---|
@@ -202,7 +204,7 @@ access: {
   composeGate: {
     title: "Unlock the drafted plan",
     body: "Your case file is saved. The Appeal Pass drafts the Plan of Action from it, reviews the draft with the critic, and adds cloud sync for your vault.",
-    price: "$199, once, for this case",
+    price: "$249, once, for this case",
     activating: "Activating your Appeal Pass. Your case is saved.",
     activatingHint: "This usually takes a few seconds after checkout.",
     stillWaiting: "Your payment went through but the activation has not arrived yet. Check again in a moment, or open Billing.",
@@ -221,6 +223,8 @@ access: {
 Removed keys (with the code that used them): `APP.case.noPass.*`, `APP.vault.noPassTitle/noPassDesc/noPassCta/noPassBack`, `APP.compose.noPass.*` (replaced by `access.composeGate`), `APP.dashboard.noPass.*` and `noPassCard.*` (the signed-in dashboard no longer has a no-pass branch).
 
 ## 9. AI field suggestions on a free account
+
+> **Retired 22 Sep 2026 (gap D-05):** the field suggestions were deleted with the classic interview and deliberately not restored, because their graded severity could contradict the decoder. Acceptance item 6 in section 11 no longer applies. The only AI help today is document checks and opt-in wording help, both Appeal Pass features.
 
 - `/api/extract-field`: replace the license gate with **signed in** + a per-user daily cap (`Ratelimit.fixedWindow(20, "1 d")`, keyed by user id, in `src/lib/ratelimit.ts` next to the existing limiters) + the existing Gemini breaker and daily spend cap. `429` with the existing too-many-requests shape when the cap is hit.
 - `FieldSuggester` receives `enabled` from the interview: hidden when signed out; when the cap is hit it shows the existing rules-only state.

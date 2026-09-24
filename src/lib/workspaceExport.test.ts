@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { buildCaseExport } from "./workspaceExport";
 import { createCaseFile } from "@/core/caseFile";
 import { documentWorkspace } from "@/core/workspace.fixture";
+import { checkContextKey } from "@/core/documentCheck";
+import { checkCaseDataForWorkspace } from "./documentChecks/context";
 
 describe("buildCaseExport", () => {
   it("includes the notice, response facts, evidence plan, submissions and replies in full", () => {
@@ -144,13 +146,60 @@ describe("what a specialist needs from the export", () => {
     expect(text).toContain("Request confirmed.");
   });
 
-  it("says document checks are not kept, rather than implying none were run", () => {
-    expect(text).toContain("Document checks are not saved with the case");
+  it("says when no document check was run, rather than staying silent", () => {
+    expect(text).toContain("Document checks: none run on the files linked here.");
   });
 
   it("does not report 'no outcome' when the record simply could not be read", () => {
     const unread = buildCaseExport(file, w);
     expect(unread).toContain("could not be read");
     expect(unread).not.toContain("(no outcome recorded)");
+  });
+});
+
+/** 24 Sep 2026: document checks are saved with the case, so the export carries them. */
+describe("saved document checks in the export", () => {
+  const base = documentWorkspace();
+  const check = (contextKey: string) => ({
+    recordId: "file-1",
+    contentHash: "hash-1",
+    at: "2026-09-24T10:00:00.000Z",
+    contextKey,
+    outcome: {
+      kind: "fields" as const,
+      result: {
+        evidenceKind: "supplier_invoice" as const,
+        findings: [
+          {
+            field: "supplier business name",
+            status: "present" as const,
+            observed: "Acme Wholesale Ltd",
+            note: "The supplier's name is printed at the top.",
+          },
+        ],
+        triggeredDisqualifiers: [],
+        allRequiredFieldsPresent: true,
+      },
+    },
+  });
+  const current = checkContextKey(checkCaseDataForWorkspace(base));
+
+  it("writes each finding with the words that were read", () => {
+    const w = { ...base, documentChecks: [check(current)] };
+    const text = buildCaseExport({ ...createCaseFile("POLICY"), workspace: w }, w);
+    expect(text).toContain("supplier business name: Found. “Acme Wholesale Ltd”");
+    expect(text).not.toContain("since changed");
+  });
+
+  it("marks a check compared with case details that have since changed", () => {
+    const w = { ...base, documentChecks: [check("an older key")] };
+    const text = buildCaseExport({ ...createCaseFile("POLICY"), workspace: w }, w);
+    expect(text).toContain("compared with case details that have since changed");
+  });
+
+  it("leaves out a check made on a different file", () => {
+    const w = { ...base, documentChecks: [{ ...check(current), contentHash: "hash-2" }] };
+    const text = buildCaseExport({ ...createCaseFile("POLICY"), workspace: w }, w);
+    expect(text).not.toContain("Acme Wholesale Ltd");
   });
 });

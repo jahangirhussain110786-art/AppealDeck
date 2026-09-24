@@ -31,6 +31,8 @@ import { computeDraftStrength, DRAFT_STRENGTH_TONE } from "@/lib/draftStrength";
 import { formatDate } from "@/lib/format";
 import { openItemsAt } from "@/lib/submissionRecord";
 import { WORKSPACE as C } from "@/content/workspace";
+import { ImproveWording } from "./ImproveWording";
+import type { WordingSection } from "@/lib/llm/improveWording";
 
 export type WorkspaceResponse = { rendered: string; draft: PoaDraft; critique: CriticResult };
 export function ResponseReview({
@@ -69,12 +71,35 @@ export function ResponseReview({
     draft?.["response.preventiveMeasures"] ?? w.preventiveMeasures,
   );
   const [attested, setAttested] = useState(Boolean(w.correctiveActionsAttested));
+  const changeExplanation = (next: string) => {
+    setExplanation(next);
+    onDraftChange("response.explanation", next === w.explanation ? undefined : next);
+    setReviewed(false);
+  };
+  const changeCorrective = (next: string) => {
+    setCorrective(next);
+    onDraftChange("response.correctiveActions", next === w.correctiveActions ? undefined : next);
+    setReviewed(false);
+    // An attestation that survives an edit is an attestation to text the seller never read. The
+    // copy under the box promises this, so it has to be true — for a chosen suggestion too.
+    setAttested(false);
+  };
+  const changePreventive = (next: string) => {
+    setPreventive(next);
+    onDraftChange("response.preventiveMeasures", next === w.preventiveMeasures ? undefined : next);
+    setReviewed(false);
+  };
   const questions = questionnaireQuestions(w);
   // Only answers edited here are held in state. The rest are read from the draft or the saved
   // case, so a re-pasted form with different questions never shows a stale answer.
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const answerValue = (q: string, i: number) =>
     answers[q] ?? draft?.[answerDraftKey(i)] ?? answerFor(w, q);
+  const changeAnswer = (q: string, i: number, next: string) => {
+    setAnswers((a) => ({ ...a, [q]: next }));
+    onDraftChange(answerDraftKey(i), next === answerFor(w, q) ? undefined : next);
+    setReviewed(false);
+  };
   const answersDirty = questions.some((q, i) => answerValue(q, i) !== answerFor(w, q));
   const [reviewed, setReviewed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -154,12 +179,16 @@ export function ResponseReview({
                     rows={3}
                     maxLength={12000}
                     value={answerValue(q, i)}
-                    onChange={(e) => {
-                      const next = e.target.value;
-                      setAnswers((a) => ({ ...a, [q]: next }));
-                      onDraftChange(answerDraftKey(i), next === answerFor(w, q) ? undefined : next);
-                      setReviewed(false);
-                    }}
+                    onChange={(e) => changeAnswer(q, i, e.target.value)}
+                  />
+                  <SectionTools
+                    file={file}
+                    signedIn={signedIn}
+                    busy={busy}
+                    section="answer"
+                    question={q}
+                    text={answerValue(q, i)}
+                    onAccept={(next) => changeAnswer(q, i, next)}
                   />
                 </div>
               ))}
@@ -179,12 +208,15 @@ export function ResponseReview({
               maxLength={12000}
               value={explanation}
               placeholder="Explain the issue using facts you can support…"
-              onChange={(e) => {
-                const next = e.target.value;
-                setExplanation(next);
-                onDraftChange("response.explanation", next === w.explanation ? undefined : next);
-                setReviewed(false);
-              }}
+              onChange={(e) => changeExplanation(e.target.value)}
+            />
+            <SectionTools
+              file={file}
+              signedIn={signedIn}
+              busy={busy}
+              section="explanation"
+              text={explanation}
+              onAccept={changeExplanation}
             />
           </div>
           {w.protocol === "operational" && (
@@ -198,18 +230,16 @@ export function ResponseReview({
                   rows={4}
                   maxLength={12000}
                   value={correctiveActions}
-                  onChange={(e) => {
-                    const next = e.target.value;
-                    setCorrective(next);
-                    onDraftChange(
-                      "response.correctiveActions",
-                      next === w.correctiveActions ? undefined : next,
-                    );
-                    setReviewed(false);
-                    // An attestation that survives an edit is an attestation to text the seller
-                    // never read. The copy under the box promises this, so it has to be true.
-                    setAttested(false);
-                  }}
+                  onChange={(e) => changeCorrective(e.target.value)}
+                />
+                <SectionTools
+                  file={file}
+                  signedIn={signedIn}
+                  busy={busy}
+                  section="correctiveActions"
+                  text={correctiveActions}
+                  onAccept={changeCorrective}
+                  attestationClears={attested}
                 />
                 {/*
                   A-01 (EF-2). The attestation layer was built in readiness.ts and reachable by
@@ -249,15 +279,15 @@ export function ResponseReview({
                   rows={4}
                   maxLength={12000}
                   value={preventiveMeasures}
-                  onChange={(e) => {
-                    const next = e.target.value;
-                    setPreventive(next);
-                    onDraftChange(
-                      "response.preventiveMeasures",
-                      next === w.preventiveMeasures ? undefined : next,
-                    );
-                    setReviewed(false);
-                  }}
+                  onChange={(e) => changePreventive(e.target.value)}
+                />
+                <SectionTools
+                  file={file}
+                  signedIn={signedIn}
+                  busy={busy}
+                  section="preventiveMeasures"
+                  text={preventiveMeasures}
+                  onAccept={changePreventive}
                 />
               </div>
             </>
@@ -550,6 +580,56 @@ export function ResponseReview({
             </div>
           </CardContent>
         </Card>
+      )}
+    </div>
+  );
+}
+
+/**
+ * What sits under each section of the response: a neutral character count, and the opt-in wording
+ * help.
+ *
+ * The count is B-08 as reduced on 24 Sep 2026. The original plan read Amazon's own form for its
+ * limits, which is reading Seller Central and is ruled out by Amazon's Agent Policy (AM-27). A
+ * count claims nothing about any limit — it lets a seller see before pasting that a section is far
+ * longer than the box they are pasting it into.
+ */
+function SectionTools({
+  file,
+  signedIn,
+  busy,
+  section,
+  text,
+  question,
+  onAccept,
+  attestationClears,
+}: {
+  file: CaseFile & { workspace: Workspace };
+  signedIn: boolean;
+  busy: boolean;
+  section: WordingSection;
+  text: string;
+  question?: string;
+  onAccept: (text: string) => void;
+  attestationClears?: boolean;
+}) {
+  return (
+    <div className="space-y-1">
+      <p className="text-right text-xs tabular-nums text-muted-foreground">
+        {C.charCount.replace("{count}", text.length.toLocaleString("en-US"))}
+      </p>
+      {workspaceCanCompose(file.workspace) && (
+        <ImproveWording
+          caseId={file.id}
+          kind={file.kind}
+          section={section}
+          text={text}
+          question={question}
+          signedIn={signedIn}
+          disabled={busy}
+          onAccept={onAccept}
+          attestationClears={attestationClears}
+        />
       )}
     </div>
   );

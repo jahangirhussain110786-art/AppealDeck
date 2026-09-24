@@ -7,6 +7,13 @@ import type { SerializedDeadline } from "@/core/deadlinesModel";
 import type { CaseLog } from "./caseStore";
 import { REQUIREMENT_GROUPS } from "./evidencePack";
 import { formatDate } from "./format";
+import {
+  checkContextKey,
+  FINDING_LABELS,
+  savedCheckFor,
+  summarizeCheck,
+} from "@/core/documentCheck";
+import { checkCaseDataForWorkspace } from "./documentChecks/context";
 
 const STATUS_LABELS: Record<Requirement["status"], string> = {
   needed: "still needed",
@@ -23,6 +30,7 @@ const OUTCOME_LABELS: Record<NonNullable<CaseLog["resolution"]>["status"], strin
 
 /** A deadline as the seller's screen describes it, so the export never states a date the page did not. */
 function describeDeadline(d: SerializedDeadline): string {
+  if (d.setBy === "seller") return `${d.label} (entered by the seller from Account Health)`;
   if (d.dueOn) return d.startsOn ? `${d.label}, closes ${formatDay(d.dueOn)}` : d.label;
   if (d.startsOnReceipt) return `${d.label}, from the day the notice was received`;
   if (d.dueAt) return `${d.label}: ${formatDate(d.dueAt)}`;
@@ -49,6 +57,39 @@ function requirementLines(r: Requirement, reason: string): string[] {
 }
 
 /**
+ * The document checks saved with the case, one per record still linked to it. Each finding is
+ * written the way the page shows it — what was read, in quotes, and what it was compared with —
+ * and a check compared with case details that have since changed says so, so a specialist does not
+ * take an old comparison for a current one.
+ */
+function documentCheckLines(w: Workspace): string[] {
+  const keyNow = checkContextKey(checkCaseDataForWorkspace(w));
+  const checked = w.requirements.flatMap((r) => {
+    const saved = savedCheckFor(w.documentChecks, r.recordId, r.contentHash);
+    return saved ? [{ r, saved }] : [];
+  });
+  if (checked.length === 0) return ["Document checks: none run on the files linked here."];
+  const lines = ["Document checks (what could be read; never a judgment of the document):"];
+  for (const { r, saved } of checked) {
+    const stale =
+      saved.contextKey !== keyNow ? " — compared with case details that have since changed" : "";
+    lines.push(`- ${r.filename ?? r.label} · checked ${formatDate(saved.at)}${stale}`);
+    if (saved.outcome.kind === "fields") {
+      lines.push(`  ${summarizeCheck(saved.outcome.result)}`);
+      for (const f of saved.outcome.result.findings) {
+        const read = f.observed ? ` “${f.observed}”` : "";
+        const against = f.comparedWith ? ` (compared with ${f.comparedWith})` : "";
+        lines.push(`  ${f.field}: ${FINDING_LABELS[f.status]}.${read}${against} ${f.note}`);
+      }
+      for (const d of saved.outcome.result.triggeredDisqualifiers) lines.push(`  Note: ${d}`);
+    } else {
+      for (const c of saved.outcome.report.checks) lines.push(`  ${c.label}: ${c.detail}`);
+    }
+  }
+  return lines;
+}
+
+/**
  * A readable record of a workspace case, complete enough to hand to a specialist.
  *
  * Widened 23 Sep 2026 (audit item Q). It said "complete" and left out most of what a specialist
@@ -58,8 +99,9 @@ function requirementLines(r: Requirement, reason: string): string[] {
  * confirmed doing, the outcome they recorded and the case's own history.
  *
  * Explicitly not a submission and not sent to Amazon. Every line comes from the case's own saved
- * data; nothing is summarized away or inferred. Document-check results are not saved with a case,
- * so the export says so rather than implying none were run.
+ * data; nothing is summarized away or inferred. Document checks are saved with the case since
+ * 24 Sep 2026 and are included, each dated, with the ones compared against since-changed case
+ * details marked as such.
  */
 export function buildCaseExport(
   file: CaseFile,
@@ -134,9 +176,7 @@ export function buildCaseExport(
     lines.push(`${group.heading}:`);
     for (const r of items) lines.push(...requirementLines(r, group.reason));
   }
-  lines.push(
-    "Document checks are not saved with the case, so their results are not included here.",
-  );
+  lines.push(...documentCheckLines(w));
   lines.push("");
 
   lines.push(`== Submissions (${w.submissions.length}) ==`);

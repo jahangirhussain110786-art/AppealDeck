@@ -3,11 +3,13 @@
 **Version 1.0 · 26 Aug 2026 · Jhangir Hussain**
 **Status: ready to execute. Start at [MASTER-CHECKLIST.md](MASTER-CHECKLIST.md), item 1.**
 
+> **Read this first (24 Sep 2026).** For what is actually built, read [`../docs/CURRENT-STATE.md`](../docs/CURRENT-STATE.md), not the checkboxes in this folder. Many boxes here are unticked for work that shipped, because ticking was the step that got skipped, and hundreds more wait on a deploy that has not happened. `02-BUILD-PLAN-AMENDMENTS.md` is authoritative over the older files; where a file names Cloudflare, `$199`, a price test or the browser extension, a later decision supersedes it (AM-27, AM-28, the 21 Sep price reset, and the single-host Vercel decision).
+
 ---
 
 ## What this is
 
-This folder is the complete, self-sufficient execution playbook for **AppealDeck** — a product that helps suspended Amazon sellers by (1) decoding their deactivation notice for free, (2) drafting an AI-generated Plan of Action (POA — the structured appeal document Amazon requires), (3) tracking appeal deadlines, and (4) keeping an encrypted, local-first case vault. It is sold as a **$199 one-time "Appeal Pass" per case** (with a $29/mo "Guardian" subscription deferred until its monitoring feature exists), against human consultants whose verified prices run **$600–$5,000 per case**.
+This folder is the complete, self-sufficient execution playbook for **AppealDeck** — a product that helps suspended Amazon sellers by (1) decoding their deactivation notice for free, (2) drafting an AI-generated Plan of Action (POA — the structured appeal document Amazon requires), (3) tracking appeal deadlines, and (4) keeping an encrypted, local-first case vault. It is sold as a **$249 one-time "Appeal Pass" per case** (with a $29/mo "Guardian" subscription deferred until its monitoring feature exists), against human consultants whose verified prices run **$600–$5,000 per case**.
 
 The playbook was distilled on 25–26 Aug 2026 from five rounds of multi-agent research (34 source documents, indexed in [07-REFERENCE/08-SOURCE-DOCUMENT-INDEX.md](07-REFERENCE/08-SOURCE-DOCUMENT-INDEX.md)) **plus an independent live-web verification pass** that confirmed the market case and corrected seven stale premises. Where this playbook and any older document disagree, **this playbook wins**.
 

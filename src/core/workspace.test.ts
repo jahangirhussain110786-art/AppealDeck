@@ -1064,3 +1064,61 @@ describe("a record the notice waives or describes as past", () => {
     );
   });
 });
+
+/**
+ * 24 Sep 2026: the vault validator strips keys it does not know, and has dropped new fields here
+ * before. A saved document check must survive the round trip, or it is lost on the first save.
+ */
+describe("saved document checks survive the vault validator", () => {
+  it("keeps a field reading and an image reading", () => {
+    const w = {
+      ...documentWorkspace(),
+      documentChecks: [
+        {
+          recordId: "file-1",
+          contentHash: "hash-1",
+          at: "2026-09-24T10:00:00.000Z",
+          contextKey: "[]",
+          outcome: {
+            kind: "fields" as const,
+            result: {
+              evidenceKind: "supplier_invoice" as const,
+              findings: [
+                {
+                  field: "issue date (within 365 days)",
+                  status: "conflicting" as const,
+                  observed: "2 March 2024",
+                  note: "Dated more than 365 days before this check.",
+                  comparedWith: "today, 24 Sep 2026",
+                },
+              ],
+              triggeredDisqualifiers: [],
+              allRequiredFieldsPresent: false,
+            },
+          },
+        },
+        {
+          recordId: "file-2",
+          at: "2026-09-24T10:00:00.000Z",
+          contextKey: "[]",
+          outcome: {
+            kind: "image" as const,
+            report: {
+              checks: [
+                {
+                  id: "sharpness" as const,
+                  status: "warn" as const,
+                  label: "Sharpness",
+                  detail: "Soft.",
+                },
+              ],
+              looksReadable: false,
+            },
+          },
+        },
+      ],
+    };
+    const parsed = WorkspaceSchema.parse(w);
+    expect(parsed.documentChecks).toEqual(w.documentChecks);
+  });
+});

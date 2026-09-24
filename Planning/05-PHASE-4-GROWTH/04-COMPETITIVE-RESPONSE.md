@@ -84,7 +84,7 @@ Each scenario: trigger → response → what NOT to do. These are settled; execu
 - Sharpen the contrast in copy (see §4): they hold your account's keys in their cloud via SP-API OAuth; our decode runs local-first with no Amazon login, no OAuth, and one fee per case.
 - Keep vault, deadline tracking, and case management as the paid-tier depth a free generic generator cannot follow into.
 
-**Do NOT:** start a price war (their subscription economics beat ours in one — and $199 vs free was already the situation on day one, the free decoder is our own funnel top); disparage them by name in any channel (explicit ASGTG rule, and a bad look everywhere — `./02-COMMUNITY-PLAYBOOK.md` §3); claim "only" or "first" anything.
+**Do NOT:** start a price war (their subscription economics beat ours in one — and $249 vs free was already the situation on day one, the free decoder is our own funnel top); disparage them by name in any channel (explicit ASGTG rule, and a bad look everywhere — `./02-COMMUNITY-PLAYBOOK.md` §3); claim "only" or "first" anything.
 
 ### S2 — A competitor adds one-time per-case pricing
 
@@ -93,7 +93,7 @@ Each scenario: trigger → response → what NOT to do. These are settled; execu
 **Response:**
 - First, verify it is real and shipping (buy it if cheap enough — the log entry pays for itself).
 - Our per-case *pricing* was never the moat on its own; the stack is per-case pricing **plus** local-first privacy **plus** dedicated deactivation depth. Re-center copy on the parts of the stack the copier did not copy.
-- ⚠ FOUNDER-DECISION: whether to run the pre-approved price experiment — testing $99/$149/$199 across the first ~20 sales is a legitimate, already-sanctioned experiment (synthesis brief, correction 2). It is a *response to data*, not a reflex to a competitor's launch. The founder decides if and when; nobody else triggers a price change.
+- ⚠ FOUNDER-DECISION: whether to run the pre-approved price experiment — testing $99/$149/$199 across the first ~20 sales is a legitimate, already-sanctioned experiment (synthesis brief, correction 2). It is a *response to data*, not a reflex to a competitor's launch. The founder decides if and when; nobody else triggers a price change. **Superseded 21 Sep 2026 (commercial reset; gap D-03): the price is $249 flat, worldwide, and no price test is planned.**
 
 **Do NOT:** cut the price the week a competitor launches (that reads as panic and reprices the anchor for everyone who already paid); add a subscription just because they have one (Guardian stays deferred until its monitoring feature ships — decision D7); match a feature list line-by-line in copy.
 
@@ -147,7 +147,7 @@ Copy is written from this bank, not improvised per channel. The grep gate from d
 |---|---|---|
 | **"Your case never leaves your browser."** | Decoder page, extension listing, privacy sections | Only where literally true: the local rules-based decode and the vault. Where the cloud drafting path is involved, use the honest long form: *"decoding runs locally by default; cloud processing only with your explicit consent"* — consistent with `./03-SEO-CONTENT-PLAN.md` §7 |
 | **"One fee for one case — no subscription."** | Pricing page, checkout, comparison contexts | The anti-SaaS wedge. Never pair it with a price attack on a named competitor |
-| **Anchoring vs the human tier: "Reinstatement firms charge $600–$5,000 per case. AppealDeck is $199, one time."** | Landing page, ads, FAQ | Every number in the anchor is verified (§1.3). Update the range only from the weekly log, never from memory |
+| **Anchoring vs the human tier: "Reinstatement firms charge $600–$5,000 per case. AppealDeck is $249, one time."** | Landing page, ads, FAQ | Every number in the anchor is verified (§1.3). Update the range only from the weekly log, never from memory |
 | **"No login, no OAuth, no access to your Amazon account."** | Privacy/trust sections, vs SP-API competitors | The local-first contrast with SellerForge/AppealAI, stated about *us*, not against *them* by name |
 | **"Most first appeals fail — even with expensive professional help. We help you build the strongest first shot, not the fastest."** | Honest-expectations card, FAQ, community replies | The trust wedge itself. Required framing before purchase (D6) |
 

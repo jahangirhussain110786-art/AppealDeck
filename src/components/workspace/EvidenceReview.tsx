@@ -30,6 +30,8 @@ export function EvidenceReview({
   onUpload,
   onDownload,
   checkOutcome,
+  checkedAt,
+  checkStale,
   checking,
   onCheck,
 }: {
@@ -51,6 +53,10 @@ export function EvidenceReview({
    * reach it at all. Optional so the classic path and the dev gallery are unaffected.
    */
   checkOutcome?: CheckOutcome | null;
+  /** When a check shown here was saved with the case, the time it ran. */
+  checkedAt?: string;
+  /** A saved check compared with case details that have since changed. */
+  checkStale?: boolean;
   checking?: boolean;
   onCheck?: () => void;
 }) {
@@ -307,6 +313,8 @@ export function EvidenceReview({
         {onCheck && item.recordId && (
           <DocumentCheckPanel
             outcome={checkOutcome ?? null}
+            checkedAt={checkedAt}
+            stale={checkStale}
             busy={Boolean(checking)}
             onCheck={onCheck}
             processing={checkProcessing(item)}

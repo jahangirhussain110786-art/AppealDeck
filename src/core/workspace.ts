@@ -8,6 +8,7 @@ import type { ViolationKind } from "./violationKinds";
 import { D6_GATED_ALLEGATION } from "./violationKinds";
 import type { NoticeIssue } from "./noticeIssues";
 import { detectIssues, hasMultipleIssues } from "./noticeIssues";
+import type { SavedDocumentCheck } from "./documentCheck";
 import { questionsIn } from "./questionnaire";
 
 /**
@@ -223,6 +224,12 @@ export interface Workspace {
    * against the seller account and may phone the supplier, so these are the facts that matter.
    */
   caseFacts?: CaseFacts;
+  /**
+   * Document checks kept with the case, one per linked record (24 Sep 2026). A check used to live
+   * only in the page's memory, so a paid reading vanished on reload. See `SavedDocumentCheck` for
+   * why a saved reading can never be shown beside a different file.
+   */
+  documentChecks?: SavedDocumentCheck[];
   /** Unsaved field text, autosaved to the vault so it survives navigation and sign-in. */
   draft?: Record<string, string>;
 }

@@ -9,6 +9,9 @@ import {
   FINDING_LABELS,
   type CheckContext,
   type FieldFinding,
+  checkContextKey,
+  savedCheckFor,
+  withSavedCheck,
 } from "./documentCheck";
 import { EVIDENCE_MATRIX, requirementsFor } from "./evidenceModel";
 
@@ -531,5 +534,42 @@ describe("no comparison note draws a verdict", () => {
     const f = field(name, { observed });
     expect(containsBannedConclusion(f.note)).toBe(false);
     expect(f.note).not.toMatch(/amazon will|likely|chance/i);
+  });
+});
+
+/** 24 Sep 2026: a check is saved with the case, and must never be shown beside another file. */
+describe("saved document checks", () => {
+  const outcome = {
+    kind: "image" as const,
+    report: { checks: [], looksReadable: true },
+  };
+  const entry = (recordId: string, contentHash?: string) => ({
+    recordId,
+    ...(contentHash ? { contentHash } : {}),
+    at: "2026-09-24T10:00:00.000Z",
+    contextKey: "k",
+    outcome,
+  });
+
+  it("gives the same key whatever order the case details were collected in", () => {
+    expect(checkContextKey({ asins: ["B0A", "B0B"], suppliers: ["Acme"] })).toBe(
+      checkContextKey({ asins: ["b0b", " B0A"], suppliers: ["acme "] }),
+    );
+    expect(checkContextKey({ business: { address: "1 High St" } })).not.toBe(
+      checkContextKey({ business: { address: "2 High St" } }),
+    );
+  });
+
+  it("finds the check for a record, but not once the record holds another file", () => {
+    const saved = [entry("r1", "hash-a")];
+    expect(savedCheckFor(saved, "r1", "hash-a")).toBeDefined();
+    expect(savedCheckFor(saved, "r1", "hash-b")).toBeUndefined();
+    expect(savedCheckFor(saved, "r2", "hash-a")).toBeUndefined();
+    expect(savedCheckFor(saved, undefined, "hash-a")).toBeUndefined();
+  });
+
+  it("replaces a record's check and drops checks for records no longer linked", () => {
+    const next = withSavedCheck([entry("r1"), entry("gone")], entry("r1", "new"), ["r1", "r2"]);
+    expect(next.map((c) => [c.recordId, c.contentHash])).toEqual([["r1", "new"]]);
   });
 });

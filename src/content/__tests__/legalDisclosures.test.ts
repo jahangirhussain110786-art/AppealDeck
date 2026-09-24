@@ -115,8 +115,23 @@ describe("the rendered Privacy page", () => {
     expect(privacy).not.toMatch(/Gemini drafting/i);
   });
 
-  it("names the document check as the one thing sent to an AI provider", () => {
-    expect(privacy).toMatch(/only thing we send to an AI provider is a business document/i);
+  it("names the two things a seller can choose to send to an AI provider", () => {
+    expect(privacy).toMatch(
+      /only things we send to an AI provider are a business document you ask us to check and a section you ask us to improve the wording of/i,
+    );
+  });
+
+  /**
+   * 24 Sep 2026: wording help. The policy must say what is sent, that it is sent only when the
+   * seller asks, and that a suggestion changing a fact is discarded — the three things a seller
+   * needs to weigh before pressing the button.
+   */
+  it("describes wording help: what is sent, when, and the fact lock", () => {
+    expect(privacy).toMatch(/If you press "Improve the wording" on a section/);
+    expect(privacy).toMatch(/nothing changes unless you choose it/);
+    expect(privacy).toMatch(
+      /adds or removes a date, number, identifier, address or name is discarded/,
+    );
   });
 });
 
@@ -144,10 +159,10 @@ describe("the FAQ says what the privacy policy says", () => {
     expect(faq).not.toMatch(/AI suggestions|field suggestions|interview drafting/i);
   });
 
-  it("names the document check as what reaches an AI provider", () => {
+  it("names the same two things as what reaches an AI provider", () => {
     const processing = FAQ.items.find((i) => i.id === "processing");
     expect(`${processing?.a} ${processing?.detail}`).toMatch(
-      /only thing sent to an AI provider[^.]*business document you ask us to check/,
+      /only things sent to an AI provider[^.]*business document you ask us to check and a section of your response you ask us to improve the wording of/,
     );
   });
 });

@@ -19,7 +19,7 @@
 
 CLAUDE.md is read automatically at session start, so it must contain exactly what a zero-context session needs — no more (a bloated CLAUDE.md gets skimmed). Required sections, in order:
 
-**Section 1 — Product one-pager.** What AppealDeck is in ~10 lines: notice decoder → AI-drafted POA → deadline tracking → encrypted local case vault; free decoder → $199 one-time Appeal Pass per case; audience = suspended Amazon sellers; founder solo/Pakistan/non-developer; local-first, read-only, no automation — ethics spine is strategy (D6).
+**Section 1 — Product one-pager.** What AppealDeck is in ~10 lines: notice decoder → AI-drafted POA → deadline tracking → encrypted local case vault; free decoder → $249 one-time Appeal Pass per case; audience = suspended Amazon sellers; founder solo/Pakistan/non-developer; local-first, read-only, no automation — ethics spine is strategy (D6).
 
 **Section 2 — The locked decisions, D1–D10, summarized.** One line each (GO-conditional · Paddle primary with self-issued license keys · hybrid build order web-first, injector last-or-never · individual seller entity · collaborator agreement before any collaborator access + paid auditions · ethics spine: no "guarantee", honest-expectations card, severity gating, read-only, local-first · Guardian and Expert Review deferred · 7-day voluntary refunds · Gemini Flash paid tier server-side only · north-star = paid Appeal Passes/week). End the section with: "These are settled. Do not reopen; deviations require a founder-approved append to `00-DECISION/02-DECISION-LOG.md`."
 

@@ -26,7 +26,7 @@ The Week-1 site does not need the decoder (that ships Week 4–5). It needs to b
 | Page | Must contain |
 |------|--------------|
 | **Home** | What AppealDeck is, in software terms: "Software that helps Amazon sellers understand enforcement notices and prepare appeal documents." Plain description of the flow: paste/decode a notice → answer a structured interview → get a draft Plan of Action you edit and submit yourself. The not-legal-advice disclaimer block (§5) in the footer. No "beta", "test", or placeholder text anywhere. |
-| **Pricing** | Free notice decoder (labelled "coming soon" until Week 4–5 is acceptable); **Appeal Pass — $199 one-time, per case** with a bullet list of what it unlocks. Do NOT list Guardian ($29/mo) as purchasable — the monitoring feature doesn't exist yet (decision D7); it may be described as "planned". No success-rate claims of any kind. |
+| **Pricing** | Free notice decoder (labelled "coming soon" until Week 4–5 is acceptable); **Appeal Pass — $249 one-time, per case** with a bullet list of what it unlocks. Do NOT list Guardian ($29/mo) as purchasable — the monitoring feature doesn't exist yet (decision D7); it may be described as "planned". No success-rate claims of any kind. |
 | **About / Contact** | Who runs it: the founder's real name (Jhangir Hussain), brand name (AppealDeck by Hawlton), contact email on the domain. Matches the identity on the Paddle application and the CWS listing exactly — identity mismatches are a documented Paddle rejection trigger (unverified — third-party rejection analyses). |
 | **Refund policy** | The 7-day voluntary refund + EU withdrawal mechanics (§4.3), stated plainly with no qualifiers that contradict it. |
 | **Privacy policy** | §3 below. |

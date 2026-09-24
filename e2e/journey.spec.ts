@@ -227,3 +227,123 @@ test.describe("on a phone", () => {
     await expect(page).toHaveURL(/\/decode$/);
   });
 });
+
+/**
+ * 24 Sep 2026: when a notice gives no date the case sends the seller to Account Health, and until
+ * now the date they found there had nowhere to go. It is saved as theirs, survives a reload, and
+ * reaches the dashboard.
+ */
+test("a response date entered from Account Health is kept and counted down to", async ({
+  page,
+}) => {
+  await startCase(
+    page,
+    "Your selling privileges have been deactivated because of late shipments. Please submit a Plan of Action explaining the root cause, the corrective actions and the preventive measures.",
+    "Submit your Plan of Action.",
+  );
+  await page.getByLabel("The response date Amazon shows you in Account Health").fill("2027-01-15");
+  await page.getByRole("button", { name: "Save this date" }).click();
+  await expect(page.getByText("You entered this date from Account Health.")).toBeVisible();
+  await expect(page.getByText(/Respond by 15 Jan 2027/).first()).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByText(/Respond by 15 Jan 2027/).first()).toBeVisible();
+
+  await page.goto("/dashboard");
+  // The dashboard's "Coming up" list counts down to it, which is what the date is for.
+  await expect(page.getByText(/^Respond by 15 Jan 2027 — in \d+ days$/)).toBeVisible();
+});
+
+/** B-10: the free decode lists what the case will need, including what the notice does not name. */
+test("the decode lists the records a case like this needs, labelling the ones we added", async ({
+  page,
+}) => {
+  await page.goto("/decode");
+  await page.getByRole("button", { name: "Try a sample notice" }).click();
+  await page.getByRole("button", { name: "Decode", exact: true }).click();
+  await expect(page.locator("summary", { hasText: "Supplier invoice" })).toBeVisible();
+  const inferred = page.locator("summary", { hasText: "Sales or performance record" });
+  await expect(inferred).toBeVisible();
+  await inferred.click();
+  await expect(page.getByText("We added this", { exact: true })).toBeVisible();
+});
+
+/**
+ * B-04, reduced: after two responses and another refusal, the case offers a change of approach
+ * instead of presenting a third attempt as the same kind of step as the first.
+ */
+test("after two responses and another refusal, the case offers a change of approach", async ({
+  page,
+}) => {
+  await page.goto("/case");
+  await page
+    .getByLabel("Amazon notice", { exact: true })
+    .fill("Your Amazon seller account has been deactivated. Please submit a Plan of Action.");
+  for (const [button, text] of [
+    ["Yes, I already responded", "We removed the listing and retrained the team."],
+    ["Add another response", "We removed the listing, retrained the team and audited stock."],
+  ] as const) {
+    await page.getByRole("button", { name: button }).click();
+    await page.getByLabel("What did you send? (optional)").fill(text);
+    await page.getByRole("button", { name: "Record this response" }).click();
+    await expect(page.getByText(text).first()).toBeVisible();
+  }
+  const title = "Two responses have not resolved this. Change the approach, not only the words.";
+  await expect(page.getByText(title)).toHaveCount(0);
+
+  await page.getByLabel("Current response instructions").fill("Submit your Plan of Action.");
+  await page.getByRole("button", { name: "Confirm this route" }).click();
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "History", exact: true }).click();
+  await page
+    .getByLabel("Add Amazon’s next reply")
+    .fill("We reviewed your appeal. We do not have enough information to reinstate your account.");
+  await page.getByRole("button", { name: "Save reply for review" }).click();
+  await page.getByRole("tab", { name: "Overview", exact: true }).click();
+  await expect(page.getByText(title)).toBeVisible();
+  await expect(page.getByRole("link", { name: /Amazon Seller Forums/ })).toBeVisible();
+});
+
+/**
+ * 24 Sep 2026: a document check used to live only in the page's memory, so it vanished on reload.
+ * An identity document is checked on the device, which lets this run without an account.
+ */
+test("a document check is saved with the case and survives a reload", async ({ page }) => {
+  await startCase(
+    page,
+    "Please complete identity verification by providing government-issued identification.",
+    "Upload documents",
+  );
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.locator('input[type="file"]').first().setInputFiles("public/brand/icon-512.png");
+  await expect(page.getByText("icon-512.png").first()).toBeVisible();
+  await page.getByRole("button", { name: "Check this document" }).first().click();
+  await expect(page.getByText("How the picture looks").first()).toBeVisible();
+  // The saved copy carries the day it ran; waiting for it means the vault write has landed.
+  await expect(page.getByText(/^Checked /).first()).toBeVisible();
+
+  await page.reload();
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await expect(page.getByText("How the picture looks").first()).toBeVisible();
+  await expect(page.getByText(/^Checked /).first()).toBeVisible();
+});
+
+/** The free half of the funnel, fired where it should be (`docs/CURRENT-STATE.md` said untested). */
+test("the free funnel events fire on decode and on starting a case", async ({ page }) => {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __events: string[]; plausible: (name: string) => void };
+    w.__events = [];
+    w.plausible = (name: string) => w.__events.push(name);
+  });
+  await page.goto("/decode");
+  await page.getByRole("button", { name: "Try a sample notice" }).click();
+  await page.getByRole("button", { name: "Decode", exact: true }).click();
+  await expect(page.locator("main").getByText("Do now", { exact: true })).toBeVisible();
+  const events = () => page.evaluate(() => (window as unknown as { __events: string[] }).__events);
+  expect(await events()).toEqual(expect.arrayContaining(["decoder_session", "decode_completed"]));
+
+  // A client-side navigation, so the events recorded on /decode are still in the same page.
+  await page.getByRole("link", { name: "Open case workspace", exact: true }).click();
+  await expect(page.getByLabel("Amazon notice", { exact: true })).not.toBeEmpty();
+  expect(await events()).toContain("intake_started");
+});

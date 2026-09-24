@@ -70,10 +70,10 @@ Numbered UN-1…UN-10, ordered by importance. Each entry: what exactly is unknow
 
 ### UN-7 · The optimal price point
 
-**Unknown:** whether $199 is the right Appeal Pass price. The verified anchors cut both ways: human firms at $600–5,000 make $199 look cheap; SellerForge's $49/mo unlimited appeals and an $11 one-shot generator squeeze from below.
+**Unknown:** whether $199 is the right Appeal Pass price. The verified anchors cut both ways: human firms at $600–5,000 make $199 look cheap; SellerForge's $49/mo unlimited appeals and an $11 one-shot generator squeeze from below. **Superseded 21 Sep 2026 (commercial reset; gap D-03): the price is $249 flat, worldwide, and no price test is planned.**
 **Why it matters:** first-session conversion is the business; a wrong anchor either leaves money on the table or kills conversion in the panic moment.
 
-- [ ] **7. Price test $99 / $149 / $199 across the first ~20 sales; measure conversion per price; decide the standing price on data. ⚠ FOUNDER-DECISION: the test design — rotation method (time-boxed cohorts vs. split), sequencing, and whether early design-partner sales count — only the founder can weigh revenue risk against data quality here.** **Owner:** Founder (design + decision) + AI assistant (instrumentation) · **Cost:** $0 (opportunity cost only) · **Deadline:** design before M-5 (checkout build); test across the first ~20 sales · **Blocks:** standing price, all anchor-based copy, revenue model.
+- [ ] **7. Price test $99 / $149 / $199 across the first ~20 sales; measure conversion per price; decide the standing price on data. ⚠ FOUNDER-DECISION: the test design — rotation method (time-boxed cohorts vs. split), sequencing, and whether early design-partner sales count — only the founder can weigh revenue risk against data quality here.** **Owner:** Founder (design + decision) + AI assistant (instrumentation) · **Cost:** $0 (opportunity cost only) · **Deadline:** design before M-5 (checkout build); test across the first ~20 sales · **Blocks:** standing price, all anchor-based copy, revenue model. **Superseded 21 Sep 2026 (commercial reset; gap D-03): the price is $249 flat, worldwide, and no price test is planned.**
 
 ### UN-8 · CWS review duration under the 2026 enforcement surge
 

@@ -106,6 +106,7 @@ function DeadlineChipContent({ deadline, now }: { deadline: DeadlineLike; now: D
 
 function caveatFor(deadline: DeadlineLike): string | null {
   const kind = deadline.kind;
+  if (deadline.setBy === "seller") return "The date you entered from Account Health.";
   // Where to find the start date, pointed at the notice's own date rather than the day the seller
   // happened to open it — a window counted from a later day would end later than Amazon's does.
   if (kind === "appeal_window" && deadline.startsOnReceipt) {

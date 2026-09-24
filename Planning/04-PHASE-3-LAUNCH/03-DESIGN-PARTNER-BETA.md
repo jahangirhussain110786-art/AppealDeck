@@ -2,7 +2,7 @@
 
 **Why this file exists / when to use it:** AppealDeck cannot pass its final pre-launch gates on fixture data alone. Three milestone requirements — real-notice validation, live Seller Central QA (M-6), and three partners through the full product flow (M-7) — depend on a small group of real sellers with **live** suspensions or violations who test the product in exchange for a free Appeal Pass. This file is the complete program: who qualifies, where to find them, what each side gives and gets, the consent paperwork, the recruitment rules, and the tracking table. Use it from week 2 (first recruitment conversations) through week 7–8 (M-7 gate evidence and case-study collection).
 
-**Terms used here:** Design partner = a real Amazon seller with a live enforcement case who tests AppealDeck before public launch, on a barter basis. Appeal Pass = the $199 one-time, per-case paid product; the barter grants it free. POA = Plan of Action, the appeal document Amazon requires (Root Cause → Corrective Actions → Preventive Measures). Fixture corpus = the library of realistic test notices (`fixtures/notices/`) the build is tested against (build plan §13.1). M-6/M-7/M-8 = milestones 6–8 of the 8-week plan (M-6 = full extension QA'd, M-7 = beta + store submission, M-8 = public launch). CWS = Chrome Web Store. Gated types = violation classes we never sell (or give) a drafting pass for: forged documents, fraud, child-safety (decision D6). ASGTG = "Amazon Seller Performance — ASGTG", the largest suspension-focused Facebook group. GDPR = the EU data-protection regulation.
+**Terms used here:** Design partner = a real Amazon seller with a live enforcement case who tests AppealDeck before public launch, on a barter basis. Appeal Pass = the $249 one-time, per-case paid product; the barter grants it free. POA = Plan of Action, the appeal document Amazon requires (Root Cause → Corrective Actions → Preventive Measures). Fixture corpus = the library of realistic test notices (`fixtures/notices/`) the build is tested against (build plan §13.1). M-6/M-7/M-8 = milestones 6–8 of the 8-week plan (M-6 = full extension QA'd, M-7 = beta + store submission, M-8 = public launch). CWS = Chrome Web Store. Gated types = violation classes we never sell (or give) a drafting pass for: forged documents, fraud, child-safety (decision D6). ASGTG = "Amazon Seller Performance — ASGTG", the largest suspension-focused Facebook group. GDPR = the EU data-protection regulation.
 
 ---
 
@@ -20,7 +20,7 @@
 
 | They give | They get |
 |---|---|
-| Their real notice text for the fixture corpus (written consent, anonymized before any use) | **Free Appeal Pass** for their live case (the $199 product, full flow, unlimited redrafts for that case) |
+| Their real notice text for the fixture corpus (written consent, anonymized before any use) | **Free Appeal Pass** for their live case (the $249 product, full flow, unlimited redrafts for that case) |
 | Beta testing on the web surface (week 4–6) and the unlisted extension (week 7, once CWS review clears — `./02-CHROME-WEB-STORE-SUBMISSION.md` §7) | **Priority support**: direct founder email, faster-than-public response target |
 | At least one partner: a supervised live Seller Central QA session (M-6) | **Roadmap input**: their feature requests are heard first and logged with attribution |
 | Honest feedback at each flow stage; optional opt-in outcome report (appeal accepted / rejected / no response) | Early-supporter credit on the site if they want it (optional, never required) |

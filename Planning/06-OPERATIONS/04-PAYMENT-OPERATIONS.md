@@ -10,7 +10,7 @@
 
 **Policy (decision D8, settled):** 7-day voluntary no-questions refund on every purchase, on top of consumer withdrawal-right compliance in the checkout. Older documents' narrower policy ("refund only if no POA generated") is superseded — do not resurrect it.
 
-**The refund-before-dispute doctrine, which governs every money decision in this file:** a refund costs one sale (~$199 minus fees already paid). A dispute costs a chargeback fee (up to ~€20 on Paddle), permanent damage to the ratio the MoR judges us by, hours of evidence work — and enough of them cost the MoR account itself. **Never fight a refund request inside the voluntary window. When in doubt, refund.**
+**The refund-before-dispute doctrine, which governs every money decision in this file:** a refund costs one sale (~$249 minus fees already paid). A dispute costs a chargeback fee (up to ~€20 on Paddle), permanent damage to the ratio the MoR judges us by, hours of evidence work — and enough of them cost the MoR account itself. **Never fight a refund request inside the voluntary window. When in doubt, refund.**
 
 **Workflow:**
 
@@ -56,7 +56,7 @@
 
 ## 3. Failed payments and dunning (for Guardian, when it ships)
 
-The $199 Appeal Pass is one-time: **no dunning applies.** A failed checkout simply shows a decline; no entitlement exists until the MoR's transaction-completed webhook arrives — nothing to recover.
+The $249 Appeal Pass is one-time: **no dunning applies.** A failed checkout simply shows a decline; no entitlement exists until the MoR's transaction-completed webhook arrives — nothing to recover.
 
 Guardian ($29/mo) needs dunning the day it ships (D7 keeps it unsold until the monitoring feature exists). Configure the MoR-native machinery — do not build custom dunning:
 
@@ -90,11 +90,11 @@ The license system (Supabase `licenses` table driven by MoR webhooks — decisio
 
 ## 5. Piracy response
 
-A $199 key WILL be shared on Reddit/forums/Telegram (high likelihood — MR-09/MR-21). The response posture, decided now:
+A $249 key WILL be shared on Reddit/forums/Telegram (high likelihood — MR-09/MR-21). The response posture, decided now:
 
 1. **The activation limit is the actual defense.** A shared key exhausts its device slots (starts at 5 per key, see TRC-12) almost immediately; the sharer's own access breaks first. Most "piracy" self-resolves into a support ticket from the original buyer (topic #8).
 2. **Revoke keys that are demonstrably mass-shared** (activation attempts from dozens of devices): revoke, email the original buyer once, politely, with a fresh key offer if they plausibly weren't the sharer.
-3. **Calm community engagement over DMCA threats.** Legal takedown letters against forum posts make a $199 tool look scared, generate screenshots, and feed the exact distrust the market already has. In threads where keys circulate: one friendly note about what the Pass funds and where the honest price lives — then leave.
+3. **Calm community engagement over DMCA threats.** Legal takedown letters against forum posts make a $249 tool look scared, generate screenshots, and feed the exact distrust the market already has. In threads where keys circulate: one friendly note about what the Pass funds and where the honest price lives — then leave.
 4. **Convert sharers into referral partners:** someone distributing our product has proven distribution reach. A referral/affiliate arrangement (post-v1) turns the leak into a channel; keep a short list of high-reach sharers as first referral-program invitees.
 5. Never rate-limit or degrade paying users to punish pirates — false positives on paying customers cost more than the piracy.
 

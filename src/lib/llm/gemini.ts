@@ -20,16 +20,17 @@ const MAX_OUTPUT_TOKENS = 512;
 // Only the tasks the app actually calls. Three more ("critique-poa", "phrase-engine-output",
 // "triage-router") sat here, never called, and the deployment guide told people to set model
 // overrides for them that did nothing; removed 24 Sep 2026.
-export type LlmTask = "draft-poa-section" | "read-document";
+export type LlmTask = "improve-wording" | "read-document";
 
 const TASK_MODELS: Record<LlmTask, string> = {
   // AA-41: reading a scanned invoice is the hardest perception task in the product — a lite model
   // that mis-reads a date or a supplier name produces a confidently wrong finding, which is worse
   // than no finding at all. Deliberately the strongest flash tier.
   "read-document": "gemini-3.5-flash",
-  // A real generation task (full sections of prose), not a cheap classify/extract call —
-  // deliberately the strongest flash tier available, not a lite model.
-  "draft-poa-section": "gemini-3.5-flash",
+  // Rewording one section of a seller's own response (24 Sep 2026). Replaces "draft-poa-section",
+  // which drafted whole sections and had not been able to run for any case since 22 Sep. A small
+  // text task, but a mistake here is a sentence in an appeal, so not a lite model either.
+  "improve-wording": "gemini-3.5-flash",
 };
 
 function envForTask(task: LlmTask): string | undefined {
@@ -101,25 +102,20 @@ export const breakerOptions: BreakerOptions = {
 };
 
 /**
- * Dedicated breaker for the "draft-poa-section" task (AM-23 / founder-authorized 12 Sep 2026).
- * D9 requires a real generation task to carry its own spend cap rather than share a budget with
- * the small, cheap tasks above — a full-section draft costs far more per call than an extraction
- * or a triage classification. A tighter per-minute limit and a longer cooldown are deliberate:
- * this task is not meant to run more than once or twice per compose session.
+ * B-15, as changed on 24 Sep 2026. D9 exists because Google may use prompts sent on the free tier
+ * to improve its products, and the privacy policy tells sellers their documents and wording are
+ * sent to the paid tier, which does not. A key does not say which tier its project is billed on,
+ * so no code can detect a free-tier key. What code can do is refuse to send anything in production
+ * until someone has confirmed, in writing, that billing is on: `GEMINI_PAID_TIER_CONFIRMED=true`,
+ * set after DEPLOYMENT §6b. Forgetting it switches the AI features off rather than quietly breaking
+ * the privacy promise.
  */
-export const composeBreakerOptions: BreakerOptions = {
-  name: "gemini-compose",
-  spendCapPerDay: 60,
-  perMinuteLimit: 4,
-  errorRateThreshold: 0.5,
-  minVolumePerWindow: 6,
-  windowMs: 60_000,
-  cooldownMs: 60_000,
-  scope: "user",
-};
+export function isPaidTierConfirmed(): boolean {
+  return process.env.NODE_ENV !== "production" || process.env.GEMINI_PAID_TIER_CONFIRMED === "true";
+}
 
 export function isGeminiConfigured(): boolean {
-  return Boolean(process.env.GEMINI_API_KEY);
+  return Boolean(process.env.GEMINI_API_KEY) && isPaidTierConfirmed();
 }
 
 function getApiKey(): string {
@@ -135,8 +131,9 @@ export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResu
     return {
       ok: false,
       reason: "not_configured",
-      message:
-        "Gemini is not configured. Set GEMINI_API_KEY in the environment to enable cloud calls.",
+      message: isPaidTierConfirmed()
+        ? "Gemini is not configured. Set GEMINI_API_KEY in the environment to enable cloud calls."
+        : "Gemini is switched off in production until GEMINI_PAID_TIER_CONFIRMED=true is set (DEPLOYMENT §6b).",
     };
   }
 

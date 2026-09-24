@@ -118,12 +118,12 @@ ongoing relationship with the user's situation; this manages one transaction.
       old code needed regardless. Gates: tsc 0 · eslint 0 · lint-copy PASS · format 0 · vitest
       431/431 · build 33 routes · Playwright chromium 54/54 (including the live signed-out
       interview + dashboard flow).
-- [ ] **P1 (case-switcher UI) not started.** With exactly one case per seller today (true until a
+- [x] **P1 (case-switcher UI) — done, recorded 24 Sep 2026 (gap C-08).** The dashboard lists and switches cases, the workspace has a "New case" action, evidence is listed per case (`src/lib/caseEvidence.ts` filters by `caseId`), and a case can be deleted with its files (`deleteCase`, 24 Sep). The paragraph below is the 14 Sep state, kept as history: With exactly one case per seller today (true until a
       UI exists to start a second one), behavior is unchanged end-to-end — this was P0's explicit
       goal. Also not yet touched in P1's scope: evidence listing elsewhere
       (`EvidenceSlotPanel`'s own uploads, `ComposeView`'s `withVaultEvidence`) still reads the
       whole vault rather than filtering by the active case's id — harmless only because no second
       case exists anywhere in the UI yet to create the ambiguity; genuinely needed once P1 ships.
-- [ ] AM-XX entry + `docs/DECISIONS.md` entry for this pass, once the founder wants it recorded
+- [x] Recorded as **AM-29** (24 Sep 2026) in `02-BUILD-PLAN-AMENDMENTS.md` and in `docs/DECISIONS.md`. Original item: AM-XX entry + `docs/DECISIONS.md` entry for this pass, once the founder wants it recorded
       alongside the other AM amendments (not blocking further work — founder approval already
       given directly in chat).

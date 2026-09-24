@@ -37,6 +37,12 @@ export interface Deadline {
    * 1 October 2026" would have been shown to a US seller as 30 September.
    */
   dueOn?: string;
+  /**
+   * `"seller"`: the seller typed this date in, from what Amazon shows them in Account Health. Absent
+   * means the date came from the notice. Kept apart so it is labelled as theirs, and so reading the
+   * notice again never overwrites a date the seller has told us.
+   */
+  setBy?: "seller";
 }
 
 export interface DeadlineInput {
@@ -214,6 +220,7 @@ export interface SerializedDeadline {
   startsOn?: string;
   startsOnReceipt?: boolean;
   dueOn?: string;
+  setBy?: "seller";
 }
 
 export function serializeDeadlines(deadlines: readonly Deadline[]): SerializedDeadline[] {
@@ -252,4 +259,49 @@ export function repairStoredDeadlines(
     const statesLength = /\b\d{1,3}[\s-]days?\b/i.test(label);
     return { ...d, dueAt: null, label, ...(statesLength ? { startsOnReceipt: true } : {}) };
   });
+}
+
+/**
+ * A response date the seller entered from Account Health (24 Sep 2026).
+ *
+ * When a notice states no date, the product says so and sends the seller to Account Health, which
+ * is right — but until now the seller found the date there and had nowhere to tell us, so the
+ * clock, the dashboard and the case's deadline stayed blank on exactly the case that needed them.
+ * The date is theirs, and the label says so: we never present it as something the notice stated.
+ */
+export function sellerDeadline(dueOn: string): SerializedDeadline {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dueOn)) throw new Error("Expected a YYYY-MM-DD date.");
+  return {
+    kind: "appeal_window",
+    dueAt: `${dueOn}T00:00:00.000Z`,
+    dueOn,
+    label: `Respond by ${formatDay(dueOn)}`,
+    setBy: "seller",
+  };
+}
+
+/**
+ * The deadlines a case keeps when its notice is read again: whatever the new reading finds, plus any
+ * date the seller entered, which is theirs and never replaced by a re-read.
+ */
+export function withSellerDeadlines(
+  computed: readonly SerializedDeadline[],
+  previous: readonly SerializedDeadline[] | undefined,
+): SerializedDeadline[] {
+  return [...computed, ...(previous ?? []).filter((d) => d.setBy === "seller")];
+}
+
+/**
+ * What to show. While the seller has entered a date, an undated appeal window from the notice
+ * ("confirm the date in Account Health") is the same window with the answer now filled in, so it is
+ * hidden rather than shown twice. It is hidden, not deleted: remove the entered date and it returns.
+ * A dated window from the notice stays beside the seller's — if they disagree the seller should see
+ * both, and Account Health is the one to go by.
+ */
+export function deadlinesForDisplay<T extends { kind: string; dueAt: unknown; setBy?: "seller" }>(
+  deadlines: readonly T[] | undefined,
+): T[] {
+  const all = deadlines ?? [];
+  if (!all.some((d) => d.setBy === "seller")) return [...all];
+  return all.filter((d) => d.setBy === "seller" || !(d.kind === "appeal_window" && !d.dueAt));
 }

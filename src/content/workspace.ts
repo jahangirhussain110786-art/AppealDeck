@@ -5,7 +5,7 @@ export const WORKSPACE = {
   // document check sends that one file to be read. Every sentence here now matches what leaves the
   // browser, and `legalDisclosures.test.ts` pins it alongside the privacy policy.
   privacy:
-    "Your work is saved in this browser’s encrypted vault, and your files stay on this device. The one exception is a business document you ask us to check: that file is sent to be read, and no copy is kept. Preparing a response sends the notice, confirmed facts and document references to AppealDeck — never the original files — and nothing is ever sent to Amazon.",
+    "Your work is saved in this browser’s encrypted vault, and your files stay on this device. Two things leave it only when you ask: a business document you ask us to check, and a section you ask us to improve the wording of. Each is sent to be read, and no copy is kept. Preparing a response sends the notice, confirmed facts and document references to AppealDeck — never the original files — and nothing is ever sent to Amazon.",
   local: "Saved on this device",
   loading: "Opening your case…",
   tabs: { overview: "Overview", evidence: "Evidence", response: "Response", history: "History" },
@@ -67,6 +67,87 @@ export const WORKSPACE = {
     weak: "This draft is thin. Work through the notes below before you copy it.",
   },
   waitingHelp: "Ask the issuer for the missing records. Continue other tasks while you wait.",
+  // B-04, reduced (24 Sep 2026). Shown after two responses have been sent and Amazon has replied
+  // again without reinstating. Amazon publishes no escalation order: the routes below are the ones
+  // its own seller forums and appeal consultants describe, checked on the date given, and the copy
+  // says so rather than presenting them as Amazon's procedure. Nothing here predicts an outcome.
+  changeOfApproach: {
+    title: "Two responses have not resolved this. Change the approach, not only the words.",
+    intro:
+      "Sending a third version of the same response is the most common reason appeals keep being refused. Before you send again, work through these in order.",
+    steps: [
+      {
+        title: "Find the one thing Amazon's latest reply objects to",
+        body: "Read the reply for the specific record, fact or explanation it says is missing, and answer that first. Send something Amazon has not already seen: a new document, a corrected fact, or a change you have made since. The response page warns you when a new draft repeats an earlier one.",
+      },
+      {
+        title: "Ask Account Health Support what was missing",
+        body: "From the Account Health page in Seller Central, use Contact Us to request a call back. Ask what specifically was insufficient. Write down the date, the name you were given and what was said, and add it to this case's notes.",
+      },
+      {
+        title: "Escalate in writing, and only with your strongest response",
+        body: "Appeal consultants describe writing to seller-performance@amazon.com with your case ID and your revised response, and, as a last internal step, to jeff@amazon.com, which reaches Amazon's executive seller relations team. Decisions from that team are usually treated as final, so send it only when your response is complete and says something new.",
+      },
+      {
+        title: "Know when to bring in someone else",
+        body: "An experienced appeal consultant can review what you have sent. If your case is heading towards arbitration, a demand letter or court, you need a lawyer: AppealDeck does not help with those, and nothing you tell it is legally privileged.",
+      },
+    ],
+    sourcesNote:
+      "Amazon does not publish an escalation order. These routes are described in Amazon's own seller forums and by appeal consultants, checked 24 Sep 2026. Channels change; if one no longer works, move to the next.",
+    sources: [
+      {
+        label: "Amazon Seller Forums: contacting Account Health Support",
+        href: "https://sellercentral.amazon.com/seller-forums/discussions/t/fdc4e327-c6e3-4386-a902-684a20bebc86",
+      },
+      {
+        label: "Webretailer: using suspension escalations",
+        href: "https://www.webretailer.com/amazon/amazon-suspension-escalations/",
+      },
+      {
+        label: "ecommerceChris: escalating when Seller Performance fails",
+        href: "https://www.ecommercechris.com/amazon-seller-escalation/",
+      },
+    ],
+  },
+  // B-08, reduced: a count only. No Amazon limit is claimed, because none is read from Amazon's form.
+  charCount: "{count} characters",
+  // 24 Sep 2026, founder-approved: opt-in wording help, one section at a time. Every string says
+  // that the text stays the seller's, and none of them says the result will work better with Amazon.
+  improveWording: {
+    action: "Improve the wording",
+    working: "Suggesting clearer wording…",
+    sendsNote:
+      "Sends this section to Google Gemini for a suggestion. Nothing changes unless you choose it.",
+    tooShort: "Write a few sentences first. Wording help can only improve what you have written.",
+    yours: "Your wording",
+    suggested: "Suggested wording",
+    check:
+      "Read it before you use it. It must say what you mean and nothing more: it becomes your response.",
+    use: "Use the suggested wording",
+    keep: "Keep mine",
+    unchanged: "Your wording is already clear. There is nothing to change.",
+    factChanged:
+      "We could not improve this section without changing a fact, so nothing was changed. Your wording is kept.",
+    attestationNote:
+      "Using it clears your confirmation above, so you can confirm the new wording after reading it.",
+    needsPass: "Wording help comes with the Appeal Pass for this case.",
+    signIn: "Sign in to use wording help.",
+    unavailable: "Wording help is not available right now. Your wording is unchanged.",
+    tooMany: "You have asked for a lot of suggestions today. Try again tomorrow.",
+  },
+  // 24 Sep 2026. When a notice states no date we send the seller to Account Health, and until now
+  // they found the date there and had nowhere to put it. The copy says the date is theirs.
+  sellerDeadline: {
+    label: "The response date Amazon shows you in Account Health",
+    help: "If your notice does not give a date, Account Health usually does. Enter it here and the case, the dashboard and your reminders count down to it.",
+    save: "Save this date",
+    saved: "Saved the response date you entered: {date}.",
+    entered: "You entered this date from Account Health.",
+    remove: "Remove the date I entered",
+    removed: "Removed the response date you entered.",
+    past: "That date has already passed. Check Account Health again before saving it.",
+  },
   // G, 24 Sep 2026: the facts every document is compared with. The description says why in one
   // sentence, because a seller asked for their address without a reason is right to hesitate.
   caseFacts: {

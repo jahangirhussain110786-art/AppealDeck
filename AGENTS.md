@@ -149,7 +149,7 @@ See `Planning/03-PHASE-2-BUILD/08-WAVE-C-HANDOFF.md` for full detail.
 
 ## What This Is
 
-AppealDeck is a Chrome extension + web SaaS for suspended Amazon sellers (notice decoder → POA composer → deadline tracker → encrypted local vault; $199 one-time Appeal Pass). Planning docs in `Planning/`; Paddle billing skills in `.agents/`; Kilo config in `kilo.json`.
+AppealDeck is a web app for suspended Amazon sellers (notice decoder → evidence plan and document checks → response preparation → deadlines and replies → encrypted local vault; $249 one-time Appeal Pass per case, since the 21 Sep 2026 reset). There is no browser extension (AM-27). What is actually built: `docs/CURRENT-STATE.md`. Planning docs in `Planning/`; Paddle billing skills in `.agents/`; Kilo config in `kilo.json`.
 
 ## Founder & Entity (settled — do not re-litigate)
 

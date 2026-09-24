@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { PROTOCOLS, EVIDENCE_KINDS } from "@/core/workspace";
 import { VIOLATION_KINDS } from "@/core/violationKinds";
+import { MAX_SAVED_CHECKS } from "@/core/documentCheck";
 
 const id = z.string().min(1).max(100);
 const text = z.string().max(12000);
@@ -46,6 +47,49 @@ const requirement = z.object({
   // and falls back to matching its label — which is the exact fragility the field replaces, and
   // would quietly reinstate the duplicate-on-kind-change bug for any renamed record.
   evidenceKind: z.enum(EVIDENCE_KINDS).optional(),
+});
+const finding = z.object({
+  field: z.string().max(500),
+  status: z.enum(["present", "missing", "unclear", "conflicting", "not_assessed"]),
+  observed: z.string().max(2000).optional(),
+  note: z.string().max(2000),
+  comparedWith: z.string().max(2000).optional(),
+  comparedValue: z
+    .object({ value: z.string().max(2000), source: z.enum(["notice", "seller"]) })
+    .optional(),
+});
+const savedCheck = z.object({
+  recordId: id,
+  contentHash: z.string().min(1).max(200).optional(),
+  at: z.string().datetime(),
+  contextKey: z.string().max(8000),
+  outcome: z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("fields"),
+      result: z.object({
+        evidenceKind: z.enum(EVIDENCE_KINDS),
+        findings: z.array(finding).max(40),
+        triggeredDisqualifiers: z.array(z.string().max(1000)).max(20),
+        allRequiredFieldsPresent: z.boolean(),
+      }),
+    }),
+    z.object({
+      kind: z.literal("image"),
+      report: z.object({
+        checks: z
+          .array(
+            z.object({
+              id: z.enum(["resolution", "sharpness", "framing", "exposure"]),
+              status: z.enum(["ok", "warn", "unknown"]),
+              label: z.string().max(200),
+              detail: z.string().max(1000),
+            }),
+          )
+          .max(10),
+        looksReadable: z.boolean(),
+      }),
+    }),
+  ]),
 });
 export const WorkspaceSchema = z
   .object({
@@ -155,6 +199,8 @@ export const WorkspaceSchema = z
         suppliers: z.array(z.string().max(300)).max(20).optional(),
       })
       .optional(),
+    // 24 Sep 2026: saved document checks, declared with the field so the first save keeps them.
+    documentChecks: z.array(savedCheck).max(MAX_SAVED_CHECKS).optional(),
     replies: z
       .array(z.object({ id, at: z.string().datetime(), text, applied: z.boolean() }))
       .max(99),

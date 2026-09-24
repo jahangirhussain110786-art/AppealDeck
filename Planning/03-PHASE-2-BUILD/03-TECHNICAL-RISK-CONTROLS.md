@@ -202,7 +202,7 @@
 
 **Scope note added 11 Sep 2026:** everything below describes the offline-capable **browser extension** design (a signed cache in `chrome.storage.local`, an offline grace period, a service-worker alarm) — none of that exists yet because the extension hasn't been built (M-7/M-8, per D3). The **web app**, live today, uses a deliberately simpler **server-truth-only** model: `src/lib/license.ts` asks Supabase directly on every check, no local cache, so there is nothing to tamper with client-side and no offline grace to protect. That's a reasonable design for an always-online web app, not a gap — this section's requirements become active once the extension ships and genuinely needs to work offline.
 
-**Risk (v1.0 M11; MR-09 adjacent).** A $199 one-time unlock invites local tampering: edited entitlement cache, system clock rolled back to stretch the 72-hour offline grace, replayed stale entitlements.
+**Risk (v1.0 M11; MR-09 adjacent).** A $249 one-time unlock invites local tampering: edited entitlement cache, system clock rolled back to stretch the 72-hour offline grace, replayed stale entitlements.
 
 **Requirement.**
 1. **Signed entitlement cache:** the backend returns `{tier, passCases, subActive, exp}` signed (HMAC with a backend-only secret); the SW caches it in `chrome.storage.local` and verifies the signature on every read. Invalid signature → treat as free tier, silently re-fetch.
@@ -220,7 +220,7 @@
 
 ## TRC-12 — Device-limit enforcement: keys get shared; the server decides
 
-**Risk (MR-09, MR-21; AM-11).** A one-time $199 key will be posted to forums (high likelihood). Unlimited activations turn one sale into many; heavy-handed enforcement (support-ticket-only deactivation, legal threats) burns trust in a scam-scarred market.
+**Risk (MR-09, MR-21; AM-11).** A one-time $249 key will be posted to forums (high likelihood). Unlimited activations turn one sale into many; heavy-handed enforcement (support-ticket-only deactivation, legal threats) burns trust in a scam-scarred market.
 
 **Requirement.**
 1. **Server-side activation limit of 3–5 devices per license key** (start at 5; tighten only on observed abuse), enforced in `verify-license` — the client never decides. Schema: an `activations` table (or `licenses.device_ids jsonb` with count enforcement), device identified by the install-generated `deviceId` UUID.

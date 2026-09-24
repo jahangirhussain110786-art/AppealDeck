@@ -29,7 +29,7 @@
 - [ ] If a re-encryption is needed: `db.on('ready')` holds the work inside `Dexie.waitFor()`.
 - [ ] `importRawDek` `extractable` decision reviewed (must remain `true` if re-wrap is required by the new flow).
 - [ ] 10k-record harness passes locally: `npx vitest run src/core/vault/migration.test.ts`.
-- [ ] `npm test` is green (all 159 tests).
+- [ ] `npm test` is green (every test passes; the count grows, so it is not written here — gap D-08).
 - [ ] `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build` all green.
 - [ ] If Supabase RLS changed: new migration applied + tested with two users (one cannot read the other's `vault/{userId}/*`).
 - [ ] `docs/MIGRATIONS.md` updated to record this release's envelope version bump and migration story.

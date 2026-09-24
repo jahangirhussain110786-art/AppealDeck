@@ -47,7 +47,7 @@ Expect scrutiny; answer fast, factually, and consistently with the site. Keep th
 |---|---|
 | "Is this an account-recovery / reinstatement service?" | No. It is software. It never contacts Amazon, never submits anything, and provides no human service. The user pastes their notice; the software classifies it and drafts a document the user edits and submits themselves. |
 | "Do you promise reinstatement outcomes?" | No. The ToS and every product surface state that appeal decisions are made solely by Amazon and no outcome is promised. There are no success-rate claims anywhere. |
-| "Is any human involved in the deliverable?" | No. The $199 Appeal Pass is fully automated software output. (A human-review add-on does not exist and is not on this account — see §4.3.) |
+| "Is any human involved in the deliverable?" | No. The $249 Appeal Pass is fully automated software output. (A human-review add-on does not exist and is not on this account — see §4.3.) |
 | "What is the refund policy?" | 7-day voluntary refund, no questions asked, plus consumer withdrawal-right mechanics at checkout (explicit prior consent to immediate digital delivery + durable-medium confirmation). |
 | "Who are you?" | Individual seller (Jhangir Hussain, Pakistan), founder's real name published on the site's About page — identical identity across site, application, and CWS listing. |
 
@@ -67,20 +67,20 @@ Expect scrutiny; answer fast, factually, and consistently with the site. Keep th
 
 - [ ] **8.** Create the Polar organization on the free Starter tier under the same seller identity (Jhangir Hussain, individual); complete KYC (Stripe Identity: ID + selfie) and connect the Stripe Connect Express payout account — **verifying the Pakistan payout path end-to-end** per the caveat above. If Pakistan payout is unavailable, log it and prepare the Dodo Payments application instead. — **Owner:** Founder · **Cost:** $0 · **Deadline:** Week 1 · **Blocks:** Gate 1 check 6; kill-criterion K1 response readiness
 - [ ] **9.** Configure the same products as §4 on the warm-fallback rail (Appeal Pass live-ready but unpublished; Guardian created, hidden), and register the same backend webhook endpoint (§5) with that rail's webhook secret, so switching rails is configuration, not engineering. — **Owner:** AI assistant (Founder verifies) · **Cost:** $0 · **Deadline:** Week 2 · **Blocks:** 48-hour fallback activation
-- [ ] **10.** Polar Pro upgrade rule (mechanical, no deliberation): upgrade to Pro ($20/mo) only if Polar is the **active** rail AND it processes ≥9 Appeal Passes in a month — at $199, Pro saves ~$2.49/sale, so ~9 sales/month is break-even. Re-check monthly at the weekly review. — **Owner:** Founder · **Cost:** $20/mo when triggered · **Deadline:** monthly check · **Blocks:** nothing (pure cost optimization)
+- [ ] **10.** Polar Pro upgrade rule (mechanical, no deliberation): upgrade to Pro ($20/mo) only if Polar is the **active** rail AND it processes ≥9 Appeal Passes in a month — at $199, Pro saves ~$2.49/sale, so ~9 sales/month is break-even. Re-check monthly at the weekly review. — **Owner:** Founder · **Cost:** $20/mo when triggered · **Deadline:** monthly check · **Blocks:** nothing (pure cost optimization) **Note 24 Sep 2026:** this break-even was worked out at the old $199 price; re-derive it at $249 from Polar's current fees before relying on it.
 
 ---
 
 ## 4. Product / SKU configuration (identical on both rails)
 
-### 4.1 Appeal Pass — $199 one-time, per case
+### 4.1 Appeal Pass — $249 one-time, per case
 
 - Type: one-time purchase, digital product (SaaS tax category).
 - **License keys are self-issued by our backend** (decision D2): the MoR webhook drives a Supabase `licenses` table, and our backend generates and emails the key. Do **not** use any MoR-native licensing feature — self-issued keys keep the product rail-agnostic, so a Paddle→Polar switch never touches licensing. (Schema and module spec: `../03-PHASE-2-BUILD/reference/APPEALDECK_BUILD_PLAN_v1.0.md` §9.2 and M11.)
 - Checkout copy: honest-expectations card renders **before** checkout (most first appeals fail, even with expensive professional help — decision D6); consumer withdrawal consent mechanics per §6.2. No success-rate claims; the word "guarantee" appears nowhere (grep gate = 0).
 
-- [ ] **11.** Create the Appeal Pass product ($199 one-time) on Paddle (sandbox first, live on approval), description per the §1 framing; record price/product IDs into deployment-env variables (`./04-REPO-AND-FIXTURE-CORPUS.md` §3 lists the names). — **Owner:** Founder (dashboard) + AI assistant (env wiring) · **Cost:** $0 · **Deadline:** Week 2 · **Blocks:** M-5 licensing work, Week 4–5 checkout
-- [ ] **12.** ⚠ **FOUNDER-DECISION** — price experiment: the market squeeze (SellerForge $49/mo unlimited; AppealPath $11/POA; consultants $1,495–$5,000/case) makes a $99/$149/$199 price test across the first ~20 sales a legitimate experiment. If wanted, configure the extra price points now (Paddle supports multiple prices). Default if undecided: launch at $199, no test. — **Owner:** Founder · **Cost:** $0 · **Deadline:** decide before checkout goes live (Week 4) · **Blocks:** nothing — checkout ships either way
+- [ ] **11.** Create the Appeal Pass product ($249 one-time) on Paddle (sandbox first, live on approval), description per the §1 framing; record price/product IDs into deployment-env variables (`./04-REPO-AND-FIXTURE-CORPUS.md` §3 lists the names). — **Owner:** Founder (dashboard) + AI assistant (env wiring) · **Cost:** $0 · **Deadline:** Week 2 · **Blocks:** M-5 licensing work, Week 4–5 checkout
+- [ ] **12.** ⚠ **FOUNDER-DECISION** — price experiment: the market squeeze (SellerForge $49/mo unlimited; AppealPath $11/POA; consultants $1,495–$5,000/case) makes a $99/$149/$199 price test across the first ~20 sales a legitimate experiment. If wanted, configure the extra price points now (Paddle supports multiple prices). Default if undecided: launch at $199, no test. — **Owner:** Founder · **Cost:** $0 · **Deadline:** decide before checkout goes live (Week 4) · **Blocks:** nothing — checkout ships either way **Superseded 21 Sep 2026 (commercial reset; gap D-03): the price is $249 flat, worldwide, and no price test is planned.**
 
 ### 4.2 Guardian — $29/mo, created but NOT sold (decision D7)
 
@@ -167,7 +167,7 @@ Repeat items 1–8 on the fallback rail's sandbox once, so a K1/K13 rail switch 
 ## Definition of done
 
 - [ ] Paddle application submitted behind the complete live site; identity consistent across site/application/CWS; sandbox account integrated.
-- [ ] Appeal Pass ($199 one-time) created on Paddle; license keys self-issued via the Supabase `licenses` table, not MoR-native licensing.
+- [ ] Appeal Pass ($249 one-time) created on Paddle; license keys self-issued via the Supabase `licenses` table, not MoR-native licensing.
 - [ ] Guardian ($29/mo) created hidden/draft, purchasable nowhere; Expert Review created nowhere.
 - [ ] Webhook contract (§5) recorded as the M-5 acceptance spec: signature verification, idempotency by event id, sub-5s acknowledgment, async processing, revocation path.
 - [ ] Refund workflow configured: 24h approve/forward SLA, consumer withdrawal consent mechanics verified in sandbox.

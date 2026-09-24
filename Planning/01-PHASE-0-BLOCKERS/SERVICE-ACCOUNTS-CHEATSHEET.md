@@ -41,6 +41,9 @@
 - Blocks: backend, webhooks, `licenses` table.
 
 ## 4. Cloudflare Pages + DNS  **[YOU]**  ($0)
+
+> **Corrected 24 Sep 2026 (gap D-02):** superseded by the 4 Sep single-host decision. The app deploys on **Vercel Pro** as one Next.js origin; there are no Supabase Edge Functions. Follow `docs/DEPLOYMENT.md`. Keep Cloudflare only for DNS and email forwarding if you like; the site itself is not deployed there. The domain is `appealdeck.com`, not `appealdeck.app`.
+
 - URL: `https://dash.cloudflare.com`
 - Add the `appealdeck.app` zone; point NS from registrar to Cloudflare.
 - Deploy the web decoder via **Cloudflare Pages** (connect the GitHub repo; build = `npm run build`).
@@ -71,7 +74,7 @@
 - URL: `https://vendor.paddle.com` (sandbox: `https://sandbox-vendor.paddle.com`)
 - Apply as **Individual**. Category = **"Digital products or SaaS"** (never "Human services").
 - Use the draft in `PADDLE-APPLICATION-DRAFT.md` — paste it into the application.
-- Create a product "Appeal Pass" $199 one-time; capture live + sandbox API keys + **webhook signature secret**.
+- Create a product "Appeal Pass" $249 one-time; capture live + sandbox API keys + **webhook signature secret**.
 - Blocks: all revenue.
 
 ## 9. Polar (warm fallback)  **[YOU]**  ($0)

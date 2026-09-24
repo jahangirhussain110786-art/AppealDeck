@@ -20,7 +20,7 @@ We score on: trap identification, root-cause honesty, Amazon tone, no fabricated
 
 Hi [Seller],
 
-I'm building AppealDeck — a free decoder + $199 AI Plan-of-Action drafting tool for suspended Amazon sellers. I'm looking for **5 design partners** with a live violation right now.
+I'm building AppealDeck — a free notice decoder plus a $249 Appeal Pass that helps suspended Amazon sellers plan their evidence and prepare their Plan of Action from facts they confirm. I'm looking for **5 design partners** with a live violation right now.
 
 In exchange for a **free lifetime Appeal Pass**, I'd love:
 - Honest feedback as you use it.

@@ -1,4 +1,6 @@
-// Sandbox only. Matches the existing $199 one-time, tax-inclusive Appeal Pass offer.
+// Sandbox only. Matches the $249 one-time, tax-inclusive Appeal Pass offer (PRICING.price in
+// src/content/marketing.ts; the 21 Sep 2026 reset moved it from $199). A $199 price made by an
+// earlier run is left alone in Paddle and simply no longer selected.
 import fs from "node:fs";
 const key = process.env.PADDLE_SANDBOX_KEY;
 if (!key) throw new Error("PADDLE_SANDBOX_KEY required");
@@ -23,7 +25,7 @@ product ??= await api("/products", {
 const prices = await api(`/prices?product_id=${product.id}&per_page=100`);
 let price = prices.find(
   (p) =>
-    p.unit_price.amount === "19900" &&
+    p.unit_price.amount === "24900" &&
     p.unit_price.currency_code === "USD" &&
     !p.billing_cycle &&
     p.tax_mode === "internal",
@@ -31,8 +33,8 @@ let price = prices.find(
 price ??= await api("/prices", {
   product_id: product.id,
   name: "Appeal Pass — one case",
-  description: "USD 199, one-time, tax-inclusive",
-  unit_price: { amount: "19900", currency_code: "USD" },
+  description: "USD 249, one-time, tax-inclusive",
+  unit_price: { amount: "24900", currency_code: "USD" },
   tax_mode: "internal",
   quantity: { minimum: 1, maximum: 1 },
 });
@@ -58,7 +60,7 @@ console.log(
     productId: product.id,
     priceId: price.id,
     environment: "sandbox",
-    amount: "199.00 USD",
+    amount: "249.00 USD",
     taxMode: price.tax_mode,
     taxCategory: product.tax_category,
     localConfigUpdated: true,

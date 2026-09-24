@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { computeDeadlines, serializeDeadlines, repairStoredDeadlines } from "./deadlinesModel";
+import {
+  computeDeadlines,
+  deadlinesForDisplay,
+  repairStoredDeadlines,
+  sellerDeadline,
+  serializeDeadlines,
+  withSellerDeadlines,
+} from "./deadlinesModel";
 import type { Deadline } from "./deadlinesModel";
 import { parseNotice } from "./noticeParser";
 
@@ -283,5 +290,51 @@ describe("repairStoredDeadlines", () => {
 
   it("passes a case with no deadlines through as it is", () => {
     expect(repairStoredDeadlines(undefined)).toBeUndefined();
+  });
+});
+
+/**
+ * 24 Sep 2026: a notice with no date sent the seller to Account Health, and the date they found
+ * there had nowhere to go. These pin that the date is saved as theirs, survives a re-read of the
+ * notice, and hides — without deleting — the undated window it answers.
+ */
+describe("a response date the seller entered", () => {
+  const undated = {
+    kind: "appeal_window" as const,
+    dueAt: null,
+    label: "Appeal window ambiguous — verify the exact date in your Account Health dashboard",
+  };
+  const stated = {
+    kind: "appeal_window" as const,
+    dueAt: "2026-10-01T00:00:00.000Z",
+    dueOn: "2026-10-01",
+    label: "Appeal by 1 Oct 2026",
+  };
+
+  it("is labelled as the seller's and dated on the day they gave", () => {
+    const d = sellerDeadline("2026-10-05");
+    expect(d).toMatchObject({ kind: "appeal_window", dueOn: "2026-10-05", setBy: "seller" });
+    expect(d.dueAt).toBe("2026-10-05T00:00:00.000Z");
+    expect(() => sellerDeadline("5 Oct")).toThrow();
+  });
+
+  it("survives the notice being read again", () => {
+    const kept = withSellerDeadlines([stated], [undated, sellerDeadline("2026-10-05")]);
+    expect(kept.map((d) => d.label)).toEqual(["Appeal by 1 Oct 2026", "Respond by 5 Oct 2026"]);
+  });
+
+  it("hides the undated window it answers, and only while it is there", () => {
+    const withEntry = [undated, stated, sellerDeadline("2026-10-05")];
+    expect(deadlinesForDisplay(withEntry).map((d) => d.label)).toEqual([
+      "Appeal by 1 Oct 2026",
+      "Respond by 5 Oct 2026",
+    ]);
+    expect(deadlinesForDisplay([undated, stated])).toHaveLength(2);
+  });
+
+  it("is not discarded by the repair that removes click-counted dates", () => {
+    expect(repairStoredDeadlines([sellerDeadline("2026-10-05")])).toEqual([
+      sellerDeadline("2026-10-05"),
+    ]);
   });
 });
