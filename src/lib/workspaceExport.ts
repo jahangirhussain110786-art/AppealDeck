@@ -271,11 +271,12 @@ export function buildCaseExport(
     lines.push("(no outcome recorded)");
   }
   if (log?.reminderAt && !log.resolution) {
-    lines.push(`Follow-up date set by the seller: ${formatDate(log.reminderAt)}`);
+    // A picked day, stored as midnight UTC: `formatDate` would print the day before west of UTC.
+    lines.push(`Follow-up date set by the seller: ${formatDay(log.reminderAt.slice(0, 10))}`);
   }
   if (log?.waitingOn) {
     lines.push(
-      `Waiting on: ${log.waitingOn.party}, since ${formatDate(log.waitingOn.since)}${log.waitingOn.followUpAt ? `, chase on ${formatDate(log.waitingOn.followUpAt)}` : ""}`,
+      `Waiting on: ${log.waitingOn.party}, since ${formatDate(log.waitingOn.since)}${log.waitingOn.followUpAt ? `, chase on ${formatDay(log.waitingOn.followUpAt.slice(0, 10))}` : ""}`,
     );
   }
   lines.push("");

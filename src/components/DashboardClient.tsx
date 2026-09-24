@@ -64,7 +64,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { APP } from "@/content/app";
 import { SHARED } from "@/content/shared";
-import { formatDate, formatBytes } from "@/lib/format";
+import { formatDate, formatBytes, daysUntilDay } from "@/lib/format";
 import type { LicenseSummary } from "@/lib/license";
 import type { EvidenceKind } from "@/core";
 import { cn } from "@/lib/utils";
@@ -114,7 +114,11 @@ function buildContext(file: CaseFile, log: CaseLog | null): CaseStateContext {
     submitted: isSubmitted(file.state) || log?.submittedAt !== undefined,
     attemptCount: log?.attemptCount ?? file.attemptCount,
     hasReply: log?.lastReply !== undefined,
-    reminderDue: Boolean(log?.reminderAt && Date.parse(log.reminderAt) <= Date.now()),
+    // The picked day (stored as midnight UTC) against the seller's own today, as the clock counts
+    // it. Comparing instants made the reminder due at 19:00 the evening before in New York.
+    reminderDue: Boolean(
+      log?.reminderAt && daysUntilDay(log.reminderAt.slice(0, 10), new Date()) <= 0,
+    ),
     waitingOnThirdParty: Boolean(log?.waitingOn),
     replyCategory: log?.lastReply?.category,
     fundsHeld: false,

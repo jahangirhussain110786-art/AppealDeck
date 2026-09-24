@@ -46,6 +46,24 @@ Current **local** environment presence checks, without printing credentials: Pad
 4. Validate representative consented cases with specialists and sellers. Synthetic routing fixtures and working UI flows do not prove correct real-world outcomes. Do not publish success rates from this audit.
 5. Broader AI semantic equivalence remains unsolved by regexes. The code now blocks several concrete failure classes and the product describes its limits. An added lowercase action with no new number/name can still pass; seller comparison and acceptance remain essential.
 
+## Second pass — outside the workspace (24 Sep 2026, Claude Code)
+
+The first pass stayed inside the case workspace. This pass covered the server routes, billing, reminders, dates, the vault backup and sign-in redirects. Two defects were found and fixed:
+
+| Priority | Defect and consequence | Repair and evidence |
+| --- | --- | --- |
+| P1 | **A seller could pay $249 twice for one case.** `/pricing` checked only whether the active case existed and could be drafted, never whether it already had a Pass. It offered "This Pass will cover your active case" and a working Buy button. `/api/checkout/intent` created a second checkout without checking either. One Pass already covers every revision, so the second payment bought nothing, and the only remedy is a refund. | The server refuses with 409 when `fetchLicenseForUser(user, case)` is active, and refuses with 503 rather than guessing when the lookup fails. `/pricing` shows "already has its Appeal Pass" and disables the button. A refunded Pass (`canceled`) can be bought again. Three new tests in `checkout-intent-gate.test.ts`. **The page half is not browser-verified**: it needs a signed-in session with a paid case. |
+| P2 | **Follow-up dates counted in UTC, not on the seller's calendar.** Picked dates (the reminder, the "chase" date) are stored as midnight UTC of the chosen day. The dashboard clock took "today" in UTC too, so for part of every day it disagreed with the deadline chip on the same page, which uses the seller's calendar. From midnight to 05:00 in Pakistan a reminder due today read "tomorrow"; from 19:00 in New York one due tomorrow read "today" and the case turned "follow-up due" early. The case-notes export printed both dates in local time, which is the day before anywhere west of UTC. | `clock.ts` counts the item's UTC calendar day against the seller's local today, the same rule as `daysUntilDay`. `reminderDue` uses `daysUntilDay`, and the export uses `formatDay`. New tests are written from local clock times so they hold in any zone. They were run under Asia/Karachi, UTC and America/New_York, and **one fails against the old code** on this machine. |
+
+Checked and found sound (no change): Paddle signature verification and the exactly-once event function (refunds and chargebacks revoke access; a completed transaction needs a matching checkout intent); per-case Pass checks on compose, wording help and document reading; identity documents never leaving the device; reminder delivery (one bad address cannot block the rest, three attempts and then it stops, deleting a case cancels its reminder first); `safeNext` on every sign-in, sign-up and callback path; backup restore (every record is decrypted and checked before anything is written, and restore refuses a vault that is not empty).
+
+Noted for a founder decision, not changed:
+- Restoring a backup switches the vault to passphrase mode, so every page asks for the backup passphrase until the seller turns automatic unlock back on in the vault.
+- Restore needs an empty vault, so a seller who started a fresh case on a new device must delete it before restoring their old one.
+- `/api/analyze-reply` (rules only, no AI) accepts any active Pass on the account rather than one for the case. It costs nothing to run, so this is a pricing question rather than a leak.
+
+Gates after the second pass: all lints and typecheck 0 · vitest **1122/1122** in 87 files · build clean · Playwright chromium `CI=1 --retries=0` **116 passed / 0 failed / 0 skipped**.
+
 ## Validation
 
 Browser authentication-dependent checks are distinguished from local/mocked paths; no browser test is treated as proof of a real payment or Amazon submission.

@@ -28,6 +28,11 @@ vi.mock("@/lib/supabase/server", () => ({
   },
 }));
 
+const fetchLicenseMock = vi.fn();
+vi.mock("@/lib/license", () => ({
+  fetchLicenseForUser: (...args: unknown[]) => fetchLicenseMock(...args),
+}));
+
 process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS = "pri_test123";
 
 import { POST } from "../checkout/intent/route";
@@ -53,6 +58,39 @@ beforeEach(() => {
   insertMock.mockReset();
   insertMock.mockResolvedValue({ data: { id: "intent-1" }, error: null });
   getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
+  fetchLicenseMock.mockReset();
+  fetchLicenseMock.mockResolvedValue({ status: "none", plan: null, licenseKey: null });
+});
+
+describe("/api/checkout/intent double-purchase guard", () => {
+  it("refuses a second checkout for a case that already has an active Pass", async () => {
+    fetchLicenseMock.mockResolvedValue({
+      status: "active",
+      plan: "appeal_pass",
+      licenseKey: "AD-1",
+    });
+    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true }));
+    expect(res.status).toBe(409);
+    expect(fetchLicenseMock).toHaveBeenCalledWith("u1", "c1");
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it("allows checkout again once the earlier Pass was refunded", async () => {
+    fetchLicenseMock.mockResolvedValue({
+      status: "canceled",
+      plan: "appeal_pass",
+      licenseKey: "AD-1",
+    });
+    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true }));
+    expect(res.status).toBe(200);
+  });
+
+  it("does not open a checkout when the licence lookup fails", async () => {
+    fetchLicenseMock.mockRejectedValue(new Error("License lookup unavailable"));
+    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true }));
+    expect(res.status).toBe(503);
+    expect(insertMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("/api/checkout/intent eligibility gate", () => {

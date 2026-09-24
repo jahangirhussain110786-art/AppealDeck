@@ -83,10 +83,22 @@ export interface ClockBrief {
 
 const DAY_MS = 86_400_000;
 
-/** Whole days between two instants, counted on calendar days in UTC so a due date is not "1 day
- * away" at one minute past midnight. */
+/**
+ * Whole calendar days from the seller's own today to the day an item falls on.
+ *
+ * Every date reaching the clock is midnight UTC of a calendar day — a follow-up the seller picked
+ * (`YYYY-MM-DDT00:00:00Z`) or a notice deadline (`dueOn` at midnight UTC) — so its UTC date *is*
+ * the day meant. Until 24 Sep 2026 "today" was also taken in UTC, which disagreed with the
+ * deadline chip on the same page (`daysUntilDay`, the seller's calendar) for part of every day:
+ * from midnight to 05:00 in Pakistan a follow-up due today read "tomorrow", and from 19:00 in New
+ * York one due tomorrow already read "today".
+ */
 function daysBetween(now: number, due: number): number {
-  return Math.floor(due / DAY_MS) - Math.floor(now / DAY_MS);
+  const n = new Date(now);
+  const d = new Date(due);
+  const today = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
+  const dueDay = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  return Math.round((dueDay - today) / DAY_MS);
 }
 
 function urgencyFor(daysRemaining: number): ClockUrgency {

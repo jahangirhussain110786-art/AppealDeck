@@ -30,6 +30,7 @@ type CaseCheck =
   | { status: "checking" }
   | { status: "none" }
   | { status: "ineligible"; label: string }
+  | { status: "covered"; label: string }
   | { status: "ok"; label: string };
 
 function caseCheckLabel(kind: string, id: string): string {
@@ -71,6 +72,16 @@ export function PurchasePanel() {
           return;
         }
         const label = caseCheckLabel(file.kind, file.id);
+        // A case that already has its Pass must not be offered a second one (the server refuses it
+        // too). A failed lookup falls through to the normal offer, and the server decides.
+        const license = await fetch(`/api/license/status?caseId=${encodeURIComponent(file.id)}`)
+          .then((r) => (r.ok ? (r.json() as Promise<{ status?: string }>) : null))
+          .catch(() => null);
+        if (!alive) return;
+        if (license?.status === "active") {
+          setCaseCheck({ status: "covered", label });
+          return;
+        }
         setCaseCheck(
           file.workspace && !workspaceCanCompose(file.workspace)
             ? { status: "ineligible", label }
@@ -130,7 +141,8 @@ export function PurchasePanel() {
     sessionState === "signed-in" &&
     (activeCase.status === "checking" ||
       activeCase.status === "none" ||
-      activeCase.status === "ineligible");
+      activeCase.status === "ineligible" ||
+      activeCase.status === "covered");
 
   return (
     <div className="space-y-6">
@@ -159,6 +171,16 @@ export function PurchasePanel() {
           Start your case before buying a Pass — each Pass covers one case.{" "}
           <Link href="/case" className="text-primary underline underline-offset-4">
             Start your case
+          </Link>
+        </p>
+      )}
+
+      {sessionState === "signed-in" && activeCase.status === "covered" && (
+        <p className="text-xs text-muted-foreground">
+          Your active case ({activeCase.label}) already has its Appeal Pass. It covers every
+          revision of that case, so there is nothing more to buy.{" "}
+          <Link href="/case" className="text-primary underline underline-offset-4">
+            Open your case
           </Link>
         </p>
       )}
@@ -193,7 +215,11 @@ export function PurchasePanel() {
             className="h-auto min-h-11 flex-1 whitespace-normal py-2"
             disabled
           >
-            {blocked && consent ? "Resolve your case first" : SHARED.consentPrompt}
+            {activeCase.status === "covered"
+              ? "Already covered"
+              : blocked && consent
+                ? "Resolve your case first"
+                : SHARED.consentPrompt}
           </Button>
         )}
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { fetchLicenseForUser } from "@/lib/license";
 import { CaseIdSchema, ViolationKindSchema } from "@/lib/caseSchema";
 import { isSeverityGated } from "@/core";
 import { LEGAL } from "@/content/legal";
@@ -45,6 +46,17 @@ export async function POST(req: NextRequest) {
   const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
   if (!supabaseAdmin || !priceId)
     return NextResponse.json({ error: "Checkout is not configured." }, { status: 503 });
+  // One Pass covers every revision of its case, so a second checkout for a case that already has
+  // one would only take the seller's money twice. Nothing checked this until 24 Sep 2026: /pricing
+  // offered a covered case the Buy button like any other.
+  const existing = await fetchLicenseForUser(user.id, parsed.data.caseId).catch(() => null);
+  if (!existing)
+    return NextResponse.json({ error: "Could not prepare checkout." }, { status: 503 });
+  if (existing.status === "active")
+    return NextResponse.json(
+      { error: "This case already has an Appeal Pass. It covers every revision — open your case." },
+      { status: 409 },
+    );
   const { data, error } = await supabaseAdmin
     .from("checkout_intents")
     .insert({

@@ -7,6 +7,24 @@ import { checkCaseDataForWorkspace } from "./documentChecks/context";
 import { answerDraftKey } from "./workspaceDraft";
 
 describe("buildCaseExport", () => {
+  // Checked under TZ=America/New_York as well: formatted as an instant, midnight UTC on 1 Oct
+  // printed "30 Sep" there.
+  it("prints the follow-up days the seller picked, not the day before west of UTC", () => {
+    const w = documentWorkspace();
+    const text = buildCaseExport({ ...createCaseFile("POLICY"), workspace: w }, w, {
+      state: "SUBMITTED",
+      attemptCount: 1,
+      reminderAt: "2026-10-01T00:00:00Z",
+      waitingOn: {
+        party: "the supplier",
+        since: "2026-09-20T10:00:00Z",
+        followUpAt: "2026-10-03T00:00:00Z",
+      },
+    });
+    expect(text).toContain("Follow-up date set by the seller: 1 Oct 2026");
+    expect(text).toContain("chase on 3 Oct 2026");
+  });
+
   it("exports current and earlier questionnaire answers and labels unconfirmed drafts separately", () => {
     const question = "What caused the late shipments?";
     const w = {

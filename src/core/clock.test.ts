@@ -38,6 +38,31 @@ describe("clockItemsForCase", () => {
     expect(items[0]!.daysRemaining).toBe(0);
   });
 
+  /*
+    A picked date is stored as midnight UTC of that day. These use the machine's own local clock
+    for `now`, so they hold in any time zone; under the old UTC-day count at least one of them
+    fails anywhere that is not UTC (the local run is Asia/Karachi, CI is UTC).
+  */
+  it("counts on the seller's own calendar in the early hours of the due day", () => {
+    const earlyOnFirst = new Date(2026, 9, 1, 1, 0).getTime();
+    const items = clockItemsForCase(
+      caseInput({ reminderAt: "2026-10-01T00:00:00Z" }),
+      earlyOnFirst,
+    );
+    expect(items[0]!.daysRemaining).toBe(0);
+    expect(describeClockItem(items[0]!)).toMatch(/today$/);
+  });
+
+  it("counts on the seller's own calendar late on the evening before", () => {
+    const lateOnThirtieth = new Date(2026, 8, 30, 23, 30).getTime();
+    const items = clockItemsForCase(
+      caseInput({ reminderAt: "2026-10-01T00:00:00Z" }),
+      lateOnThirtieth,
+    );
+    expect(items[0]!.daysRemaining).toBe(1);
+    expect(items[0]!.urgency).toBe("soon");
+  });
+
   it("includes a third-party follow-up as its own item", () => {
     const items = clockItemsForCase(
       caseInput({
