@@ -1,0 +1,10 @@
+{
+  "//": "Typechecks the test files, which tsconfig.json excludes so `next build` does not compile them. Added 24 Sep 2026: with the tests unchecked, a changed signature broke test call sites silently three times in two days (requirementGuidance, proposedRequirements, runDocumentCheck). Run by `npm run typecheck`.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "types": ["vitest/globals", "node"]
+  },
+  "include": ["next-env.d.ts", "src", "e2e", "vitest.config.ts", "playwright.config.ts"],
+  "exclude": ["node_modules", ".next"]
+}

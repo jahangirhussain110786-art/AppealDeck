@@ -17,7 +17,7 @@ describe("buildNoticeAnnotations", () => {
     const annotations = buildNoticeAnnotations(raw, "INAUTHENTIC", copy);
     expect(annotations).toHaveLength(1);
     expect(annotations[0]).toMatchObject({ id: "unverifiable-claims", tag: "risky" });
-    expect(raw.slice(annotations[0].start, annotations[0].end)).toBe(annotations[0].matchedText);
+    expect(raw.slice(annotations[0]!.start, annotations[0]!.end)).toBe(annotations[0]!.matchedText);
   });
 
   it("also flags it from the parser's own kind hints, not just the passed-in kind", () => {
@@ -81,7 +81,7 @@ describe("buildNoticeAnnotations", () => {
     const annotations = buildNoticeAnnotations(raw, "INAUTHENTIC", copy);
     expect(annotations.length).toBeLessThanOrEqual(3);
     for (let i = 1; i < annotations.length; i++) {
-      expect(annotations[i].start).toBeGreaterThanOrEqual(annotations[i - 1].end);
+      expect(annotations[i]!.start).toBeGreaterThanOrEqual(annotations[i - 1]!.end);
     }
   });
 

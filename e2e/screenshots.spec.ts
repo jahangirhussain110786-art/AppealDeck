@@ -1,4 +1,4 @@
-import { test, type FullConfig } from "@playwright/test";
+import { test } from "@playwright/test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -13,7 +13,7 @@ const WIDTHS = [375, 768, 1280];
 
 test.describe.configure({ mode: "parallel" });
 
-test.beforeAll(async ({ browser }, testInfo) => {
+test.beforeAll(async () => {
   const dir = path.resolve(OUT);
   fs.mkdirSync(dir, { recursive: true });
 });

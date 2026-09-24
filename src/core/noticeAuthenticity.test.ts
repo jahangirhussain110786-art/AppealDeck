@@ -8,7 +8,7 @@ describe("assessNoticeAuthenticity", () => {
    * may delay answering it, and the appeal window is short. Every real fixture must stay silent.
    */
   it("says nothing about the real notice corpus", () => {
-    const noisy = FIXTURES.filter((f) => assessNoticeAuthenticity(f.text).worthChecking).map(
+    const noisy = FIXTURES.filter((f) => assessNoticeAuthenticity(f.raw).worthChecking).map(
       (f) => f.id,
     );
     expect(noisy, `these real notices were flagged: ${noisy.join(", ")}`).toEqual([]);

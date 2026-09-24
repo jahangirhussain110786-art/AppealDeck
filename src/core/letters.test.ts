@@ -54,13 +54,13 @@ describe("letters", () => {
   it("lettersForEvidenceKind maps supplier_invoice to the invoice request", () => {
     const result = lettersForEvidenceKind("supplier_invoice");
     expect(result).toHaveLength(1);
-    expect(result[0].id).toBe("supplier_invoice_request");
+    expect(result[0]!.id).toBe("supplier_invoice_request");
   });
 
   it("lettersForEvidenceKind maps rights_owner_retraction to the retraction letter", () => {
     const result = lettersForEvidenceKind("rights_owner_retraction");
     expect(result).toHaveLength(1);
-    expect(result[0].id).toBe("rights_owner_retraction");
+    expect(result[0]!.id).toBe("rights_owner_retraction");
   });
 
   it("lettersForEvidenceKind returns empty for unrelated kinds", () => {

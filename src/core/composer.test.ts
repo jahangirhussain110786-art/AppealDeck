@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { composePoa, critiquePoa, renderPoaText } from "./composer";
-import type { PoaDraft } from "./composer";
 import type { CaseFileData } from "./readiness";
 
 function makeCase(overrides: Partial<CaseFileData> = {}): CaseFileData {
@@ -20,9 +19,9 @@ describe("composePoa", () => {
   it("produces a draft with root cause, corrective, and preventive sections", () => {
     const draft = composePoa(makeCase());
     expect(draft.sections.length).toBeGreaterThanOrEqual(3);
-    expect(draft.sections[0].heading).toBe("Root Cause");
-    expect(draft.sections[1].heading).toBe("Corrective Actions");
-    expect(draft.sections[2].heading).toBe("Preventive Measures");
+    expect(draft.sections[0]!.heading).toBe("Root Cause");
+    expect(draft.sections[1]!.heading).toBe("Corrective Actions");
+    expect(draft.sections[2]!.heading).toBe("Preventive Measures");
   });
 
   it("uses the seller's root-cause words verbatim", () => {
@@ -35,7 +34,7 @@ describe("composePoa", () => {
         evidenceSlots: { metric_export: { present: true } },
       }),
     );
-    expect(draft.sections[0].body).toBe(`On 2026-09-01: ${rootCause}`);
+    expect(draft.sections[0]!.body).toBe(`On 2026-09-01: ${rootCause}`);
     expect(draft.mode.mode).toBe("full-draft");
   });
 
@@ -50,7 +49,7 @@ describe("composePoa", () => {
         evidenceSlots: { metric_export: { present: true } },
       }),
     );
-    expect(draft.sections[2].body).toBe(preventiveMeasures);
+    expect(draft.sections[2]!.body).toBe(preventiveMeasures);
   });
 
   it("creates a narrative gap instead of a bracketed placeholder", () => {
@@ -61,9 +60,9 @@ describe("composePoa", () => {
       }),
     );
     expect(draft.mode.gapReason).toBe("narrative");
-    expect(draft.sections[0].body).not.toMatch(/\[Describe/);
-    expect(draft.sections[0].body).toContain("isn't enough detail");
-    expect(draft.sections[3].body).toContain("narrative sections");
+    expect(draft.sections[0]!.body).not.toMatch(/\[Describe/);
+    expect(draft.sections[0]!.body).toContain("isn't enough detail");
+    expect(draft.sections[3]!.body).toContain("narrative sections");
   });
 
   it("marks complete evidence as a gap when the narrative is thin", () => {
@@ -98,9 +97,9 @@ describe("composePoa", () => {
     );
     expect(draft.mode.mode).toBe("gap-draft");
     expect(draft.mode.gapReason).toBe("narrative");
-    expect(draft.sections[2].heading).toBe("Preventive Measures");
-    expect(draft.sections[2].body).not.toMatch(/\[Describe/);
-    expect(draft.sections[2].body).toContain("No preventive measures were provided");
+    expect(draft.sections[2]!.heading).toBe("Preventive Measures");
+    expect(draft.sections[2]!.body).not.toMatch(/\[Describe/);
+    expect(draft.sections[2]!.body).toContain("No preventive measures were provided");
   });
 
   it("includes gap section for gap draft", () => {
@@ -184,11 +183,11 @@ describe("composePoa", () => {
     const draft = composePoa(
       makeCase({ rootCause: "idk", evidenceSlots: { metric_export: { present: true } } }),
     );
-    expect(draft.sections[0].heading).toBe("Root Cause");
-    expect(draft.sections[1].heading).toBe("Corrective Actions");
-    expect(draft.sections[2].heading).toBe("Preventive Measures");
-    expect(draft.sections[3].heading).toBe("Evidence Gaps (Action Required)");
-    expect(draft.sections[4].heading).toBe("Evidence Attached");
+    expect(draft.sections[0]!.heading).toBe("Root Cause");
+    expect(draft.sections[1]!.heading).toBe("Corrective Actions");
+    expect(draft.sections[2]!.heading).toBe("Preventive Measures");
+    expect(draft.sections[3]!.heading).toBe("Evidence Gaps (Action Required)");
+    expect(draft.sections[4]!.heading).toBe("Evidence Attached");
   });
 
   it("sets metadata correctly", () => {
@@ -247,7 +246,7 @@ describe("critiquePoa", () => {
       evidenceSlots: { metric_export: { present: true } },
     });
     const draft = composePoa(data);
-    draft.sections[0].body = "We promise this will be fixed and you will be reinstated.";
+    draft.sections[0]!.body = "We promise this will be fixed and you will be reinstated.";
     const result = critiquePoa(draft, data);
     expect(result.findings.some((f) => f.code === "BANNED_REINSTATEMENT_PROMISE")).toBe(true);
     expect(result.passed).toBe(false);
@@ -350,7 +349,7 @@ describe("critiquePoa", () => {
     it("warns on vague-time phrases anywhere in the draft", () => {
       const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
       const draft = composePoa(data);
-      draft.sections[0].body = "We recently corrected the issue with our supplier.";
+      draft.sections[0]!.body = "We recently corrected the issue with our supplier.";
       const result = critiquePoa(draft, data);
       const finding = result.findings.find((f) => f.code === "VAGUE_TIME_PHRASE");
       expect(finding).toBeDefined();
@@ -394,7 +393,7 @@ describe("critiquePoa", () => {
     it("none of the new rules ever produce an error-severity finding", () => {
       const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
       const draft = composePoa(data);
-      draft.sections[0].body = "The supplier caused this. We recently fixed it and will monitor.";
+      draft.sections[0]!.body = "The supplier caused this. We recently fixed it and will monitor.";
       const result = critiquePoa(draft, data);
       const newCodes = [
         "FUTURE_TENSE_LANGUAGE",
@@ -450,7 +449,7 @@ describe("time-promise rule", () => {
   const flagged = (body: string) => {
     const data = makeCase({ evidenceSlots: { metric_export: { present: true } } });
     const draft = composePoa(data);
-    draft.sections[0].body = body;
+    draft.sections[0]!.body = body;
     return critiquePoa(draft, data).findings.some((f) => f.code === "BANNED_TIME_PROMISE");
   };
 

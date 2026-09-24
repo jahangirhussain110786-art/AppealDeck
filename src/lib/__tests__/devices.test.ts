@@ -180,7 +180,6 @@ async function fingerprintFor(idx: number): Promise<string> {
     ip: "10.0.0.1",
     acceptLanguage: "en-US,en;q=0.9",
     userId: "user-uuid",
-    email: "user@example.com",
   });
 }
 
@@ -302,7 +301,7 @@ describe("devices", () => {
         userAgent: UA,
       });
     }
-    const firstId = db.devices[0].id;
+    const firstId = db.devices[0]!.id;
     const rev = await revokeDevice(db.client(), "user-uuid", firstId);
     expect(rev.ok).toBe(true);
 
@@ -329,7 +328,7 @@ describe("devices", () => {
       fingerprint: await fingerprintFor(1),
       userAgent: UA,
     });
-    const otherDeviceId = db.devices[0].id;
+    const otherDeviceId = db.devices[0]!.id;
     const other = {
       id: "22222222-2222-2222-2222-222222222222",
       email: "other@example.com",
@@ -337,7 +336,7 @@ describe("devices", () => {
       plan: "appeal_pass",
     };
     db.licenses.push({ ...other });
-    db.devices[0].license_id = other.id;
+    db.devices[0]!.license_id = other.id;
     const r = await revokeDevice(db.client(), "user-uuid", otherDeviceId);
     expect(r.ok).toBe(false);
     expect(r.reason).toBe("not_owner");
@@ -375,7 +374,7 @@ describe("devices", () => {
   });
 
   it("recordActivation on a non-active license is a no-op", async () => {
-    db.licenses[0].status = "canceled";
+    db.licenses[0]!.status = "canceled";
     const r = await recordActivation(db.client(), {
       userId: "user-uuid",
       email: "user@example.com",
@@ -396,10 +395,10 @@ describe("devices", () => {
       userAgent: UA,
     });
     expect(r1.status).toBe("ok");
-    const deviceId = db.devices[0].id;
+    const deviceId = db.devices[0]!.id;
     const rev = await revokeDevice(db.client(), "user-uuid", deviceId);
     expect(rev.ok).toBe(true);
-    expect(db.devices[0].revoked_at).not.toBeNull();
+    expect(db.devices[0]!.revoked_at).not.toBeNull();
 
     const r2 = await recordActivation(db.client(), {
       userId: "user-uuid",

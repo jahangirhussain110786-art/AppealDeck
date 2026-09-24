@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { CasePreview } from "@/components/CasePreview";
+import { createCaseFile } from "@/core/caseFile";
 
 describe("CasePreview", () => {
   it("renders the evidence title and required/optional markers for POLICY", () => {
@@ -29,13 +30,8 @@ describe("CasePreview", () => {
       <CasePreview
         kind="POLICY"
         caseFile={{
-          kind: "POLICY",
-          state: "DECODED",
-          timelineEvents: [],
-          priorAppealCount: 0,
+          ...createCaseFile("POLICY"),
           evidenceSlots: { metric_export: { present: true } },
-          actionItems: [],
-          attemptCount: 0,
         }}
       />,
     );

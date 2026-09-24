@@ -10,7 +10,7 @@ function provider() {
   return {
     subtle: webcrypto.subtle,
     getRandomValues: webcrypto.getRandomValues.bind(webcrypto),
-  } as unknown as Parameters<typeof Vault>[0];
+  } as unknown as ConstructorParameters<typeof Vault>[0];
 }
 
 const TARGET = 10_000;

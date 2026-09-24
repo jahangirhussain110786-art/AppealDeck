@@ -28,12 +28,12 @@ describe("workspace document reconciliation", () => {
       ]);
     const reconciled = await withCaseEvidence({ list } as unknown as Vault, file);
     expect(list).toHaveBeenCalledWith({ caseId: file.id });
-    expect(reconciled.workspace?.requirements[0].recordId).toBeUndefined();
-    expect(reconciled.workspace?.requirements[0].status).toBe("needed");
-    expect(workspace.requirements[0].status).toBe("reviewed");
+    expect(reconciled.workspace?.requirements[0]!.recordId).toBeUndefined();
+    expect(reconciled.workspace?.requirements[0]!.status).toBe("needed");
+    expect(workspace.requirements[0]!.status).toBe("reviewed");
     list.mockResolvedValue([]);
     expect(
-      (await withCaseEvidence({ list } as unknown as Vault, file)).workspace?.requirements[0]
+      (await withCaseEvidence({ list } as unknown as Vault, file)).workspace?.requirements[0]!
         .recordId,
     ).toBeUndefined();
   });

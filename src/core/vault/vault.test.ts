@@ -9,7 +9,7 @@ function provider() {
   return {
     subtle: webcrypto.subtle,
     getRandomValues: webcrypto.getRandomValues.bind(webcrypto),
-  } as unknown as Parameters<typeof Vault>[0];
+  } as unknown as ConstructorParameters<typeof Vault>[0];
 }
 
 function newVault(): { vault: Vault; dbName: string } {
@@ -227,7 +227,7 @@ describe("Vault", () => {
 
   it("rejects imports with newer envelope versions", async () => {
     await v.initWithPassphrase("super-secret-pass");
-    const rec = await v.add({ name: "x", mimeType: "text/plain", data: "x" });
+    await v.add({ name: "x", mimeType: "text/plain", data: "x" });
     const payload = await v.exportAll();
     const broken = {
       ...payload,
@@ -260,7 +260,7 @@ describe("Vault", () => {
       data: "device-secret",
     });
     await v.lock();
-    expect((await v.status()).mode).toBe("device");
+    expect(await v.status()).toMatchObject({ mode: "device" });
     await v.unlockWithDeviceKey();
     const { text, record } = await v.getString(rec.id);
     expect(text).toBe("device-secret");
@@ -272,7 +272,7 @@ describe("Vault", () => {
     const rec = await v.add({ name: "x", mimeType: "text/plain", data: "keep-me" });
     await v.relockWithPassphrase("my-pass-2026");
     await v.lock();
-    expect((await v.status()).mode).toBe("passphrase");
+    expect(await v.status()).toMatchObject({ mode: "passphrase" });
     const meta = await v.rawMeta();
     expect(meta?.mode.kind).toBe("passphrase");
     expect(meta?.deviceKey).toBeUndefined();
@@ -326,7 +326,7 @@ describe("Vault", () => {
     expect(meta?.kdf).toBeUndefined();
     expect(meta?.deviceWrappedDek).toBeTruthy();
     await v.lock();
-    expect((await v.status()).mode).toBe("device");
+    expect(await v.status()).toMatchObject({ mode: "device" });
     await v.unlockWithDeviceKey();
     const { text } = await v.getString(rec.id);
     expect(text).toBe("keep-me");
@@ -340,7 +340,7 @@ describe("Vault", () => {
     const meta = await v.rawMeta();
     expect(meta?.mode.kind).toBe("device");
     await v.lock();
-    expect((await v.status()).mode).toBe("device");
+    expect(await v.status()).toMatchObject({ mode: "device" });
   });
 
   it("relockWithDeviceKey requires the passphrase when locked and none is given", async () => {

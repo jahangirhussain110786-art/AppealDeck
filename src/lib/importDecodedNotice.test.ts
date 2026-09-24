@@ -16,7 +16,7 @@ describe("decoded notice continuity", () => {
       {
         subtle: webcrypto.subtle,
         getRandomValues: webcrypto.getRandomValues.bind(webcrypto),
-      } as unknown as Parameters<typeof Vault>[0],
+      } as unknown as ConstructorParameters<typeof Vault>[0],
       db,
     );
     await vault.open();
@@ -36,7 +36,7 @@ describe("decoded notice continuity", () => {
     expect((await loadCaseFile(vault))?.workspace?.notice).toBe(pending.text);
     expect(file.deadlines).toEqual(pending.deadlines);
     expect(file.workspace?.confirmed).toBe(false);
-    expect(file.workspace?.requirements[0].label).toBe("Supplier invoice");
+    expect(file.workspace?.requirements[0]!.label).toBe("Supplier invoice");
   });
   it("resumes saved edits for the same decode while preserving a different active case", async () => {
     const original = {

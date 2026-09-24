@@ -23,14 +23,14 @@ describe("serializeDeadlines", () => {
     const deadlines: Deadline[] = [
       { kind: "appeal_window", dueAt: null, label: "Appeal window ambiguous" },
     ];
-    expect(serializeDeadlines(deadlines)[0].dueAt).toBeNull();
+    expect(serializeDeadlines(deadlines)[0]!.dueAt).toBeNull();
   });
 
   it("carries isIndefinite through unchanged", () => {
     const deadlines: Deadline[] = [
       { kind: "indefinite_hold", dueAt: null, label: "No countdown", isIndefinite: true },
     ];
-    expect(serializeDeadlines(deadlines)[0].isIndefinite).toBe(true);
+    expect(serializeDeadlines(deadlines)[0]!.isIndefinite).toBe(true);
   });
 
   it("returns an empty array for no deadlines", () => {
@@ -81,7 +81,7 @@ describe("computeDeadlines", () => {
       kind: "POLICY",
     });
     expect(deadlines.some((d) => d.kind === "indefinite_hold")).toBe(false);
-    expect(deadlines[0].kind).toBe("appeal_window");
+    expect(deadlines[0]!.kind).toBe("appeal_window");
   });
 });
 

@@ -70,11 +70,12 @@ describe("callGemini request shape", () => {
   });
 
   function mockFetch(candidates: unknown) {
-    const fetchMock = vi.fn(async () => ({
+    // Typed with fetch's own parameters, so `mock.calls[0][1]` is the request init it received.
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => ({
       ok: true,
       json: async () => ({ candidates }),
-    })) as unknown as typeof fetch;
-    globalThis.fetch = fetchMock;
+    }));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
     return fetchMock;
   }
 
@@ -171,11 +172,11 @@ describe("per-task model selection", () => {
       delete process.env[k];
     }
     process.env.GEMINI_API_KEY = "test-key";
-    const fetchMock = vi.fn(async () => ({
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => ({
       ok: true,
       json: async () => ({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }),
-    })) as unknown as typeof fetch;
-    globalThis.fetch = fetchMock;
+    }));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
     const result = await callGemini({
       task: "read-document",
       model: "gemini-3.5-flash-lite",

@@ -125,10 +125,10 @@ describe("request routing", () => {
       revision: 1,
     });
     expect(sampleRecords).toHaveLength(1);
-    expect(sampleRecords[0].label).toBe("Supplier invoice");
+    expect(sampleRecords[0]!.label).toBe("Supplier invoice");
     const w = documentWorkspace();
     expect(w.requirements).toHaveLength(1);
-    expect(w.notice).toContain(w.requirements[0].sourceQuote);
+    expect(w.notice).toContain(w.requirements[0]!.sourceQuote);
     expect(
       proposedRequirements({
         notice: "Do not provide invoices for this request.",
@@ -183,13 +183,13 @@ describe("response and provenance", () => {
     expect(
       workspaceGaps({
         ...workspace,
-        requirements: [{ ...workspace.requirements[0], sourceQuote: "Invented request" }],
+        requirements: [{ ...workspace.requirements[0]!, sourceQuote: "Invented request" }],
       }),
     ).not.toEqual([]);
     expect(
       workspaceGaps({
         ...workspace,
-        requirements: [{ ...workspace.requirements[0], contentHash: undefined }],
+        requirements: [{ ...workspace.requirements[0]!, contentHash: undefined }],
       }),
     ).not.toEqual([]);
   });
@@ -237,13 +237,13 @@ describe("response and provenance", () => {
     const next = applyWorkspaceReply(w, "reply-1");
     expect(w).toEqual(frozen);
     expect(next.submissions).toEqual(frozen.submissions);
-    expect(next.previousRequests[0].notice).toBe(frozen.notice);
+    expect(next.previousRequests[0]!.notice).toBe(frozen.notice);
     // B-03, 23 Sep 2026: this line used to assert `"needed"`, which contradicted the test's own
     // name. The reply asks for a sales report and says nothing about the invoice, so the reviewed
     // invoice is kept — with its vault record, hash, page and the seller's note intact.
-    expect(next.requirements[0].status).toBe("reviewed");
-    expect(next.requirements[0].recordId).toBe("file-1");
-    expect(next.requirements[0].note).toBe(frozen.requirements[0].note);
+    expect(next.requirements[0]!.status).toBe("reviewed");
+    expect(next.requirements[0]!.recordId).toBe("file-1");
+    expect(next.requirements[0]!.note).toBe(frozen.requirements[0]!.note);
     expect(next.confirmed).toBe(false);
     expect(next.revision).toBe(2);
     expect(applyWorkspaceReply(next, "reply-1")).toBe(next);
@@ -253,7 +253,7 @@ describe("response and provenance", () => {
   it("retains workspace data at the API boundary and rejects malformed evidence", () => {
     const file = { ...createCaseFile("UNKNOWN"), workspace: documentWorkspace() };
     expect(CaseDataSchema.parse(file).workspace).toEqual(file.workspace);
-    file.workspace.requirements[0].page = -1;
+    file.workspace.requirements[0]!.page = -1;
     expect(CaseDataSchema.safeParse(file).success).toBe(false);
   });
 });
@@ -724,7 +724,7 @@ describe("the union of the notice and the matrix", () => {
 describe("correcting the decoded kind", () => {
   it("adds what the new kind requires", () => {
     const existing = proposedRequirements(
-      { notice: "Please provide the supplier invoice.", formInstructions: "" },
+      { notice: "Please provide the supplier invoice.", formInstructions: "", revision: 1 },
       "INAUTHENTIC_DOCUMENTS",
     );
     const next = requirementsAfterKindChange(existing, "POLICY");
