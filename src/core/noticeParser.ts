@@ -37,9 +37,14 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   // The ordinary complaint that goods are not genuine, or that supplied records could not be
   // confirmed. Answered with supplier invoices; not gated. Listed after the fabrication pattern so
   // a notice alleging both is classified by the more serious one (see `KIND_PRIORITY`).
+  // "A complaint about the authenticity of…" and "authenticity complaints" were added 24 Sep 2026,
+  // when the evaluation set's routine invoice request classified as UNKNOWN: Amazon names the
+  // complaint that way at least as often as it says "inauthentic", and UNKNOWN costs the seller the
+  // violation-specific guidance and evidence list. Both require "authenticity" to be what the
+  // complaint is about, so a notice that merely mentions the word elsewhere does not match.
   [
     "INAUTHENTIC",
-    /inauthentic|not authentic|(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)/i,
+    /inauthentic|not authentic|(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)|(?:complaints?|concerns?|reports?) (?:about|regarding|concerning|related to) the authenticity|authenticity (?:complaints?|concerns?)/i,
   ],
   ["RELATED_ACCOUNT", /related[\s-]?account/i],
   [

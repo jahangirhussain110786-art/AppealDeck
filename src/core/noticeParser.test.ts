@@ -123,3 +123,21 @@ describe("kindForConfirmedNotice", () => {
     expect(kindForConfirmedNotice({ kind: "UNKNOWN" }, fabricated)).toBe("INAUTHENTIC_DOCUMENTS");
   });
 });
+
+/** 24 Sep 2026: found by the evaluation set, where a routine invoice request classified UNKNOWN. */
+describe("authenticity complaints worded the way Amazon often words them", () => {
+  it.each([
+    "We received a complaint about the authenticity of ASIN B0ABCDEF12. Please provide invoices.",
+    "We have received concerns regarding the authenticity of items in your inventory.",
+    "Your listings received authenticity complaints from customers. Please provide invoices.",
+  ])("reads %s as an ordinary authenticity complaint, not gated", (notice) => {
+    const kind = classifyStage1(parseNotice(notice)).kind;
+    expect(kind).toBe("INAUTHENTIC");
+  });
+
+  it("does not match a notice that only mentions the word elsewhere", () => {
+    const notice =
+      "Your account has been deactivated for policy violations. We value the authenticity of our marketplace.";
+    expect(classifyStage1(parseNotice(notice)).kind).not.toBe("INAUTHENTIC");
+  });
+});
