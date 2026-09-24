@@ -14,8 +14,10 @@ import { cn } from "@/lib/utils";
  * it depends on a key and a migration the founder has to apply. This card depends on nothing, and
  * it is what a returning seller sees before anything else on the page.
  *
- * It never invents urgency. Every line is a date the seller set themselves, and the footnote says
- * so — implying Amazon had been in touch would be the kind of manufactured pressure D6 rules out.
+ * It never invents urgency. Every line is a date the seller set themselves or a date their own
+ * notice states, and the footnote says so — implying Amazon had been in touch would be the kind of
+ * manufactured pressure D6 rules out. Notice dates joined on 23 Sep 2026; before that the clock
+ * accepted them and the dashboard never passed any.
  */
 export function ClockBriefCard({ brief }: { brief: ClockBrief | null }) {
   if (!brief) return null;
@@ -39,7 +41,9 @@ export function ClockBriefCard({ brief }: { brief: ClockBrief | null }) {
   const lead = items[0]!;
   const title =
     lead.urgency === "overdue"
-      ? APP.dashboard.clock.titleOverdue
+      ? lead.source === "deadline"
+        ? APP.dashboard.clock.titleNoticeDatePassed
+        : APP.dashboard.clock.titleOverdue
       : lead.urgency === "today"
         ? APP.dashboard.clock.titleDue
         : APP.dashboard.clock.titleUpcoming;

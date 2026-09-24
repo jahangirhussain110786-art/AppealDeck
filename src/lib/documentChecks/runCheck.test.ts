@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { runDocumentCheck, isBrowserOnly, BROWSER_ONLY_EVIDENCE_KINDS } from "./runCheck";
 import type { EvidenceKind } from "@/core";
+import { MAX_CHECK_BYTES } from "./limits";
 
 /**
  * A, 23 Sep 2026. The workspace stored every upload as `evidenceKind: "other"`, hardcoded, and this
@@ -86,6 +87,55 @@ describe("document check routing", () => {
     const body = JSON.parse(fetchSpy.mock.calls[0]![1].body as string);
     expect(body.evidenceKind).toBe("supplier_invoice");
     expect(outcome.kind).toBe("fields");
+  });
+
+  /**
+   * 23 Sep 2026. A file over roughly 3.3 MB was base64-encoded past Vercel's 4.5 MB request limit;
+   * the host answered with a page that is not JSON and the seller read only "We could not check that
+   * document". The workspace accepts 10 MB, so this was an ordinary scanned invoice.
+   */
+  it("does not send a file too large for the host, and says why", async () => {
+    const outcome = await runDocumentCheck({
+      kind: "INAUTHENTIC",
+      evidenceKind: "supplier_invoice",
+      bytes: new Uint8Array(MAX_CHECK_BYTES + 1),
+      mimeType: "application/pdf",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(outcome).toMatchObject({ kind: "unavailable" });
+    const message = (outcome as { message: string }).message;
+    // The size, the limit, that nothing was lost, and what to do — in the same unit.
+    expect(message).toContain("This file is 3.1 MB, and we can read files up to 3 MB.");
+    expect(message).toContain("saved in your case");
+  });
+
+  it("still sends a file at the limit, whose request fits under the host's", async () => {
+    await runDocumentCheck({
+      kind: "INAUTHENTIC",
+      evidenceKind: "supplier_invoice",
+      bytes: new Uint8Array(MAX_CHECK_BYTES),
+      mimeType: "application/pdf",
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const sent = fetchSpy.mock.calls[0]![1].body as string;
+    expect(sent.length).toBeLessThan(4_500_000);
+  });
+
+  it("explains a rejection by the host rather than calling it a failed check", async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: false,
+      status: 413,
+      json: async () => {
+        throw new SyntaxError("Unexpected token 'R'");
+      },
+    });
+    const outcome = await runDocumentCheck({
+      kind: "INAUTHENTIC",
+      evidenceKind: "supplier_invoice",
+      bytes: PNG,
+      mimeType: "image/png",
+    });
+    expect((outcome as { message: string }).message).toMatch(/we can read files up to 3 MB/);
   });
 
   it("agrees with the server about which kinds are browser-only", async () => {

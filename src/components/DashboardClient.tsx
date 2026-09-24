@@ -44,7 +44,8 @@ import type { CaseFile } from "@/core/caseFile";
 import type { CaseState, CaseStateContext, ReplyCategory } from "@/core/caseState";
 import { buildClockBrief, type ClockBrief } from "@/core";
 import { ClockBriefCard } from "@/components/ClockBriefCard";
-import { syncCaseReminder } from "@/lib/reminderSync";
+import { ReminderControl } from "@/components/ReminderControl";
+import { WaitingOnCard } from "@/components/WaitingOnCard";
 import { CaseStateBadge } from "@/components/CaseStateBadge";
 import { DeadlineChip, DeadlineChipList } from "@/components/DeadlineChip";
 import { EmptyState } from "@/components/EmptyState";
@@ -250,22 +251,37 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
       setReplyText("");
       setReplyResult(null);
 
-      if (file && log) {
+      /*
+        Built for every case, not only one with a log. A workspace case has no log until the seller
+        first submits or sets a date, so the notice's own deadline — the date that matters most
+        before a response is sent — was never shown here.
+
+        `deadlines` is new on 23 Sep 2026. The clock was written to take them and nothing ever
+        passed them, so it could only ever show dates the seller had set. Only a date the notice
+        grounds reaches it: a window with an unknown start has no `dueAt` and is skipped, and one
+        saved from a click was repaired on load.
+      */
+      if (file) {
         setClockBrief(
           buildClockBrief(
             [
               {
                 caseId: file.id,
                 kind: file.kind,
-                state: log.state,
-                reminderAt: log.reminderAt,
-                waitingOn: log.waitingOn,
-                lastSeenAt: log.lastSeenAt,
+                state: log?.state ?? file.state,
+                reminderAt: log?.reminderAt,
+                waitingOn: log?.waitingOn,
+                deadlines: file.deadlines,
+                lastSeenAt: log?.lastSeenAt,
               },
             ],
             Date.now(),
           ),
         );
+      } else {
+        setClockBrief(null);
+      }
+      if (file && log) {
         if (!seenStampedRef.current) {
           seenStampedRef.current = true;
           // Deliberately not awaited and not followed by a reload: stamping the visit must never
@@ -273,8 +289,6 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
           // here" badge, which is not worth surfacing an error to a seller in a crisis.
           void saveCaseLog(vault, { ...log, lastSeenAt: new Date().toISOString() }).catch(() => {});
         }
-      } else {
-        setClockBrief(null);
       }
     } catch (e) {
       toast.error(APP.dashboard.toasts.vaultOpenFailed, {
@@ -402,13 +416,15 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     }
   };
 
+  // Every card that edits the case log saves through this, so its failure message has to fit all of
+  // them — it said "Could not save reply" for an outcome, a reminder or a waiting note.
   const saveWorkspaceLog = async (log: CaseLog) => {
     try {
       await saveCaseLog(vault, log);
       await loadFromVault();
       return true;
     } catch (e) {
-      toast.error(APP.dashboard.toasts.saveReplyFailed, {
+      toast.error(APP.dashboard.clock.waitingSaveFailed, {
         description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
       return false;
@@ -426,6 +442,44 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
       });
       return false;
     }
+  };
+
+  /*
+    A workspace case — every case started since the interview was retired. Until 23 Sep 2026 this
+    rendered the summary alone, and the AA-40 clock, the "waiting on someone else" note and the
+    email-reminder switch lived only in the classic-case branch below, where no new case can go.
+    They were built, tested and ticked off, and no seller with a current case could reach them.
+  */
+  const renderWorkspace = (file: CaseFile) => {
+    const log: CaseLog = caseLog ?? {
+      state: file.state,
+      attemptCount: file.workspace!.submissions.length,
+    };
+    const awaitingAmazon = file.state === "SUBMITTED";
+    return (
+      <div className="animate-fade-in space-y-6">
+        <ClockBriefCard brief={clockBrief} />
+        {!log.resolution && (!awaitingAmazon || log.waitingOn) && (
+          <WaitingOnCard log={log} onSaveLog={saveWorkspaceLog} />
+        )}
+        <WorkspaceSummary
+          file={file}
+          cases={cases}
+          log={caseLog}
+          signedIn={signedIn}
+          onSaveLog={saveWorkspaceLog}
+          onArchive={archiveCase}
+          onSelect={async (id) => {
+            try {
+              await setActiveCaseId(vault, id);
+              await loadFromVault();
+            } catch {
+              toast.error("Could not switch cases");
+            }
+          }}
+        />
+      </div>
+    );
   };
 
   if (!signedIn) {
@@ -454,24 +508,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
       );
     }
 
-    if (caseFile.workspace)
-      return (
-        <WorkspaceSummary
-          file={caseFile}
-          cases={cases}
-          log={caseLog}
-          onSaveLog={saveWorkspaceLog}
-          onArchive={archiveCase}
-          onSelect={async (id) => {
-            try {
-              await setActiveCaseId(vault, id);
-              await loadFromVault();
-            } catch {
-              toast.error("Could not switch cases");
-            }
-          }}
-        />
-      );
+    if (caseFile.workspace) return renderWorkspace(caseFile);
     const draftLog: CaseLog = caseLog ?? {
       state: caseFile.state,
       attemptCount: caseFile.attemptCount,
@@ -565,24 +602,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
           );
         }
 
-        if (caseFile.workspace)
-          return (
-            <WorkspaceSummary
-              file={caseFile}
-              cases={cases}
-              log={caseLog}
-              onSaveLog={saveWorkspaceLog}
-              onArchive={archiveCase}
-              onSelect={async (id) => {
-                try {
-                  await setActiveCaseId(vault, id);
-                  await loadFromVault();
-                } catch {
-                  toast.error("Could not switch cases");
-                }
-              }}
-            />
-          );
+        if (caseFile.workspace) return renderWorkspace(caseFile);
         const currentLog: CaseLog = caseLog ?? {
           state: caseFile.state,
           attemptCount: caseFile.attemptCount,
@@ -602,23 +622,6 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
         const expCopy = expectationsCopy(next);
         const noticeDate = caseFile.timelineEvents[0]?.date ?? null;
         const isNoveltyRequired = noveltyRequired(currentLog.attemptCount);
-
-        // AA-40. Passing `undefined` clears the waiting note entirely, which is why the field is
-        // spread away rather than set to undefined — a stored `waitingOn: undefined` would still
-        // satisfy `currentLog.waitingOn` checks after a round trip through the vault.
-        const saveWaitingOn = async (waitingOn: CaseLog["waitingOn"]) => {
-          const { waitingOn: _drop, ...rest } = currentLog;
-          void _drop;
-          try {
-            await saveCaseLog(vault, waitingOn ? { ...rest, waitingOn } : rest);
-            await loadFromVault();
-            toast.success(
-              waitingOn ? APP.dashboard.clock.waitingSaved : APP.dashboard.clock.waitingCleared,
-            );
-          } catch {
-            toast.error(APP.dashboard.clock.waitingSaveFailed);
-          }
-        };
 
         return (
           <div className="animate-fade-in space-y-6">
@@ -646,76 +649,13 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
               </label>
             )}
             {ctx.submitted && !ctx.hasReply && (
-              <div className="space-y-3">
-                <label className="block text-sm">
-                  Your follow-up reminder date
-                  <input
-                    className="ml-2 h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    type="date"
-                    value={currentLog.reminderAt?.slice(0, 10) ?? ""}
-                    onChange={(event) => {
-                      const reminderAt = event.target.value
-                        ? event.target.value + "T00:00:00Z"
-                        : undefined;
-                      void saveCaseLog(vault, { ...currentLog, reminderAt })
-                        .then(loadFromVault)
-                        // The date is the seller's; keep the server row in step but never let its
-                        // failure stop the date being saved (AA-40, see reminderSync.ts).
-                        .then(() =>
-                          syncCaseReminder({
-                            caseRef: caseFile.id,
-                            kind: caseFile.kind,
-                            dueAt: reminderAt,
-                            enabled: currentLog.emailReminder === true,
-                          }),
-                        )
-                        .catch(() => toast.error("Could not save reminder"));
-                    }}
-                  />
-                </label>
-                {/* AA-40: opt-in, per case, and the copy states exactly what leaves the device. */}
-                <div className="rounded-lg border border-border bg-surface-2/40 p-4">
-                  <p className="text-sm font-medium text-foreground">
-                    {APP.dashboard.clock.emailTitle}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {APP.dashboard.clock.emailBody}
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <Button
-                      type="button"
-                      variant={currentLog.emailReminder ? "outline" : "default"}
-                      disabled={!currentLog.reminderAt}
-                      onClick={() => {
-                        const enabled = !currentLog.emailReminder;
-                        void saveCaseLog(vault, { ...currentLog, emailReminder: enabled })
-                          .then(loadFromVault)
-                          .then(() =>
-                            syncCaseReminder({
-                              caseRef: caseFile.id,
-                              kind: caseFile.kind,
-                              dueAt: currentLog.reminderAt,
-                              enabled,
-                            }),
-                          )
-                          .then((ok) => {
-                            if (!ok) toast.error(APP.dashboard.clock.emailFailed);
-                          })
-                          .catch(() => toast.error(APP.dashboard.clock.emailFailed));
-                      }}
-                    >
-                      {currentLog.emailReminder
-                        ? APP.dashboard.clock.emailDisable
-                        : APP.dashboard.clock.emailEnable}
-                    </Button>
-                    <span className="text-xs text-muted-foreground">
-                      {currentLog.emailReminder
-                        ? APP.dashboard.clock.emailOn
-                        : APP.dashboard.clock.emailOff}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <ReminderControl
+                caseId={caseFile.id}
+                kind={caseFile.kind}
+                log={currentLog}
+                signedIn={signedIn}
+                onSaveLog={saveWorkspaceLog}
+              />
             )}
             {/*
               AA-40: a case blocked on a supplier used to sit in "Evidence gathering", which reads
@@ -723,71 +663,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
               it to WAITING_THIRD_PARTY and gives the clock a date to chase.
             */}
             {(!ctx.submitted || currentLog.waitingOn) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">{APP.dashboard.clock.waitingTitle}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {APP.dashboard.clock.waitingDescription}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-wrap items-end gap-3">
-                    <label className="block text-sm">
-                      <span className="mb-1 block">{APP.dashboard.clock.waitingPartyLabel}</span>
-                      <input
-                        className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        type="text"
-                        defaultValue={currentLog.waitingOn?.party ?? ""}
-                        placeholder={APP.dashboard.clock.waitingPartyPlaceholder}
-                        onBlur={(event) => {
-                          const party = event.target.value.trim();
-                          if (!party) return;
-                          void saveWaitingOn({
-                            party,
-                            since: currentLog.waitingOn?.since ?? new Date().toISOString(),
-                            followUpAt: currentLog.waitingOn?.followUpAt,
-                          });
-                        }}
-                      />
-                    </label>
-                    <label className="block text-sm">
-                      <span className="mb-1 block">{APP.dashboard.clock.waitingFollowUpLabel}</span>
-                      <input
-                        className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        type="date"
-                        value={currentLog.waitingOn?.followUpAt?.slice(0, 10) ?? ""}
-                        onChange={(event) => {
-                          const party = currentLog.waitingOn?.party;
-                          // Without a named party there is nothing to chase; the date alone would
-                          // produce a clock item reading "Chase undefined".
-                          if (!party) return;
-                          void saveWaitingOn({
-                            party,
-                            since: currentLog.waitingOn?.since ?? new Date().toISOString(),
-                            followUpAt: event.target.value
-                              ? `${event.target.value}T00:00:00Z`
-                              : undefined,
-                          });
-                        }}
-                      />
-                    </label>
-                    {currentLog.waitingOn && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => void saveWaitingOn(undefined)}
-                      >
-                        {APP.dashboard.clock.waitingClear}
-                      </Button>
-                    )}
-                  </div>
-                  {currentLog.waitingOn && (
-                    <p className="text-xs text-muted-foreground">
-                      {APP.dashboard.clock.waitingSince} {formatDate(currentLog.waitingOn.since)}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+              <WaitingOnCard log={currentLog} onSaveLog={saveWorkspaceLog} />
             )}
             <div className="flex items-start justify-between gap-4">
               <div>

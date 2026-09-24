@@ -30,6 +30,7 @@ import { VIOLATION_KINDS } from "@/core/violationKinds";
 import { buildDocumentCheck, type FieldFinding } from "@/core/documentCheck";
 import { requirementsFor, canonicalRequirementFor } from "@/core/evidenceModel";
 import type { EvidenceKind } from "@/core/evidenceModel";
+import { MAX_CHECK_BASE64_CHARS } from "@/lib/documentChecks/limits";
 
 export const dynamic = "force-dynamic";
 
@@ -62,9 +63,8 @@ export const BROWSER_ONLY_EVIDENCE_KINDS = ["identity_doc", "financial_instrumen
  */
 const UNNAMED_EVIDENCE_KIND = "other";
 
-/** Base64 inflates by ~33%, so this is roughly a 7 MB original — comfortably above a scanned
- * multi-page invoice and well below the point where the upstream rejects the request. */
-const MAX_BASE64_BYTES = 9_500_000;
+/** Shared with the client; see `limits.ts` for why it is set by the host's request limit. */
+const MAX_BASE64_BYTES = MAX_CHECK_BASE64_CHARS;
 
 const ACCEPTED_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
 

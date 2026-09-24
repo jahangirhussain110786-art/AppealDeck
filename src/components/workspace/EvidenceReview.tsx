@@ -123,7 +123,7 @@ export function EvidenceReview({
             multiple={false}
             accept="application/pdf,image/png,image/jpeg"
             onFile={onUpload}
-            hint="PDF, PNG or JPEG · up to 10 MB · stored in this case"
+            hint="PDF, PNG or JPEG · up to 10 MB stored, up to 3 MB checked"
           />
         )}
         {records.length > 0 && (

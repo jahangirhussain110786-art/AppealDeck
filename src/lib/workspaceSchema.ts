@@ -121,9 +121,32 @@ export const WorkspaceSchema = z
            * drafted here.
            */
           source: z.literal("prior").optional(),
+          // Both declared for the same reason: stripped here, a seller's edited submission would
+          // come back as though the prepared text had been sent, and its open items would vanish.
+          preparedText: z.string().max(60000).optional(),
+          unresolved: z.array(z.string().max(2000)).max(50).optional(),
+          readinessAtSubmit: z.number().int().min(0).max(100).optional(),
         }),
       )
       .max(99),
+    // Declared because this schema strips unknown keys: without it, every questionnaire answer a
+    // seller saved would be discarded on the way into the vault.
+    answers: z
+      .array(z.object({ question: z.string().max(500), answer: z.string().max(12000) }))
+      .max(50)
+      .optional(),
+    // Same reason: stripped here, a removed record would come back on the next confirmation.
+    dismissed: z
+      .array(
+        z.object({
+          key: z.string().max(200),
+          label: z.string().max(200),
+          reason: z.string().max(2000),
+          at: z.string().datetime(),
+        }),
+      )
+      .max(100)
+      .optional(),
     replies: z
       .array(z.object({ id, at: z.string().datetime(), text, applied: z.boolean() }))
       .max(99),

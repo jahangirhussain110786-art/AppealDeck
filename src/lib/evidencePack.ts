@@ -38,6 +38,29 @@ export interface EvidencePackInput {
   records: readonly PackRecord[];
 }
 
+/**
+ * Who asked for each record, in the words both exports use. Shared with `buildCaseExport` since
+ * 23 Sep 2026, which labelled every record "Requested because" — including the ones we recommended
+ * and the ones the seller added — long after this manifest had been corrected.
+ */
+export const REQUIREMENT_GROUPS = [
+  {
+    heading: "Requirements Amazon asked for",
+    reason: "Requested because",
+    match: (r: Requirement) => r.source !== "matrix" && r.source !== "seller",
+  },
+  {
+    heading: "Records AppealDeck recommended (not named in the notice)",
+    reason: "Recommended because",
+    match: (r: Requirement) => r.source === "matrix",
+  },
+  {
+    heading: "Records the seller added",
+    reason: "Added because",
+    match: (r: Requirement) => r.source === "seller",
+  },
+] as const;
+
 function bytes(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
@@ -83,23 +106,6 @@ export function buildEvidenceManifest(input: EvidencePackInput): string {
     Each record still appears exactly once, and the "Requested because" line is only called that
     where Amazon really did the requesting.
   */
-  const REQUIREMENT_GROUPS = [
-    {
-      heading: "Requirements Amazon asked for",
-      reason: "Requested because",
-      match: (r: Requirement) => r.source !== "matrix" && r.source !== "seller",
-    },
-    {
-      heading: "Records AppealDeck recommended (not named in the notice)",
-      reason: "Recommended because",
-      match: (r: Requirement) => r.source === "matrix",
-    },
-    {
-      heading: "Records the seller added",
-      reason: "Added because",
-      match: (r: Requirement) => r.source === "seller",
-    },
-  ];
   for (const group of REQUIREMENT_GROUPS) {
     const items = workspace.requirements.filter(group.match);
     if (items.length === 0 && group.heading !== REQUIREMENT_GROUPS[0]!.heading) continue;
@@ -138,6 +144,11 @@ export function buildEvidenceManifest(input: EvidencePackInput): string {
   lines.push("== How to check a file against this manifest ==");
   lines.push(
     "Each content hash is taken from the file's contents, not its name. If a hash here matches the file you still hold, the contents are unchanged since it was added.",
+  );
+  // A hash is proof about a file, not about Amazon. Said outright, because a seller showing this to
+  // a specialist could otherwise be taken to be claiming more than it shows.
+  lines.push(
+    "A matching hash shows the file is unchanged. It does not show that Amazon received, read or accepted it.",
   );
   lines.push("");
   lines.push(

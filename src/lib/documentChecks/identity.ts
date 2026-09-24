@@ -63,7 +63,7 @@ function resolutionCheck(width: number, height: number): ImageCheck {
     status: ok ? "ok" : "warn",
     label: "Size",
     detail: ok
-      ? `${width} by ${height} pixels — large enough for small print to stay legible.`
+      ? `${width} by ${height} pixels — enough detail for small print, if the picture is also in focus.`
       : `${width} by ${height} pixels. Small print is likely to be unreadable. Retake it closer, or scan at a higher setting.`,
   };
 }
@@ -96,8 +96,8 @@ function sharpnessCheck(pixels: Uint8ClampedArray, width: number, height: number
     status: ok ? "ok" : "warn",
     label: "Focus",
     detail: ok
-      ? "The image looks sharp enough to read."
-      : "The image looks soft or out of focus. Rest the document on a flat surface and retake it.",
+      ? "No sign of blur. Zoom in on the smallest print to be sure you can read it."
+      : "The image may be soft or out of focus. Zoom in on the smallest print; if it is blurred, rest the document on a flat surface and retake it.",
   };
 }
 
@@ -120,11 +120,12 @@ function exposureCheck(pixels: Uint8ClampedArray): ImageCheck {
     id: "exposure",
     status: blownOut || tooDark ? "warn" : "ok",
     label: "Lighting",
+    // A flatbed scan of a white page is mostly pure white, so a bright image is not proof of glare.
     detail: blownOut
-      ? "Large areas are washed out, usually glare from a flash or a window. Retake it in even light without flash."
+      ? "Large areas are pure white. That can be glare from a flash or a window, or simply the white page of a scan. Check that none of the printed details or the photo is washed out; if any is, retake it in even light without flash."
       : tooDark
-        ? "Large areas are very dark. Retake it somewhere brighter."
-        : "Lighting looks even enough to read.",
+        ? "Large areas are very dark. Check that every part of the document can be read; if not, retake it somewhere brighter."
+        : "No large washed-out or very dark areas.",
   };
 }
 
@@ -154,10 +155,12 @@ function framingCheck(pixels: Uint8ClampedArray, width: number, height: number):
     id: "framing",
     status: flat >= 2 ? "warn" : "ok",
     label: "Framing",
+    // A uniform border is equally what a plain background or a scanner lid leaves, and a varied one
+    // does not prove the corners are in shot — so neither result is stated as a finding.
     detail:
       flat >= 2
-        ? "The document may run past the edge of the picture. All four corners need to be inside the frame."
-        : "All four edges appear to be inside the frame.",
+        ? "The edges of the picture are very even, which can mean the document runs past them — or just a plain background. Check that all four corners are inside the frame."
+        : "No sign of the document running off the edge. Check that all four corners are visible.",
   };
 }
 

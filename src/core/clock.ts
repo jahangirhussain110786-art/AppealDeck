@@ -23,6 +23,17 @@ export type ClockUrgency = "overdue" | "today" | "soon" | "scheduled";
 
 export type ClockSource = "reminder" | "deadline" | "third_party";
 
+/**
+ * A response has been sent and Amazon has not answered it. Narrower than `isSubmitted`, which also
+ * covers a case that was rejected and is being revised — that case answers a new window.
+ */
+const WITH_AMAZON: ReadonlySet<CaseState> = new Set([
+  "SUBMITTED",
+  "AWAITING",
+  "NO_RESPONSE",
+  "FOLLOW_UP",
+]);
+
 /** Days ahead that still counts as "soon" rather than merely scheduled. */
 export const SOON_WINDOW_DAYS = 7;
 
@@ -149,7 +160,11 @@ export function clockItemsForCase(input: ClockCaseInput, now: number): ClockItem
     if (item) items.push(item);
   }
 
-  for (const deadline of input.deadlines ?? []) {
+  // Once the response is with Amazon, the window it answered is met. Counting down to it would tell
+  // a seller who has done the work that they are running out of time. A reply that reopens the case
+  // brings its own window, recomputed when the reply is applied, and moves the case out of these.
+  const deadlines = WITH_AMAZON.has(input.state) ? [] : (input.deadlines ?? []);
+  for (const deadline of deadlines) {
     // A deadline with no established date is skipped rather than shown with a guessed one. The
     // decoder deliberately returns null when a notice does not state a date (AM-03).
     if (!deadline.dueAt) continue;

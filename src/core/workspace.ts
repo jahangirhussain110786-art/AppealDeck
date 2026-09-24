@@ -1,6 +1,6 @@
 import type { CaseFile } from "./caseFile";
 import type { PoaDraft } from "./composer";
-import { determineResponseType } from "./responseType";
+import { determineResponseType, describesThePast } from "./responseType";
 import type { ResponseType } from "./responseType";
 import type { EvidenceKind } from "./evidenceModel";
 import { requirementsFor } from "./evidenceModel";
@@ -8,6 +8,7 @@ import type { ViolationKind } from "./violationKinds";
 import { D6_GATED_ALLEGATION } from "./violationKinds";
 import type { NoticeIssue } from "./noticeIssues";
 import { detectIssues, hasMultipleIssues } from "./noticeIssues";
+import { questionsIn } from "./questionnaire";
 
 /**
  * AA-39 (AM-26) added `verification`, `questionnaire` and `acknowledgement`. Before that, a notice
@@ -178,8 +179,29 @@ export interface Workspace {
      * second list.
      */
     source?: "prior";
+    /**
+     * The response AppealDeck prepared, kept only when the seller sent something different —
+     * `text` is always what was actually sent. See `buildSubmission` (lib/submissionRecord.ts).
+     */
+    preparedText?: string;
+    /** What was still open when it was sent, in the page's own words. Never shown as approval. */
+    unresolved?: string[];
+    /** Share of records reviewed and linked at the time, 0-100, for the opt-in outcome record. */
+    readinessAtSubmit?: number;
   }>;
   replies: Array<{ id: string; at: string; text: string; applied: boolean }>;
+  /**
+   * A questionnaire's answers, one per question as `questionnaireQuestions` reads it. Keyed by the
+   * question's own text, so an answer stays with its question if Amazon's form is re-pasted in a
+   * different order — and an answer to a question no longer asked is not shown against another.
+   */
+  answers?: Array<{ question: string; answer: string }>;
+  /**
+   * Records the seller removed, keyed by `requirementKey`, with the reason they gave. Kept so that
+   * reading the notice again — on a correction, or a kind change — does not quietly raise a record
+   * the seller has already told us is not wanted.
+   */
+  dismissed?: Array<{ key: string; label: string; reason: string; at: string }>;
   /** Unsaved field text, autosaved to the vault so it survives navigation and sign-in. */
   draft?: Record<string, string>;
 }
@@ -315,6 +337,16 @@ export function requirementEvidenceKind(
 }
 
 /** Suggest only record names present in an explicit request; seller confirms coverage. */
+/**
+ * A sentence that says a record is not wanted. Narrower than `responseType.ts`'s list on purpose:
+ * that one also drops "rather than" and "without", which costs a response-type decision one
+ * supporting quote but would cost this list a real request — "provide invoices rather than order
+ * confirmations" asks for invoices. "No further" and "not needed" were missing until 23 Sep 2026,
+ * so "no further submission is needed" still raised the record it had just waived.
+ */
+const REQUIREMENT_NEGATION =
+  /\b(do not|don't|does not need|not required|not necessary|not needed|no need to|no longer|no additional|no further)\b/i;
+
 export function proposedRequirements(
   /**
    * `revision` is here so a named requirement records which request its quote came from. Callers
@@ -332,7 +364,10 @@ export function proposedRequirements(
       (s) =>
         s.length <= 2000 &&
         /\b(provide|submit|upload|send|include|request(?:ed|ing)?)\b/i.test(s) &&
-        !/\b(do not|don't|not required|no need to|no additional)\b/i.test(s),
+        !REQUIREMENT_NEGATION.test(s) &&
+        // "Invoices were requested earlier", "thank you for providing your invoices": the notice
+        // describing what already happened. The same rule `determineResponseType` applies.
+        !describesThePast(s),
     );
   const named = REQUIREMENT_CANDIDATES.flatMap(({ pattern, label, evidenceKind }) => {
     const sourceQuote = sources.find((s) => pattern.test(s));
@@ -456,8 +491,11 @@ export function sourceQuoteResolves(
 export function requirementsAfterKindChange(
   existing: readonly Requirement[],
   nextKind: ViolationKind,
+  /** Records the seller removed. A kind change does not bring them back. */
+  dismissed: Workspace["dismissed"] = [],
 ): Requirement[] {
-  const covered = new Set(existing.map(requirementEvidenceKind));
+  const covered = new Set<string | undefined>(existing.map(requirementEvidenceKind));
+  for (const d of dismissed) covered.add(d.key);
   const added = requirementsFor(nextKind)
     .filter((r) => r.required && !covered.has(r.kind))
     .map((r) => ({
@@ -470,6 +508,73 @@ export function requirementsAfterKindChange(
       evidenceKind: r.kind,
     }));
   return [...existing, ...added];
+}
+
+/**
+ * The records to hold once the seller confirms a corrected or replaced notice.
+ *
+ * Added 23 Sep 2026. Confirming the request rebuilt the issues every time but the records only
+ * when there were none, so a seller who fixed a mis-pasted notice kept the old list: a record the
+ * corrected text asks for never appeared, and one it no longer names kept quoting a sentence that
+ * is not there any more. Built on the same rule as a kind change and a reply round — nothing the
+ * seller has worked on is removed because we read the notice again.
+ *
+ * - A record the corrected notice names keeps all of the seller's work and takes the new quote. One
+ *   we had only recommended becomes Amazon's, because now it is.
+ * - A record the corrected notice raises for the first time is added.
+ * - A record from the old text that the new one does not name is dropped only if nothing was done
+ *   with it. If the seller had linked a file, written a note or said they cannot get it, it stays,
+ *   and `sourceQuoteResolves` flags its quote so they can decide.
+ * - Records we recommended and records the seller added are kept as they are.
+ *
+ * `fresh` is `proposedRequirements` for the corrected text, with the case's kind.
+ */
+export function requirementsAfterNoticeChange(
+  existing: readonly Requirement[],
+  fresh: readonly Requirement[],
+  /** Records the seller removed, with a reason. Never raised again by reading the notice. */
+  dismissed: Workspace["dismissed"] = [],
+): Requirement[] {
+  const keyFor = requirementKey;
+  const removed = new Set(dismissed.map((d) => d.key));
+  const freshByKey = new Map(
+    fresh.filter((r) => !removed.has(keyFor(r))).map((r) => [keyFor(r), r]),
+  );
+  const matched = new Set<string>();
+  const kept: Requirement[] = [];
+  for (const r of existing) {
+    const key = keyFor(r);
+    const now = freshByKey.get(key);
+    if (now) {
+      matched.add(key);
+      kept.push(
+        now.source === "notice"
+          ? {
+              ...r,
+              source: "notice",
+              sourceQuote: now.sourceQuote,
+              sourceRevision: now.sourceRevision,
+              evidenceKind: r.evidenceKind ?? now.evidenceKind,
+            }
+          : r,
+      );
+      continue;
+    }
+    const fromNotice = r.source !== "matrix" && r.source !== "seller";
+    const untouched =
+      r.status === "needed" && !r.recordId && !r.note.trim() && !r.declined?.reason.trim();
+    if (fromNotice && untouched) continue;
+    kept.push(r);
+  }
+  return [...kept, ...[...freshByKey.values()].filter((r) => !matched.has(keyFor(r)))];
+}
+
+/**
+ * What identifies "the same record" across readings of a notice: its evidence kind when it has
+ * one, its label otherwise. The reply comparison uses the same rule.
+ */
+export function requirementKey(r: Requirement): string {
+  return requirementEvidenceKind(r) ?? r.label.toLowerCase();
 }
 
 /**
@@ -645,6 +750,18 @@ export function totalAttempts(w: Workspace): number {
   return w.submissions.length;
 }
 
+/** The questions this case's questionnaire asks, response page first. Empty for any other protocol. */
+export function questionnaireQuestions(
+  w: Pick<Workspace, "protocol" | "formInstructions" | "notice">,
+): string[] {
+  if (w.protocol !== "questionnaire") return [];
+  return questionsIn(`${w.formInstructions}\n${w.notice}`);
+}
+
+export function answerFor(w: Pick<Workspace, "answers">, question: string): string {
+  return w.answers?.find((a) => a.question === question)?.answer ?? "";
+}
+
 export function workspaceGaps(w: Workspace): string[] {
   const gaps: string[] = [];
   const route = routeWorkspace(w);
@@ -687,12 +804,25 @@ export function workspaceGaps(w: Workspace): string[] {
     // carried through a reply round.
     if (!sourceQuoteResolves(w, r)) gaps.push(`Check the source of the request for: ${r.label}`);
   }
-  if (w.explanation.trim().length < 40)
+  /*
+    What the written part must contain depends on what was asked (audit item L, 23 Sep 2026). A
+    single 40-character minimum was applied to every protocol, which kept a correct one-line
+    acknowledgement a "working draft" forever while accepting any 40 characters of anything.
+  */
+  const questions = questionnaireQuestions(w);
+  if (questions.length) {
+    for (const q of questions) {
+      if (!answerFor(w, q).trim()) gaps.push(`Answer the question: ${q}`);
+    }
+  } else if (w.protocol === "acknowledgement") {
+    if (!w.explanation.trim()) gaps.push("Write the acknowledgement Amazon asked for.");
+  } else if (w.explanation.trim().length < 40) {
     gaps.push(
       w.protocol === "operational"
         ? "Describe the specific root cause."
         : "Explain how the supplied records answer the request.",
     );
+  }
   if (w.protocol === "operational") {
     if (w.correctiveActions.trim().length < 40)
       gaps.push("Describe corrective actions, distinguishing completed work from plans.");
@@ -720,6 +850,7 @@ export function composeWorkspace(
   const gaps = workspaceGaps(w);
   // AA-39: each composable protocol gets its own heading. A questionnaire answered under a heading
   // that says "response to the document request" reads as though the seller misunderstood the ask.
+  const questions = questionnaireQuestions(w);
   const sections =
     w.protocol === "operational"
       ? [
@@ -727,7 +858,18 @@ export function composeWorkspace(
           { heading: "Corrective Actions", body: w.correctiveActions },
           { heading: "Preventive Measures", body: w.preventiveMeasures },
         ]
-      : [{ heading: RESPONSE_HEADING[w.protocol] ?? "Your response", body: w.explanation }];
+      : questions.length
+        ? // Answered in Amazon's order, each under its own question (audit item L).
+          [
+            ...questions.map((q) => ({
+              heading: q,
+              body: answerFor(w, q) || "(not answered yet)",
+            })),
+            ...(w.explanation.trim()
+              ? [{ heading: "Additional context", body: w.explanation }]
+              : []),
+          ]
+        : [{ heading: RESPONSE_HEADING[w.protocol] ?? "Your response", body: w.explanation }];
   sections.push({
     heading: "Supporting records",
     body:

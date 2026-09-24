@@ -63,6 +63,8 @@ describe("clockItemsForCase", () => {
   it("skips deadlines whose date could not be established", () => {
     const items = clockItemsForCase(
       caseInput({
+        // Still being prepared: once it is with Amazon, deadlines are not counted down at all.
+        state: "REMEDIATION",
         deadlines: [
           { kind: "appeal_window", label: "Appeal window", dueAt: null },
           { kind: "funds_appeal_eligible", label: "Funds appeal opens", dueAt: day(5) },
@@ -72,6 +74,40 @@ describe("clockItemsForCase", () => {
     );
     expect(items).toHaveLength(1);
     expect(items[0]!.label).toBe("Funds appeal opens");
+  });
+
+  /*
+    23 Sep 2026. The dashboard now passes the notice's deadlines in. Once the response is with
+    Amazon the window it answered is met, and a countdown to it would tell a seller who has done the
+    work that they are running out of time. Their own follow-up date still shows.
+  */
+  it("stops counting down to the notice's window once the response is with Amazon", () => {
+    for (const state of ["SUBMITTED", "AWAITING", "NO_RESPONSE", "FOLLOW_UP"] as const) {
+      const input = caseInput({
+        state,
+        reminderAt: day(3),
+        deadlines: [{ kind: "appeal_window", label: "Appeal by 25 Sep 2026", dueAt: day(3) }],
+      });
+      expect(
+        clockItemsForCase(input, NOW).map((i) => i.source),
+        state,
+      ).toEqual(["reminder"]);
+    }
+  });
+
+  it("counts down to it while the response is prepared, or revised after a reply", () => {
+    for (const state of ["REMEDIATION", "READY", "REVISION"] as const) {
+      const items = clockItemsForCase(
+        caseInput({
+          state,
+          deadlines: [{ kind: "appeal_window", label: "Appeal by 25 Sep 2026", dueAt: day(3) }],
+        }),
+        NOW,
+      );
+      expect(items, state).toMatchObject([
+        { source: "deadline", urgency: "soon", daysRemaining: 3 },
+      ]);
+    }
   });
 
   it("says nothing about a case that is already won or closed", () => {

@@ -21,6 +21,7 @@
 import type { EvidenceKind, ViolationKind } from "@/core";
 import type { DocumentCheckResult } from "@/core/documentCheck";
 import { analyzeIdentityImage, type IdentityImageReport } from "./identity";
+import { MAX_CHECK_BYTES } from "./limits";
 
 /** Evidence kinds examined in the browser. Mirrors the server's own refusal list. */
 export const BROWSER_ONLY_EVIDENCE_KINDS: readonly EvidenceKind[] = [
@@ -80,6 +81,12 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
     };
   }
 
+  // Refused before it is sent: the host would reject it with a page that is not JSON, and the seller
+  // would be told only that the check failed. See `limits.ts`.
+  if (input.bytes.byteLength > MAX_CHECK_BYTES) {
+    return { kind: "unavailable", message: tooLargeMessage(input.bytes.byteLength) };
+  }
+
   try {
     const res = await fetch("/api/read-document", {
       method: "POST",
@@ -91,6 +98,10 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
         data: toBase64(input.bytes),
       }),
     });
+    // Should be unreachable after the check above; kept so a lowered host limit still gets a reason.
+    if (res.status === 413) {
+      return { kind: "unavailable", message: tooLargeMessage(input.bytes.byteLength) };
+    }
     const body = await res.json().catch(() => null);
     if (!res.ok) {
       return {
@@ -115,6 +126,18 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
       message: "We could not reach the checker. Your document and your case are unchanged.",
     };
   }
+}
+
+/**
+ * Sizes in decimal megabytes, rounded up, so the file's size and the limit are in the same unit and
+ * a file just over the limit never reads as "3.0 MB" beside "up to 3 MB".
+ */
+function megabytes(bytes: number): string {
+  return `${Math.ceil(bytes / 100_000) / 10} MB`;
+}
+
+function tooLargeMessage(bytes: number): string {
+  return `This file is ${megabytes(bytes)}, and we can read files up to ${megabytes(MAX_CHECK_BYTES)}. It is saved in your case either way. To have it checked, save the scan at a lower resolution, or keep only the pages Amazon asks about.`;
 }
 
 /** Chunked so a multi-megabyte scan does not blow the argument limit of `String.fromCharCode`. */

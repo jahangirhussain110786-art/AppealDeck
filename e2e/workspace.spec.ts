@@ -627,3 +627,65 @@ test("a seller can correct the issue we read, and we raise the records that issu
   // And the record the notice did name is still there, untouched.
   await expect(evidence.getByText("Supplier invoice", { exact: true }).first()).toBeVisible();
 });
+
+/**
+ * 23 Sep 2026. Confirming the request rebuilt the issues every time but the records only when there
+ * were none, so a seller who corrected a mis-pasted notice kept the old list.
+ */
+test("a corrected notice brings in the record it now asks for, and keeps work already done", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await configure(page);
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
+  await page.getByRole("button", { name: "I’m waiting for information" }).click();
+  await expect(evidence.getByText("Waiting for information", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("Authorization letter", { exact: true })).toHaveCount(0);
+
+  await page.getByRole("tab", { name: "Overview", exact: true }).click();
+  await page.getByRole("button", { name: "Review the request" }).click();
+  await page
+    .getByLabel("Amazon notice", { exact: true })
+    .fill(`${notice} Please also provide a letter of authorization from the brand owner.`);
+  await page.getByRole("button", { name: "Confirm this route" }).click();
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await expect(evidence.getByText("Authorization letter", { exact: true })).toBeVisible();
+  // The invoice the seller had already started on is kept, with its status.
+  await expect(evidence.getByText("Supplier invoice", { exact: true }).first()).toBeVisible();
+  await expect(evidence.getByText("Waiting for information", { exact: true })).toBeVisible();
+});
+
+/**
+ * 23 Sep 2026. The dashboard's clock, the "waiting on someone else" note and the email-reminder
+ * switch rendered only for classic cases, so no current case could reach them — and the clock never
+ * received a notice's deadline at all. Run from Los Angeles, where a midnight-UTC date used to show
+ * as the day before.
+ */
+test.describe("the dashboard for a workspace case", () => {
+  test.use({ timezoneId: "America/Los_Angeles" });
+
+  test("shows the notice's own deadline first, and lets the seller record who they wait on", async ({
+    page,
+  }) => {
+    await page.goto("/case");
+    await page
+      .getByLabel("Amazon notice", { exact: true })
+      .fill(
+        "Your account has been deactivated for repeated policy violations. Please submit your appeal by 1 October 2026. Please provide the supplier invoice.",
+      );
+    await page.getByLabel("Current response instructions").fill("Upload the requested invoice.");
+    await page.getByRole("button", { name: "Confirm this route" }).click();
+    await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+
+    await page.goto("/dashboard");
+    await expect(page.getByText(/^Appeal by 1 Oct 2026 — /)).toBeVisible();
+    await expect(page.getByText(/30 Sep 2026/)).toHaveCount(0);
+    await expect(
+      page.getByText("Based on dates you set and dates stated in your notice.", { exact: false }),
+    ).toBeVisible();
+    await expect(page.getByText("Waiting on someone else", { exact: true })).toBeVisible();
+  });
+});

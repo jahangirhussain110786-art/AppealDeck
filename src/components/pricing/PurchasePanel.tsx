@@ -20,7 +20,6 @@ import { SHARED } from "@/content/shared";
 import { useSessionState } from "@/lib/useSessionState";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { pollLicenseStatus } from "@/lib/licensePoll";
-import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { getBrowserVault } from "@/lib/vault/browser";
 import { loadCaseFile } from "@/lib/caseStore";
 import { openVaultForVisitor } from "@/lib/vault/visitor";
@@ -92,7 +91,7 @@ export function PurchasePanel() {
 
   const handleCompleted = useCallback(() => {
     if (sessionState !== "signed-in") return;
-    trackFunnelEvent(FUNNEL_EVENTS.passPurchased);
+    // `pass_purchased` is counted by CheckoutButton, the one place every purchase passes through.
     setPhase("activating");
     void pollLicenseStatus()
       .then(() => router.push("/compose"))

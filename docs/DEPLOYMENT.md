@@ -1,8 +1,10 @@
 > **18 Sep 2026 update:** Before deployment, follow the current requirements in [the integrity handoff](handoffs/2026-09-18-integrity-fixes.md#deployment-requirements-and-remaining-external-limits). Apply migrations 0009 and 0010; configure the checkout price/webhook and durable email worker. Production rate limiting now fails closed. Historical setup details below must be read with this update.
 
-# AppealDeck — Vercel Deployment Guide (Hobby / Free Tier)
+# AppealDeck — Vercel Deployment Guide
 
-This guide is the single source of truth for getting AppealDeck onto Vercel Hobby (free) for the first 20 customers. If a step says "founder action", it's a manual click in a dashboard that the AI cannot perform for you.
+This guide is the single source of truth for getting AppealDeck onto Vercel. If a step says "founder action", it's a manual click in a dashboard that the AI cannot perform for you.
+
+> **Corrected 23 Sep 2026 — use Vercel Pro, not Hobby.** This guide was written for Hobby "for the first 20 customers". Vercel's own Hobby page (checked 23 Sep 2026, last updated 14 Sep 2026) says the Hobby plan "restricts users to non-commercial, personal use only" (https://vercel.com/docs/plans/hobby). AppealDeck takes payment, so it is commercial from its first sale. Section 8 also described limits that were stale or untrue for this app: see the corrected table there.
 
 ---
 
@@ -24,24 +26,24 @@ Set these for **Production**, **Preview**, and **Development** scopes (Vercel no
 
 ### Required (app will crash without these)
 
-| Variable                                | Source                                 | Production value                                  |
-| --------------------------------------- | -------------------------------------- | ------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL` | this file | `https://<project>.vercel.app` now → `https://appealdeck.com` when the domain is connected |
-| `NEXT_PUBLIC_MARKETING_HOST` | this file | `<project>.vercel.app` now → `appealdeck.com` later |
-| `NEXT_PUBLIC_APP_HOST` | this file | **leave unset** (single host). Set only for a later `app.` split — AGENTS.md "Domain topology" |
-| `NEXT_PUBLIC_APP_URL` | this file | **leave unset** (resolves to `NEXT_PUBLIC_SITE_URL` via `src/lib/urls.ts`) |
-| `NEXT_PUBLIC_SUPABASE_URL`              | Supabase dashboard                     | `https://<project-ref>.supabase.co`               |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`         | Supabase dashboard                     | `eyJ...`                                          |
-| `SUPABASE_SERVICE_ROLE_KEY`             | Supabase dashboard                     | `eyJ...` (sensitive — keep "Sensitive" toggle ON) |
-| `GEMINI_API_KEY`                        | https://aistudio.google.com/app/apikey | `AIzaSy...` (sensitive)                           |
-| `GEMINI_MODEL`                          | optional                               | `gemini-3.5-flash` (default in code)              |
-| `UPSTASH_REDIS_REST_URL`                | https://console.upstash.com            | `https://<db>.upstash.io` (sensitive)             |
-| `UPSTASH_REDIS_REST_TOKEN`              | Upstash dashboard                      | (sensitive)                                       |
-| `PADDLE_WEBHOOK_SECRET`                 | Paddle dashboard → Notifications       | (sensitive)                                       |
-| `NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS`  | Paddle dashboard → catalog             | `pri_...`                                         |
-| `NEXT_PUBLIC_PADDLE_PRICE_GUARDIAN_SUB` | Paddle dashboard → catalog             | `pri_...`                                         |
-| `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`       | Paddle dashboard → Developer tools     | `live_...`                                        |
-| `NEXT_PUBLIC_PADDLE_ENV`                | this file                              | `production`                                      |
+| Variable                                | Source                                 | Production value                                                                               |
+| --------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`                  | this file                              | `https://<project>.vercel.app` now → `https://appealdeck.com` when the domain is connected     |
+| `NEXT_PUBLIC_MARKETING_HOST`            | this file                              | `<project>.vercel.app` now → `appealdeck.com` later                                            |
+| `NEXT_PUBLIC_APP_HOST`                  | this file                              | **leave unset** (single host). Set only for a later `app.` split — AGENTS.md "Domain topology" |
+| `NEXT_PUBLIC_APP_URL`                   | this file                              | **leave unset** (resolves to `NEXT_PUBLIC_SITE_URL` via `src/lib/urls.ts`)                     |
+| `NEXT_PUBLIC_SUPABASE_URL`              | Supabase dashboard                     | `https://<project-ref>.supabase.co`                                                            |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`         | Supabase dashboard                     | `eyJ...`                                                                                       |
+| `SUPABASE_SERVICE_ROLE_KEY`             | Supabase dashboard                     | `eyJ...` (sensitive — keep "Sensitive" toggle ON)                                              |
+| `GEMINI_API_KEY`                        | https://aistudio.google.com/app/apikey | `AIzaSy...` (sensitive)                                                                        |
+| `GEMINI_MODEL`                          | optional                               | `gemini-3.5-flash` (default in code)                                                           |
+| `UPSTASH_REDIS_REST_URL`                | https://console.upstash.com            | `https://<db>.upstash.io` (sensitive)                                                          |
+| `UPSTASH_REDIS_REST_TOKEN`              | Upstash dashboard                      | (sensitive)                                                                                    |
+| `PADDLE_WEBHOOK_SECRET`                 | Paddle dashboard → Notifications       | (sensitive)                                                                                    |
+| `NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS`  | Paddle dashboard → catalog             | `pri_...`                                                                                      |
+| `NEXT_PUBLIC_PADDLE_PRICE_GUARDIAN_SUB` | Paddle dashboard → catalog             | `pri_...`                                                                                      |
+| `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`       | Paddle dashboard → Developer tools     | `live_...`                                                                                     |
+| `NEXT_PUBLIC_PADDLE_ENV`                | this file                              | `production`                                                                                   |
 
 ### Optional
 
@@ -74,6 +76,7 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
    Verified the same day against the live project by REST probe, not by assumption: every column present with no drift, RLS on with anon reads empty and anon inserts refused (401), the `CHECK` constraints rejecting an out-of-range `readiness_at_submit` and an unknown `outcome`, the `(user_id, case_ref)` unique index collapsing a re-set reminder into one row instead of duplicating it, and the cron's own due-row query returning what it should. Every row written by that check was deleted again; both tables hold 0 rows.
 
    Email reminders still need `RESEND_API_KEY` and `CRON_SECRET` (the latter shared with the purchase-email job) on the deployed project. Without the key no reminder email is sent and the feature stays visibly off rather than silently failing; the reminder date still saves to the seller's vault and still shows on the page either way.
+
 3. Supabase dashboard → Settings → API: copy `URL`, `anon` key, `service_role` key to Vercel env.
 
 ## 5. Paddle production setup (founder action)
@@ -101,10 +104,10 @@ secret). Until both exist, `.github/workflows/backup.yml` **fails every night on
 job that reports success while writing nothing is the failure this is meant to prevent, so it is
 built to be noisy rather than quietly useless.
 
-| Secret | Where to get it | Why |
-|---|---|---|
-| `SUPABASE_DB_URL` | Supabase → Project Settings → Database → Connection string (URI), with the password filled in | The nightly `supabase db dump --data-only` reads through this. |
-| `BACKUP_PASSPHRASE` | Generate a long random string and **store it in your password manager, not in this repo** | The dump is encrypted with it. Lose it and the backups are unopenable — which is the same as having none. |
+| Secret              | Where to get it                                                                               | Why                                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_DB_URL`   | Supabase → Project Settings → Database → Connection string (URI), with the password filled in | The nightly `supabase db dump --data-only` reads through this.                                            |
+| `BACKUP_PASSPHRASE` | Generate a long random string and **store it in your password manager, not in this repo**     | The dump is encrypted with it. Lose it and the backups are unopenable — which is the same as having none. |
 
 Then run the workflow once by hand (Actions → Backup → Run workflow) and confirm it goes green. It
 verifies the dump is not empty and that the encrypted file decrypts with that passphrase, because a
@@ -135,28 +138,19 @@ Vercel will build and deploy automatically. The build takes ~60-90s.
 - Preview deployments: every PR gets its own `appealdeck-git-<branch>-<user>.vercel.app` URL.
 - Production: pushes to `master` deploy to your production domain.
 
-## 8. Vercel Hobby constraints (this is what makes "free tier" tricky)
+## 8. Vercel limits that matter to this app
 
-Vercel Hobby has hard limits we already respect in `vercel.json` and the codebase:
+Corrected 23 Sep 2026. The previous version of this table said Hobby had no cron jobs and that "we don't have any", and that uploads went "directly from the browser to Supabase Storage, NOT through Vercel". Neither was true. `vercel.json` schedules two daily jobs, and the vault is in the seller's browser (IndexedDB), with no storage upload at all. The one path that does send a file to Vercel is the document check, `/api/read-document`.
 
-| Limit                    | Hobby value                                  | Where we set it                         | Why                                                                                                                                       |
-| ------------------------ | -------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Function max duration    | 10s default; 30s on Hobby with `maxDuration` | `vercel.json` `functions.*.maxDuration` | Paddle webhook can take up to 10s for crypto signature + Supabase roundtrip; read-document has its own Gemini timeout in code |
-| Serverless function size | 50MB (unzipped)                              | not at risk                             | Our routes are <5MB each                                                                                                                  |
-| Build timeout            | 45 min                                       | not at risk                             | Builds take ~90s                                                                                                                          |
-| Edge function size       | 1MB                                          | not using Edge                          | All functions are Node.js                                                                                                                 |
-| Concurrent executions    | 1000                                         | not at risk                             | We have 1 customer                                                                                                                        |
-| Bandwidth                | 100GB/mo                                     | not at risk                             | We have 1 customer                                                                                                                        |
-| Serverless invocations   | 1M/mo                                        | not at risk                             | We have 1 customer                                                                                                                        |
-| Preview deployments      | unlimited                                    | not at risk                             | Hobby is generous here                                                                                                                    |
-| Cron jobs                | 0 (Hobby has none)                           | not used                                | We don't have any                                                                                                                         |
-| Team members             | 1 (Hobby)                                    | founder-only                            | OK at this stage                                                                                                                          |
+| Limit                 | What applies                                                                  | Where it is handled                                                                                              |
+| --------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Commercial use        | Hobby is non-commercial and personal only. Use **Pro** before the first sale. | Founder action: plan choice                                                                                      |
+| Request body size     | 4.5 MB per function request                                                   | `src/lib/documentChecks/limits.ts`: files over 3 MB are refused in the browser with a reason, before any request |
+| Function max duration | 300 s default on both plans (Vercel docs, 14 Sep 2026)                        | `vercel.json` `functions`; read-document has its own Gemini timeout                                              |
+| Cron jobs             | Two daily jobs: purchase emails at 03:00 UTC, case reminders at 08:00 UTC     | `vercel.json` `crons`; both need `CRON_SECRET`                                                                   |
+| Runtime               | Node.js for every route; no edge functions                                    | default for `route.ts`                                                                                           |
 
-**What we are NOT doing on Vercel Hobby:**
-
-- No background workers / cron / long-running tasks (we have none).
-- No file uploads > 4.5MB (Vercel body limit on Hobby). The vault uploads go directly from the browser to Supabase Storage, NOT through Vercel — so this doesn't apply.
-- No edge functions (we use Node.js runtime, all `route.ts` files default to Node).
+`npm run lint:reachability` fails if a `vercel.json` `functions` entry or cron names a route that no longer exists. A `functions` pattern that matches no function can fail the deployment, and one did exist here: a duration for `extract-field`, deleted on 22 Sep 2026, was still configured until 23 Sep.
 
 ## 9. Post-deploy verification (founder action)
 
@@ -165,23 +159,21 @@ After first deployment:
 1. Visit `https://appealdeck.com/` — should show marketing home.
 2. Visit `https://appealdeck.com/decode` — paste a real Amazon notice, click decode, should return classification.
 3. Visit `https://appealdeck.com/login` — sign in with dev account.
-4. Visit `https://app.appealdeck.com/case` — should show Guided Interview (license-gated; dev user has the dev license row).
-5. In the interview, type into a `short_text` field, click "Suggest fields (AI)" — should return `ok:true` with real Gemini suggestions.
-6. Open browser DevTools → Network → attach a document in the case workspace to trigger /api/read-document. Response should be 200, not 503/429 (Upstash breaker is engaged but the spend cap is 240/day).
+4. Visit `https://appealdeck.com/case` — should show the case workspace. (The guided interview and its "Suggest fields (AI)" button were retired on 22 Sep 2026, and the app runs on a single host, so there is no `app.` subdomain to check.)
+5. In the workspace, confirm a request whose notice gives a dated deadline (for example "submit your appeal by 1 October 2026"), then open the dashboard: that date should appear in the card at the top, along with any follow-up date you set.
+6. Open browser DevTools → Network → attach a document under 3 MB in the case workspace to trigger /api/read-document. Response should be 200, not 503/429 (Upstash breaker is engaged but the spend cap is 240/day). A file over 3 MB should be refused in the page with its size and the limit, and make no request.
 7. Paddle webhook test: in Paddle dashboard → Notifications → test event → `transaction.completed` with a sandbox customer email. Check `licenses` table in Supabase for the new row.
 8. Run Lighthouse on `https://appealdeck.com/`: perf ≥ 0.9, a11y/bp/seo ≥ 0.95 (CI enforces this on every PR).
 
-If all 8 pass, you're live on Vercel free tier.
+If all 8 pass, you're live.
 
-## 10. When to leave Vercel Hobby
+## 10. Which Vercel plan
 
-Migrate to Vercel Pro ($20/mo per member) when ANY of these become true:
+**Pro ($20 per developer seat per month, checked 23 Sep 2026), from before the first paying customer.** The previous version of this section said Vercel's terms "permit it technically" to run a paid product on Hobby. They do not: Vercel's Hobby page states the plan is for non-commercial, personal use only. Hobby is fine for a private preview nobody pays for; the switch has to happen before checkout is live, not after the first sale.
 
-- 1 paying customer in production AND you need > 100GB bandwidth / > 1M invocations / cron jobs.
-- You need team collaboration (Pro allows 5 seats).
-- You need commercial ToS coverage (Hobby is fine for non-commercial; for paid SaaS, Pro is the correct tier even if you don't need the features).
+## 10a. Framework version (planned work, not yet done)
 
-**Do not run a paid SaaS on Vercel Hobby in production.** Vercel's ToS permits it technically, but the lack of commercial-grade SLA + no team seats + no audit log makes it an operational risk for any business that takes real money. Pro is the correct tier once you have ≥ 1 paying customer.
+The app runs Next.js 14 (`package.json`: `^14.2.5`). Next.js's support policy (checked 23 Sep 2026) lists 14.x as unsupported: 16.x is Active LTS and 15.x is Maintenance LTS, receiving only critical fixes and security updates. No specific vulnerability is known here, but an unsupported framework stops receiving security patches. Upgrading is a pass of its own, because 15 changes how request data is read in server code and moves to React 19. Plan it before launch, not as a side change.
 
 ## 11. Rollback
 

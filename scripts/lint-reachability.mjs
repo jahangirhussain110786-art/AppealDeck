@@ -25,7 +25,7 @@
  * `EvidenceSlotPanel`, whose only live mention was inside another file's comment explaining why it
  * had been superseded, and `SignOutButton`, orphaned when sign-out moved into the profile menu.
  */
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
@@ -182,11 +182,29 @@ for (const file of allFiles) {
 
 // --- API routes -------------------------------------------------------------------------------
 let cronPaths = new Set();
+let vercel = null;
 try {
-  const vercel = JSON.parse(readFileSync(path.join(ROOT, "vercel.json"), "utf8"));
+  vercel = JSON.parse(readFileSync(path.join(ROOT, "vercel.json"), "utf8"));
   cronPaths = new Set((vercel.crons ?? []).map((c) => c.path));
 } catch {
   // No vercel.json: every job route will report as unscheduled, which is the honest answer.
+}
+
+/*
+  The other direction, added 23 Sep 2026: configuration pointing at code that is gone.
+  `vercel.json` still set a duration for `extract-field`, deleted on 22 Sep, and a `functions`
+  pattern that matches no function can fail the deployment outright. Same for a cron whose
+  route no longer exists — it would call a 404 every day and look scheduled.
+*/
+for (const pattern of Object.keys(vercel?.functions ?? {})) {
+  if (!existsSync(path.join(ROOT, pattern))) {
+    failures.push(`vercel.json functions["${pattern}"] — no such file. Remove the entry.`);
+  }
+}
+for (const cron of cronPaths) {
+  if (!existsSync(path.join(ROOT, "src", "app", ...cron.split("/").filter(Boolean), "route.ts"))) {
+    failures.push(`vercel.json crons "${cron}" — no such route. Remove the schedule.`);
+  }
 }
 
 for (const file of allFiles) {

@@ -110,7 +110,7 @@ const NEGATION =
  * the form. That is a good outcome; confidently telling them the wrong thing is not.
  */
 const HISTORICAL =
-  /\b(previous(?:ly)?|earlier|already|prior)\b|\b(?:was|were|have been|has been) (?:received|reviewed|submitted|provided)\b|\byou (?:submitted|sent|provided)\b/i;
+  /\b(previous(?:ly)?|earlier|already|prior)\b|\b(?:was|were|have been|has been|had been) (?:received|reviewed|submitted|provided|requested)\b|\byou (?:submitted|sent|provided)\b|\bthank(?:s| you) for\b|\bwe (?:have )?received\b/i;
 
 /**
  * Terms that are a request on their own when they appear as a form-field label, but not when they
@@ -128,6 +128,28 @@ const POA_TERM = /\bplan of action\b|\bPOA\b|\broot cause\b|\bcorrective action/
  */
 const REQUEST_VERB_SOURCE =
   "(?:provid(?:e|es|ing|ed)|submit(?:s|ting|ted)?|send(?:s|ing)?|upload(?:s|ing|ed)?|includ(?:e|es|ing|ed)|attach(?:es|ing|ed)?|furnish(?:es|ing|ed)?|suppl(?:y|ies|ying)|request(?:s|ed|ing)?)";
+
+/**
+ * A present request inside a sentence that also mentions the past: "we previously requested
+ * invoices — please provide them now". Only a request verb introduced by "please" or by "you
+ * must / need to / should" counts, so "thank you for providing your invoices; please allow 48 hours"
+ * stays in the past.
+ */
+const PRESENT_ASK = new RegExp(
+  `\\bplease\\s+(?:re-?)?${REQUEST_VERB_SOURCE}\\b|\\byou (?:must|need to|should) (?:now )?(?:re-?)?${REQUEST_VERB_SOURCE}\\b`,
+  "i",
+);
+
+/**
+ * Whether a sentence reports what already happened rather than asking for something. Shared with
+ * `proposedRequirements`, so a request the notice describes as past is past in both places. Before
+ * 23 Sep 2026 "invoices were requested earlier" raised a live invoice requirement there while this
+ * module ignored the same sentence; and "thank you for providing your invoices" was read here as a
+ * request to send documents.
+ */
+export function describesThePast(clause: string): boolean {
+  return HISTORICAL.test(clause) && !PRESENT_ASK.test(clause);
+}
 
 /** In prose, the plan-of-action terms only count when something actually asks for them. */
 const POA_REQUESTED = new RegExp(
@@ -158,7 +180,7 @@ const PATTERNS: ReadonlyArray<readonly [Exclude<ResponseType, "UNDETERMINED">, R
   ],
   [
     "NO_ACTION_REQUESTED",
-    /no (?:further |additional )?(?:action|information|documents?|response)[^\n]{0,30}(?:is |are |)(?:required|requested|needed)|(?:currently|still|remains?) under review|we will (?:contact|update|notify) you/i,
+    /no (?:further |additional )?(?:action|information|documents?|documentation|response|submission)[^\n]{0,30}(?:is |are |)(?:required|requested|needed)|(?:currently|still|remains?) under review|we will (?:contact|update|notify) you|\b(?:has|have) been reinstated\b|\b(?:appeal|plan of action) (?:has been|was) (?:accepted|approved)\b/i,
   ],
 ];
 
@@ -214,8 +236,18 @@ export function determineResponseType(raw: string, formInstructions = ""): Respo
   const matches: ResponseTypeMatch[] = [];
   for (const source of sources) {
     for (const clause of splitClauses(source.text)) {
-      if (NEGATION.test(clause.text) || HISTORICAL.test(clause.text)) continue;
+      const past = describesThePast(clause.text);
+      const negated = NEGATION.test(clause.text);
       for (const [type, basePattern] of PATTERNS) {
+        /*
+          Both filters stop a *request* from counting when it is negated or already in the past. The
+          no-response reading is not a request: it is made of negation ("No additional information
+          is required") and often follows a mention of the past ("we previously requested invoices,
+          but no further submission is needed"). Applying the filters to it too meant
+          NO_ACTION_REQUESTED could almost never be chosen — until 23 Sep 2026 both sentences came
+          back UNDETERMINED. It stays last in PREFERENCE, so a real request elsewhere still wins.
+        */
+        if (type !== "NO_ACTION_REQUESTED" && (past || negated)) continue;
         const pattern = source.terse && type === "PLAN_OF_ACTION" ? POA_TERM : basePattern;
         const found = pattern.exec(clause.text);
         if (!found) continue;

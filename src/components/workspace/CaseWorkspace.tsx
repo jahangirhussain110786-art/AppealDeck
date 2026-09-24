@@ -58,10 +58,13 @@ import {
   newWorkspace,
   proposedRequirements,
   requirementsAfterKindChange,
+  requirementsAfterNoticeChange,
+  requirementKey,
   requirementEvidenceKind,
   sourceQuoteResolves,
   SELLER_SOURCE_NOTE,
   PROTOCOL_LABELS,
+  questionnaireQuestions,
   routeWorkspace,
   workspaceCanCompose,
   workspaceGaps,
@@ -76,12 +79,13 @@ import { loadCaseFile, saveCaseFile, loadCaseLog, saveCaseLog } from "@/lib/case
 import { WorkspaceSchema } from "@/lib/workspaceSchema";
 import { proposedIssues, totalAttempts } from "@/core/workspace";
 import { buildCaseExport } from "@/lib/workspaceExport";
+import { buildSubmission, submissionHistoryMessage } from "@/lib/submissionRecord";
 import { buildEvidenceManifest, manifestFilename } from "@/lib/evidencePack";
 import {
   evidenceNoteKey,
   HISTORY_REPLY_KEY,
   REQUEST_DRAFT_KEYS,
-  RESPONSE_DRAFT_KEYS,
+  responseDraftKeys,
   withDraftValue,
   withoutDraftKeys,
 } from "@/lib/workspaceDraft";
@@ -182,6 +186,20 @@ function WorkspaceInner({
   const pathname = usePathname();
   const [file, setFile] = useState<CaseFile | null>(null);
   const fileRef = useRef<CaseFile | null>(null);
+  /*
+    `gated_screen_shown`: defined and sent from nowhere since the interview that fired it was
+    retired, so how often the product declines a case was unmeasured. Once per case per visit, with
+    no properties — which kind of serious allegation it was is not something analytics needs.
+  */
+  const gatedCountedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!file?.workspace) return;
+    const gatedCase =
+      isSeverityGated(file.kind) || routeWorkspace(file.workspace).protocol === "specialist";
+    if (!gatedCase || gatedCountedFor.current === file.id) return;
+    gatedCountedFor.current = file.id;
+    trackFunnelEvent(FUNNEL_EVENTS.gatedScreenShown);
+  }, [file]);
   const persisted = useRef<string>("null");
   const saving = useRef(false);
   const uploading = useRef(false);
@@ -747,6 +765,9 @@ function WorkspaceInner({
       if (!response.ok) throw new Error(data.error ?? "Could not prepare the response. Try again.");
       setResult(data as WorkspaceResponse);
       setPurchase(false);
+      // Defined in analytics.ts and sent from nowhere until 23 Sep 2026, so the funnel could not
+      // tell a seller who bought a Pass and prepared a response from one who stopped.
+      trackFunnelEvent(FUNNEL_EVENTS.poaGenerated);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Response preparation failed.");
     } finally {
@@ -755,43 +776,37 @@ function WorkspaceInner({
     }
   };
 
-  const recordSubmission = async (receipt: string) => {
-    if (
-      !result ||
-      result.draft.mode.mode !== "full-draft" ||
-      !result.critique.passed ||
-      !fileRef.current?.workspace
-    )
-      return false;
+  /*
+    Records what the seller says they sent. Until 23 Sep 2026 this refused unless the prepared
+    response passed every check, and always saved the prepared text — so a seller who edited it in
+    Seller Central, or sent it with a warning open, could not record the attempt at all, or recorded
+    words they never sent. The rules now live in `buildSubmission`, where they are tested.
+  */
+  const recordSubmission = async ({
+    receipt,
+    sentText,
+  }: {
+    receipt: string;
+    sentText?: string;
+  }) => {
+    if (!result || !fileRef.current?.workspace) return false;
+    // Current evidence, not the evidence as it stood when the response was prepared.
     const fresh = await withCaseEvidence(vault, fileRef.current);
-    if (workspaceGaps(fresh.workspace!).length) {
-      setError("Review the case again: an evidence requirement is no longer satisfied.");
-      setResult(null);
-      return false;
-    }
-    const text = result.rendered;
+    const submission = buildSubmission({
+      workspace: fresh.workspace!,
+      prepared: {
+        rendered: result.rendered,
+        mode: result.draft.mode.mode,
+        findings: result.critique.findings,
+      },
+      sentText,
+      receipt,
+      id: crypto.randomUUID(),
+      at: new Date().toISOString(),
+    });
     const ok = await commit(
-      (w) => ({
-        ...w,
-        submissions: [
-          ...w.submissions,
-          {
-            id: crypto.randomUUID(),
-            at: new Date().toISOString(),
-            revision: w.revision,
-            protocol: w.protocol,
-            text,
-            receipt,
-            attachments: w.requirements.map((r) => ({
-              recordId: r.recordId!,
-              filename: r.filename!,
-              contentHash: r.contentHash!,
-              page: r.page!,
-            })),
-          },
-        ],
-      }),
-      "Recorded the seller-confirmed submission and selected document versions.",
+      (w) => ({ ...w, submissions: [...w.submissions, submission] }),
+      submissionHistoryMessage(submission),
       "SUBMITTED",
     );
     if (ok) setTab("history");
@@ -888,14 +903,15 @@ function WorkspaceInner({
           (updated.confirmed && updated.protocol === "specialist"),
         requirementsConfirmed: false,
         // B-05: the kind unions the evidence matrix in, so a record this violation family nearly
-        // always needs is raised even when the notice never spells it out. A kind that changed on
-        // a re-confirmation is applied additively, exactly as the seller's own correction is — a
-        // reviewed record is never removed because we read the notice again.
-        requirements: !old.requirements.length
-          ? proposedRequirements(updated, kind)
-          : kindChanged
-            ? requirementsAfterKindChange(old.requirements, kind)
-            : old.requirements,
+        // always needs is raised even when the notice never spells it out. Rebuilt from the
+        // corrected text on every confirmation, not only the first, and merged so a record the
+        // seller has worked on is never removed because we read the notice again — see
+        // `requirementsAfterNoticeChange`. A changed kind's records arrive through the same merge.
+        requirements: requirementsAfterNoticeChange(
+          old.requirements,
+          proposedRequirements(updated, kind),
+          old.dismissed,
+        ),
         // #86: recomputed on every route confirmation, because the notice text may have changed
         // and a second issue must not survive from a notice the seller has since replaced.
         issues: proposedIssues(updated),
@@ -1072,7 +1088,11 @@ function WorkspaceInner({
                     commit(
                       (old) => ({
                         ...old,
-                        requirements: requirementsAfterKindChange(old.requirements, next),
+                        requirements: requirementsAfterKindChange(
+                          old.requirements,
+                          next,
+                          old.dismissed,
+                        ),
                         requirementsConfirmed: false,
                       }),
                       C.kindOverride.applied.replace("{kind}", APP.violationKinds[next]),
@@ -1359,6 +1379,16 @@ function WorkspaceInner({
                         ...old,
                         requirementsConfirmed: false,
                         requirements: old.requirements.filter((item) => item.id !== r.id),
+                        // Remembered, so reading the notice again does not raise it a second time.
+                        dismissed: [
+                          ...(old.dismissed ?? []).filter((d) => d.key !== requirementKey(r)),
+                          {
+                            key: requirementKey(r),
+                            label: r.label,
+                            reason,
+                            at: new Date().toISOString(),
+                          },
+                        ],
                       }),
                       `Removed ${r.label} from the current plan: ${reason}`,
                     )
@@ -1400,11 +1430,14 @@ function WorkspaceInner({
                   onDraftChange={setDraftField}
                   signInHref={signInHref}
                   onSave={(updated) => {
-                    cancelDraftFields(RESPONSE_DRAFT_KEYS);
+                    // Includes one key per questionnaire answer, so a saved answer's draft is
+                    // cleared with the rest instead of being shown again over the saved text.
+                    const keys = responseDraftKeys(questionnaireQuestions(updated).length);
+                    cancelDraftFields(keys);
                     return commit(
                       () => ({
                         ...updated,
-                        draft: withoutDraftKeys(updated.draft, RESPONSE_DRAFT_KEYS),
+                        draft: withoutDraftKeys(updated.draft, keys),
                       }),
                       "Saved the seller’s response facts.",
                     );
@@ -1641,7 +1674,12 @@ function WorkspaceInner({
                     <Button
                       variant="outline"
                       onClick={() =>
-                        downloadText(buildCaseExport(file, w), "appealdeck-case-notes.txt")
+                        void (async () => {
+                          // The log holds the outcome and follow-up dates. A read failure still
+                          // exports the case, and the outcome section says it could not be read.
+                          const log = await loadCaseLog(vault, file.id).catch(() => undefined);
+                          downloadText(buildCaseExport(file, w, log), "appealdeck-case-notes.txt");
+                        })()
                       }
                     >
                       Download case notes

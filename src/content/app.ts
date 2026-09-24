@@ -208,6 +208,7 @@ export const APP = {
      */
     clock: {
       titleOverdue: "Past your own follow-up date",
+      titleNoticeDatePassed: "Past the date in your notice",
       titleDue: "Due today",
       titleUpcoming: "Coming up",
       titleClear: "Nothing is due",
@@ -217,7 +218,8 @@ export const APP = {
       /** Short row-level marker. The header already carries the full phrase, so repeating it on
        * every row reads as a stutter rather than as emphasis. */
       newBadgeShort: "New",
-      sinceNote: "Based on dates you set. Amazon does not notify us about your case.",
+      sinceNote:
+        "Based on dates you set and dates stated in your notice. Amazon does not notify us about your case.",
       waitingTitle: "Waiting on someone else",
       waitingDescription:
         "Record who you are waiting on, so a stalled case reads as waiting rather than unfinished.",
@@ -237,6 +239,9 @@ export const APP = {
       emailEnable: "Email me for this case",
       emailDisable: "Turn off email for this case",
       emailSignedOut: "Sign in to get an email when a date arrives.",
+      emailNeedsDate: "Set a follow-up date above to get an email when it arrives.",
+      reminderLabel: "Your follow-up reminder date",
+      reminderHint: "Shown at the top of your dashboard when it arrives.",
       emailFailed: "Could not change email reminders. Nothing else has changed.",
     },
     replyCard: {

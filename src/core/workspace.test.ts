@@ -10,6 +10,8 @@ import {
   recordPriorAttempt,
   removePriorAttempt,
   requirementsAfterKindChange,
+  requirementsAfterNoticeChange,
+  requirementKey,
   routeWorkspace,
   sourceQuoteResolves,
   requestTextForRevision,
@@ -898,5 +900,117 @@ describe("reply delta matches on identity, not display text", () => {
     expect(item.requirement.label).toBe("Acme invoice (scan 3)");
     expect(item.requirement.recordId).toBe("file-1");
     expect(item.requirement.contentHash).toBe("hash-1");
+  });
+});
+
+/**
+ * 23 Sep 2026. Confirming the request rebuilt the issues every time but the records only when there
+ * were none, so a corrected notice kept the old list.
+ */
+describe("requirementsAfterNoticeChange", () => {
+  const fresh = (notice: string) =>
+    proposedRequirements({ notice, formInstructions: "", revision: 1 });
+  const invoiceNotice = "Please provide invoices from your supplier.";
+  const loaNotice = "Please provide a letter of authorization from the brand owner.";
+
+  it("adds a record the corrected notice asks for", () => {
+    const before = fresh(invoiceNotice);
+    const after = requirementsAfterNoticeChange(before, fresh(`${invoiceNotice} ${loaNotice}`));
+    expect(after.map((r) => r.label)).toEqual(
+      expect.arrayContaining([before[0]!.label, fresh(loaNotice)[0]!.label]),
+    );
+    expect(after).toHaveLength(2);
+  });
+
+  it("keeps the seller's work on a record the corrected notice still names, with the new quote", () => {
+    const [invoice] = fresh("Provide invoices.");
+    const worked = {
+      ...invoice!,
+      status: "reviewed" as const,
+      recordId: "f1",
+      note: "Covers J-104.",
+    };
+    const [after] = requirementsAfterNoticeChange([worked], fresh(invoiceNotice));
+    expect(after).toMatchObject({ recordId: "f1", note: "Covers J-104.", status: "reviewed" });
+    expect(after!.sourceQuote).toBe(invoiceNotice);
+  });
+
+  it("drops an untouched record the corrected notice no longer names", () => {
+    const after = requirementsAfterNoticeChange(fresh(invoiceNotice), fresh(loaNotice));
+    expect(after.map((r) => r.label)).toEqual([fresh(loaNotice)[0]!.label]);
+  });
+
+  it("keeps a record the seller worked on even when the corrected notice drops it", () => {
+    const [invoice] = fresh(invoiceNotice);
+    const worked = { ...invoice!, note: "I asked the supplier on 20 Sep." };
+    const after = requirementsAfterNoticeChange([worked], fresh(loaNotice));
+    expect(after.map((r) => r.id)).toContain(worked.id);
+  });
+
+  it("turns a record we recommended into Amazon's once the notice names it", () => {
+    const recommended = {
+      ...fresh(invoiceNotice)[0]!,
+      source: "matrix" as const,
+      sourceQuote: "Recommended.",
+      note: "Already have it.",
+    };
+    const [after] = requirementsAfterNoticeChange([recommended], fresh(invoiceNotice));
+    expect(after).toMatchObject({
+      source: "notice",
+      sourceQuote: invoiceNotice,
+      note: "Already have it.",
+    });
+  });
+
+  it("never raises again a record the seller removed", () => {
+    const [invoice] = fresh(invoiceNotice);
+    const dismissed = [
+      {
+        key: requirementKey(invoice!),
+        label: invoice!.label,
+        reason: "Not asked for.",
+        at: "2026-09-23T00:00:00.000Z",
+      },
+    ];
+    expect(requirementsAfterNoticeChange([], fresh(invoiceNotice), dismissed)).toEqual([]);
+    expect(
+      requirementsAfterKindChange([], "INAUTHENTIC", dismissed).map(requirementKey),
+    ).not.toContain(requirementKey(invoice!));
+  });
+
+  it("changes nothing when the notice is confirmed again unchanged", () => {
+    const before = fresh(invoiceNotice);
+    expect(requirementsAfterNoticeChange(before, fresh(invoiceNotice))).toEqual(before);
+  });
+});
+
+/**
+ * 23 Sep 2026 (audit item K). A notice that describes an earlier request, or waives one, created a
+ * live requirement — so a seller was asked to find invoices Amazon had just said it no longer needed.
+ */
+describe("a record the notice waives or describes as past", () => {
+  const labels = (notice: string) =>
+    proposedRequirements({ notice, formInstructions: "", revision: 1 }).map((r) => r.label);
+
+  it.each([
+    "We previously requested invoices, but no further submission is needed.",
+    "Invoices were requested earlier. No further action is required.",
+    "Thank you for providing your invoices.",
+    "Invoices are not needed for this review.",
+  ])("raises nothing for %j", (notice) => {
+    expect(labels(notice)).toEqual([]);
+  });
+
+  it("still raises a record asked for now, after a mention of the past", () => {
+    expect(labels("We previously requested invoices; please provide them now.")).toEqual([
+      "Supplier invoice",
+    ]);
+  });
+
+  it("still raises a record asked for in preference to another", () => {
+    // "rather than" waives the other record, not this one — so it is not treated as negation here.
+    expect(labels("Please provide invoices rather than order confirmations.")).toContain(
+      "Supplier invoice",
+    );
   });
 });

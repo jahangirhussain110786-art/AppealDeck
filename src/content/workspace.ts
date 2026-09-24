@@ -34,6 +34,21 @@ export const WORKSPACE = {
   },
   submitConfirm:
     "I have submitted this exact response and its selected files through the official channel.",
+  questionnaire: {
+    intro:
+      "Answer each question Amazon asked, in its own box. Your answers are laid out under Amazon's own questions, in the same order.",
+    additional: "Anything else Amazon should know (optional)",
+  },
+  submitConfirmChanged:
+    "I have submitted the text above and its selected files through the official channel.",
+  recordTitle: "Record what you sent",
+  whatWasSent: "What you sent",
+  sentAsShown: "I sent the response exactly as prepared here.",
+  sentChanged: "I changed it before sending, or sent different wording.",
+  sentTextLabel: "Paste the text you actually sent",
+  openItemsTitle: "Still open on this case",
+  openItemsNote:
+    "You can still record what you sent. These items are kept with the record so it shows what was unresolved at the time.",
   finalReview:
     "I reviewed the facts, attachment names and page references against the current response form.",
   // A-07 (classified 23 Sep 2026, built from founder feedback 12 Sep 2026): the completeness badge

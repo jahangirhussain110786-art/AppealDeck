@@ -105,6 +105,7 @@ export function WorkspaceSummary({
   file,
   cases,
   log,
+  signedIn,
   onSelect,
   onSaveLog,
   onArchive,
@@ -112,6 +113,7 @@ export function WorkspaceSummary({
   file: CaseFile;
   cases: CaseIndexEntry[];
   log: CaseLog | null;
+  signedIn: boolean;
   onSelect: (id: string) => Promise<void>;
   onSaveLog: (log: CaseLog) => Promise<boolean>;
   onArchive: (id: string, archived: boolean) => Promise<boolean>;
@@ -199,6 +201,7 @@ export function WorkspaceSummary({
         file={file}
         log={log}
         busy={busy}
+        signedIn={signedIn}
         onSaveLog={onSaveLog}
         onArchive={async () => {
           setBusy(true);

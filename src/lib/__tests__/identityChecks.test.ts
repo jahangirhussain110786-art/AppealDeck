@@ -105,6 +105,36 @@ describe("identity image checks", () => {
     }
   });
 
+  /**
+   * 23 Sep 2026 (audit item N). These are rough pixel measurements — a white scanned page is mostly
+   * pure white, and a plain background leaves an even border — so no result may state a conclusion
+   * the measurement cannot support, in either direction. Each one names what it saw and asks the
+   * seller to confirm by eye.
+   */
+  it("never tells the seller the document is readable or correctly framed", () => {
+    const good = analyzeIdentityPixels(makePixels(1200, 900, sharp), 1200, 900);
+    const text = good.checks.map((c) => c.detail).join(" ");
+    for (const claim of [
+      /sharp enough to read/i,
+      /appear to be inside the frame/i,
+      /even enough to read/i,
+      /stay legible/i,
+    ]) {
+      expect(text).not.toMatch(claim);
+    }
+    // Every pass still asks for a look, rather than standing in for one.
+    for (const id of ["sharpness", "framing"] as const) {
+      expect(check(good, id).detail).toMatch(/check|zoom in/i);
+    }
+  });
+
+  it("does not blame glare for a bright image, which may just be a scanned page", () => {
+    const white = new Uint8ClampedArray(400 * 400 * 4).fill(255);
+    const detail = check(analyzeIdentityPixels(white, 400, 400), "exposure").detail;
+    expect(detail).toMatch(/or simply the white page of a scan/);
+    expect(detail).not.toMatch(/usually glare/);
+  });
+
   it("only reports readable when nothing is flagged", () => {
     const bad = analyzeIdentityPixels(makePixels(400, 300, blurry), 400, 300);
     expect(bad.looksReadable).toBe(false);

@@ -9,6 +9,18 @@ export const RESPONSE_DRAFT_KEYS = [
   "response.correctiveActions",
   "response.preventiveMeasures",
 ];
+/** A questionnaire answer's unsaved text, keyed by the question's position on the page. */
+export function answerDraftKey(index: number): string {
+  return `response.answer.${index}`;
+}
+
+/** Every response draft key for a case whose questionnaire has `questionCount` questions. */
+export function responseDraftKeys(questionCount: number): string[] {
+  return [
+    ...RESPONSE_DRAFT_KEYS,
+    ...Array.from({ length: questionCount }, (_, i) => answerDraftKey(i)),
+  ];
+}
 export const HISTORY_REPLY_KEY = "history.replyText";
 export function evidenceNoteKey(requirementId: string): string {
   return `evidence.${requirementId}.note`;

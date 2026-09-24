@@ -129,3 +129,40 @@ describe("determineResponseType", () => {
     }
   });
 });
+
+/**
+ * 23 Sep 2026 (audit item K). The rule that drops negated and past-tense sentences was also applied
+ * to the no-response reading, which is made of negation — so "No additional information is
+ * required" came back UNDETERMINED. And "thank you for providing your invoices" was read as a
+ * request to send documents.
+ */
+describe("when Amazon asks for nothing", () => {
+  it.each([
+    "No additional information is required.",
+    "We previously requested invoices, but no further submission is needed.",
+    "Invoices were requested earlier. No further action is required.",
+    "Thank you for providing your invoices. Your account has been reinstated.",
+    "Your appeal has been accepted. No further action is required.",
+  ])("reads %j as no response requested", (text) => {
+    expect(determineResponseType(text).type).toBe("NO_ACTION_REQUESTED");
+  });
+
+  it("does not read thanks for past documents as a request for documents", () => {
+    const result = determineResponseType("Thank you for providing your invoices.");
+    expect(result.type).not.toBe("SUPPORTING_DOCUMENTS");
+  });
+
+  it("still prefers a real request over boilerplate saying nothing else is needed", () => {
+    const result = determineResponseType(
+      "Please provide invoices for the listed ASINs. No further action is required on your other listings.",
+    );
+    expect(result.type).toBe("SUPPORTING_DOCUMENTS");
+    expect(result.reason).toMatch(/check the response page/);
+  });
+
+  it("keeps a present request that follows a mention of the past", () => {
+    expect(
+      determineResponseType("We previously requested invoices; please provide them now.").type,
+    ).not.toBe("NO_ACTION_REQUESTED");
+  });
+});

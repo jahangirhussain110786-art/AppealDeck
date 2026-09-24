@@ -13,11 +13,14 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CopyButton } from "@/components/CopyButton";
 import { ComposeGate } from "@/components/ComposeGate";
 import {
+  answerFor,
+  questionnaireQuestions,
   totalAttempts,
   workspaceCanCompose,
   workspaceGaps,
   type Workspace,
 } from "@/core/workspace";
+import { answerDraftKey } from "@/lib/workspaceDraft";
 import type { CaseFile } from "@/core/caseFile";
 import type { Vault } from "@/core/vault/vault";
 import type { CriticResult, PoaDraft } from "@/core/composer";
@@ -26,6 +29,7 @@ import { IssuesRaised } from "./IssuesRaised";
 import { assessNovelty, shouldWarnBeforeSubmit } from "@/core/submissionNovelty";
 import { computeDraftStrength, DRAFT_STRENGTH_TONE } from "@/lib/draftStrength";
 import { formatDate } from "@/lib/format";
+import { openItemsAt } from "@/lib/submissionRecord";
 import { WORKSPACE as C } from "@/content/workspace";
 
 export type WorkspaceResponse = { rendered: string; draft: PoaDraft; critique: CriticResult };
@@ -54,7 +58,7 @@ export function ResponseReview({
   signInHref: string;
   onSave: (w: Workspace) => Promise<boolean>;
   onGenerate: () => void;
-  onSubmit: (receipt: string) => Promise<boolean>;
+  onSubmit: (sent: { receipt: string; sentText?: string }) => Promise<boolean>;
 }) {
   const w = file.workspace;
   const [explanation, setExplanation] = useState(draft?.["response.explanation"] ?? w.explanation);
@@ -65,9 +69,18 @@ export function ResponseReview({
     draft?.["response.preventiveMeasures"] ?? w.preventiveMeasures,
   );
   const [attested, setAttested] = useState(Boolean(w.correctiveActionsAttested));
+  const questions = questionnaireQuestions(w);
+  // Only answers edited here are held in state. The rest are read from the draft or the saved
+  // case, so a re-pasted form with different questions never shows a stale answer.
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const answerValue = (q: string, i: number) =>
+    answers[q] ?? draft?.[answerDraftKey(i)] ?? answerFor(w, q);
+  const answersDirty = questions.some((q, i) => answerValue(q, i) !== answerFor(w, q));
   const [reviewed, setReviewed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [receipt, setReceipt] = useState("");
+  const [changedBeforeSending, setChangedBeforeSending] = useState(false);
+  const [sentText, setSentText] = useState("");
   // AA-42: compares the rendered response against everything already recorded on this case.
   const novelty = React.useMemo(
     () => (result ? assessNovelty(result.rendered, w.submissions) : null),
@@ -77,14 +90,28 @@ export function ResponseReview({
     setReviewed(false);
     setSubmitted(false);
     setReceipt("");
+    setChangedBeforeSending(false);
+    setSentText("");
   }, [result]);
+  const openItems = React.useMemo(
+    () =>
+      result
+        ? openItemsAt(w, {
+            rendered: result.rendered,
+            mode: result.draft.mode.mode,
+            findings: result.critique.findings,
+          })
+        : [],
+    [result, w],
+  );
   const dirty =
     explanation !== w.explanation ||
     correctiveActions !== w.correctiveActions ||
     preventiveMeasures !== w.preventiveMeasures ||
     // A-01: ticking the confirmation is itself a change worth saving. Without this the Save button
     // stays disabled and the attestation never reaches the vault.
-    attested !== Boolean(w.correctiveActionsAttested);
+    attested !== Boolean(w.correctiveActionsAttested) ||
+    answersDirty;
   const gaps = workspaceGaps(w);
   const supported = workspaceCanCompose(w);
   return (
@@ -107,9 +134,39 @@ export function ResponseReview({
           </p>
         </CardHeader>
         <CardContent className="space-y-4 pt-5">
+          {/*
+            Audit item L (23 Sep 2026): a questionnaire is answered question by question, in
+            Amazon's order and under Amazon's wording — not as one essay under one heading.
+          */}
+          {questions.length > 0 && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">{C.questionnaire.intro}</p>
+              {questions.map((q, i) => (
+                <div key={q} className="space-y-2">
+                  <Label htmlFor={`workspace-answer-${i}`}>{q}</Label>
+                  <Textarea
+                    id={`workspace-answer-${i}`}
+                    rows={3}
+                    maxLength={12000}
+                    value={answerValue(q, i)}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setAnswers((a) => ({ ...a, [q]: next }));
+                      onDraftChange(answerDraftKey(i), next === answerFor(w, q) ? undefined : next);
+                      setReviewed(false);
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="workspace-explanation">
-              {w.protocol === "operational" ? "Root cause" : "Your factual explanation"}
+              {w.protocol === "operational"
+                ? "Root cause"
+                : questions.length > 0
+                  ? C.questionnaire.additional
+                  : "Your factual explanation"}
             </Label>
             <Textarea
               id="workspace-explanation"
@@ -209,6 +266,14 @@ export function ResponseReview({
                 explanation,
                 correctiveActions,
                 preventiveMeasures,
+                // Answers to questions no longer on the form are kept, not discarded: a re-pasted
+                // form that words one question differently should not cost the seller their work.
+                answers: [
+                  ...(w.answers ?? []).filter((a) => !questions.includes(a.question)),
+                  ...questions
+                    .map((q, i) => ({ question: q, answer: answerValue(q, i) }))
+                    .filter((a) => a.answer.trim()),
+                ],
                 correctiveActionsAttested: attested
                   ? (w.correctiveActionsAttested ?? { at: new Date().toISOString() })
                   : undefined,
@@ -385,38 +450,99 @@ export function ResponseReview({
                 </AlertDescription>
               </Alert>
             )}
-            {result.draft.mode.mode === "full-draft" &&
-              result.critique.passed &&
-              gaps.length === 0 && (
-                <div className="space-y-4 border-t border-border pt-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="workspace-receipt">
-                      Submission reference or receipt note (optional)
-                    </Label>
-                    <Input
-                      id="workspace-receipt"
-                      value={receipt}
-                      maxLength={2000}
-                      onChange={(e) => setReceipt(e.target.value)}
-                    />
-                  </div>
-                  <label className="flex items-start gap-3 text-sm">
-                    <input
-                      className="mt-1 h-4 w-4 accent-primary"
-                      type="checkbox"
-                      checked={submitted}
-                      onChange={(e) => setSubmitted(e.target.checked)}
-                    />
-                    {C.submitConfirm}
-                  </label>
-                  <Button
-                    disabled={busy || !reviewed || !submitted}
-                    onClick={() => void onSubmit(receipt)}
-                  >
-                    Record submission
-                  </Button>
+            {/*
+              Recording is open whatever state the draft is in (audit item R, 23 Sep 2026). What
+              the seller sent is a fact about their case; refusing to record it made the attempt
+              count and the duplicate guard wrong from then on. Open items are shown here and kept
+              with the record — never as approval.
+            */}
+            <div className="space-y-4 border-t border-border pt-5">
+              <p className="text-sm font-medium text-foreground">{C.recordTitle}</p>
+              {openItems.length > 0 && (
+                <Alert variant="warning">
+                  <AlertTitle>{C.openItemsTitle}</AlertTitle>
+                  <AlertDescription>
+                    <ul className="mt-1 list-disc space-y-1 pl-5">
+                      {openItems.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                    <span className="mt-2 block">{C.openItemsNote}</span>
+                  </AlertDescription>
+                </Alert>
+              )}
+              <fieldset className="space-y-2 text-sm">
+                <legend className="sr-only">{C.whatWasSent}</legend>
+                <label className="flex items-start gap-3">
+                  <input
+                    className="mt-1 h-4 w-4 accent-primary"
+                    type="radio"
+                    name="workspace-sent-as"
+                    checked={!changedBeforeSending}
+                    onChange={() => setChangedBeforeSending(false)}
+                  />
+                  {C.sentAsShown}
+                </label>
+                <label className="flex items-start gap-3">
+                  <input
+                    className="mt-1 h-4 w-4 accent-primary"
+                    type="radio"
+                    name="workspace-sent-as"
+                    checked={changedBeforeSending}
+                    onChange={() => setChangedBeforeSending(true)}
+                  />
+                  {C.sentChanged}
+                </label>
+              </fieldset>
+              {changedBeforeSending && (
+                <div className="space-y-2">
+                  <Label htmlFor="workspace-sent-text">{C.sentTextLabel}</Label>
+                  <Textarea
+                    id="workspace-sent-text"
+                    value={sentText}
+                    maxLength={60000}
+                    rows={8}
+                    onChange={(e) => setSentText(e.target.value)}
+                  />
                 </div>
               )}
+              <div className="space-y-2">
+                <Label htmlFor="workspace-receipt">
+                  Submission reference or receipt note (optional)
+                </Label>
+                <Input
+                  id="workspace-receipt"
+                  value={receipt}
+                  maxLength={2000}
+                  onChange={(e) => setReceipt(e.target.value)}
+                />
+              </div>
+              <label className="flex items-start gap-3 text-sm">
+                <input
+                  className="mt-1 h-4 w-4 accent-primary"
+                  type="checkbox"
+                  checked={submitted}
+                  onChange={(e) => setSubmitted(e.target.checked)}
+                />
+                {changedBeforeSending ? C.submitConfirmChanged : C.submitConfirm}
+              </label>
+              <Button
+                disabled={
+                  busy ||
+                  !reviewed ||
+                  !submitted ||
+                  (changedBeforeSending && sentText.trim().length === 0)
+                }
+                onClick={() =>
+                  void onSubmit({
+                    receipt,
+                    sentText: changedBeforeSending ? sentText : undefined,
+                  })
+                }
+              >
+                Record submission
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

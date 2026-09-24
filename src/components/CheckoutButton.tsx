@@ -16,7 +16,7 @@ declare global {
     Paddle?: {
       Initialize: (opts: {
         token: string;
-        eventCallback?: (event: { name: string }) => void;
+        eventCallback?: (event: { name: string; data?: { transaction_id?: string } }) => void;
       }) => void;
       Environment: { set: (env: "sandbox" | "production") => void };
       Checkout: {
@@ -29,6 +29,26 @@ declare global {
       };
     };
   }
+}
+
+/**
+ * Transactions already counted on this page. Module-level, so a remounted button or a second
+ * Paddle callback for the same transaction is not counted twice.
+ */
+const countedTransactions = new Set<string>();
+
+/**
+ * `pass_purchased`, sent from here since 23 Sep 2026. It was sent by `PurchasePanel` on /pricing
+ * only, so a Pass bought through the compose gate — the path a seller in the middle of a case
+ * takes — was never counted, and a retried completion on /pricing could count one twice. This is
+ * the one place both paths pass through. Revenue itself is reported from the Paddle webhook; this
+ * event is only the funnel step.
+ */
+function countPurchaseOnce(transactionId: string | undefined): void {
+  const key = transactionId ?? "unidentified";
+  if (countedTransactions.has(key)) return;
+  countedTransactions.add(key);
+  trackFunnelEvent(FUNNEL_EVENTS.passPurchased);
 }
 
 export function CheckoutButton({
@@ -72,6 +92,7 @@ export function CheckoutButton({
         token: tk,
         eventCallback: (event) => {
           if (event.name === "checkout.completed") {
+            countPurchaseOnce(event.data?.transaction_id);
             completedRef.current?.();
           }
         },

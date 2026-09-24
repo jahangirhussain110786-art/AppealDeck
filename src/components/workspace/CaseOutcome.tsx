@@ -1,6 +1,12 @@
 "use client";
 import { useState } from "react";
-import { Archive, CalendarClock, ClipboardCheck } from "lucide-react";
+import { Archive, ClipboardCheck } from "lucide-react";
+import { ReminderControl } from "@/components/ReminderControl";
+import { OutcomeShareCard } from "@/components/OutcomeShareCard";
+import { workspaceOutcomeRecord } from "@/lib/submissionRecord";
+import { syncCaseReminder } from "@/lib/reminderSync";
+import { toast } from "sonner";
+import { APP } from "@/content/app";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,12 +61,14 @@ export function CaseOutcome({
   file,
   log,
   busy,
+  signedIn,
   onSaveLog,
   onArchive,
 }: {
   file: CaseFile;
   log: CaseLog | null;
   busy: boolean;
+  signedIn: boolean;
   onSaveLog: (log: CaseLog) => Promise<boolean>;
   onArchive: () => Promise<boolean>;
 }) {
@@ -69,6 +77,7 @@ export function CaseOutcome({
   const awaitingReply = file.state === "SUBMITTED" && !w.replies.some((r) => !r.applied);
   const current: CaseLog = log ?? { state: file.state, attemptCount: w.submissions.length };
   const resolution = current.resolution;
+  const shareRecord = workspaceOutcomeRecord(file, log);
 
   /** Writes the log exactly as given. Clearing a field means passing a log without it. */
   const write = async (next: CaseLog) => {
@@ -79,7 +88,20 @@ export function CaseOutcome({
       setSaving(false);
     }
   };
-  const save = (patch: Partial<CaseLog>) => write({ ...current, ...patch });
+  /*
+    A settled case stops emailing. The follow-up date is hidden once an outcome is recorded, so an
+    email left scheduled would arrive about a case the seller has already closed, with no control on
+    the page to stop it. The switch is turned off in the log as well as on the server, so reverting
+    to "still waiting" shows it off rather than claiming an email the server no longer has.
+  */
+  const recordOutcome = async (next: CaseLog) => {
+    const settles = Boolean(next.resolution) && current.emailReminder === true;
+    await write(settles ? { ...next, emailReminder: false } : next);
+    if (settles && signedIn) {
+      const stopped = await syncCaseReminder({ caseRef: file.id, kind: file.kind, enabled: false });
+      if (!stopped) toast.error(APP.dashboard.clock.emailFailed);
+    }
+  };
 
   return (
     <Card>
@@ -115,7 +137,7 @@ export function CaseOutcome({
                 e.target.value as ResolutionStatus | "pending",
                 new Date().toISOString(),
               );
-              if (next) void write(next);
+              if (next) void recordOutcome(next);
             }}
           >
             <option value="pending">Still waiting on Amazon</option>
@@ -135,26 +157,28 @@ export function CaseOutcome({
             </Button>
           )}
         </div>
+        {/*
+          EF-5's opt-in, offered where a workspace case records its outcome. Signed-in only: the
+          endpoint needs an account, and asking a guest would end in a refusal. Answered once —
+          declining is a real choice and the card never comes back.
+        */}
+        {signedIn && shareRecord && !current.outcomePromptResolved && (
+          <OutcomeShareCard
+            record={shareRecord}
+            onResolved={async () => {
+              await write({ ...current, outcomePromptResolved: true });
+            }}
+          />
+        )}
         {!resolution && awaitingReply && (
-          <label className="block text-sm">
-            <span className="mb-1 flex items-center gap-2 font-medium text-foreground">
-              <CalendarClock className="size-4 text-muted-foreground" aria-hidden />
-              Your follow-up reminder date
-            </span>
-            <input
-              className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              type="date"
-              disabled={busy || saving}
-              value={current.reminderAt?.slice(0, 10) ?? ""}
-              onChange={(e) => {
-                const reminderAt = e.target.value ? `${e.target.value}T00:00:00Z` : undefined;
-                void save({ reminderAt });
-              }}
-            />
-            <span className="mt-1 block text-xs text-muted-foreground">
-              A date to remind yourself to check back — AppealDeck does not send this reminder.
-            </span>
-          </label>
+          <ReminderControl
+            caseId={file.id}
+            kind={file.kind}
+            log={current}
+            signedIn={signedIn}
+            disabled={busy || saving}
+            onSaveLog={onSaveLog}
+          />
         )}
       </CardContent>
     </Card>

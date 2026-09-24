@@ -4,9 +4,7 @@
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "framework": "nextjs",
-  "regions": [
-    "iad1"
-  ],
+  "regions": ["iad1"],
   "headers": [
     {
       "source": "/(.*)",
@@ -37,9 +35,6 @@
   "functions": {
     "src/app/api/webhooks/paddle/route.ts": {
       "maxDuration": 30
-    },
-    "src/app/api/extract-field/route.ts": {
-      "maxDuration": 15
     },
     "src/app/api/jobs/purchase-emails/route.ts": {
       "maxDuration": 60
