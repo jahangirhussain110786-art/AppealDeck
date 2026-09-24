@@ -1,5 +1,6 @@
 import {
   withBreaker,
+  reserveSpend,
   type BreakerOptions,
   type BreakerContext,
   type DegradedResponse,
@@ -86,7 +87,7 @@ export type GeminiCallResult =
   | { ok: true; text: string; model: string; usage?: { inputTokens: number; outputTokens: number } }
   | {
       ok: false;
-      reason: "not_configured" | "upstream_error" | "timeout" | "invalid_response";
+      reason: "not_configured" | "spend_cap" | "upstream_error" | "timeout" | "invalid_response";
       message: string;
     };
 
@@ -99,6 +100,9 @@ export const breakerOptions: BreakerOptions = {
   windowMs: 60_000,
   cooldownMs: 30_000,
   scope: "user",
+  // Counted in `callGemini`, only for a request that has passed sign-in and the Pass check and is
+  // about to reach Google. See `reserveSpend`.
+  spendCountedAt: "call",
 };
 
 /**
@@ -134,6 +138,15 @@ export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResu
       message: isPaidTierConfirmed()
         ? "Gemini is not configured. Set GEMINI_API_KEY in the environment to enable cloud calls."
         : "Gemini is switched off in production until GEMINI_PAID_TIER_CONFIRMED=true is set (DEPLOYMENT §6b).",
+    };
+  }
+
+  const budget = await reserveSpend(breakerOptions);
+  if (!budget.ok) {
+    return {
+      ok: false,
+      reason: "spend_cap",
+      message: "Today's allowance for AI reading is used up. It resets at midnight UTC.",
     };
   }
 

@@ -14,6 +14,12 @@ capability changes, change its row in the same commit.
 Status: **Live** — reachable and tested · **Needs config** — built and tested, but does nothing in
 production until a founder step is done · **Not built** — deliberately absent, with the reason.
 
+**One founder step sits under every signed-in server feature: Upstash** (`UPSTASH_REDIS_REST_URL`
+and `_TOKEN`, DEPLOYMENT §6). The rate limiter fails closed in production (`src/lib/ratelimit.ts`),
+so without it buying a Pass, preparing a response, document checks, wording help, reminders,
+outcome sharing and reply reading all answer "too many requests". "Live" below means live once
+Upstash is set. Added 24 Sep 2026: this file did not mention Upstash at all.
+
 ## The case, from notice to outcome
 
 | Capability                                                                                                                                                           | Where                                      | Status       | Proof                                                                                      | Limits                                                                                                                                                                                                                                                                                                                                   |

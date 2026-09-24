@@ -64,6 +64,22 @@ Noted for a founder decision, not changed:
 
 Gates after the second pass: all lints and typecheck 0 · vitest **1122/1122** in 87 files · build clean · Playwright chromium `CI=1 --retries=0` **116 passed / 0 failed / 0 skipped**.
 
+## Third pass — cost controls, compose, outcomes, devices (24 Sep 2026, Claude Code)
+
+| Priority | Defect and consequence | Repair and evidence |
+| --- | --- | --- |
+| P1 | **Anyone could switch AI reading off for every seller, at no cost.** `withGeminiBreaker` wraps the whole route, so the day's spend cap (240, one counter for the service) was counted at the door: before sign-in, before the Pass check, and for requests that never reach Gemini. The per-minute limit in front of it keys on request headers a script can vary. About 241 anonymous POSTs to `/api/read-document` or `/api/improve-wording` disabled both for every paying seller until midnight UTC. A seller's own refused requests (an identity photo, an unnamed record) spent it too. | `BreakerOptions.spendCountedAt: "call"`. Spend is counted by `reserveSpend` inside `callGemini`, immediately before the request to Google, so only a signed-in, Pass-holding request that is about to cost money can use the budget. It fails closed on a Redis error. Document reading tells the seller when the daily limit is the reason. Four tests in `breaker.test.ts`. |
+| P2 | **A refused outcome share was silently lost.** `OutcomeShareCard` reported whether the send worked, but both callers marked the prompt answered regardless. A seller who pressed "Share it" while the server could not record it (a rate limit, or the outcome table not yet applied) was told nothing, and the card never returned. The dashboard's "success" toast was the button label, "Share it". | The card keeps itself open on a refused send and says nothing was sent. On success it confirms, then resolves. New signed-in e2e test (`workspace.spec.ts`): first send refused, card stays; second send accepted, card closes. |
+| Register | **`docs/CURRENT-STATE.md` never mentioned Upstash**, though the limiter fails closed in production. Without it, buying a Pass, preparing a response and every other signed-in server feature answers "too many requests", while the register listed several of them as Live. | A note under the status legend names Upstash as the step under every signed-in server feature. |
+
+Checked and found sound (no change): `/api/decode` is public but rules-only, with no AI call, so it has no cost to abuse; compose checks the gate, the Pass and the per-case Pass in the right order, and the page strips submission history before sending (a realistic case stays far under the 200 KB cap); the device cap is per account (the oldest active licence) and device removal checks ownership; the Gemini paid-tier switch is enforced for both AI routes.
+
+Noted for a founder decision, not changed:
+- Outcome rows are anonymous by design, so a seller who shares "approved" by mistake cannot correct it, and the aggregate keeps the wrong row. Any future published rate should allow for that, or the card should ask for confirmation first.
+- The breaker records a failure only for a 5xx status, and document reading returns 200 with `ok: false` when Gemini fails, so the error-rate circuit never opens for that route. It is harmless, because the per-call timeout still applies, but the circuit protects less than its name suggests.
+
+Gates after the third pass: all lints and typecheck 0 · vitest **1126/1126** in 87 files · build clean · Playwright chromium `CI=1 --retries=0` **117 passed / 0 failed / 0 skipped**.
+
 ## Validation
 
 Browser authentication-dependent checks are distinguished from local/mocked paths; no browser test is treated as proof of a real payment or Amazon submission.

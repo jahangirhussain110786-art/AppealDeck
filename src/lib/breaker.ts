@@ -18,6 +18,11 @@ export type BreakerOptions = {
   windowMs: number;
   cooldownMs: number;
   scope: "user" | "ip" | "none";
+  /**
+   * `"call"`: the daily spend cap is counted by `reserveSpend` at the moment the paid provider is
+   * actually called, not by `checkBreaker` at the route's door. See `reserveSpend`.
+   */
+  spendCountedAt?: "door" | "call";
 };
 
 export type BreakerContext = {
@@ -128,7 +133,7 @@ export async function checkBreaker(
       }
     }
 
-    if (opts.spendCapPerDay > 0) {
+    if (opts.spendCapPerDay > 0 && opts.spendCountedAt !== "call") {
       const used = Number((await redis.incr(spendKey(opts.name, now))) ?? 0);
       if (used === 1) {
         await redis.expire(spendKey(opts.name, now), 90_000);
@@ -253,6 +258,38 @@ function fnv1aHash(input: string): string {
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
   return hash.toString(16).padStart(8, "0");
+}
+
+/**
+ * Counts one paid call against the day's spend cap, immediately before it is made.
+ *
+ * 24 Sep 2026. The cap used to be counted by `checkBreaker`, which `withBreaker` runs before the
+ * route's own handler — before sign-in, before the Appeal Pass check, and for requests that never
+ * reach the provider at all. The cap is one counter for the whole service, and the per-minute
+ * limit in front of it keys on request headers a script can vary freely, so ~241 anonymous
+ * requests costing nothing switched document checks and wording help off for every paying seller
+ * until midnight UTC. A seller's own refused requests (an identity photo, an unnamed record) spent
+ * it too. Counted here, only a call that is about to cost money can use the budget up.
+ *
+ * Fails closed on a Redis error, like `checkBreaker`. With no Redis at all it allows: the door
+ * check has already refused every request in production in that case.
+ */
+export async function reserveSpend(
+  opts: BreakerOptions,
+  now: number = Date.now(),
+  redis: Pick<Redis, "incr" | "expire"> | null = getRedis(),
+): Promise<{ ok: true } | { ok: false; resetAt: number; used: number; cap: number }> {
+  if (opts.spendCapPerDay <= 0 || !redis) return { ok: true };
+  try {
+    const key = spendKey(opts.name, now);
+    const used = Number((await redis.incr(key)) ?? 0);
+    if (used === 1) await redis.expire(key, 90_000);
+    return used > opts.spendCapPerDay
+      ? { ok: false, resetAt: endOfDay(now), used, cap: opts.spendCapPerDay }
+      : { ok: true };
+  } catch {
+    return { ok: false, resetAt: now + 60_000, used: 0, cap: opts.spendCapPerDay };
+  }
 }
 
 function endOfDay(now: number): number {

@@ -4,6 +4,7 @@ import {
   degradedResponse,
   isBreakerEnabled,
   recordBreaker,
+  reserveSpend,
   withBreaker,
   type BreakerContext,
   type BreakerOptions,
@@ -11,6 +12,7 @@ import {
   type WithBreakerHandler,
 } from "../breaker";
 import type { NextRequest } from "next/server";
+import { __test as geminiTest } from "../llm/gemini";
 
 const baseOpts: BreakerOptions = {
   name: "test",
@@ -22,6 +24,56 @@ const baseOpts: BreakerOptions = {
   cooldownMs: 30_000,
   scope: "none",
 };
+
+/** An in-memory stand-in for the two Redis calls `reserveSpend` makes. */
+function fakeRedis() {
+  const counts = new Map<string, number>();
+  return {
+    counts,
+    incr: async (key: string) => {
+      const n = (counts.get(key) ?? 0) + 1;
+      counts.set(key, n);
+      return n;
+    },
+    expire: async () => 1 as const,
+  } as unknown as Parameters<typeof reserveSpend>[2] & { counts: Map<string, number> };
+}
+
+describe("reserveSpend — the daily cap counts paid calls, not requests (24 Sep 2026)", () => {
+  const capOpts: BreakerOptions = { ...baseOpts, spendCapPerDay: 3, spendCountedAt: "call" };
+
+  it("allows calls up to the cap and refuses the next one until the day ends", async () => {
+    const redis = fakeRedis();
+    const now = Date.parse("2026-09-24T10:00:00Z");
+    for (let i = 0; i < 3; i++) expect((await reserveSpend(capOpts, now, redis)).ok).toBe(true);
+    const over = await reserveSpend(capOpts, now, redis);
+    expect(over).toMatchObject({ ok: false, cap: 3 });
+    expect(over.ok === false && over.resetAt).toBe(Date.parse("2026-09-24T23:59:59.999Z"));
+  });
+
+  it("starts a fresh budget on the next UTC day", async () => {
+    const redis = fakeRedis();
+    for (let i = 0; i < 4; i++)
+      await reserveSpend(capOpts, Date.parse("2026-09-24T22:00:00Z"), redis);
+    expect((await reserveSpend(capOpts, Date.parse("2026-09-25T00:10:00Z"), redis)).ok).toBe(true);
+  });
+
+  it("fails closed when Redis errors, as the door check does", async () => {
+    const broken = {
+      incr: async () => {
+        throw new Error("down");
+      },
+      expire: async () => 1,
+    } as unknown as Parameters<typeof reserveSpend>[2];
+    expect((await reserveSpend(capOpts, Date.now(), broken)).ok).toBe(false);
+  });
+
+  it("the Gemini breaker counts at the call, so a refused request cannot spend the budget", () => {
+    // The door check runs before sign-in and the Pass check; counting there let anonymous
+    // requests switch AI reading off for every seller.
+    expect(geminiTest.breakerOptions.spendCountedAt).toBe("call");
+  });
+});
 
 describe("breaker (no Upstash configured)", () => {
   it("isBreakerEnabled returns false when env is unset", () => {

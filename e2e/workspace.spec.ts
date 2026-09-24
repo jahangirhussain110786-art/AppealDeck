@@ -311,6 +311,78 @@ test("authenticated workspace preserves the exact response through submission an
 });
 
 /**
+ * 24 Sep 2026. A share the server refused used to resolve the prompt anyway: the seller pressed
+ * "Share it", nothing was recorded, nothing was said, and the card never came back.
+ */
+test("a refused outcome share keeps the offer and says so; a recorded one confirms it", async ({
+  page,
+}) => {
+  test.skip(
+    !process.env.DEV_LOGIN_EMAIL || !process.env.DEV_LOGIN_PASSWORD,
+    "Dev authentication fixture required",
+  );
+  test.setTimeout(90000);
+  await configure(page);
+  await reviewEvidence(page);
+  await page.goto("/login");
+  await page.getByLabel(/email/i).fill(process.env.DEV_LOGIN_EMAIL!);
+  await page.getByLabel(/^password$/i).fill(process.env.DEV_LOGIN_PASSWORD!);
+  await page.getByRole("button", { name: /^sign in$/i }).click();
+  await expect(page).toHaveURL(/dashboard/);
+  await page.goto("/case?view=response");
+  await page
+    .getByLabel("Your factual explanation")
+    .fill("The supplier invoice identifies the product by code J-104 and records the purchase.");
+  await page.getByRole("button", { name: "Save response facts" }).click();
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.route("**/api/compose", async (route) => {
+    const { caseData, attemptNumber } = route.request().postDataJSON();
+    const draft = composePoa(caseData, attemptNumber);
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        draft,
+        critique: critiquePoa(draft, caseData),
+        rendered: renderPoaText(draft),
+      }),
+    });
+  });
+  await page.getByRole("button", { name: "Prepare response", exact: true }).click();
+  await page
+    .getByLabel(
+      "I reviewed the facts, attachment names and page references against the current response form.",
+    )
+    .check();
+  await page
+    .getByLabel(
+      "I have submitted this exact response and its selected files through the official channel.",
+    )
+    .check();
+  await page.getByRole("button", { name: "Record submission", exact: true }).click();
+  await expect(page.getByText(/Attempt 1 ·/)).toBeVisible();
+
+  await page.goto("/dashboard");
+  await page.getByLabel("What happened with this case?").selectOption("reinstated");
+  const share = page.getByRole("button", { name: "Share it", exact: true });
+  await expect(share).toBeVisible();
+
+  let calls = 0;
+  await page.route("**/api/outcome", async (route) => {
+    calls += 1;
+    await route.fulfill({ status: calls === 1 ? 500 : 200, body: "{}" });
+  });
+  await share.click();
+  await expect(page.getByText(/We could not record that, and nothing was sent/)).toBeVisible();
+  await expect(share).toBeVisible();
+
+  await share.click();
+  await expect(page.getByText("Outcome shared anonymously. Thank you.")).toBeVisible();
+  await expect(share).toBeHidden();
+  expect(calls).toBe(2);
+});
+
+/**
  * #86 and #91. Both were added because the product was silently wrong about a real case — a
  * second violation dropped on the floor, and a seller's earlier rejected attempts invisible to
  * every rule that depends on them. Asserted end to end, because the recurring defect in this

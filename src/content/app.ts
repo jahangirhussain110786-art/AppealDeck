@@ -200,6 +200,8 @@ export const APP = {
       body: "This sends only the case type, document type, attempt count, readiness score, the result, and how many days it took — never your notice text, evidence, or any identifying detail. It helps us report honest results instead of invented ones.",
       accept: "Share it",
       decline: "Not this time",
+      shared: "Outcome shared anonymously. Thank you.",
+      failed: "We could not record that, and nothing was sent. Try again, or choose not this time.",
     },
     actions: {
       nextBestActions: "Next best actions",

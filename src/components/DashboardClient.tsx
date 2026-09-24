@@ -378,13 +378,13 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     }
   };
 
-  const resolveOutcomePrompt = async (shared: boolean) => {
+  // The card confirms a share itself; this only records that the prompt was answered.
+  const resolveOutcomePrompt = async () => {
     if (!caseFile || !caseLog) return;
     const logEntry: CaseLog = { ...caseLog, outcomePromptResolved: true };
     try {
       await saveCaseLog(vault, logEntry);
       await loadFromVault();
-      if (shared) toast.success(APP.dashboard.outcomeShare.accept);
     } catch {
       // Non-critical — the case still works either way; a save hiccup here means the prompt may
       // reappear next visit, which is a safe failure mode, not a data-loss one.

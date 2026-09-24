@@ -283,7 +283,9 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
         message:
           result.reason === "not_configured"
             ? "Document reading is not switched on."
-            : "We could not read that document. Nothing about your case has changed.",
+            : result.reason === "spend_cap"
+              ? "Document reading has reached today's limit for the whole service. It resets at midnight UTC; nothing about your case has changed."
+              : "We could not read that document. Nothing about your case has changed.",
       },
       { status: 200 },
     );

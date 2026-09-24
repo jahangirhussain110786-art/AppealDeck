@@ -5,6 +5,7 @@
 // this prompt. Declining is a real, respected choice — this never re-appears once resolved.
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,10 +41,21 @@ export function OutcomeShareCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(record),
       });
-      if (res.ok) trackFunnelEvent(FUNNEL_EVENTS.outcomeReported, { outcome: record.outcome });
-      await onResolved(res.ok);
+      /*
+        24 Sep 2026. A refused send used to resolve the prompt too, so a seller who pressed "Share
+        it" while the server could not record it (a rate limit, the table not yet set up) was told
+        nothing, and the card never came back: an opt-in silently lost. Now the card stays, says so,
+        and the seller can try again or decline.
+      */
+      if (!res.ok) {
+        toast.error(APP.dashboard.outcomeShare.failed);
+        return;
+      }
+      trackFunnelEvent(FUNNEL_EVENTS.outcomeReported, { outcome: record.outcome });
+      toast.success(APP.dashboard.outcomeShare.shared);
+      await onResolved(true);
     } catch {
-      await onResolved(false);
+      toast.error(APP.dashboard.outcomeShare.failed);
     } finally {
       setBusy(null);
     }
