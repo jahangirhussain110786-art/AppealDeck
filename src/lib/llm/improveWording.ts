@@ -10,9 +10,8 @@ import { checkWordingLock, MIN_WORDING_CHARS } from "@/core/wordingLock";
  * instruction — improve the wording, change no fact — and comes back as a suggestion shown beside
  * the original. The seller keeps their own text unless they choose the suggestion.
  *
- * The instruction is not what keeps the facts safe; `checkWordingLock` is. A suggestion that adds
- * or drops a date, number, identifier, address or name is discarded here and never shown, and the
- * seller is told that nothing changed. The composer, the critic and the pre-submit checks all run
+ * `checkWordingLock` rejects changes to recognized tokens, not every semantic change. Seller review
+ * remains required. The composer, the critic and the pre-submit checks all run
  * on whatever the seller finally keeps, exactly as before.
  *
  * Replaces `composePoaLlm.ts` (AM-23, 12 Sep), which rewrote whole sections inside `/api/compose`

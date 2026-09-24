@@ -1,6 +1,12 @@
 import type { CaseFile } from "@/core/caseFile";
 import type { Requirement, Workspace } from "@/core/workspace";
-import { PROTOCOL_LABELS, workspaceGaps, requirementEvidenceKind } from "@/core/workspace";
+import {
+  PROTOCOL_LABELS,
+  workspaceGaps,
+  requirementEvidenceKind,
+  questionnaireQuestions,
+  answerFor,
+} from "@/core/workspace";
 import { alternativesFor } from "@/core/requirementGuidance";
 import { formatDay } from "@/core/noticeDate";
 import type { SerializedDeadline } from "@/core/deadlinesModel";
@@ -14,6 +20,7 @@ import {
   summarizeCheck,
 } from "@/core/documentCheck";
 import { checkCaseDataForWorkspace } from "./documentChecks/context";
+import { migrateAnswerDrafts } from "./workspaceDraft";
 
 const STATUS_LABELS: Record<Requirement["status"], string> = {
   needed: "still needed",
@@ -143,6 +150,16 @@ export function buildCaseExport(
   }
 
   lines.push("== Seller's response facts ==");
+  const questions = questionnaireQuestions(w);
+  for (const question of questions) {
+    lines.push(`Question: ${question}`);
+    lines.push(`Answer: ${answerFor(w, question) || "(not answered yet)"}`);
+  }
+  for (const answer of w.answers ?? []) {
+    if (questions.includes(answer.question)) continue;
+    lines.push(`Earlier question: ${answer.question}`);
+    lines.push(`Answer: ${answer.answer || "(not answered yet)"}`);
+  }
   lines.push(`Explanation:\n${w.explanation || "(not written yet)"}`);
   if (w.protocol === "operational") {
     lines.push(`\nCorrective actions:\n${w.correctiveActions || "(not written yet)"}`);
@@ -154,6 +171,29 @@ export function buildCaseExport(
     lines.push(`\nPreventive measures:\n${w.preventiveMeasures || "(not written yet)"}`);
   }
   lines.push("");
+
+  const drafts = Object.entries(migrateAnswerDrafts(w) ?? {});
+  if (drafts.length) {
+    const labels: Record<string, string> = {
+      "request.notice": "Amazon notice",
+      "request.formInstructions": "Response-page instructions",
+      "response.explanation": "Explanation",
+      "response.correctiveActions": "Corrective actions",
+      "response.preventiveMeasures": "Preventive measures",
+      "history.replyText": "Reply not yet added to history",
+      ...Object.fromEntries(
+        w.requirements.map((r) => [`evidence.${r.id}.note`, `Evidence note: ${r.label}`]),
+      ),
+    };
+    lines.push("== Unconfirmed field drafts — not confirmed response facts ==");
+    for (const [key, value] of drafts) {
+      const label = key.startsWith("response.answer.question:")
+        ? `Answer to: ${key.slice("response.answer.question:".length)}`
+        : (labels[key] ?? "Other unfinished field");
+      lines.push(`${label}:\n${value || "(field cleared in draft)"}`);
+    }
+    lines.push("");
+  }
 
   // G, 24 Sep 2026. Stated by the seller, and labelled as such: a specialist reading the export
   // needs to know these came from the seller, not from a document or from Amazon.

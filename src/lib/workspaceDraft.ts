@@ -1,3 +1,5 @@
+import { questionnaireQuestions, type Workspace } from "@/core/workspace";
+
 /**
  * Keys for unsaved workspace field text, autosaved into `Workspace.draft` (encrypted,
  * vault-backed) so edits survive tab/route changes, reloads and the sign-in redirect,
@@ -9,17 +11,26 @@ export const RESPONSE_DRAFT_KEYS = [
   "response.correctiveActions",
   "response.preventiveMeasures",
 ];
-/** A questionnaire answer's unsaved text, keyed by the question's position on the page. */
-export function answerDraftKey(index: number): string {
-  return `response.answer.${index}`;
+
+export function answerDraftKey(question: string): string {
+  return `response.answer.question:${question}`;
 }
 
-/** Every response draft key for a case whose questionnaire has `questionCount` questions. */
-export function responseDraftKeys(questionCount: number): string[] {
-  return [
-    ...RESPONSE_DRAFT_KEYS,
-    ...Array.from({ length: questionCount }, (_, i) => answerDraftKey(i)),
-  ];
+export function responseDraftKeys(questions: string[]): string[] {
+  return [...RESPONSE_DRAFT_KEYS, ...questions.map(answerDraftKey)];
+}
+
+export function migrateAnswerDrafts(w: Workspace): Record<string, string> | undefined {
+  if (!w.draft) return undefined;
+  const draft = { ...w.draft };
+  questionnaireQuestions(w).forEach((question, index) => {
+    const legacyKey = `response.answer.${index}`;
+    if (draft[legacyKey] !== undefined) {
+      draft[answerDraftKey(question)] ??= draft[legacyKey];
+      delete draft[legacyKey];
+    }
+  });
+  return draft;
 }
 export const HISTORY_REPLY_KEY = "history.replyText";
 export function evidenceNoteKey(requirementId: string): string {
@@ -32,7 +43,7 @@ export function withDraftValue(
   value: string | undefined,
 ): Record<string, string> | undefined {
   const next = { ...(draft ?? {}) };
-  if (value === undefined || value === "") delete next[key];
+  if (value === undefined) delete next[key];
   else next[key] = value;
   return Object.keys(next).length ? next : undefined;
 }

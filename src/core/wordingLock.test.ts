@@ -5,6 +5,26 @@ const seller =
   "on 3 sep we found our supplier Acme sent 40 units of B08N5WRWNW without invoices. we stopped selling it and asked Acme for the invoices.";
 
 describe("the wording lock", () => {
+  it.each([
+    [
+      "We have not trained the warehouse team on invoice checks.",
+      "We have trained the warehouse team on invoice checks.",
+    ],
+    [
+      "We haven't trained the warehouse team on invoice checks.",
+      "We have trained the warehouse team on invoice checks.",
+    ],
+    [
+      "We plan to train the warehouse team on invoice checks.",
+      "We trained the warehouse team on invoice checks.",
+    ],
+    ["We received invoices from our supplier Acme.", "We received invoices from our supplier."],
+  ])(
+    "rejects a rewrite that removes qualifications or a recognized name: %s",
+    (original, rewrite) => {
+      expect(checkWordingLock(original, rewrite).ok).toBe(false);
+    },
+  );
   it("lets a rewrite through when it changes only the wording", () => {
     const rewrite =
       "On 3 Sep we found that our supplier, Acme, had sent 40 units of B08N5WRWNW without invoices. We stopped selling the product and asked Acme for the invoices.";

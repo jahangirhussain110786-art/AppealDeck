@@ -2,9 +2,9 @@
  * The fact lock on AI wording help (24 Sep 2026, founder-approved).
  *
  * A seller may ask for the wording of one section of their response to be improved. The model is
- * told to change only the wording, and this module is why that instruction does not have to be
- * trusted: a rewrite that adds a fact the seller did not write, or drops one they did, is thrown
- * away here, in code, before the seller ever sees it.
+ * told to change only the wording. These mechanical checks reject changes to recognized tokens
+ * and explicit negation or planning language. They cannot prove semantic equivalence; the seller
+ * must review the suggestion for invented actions and changes in meaning.
  *
  * Why this matters more than the writing: the commonest reason a template Plan of Action fails is
  * invented, generic corrective actions — "we have implemented a comprehensive training programme"
@@ -109,6 +109,9 @@ const WITH_DIGIT = /[A-Za-z0-9][A-Za-z0-9./:\-#]*\d[A-Za-z0-9./:\-#]*|\d/g;
 const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
 // A bare domain counts too: "docs.example.com" is an address whether or not it starts with www.
 const URL = /\bhttps?:\/\/\S+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b(?:\/\S*)?/gi;
+const NEGATION = /\b(?:not|never|no|without|cannot)\b|n['’]t\b/gi;
+const PLANNED =
+  /\b(?:will|intend(?:ed|s)?|planning|planned|plan to|plans to|aim to|hope to|expect to)\b/gi;
 
 function norm(token: string): string {
   // Trailing punctuation belongs to the sentence, not the fact.
@@ -138,8 +141,7 @@ export interface WordingLockResult {
 }
 
 /**
- * Checks a rewrite against the seller's original. `ok` only when no fact was added or dropped.
- * Names are checked one way only: a rewrite may drop a repeated name, but may never introduce one.
+ * Checks recognized tokens and explicit polarity markers, not the truth or meaning of the prose.
  */
 export function checkWordingLock(original: string, rewrite: string): WordingLockResult {
   const added: string[] = [];
@@ -160,6 +162,24 @@ export function checkWordingLock(original: string, rewrite: string): WordingLock
   }
   for (const name of midSentenceNames(rewrite)) {
     if (!allWordsInOriginal.has(name)) added.push(name);
+  }
+  const wordsInRewrite = new Set(
+    rewrite
+      .toLowerCase()
+      .split(/[^a-z'&-]+/)
+      .map((w) => w.replace(/'s$/, "")),
+  );
+  for (const name of midSentenceNames(original)) {
+    if (!wordsInRewrite.has(name)) dropped.push(name);
+  }
+  for (const [label, pattern] of [
+    ["negation", NEGATION],
+    ["planned action", PLANNED],
+  ] as const) {
+    const before = [...original.matchAll(pattern)].length;
+    const after = [...rewrite.matchAll(pattern)].length;
+    if (after > before) added.push(label);
+    if (after < before) dropped.push(label);
   }
 
   const unique = (xs: string[]) => [...new Set(xs)];

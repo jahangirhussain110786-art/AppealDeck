@@ -204,13 +204,13 @@ export const WorkspaceSchema = z
     replies: z
       .array(z.object({ id, at: z.string().datetime(), text, applied: z.boolean() }))
       .max(99),
-    draft: z.record(z.string().max(200), z.string().max(50000)).optional(),
+    draft: z.record(z.string().max(550), z.string().max(50000)).optional(),
   })
   .superRefine((w, ctx) => {
     for (const key of ["requirements", "submissions", "replies"] as const) {
       if (new Set(w[key].map((r) => r.id)).size !== w[key].length)
         ctx.addIssue({ code: "custom", path: [key], message: "Duplicate record identifiers." });
     }
-    if (w.draft && Object.keys(w.draft).length > 20)
+    if (w.draft && Object.keys(w.draft).length > 100)
       ctx.addIssue({ code: "custom", path: ["draft"], message: "Too many unsaved draft fields." });
   });

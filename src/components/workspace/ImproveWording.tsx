@@ -18,9 +18,8 @@ type State =
  * The opt-in wording help beside one section of the response (24 Sep 2026, founder-approved).
  *
  * Nothing happens unless the seller presses the button, and nothing changes unless they choose the
- * suggestion, which is shown beside their own text. The server discards a suggestion that adds or
- * drops a fact (`checkWordingLock`), so what reaches this screen changes wording only — and the
- * seller still reads it, because it becomes their response.
+ * suggestion, which is shown beside their own text. The server checks recognized factual tokens;
+ * the seller must still review claims and meaning before accepting it.
  */
 export function ImproveWording({
   caseId,
@@ -137,6 +136,7 @@ export function ImproveWording({
             <Button
               type="button"
               size="sm"
+              disabled={disabled}
               onClick={() => {
                 onAccept(state.text);
                 setState({ kind: "idle" });

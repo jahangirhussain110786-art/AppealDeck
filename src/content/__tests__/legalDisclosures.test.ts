@@ -130,8 +130,9 @@ describe("the rendered Privacy page", () => {
     expect(privacy).toMatch(/If you press "Improve the wording" on a section/);
     expect(privacy).toMatch(/nothing changes unless you choose it/);
     expect(privacy).toMatch(
-      /adds or removes a date, number, identifier, address or name is discarded/,
+      /Automated checks reject changes to recognized numbers, dates, identifiers/,
     );
+    expect(privacy).toMatch(/cannot detect every invented claim or change in meaning/);
   });
 });
 

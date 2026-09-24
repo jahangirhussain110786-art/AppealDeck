@@ -320,12 +320,15 @@ test("a document check is saved with the case and survives a reload", async ({ p
   await page.getByRole("button", { name: "Check this document" }).first().click();
   await expect(page.getByText("How the picture looks").first()).toBeVisible();
   // The saved copy carries the day it ran; waiting for it means the vault write has landed.
-  await expect(page.getByText(/^Checked /).first()).toBeVisible();
+  // Not a bare /^Checked /: an image's local check shows "Checked on this device." at once,
+  // before any save, and waiting on that line let the reload race the vault write.
+  const savedLine = /^Checked (?!on this device)/;
+  await expect(page.getByText(savedLine).first()).toBeVisible();
 
   await page.reload();
   await page.getByRole("tab", { name: "Evidence", exact: true }).click();
   await expect(page.getByText("How the picture looks").first()).toBeVisible();
-  await expect(page.getByText(/^Checked /).first()).toBeVisible();
+  await expect(page.getByText(savedLine).first()).toBeVisible();
 });
 
 /** The free half of the funnel, fired where it should be (`docs/CURRENT-STATE.md` said untested). */

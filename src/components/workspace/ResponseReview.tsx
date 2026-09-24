@@ -46,6 +46,7 @@ export function ResponseReview({
   onDraftChange,
   signInHref,
   onSave,
+  onConfirmIssues,
   onGenerate,
   onSubmit,
 }: {
@@ -59,6 +60,7 @@ export function ResponseReview({
   onDraftChange: (key: string, value: string | undefined) => void;
   signInHref: string;
   onSave: (w: Workspace) => Promise<boolean>;
+  onConfirmIssues: (confirmed: boolean) => void;
   onGenerate: () => void;
   onSubmit: (sent: { receipt: string; sentText?: string }) => Promise<boolean>;
 }) {
@@ -70,7 +72,9 @@ export function ResponseReview({
   const [preventiveMeasures, setPreventive] = useState(
     draft?.["response.preventiveMeasures"] ?? w.preventiveMeasures,
   );
-  const [attested, setAttested] = useState(Boolean(w.correctiveActionsAttested));
+  const [attested, setAttested] = useState(
+    Boolean(w.correctiveActionsAttested) && correctiveActions === w.correctiveActions,
+  );
   const changeExplanation = (next: string) => {
     setExplanation(next);
     onDraftChange("response.explanation", next === w.explanation ? undefined : next);
@@ -93,14 +97,13 @@ export function ResponseReview({
   // Only answers edited here are held in state. The rest are read from the draft or the saved
   // case, so a re-pasted form with different questions never shows a stale answer.
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const answerValue = (q: string, i: number) =>
-    answers[q] ?? draft?.[answerDraftKey(i)] ?? answerFor(w, q);
-  const changeAnswer = (q: string, i: number, next: string) => {
+  const answerValue = (q: string) => answers[q] ?? draft?.[answerDraftKey(q)] ?? answerFor(w, q);
+  const changeAnswer = (q: string, next: string) => {
     setAnswers((a) => ({ ...a, [q]: next }));
-    onDraftChange(answerDraftKey(i), next === answerFor(w, q) ? undefined : next);
+    onDraftChange(answerDraftKey(q), next === answerFor(w, q) ? undefined : next);
     setReviewed(false);
   };
-  const answersDirty = questions.some((q, i) => answerValue(q, i) !== answerFor(w, q));
+  const answersDirty = questions.some((q) => answerValue(q) !== answerFor(w, q));
   const [reviewed, setReviewed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [receipt, setReceipt] = useState("");
@@ -178,8 +181,8 @@ export function ResponseReview({
                     id={`workspace-answer-${i}`}
                     rows={3}
                     maxLength={12000}
-                    value={answerValue(q, i)}
-                    onChange={(e) => changeAnswer(q, i, e.target.value)}
+                    value={answerValue(q)}
+                    onChange={(e) => changeAnswer(q, e.target.value)}
                   />
                   <SectionTools
                     file={file}
@@ -187,8 +190,8 @@ export function ResponseReview({
                     busy={busy}
                     section="answer"
                     question={q}
-                    text={answerValue(q, i)}
-                    onAccept={(next) => changeAnswer(q, i, next)}
+                    text={answerValue(q)}
+                    onAccept={(next) => changeAnswer(q, next)}
                   />
                 </div>
               ))}
@@ -306,7 +309,7 @@ export function ResponseReview({
                 answers: [
                   ...(w.answers ?? []).filter((a) => !questions.includes(a.question)),
                   ...questions
-                    .map((q, i) => ({ question: q, answer: answerValue(q, i) }))
+                    .map((q) => ({ question: q, answer: answerValue(q) }))
                     .filter((a) => a.answer.trim()),
                 ],
                 correctiveActionsAttested: attested
@@ -322,11 +325,7 @@ export function ResponseReview({
             actually check whether both issues were covered. `workspaceGaps` requires it, so the
             case cannot be reported ready while one is unanswered.
           */}
-          <IssuesRaised
-            workspace={w}
-            busy={busy}
-            onConfirm={(confirmed) => void onSave({ ...w, issuesConfirmed: confirmed })}
-          />
+          <IssuesRaised workspace={w} busy={busy} onConfirm={onConfirmIssues} />
           {!supported ? (
             <Alert variant="info">
               <AlertTitle>Organize your notes first</AlertTitle>

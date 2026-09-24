@@ -84,5 +84,5 @@ test("guest case survives sign-in and remains private after sign-out", async ({ 
   await page.getByLabel(/^password$/i).fill(process.env.DEV_LOGIN_PASSWORD!);
   await page.getByRole("button", { name: /^sign in$/i }).click();
   await expect(page).toHaveURL(/dashboard/);
-  await expect(page.getByLabel("Current case").locator("option")).toHaveCount(2);
+  await expect(page.getByRole("region", { name: "Your cases" }).getByRole("button")).toHaveCount(2);
 });

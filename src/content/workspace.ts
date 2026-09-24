@@ -123,7 +123,7 @@ export const WORKSPACE = {
     yours: "Your wording",
     suggested: "Suggested wording",
     check:
-      "Read it before you use it. It must say what you mean and nothing more: it becomes your response.",
+      "Check every claim against your records. Automated checks can miss invented actions or changes in meaning.",
     use: "Use the suggested wording",
     keep: "Keep mine",
     unchanged: "Your wording is already clear. There is nothing to change.",

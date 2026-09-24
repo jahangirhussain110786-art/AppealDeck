@@ -4,8 +4,33 @@ import { createCaseFile } from "@/core/caseFile";
 import { documentWorkspace } from "@/core/workspace.fixture";
 import { checkContextKey } from "@/core/documentCheck";
 import { checkCaseDataForWorkspace } from "./documentChecks/context";
+import { answerDraftKey } from "./workspaceDraft";
 
 describe("buildCaseExport", () => {
+  it("exports current and earlier questionnaire answers and labels unconfirmed drafts separately", () => {
+    const question = "What caused the late shipments?";
+    const w = {
+      ...documentWorkspace(),
+      protocol: "questionnaire" as const,
+      formInstructions: question,
+      answers: [
+        { question, answer: "The collection was missed." },
+        { question: "What changed before that?", answer: "We changed our carrier." },
+      ],
+      draft: {
+        [answerDraftKey(question)]: "The carrier cancelled collection.",
+        "response.explanation": "",
+      },
+    };
+    const text = buildCaseExport({ ...createCaseFile("POLICY"), workspace: w }, w);
+    expect(text).toContain(`Question: ${question}\nAnswer: The collection was missed.`);
+    expect(text).toContain(
+      "Earlier question: What changed before that?\nAnswer: We changed our carrier.",
+    );
+    expect(text).toContain("Unconfirmed field drafts — not confirmed response facts");
+    expect(text).toContain("The carrier cancelled collection.");
+    expect(text).toContain("(field cleared in draft)");
+  });
   it("includes the notice, response facts, evidence plan, submissions and replies in full", () => {
     const w = {
       ...documentWorkspace(),

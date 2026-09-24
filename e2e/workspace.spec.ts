@@ -254,8 +254,17 @@ test("authenticated workspace preserves the exact response through submission an
       "The supplier invoice identifies the product by code J-104 and records the purchase. The product code corresponds to the affected listing.",
     );
   await page.getByRole("button", { name: "Save response facts" }).click();
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "History", exact: true }).click();
+  await page
+    .getByLabel("Add Amazon’s next reply")
+    .fill("Private scratch reply not confirmed for processing.");
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Response", exact: true }).click();
   await page.route("**/api/compose", async (route) => {
     const { caseData, attemptNumber } = route.request().postDataJSON();
+    expect(caseData.workspace.draft).toBeUndefined();
+    expect(route.request().postData()).not.toContain("Private scratch reply");
     const draft = composePoa(caseData, attemptNumber);
     await route.fulfill({
       status: 200,
@@ -588,6 +597,15 @@ test("a Plan of Action asks the seller to stand behind the work they describe", 
   await page
     .getByLabel("Corrective actions and their actual status")
     .fill("We changed something else entirely, and this sentence was never confirmed by anyone.");
+  await expect(
+    page.getByLabel(/I confirm each corrective action described above/),
+  ).not.toBeChecked();
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.reload();
+  await page.getByRole("tab", { name: "Response", exact: true }).click();
+  await expect(page.getByLabel("Corrective actions and their actual status")).toHaveValue(
+    "We changed something else entirely, and this sentence was never confirmed by anyone.",
+  );
   await expect(
     page.getByLabel(/I confirm each corrective action described above/),
   ).not.toBeChecked();

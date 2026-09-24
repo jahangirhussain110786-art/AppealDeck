@@ -100,6 +100,7 @@ import {
   HISTORY_REPLY_KEY,
   REQUEST_DRAFT_KEYS,
   responseDraftKeys,
+  migrateAnswerDrafts,
   withDraftValue,
   withoutDraftKeys,
 } from "@/lib/workspaceDraft";
@@ -275,7 +276,16 @@ function WorkspaceInner({
           clearPendingNotice(pendingNotice);
           persisted.current = JSON.stringify(next.workspace);
         }
-        const displayed = pendingNotice ? await withCaseEvidence(vault, next) : next;
+        const reconciled = pendingNotice ? await withCaseEvidence(vault, next) : next;
+        const displayed = reconciled.workspace
+          ? {
+              ...reconciled,
+              workspace: {
+                ...reconciled.workspace,
+                draft: migrateAnswerDrafts(reconciled.workspace),
+              },
+            }
+          : reconciled;
         const docs = (await vault.list({ caseId: next.id })).filter((r) => r.kind === "document");
         if (!alive) return;
         setCurrent(displayed);
@@ -811,6 +821,7 @@ function WorkspaceInner({
               // Saved document readings are for the seller's own review and export; preparing the
               // response does not use them, so they do not travel with it.
               documentChecks: undefined,
+              draft: undefined,
             },
           },
           attemptNumber: Math.min(99, totalAttempts(w) + 1),
@@ -1542,15 +1553,23 @@ function WorkspaceInner({
                   draft={w.draft}
                   onDraftChange={setDraftField}
                   signInHref={signInHref}
+                  onConfirmIssues={(confirmed) => {
+                    void commit((old) => ({ ...old, issuesConfirmed: confirmed }));
+                  }}
                   onSave={(updated) => {
                     // Includes one key per questionnaire answer, so a saved answer's draft is
                     // cleared with the rest instead of being shown again over the saved text.
-                    const keys = responseDraftKeys(questionnaireQuestions(updated).length);
+                    const keys = responseDraftKeys(questionnaireQuestions(updated));
                     cancelDraftFields(keys);
                     return commit(
-                      () => ({
-                        ...updated,
-                        draft: withoutDraftKeys(updated.draft, keys),
+                      (old) => ({
+                        ...old,
+                        explanation: updated.explanation,
+                        correctiveActions: updated.correctiveActions,
+                        correctiveActionsAttested: updated.correctiveActionsAttested,
+                        preventiveMeasures: updated.preventiveMeasures,
+                        answers: updated.answers,
+                        draft: withoutDraftKeys(old.draft, keys),
                       }),
                       "Saved the seller’s response facts.",
                     );
