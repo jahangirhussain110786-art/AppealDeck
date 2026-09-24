@@ -22,6 +22,7 @@ import type { EvidenceKind, ViolationKind } from "@/core";
 import type { DocumentCheckResult } from "@/core/documentCheck";
 import { analyzeIdentityImage, type IdentityImageReport } from "./identity";
 import { MAX_CHECK_BYTES } from "./limits";
+import type { DocumentCheckCaseData } from "./context";
 
 /** Evidence kinds examined in the browser. Mirrors the server's own refusal list. */
 export const BROWSER_ONLY_EVIDENCE_KINDS: readonly EvidenceKind[] = [
@@ -45,10 +46,14 @@ export type CheckOutcome =
 const SERVER_READABLE = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 
 export interface RunCheckInput {
+  /** The case the document belongs to; a check is covered by that case's Appeal Pass. */
+  caseId: string;
   kind: ViolationKind;
   evidenceKind: EvidenceKind;
   bytes: Uint8Array;
   mimeType: string;
+  /** Identifiers from the case's own notices, so the reading can be compared with them. */
+  caseData?: DocumentCheckCaseData;
 }
 
 export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutcome> {
@@ -92,10 +97,12 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        caseId: input.caseId,
         kind: input.kind,
         evidenceKind: input.evidenceKind,
         mimeType: input.mimeType,
         data: toBase64(input.bytes),
+        ...(input.caseData ? { context: input.caseData } : {}),
       }),
     });
     // Should be unreachable after the check above; kept so a lowered host limit still gets a reason.

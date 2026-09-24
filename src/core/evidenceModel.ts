@@ -11,6 +11,14 @@ export type EvidenceKind =
   | "disposal_or_recall_proof"
   | "metric_export"
   | "sop_document"
+  /** A laboratory test report or certificate of conformity for a product (PRODUCT_SAFETY). */
+  | "compliance_report"
+  /** Proof a linked account's issue is resolved or the account closed, or of non-relation. */
+  | "account_resolution_proof"
+  /**
+   * A record the seller named themselves and we cannot identify. Never read by the document
+   * checker, which will not read a document it cannot name.
+   */
   | "other";
 
 export interface EvidenceRequirement {
@@ -23,6 +31,10 @@ export interface EvidenceRequirement {
   whyAmazonWantsIt: string;
 }
 
+/** The invoice field compared with the seller account. Shared so both invoice entries say it alike. */
+export const BUYER_FIELD =
+  "your business name and address as the buyer, matching your seller account";
+
 const INAUTHENTIC: EvidenceRequirement[] = [
   {
     kind: "supplier_invoice",
@@ -34,6 +46,10 @@ const INAUTHENTIC: EvidenceRequirement[] = [
       "issue date (within 365 days)",
       "line items mappable to the ASIN(s)",
       "invoiced quantity consistent with units sold in the complaint window",
+      // Added 24 Sep 2026. Amazon compares an invoice's buyer details with the seller account
+      // (Riverbend Consulting, ecommerceChris and Amazon's own seller forums all state it, checked
+      // 24 Sep 2026), and "ABC Co." against "ABC Company LLC" is a named cause of rejection.
+      BUYER_FIELD,
     ],
     freshnessDays: 365,
     quantityRule: "invoiced units >= units sold in the complaint window",
@@ -77,7 +93,7 @@ const IP: EvidenceRequirement[] = [
   {
     kind: "supplier_invoice",
     required: false,
-    fields: ["invoice from an authorized distributor", "matching ASIN(s)"],
+    fields: ["invoice from an authorized distributor", "matching ASIN(s)", BUYER_FIELD],
     disqualifiers: ["invoices from unknown or unauthorized sources"],
     whyAmazonWantsIt:
       "An invoice from an authorized distributor supports the claim that your inventory is legitimate.",
@@ -102,7 +118,9 @@ const RELATED_ACCOUNT: EvidenceRequirement[] = [
       "Amazon needs to understand how the accounts are connected and whether the same operator is behind both.",
   },
   {
-    kind: "other",
+    // Was "other" until 24 Sep 2026, which the document checker refuses by design — so the one
+    // record that can answer a related-account notice could never be checked.
+    kind: "account_resolution_proof",
     required: false,
     fields: [
       "proof the linked account's issue is resolved or the account is closed",
@@ -253,7 +271,8 @@ const PRODUCT_SAFETY: EvidenceRequirement[] = [
       "A safety notice is about the product still in circulation, not only about the listing. Amazon wants to see that the affected units are accounted for.",
   },
   {
-    kind: "other",
+    // Was "other" until 24 Sep 2026; see account_resolution_proof above.
+    kind: "compliance_report",
     required: true,
     fields: [
       "test report or compliance certificate for the product",

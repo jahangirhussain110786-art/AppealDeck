@@ -698,24 +698,43 @@ function demoFieldsOutcome(): CheckOutcome {
   )!.fields;
   return {
     kind: "fields",
-    result: buildDocumentCheck("INAUTHENTIC_DOCUMENTS", "supplier_invoice", [
-      {
-        field: fields[0]!,
-        status: "present",
-        observed: "Acme Trading Ltd",
-        note: "The supplier business name is printed at the top of page 1.",
-      },
-      {
-        field: fields[2]!,
-        status: "missing",
-        note: "This invoice is authentic.",
-      },
-      {
-        field: fields[3]!,
-        status: "unclear",
-        note: "The date is partly cut off at the edge of the scan.",
-      },
-    ]),
+    result: buildDocumentCheck(
+      "INAUTHENTIC_DOCUMENTS",
+      "supplier_invoice",
+      [
+        {
+          field: fields[0]!,
+          status: "present",
+          observed: "Acme Trading Ltd",
+          note: "The supplier business name is printed at the top of page 1.",
+        },
+        {
+          field: fields[2]!,
+          status: "missing",
+          note: "This invoice is authentic.",
+        },
+        {
+          field: fields[3]!,
+          status: "present",
+          observed: "Invoice date: 03-Mar-2025",
+          note: "The invoice date is printed under the supplier's address.",
+        },
+        {
+          field: fields[4]!,
+          status: "present",
+          observed: "Blue widget, 10-pack x 200",
+          note: "One line item is listed.",
+        },
+        {
+          field: fields[5]!,
+          status: "present",
+          observed: "Qty 200",
+          note: "The quantity is printed on the line item.",
+        },
+        // fields[1] (address) is left out on purpose: the gallery shows a field the reading skipped.
+      ],
+      { today: "2026-09-24", asins: ["B0ABCDEF12"], referenceIds: [] },
+    ),
   };
 }
 

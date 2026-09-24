@@ -68,7 +68,7 @@ const DAY_MONTH_YEAR = new RegExp(
 );
 const MONTH_DAY_YEAR = new RegExp(`\\b${MONTH}\\.?\\s+(\\d{1,2})${ORDINAL},?\\s+(\\d{4})\\b`, "i");
 
-function isoDay(year: number, month: number, day: number): string | null {
+export function isoDay(year: number, month: number, day: number): string | null {
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
   // Round-trip through a UTC date so "31 Feb" is rejected rather than rolled into March.
   const d = new Date(Date.UTC(year, month - 1, day));
@@ -79,12 +79,12 @@ function isoDay(year: number, month: number, day: number): string | null {
 }
 
 /** Keyed on the first three letters, so "September", "Sept" and "Sep" all resolve. */
-function monthNumber(name: string): number {
+export function monthNumber(name: string): number {
   return MONTHS[name.slice(0, 3).toLowerCase()] ?? 0;
 }
 
 /** The unambiguous calendar date in one header value, or null. Numeric slash dates never match. */
-function dayIn(value: string): string | null {
+export function dayIn(value: string): string | null {
   const iso = ISO.exec(value);
   if (iso) return isoDay(Number(iso[1]), Number(iso[2]), Number(iso[3]));
   const dmy = DAY_MONTH_YEAR.exec(value);

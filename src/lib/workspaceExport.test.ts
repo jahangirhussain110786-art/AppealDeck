@@ -37,6 +37,18 @@ describe("buildCaseExport", () => {
     expect(text).toContain("not a submitted response");
   });
 
+  it("carries the business details, labelled as the seller's own statement", () => {
+    const w = {
+      ...documentWorkspace(),
+      caseFacts: { businessName: "Hawlton Trading", suppliers: ["Acme Ltd", "Other Co"] },
+    };
+    const text = buildCaseExport({ ...createCaseFile("POLICY"), workspace: w }, w);
+    expect(text).toContain("== Business details, as the seller stated them ==");
+    expect(text).toContain("Registered business name: Hawlton Trading");
+    expect(text).toContain("Suppliers: Acme Ltd; Other Co");
+    expect(text).not.toContain("Registered business address");
+  });
+
   it("does not claim a submission or reply exists when there are none", () => {
     const w = documentWorkspace();
     const file = { ...createCaseFile("POLICY"), workspace: w };

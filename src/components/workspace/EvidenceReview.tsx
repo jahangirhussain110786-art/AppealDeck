@@ -11,8 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileDropZone } from "@/components/FileDropZone";
 import { CopyButton } from "@/components/CopyButton";
 import { DocumentCheckPanel } from "@/components/DocumentCheckPanel";
-import type { CheckOutcome } from "@/lib/documentChecks/runCheck";
-import type { Requirement } from "@/core/workspace";
+import { isBrowserOnly, type CheckOutcome } from "@/lib/documentChecks/runCheck";
+import { requirementEvidenceKind, type Requirement } from "@/core/workspace";
 import type { VaultListItem } from "@/core/vault/vault";
 import { RequirementGuidance } from "./RequirementGuidance";
 import type { ViolationKind } from "@/core";
@@ -309,6 +309,7 @@ export function EvidenceReview({
             outcome={checkOutcome ?? null}
             busy={Boolean(checking)}
             onCheck={onCheck}
+            processing={checkProcessing(item)}
           />
         )}
         {showRequest && (
@@ -325,4 +326,15 @@ export function EvidenceReview({
       </CardContent>
     </Card>
   );
+}
+
+/**
+ * Where a check on this record would read the file, or nothing when it cannot be checked at all —
+ * in which case the check itself says so, and a line about uploading would describe something that
+ * will not happen.
+ */
+function checkProcessing(item: Requirement): "server" | "device" | undefined {
+  const kind = requirementEvidenceKind(item);
+  if (!kind || kind === "other") return undefined;
+  return isBrowserOnly(kind) ? "device" : "server";
 }

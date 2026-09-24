@@ -12,6 +12,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { LEGAL } from "../legal";
+import { WORKSPACE } from "../workspace";
 
 function text(doc: "privacy" | "terms" | "refund"): string {
   return LEGAL[doc].sections.flatMap((s) => [s.title, ...s.body]).join("\n");
@@ -100,6 +101,34 @@ describe("the rendered Privacy page", () => {
 
   it("still says identity documents are never uploaded", () => {
     expect(privacy).toMatch(/never uploaded for checking/i);
+  });
+
+  /**
+   * 24 Sep 2026 (ChatGPT audit §9). The policy said preparing a response sent the seller's wording
+   * to Google Gemini; `/api/compose` never calls a model for a workspace response. If AI drafting
+   * is switched on for workspace responses, this test is meant to fail until the policy says so.
+   */
+  it("says response preparation is not sent to an AI provider, as it is not", () => {
+    expect(privacy).toMatch(/not sent to Google Gemini or any other AI provider/);
+    expect(privacy).not.toMatch(/Preparing a response sends your notice text[^.]*Gemini/i);
+    expect(privacy).not.toMatch(/Gemini drafting/i);
+  });
+
+  it("names the document check as the one thing sent to an AI provider", () => {
+    expect(privacy).toMatch(/only thing we send to an AI provider is a business document/i);
+  });
+});
+
+/** The same claim, in the sentence a seller reads on the case screen itself. */
+describe("the workspace's own privacy line", () => {
+  it("does not say files never leave the device, and names the exception", () => {
+    expect(WORKSPACE.privacy).not.toMatch(/Documents stay on this device\./);
+    expect(WORKSPACE.privacy).toMatch(/business document you ask us to check/);
+    expect(WORKSPACE.privacy).toMatch(/nothing is ever sent to Amazon/);
+  });
+
+  it("does not say document reading is unavailable, since it is available", () => {
+    expect(WORKSPACE.manualReview).not.toMatch(/not available yet/i);
   });
 });
 

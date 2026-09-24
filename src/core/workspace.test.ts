@@ -602,6 +602,56 @@ describe("confirming corrective actions", () => {
  * spell it out. Knowing that an inauthenticity case needs a supplier invoice whether or not the
  * notice says the word is what a seller pays an appeal writer for.
  */
+/** G, 24 Sep 2026. Declared in the schema in the same edit as the model — it strips unknown keys. */
+describe("the seller's business details", () => {
+  it("survive the schema that guards every save", () => {
+    const w = {
+      ...newWorkspace(),
+      caseFacts: {
+        businessName: "Hawlton Trading",
+        businessAddress: "12 High Street, Lahore",
+        suppliers: ["Acme Ltd"],
+      },
+    };
+    const parsed = WorkspaceSchema.safeParse(w);
+    expect(parsed.success, JSON.stringify(parsed.error?.issues ?? [])).toBe(true);
+    expect(parsed.data!.caseFacts).toEqual(w.caseFacts);
+  });
+
+  it("also survive the case-file schema the compose route validates", () => {
+    const file = {
+      ...createCaseFile("POLICY"),
+      workspace: { ...newWorkspace(), caseFacts: { businessName: "Hawlton Trading" } },
+    };
+    const parsed = CaseDataSchema.safeParse(file);
+    expect(parsed.success, JSON.stringify(parsed.error?.issues ?? [])).toBe(true);
+    expect(parsed.data!.workspace?.caseFacts?.businessName).toBe("Hawlton Trading");
+  });
+});
+
+/** 24 Sep 2026: these two records were typed "other", which the document checker refuses by design. */
+describe("the two records that used to have no type", () => {
+  it("raises a named test report as a compliance report, which can be checked", () => {
+    const [r] = proposedRequirements({
+      notice: "Please provide a test report from an accredited laboratory for this product.",
+      formInstructions: "",
+      revision: 1,
+    });
+    expect(r?.label).toBe("Test report or compliance certificate");
+    expect(requirementEvidenceKind(r!)).toBe("compliance_report");
+  });
+
+  it("gives both matrix records a real type on the families that ask for them", () => {
+    const blank = { notice: "Please respond.", formInstructions: "", revision: 1 };
+    const kinds = [
+      ...proposedRequirements(blank, "PRODUCT_SAFETY"),
+      ...proposedRequirements(blank, "RELATED_ACCOUNT"),
+    ].map((r) => requirementEvidenceKind(r));
+    expect(kinds).toContain("compliance_report");
+    expect(kinds).not.toContain("other");
+  });
+});
+
 describe("the union of the notice and the matrix", () => {
   const notice = {
     notice: "Please provide the supplier invoice.",

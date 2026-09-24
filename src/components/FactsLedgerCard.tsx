@@ -45,8 +45,10 @@ export function FactsLedgerCard({ ledger }: { ledger: FactsLedger }) {
             </AlertTitle>
             <AlertDescription>
               <ul className="mt-2 space-y-2">
-                {ledger.contradictions.map((fact) => (
-                  <li key={fact.label}>{describeContradiction(fact)}</li>
+                {ledger.contradictions.map((fact, i) => (
+                  // A label is not unique: a document can disagree with the notice about a field
+                  // that another document also reports, so the position is part of the key.
+                  <li key={`${fact.label}-${i}`}>{describeContradiction(fact)}</li>
                 ))}
               </ul>
             </AlertDescription>
@@ -54,8 +56,8 @@ export function FactsLedgerCard({ ledger }: { ledger: FactsLedger }) {
         )}
 
         <ul className="space-y-3">
-          {ledger.facts.map((fact) => (
-            <li key={fact.label} className="space-y-1">
+          {ledger.facts.map((fact, i) => (
+            <li key={`${fact.label}-${fact.status}-${i}`} className="space-y-1">
               <p className="flex flex-wrap items-baseline gap-2 text-sm">
                 <span className="font-medium text-foreground">{fact.label}</span>
                 <Badge variant={badgeVariant(fact.status)} className="text-xs">

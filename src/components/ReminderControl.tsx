@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,16 @@ import { APP } from "@/content/app";
 import type { CaseLog } from "@/lib/caseStore";
 import type { ViolationKind } from "@/core/violationKinds";
 import {
+  fetchReminderDelivery,
+  reminderDeliveryState,
   setEmailReminder,
   setReminderDate,
   syncCaseReminder,
+  type ReminderDelivery,
+  type ReminderDeliveryState,
   type ReminderResult,
 } from "@/lib/reminderSync";
+import { formatDay } from "@/core/noticeDate";
 
 /**
  * The seller's follow-up date and the per-case email switch (AA-40), in one place.
@@ -43,8 +48,30 @@ export function ReminderControl({
   onSaveLog: (log: CaseLog) => Promise<boolean>;
 }) {
   const [pending, setPending] = useState(false);
+  const [delivery, setDelivery] = useState<ReminderDelivery | null | undefined>(undefined);
   const copy = APP.dashboard.clock;
   const emailOn = log.emailReminder === true;
+
+  // Read back what the server did, whenever the switch or the date changes — including after this
+  // control changed them, so the line never describes the reminder as it was before the click.
+  useEffect(() => {
+    if (!signedIn || !emailOn || !log.reminderAt) {
+      setDelivery(undefined);
+      return;
+    }
+    let live = true;
+    void fetchReminderDelivery(caseId).then((d) => {
+      if (live) setDelivery(d);
+    });
+    return () => {
+      live = false;
+    };
+  }, [signedIn, emailOn, log.reminderAt, caseId]);
+
+  const deliveryLine = describeDelivery(
+    reminderDeliveryState(delivery, { emailOn, reminderAt: log.reminderAt }),
+    copy.delivery,
+  );
 
   const deps = { saveLog: onSaveLog, sync: syncCaseReminder };
 
@@ -104,6 +131,11 @@ export function ReminderControl({
               {/* "On" with no date would promise an email that nothing will send. */}
               {!log.reminderAt ? copy.emailNeedsDate : emailOn ? copy.emailOn : copy.emailOff}
             </span>
+            {deliveryLine && (
+              <p className="w-full text-xs text-muted-foreground" role="status">
+                {deliveryLine}
+              </p>
+            )}
           </div>
         ) : (
           <p className="mt-3 text-xs text-muted-foreground">{copy.emailSignedOut}</p>
@@ -111,4 +143,19 @@ export function ReminderControl({
       </div>
     </div>
   );
+}
+
+function describeDelivery(
+  status: ReminderDeliveryState | null,
+  copy: (typeof APP)["dashboard"]["clock"]["delivery"],
+): string | null {
+  if (!status) return null;
+  switch (status.state) {
+    case "scheduled":
+      return copy.scheduled.replace("{date}", formatDay(status.day));
+    case "sent":
+      return copy.sent.replace("{date}", formatDay(status.day));
+    default:
+      return copy[status.state];
+  }
 }

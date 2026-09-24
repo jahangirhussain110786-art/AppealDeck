@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VaultGate } from "@/components/VaultGate";
 import { VerificationChecklistCard } from "@/components/VerificationChecklistCard";
 import { FactsLedgerCard } from "@/components/FactsLedgerCard";
+import { CaseFactsCard } from "./CaseFactsCard";
 import { PageIntro } from "@/components/PageIntro";
 import { RequestReview } from "./RequestReview";
 import { EvidenceReview } from "./EvidenceReview";
@@ -49,8 +50,11 @@ import {
   entriesFromEntities,
   entriesFromSeller,
   entriesFromDocumentCheck,
+  entriesFromCaseFacts,
+  disagreementsFromDocumentCheck,
 } from "@/core/factsLedger";
 import { runDocumentCheck, type CheckOutcome } from "@/lib/documentChecks/runCheck";
+import { caseFactsForCheck, checkCaseDataFrom } from "@/lib/documentChecks/context";
 import { migrateLegacyCase, needsMigration, migrationSummary } from "@/core/legacyMigration";
 import {
   addWorkspaceEvent,
@@ -685,11 +689,25 @@ function WorkspaceInner({
         }));
         return;
       }
+      const ws = fileRef.current?.workspace;
       const outcome = await runDocumentCheck({
+        caseId: fileRef.current?.id ?? "",
         kind: fileRef.current?.kind ?? "UNKNOWN",
         evidenceKind,
         bytes,
         mimeType: record.mimeType || "application/octet-stream",
+        // The ASINs and IDs Amazon named, from every request on the case, so an invoice is compared
+        // with the product Amazon asked about rather than judged in the abstract.
+        caseData: ws
+          ? {
+              ...checkCaseDataFrom([
+                ws.notice,
+                ws.formInstructions,
+                ...ws.previousRequests.flatMap((p) => [p.notice, p.formInstructions]),
+              ]),
+              ...caseFactsForCheck(ws.caseFacts),
+            }
+          : undefined,
       });
       setDocChecks((prev) => ({ ...prev, [recordId]: outcome }));
     } catch {
@@ -843,23 +861,38 @@ function WorkspaceInner({
    * document checks have been run in this session. Checks stay in memory on purpose (AA-41): a
    * stale reading shown beside a replaced file would be worse than asking for a re-run.
    */
-  const ledger = buildFactsLedger([
-    // The draft is read first: `w.notice` only becomes populated when the seller confirms the
-    // request, so reading it alone left the ledger invisible for everyone who had typed their
-    // notice but not yet confirmed the route — which is most of the time they spend here.
-    ...entriesFromEntities(extractEntities(w.draft?.["request.notice"] ?? w.notice)),
-    ...entriesFromSeller(
-      Object.fromEntries(w.requirements.filter((r) => r.note.trim()).map((r) => [r.label, r.note])),
-    ),
-    ...Object.entries(docChecks).flatMap(([recordId, outcome]) => {
-      if (outcome.kind !== "fields") return [];
-      const filename =
-        w.requirements.find((r) => r.recordId === recordId)?.filename ??
-        records.find((rec) => rec.id === recordId)?.name ??
-        "an uploaded document";
-      return entriesFromDocumentCheck(filename, outcome.result);
-    }),
-  ]);
+  const checkedFiles = Object.entries(docChecks).flatMap(([recordId, outcome]) =>
+    outcome.kind === "fields"
+      ? [
+          {
+            filename:
+              w.requirements.find((r) => r.recordId === recordId)?.filename ??
+              records.find((rec) => rec.id === recordId)?.name ??
+              "an uploaded document",
+            result: outcome.result,
+          },
+        ]
+      : [],
+  );
+  const ledger = buildFactsLedger(
+    [
+      // The draft is read first: `w.notice` only becomes populated when the seller confirms the
+      // request, so reading it alone left the ledger invisible for everyone who had typed their
+      // notice but not yet confirmed the route — which is most of the time they spend here.
+      ...entriesFromEntities(extractEntities(w.draft?.["request.notice"] ?? w.notice)),
+      ...entriesFromSeller(
+        Object.fromEntries(
+          w.requirements.filter((r) => r.note.trim()).map((r) => [r.label, r.note]),
+        ),
+      ),
+      // The business details the seller stated once — the facts every document is compared with.
+      ...entriesFromCaseFacts(w.caseFacts),
+      ...checkedFiles.flatMap((c) => entriesFromDocumentCheck(c.filename, c.result)),
+    ],
+    // Where a checked document disagrees with the notice or with those details: both sides, both
+    // sources, listed with every other disagreement (ChatGPT audit item G, 24 Sep 2026).
+    checkedFiles.flatMap((c) => disagreementsFromDocumentCheck(c.filename, c.result)),
+  );
   const gaps = workspaceGaps(w);
   const next = w.requirements.find((r) => r.status !== "reviewed");
   const awaiting = file.state === "SUBMITTED" && !w.replies.some((r) => !r.applied);
@@ -1363,6 +1396,20 @@ function WorkspaceInner({
                   </label>
                 </CardContent>
               </Card>
+              {/* Before the records: a check compares each document with these. */}
+              <CaseFactsCard
+                key={JSON.stringify(w.caseFacts ?? {})}
+                facts={w.caseFacts}
+                busy={busy}
+                onSave={(facts) =>
+                  commit((old) => {
+                    // Built without the key when empty, never by merging `undefined` over it.
+                    const { caseFacts: _previous, ...rest } = old;
+                    void _previous;
+                    return Object.keys(facts).length > 0 ? { ...rest, caseFacts: facts } : rest;
+                  }, C.caseFacts.saved)
+                }
+              />
               {w.requirements.map((r) => (
                 <EvidenceReview
                   key={`${r.id}-${r.recordId}-${r.status}-${r.sourceQuote}`}

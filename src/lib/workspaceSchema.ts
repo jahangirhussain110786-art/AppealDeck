@@ -147,6 +147,14 @@ export const WorkspaceSchema = z
       )
       .max(100)
       .optional(),
+    // G, 24 Sep 2026: declared with the field, so the first save does not strip it.
+    caseFacts: z
+      .object({
+        businessName: z.string().max(300).optional(),
+        businessAddress: z.string().max(1000).optional(),
+        suppliers: z.array(z.string().max(300)).max(20).optional(),
+      })
+      .optional(),
     replies: z
       .array(z.object({ id, at: z.string().datetime(), text, applied: z.boolean() }))
       .max(99),

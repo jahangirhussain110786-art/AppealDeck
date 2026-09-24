@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { AlertCircle, CheckCircle2, CircleHelp, FileSearch, TriangleAlert } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  CircleDashed,
+  CircleHelp,
+  FileSearch,
+  TriangleAlert,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FINDING_LABELS, summarizeCheck, type FindingStatus } from "@/core/documentCheck";
@@ -20,10 +27,13 @@ export function DocumentCheckPanel({
   outcome,
   busy,
   onCheck,
+  processing,
 }: {
   outcome: CheckOutcome | null;
   busy: boolean;
   onCheck: () => void;
+  /** Where the file will be read, stated before the seller presses the button. */
+  processing?: "server" | "device";
 }) {
   return (
     <div className="space-y-3 rounded-lg border border-border bg-surface-2/40 p-4">
@@ -37,6 +47,14 @@ export function DocumentCheckPanel({
               : APP.evidenceSlots.check.action}
         </Button>
       </div>
+
+      {!outcome && processing && (
+        <p className="text-xs text-muted-foreground">
+          {processing === "server"
+            ? APP.evidenceSlots.check.beforeServer
+            : APP.evidenceSlots.check.beforeDevice}
+        </p>
+      )}
 
       {outcome?.kind === "unavailable" && (
         <p className="text-sm text-muted-foreground">
@@ -64,6 +82,11 @@ export function DocumentCheckPanel({
                   {f.observed && (
                     <span className="block font-mono text-xs text-muted-foreground">
                       “{f.observed}”
+                    </span>
+                  )}
+                  {f.comparedWith && (
+                    <span className="block text-xs text-muted-foreground">
+                      {APP.evidenceSlots.check.comparedWith} {f.comparedWith}
                     </span>
                   )}
                 </span>
@@ -133,7 +156,9 @@ function StatusIcon({ status }: { status: FindingStatus }) {
         ? AlertCircle
         : status === "missing"
           ? TriangleAlert
-          : CircleHelp;
+          : status === "not_assessed"
+            ? CircleDashed
+            : CircleHelp;
   return (
     <Icon
       className={cn(

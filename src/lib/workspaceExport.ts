@@ -113,6 +113,17 @@ export function buildCaseExport(
   }
   lines.push("");
 
+  // G, 24 Sep 2026. Stated by the seller, and labelled as such: a specialist reading the export
+  // needs to know these came from the seller, not from a document or from Amazon.
+  const facts = w.caseFacts;
+  if (facts && (facts.businessName || facts.businessAddress || facts.suppliers?.length)) {
+    lines.push("== Business details, as the seller stated them ==");
+    if (facts.businessName) lines.push(`Registered business name: ${facts.businessName}`);
+    if (facts.businessAddress) lines.push(`Registered business address: ${facts.businessAddress}`);
+    if (facts.suppliers?.length) lines.push(`Suppliers: ${facts.suppliers.join("; ")}`);
+    lines.push("");
+  }
+
   lines.push(
     `== Evidence plan (${w.requirements.length} record${w.requirements.length === 1 ? "" : "s"}) ==`,
   );

@@ -92,6 +92,8 @@ export const APP = {
     disposal_or_recall_proof: "Disposal/recall proof",
     metric_export: "Metric export",
     sop_document: "SOP document",
+    compliance_report: "Compliance or test report",
+    account_resolution_proof: "Linked-account resolution record",
     other: "Other",
   },
   evidenceSlots: {
@@ -122,6 +124,13 @@ export const APP = {
       recheck: "Check again",
       noVerdict: "This describes your document only. Whether Amazon accepts it is their decision.",
       failed: "Could not check that document",
+      comparedWith: "Compared with:",
+      // Shown before the button is pressed, so a seller knows where the file goes before it goes
+      // there rather than learning it from the result (ChatGPT audit §8, 24 Sep 2026).
+      beforeServer:
+        "Checking sends this file to AppealDeck and on to Google Gemini to be read against what Amazon asked for. No copy is kept, and nothing is sent to Amazon.",
+      beforeDevice:
+        "Identity and bank documents are checked on this device only. The file is never uploaded.",
     },
     requestDialog: {
       description:
@@ -243,6 +252,18 @@ export const APP = {
       reminderLabel: "Your follow-up reminder date",
       reminderHint: "Shown at the top of your dashboard when it arrives.",
       emailFailed: "Could not change email reminders. Nothing else has changed.",
+      // What the server has actually done with the reminder, read back from it (24 Sep 2026). "On"
+      // said only that the seller had asked; these say whether the email went.
+      delivery: {
+        scheduled: "We will email you on {date}.",
+        sent: "Email sent on {date}.",
+        retrying:
+          "We could not deliver the email yet. We will try again at the next daily run — check your spam folder too.",
+        failed:
+          "We could not deliver the email after several tries. Check the email address on your account, then turn reminders off and on again.",
+        missing:
+          "Your reminder is not scheduled on our side. Turn email reminders off and on again to set it.",
+      },
     },
     replyCard: {
       title: "Amazon replied?",

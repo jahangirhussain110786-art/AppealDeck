@@ -127,6 +127,30 @@ business days. Create that mailbox (or alias it to one you read) before the page
 change the window in `src/content/support.ts` if two business days is not what you can actually
 hold to. A stated window you miss is worse than a longer one you keep.
 
+**Restore drill — once, before the first sale.** Added 24 Sep 2026: a backup that decrypts has not
+yet been shown to restore. Create a scratch Supabase project, replay one real dump into it with the
+commands above, and confirm that `licenses` (which carries each per-case entitlement in `case_id`),
+`checkout_intents`, `payment_events`, `payment_adjustments`, `license_devices`, `outcome_events` and
+`case_reminders` hold the same row counts as production. Write the date and the counts here. Then
+delete the scratch project.
+
+## 6b. The AI provider's billing tier (founder action) — before the first real document
+
+The privacy policy tells sellers that Google does not use what we send to improve its products and
+keeps it for up to 55 days only to detect abuse. **That is true of the Gemini API's paid tier only.**
+On the free tier Google may use prompts and documents to improve its products — including a seller's
+supplier invoice. An API key does not show which tier it is on; the Google Cloud project behind it
+does. Before any seller checks a real document:
+
+1. Open https://aistudio.google.com/app/apikey and note which Google Cloud project the production
+   `GEMINI_API_KEY` belongs to.
+2. In https://console.cloud.google.com/billing, confirm that project is linked to an active billing
+   account. In AI Studio the key should show a paid tier, not "Free".
+3. Keep development keys (D9: free tier, dev fixtures only) in a **different** project, so a seller's
+   document can never reach a free-tier key.
+
+If the production project is not on a paid tier, the privacy policy is untrue until it is.
+
 ## 7. Deploy
 
 ```bash
@@ -161,11 +185,15 @@ After first deployment:
 3. Visit `https://appealdeck.com/login` — sign in with dev account.
 4. Visit `https://appealdeck.com/case` — should show the case workspace. (The guided interview and its "Suggest fields (AI)" button were retired on 22 Sep 2026, and the app runs on a single host, so there is no `app.` subdomain to check.)
 5. In the workspace, confirm a request whose notice gives a dated deadline (for example "submit your appeal by 1 October 2026"), then open the dashboard: that date should appear in the card at the top, along with any follow-up date you set.
-6. Open browser DevTools → Network → attach a document under 3 MB in the case workspace to trigger /api/read-document. Response should be 200, not 503/429 (Upstash breaker is engaged but the spend cap is 240/day). A file over 3 MB should be refused in the page with its size and the limit, and make no request.
+6. Open browser DevTools → Network → attach a business document under 3 MB to a record in the case workspace, then press **Check this document** to trigger /api/read-document. (Attaching alone sends nothing.) Response should be 200, not 503/429 (Upstash breaker is engaged but the spend cap is 240/day). The result should list each field with what was read, and a date field should say "Compared with: Today's date, …". A file over 3 MB should be refused in the page with its size and the limit, and make no request. Attach an identity photo to an identity record and check it: there should be **no** request to /api/read-document at all.
 7. Paddle webhook test: in Paddle dashboard → Notifications → test event → `transaction.completed` with a sandbox customer email. Check `licenses` table in Supabase for the new row.
 8. Run Lighthouse on `https://appealdeck.com/`: perf ≥ 0.9, a11y/bp/seo ≥ 0.95 (CI enforces this on every PR).
+9. **Purchase confirmation email** (D8 — the checkout promises it): after step 7 with a real inbox, confirm the email arrives. Needs `RESEND_API_KEY`.
+10. **Refund and revocation**: refund that sandbox transaction in Paddle, then confirm the licence row changes status and the case's paid features lock again.
+11. **Reminder email**: on a signed-in case, set a follow-up date for today and turn email reminders on, then run the cron by hand (`curl -H "Authorization: Bearer $CRON_SECRET" https://appealdeck.com/api/jobs/case-reminders`) and confirm the email arrives. Needs `RESEND_API_KEY` and `CRON_SECRET`.
+12. **Support mailbox**: send a message to the address on `/support` and confirm you receive it.
 
-If all 8 pass, you're live.
+If all 12 pass, and §6a's restore drill and §6b's billing check are done, you're live.
 
 ## 10. Which Vercel plan
 

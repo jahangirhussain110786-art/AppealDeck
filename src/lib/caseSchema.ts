@@ -1,24 +1,16 @@
 import { z } from "zod";
 import { VIOLATION_KINDS } from "@/core/violationKinds";
+import { EVIDENCE_KINDS } from "@/core/workspace";
 import { WorkspaceSchema } from "./workspaceSchema";
 
 // Derived from core's VIOLATION_KINDS so a new taxonomy member cannot be accepted by the type
 // system while being rejected at the schema boundary (AA-39).
 export const ViolationKindSchema = z.enum(VIOLATION_KINDS);
 export const CaseIdSchema = z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/);
-const EvidenceKindSchema = z.enum([
-  "supplier_invoice",
-  "brand_authorization",
-  "rights_owner_retraction",
-  "identity_doc",
-  "financial_instrument_doc",
-  "sourcing_doc",
-  "listing_fix_proof",
-  "disposal_or_recall_proof",
-  "metric_export",
-  "sop_document",
-  "other",
-]);
+// Derived, like ViolationKindSchema above. This was a hand-written copy until 24 Sep 2026, and a
+// schema that falls behind the type rejects or strips what the type allows — the silent-drop
+// defect this project has hit several times.
+const EvidenceKindSchema = z.enum(EVIDENCE_KINDS);
 const narrative = z.string().max(12000);
 export const CaseDataSchema = z.object({
   workspace: WorkspaceSchema.optional(),

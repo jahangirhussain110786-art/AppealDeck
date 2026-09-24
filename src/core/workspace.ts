@@ -113,6 +113,16 @@ export type Requirement = {
    */
   sourceRevision?: number;
 };
+/** See `Workspace.caseFacts`. Every field is optional: a seller states what they know. */
+export interface CaseFacts {
+  /** The business name exactly as registered on the seller account. */
+  businessName?: string;
+  /** The registered business address exactly as on the seller account. */
+  businessAddress?: string;
+  /** Every supplier the seller buys from, as each names itself. Several suppliers are normal. */
+  suppliers?: string[];
+}
+
 export interface Workspace {
   version: 1;
   revision: number;
@@ -202,6 +212,17 @@ export interface Workspace {
    * the seller has already told us is not wanted.
    */
   dismissed?: Array<{ key: string; label: string; reason: string; at: string }>;
+  /**
+   * The few facts every document in the case is compared with, stated once by the seller.
+   *
+   * Added 24 Sep 2026 (ChatGPT audit item G, second half). The facts ledger held the seller's notes
+   * under a record's name ("Supplier invoice") and a document's readings under a field's name
+   * ("supplier business name"), so the two never met and the contradiction the ledger exists to
+   * catch — a narrative that disagrees with its own exhibit — could not be found. Free-text notes
+   * cannot be compared honestly; these can. Amazon checks an invoice's buyer name and address
+   * against the seller account and may phone the supplier, so these are the facts that matter.
+   */
+  caseFacts?: CaseFacts;
   /** Unsaved field text, autosaved to the vault so it survives navigation and sign-in. */
   draft?: Record<string, string>;
 }
@@ -252,6 +273,8 @@ export const EVIDENCE_KIND_LABELS: Readonly<Record<EvidenceKind, string>> = {
   disposal_or_recall_proof: "Disposal or recall record",
   metric_export: "Sales or performance record",
   sop_document: "Written procedure",
+  compliance_report: "Test report or compliance certificate",
+  account_resolution_proof: "Linked-account resolution record",
   other: "Other requested record",
 };
 
@@ -283,6 +306,11 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{ pattern: RegExp; evidenceKind: Evidenc
   {
     pattern: /\b(proof of (?:correction|changes)|listing screenshots?)\b/i,
     evidenceKind: "listing_fix_proof",
+  },
+  {
+    pattern:
+      /\b(test reports?|compliance certificates?|certificates? of (?:conformity|compliance)|lab(?:oratory)? (?:test )?reports?)\b/i,
+    evidenceKind: "compliance_report",
   },
 ];
 

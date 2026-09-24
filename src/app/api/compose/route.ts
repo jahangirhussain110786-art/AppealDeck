@@ -123,6 +123,9 @@ async function composeDraft(
 
   // Workspace responses retain the seller's confirmed wording and exact evidence references.
   // The legacy rewrite prompt is specific to POA sections and must not rewrite document responses.
+  // The privacy policy states that preparing a response is not sent to any AI provider, which is
+  // true because of this line. Change it and `src/content/legal.ts` must change in the same commit
+  // — `legalDisclosures.test.ts` fails until it does.
   if (data.workspace || !isGeminiConfigured()) {
     return deterministic;
   }

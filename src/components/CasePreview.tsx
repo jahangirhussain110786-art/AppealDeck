@@ -67,19 +67,7 @@ export function CasePreview({ kind, caseFile }: CasePreviewProps) {
   );
 }
 
+/** The one copy in `src/content`; this component kept a word-for-word duplicate until 24 Sep 2026. */
 function evidenceKindLabel(kind: EvidenceKind): string {
-  const labels: Record<EvidenceKind, string> = {
-    supplier_invoice: "Supplier invoice",
-    brand_authorization: "Brand authorization",
-    rights_owner_retraction: "Rights owner retraction",
-    identity_doc: "Identity document",
-    financial_instrument_doc: "Financial instrument document",
-    sourcing_doc: "Sourcing document",
-    listing_fix_proof: "Listing fix proof",
-    disposal_or_recall_proof: "Disposal/recall proof",
-    metric_export: "Metric export",
-    sop_document: "SOP document",
-    other: "Other",
-  };
-  return labels[kind];
+  return APP.evidenceKinds[kind];
 }

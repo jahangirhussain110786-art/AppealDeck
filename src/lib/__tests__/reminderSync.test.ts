@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { setEmailReminder, setReminderDate, type ReminderDeps } from "@/lib/reminderSync";
+import {
+  reminderDeliveryState,
+  setEmailReminder,
+  setReminderDate,
+  type ReminderDeps,
+} from "@/lib/reminderSync";
 import type { CaseLog } from "@/lib/caseStore";
 
 /**
@@ -87,5 +92,48 @@ describe("setEmailReminder", () => {
     const { d } = deps({ save: false });
     expect(await setEmailReminder(dated, true, target, d)).toBe("not-saved");
     expect(d.sync).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: false }));
+  });
+});
+
+/**
+ * 24 Sep 2026 (ChatGPT audit item O). "Email reminders are on" said only that the seller had asked.
+ * These pin what the page says about whether the email actually went.
+ */
+describe("reminderDeliveryState", () => {
+  const on = { emailOn: true, reminderAt: "2026-10-01T00:00:00Z" };
+  const row = { dueAt: "2026-10-01T00:00:00+00:00", sentAt: null, attempts: 0, gaveUp: false };
+
+  it("says when the email is scheduled, on the day the seller chose", () => {
+    expect(reminderDeliveryState(row, on)).toEqual({ state: "scheduled", day: "2026-10-01" });
+  });
+
+  it("says when it was sent", () => {
+    const sent = reminderDeliveryState({ ...row, sentAt: "2026-10-01T08:00:05Z" }, on);
+    expect(sent?.state).toBe("sent");
+  });
+
+  it("says a delivery is being retried, then that it failed", () => {
+    expect(reminderDeliveryState({ ...row, attempts: 1 }, on)).toEqual({ state: "retrying" });
+    expect(reminderDeliveryState({ ...row, attempts: 3, gaveUp: true }, on)).toEqual({
+      state: "failed",
+    });
+  });
+
+  it("says so when the switch is on here but nothing is scheduled on the server", () => {
+    expect(reminderDeliveryState(null, on)).toEqual({ state: "missing" });
+  });
+
+  it("says nothing when the record could not be read — a network blip is not a failed email", () => {
+    expect(reminderDeliveryState(undefined, on)).toBeNull();
+  });
+
+  it("says nothing when email is off or there is no date", () => {
+    expect(reminderDeliveryState(row, { emailOn: false, reminderAt: on.reminderAt })).toBeNull();
+    expect(reminderDeliveryState(row, { emailOn: true })).toBeNull();
+  });
+
+  it("reports the server's date, so a mismatch with the date on screen is visible", () => {
+    const moved = reminderDeliveryState({ ...row, dueAt: "2026-09-28T00:00:00+00:00" }, on);
+    expect(moved).toEqual({ state: "scheduled", day: "2026-09-28" });
   });
 });

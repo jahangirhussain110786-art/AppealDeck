@@ -100,3 +100,65 @@ export async function setEmailReminder(
   await deps.sync({ ...request, enabled: log.emailReminder === true });
   return "not-saved";
 }
+
+/**
+ * What the server has done with this case's reminder — the shape `GET /api/reminders` returns.
+ * Declared here rather than imported from `caseReminders.ts`, which is server-only.
+ */
+export interface ReminderDelivery {
+  dueAt: string;
+  sentAt: string | null;
+  attempts: number;
+  gaveUp: boolean;
+}
+
+/**
+ * Reads the server's record of this case's reminder. `undefined` when it could not be read, which
+ * the caller shows as nothing at all: a network blip is not a delivery failure, and saying one
+ * would alarm a seller about an email that may be fine.
+ */
+export async function fetchReminderDelivery(
+  caseRef: string,
+): Promise<ReminderDelivery | null | undefined> {
+  try {
+    const res = await fetch(`/api/reminders?caseRef=${encodeURIComponent(caseRef)}`);
+    if (!res.ok) return undefined;
+    const body = (await res.json()) as { reminder?: ReminderDelivery | null };
+    return body.reminder ?? null;
+  } catch {
+    return undefined;
+  }
+}
+
+export type ReminderDeliveryState =
+  | { state: "scheduled"; day: string }
+  | { state: "sent"; day: string }
+  | { state: "retrying" }
+  | { state: "failed" }
+  | { state: "missing" };
+
+/**
+ * One plain line about whether the email actually went, from the server's record and the seller's
+ * own switch. Added 24 Sep 2026 (ChatGPT audit item O): "Email reminders are on" said only that the
+ * seller had asked, never whether anything was sent or had failed.
+ *
+ * Null when there is nothing honest to add — email off, no date, or the record unreadable.
+ * `day` is a calendar day (YYYY-MM-DD): the due date is stored as that day at midnight UTC, and the
+ * send time is shown on the seller's own calendar.
+ */
+export function reminderDeliveryState(
+  delivery: ReminderDelivery | null | undefined,
+  local: { emailOn: boolean; reminderAt?: string },
+): ReminderDeliveryState | null {
+  if (!local.emailOn || !local.reminderAt || delivery === undefined) return null;
+  if (delivery === null) return { state: "missing" };
+  if (delivery.sentAt) return { state: "sent", day: localDay(new Date(delivery.sentAt)) };
+  if (delivery.gaveUp) return { state: "failed" };
+  if (delivery.attempts > 0) return { state: "retrying" };
+  return { state: "scheduled", day: delivery.dueAt.slice(0, 10) };
+}
+
+function localDay(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}

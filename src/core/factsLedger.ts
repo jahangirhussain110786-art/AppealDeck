@@ -25,12 +25,16 @@
 
 import type { ExtractedEntity } from "./entities";
 import type { DocumentCheckResult } from "./documentCheck";
+import type { CaseFacts } from "./workspace";
 
 export type FactSource =
   /** The seller typed this into their case. */
   | { kind: "seller"; field: string }
-  /** Read out of the Amazon notice, with the span it came from. */
-  | { kind: "notice"; quote: string; start: number; end: number }
+  /**
+   * Read out of the Amazon notice, with the span it came from when there is one. A value the
+   * notice supplied to a document comparison has no single span, and one is not invented for it.
+   */
+  | { kind: "notice"; quote: string; start?: number; end?: number }
   /** Read off a document the seller uploaded, during a document check. */
   | { kind: "document"; filename: string; field: string }
   /** Stated in a reply from Amazon. */
@@ -93,7 +97,11 @@ function labelKey(label: string): string {
  * Entries with an empty value are dropped rather than recorded as a blank fact — an absent value is
  * the absence of a fact, not a fact that something is empty.
  */
-export function buildFactsLedger(entries: readonly FactEntry[]): FactsLedger {
+export function buildFactsLedger(
+  entries: readonly FactEntry[],
+  /** Already-established disagreements, from `disagreementsFromDocumentCheck`. */
+  disagreements: readonly Fact[] = [],
+): FactsLedger {
   const byLabel = new Map<string, FactEntry[]>();
   for (const entry of entries) {
     if (!entry.value.trim() || !entry.label.trim()) continue;
@@ -156,6 +164,7 @@ export function buildFactsLedger(entries: readonly FactEntry[]): FactsLedger {
     });
   }
 
+  facts.push(...disagreements);
   return { facts, contradictions: facts.filter((f) => f.status === "contradicted") };
 }
 
@@ -192,6 +201,12 @@ const ENTITY_FACT_LABELS: Record<string, { label: string; multiValued: boolean }
 /**
  * Entries from a document check. Only `present` findings with something quoted become facts: a
  * field we could not read is not a fact, and a missing one certainly is not.
+ *
+ * Every document entry is many-valued (24 Sep 2026). A case holds several documents, and two
+ * invoices with different dates, quantities or suppliers are two invoices, not a contradiction —
+ * grouped as single answers, they were reported as one, which is the false alarm the ASIN fix of
+ * 23 Sep removed for the notice and left in place here. A document that disagrees with the *case*
+ * is a real disagreement, and `disagreementsFromDocumentCheck` reports it.
  */
 export function entriesFromDocumentCheck(
   filename: string,
@@ -203,7 +218,82 @@ export function entriesFromDocumentCheck(
       label: f.field,
       value: f.observed!.trim(),
       source: { kind: "document" as const, filename, field: f.field },
+      multiValued: true,
     }));
+}
+
+/**
+ * Where a checked document disagrees with the case itself — an ASIN or complaint ID the notice
+ * named, or a business detail the seller stated — as a ledger disagreement with both values and
+ * both sources. Added 24 Sep 2026 (ChatGPT audit item G): the ledger was meant to catch a narrative
+ * that contradicts its own exhibit, and could not, because the two halves were filed under
+ * different names and never compared. The comparison is made by the document check, against a
+ * named case value; this only puts it where every other disagreement is listed.
+ */
+export function disagreementsFromDocumentCheck(
+  filename: string,
+  check: DocumentCheckResult,
+): Fact[] {
+  return check.findings
+    .filter((f) => f.status === "conflicting" && f.observed?.trim() && f.comparedValue)
+    .map((f) => ({
+      label: f.field,
+      status: "contradicted" as const,
+      entries: [
+        {
+          label: f.field,
+          value: f.observed!.trim(),
+          source: { kind: "document" as const, filename, field: f.field },
+        },
+        {
+          label: f.field,
+          value: f.comparedValue!.value,
+          source:
+            f.comparedValue!.source === "notice"
+              ? { kind: "notice" as const, quote: f.comparedValue!.value }
+              : { kind: "seller" as const, field: "Your business details" },
+        },
+      ],
+    }));
+}
+
+/**
+ * The business details the seller stated once for the case (`Workspace.caseFacts`). The name and
+ * address are single answers — a seller account has one of each — so two different values for
+ * either are a real disagreement. Suppliers are a list.
+ */
+export function entriesFromCaseFacts(facts: CaseFacts | undefined): FactEntry[] {
+  if (!facts) return [];
+  const seller = (field: string) => ({ kind: "seller" as const, field });
+  return [
+    ...(facts.businessName?.trim()
+      ? [
+          {
+            label: "Your registered business name",
+            value: facts.businessName.trim(),
+            source: seller("Business name"),
+          },
+        ]
+      : []),
+    ...(facts.businessAddress?.trim()
+      ? [
+          {
+            label: "Your registered business address",
+            value: facts.businessAddress.trim(),
+            source: seller("Business address"),
+          },
+        ]
+      : []),
+    ...(facts.suppliers ?? [])
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((value) => ({
+        label: "Your suppliers",
+        value,
+        source: seller("Suppliers"),
+        multiValued: true,
+      })),
+  ];
 }
 
 /** Entries the seller typed. The caller supplies the label/value pairs it already has. */

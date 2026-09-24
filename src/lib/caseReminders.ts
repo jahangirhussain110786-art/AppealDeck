@@ -56,19 +56,37 @@ export async function deleteCaseReminder(userId: string, caseRef: string): Promi
   if (error) throw new Error("Could not clear reminder");
 }
 
+/**
+ * What the server has done with one case's reminder. `gaveUp` is computed here so the client never
+ * needs to know the retry limit — the limit is a server policy, and a copy of it would drift.
+ */
+export interface ReminderDelivery {
+  dueAt: string;
+  sentAt: string | null;
+  attempts: number;
+  gaveUp: boolean;
+}
+
 export async function getCaseReminder(
   userId: string,
   caseRef: string,
-): Promise<{ dueAt: string; sentAt: string | null } | null> {
+): Promise<ReminderDelivery | null> {
   if (!supabaseAdmin) throw new Error("Database unavailable");
   const { data, error } = await supabaseAdmin
     .from("case_reminders")
-    .select("due_at, sent_at")
+    .select("due_at, sent_at, attempts")
     .eq("user_id", userId)
     .eq("case_ref", caseRef)
     .maybeSingle();
   if (error) throw new Error("Could not read reminder");
-  return data ? { dueAt: data.due_at, sentAt: data.sent_at } : null;
+  if (!data) return null;
+  const attempts = Number(data.attempts ?? 0);
+  return {
+    dueAt: data.due_at,
+    sentAt: data.sent_at,
+    attempts,
+    gaveUp: !data.sent_at && attempts >= MAX_ATTEMPTS,
+  };
 }
 
 /**

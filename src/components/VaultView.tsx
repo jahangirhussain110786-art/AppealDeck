@@ -46,6 +46,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { VaultDoorIllustration } from "@/components/illustrations/VaultDoorIllustration";
 import { APP } from "@/content/app";
 import type { EvidenceKind } from "@/core/evidenceModel";
+import { EVIDENCE_KINDS as ALL_EVIDENCE_KINDS } from "@/core/workspace";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IconTile, DetailDisclosure } from "@/components/workspace/WorkspaceVisuals";
@@ -72,19 +73,9 @@ function mimeTypeToIcon(mimeType: string): React.ReactNode {
   return <FileBox className="size-5" />;
 }
 
-const EVIDENCE_KINDS: EvidenceKind[] = [
-  "supplier_invoice",
-  "brand_authorization",
-  "rights_owner_retraction",
-  "identity_doc",
-  "financial_instrument_doc",
-  "sourcing_doc",
-  "listing_fix_proof",
-  "disposal_or_recall_proof",
-  "metric_export",
-  "sop_document",
-  "other",
-];
+// The tagging menu offers every kind, from the one registry (`core/workspace`) — a hand-kept list
+// here fell behind the day a kind was added.
+const EVIDENCE_KINDS: readonly EvidenceKind[] = ALL_EVIDENCE_KINDS;
 
 function evidenceKindLabel(kind: EvidenceKind): string {
   return kind.replace(/_/g, " ");

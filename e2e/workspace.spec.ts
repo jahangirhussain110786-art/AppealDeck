@@ -689,3 +689,35 @@ test.describe("the dashboard for a workspace case", () => {
     await expect(page.getByText("Waiting on someone else", { exact: true })).toBeVisible();
   });
 });
+
+/**
+ * 24 Sep 2026 (ChatGPT audit item G). The facts ledger could not compare a document with the
+ * seller's own account, because the seller had nowhere to state it. The business details are
+ * saved to the vault, survive a reload, and join the ledger as the seller's own statement.
+ */
+test("the seller's business details are saved, survive a reload and join the facts ledger", async ({
+  page,
+}) => {
+  await configure(page);
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
+
+  await evidence
+    .getByLabel("Business name, exactly as registered on your seller account")
+    .fill("Hawlton Trading");
+  await evidence
+    .getByLabel("Your suppliers (one per line, as each names itself)")
+    .fill("Acme Trading Ltd\nOther Wholesale");
+  await evidence.getByRole("button", { name: "Save business details" }).click();
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+
+  await page.reload();
+  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await expect(
+    evidence.getByLabel("Business name, exactly as registered on your seller account"),
+  ).toHaveValue("Hawlton Trading");
+  // Saved and unchanged, so there is nothing to save.
+  await expect(evidence.getByRole("button", { name: "Save business details" })).toBeDisabled();
+  await expect(evidence.getByText("Your registered business name", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("Your suppliers", { exact: true })).toBeVisible();
+});

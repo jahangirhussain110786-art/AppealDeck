@@ -1,8 +1,11 @@
 export const WORKSPACE = {
   title: "Your case workspace",
   subtitle: "One case. Every record, response and reply.",
+  // 24 Sep 2026 (ChatGPT audit §9). Said "Documents stay on this device" without exception, while a
+  // document check sends that one file to be read. Every sentence here now matches what leaves the
+  // browser, and `legalDisclosures.test.ts` pins it alongside the privacy policy.
   privacy:
-    "Your work is saved in this browser’s encrypted vault. Documents stay on this device. Preparing a response sends the notice, confirmed facts and document references to AppealDeck; it does not upload the original files or send anything to Amazon.",
+    "Your work is saved in this browser’s encrypted vault, and your files stay on this device. The one exception is a business document you ask us to check: that file is sent to be read, and no copy is kept. Preparing a response sends the notice, confirmed facts and document references to AppealDeck — never the original files — and nothing is ever sent to Amazon.",
   local: "Saved on this device",
   loading: "Opening your case…",
   tabs: { overview: "Overview", evidence: "Evidence", response: "Response", history: "History" },
@@ -27,7 +30,7 @@ export const WORKSPACE = {
   sourceHelp:
     "Paste the exact sentence if your notice or response page asks for this record. Leave it empty if you know the case needs it and Amazon did not say so — it will be recorded as yours, not theirs.",
   manualReview:
-    "Review the original file and record what it supports. This is your factual review, not document authentication. Automatic text extraction is not available yet.",
+    "Review the original file and record what it supports. This is your factual review, not document authentication. With an Appeal Pass you can also ask us to check a business document against what Amazon asked for; identity and bank documents are checked on this device only.",
   check: {
     unnamed:
       "This record is not one of the document types we know how to check, so we have not read it. Review it yourself and note what it shows. Your file is unchanged and stayed on this device.",
@@ -64,6 +67,21 @@ export const WORKSPACE = {
     weak: "This draft is thin. Work through the notes below before you copy it.",
   },
   waitingHelp: "Ask the issuer for the missing records. Continue other tasks while you wait.",
+  // G, 24 Sep 2026: the facts every document is compared with. The description says why in one
+  // sentence, because a seller asked for their address without a reason is right to hesitate.
+  caseFacts: {
+    title: "Your business details",
+    description:
+      "Amazon compares your invoices with your seller account and may contact your suppliers. Enter these once, exactly as they appear in Seller Central, and each document check compares them too — so a mismatch is found here first.",
+    businessName: "Business name, exactly as registered on your seller account",
+    businessAddress: "Registered business address, exactly as on your seller account",
+    suppliers: "Your suppliers (one per line, as each names itself)",
+    suppliersHelp: "List every supplier whose invoices you are using. Several is normal.",
+    save: "Save business details",
+    saved: "Updated your business details.",
+    privacy:
+      "Saved in your encrypted vault. Sent with a document check only, to compare with that document — never to Google Gemini.",
+  },
   // A-05/A-06/A-02, wired 23 Sep 2026. All three existed in `src/core` and were reachable by no
   // seller. Each string below describes the record or the seller's own choice, and none of them
   // says anything about what Amazon will decide.

@@ -37,6 +37,7 @@ describe("document check routing", () => {
     for (const evidenceKind of BROWSER_ONLY_EVIDENCE_KINDS) {
       fetchSpy.mockClear();
       const outcome = await runDocumentCheck({
+        caseId: "case-1",
         kind: "VERIFICATION",
         evidenceKind,
         bytes: PNG,
@@ -55,6 +56,7 @@ describe("document check routing", () => {
    */
   it("does not send a document it cannot name", async () => {
     const outcome = await runDocumentCheck({
+      caseId: "case-1",
       kind: "PRODUCT_SAFETY",
       evidenceKind: "other",
       bytes: PNG,
@@ -67,6 +69,7 @@ describe("document check routing", () => {
 
   it("refuses an unreadable format without sending it", async () => {
     const outcome = await runDocumentCheck({
+      caseId: "case-1",
       kind: "INAUTHENTIC_DOCUMENTS",
       evidenceKind: "supplier_invoice",
       bytes: PNG,
@@ -78,6 +81,7 @@ describe("document check routing", () => {
 
   it("sends a named business document, and only that", async () => {
     const outcome = await runDocumentCheck({
+      caseId: "case-1",
       kind: "INAUTHENTIC_DOCUMENTS",
       evidenceKind: "supplier_invoice",
       bytes: PNG,
@@ -96,6 +100,7 @@ describe("document check routing", () => {
    */
   it("does not send a file too large for the host, and says why", async () => {
     const outcome = await runDocumentCheck({
+      caseId: "case-1",
       kind: "INAUTHENTIC",
       evidenceKind: "supplier_invoice",
       bytes: new Uint8Array(MAX_CHECK_BYTES + 1),
@@ -111,6 +116,7 @@ describe("document check routing", () => {
 
   it("still sends a file at the limit, whose request fits under the host's", async () => {
     await runDocumentCheck({
+      caseId: "case-1",
       kind: "INAUTHENTIC",
       evidenceKind: "supplier_invoice",
       bytes: new Uint8Array(MAX_CHECK_BYTES),
@@ -119,6 +125,20 @@ describe("document check routing", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const sent = fetchSpy.mock.calls[0]![1].body as string;
     expect(sent.length).toBeLessThan(4_500_000);
+  });
+
+  it("names the case and sends the notice's identifiers for comparison", async () => {
+    await runDocumentCheck({
+      caseId: "case-1",
+      kind: "INAUTHENTIC",
+      evidenceKind: "supplier_invoice",
+      bytes: new Uint8Array(10),
+      mimeType: "application/pdf",
+      caseData: { asins: ["B0ABCDEF12"], referenceIds: [] },
+    });
+    const sent = JSON.parse(fetchSpy.mock.calls[0]![1].body as string);
+    expect(sent.caseId).toBe("case-1");
+    expect(sent.context).toEqual({ asins: ["B0ABCDEF12"], referenceIds: [] });
   });
 
   it("explains a rejection by the host rather than calling it a failed check", async () => {
@@ -130,6 +150,7 @@ describe("document check routing", () => {
       },
     });
     const outcome = await runDocumentCheck({
+      caseId: "case-1",
       kind: "INAUTHENTIC",
       evidenceKind: "supplier_invoice",
       bytes: PNG,

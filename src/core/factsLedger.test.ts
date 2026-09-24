@@ -4,6 +4,8 @@ import {
   entriesFromEntities,
   entriesFromDocumentCheck,
   entriesFromSeller,
+  entriesFromCaseFacts,
+  disagreementsFromDocumentCheck,
   describeContradiction,
   describeSource,
   FACT_STATUS_LABELS,
@@ -247,5 +249,91 @@ describe("multi-valued facts", () => {
     ];
     const ledger = buildFactsLedger(entries);
     expect(ledger.contradictions.map((f) => f.label)).toEqual(["Case ID"]);
+  });
+});
+
+/*
+ * G, second half (24 Sep 2026). The seller's notes and a document's readings were filed under
+ * different names and never met; and two different invoices were reported as contradicting each
+ * other. These pin both fixes.
+ */
+describe("documents, the notice and the seller's own details, compared", () => {
+  const invoice = (observed: Record<string, string>, context = {}) =>
+    buildDocumentCheck(
+      "INAUTHENTIC",
+      "supplier_invoice",
+      Object.entries(observed).map(([field, value]) => ({
+        field,
+        status: "present" as const,
+        observed: value,
+        note: "Read from the document.",
+      })),
+      { today: "2026-09-24", asins: ["B0ABCDEF12"], referenceIds: [], ...context },
+    );
+
+  it("does not call two invoices with different dates and suppliers a contradiction", () => {
+    const a = invoice({
+      "supplier business name": "Acme Ltd",
+      "issue date (within 365 days)": "1 March 2026",
+    });
+    const b = invoice({
+      "supplier business name": "Other Wholesale",
+      "issue date (within 365 days)": "5 June 2026",
+    });
+    const ledger = buildFactsLedger([
+      ...entriesFromDocumentCheck("a.pdf", a),
+      ...entriesFromDocumentCheck("b.pdf", b),
+    ]);
+    expect(ledger.contradictions).toEqual([]);
+  });
+
+  it("lists a document that names a different ASIN from the notice, with both sources", () => {
+    const check = invoice({ "line items mappable to the ASIN(s)": "B0QQQQQQQ1 x 200" });
+    const ledger = buildFactsLedger([], disagreementsFromDocumentCheck("inv.pdf", check));
+    expect(ledger.contradictions).toHaveLength(1);
+    const [fact] = ledger.contradictions;
+    expect(fact!.entries.map((e) => e.value)).toEqual(["B0QQQQQQQ1 x 200", "B0ABCDEF12"]);
+    expect(describeContradiction(fact!)).toMatch(/read from inv.pdf/);
+    expect(describeContradiction(fact!)).toMatch(/read from your amazon notice/);
+  });
+
+  it("lists an invoice billed to a name the seller did not give for their account", () => {
+    const check = invoice(
+      {
+        "your business name and address as the buyer, matching your seller account":
+          "Bill to: Hawlton Co.",
+      },
+      { business: { name: "Hawlton Trading" } },
+    );
+    const [fact] = disagreementsFromDocumentCheck("inv.pdf", check);
+    expect(fact!.entries[1]).toMatchObject({
+      value: "Hawlton Trading",
+      source: { kind: "seller" },
+    });
+  });
+
+  it("does not list an out-of-window date as a disagreement between sources", () => {
+    // A date too old is a finding about the document, not two sources disagreeing.
+    const check = invoice({ "issue date (within 365 days)": "1 March 2024" });
+    expect(disagreementsFromDocumentCheck("inv.pdf", check)).toEqual([]);
+  });
+
+  it("records the seller's business details, and treats two different names as a contradiction", () => {
+    const facts = entriesFromCaseFacts({
+      businessName: "Hawlton Trading",
+      suppliers: ["Acme Ltd", "Other Wholesale"],
+    });
+    const ledger = buildFactsLedger([
+      ...facts,
+      sellerEntry("Your registered business name", "Hawlton Traders"),
+    ]);
+    expect(ledger.contradictions.map((f) => f.label)).toEqual(["Your registered business name"]);
+    // Several suppliers are a list, not a disagreement.
+    expect(ledger.facts.find((f) => f.label === "Your suppliers")?.status).toBe("recorded");
+  });
+
+  it("records nothing for details the seller has not entered", () => {
+    expect(entriesFromCaseFacts(undefined)).toEqual([]);
+    expect(entriesFromCaseFacts({ businessName: "  " })).toEqual([]);
   });
 });
