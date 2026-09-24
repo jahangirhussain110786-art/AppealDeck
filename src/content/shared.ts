@@ -47,9 +47,6 @@ export const SHARED = {
     titleDefault: "AppealDeck — Your Amazon case workspace",
     description:
       "Decode your Amazon notice, organize original evidence, and prepare a factual response. Track submissions and replies in one case workspace. Start free.",
-    titleDecode: "Decode your Amazon notice, free — AppealDeck",
-    descriptionDecode:
-      "Understand the detected issue, stated time windows and next steps. Your notice is analyzed by AppealDeck; nothing is sent to Amazon.",
     titlePricing: "Appeal Pass — $249 one-time — AppealDeck",
     descriptionPricing:
       "Start with a free case workspace. An Appeal Pass adds response preparation and encrypted backup for one eligible case. $249 once. Read the 7-day refund policy.",
@@ -60,9 +57,7 @@ export const SHARED = {
     descriptionFaq:
       "How the decoder works, what the Appeal Pass includes, how your documents are protected, and how refunds work.",
   },
-  submitButton: "Submit",
   retryButton: "Retry",
-  cta: "See the Appeal Pass",
   navSkip: "Skip to main content",
   tocHeading: "Contents",
   lastUpdated: "Last updated:",

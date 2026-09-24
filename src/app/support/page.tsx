@@ -9,6 +9,7 @@ import { SUPPORT, SUPPORT_EMAIL, BILLING_EMAIL } from "@/content/support";
 import { SHARED } from "@/content/shared";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/support" },
   title: SHARED.metadata.titleSupport,
   description: SHARED.metadata.descriptionSupport,
   openGraph: {

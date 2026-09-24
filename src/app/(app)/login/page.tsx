@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   AuthShell,
@@ -38,8 +38,16 @@ function LoginPageInner() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [mode, setMode] = useState<"password" | "magic">("password");
-  const [status, setStatus] = useState<AuthStatus>("idle");
-  const [message, setMessage] = useState("");
+  /*
+    `?error=` means a sign-in link failed (auth/callback, reset-password). It is read once, as the
+    initial state, and only ever shown as our own sentence: until 24 Sep 2026 the parameter's text
+    was rendered as the error, so a link to this page could make it display anything — for sellers
+    who are targeted by scammers, that is a phishing surface. The text was also decoded a second
+    time, so any message containing a percent sign threw and crashed the page.
+  */
+  const linkFailed = searchParams.get("error") !== null;
+  const [status, setStatus] = useState<AuthStatus>(linkFailed ? "error" : "idle");
+  const [message, setMessage] = useState(linkFailed ? AUTH.login.messages.linkFailed : "");
 
   const validateEmailError = (value: string) => {
     if (value.length > 0 && !isValidEmail(value)) {
@@ -55,14 +63,6 @@ function LoginPageInner() {
   const handlePasswordBlur = () => {
     setPasswordError(validatePasswordLength(password));
   };
-
-  const errorParam = searchParams.get("error");
-  useEffect(() => {
-    if (errorParam) {
-      setStatus("error");
-      setMessage(decodeURIComponent(errorParam));
-    }
-  }, [errorParam]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

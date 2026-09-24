@@ -11,13 +11,6 @@ export const APP = {
     loadFailedDesc: "Check your network and disable ad blockers, then try again.",
   },
   access: {
-    signInGate: {
-      title: "Save your case to continue",
-      body: "Your answers so far are saved on this device, encrypted with a key that stays in this browser. From here the interview asks for documents — sign in so your case carries over to the dashboard and vault.",
-      signIn: "Sign in",
-      createAccount: "Create an account",
-      savedNote: "Saved on this device",
-    },
     setPassphrase: {
       title: "Set a passphrase to keep your case",
       body: "Your case has been saved on this device so far. Choose the passphrase that protects it from now on. Documents you add are encrypted with it.",
@@ -51,8 +44,10 @@ export const APP = {
       required: "Required",
       optional: "Optional",
       startCta: "Start your case — free",
+      // Was "Sign in when the interview reaches your documents" — there has been no interview since
+      // 22 Sep 2026, and a guest can attach documents without signing in.
       startNote:
-        "Saved on this device as you go. Sign in when the interview reaches your documents.",
+        "Saved in this browser as you go, with no account needed. Sign in any time to keep it with your account.",
     },
     composeGate: {
       title: "Unlock the drafted plan",
@@ -65,7 +60,6 @@ export const APP = {
       checkAgain: "Check again",
       signInToActivate: "Sign in first — an Appeal Pass is tied to your account and one case.",
     },
-    aiSignedOut: "Sign in to enable field suggestions.",
   },
   violationKinds: {
     INAUTHENTIC_DOCUMENTS: "Falsified documents alleged",
@@ -143,6 +137,26 @@ export const APP = {
     title: "Your dashboard",
     subtitle:
       "Your case at a glance: what to do next, your deadlines, and how complete the file is.",
+    // Added 24 Sep 2026: the privacy policy promises a case stays in the browser until the seller
+    // deletes it, and there was no way to. The dialog says what goes, that it cannot come back,
+    // and how to keep a copy first — in that order, because a seller in a crisis reads the first
+    // line and may not read the rest.
+    deleteCase: {
+      action: "Delete this case",
+      title: "Delete this case from this browser?",
+      body: "This removes the notice, your answers, your business details and every file attached to this case from this browser. It cannot be undone.",
+      keepCopy:
+        "If you might need it later, download your case notes from the case's History tab first.",
+      backupNote:
+        "A cloud backup you made earlier is stored separately and is not deleted by this.",
+      confirm: "Delete this case",
+      cancel: "Keep it",
+      deleted: "Case deleted from this browser",
+      deletedWithFiles: "Case and {count} attached file(s) deleted from this browser",
+      failed: "Could not delete this case. Nothing was removed.",
+      reminderNotCancelled:
+        "The case is deleted, but its email reminder could not be cancelled. Sign in and try again, or contact support.",
+    },
     active: {
       heading: "Appeal Pass active",
       planLabel: "Plan",
@@ -164,7 +178,7 @@ export const APP = {
       noCase: {
         title: "No active case",
         description:
-          "Start by decoding your notice on the free decoder, then begin the guided interview to build your case file.",
+          "Decode your notice on the free decoder, or start a case and paste it in. Everything is saved in this browser as you go.",
         cta: "Start your case",
       },
     },
@@ -299,81 +313,15 @@ export const APP = {
       downloadFailed: "Download failed",
       recordDeleted: "Record deleted",
       deleteFailed: "Delete failed",
+      // Was "Delete failed" for an archive that failed, which described the wrong action.
+      archiveFailed: "Could not archive this case",
       vaultSynced: "Vault synced",
       syncFailed: "Sync failed",
     },
   },
+  // Only the pre-submit checklist remains. The rest of this block served the compose page and a
+  // PoaSection component that nothing mounted; removed 24 Sep 2026.
   compose: {
-    title: "Your Plan of Action (POA)",
-    subtitle:
-      "Drafts are generated from your case file. Review, copy, and submit through Seller Central (Amazon's seller dashboard).",
-    backButton: "Back to case",
-    fullDraft: {
-      title: "Full draft",
-      description:
-        "All required evidence and narrative are present. This is a complete Plan of Action.",
-    },
-    nextSteps: {
-      title: "Not ready to submit yet",
-      description:
-        "AppealDeck only shows a complete Plan of Action once every part below is in place. Finish these, then return to this page for the full draft.",
-      pillars: {
-        evidence: {
-          title: "Required evidence",
-          complete: "All required evidence is attached.",
-        },
-        rootCause: {
-          title: "Root cause",
-          complete: "Your root-cause narrative has enough detail to draft from.",
-        },
-        preventiveMeasures: {
-          title: "Preventive measures",
-          complete: "Your preventive-measures narrative has enough detail to draft from.",
-        },
-      },
-      fixInInterview: "Continue the interview",
-    },
-    strength: {
-      title: "Draft strength",
-      strong: "Strong",
-      needsWork: "Needs work",
-      weak: "Weak",
-      strongDetail: "The critic review below found no open issues.",
-      needsWorkDetail: "The critic review below found points worth addressing before you submit.",
-      weakDetail: "Required evidence or detail is still missing — see the sections below.",
-      note: "Reflects the critic review and case-file completeness below — not a prediction of Amazon's decision.",
-    },
-    aiDrafted: {
-      badge: "AI-drafted from your answers",
-      detail:
-        "This wording was drafted from the facts you gave in the interview. Read it over and correct anything before you submit.",
-    },
-    sellerWords: {
-      badge: "Your own words",
-      detail: "Shown exactly as you wrote it in the interview.",
-    },
-    restoreOriginal: {
-      button: "Restore original",
-      detail: "Replace your edits with the version AppealDeck generated for this section.",
-      toast: "Restored the original wording for this section.",
-    },
-    sections: {
-      rootCause: "Root Cause",
-      correctiveActions: "Corrective Actions",
-      preventiveMeasures: "Preventive Measures",
-      evidenceGaps: "Evidence Gaps (Action Required)",
-    },
-    copyAll: "Copy full POA",
-    openSellerCentral: "Open Seller Central",
-    asPasted: {
-      toggle: "Show as it will paste",
-    },
-    empty: {
-      title: "No case file yet",
-      description:
-        "Complete the guided interview to build your case file, then return here to draft your Plan of Action.",
-      cta: "Start the interview",
-    },
     checklist: {
       title: "Before you submit",
       submitYourself: "You submit this yourself in Seller Central.",
@@ -397,35 +345,6 @@ export const APP = {
         done: "Complete",
         pending: "Not yet",
       },
-    },
-    findingFix: {
-      EMPTY_EVIDENCE_SLOTS: "Attach the required evidence before submitting.",
-      UNATTESTED_CLAIMS: "Remove any claim you have not backed with evidence.",
-      NOVELTY_REMINDER: "Add new information or changed framing for this resubmission.",
-      BANNED_GUARANTEE: "Remove any promise about Amazon's decision.",
-      BANNED_REINSTATEMENT_PROMISE: "Remove any promise that your account will be reinstated.",
-      BANNED_TIME_PROMISE: "Remove any promise about a timeline.",
-      BANNED_BLAME: "Remove blame aimed at Amazon or any third party.",
-      SEVERITY_GATE: "Address the highest-severity finding before submitting.",
-    },
-    critic: {
-      title: "Critic review",
-      asideLabel: "Critic findings",
-      copySection: "Copy {heading}",
-    },
-    deviceCap: {
-      title: "Device limit reached",
-      description: "Revoke an older device in Billing to continue.",
-      action: "Manage devices in Billing",
-    },
-    error: {
-      title: "Unable to compose",
-      fallback: "Compose failed",
-      action: "Go to case",
-    },
-    loading: "Composing your Plan of Action…",
-    print: {
-      header: "Plan of Action draft · {date}",
     },
   },
   links: {
@@ -624,116 +543,26 @@ export const APP = {
       close: "Close",
     },
   },
-  interview: {
-    saveAndExit: "Save & exit",
-    saveAndExitToast: "Your case has been saved to the vault. You can resume from the dashboard.",
-    unlockPrompt: {
-      title: "Unlock your vault",
-      desc: "Enter your passphrase to decrypt your case data. The key never leaves your device.",
-      placeholder: "Passphrase",
-    },
-    resumePrompt: {
-      title: "Resume your case?",
-      desc: "You have a saved case file in your vault. Resume where you left off, or start fresh.",
-      resume: "Resume case",
-      startOver: "Start over",
-    },
-    declineNote: "Declined — not claimed. The engine will adapt; you can still proceed.",
-    declineButton: "I can't or won't provide this",
-    answerPlaceholder: "Type your answer...",
-    kindPrompt: "What kind of enforcement are you appealing?",
-    kindHelper: "The engine tailors every step to this.",
-    fileUpload: {
-      drop: "Drop a file here, or",
-      choose: "Choose a file",
-      maxMb: "Max 10 MB per file. Encrypted on this device before storage.",
-      tooLarge: "File too large",
-      alreadyHave: "Already have this in your vault?",
-      pickFromVault: "Pick from vault",
-      noMatching: "No matching records in your vault.",
-      attach: "Attach",
-      attached: "Attached",
-      wrongType: "That file type is not accepted",
-      wrongTypeDesc: "Use a PDF or an image (JPG, PNG, HEIC).",
-      duplicate: "Already in your vault",
-      duplicateDesc: '"{name}" matches "{existing}" byte for byte. Nothing was added.',
-      added: '"{name}" added',
-      addedDesc: "{size} · {slot} · encrypted on this device",
-      vaultSlot: "Vault",
-      addFailed: "Add failed",
-      takePhoto: "Take a photo",
-      uploadedLabel: "Uploaded",
-    },
-    stepControls: "Step controls",
-    stepOf: "Step {current} of {total}",
-    saving: "Saving...",
-    continue: "Continue",
-    pendingEvidence: "{count} evidence item(s) pending",
-    whyAmazonWants: "Why does Amazon want this?",
-    whyPanelEyebrow: "Why we ask",
-    whyPanelPrivacy:
-      "This stays in your case file. It is never sent to Amazon unless you include it in your draft.",
-    whyHint:
-      "This evidence is required for this appeal type. The engine has looked it up from Amazon's published policy for this category.",
-    whyHintDismiss: "Got it",
-    declinePlaceholder: "Optional: explain why (stays in your case file only)",
-    confirmDecline: "Confirm and continue",
-    goBack: "Go back",
-    saveStatus: {
-      saved: "Saved to vault · {time}",
-      failedTitle: "Your last answer was not saved to the vault",
-      failedDesc:
-        "Your answer is still on screen. Retry the save, or continue and use Save & exit later.",
-      retry: "Retry save",
-    },
-    complete: {
-      title: "Interview complete",
-      desc: "Your case file is ready. The composer will draft your POA from the facts you provided.",
-      continue: "Continue to composer",
-    },
-    noCaseYet: "No case file found",
-    noCaseDesc: "Start your case on the dashboard.",
-    engineBadge: "Engine: rules-first",
-    numberPlaceholder: "Enter a number",
-    optionalSuffix: "(optional)",
-    willDoAck: {
-      title: "Noted — this one's still ahead of you",
-      description:
-        "A Plan of Action reads strongest once the real change is in place, not only planned. Come back to this item once it's done, and AppealDeck will pick up right where you left off.",
-    },
-    guidanceBanner: {
-      eyebrow: "Before we start",
-      whatToDoTitle: "What matters for this case",
-      doNow: "Do now",
-      doNot: "Avoid",
-      dismiss: "Got it — let's start",
-    },
-    journey: {
-      decode: "Decode",
-      build: "Build your case",
-      draft: "Draft your POA",
-      submit: "Submit",
-    },
-  },
-  case: {
-    title: "Your case",
-    subtitle:
-      "Step through your appeal. The engine chooses each step based on your case type and evidence.",
-    guidedInterview: "Guided interview",
-    guidedDesc:
-      "AppealDeck will guide you step by step. Each step is chosen by the engine — not a chat bot. You can decline any evidence request and the system will show you honest alternatives.",
-    howItWorks: {
-      title: "How this works",
-      bullet1: "The engine chooses each step based on your case type and evidence.",
-      bullet2: "Decline any request — the system shows honest alternatives, never fabricates.",
-      bullet3:
-        "When evidence is complete, the composer drafts your Plan of Action (POA) from real facts.",
-    },
-    quickLinks: {
-      title: "Quick links",
-      decode: "Decode a notice",
-      billing: "Billing",
-    },
+  upload: {
+    drop: "Drop a file here, or",
+    choose: "Choose a file",
+    maxMb: "Max 10 MB per file. Encrypted on this device before storage.",
+    tooLarge: "File too large",
+    alreadyHave: "Already have this in your vault?",
+    pickFromVault: "Pick from vault",
+    noMatching: "No matching records in your vault.",
+    attach: "Attach",
+    attached: "Attached",
+    wrongType: "That file type is not accepted",
+    wrongTypeDesc: "Use a PDF or an image (JPG, PNG, HEIC).",
+    duplicate: "Already in your vault",
+    duplicateDesc: '"{name}" matches "{existing}" byte for byte. Nothing was added.',
+    added: '"{name}" added',
+    addedDesc: "{size} · {slot} · encrypted on this device",
+    vaultSlot: "Vault",
+    addFailed: "Add failed",
+    takePhoto: "Take a photo",
+    uploadedLabel: "Uploaded",
   },
   breadcrumb: {
     home: "Home",

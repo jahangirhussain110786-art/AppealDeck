@@ -39,15 +39,18 @@ describe("/auth/callback route", () => {
     expect(exchangeCodeForSessionMock).toHaveBeenCalledWith("abc123");
   });
 
-  it("redirects to /login with error when exchange fails", async () => {
+  /**
+   * A reason code, never the provider's text (24 Sep 2026): /login shows only its own wording,
+   * because text carried in a URL can be set by anyone who sends a seller a link.
+   */
+  it("redirects to /login with a reason code when exchange fails, not the provider's text", async () => {
     exchangeCodeForSessionMock.mockResolvedValue({ error: { message: "bad code" } });
     const res = await GET(
       makeReq("http://localhost/auth/callback?code=bogus") as unknown as Request,
     );
     expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe(
-      "http://localhost/login?error=" + encodeURIComponent("bad code"),
-    );
+    expect(res.headers.get("location")).toBe("http://localhost/login?error=link_failed");
+    expect(res.headers.get("location")).not.toContain("bad");
   });
 
   it("honors an explicit ?next= param when type is not recovery", async () => {

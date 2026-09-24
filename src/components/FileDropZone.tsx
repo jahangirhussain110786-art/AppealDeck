@@ -77,14 +77,14 @@ export function FileDropZone({
     for (const f of fileArray) {
       if (!f) continue;
       if (f.size > MAX_FILE_MB * 1024 * 1024) {
-        toast.error(APP.interview.fileUpload.tooLarge, {
+        toast.error(APP.upload.tooLarge, {
           description: `File must be under ${MAX_FILE_MB} MB.`,
         });
         continue;
       }
       if (!isAccepted(f)) {
-        toast.error(APP.interview.fileUpload.wrongType, {
-          description: APP.interview.fileUpload.wrongTypeDesc,
+        toast.error(APP.upload.wrongType, {
+          description: APP.upload.wrongTypeDesc,
         });
         continue;
       }
@@ -124,14 +124,14 @@ export function FileDropZone({
       }}
     >
       {uploaded.length > 0 && (
-        <ul className="w-full space-y-1.5" aria-label={APP.interview.fileUpload.uploadedLabel}>
+        <ul className="w-full space-y-1.5" aria-label={APP.upload.uploadedLabel}>
           {uploaded.map((u) => (
             <li
               key={u.id}
               className="flex items-center gap-2 rounded-md border border-success/30 bg-success/5 px-3 py-2 text-left"
             >
               <Check className="size-4 shrink-0 text-success" aria-hidden />
-              <span className="sr-only">{APP.interview.fileUpload.uploadedLabel}:</span>
+              <span className="sr-only">{APP.upload.uploadedLabel}:</span>
               <span className="min-w-0 flex-1 truncate font-medium text-foreground">{u.name}</span>
               <span className="shrink-0 whitespace-nowrap font-mono text-xs tabular-nums text-muted-foreground">
                 {formatBytes(u.size)}
@@ -142,7 +142,7 @@ export function FileDropZone({
       )}
 
       <Plus className="size-5 text-muted-foreground" />
-      <p className="text-muted-foreground">{APP.interview.fileUpload.drop}</p>
+      <p className="text-muted-foreground">{APP.upload.drop}</p>
       <div className="flex flex-col sm:flex-row gap-2">
         <Button
           variant="outline"
@@ -150,7 +150,7 @@ export function FileDropZone({
           onClick={() => inputRef.current?.click()}
           disabled={disabled}
         >
-          {APP.interview.fileUpload.choose}
+          {APP.upload.choose}
         </Button>
         <Button
           variant="outline"
@@ -159,7 +159,7 @@ export function FileDropZone({
           onClick={() => cameraInputRef.current?.click()}
           disabled={disabled}
         >
-          {APP.interview.fileUpload.takePhoto}
+          {APP.upload.takePhoto}
         </Button>
       </div>
       <input
@@ -185,7 +185,7 @@ export function FileDropZone({
         }}
       />
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-      {!hint && <p className="text-xs text-muted-foreground">{APP.interview.fileUpload.maxMb}</p>}
+      {!hint && <p className="text-xs text-muted-foreground">{APP.upload.maxMb}</p>}
     </Card>
   );
 }

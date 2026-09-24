@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -75,10 +75,6 @@ export default function DecodeClient() {
   const likeness = useMemo(() => assessNoticeLikeness(text), [text]);
   const guidance = result ? guidanceFor(result.kind) : null;
   const showHint = text.trim().length >= 40 && Boolean(likeness.hint);
-
-  useEffect(() => {
-    if (text.length < 1) setStatus("empty");
-  }, [text]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -181,18 +177,29 @@ export default function DecodeClient() {
                 {DECODE.textarea.label}
               </label>
               <p className="text-xs tabular-nums text-muted-foreground" data-tn>
-                {charFmt.format(text.length)} characters
+                {DECODE.charCounter.replace("{count}", charFmt.format(text.length))}
               </p>
             </div>
             <Textarea
               id="notice"
               placeholder={DECODE.textarea.placeholder}
               value={text}
-              onChange={(e) => setText(stripInvisibleChars(e.target.value))}
+              onChange={(e) => {
+                const value = stripInvisibleChars(e.target.value);
+                setText(value);
+                // Emptied by typing: back to the empty state, as the clear button does.
+                if (value.length < 1) setStatus("empty");
+              }}
               spellCheck={false}
-              aria-describedby="notice-hint"
+              aria-describedby="notice-help notice-hint"
               className="min-h-[14rem] font-mono text-sm leading-relaxed"
             />
+            {/* Shown, not only written down (it sat unused until 24 Sep 2026): a pasted header is
+                what lets a deadline be counted from the notice's own date instead of "from
+                receipt". */}
+            <p id="notice-help" className="text-xs text-muted-foreground">
+              {DECODE.textarea.hint}
+            </p>
             <div id="notice-hint" className="sr-only" aria-live="polite">
               {likeness.hint ?? ""}
             </div>
@@ -213,9 +220,7 @@ export default function DecodeClient() {
               </Alert>
             )}
 
-            <p className="text-xs text-muted-foreground">
-              Your notice is sent to AppealDeck for analysis. Nothing is sent to Amazon.
-            </p>
+            <p className="text-xs text-muted-foreground">{DECODE.privacyNote}</p>
             <div className="flex flex-wrap items-center gap-3">
               <Button type="submit" size="lg" disabled={status === "loading" || !canSubmit}>
                 {status === "loading" && <RefreshCw className="animate-spin" />}

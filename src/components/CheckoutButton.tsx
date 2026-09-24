@@ -71,19 +71,22 @@ export function CheckoutButton({
   consent?: boolean;
   vault?: Vault;
 }) {
+  // Kept current in an effect, never written during render; Paddle calls it long after either.
   const completedRef = useRef(onCompleted);
-  completedRef.current = onCompleted;
+  useEffect(() => {
+    completedRef.current = onCompleted;
+  }, [onCompleted]);
   const [opening, setOpening] = useState(false);
   const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // Inlined at build time, so a missing token is known during render rather than set from an
+  // effect one render later.
+  const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+  const error = token ? loadError : APP.checkout.unavailableTitle;
 
   useEffect(() => {
-    const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
     const env = (process.env.NEXT_PUBLIC_PADDLE_ENV ?? "sandbox") as "sandbox" | "production";
-    if (!token) {
-      setError(APP.checkout.unavailableTitle);
-      return;
-    }
+    if (!token) return;
 
     function init(tk: string) {
       if (!window.Paddle) return;
@@ -117,16 +120,15 @@ export function CheckoutButton({
     script.async = true;
     script.onload = () => init(token);
     script.onerror = () => {
-      setError(APP.checkout.loadFailedTitle);
+      setLoadError(APP.checkout.loadFailedTitle);
       toast.error(APP.checkout.loadFailedTitle, {
         description: APP.checkout.loadFailedDesc,
       });
     };
     document.body.appendChild(script);
-    // onCompleted is read fresh via the eventCallback closure at init time;
-    // re-running this effect on every onCompleted identity change would
-    // reload the Paddle script unnecessarily.
-  }, []);
+    // onCompleted is read through completedRef when Paddle fires, so this effect does not re-run
+    // (and reload the Paddle script) whenever the callback identity changes.
+  }, [token]);
 
   async function openCheckout() {
     if (opening || !consent || !window.Paddle) return;

@@ -1,28 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { SHARED } from "@/content/shared";
 
+function subscribe(onChange: () => void): () => void {
+  window.addEventListener("online", onChange);
+  window.addEventListener("offline", onChange);
+  return () => {
+    window.removeEventListener("online", onChange);
+    window.removeEventListener("offline", onChange);
+  };
+}
+
 /**
  * Inline notice shown only while the browser reports no connection.
- * State starts as "online" so the server render and the first client render match;
- * the real value is read from navigator.onLine in an effect.
+ * Read with useSyncExternalStore: the server snapshot is "online", so the server render and the
+ * first client render match, and the browser's real value takes over without an extra effect.
  */
 export function OfflineNotice({ className }: { className?: string }) {
-  const [online, setOnline] = useState(true);
-
-  useEffect(() => {
-    setOnline(navigator.onLine);
-    const goOnline = () => setOnline(true);
-    const goOffline = () => setOnline(false);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-    };
-  }, []);
+  const online = useSyncExternalStore(
+    subscribe,
+    () => navigator.onLine,
+    () => true,
+  );
 
   if (online) return null;
 

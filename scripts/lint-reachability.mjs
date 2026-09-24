@@ -11,8 +11,8 @@
  * Vigilance did not catch those, so this does. It answers one question per thing: can anything
  * actually reach you?
  *
- *   components  — is the symbol referenced anywhere outside its own file, its test and the
- *                 dev-only gallery?
+ *   components  — does any file outside its own tests and the dev-only gallery import it?
+ *                 (By import path since 24 Sep 2026 — a same-named type used to count.)
  *   modules     — does any non-test module under src/core or src/lib import this file?
  *   API routes  — does something in src call this path, or (for a cron) does vercel.json
  *                 schedule it, or is it a documented external entry point?
@@ -140,13 +140,18 @@ for (const file of allFiles) {
   if (ROUTE_FILES.has(path.basename(file))) continue;
 
   const name = path.basename(file, ".tsx");
+  // Matched by import path, not by the name appearing anywhere. Until 24 Sep 2026 a bare word
+  // match counted, so `PoaSection.tsx` — imported by nothing — passed because the core *type*
+  // `PoaSection` is named in several files. A component is reached only by importing its file.
+  const escaped = name.replace(/[^\w]/g, "\\$&");
+  const imported = new RegExp(`(?:from\\s+|import\\s*\\(\\s*)["'][^"']*\\/${escaped}["']`);
   const referenced = [...sources.entries()].some(
     ([other, text]) =>
       other !== file &&
       !isTest(other) &&
       // A-13: the dev gallery previews everything and ships to nobody.
       !other.includes(DEV_GALLERY) &&
-      new RegExp(`\\b${name.replace(/[^\w]/g, "\\$&")}\\b`).test(text),
+      imported.test(text),
   );
   if (!referenced && !GALLERY_ONLY.has(name)) {
     failures.push(

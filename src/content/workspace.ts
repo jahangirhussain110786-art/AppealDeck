@@ -155,8 +155,6 @@ export const WORKSPACE = {
       help: "This reply does not mention it. Your review, note and linked file are unchanged.",
     },
   },
-  legacy:
-    "Your existing interview and records are preserved. You can continue that interview or add the new workspace to this case.",
   unsupported:
     "You can organize and export your case notes. Self-serve response preparation is unavailable for this route; no purchase is needed for these notes.",
   /**

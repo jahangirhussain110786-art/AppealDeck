@@ -54,10 +54,8 @@ export function PurchasePanel() {
   }, []);
 
   useEffect(() => {
-    if (sessionState !== "signed-in") {
-      setCaseCheck({ status: "none" });
-      return;
-    }
+    // Signed out, there is no case to check; `activeCase` below says so without an extra render.
+    if (sessionState !== "signed-in") return;
     let alive = true;
     void (async () => {
       const vault = getBrowserVault();
@@ -88,6 +86,8 @@ export function PurchasePanel() {
       alive = false;
     };
   }, [sessionState]);
+
+  const activeCase: CaseCheck = sessionState === "signed-in" ? caseCheck : { status: "none" };
 
   const handleCompleted = useCallback(() => {
     if (sessionState !== "signed-in") return;
@@ -128,9 +128,9 @@ export function PurchasePanel() {
 
   const blocked =
     sessionState === "signed-in" &&
-    (caseCheck.status === "checking" ||
-      caseCheck.status === "none" ||
-      caseCheck.status === "ineligible");
+    (activeCase.status === "checking" ||
+      activeCase.status === "none" ||
+      activeCase.status === "ineligible");
 
   return (
     <div className="space-y-6">
@@ -148,13 +148,13 @@ export function PurchasePanel() {
         </p>
       )}
 
-      {sessionState === "signed-in" && caseCheck.status === "ok" && (
+      {sessionState === "signed-in" && activeCase.status === "ok" && (
         <p className="text-xs text-muted-foreground">
-          This Pass will cover your active case: {caseCheck.label}.
+          This Pass will cover your active case: {activeCase.label}.
         </p>
       )}
 
-      {sessionState === "signed-in" && caseCheck.status === "none" && (
+      {sessionState === "signed-in" && activeCase.status === "none" && (
         <p className="text-xs text-muted-foreground">
           Start your case before buying a Pass — each Pass covers one case.{" "}
           <Link href="/case" className="text-primary underline underline-offset-4">
@@ -163,9 +163,9 @@ export function PurchasePanel() {
         </p>
       )}
 
-      {sessionState === "signed-in" && caseCheck.status === "ineligible" && (
+      {sessionState === "signed-in" && activeCase.status === "ineligible" && (
         <p className="text-xs text-muted-foreground">
-          Your active case ({caseCheck.label}) does not currently need a drafted response — confirm
+          Your active case ({activeCase.label}) does not currently need a drafted response — confirm
           its response route in the case workspace first.{" "}
           <Link href="/case" className="text-primary underline underline-offset-4">
             Open your case

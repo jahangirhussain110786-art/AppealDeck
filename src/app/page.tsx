@@ -28,6 +28,7 @@ import { splitAccent } from "@/lib/splitAccent";
 const HERO_ACCENT = splitAccent(HOME.hero.headline, "clearer path");
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/" },
   title: SHARED.metadata.titleDefault,
   description: SHARED.metadata.description,
   openGraph: {

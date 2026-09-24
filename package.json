@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit && tsc --noEmit -p tsconfig.tests.json",
-    "lint": "eslint src",
+    "lint": "eslint src --max-warnings=0",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,md,json}\"",
     "analyze": "ANALYZE=true next build",

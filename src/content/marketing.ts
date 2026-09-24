@@ -12,11 +12,6 @@ export const HOME = {
     secondaryCta: "See the Appeal Pass",
     reassuranceLine:
       "For Amazon US, English-language notices. Start free — no Seller Central login, you submit the response.",
-    artwork: {
-      label: "Decoded notice",
-      srOnly:
-        "Illustration composed of the real decode result: a SeverityBadge and two DeadlineChips with illustrative dates.",
-    },
   },
   howItWorks: {
     eyebrow: "How it works",
@@ -58,34 +53,25 @@ export const DECODE = {
     placeholder: "Paste the full Amazon notice here…",
     hint: "Paste the entire email, including the subject line and any stated dates.",
   },
-  charCounter: "{count, number} characters",
+  charCounter: "{count} characters",
+  privacyNote: "Your notice is sent to AppealDeck for analysis. Nothing is sent to Amazon.",
   sampleButton: "Try a sample notice",
   clearButton: "Clear",
   sampleBadge: "Sample notice — not yours",
   submitButton: "Decode",
-  loading: {
-    title: "Decoding…",
-    hint: "This takes a moment.",
-  },
   decodeAnotherButton: "Decode another notice",
   noticeLikenessTitle: "Before you decode",
   likenessHint:
     "This doesn't look like an Amazon notice yet. Paste the full email, including the subject line.",
   result: {
     deadlinesTitle: "Deadlines",
-    whatToDoTitle: "What to do",
     doNow: "Do now",
     doNot: "Do not",
-    ctaTitle: "Continue with the request Amazon actually made",
-    ctaDesc:
-      "Check the response-page instructions, review requested records and prepare the appropriate response in your case workspace.",
-    ctaNote: "Organizing your case is free.",
     copySummary: "Copy plain-English summary",
     errorTitle: "Could not decode",
     errorFallback: "Something went wrong.",
     errorNetwork: "Network error. Try again.",
     errorHint: "Paste the full Amazon notice and try again.",
-    whatThisMeans: "What this means",
     startPoaCta: "Open case workspace",
     // AA-39: the decoder's actual decision. Phrased as what Amazon asked for, never as advice
     // about what will work — the honest-expectations rule in D6 applies to this block too.
@@ -297,9 +283,12 @@ export const FAQ = {
     {
       id: "processing",
       q: "What leaves my browser?",
-      a: "Your notice goes to AppealDeck when you decode it. Response preparation sends the relevant case text and file references.",
+      a: "Your notice goes to AppealDeck when you decode it, and preparing a response sends your case text and file references — never the files themselves. Nothing is ever sent to Amazon.",
+      // 24 Sep 2026: named two features deleted on 22 Sep (AI field suggestions, the interview's
+      // drafting flow) and left out the one thing that does reach an AI provider. Now says what
+      // the privacy policy says, and legalDisclosures.test.ts holds the two together.
       detail:
-        "Workspace responses use your confirmed wording. Optional AI suggestions and the older interview drafting flow can send text to Google Gemini. Original evidence files are not sent for drafting.",
+        "The only thing sent to an AI provider (Google Gemini) is a business document you ask us to check — read for that one request, not kept. Identity and bank documents are checked on your device and never uploaded.",
       link: { label: "How processing works", href: "/privacy#how-we-use" },
     },
     {
@@ -358,7 +347,6 @@ export function faqByGroup(): { id: string; name: string; hint: string; items: F
 
 export const SAMPLE_POA = {
   watermark: "ILLUSTRATIVE — not a real appeal",
-  copyDisabled: "Sample only",
   title: "Sample Plan of Action",
   body: `Appeal Plan of Action — Illustrative Example
 

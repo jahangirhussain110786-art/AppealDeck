@@ -408,28 +408,34 @@ export async function loadCaseLog(vault: Vault, requestedCaseId?: string): Promi
   return JSON.parse(text) as CaseLog;
 }
 
-export async function deleteCaseFile(vault: Vault): Promise<void> {
+/**
+ * Deletes one case from this browser completely: its file, its log and every document attached to
+ * it, and its entry in the case list. Returns how many documents went with it.
+ *
+ * Added 24 Sep 2026. The privacy policy says a case stays in the browser "until you delete" it,
+ * and nothing in the product could: the vault page hides case records, the dashboard only
+ * archives, and the only delete helper (`deleteCaseFile`, called by nothing) removed the file and
+ * log but left the case's documents in the vault with no case to belong to.
+ *
+ * One transaction, so a failure part-way leaves the case whole rather than half-deleted. If it was
+ * the active case, the newest remaining case becomes active, so the dashboard opens on a real case
+ * instead of an empty page while others still exist.
+ */
+export async function deleteCase(vault: Vault, caseId: string): Promise<{ documents: number }> {
   return vault.atomic(async () => {
-    const caseId = await resolveActiveCaseId(vault);
-    if (!caseId) return;
-    const id = await findRecordId(vault, CASE_FILE_NAME, caseId);
-    if (id) await vault.delete(id);
-    const logId = await findRecordId(vault, CASE_LOG_NAME, caseId);
-    if (logId) await vault.delete(logId);
-    // "Start over" discards the case entirely — nothing should still point at a case with no file,
-    // so the next save (a fresh createCaseFile()) starts genuinely clean rather than colliding
-    // with a stale pointer/index entry for a case that no longer exists.
-    const pointerId = await findMetaRecordId(vault, ACTIVE_CASE_POINTER_NAME);
-    if (pointerId) await vault.delete(pointerId);
+    const records = await vault.list({ caseId });
+    for (const r of records) await vault.delete(r.id);
     await removeCaseIndexEntry(vault, caseId);
-  });
-}
 
-export async function deleteCaseLog(vault: Vault): Promise<void> {
-  return vault.atomic(async () => {
-    const caseId = await resolveActiveCaseId(vault);
-    if (!caseId) return;
-    const id = await findRecordId(vault, CASE_LOG_NAME, caseId);
-    if (id) await vault.delete(id);
+    if ((await readActivePointer(vault)) === caseId) {
+      const pointerId = await findMetaRecordId(vault, ACTIVE_CASE_POINTER_NAME);
+      if (pointerId) await vault.delete(pointerId);
+      const [newest] = [...(await readCaseIndex(vault))].sort((a, b) =>
+        b.createdAt.localeCompare(a.createdAt),
+      );
+      if (newest) await writeActivePointer(vault, newest.id);
+    }
+    if (readPendingActiveCase() === caseId) clearPendingActiveCase();
+    return { documents: records.filter((r) => r.kind === "document").length };
   });
 }

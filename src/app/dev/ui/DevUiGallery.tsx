@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { AlertTriangle, FileText, Inbox, Info, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,7 +74,8 @@ import { APP } from "@/content/app";
 import { GLOBAL_EXPECTATIONS } from "@/core";
 
 export function DevUiGallery() {
-  const sampleDeadlines = [
+  // Built once per mount: Date.now() during render would give a new answer on every render.
+  const [sampleDeadlines] = useState(() => [
     {
       kind: "appeal_window" as const,
       dueAt: new Date(Date.now() + 8 * 86_400_000),
@@ -94,7 +96,7 @@ export function DevUiGallery() {
       dueAt: null,
       label: "Severity-gated - indefinite hold (inauthentic / fraud)",
     },
-  ];
+  ]);
 
   return (
     <main className="mx-auto flex w-full max-w-app flex-col gap-10 px-4 py-12">

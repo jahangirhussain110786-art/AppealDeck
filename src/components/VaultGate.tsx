@@ -63,7 +63,11 @@ export function VaultGate({
   const phaseRef = React.useRef(phase);
   const onLockedRef = React.useRef(onLocked);
   const onUnlockedRef = React.useRef(onUnlocked);
-  onUnlockedRef.current = onUnlocked;
+  // Synced in an effect declared before the unlock effect below, so it is current by the time
+  // that effect calls it — and never written during render.
+  React.useEffect(() => {
+    onUnlockedRef.current = onUnlocked;
+  }, [onUnlocked]);
   const lockTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const warnTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastReset = React.useRef(0);
@@ -103,10 +107,8 @@ export function VaultGate({
   }, [vault, idleMs, warnMs, clearTimers]);
 
   React.useEffect(() => {
-    if (!vault) {
-      setPhase({ kind: "loading" });
-      return;
-    }
+    // No vault yet: rendering already shows the loading state for that (`!vault` below).
+    if (!vault) return;
     let cancelled = false;
     void (async () => {
       try {

@@ -31,6 +31,7 @@ import { SHARED } from "@/content/shared";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/pricing" },
   title: SHARED.metadata.titlePricing,
   description: SHARED.metadata.descriptionPricing,
   openGraph: {

@@ -21,7 +21,8 @@ export async function GET(request: Request) {
     if (supabase) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) {
-        return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`);
+        // A reason code, not Supabase's text: /login shows only its own wording (see login/page.tsx).
+        return NextResponse.redirect(`${origin}/login?error=link_failed`);
       }
     }
   }

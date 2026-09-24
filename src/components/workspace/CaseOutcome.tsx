@@ -108,7 +108,9 @@ export function CaseOutcome({
       <CardHeader>
         <div className="flex items-center gap-3">
           <ClipboardCheck className="size-5 shrink-0 text-primary" aria-hidden />
-          <CardTitle className="text-base">What happened with this case?</CardTitle>
+          <CardTitle id="case-outcome-title" className="text-base">
+            What happened with this case?
+          </CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -127,7 +129,9 @@ export function CaseOutcome({
           </p>
         )}
         <div className="flex flex-wrap items-center gap-3">
+          {/* Named by the card heading: until 24 Sep 2026 this was an unlabelled select. */}
           <select
+            aria-labelledby="case-outcome-title"
             className={selectStyle}
             disabled={busy || saving}
             value={resolution?.status ?? "pending"}

@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, FileCheck2, FilePenLine, CircleDot } from "lucide-react";
 import { DetailDisclosure, IconTile } from "./WorkspaceVisuals";
@@ -86,13 +86,18 @@ export function ResponseReview({
     () => (result ? assessNovelty(result.rendered, w.submissions) : null),
     [result, w.submissions],
   );
-  useEffect(() => {
+  // A new draft means a fresh review: every confirmation the seller gave was about the old text.
+  // Reset while rendering (React's pattern for state that follows a prop), not in an effect that
+  // would first paint the new draft with the old ticks still on.
+  const [confirmedFor, setConfirmedFor] = useState(result);
+  if (confirmedFor !== result) {
+    setConfirmedFor(result);
     setReviewed(false);
     setSubmitted(false);
     setReceipt("");
     setChangedBeforeSending(false);
     setSentText("");
-  }, [result]);
+  }
   const openItems = React.useMemo(
     () =>
       result

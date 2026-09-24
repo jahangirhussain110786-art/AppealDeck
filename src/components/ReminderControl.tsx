@@ -48,25 +48,28 @@ export function ReminderControl({
   onSaveLog: (log: CaseLog) => Promise<boolean>;
 }) {
   const [pending, setPending] = useState(false);
-  const [delivery, setDelivery] = useState<ReminderDelivery | null | undefined>(undefined);
   const copy = APP.dashboard.clock;
   const emailOn = log.emailReminder === true;
+  // What the server said, and for which switch-and-date it said it. A reading taken for different
+  // settings is simply not shown, so a stale line never describes the reminder as it was before a
+  // click — without an effect clearing it first.
+  const readingKey = signedIn && emailOn && log.reminderAt ? `${caseId}|${log.reminderAt}` : null;
+  const [reading, setReading] = useState<{
+    key: string;
+    delivery: ReminderDelivery | null | undefined;
+  } | null>(null);
+  const delivery = reading && reading.key === readingKey ? reading.delivery : undefined;
 
-  // Read back what the server did, whenever the switch or the date changes — including after this
-  // control changed them, so the line never describes the reminder as it was before the click.
   useEffect(() => {
-    if (!signedIn || !emailOn || !log.reminderAt) {
-      setDelivery(undefined);
-      return;
-    }
+    if (!readingKey) return;
     let live = true;
     void fetchReminderDelivery(caseId).then((d) => {
-      if (live) setDelivery(d);
+      if (live) setReading({ key: readingKey, delivery: d });
     });
     return () => {
       live = false;
     };
-  }, [signedIn, emailOn, log.reminderAt, caseId]);
+  }, [readingKey, caseId]);
 
   const deliveryLine = describeDelivery(
     reminderDeliveryState(delivery, { emailOn, reminderAt: log.reminderAt }),

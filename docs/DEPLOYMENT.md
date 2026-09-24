@@ -26,37 +26,47 @@ Set these for **Production**, **Preview**, and **Development** scopes (Vercel no
 
 ### Required (app will crash without these)
 
-| Variable                                | Source                                 | Production value                                                                               |
-| --------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL`                  | this file                              | `https://<project>.vercel.app` now → `https://appealdeck.com` when the domain is connected     |
-| `NEXT_PUBLIC_MARKETING_HOST`            | this file                              | `<project>.vercel.app` now → `appealdeck.com` later                                            |
-| `NEXT_PUBLIC_APP_HOST`                  | this file                              | **leave unset** (single host). Set only for a later `app.` split — AGENTS.md "Domain topology" |
-| `NEXT_PUBLIC_APP_URL`                   | this file                              | **leave unset** (resolves to `NEXT_PUBLIC_SITE_URL` via `src/lib/urls.ts`)                     |
-| `NEXT_PUBLIC_SUPABASE_URL`              | Supabase dashboard                     | `https://<project-ref>.supabase.co`                                                            |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`         | Supabase dashboard                     | `eyJ...`                                                                                       |
-| `SUPABASE_SERVICE_ROLE_KEY`             | Supabase dashboard                     | `eyJ...` (sensitive — keep "Sensitive" toggle ON)                                              |
-| `GEMINI_API_KEY`                        | https://aistudio.google.com/app/apikey | `AIzaSy...` (sensitive)                                                                        |
-| `GEMINI_MODEL`                          | optional                               | `gemini-3.5-flash` (default in code)                                                           |
-| `UPSTASH_REDIS_REST_URL`                | https://console.upstash.com            | `https://<db>.upstash.io` (sensitive)                                                          |
-| `UPSTASH_REDIS_REST_TOKEN`              | Upstash dashboard                      | (sensitive)                                                                                    |
-| `PADDLE_WEBHOOK_SECRET`                 | Paddle dashboard → Notifications       | (sensitive)                                                                                    |
-| `NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS`  | Paddle dashboard → catalog             | `pri_...`                                                                                      |
-| `NEXT_PUBLIC_PADDLE_PRICE_GUARDIAN_SUB` | Paddle dashboard → catalog             | `pri_...`                                                                                      |
-| `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`       | Paddle dashboard → Developer tools     | `live_...`                                                                                     |
-| `NEXT_PUBLIC_PADDLE_ENV`                | this file                              | `production`                                                                                   |
+| Variable                               | Source                                 | Production value                                                                               |
+| -------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`                 | this file                              | `https://<project>.vercel.app` now → `https://appealdeck.com` when the domain is connected     |
+| `NEXT_PUBLIC_MARKETING_HOST`           | this file                              | `<project>.vercel.app` now → `appealdeck.com` later                                            |
+| `NEXT_PUBLIC_APP_HOST`                 | this file                              | **leave unset** (single host). Set only for a later `app.` split — AGENTS.md "Domain topology" |
+| `NEXT_PUBLIC_APP_URL`                  | this file                              | **leave unset** (resolves to `NEXT_PUBLIC_SITE_URL` via `src/lib/urls.ts`)                     |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Supabase dashboard                     | `https://<project-ref>.supabase.co`                                                            |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`        | Supabase dashboard                     | `eyJ...`                                                                                       |
+| `SUPABASE_SERVICE_ROLE_KEY`            | Supabase dashboard                     | `eyJ...` (sensitive — keep "Sensitive" toggle ON)                                              |
+| `GEMINI_API_KEY`                       | https://aistudio.google.com/app/apikey | `AIzaSy...` (sensitive)                                                                        |
+| `GEMINI_MODEL`                         | optional                               | `gemini-3.5-flash` (default in code)                                                           |
+| `UPSTASH_REDIS_REST_URL`               | https://console.upstash.com            | `https://<db>.upstash.io` (sensitive)                                                          |
+| `UPSTASH_REDIS_REST_TOKEN`             | Upstash dashboard                      | (sensitive)                                                                                    |
+| `PADDLE_WEBHOOK_SECRET`                | Paddle dashboard → Notifications       | (sensitive)                                                                                    |
+| `NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS` | Paddle dashboard → catalog             | `pri_...`                                                                                      |
+| `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`      | Paddle dashboard → Developer tools     | `live_...`                                                                                     |
+| `NEXT_PUBLIC_PADDLE_ENV`               | this file                              | `production`                                                                                   |
+
+### Required for a feature (the app runs without them; that feature does not)
+
+Added 24 Sep 2026. These were missing from this guide, so following it would have shipped the confirmation email, the reminder emails and the funnel analytics switched off.
+
+| Variable                       | Feature                                           | Notes                                                                                     |
+| ------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `RESEND_API_KEY`               | Purchase confirmation email (D8), reminder emails | Without it purchases still provision; unsent confirmations wait in the outbox for retry.  |
+| `EMAIL_FROM`                   | Sender for both emails                            | Defaults to `AppealDeck <billing@appealdeck.com>`; the domain must be verified in Resend. |
+| `CRON_SECRET`                  | Both daily jobs (`vercel.json` crons)             | A long random string. Without it both jobs refuse every call, so no email is ever sent.   |
+| `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` | Cookieless funnel analytics                       | The site's domain as registered in Plausible. Without it no event is sent.                |
 
 ### Optional
 
-| Variable                            | Purpose                                 | Notes                                  |
-| ----------------------------------- | --------------------------------------- | -------------------------------------- |
-| `GEMINI_MODEL_READ_DOCUMENT`        | override model for `/api/read-document` | defaults to `gemini-3.5-flash`         |
-| `GEMINI_MODEL_CRITIQUE_POA`         | override model for POA critique         | defaults to `gemini-3.5-flash`         |
-| `GEMINI_MODEL_PHRASE_ENGINE_OUTPUT` | override model for phrase engine        | defaults to `gemini-3.5-flash-lite`    |
-| `GEMINI_MODEL_TRIAGE_ROUTER`        | override model for triage routing       | defaults to `gemini-flash-lite-latest` |
+| Variable                         | Purpose                                                   | Notes                          |
+| -------------------------------- | --------------------------------------------------------- | ------------------------------ |
+| `GEMINI_MODEL_READ_DOCUMENT`     | override the model for document checks                    | defaults to `gemini-3.5-flash` |
+| `GEMINI_MODEL_DRAFT_POA_SECTION` | override the model for AI section drafting (classic path) | defaults to `gemini-3.5-flash` |
+
+Overrides exist only for tasks the app calls. The three earlier listed here (`CRITIQUE_POA`, `PHRASE_ENGINE_OUTPUT`, `TRIAGE_ROUTER`) belonged to tasks that were never called, and setting them did nothing; removed 24 Sep 2026.
 
 ### Never set in Vercel
 
-See `.env.example` "NOT USED BY THE APP" section. The old plan added ~10 unused env vars (Polar, MCP, analytics, `PADDLE_API_KEY`, etc.). Setting them in Vercel is noise — do not set them.
+See `.env.example` "NOT USED BY THE APP" section. The old plan added ~10 unused env vars (Polar, MCP, `PADDLE_API_KEY`, etc.; analytics is used now — `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` above). Setting them in Vercel is noise — do not set them.
 
 ## 3. Domain setup (founder action) — single host, apex only
 
@@ -208,7 +218,7 @@ If all 12 pass, and §6a's restore drill and §6b's billing check are done, you'
 - `next lint` was removed in 16. ESLint 9 runs through its own CLI with a flat config (`eslint.config.mjs`); `npm run lint` is `eslint src`.
 - Builds use Turbopack, the new default. `tsconfig.json` now uses `"jsx": "react-jsx"` (set by Next), and `npm run typecheck` runs `next typegen` first so the generated route types exist on a fresh checkout.
 
-**Left for a separate pass, deliberately:** eslint-config-next 16 ships React Compiler readiness rules that flag 18 existing effects (mostly setState called once on mount) in the vault gate, the auth pages and checkout. Rewriting those changes behaviour in the flows that guard a seller's data and payment, so the four rules are switched off in `eslint.config.mjs` with the reason, rather than rewritten as a side effect of an upgrade.
+**React Compiler lint rules.** eslint-config-next 16 added rules that flagged 18 existing places — mostly an effect that set state once on mount, a few refs written during render, and one `Date.now()` in render. All were fixed the same day (derived values, `useSyncExternalStore` for online status and the theme icon, lazy initial state, effects for latest-callback refs), none by switching a rule off. `npm run lint` now fails on any warning.
 
 **Node.js 24.** `package.json` pins `"engines": { "node": "24.x" }`, which Vercel follows, and CI runs 24. CI ran Node 20 until this upgrade; Node 20 reached end of life in April 2026, and it also had no global `navigator`, which is why `persistence.test.ts` crashed on CI but not locally.
 

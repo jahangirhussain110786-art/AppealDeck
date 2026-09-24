@@ -117,13 +117,7 @@ describe("callGemini request shape", () => {
 
 describe("per-task model selection", () => {
   const savedEnv: Record<string, string | undefined> = {};
-  const KEYS = [
-    "GEMINI_MODEL",
-    "GEMINI_MODEL_READ_DOCUMENT",
-    "GEMINI_MODEL_CRITIQUE_POA",
-    "GEMINI_MODEL_PHRASE_ENGINE_OUTPUT",
-    "GEMINI_MODEL_TRIAGE_ROUTER",
-  ];
+  const KEYS = ["GEMINI_MODEL", "GEMINI_MODEL_READ_DOCUMENT", "GEMINI_MODEL_DRAFT_POA_SECTION"];
 
   afterEach(() => {
     for (const k of KEYS) {
@@ -139,9 +133,7 @@ describe("per-task model selection", () => {
       delete process.env[k];
     }
     expect(getGeminiModel("read-document")).toBe("gemini-3.5-flash");
-    expect(getGeminiModel("critique-poa")).toBe("gemini-3.5-flash");
-    expect(getGeminiModel("phrase-engine-output")).toBe("gemini-3.5-flash-lite");
-    expect(getGeminiModel("triage-router")).toBe("gemini-flash-lite-latest");
+    expect(getGeminiModel("draft-poa-section")).toBe("gemini-3.5-flash");
     expect(getGeminiModel()).toBe("gemini-3.5-flash");
   });
 
@@ -151,10 +143,9 @@ describe("per-task model selection", () => {
       delete process.env[k];
     }
     process.env.GEMINI_MODEL_READ_DOCUMENT = "gemini-3.5-flash-lite";
-    process.env.GEMINI_MODEL_PHRASE_ENGINE_OUTPUT = "gemini-3.5-flash";
     expect(getGeminiModel("read-document")).toBe("gemini-3.5-flash-lite");
-    expect(getGeminiModel("phrase-engine-output")).toBe("gemini-3.5-flash");
-    expect(getGeminiModel("critique-poa")).toBe("gemini-3.5-flash");
+    // An override for one task leaves the others on their defaults.
+    expect(getGeminiModel("draft-poa-section")).toBe("gemini-3.5-flash");
   });
 
   it("ignores empty-string env overrides", () => {

@@ -17,19 +17,18 @@ const MAX_OUTPUT_TOKENS = 512;
  * picks the right one. Per-task env overrides let ops swap a model without
  * code changes. The default model covers anything not in the table.
  */
-export type LlmTask =
-  "critique-poa" | "phrase-engine-output" | "triage-router" | "draft-poa-section" | "read-document";
+// Only the tasks the app actually calls. Three more ("critique-poa", "phrase-engine-output",
+// "triage-router") sat here, never called, and the deployment guide told people to set model
+// overrides for them that did nothing; removed 24 Sep 2026.
+export type LlmTask = "draft-poa-section" | "read-document";
 
 const TASK_MODELS: Record<LlmTask, string> = {
-  "critique-poa": "gemini-3.5-flash",
-  "phrase-engine-output": "gemini-3.5-flash-lite",
-  "triage-router": "gemini-flash-lite-latest",
   // AA-41: reading a scanned invoice is the hardest perception task in the product — a lite model
   // that mis-reads a date or a supplier name produces a confidently wrong finding, which is worse
   // than no finding at all. Deliberately the strongest flash tier.
   "read-document": "gemini-3.5-flash",
   // A real generation task (full sections of prose), not a cheap classify/extract call —
-  // deliberately the strongest flash tier available, not the lite models above.
+  // deliberately the strongest flash tier available, not a lite model.
   "draft-poa-section": "gemini-3.5-flash",
 };
 

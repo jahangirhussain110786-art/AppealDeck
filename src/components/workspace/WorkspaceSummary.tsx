@@ -1,22 +1,29 @@
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, FileSearch, FolderOpen, History, GitBranch } from "lucide-react";
+import { ArrowRight, FileSearch, FolderOpen, History, GitBranch, Trash2 } from "lucide-react";
 import { IconTile } from "./WorkspaceVisuals";
 import { CaseOutcome } from "./CaseOutcome";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { APP } from "@/content/app";
 import { PROTOCOL_LABELS, workspaceGaps } from "@/core/workspace";
 import type { CaseFile } from "@/core/caseFile";
 import type { CaseIndexEntry, CaseLog } from "@/lib/caseStore";
 import { formatDate } from "@/lib/format";
 
 function caseLabel(c: CaseIndexEntry): string {
-  const kind = c.kind
-    .toLowerCase()
-    .split("_")
-    .map((w) => w[0]?.toUpperCase() + w.slice(1))
-    .join(" ");
+  // The same names the rest of the product uses. This list turned the enum into title case, so a
+  // fabrication case read "Inauthentic Documents" here and "Falsified documents alleged" elsewhere.
+  const kind = APP.violationKinds[c.kind] ?? c.kind;
   // The id suffix keeps same-kind, same-day cases distinguishable from each other in the list.
   return `${kind} · #${c.id.slice(0, 6)}`;
 }
@@ -109,6 +116,7 @@ export function WorkspaceSummary({
   onSelect,
   onSaveLog,
   onArchive,
+  onDelete,
 }: {
   file: CaseFile;
   cases: CaseIndexEntry[];
@@ -117,8 +125,11 @@ export function WorkspaceSummary({
   onSelect: (id: string) => Promise<void>;
   onSaveLog: (log: CaseLog) => Promise<boolean>;
   onArchive: (id: string, archived: boolean) => Promise<boolean>;
+  onDelete: () => Promise<boolean>;
 }) {
   const [busy, setBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const del = APP.dashboard.deleteCase;
   // Switching cases writes to the vault. Until that returns the list is disabled and the row says
   // what is happening, so the seller is not left clicking a list that looks inert — and cannot
   // start a second switch over the top of the first.
@@ -212,6 +223,47 @@ export function WorkspaceSummary({
           }
         }}
       />
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-destructive"
+          disabled={busy}
+          onClick={() => setConfirmDelete(true)}
+        >
+          <Trash2 className="mr-2 size-4" aria-hidden />
+          {del.action}
+        </Button>
+      </div>
+      <Dialog open={confirmDelete} onOpenChange={(open) => !busy && setConfirmDelete(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{del.title}</DialogTitle>
+            <DialogDescription>{del.body}</DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{del.keepCopy}</p>
+          <p className="text-xs text-muted-foreground">{del.backupNote}</p>
+          <DialogFooter>
+            <Button variant="outline" disabled={busy} onClick={() => setConfirmDelete(false)}>
+              {del.cancel}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={busy}
+              onClick={() => {
+                setBusy(true);
+                void onDelete().then((ok) => {
+                  setBusy(false);
+                  if (ok) setConfirmDelete(false);
+                });
+              }}
+            >
+              {del.confirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -17,8 +17,8 @@ export async function addFileToVault(
 
   const dup = await vault.findByPlaintext(buf);
   if (dup && dup.caseId === opts.caseId && dup.evidenceKind === opts.evidenceKind) {
-    toast.info(APP.interview.fileUpload.duplicate, {
-      description: APP.interview.fileUpload.duplicateDesc
+    toast.info(APP.upload.duplicate, {
+      description: APP.upload.duplicateDesc
         .replace("{name}", file.name)
         .replace("{existing}", dup.name),
     });
@@ -36,12 +36,10 @@ export async function addFileToVault(
 
   const record = await vault.add(input);
   const size = formatBytes(file.size);
-  const slot = opts.evidenceKind
-    ? APP.evidenceKinds[opts.evidenceKind]
-    : APP.interview.fileUpload.vaultSlot;
+  const slot = opts.evidenceKind ? APP.evidenceKinds[opts.evidenceKind] : APP.upload.vaultSlot;
 
-  toast.success(APP.interview.fileUpload.added.replace("{name}", file.name), {
-    description: APP.interview.fileUpload.addedDesc.replace("{size}", size).replace("{slot}", slot),
+  toast.success(APP.upload.added.replace("{name}", file.name), {
+    description: APP.upload.addedDesc.replace("{size}", size).replace("{slot}", slot),
   });
 
   return { status: "added", record };

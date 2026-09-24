@@ -21,7 +21,9 @@ import {
   listCases,
   setActiveCaseId,
   setCaseArchived,
+  deleteCase,
 } from "@/lib/caseStore";
+import { syncCaseReminder } from "@/lib/reminderSync";
 import { withCaseEvidence } from "@/lib/caseEvidence";
 import type { CaseIndexEntry } from "@/lib/caseStore";
 import type { CaseLog } from "@/lib/caseStore";
@@ -78,12 +80,10 @@ interface DashboardClientProps {
   signedIn: boolean;
 }
 
+/** One vault per mount. A lazy state initialiser, not a ref written during render. */
 function useVaultInstance(): Vault {
-  const ref = useRef<Vault | null>(null);
-  if (ref.current === null) {
-    ref.current = getBrowserVault();
-  }
-  return ref.current;
+  const [vault] = useState(getBrowserVault);
+  return vault;
 }
 
 /**
@@ -437,7 +437,38 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
       await loadFromVault();
       return true;
     } catch (e) {
-      toast.error(APP.dashboard.toasts.deleteFailed, {
+      toast.error(APP.dashboard.toasts.archiveFailed, {
+        description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
+      });
+      return false;
+    }
+  };
+
+  /**
+   * Deletes a case from this browser. The server's reminder row is cancelled first, while the
+   * case log still says whether one exists: deleting the case first would lose that, and leave an
+   * email going out about a case the seller has deleted.
+   */
+  const removeCase = async (file: CaseFile): Promise<boolean> => {
+    const copy = APP.dashboard.deleteCase;
+    let reminderCancelled = true;
+    if (caseLog?.emailReminder && signedIn) {
+      reminderCancelled = await syncCaseReminder({
+        caseRef: file.id,
+        kind: file.kind,
+        enabled: false,
+      });
+    }
+    try {
+      const { documents } = await deleteCase(vault, file.id);
+      await loadFromVault();
+      toast.success(
+        documents > 0 ? copy.deletedWithFiles.replace("{count}", String(documents)) : copy.deleted,
+      );
+      if (!reminderCancelled) toast.error(copy.reminderNotCancelled);
+      return true;
+    } catch (e) {
+      toast.error(copy.failed, {
         description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
       return false;
@@ -469,6 +500,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
           signedIn={signedIn}
           onSaveLog={saveWorkspaceLog}
           onArchive={archiveCase}
+          onDelete={() => removeCase(file)}
           onSelect={async (id) => {
             try {
               await setActiveCaseId(vault, id);

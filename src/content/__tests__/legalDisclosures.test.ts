@@ -13,6 +13,7 @@
 import { describe, expect, it } from "vitest";
 import { LEGAL } from "../legal";
 import { WORKSPACE } from "../workspace";
+import { FAQ } from "../marketing";
 
 function text(doc: "privacy" | "terms" | "refund"): string {
   return LEGAL[doc].sections.flatMap((s) => [s.title, ...s.body]).join("\n");
@@ -129,6 +130,25 @@ describe("the workspace's own privacy line", () => {
 
   it("does not say document reading is unavailable, since it is available", () => {
     expect(WORKSPACE.manualReview).not.toMatch(/not available yet/i);
+  });
+});
+
+/**
+ * 24 Sep 2026: the FAQ's "What leaves my browser?" still named two features deleted on 22 Sep and
+ * left out the one thing that does reach an AI provider, while the privacy policy had been fixed.
+ */
+describe("the FAQ says what the privacy policy says", () => {
+  const faq = JSON.stringify(FAQ);
+
+  it("describes no deleted feature", () => {
+    expect(faq).not.toMatch(/AI suggestions|field suggestions|interview drafting/i);
+  });
+
+  it("names the document check as what reaches an AI provider", () => {
+    const processing = FAQ.items.find((i) => i.id === "processing");
+    expect(`${processing?.a} ${processing?.detail}`).toMatch(
+      /only thing sent to an AI provider[^.]*business document you ask us to check/,
+    );
   });
 });
 

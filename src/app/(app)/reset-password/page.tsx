@@ -59,16 +59,19 @@ function ResetPasswordPageInner() {
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
+    // Full page loads on purpose (see useSignOut): no cached signed-in page may survive.
     if (!supabase) {
       // No auth backend means no session that could reset a password, so this form cannot work.
       // Sent to sign-in like any other signed-out visitor, as useSignOut does in the same case.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = "/login";
       return;
     }
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) {
-        const error = searchParams.get("error");
-        window.location.href = error ? `/login?error=${encodeURIComponent(error)}` : "/login";
+        // A reason code, never the incoming text: /login shows only its own wording.
+        const failed = searchParams.get("error") !== null;
+        window.location.href = failed ? "/login?error=link_failed" : "/login";
       }
     });
   }, [searchParams]);

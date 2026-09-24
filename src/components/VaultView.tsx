@@ -57,12 +57,10 @@ import { formatDateTime, formatBytes } from "@/lib/format";
 import { getActiveCaseId } from "@/lib/caseStore";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
 
+/** One vault per mount. A lazy state initialiser, not a ref written during render. */
 function useVault(): Vault {
-  const ref = React.useRef<Vault | null>(null);
-  if (ref.current === null) {
-    ref.current = getBrowserVault();
-  }
-  return ref.current;
+  const [vault] = React.useState(getBrowserVault);
+  return vault;
 }
 
 function mimeTypeToIcon(mimeType: string): React.ReactNode {
@@ -227,7 +225,7 @@ export default function VaultView({ userId }: { userId: string }) {
       // was uploaded, so FileDropZone shouldn't show a fresh "uploaded" confirmation for it too.
       return result.status === "added";
     } catch (e) {
-      toast.error(APP.interview.fileUpload.addFailed, {
+      toast.error(APP.upload.addFailed, {
         description: e instanceof Error ? e.message : APP.dashboard.toasts.unknownError,
       });
       return false;

@@ -21,6 +21,10 @@ export const AUTH = {
       submitPassword: "Sign in",
       submitMagic: "Email me a sign-in link",
       invalidEmail: "Enter a valid email address.",
+      // Shown for `?error=` on /login. Only our own words, chosen by reason — the parameter's text
+      // is never displayed, because anyone can put any sentence in a link to this page.
+      linkFailed:
+        "That sign-in link did not work. It may have expired or been used already — sign in again, or request a new link.",
     },
     footer: {
       prompt: "New to AppealDeck?",

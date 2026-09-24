@@ -4,6 +4,7 @@ import { MarketingShell } from "@/components/MarketingShell";
 import { DECODE } from "@/content/marketing";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/decode" },
   title: DECODE.pageTitle,
   description: DECODE.pageDescription,
   openGraph: {

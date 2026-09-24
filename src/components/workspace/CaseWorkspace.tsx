@@ -93,7 +93,6 @@ import {
   withDraftValue,
   withoutDraftKeys,
 } from "@/lib/workspaceDraft";
-import { consumePendingDeadlines } from "@/lib/pendingDeadlines";
 import { peekPendingNotice, clearPendingNotice } from "@/lib/pendingNotice";
 import { importDecodedNotice } from "@/lib/importDecodedNotice";
 import type { Vault, VaultListItem } from "@/core/vault/vault";
@@ -261,7 +260,6 @@ function WorkspaceInner({
             : {
                 ...createCaseFile(initialKind ?? "UNKNOWN"),
                 workspace: newWorkspace(),
-                deadlines: consumePendingDeadlines(),
               };
         if (pendingNotice) {
           clearPendingNotice(pendingNotice);
@@ -430,7 +428,9 @@ function WorkspaceInner({
    * `Workspace.draft` map, so edits survive route changes (including the sign-in
    * redirect), reloads and tab closes, not only an explicit "Save" click.
    */
-  const flushDraftKey = useCallback((key: string) => {
+  // A named function expression, so the retry below refers to this function itself rather than
+  // to the `flushDraftKey` binding before it is initialised.
+  const flushDraftKey = useCallback(function flushDraft(key: string) {
     const timer = draftTimers.current.get(key);
     if (timer) {
       clearTimeout(timer);
@@ -462,7 +462,7 @@ function WorkspaceInner({
     if (saving.current || uploading.current) {
       draftTimers.current.set(
         key,
-        setTimeout(() => flushDraftKey(key), 900),
+        setTimeout(() => flushDraft(key), 900),
       );
       return;
     }

@@ -10,6 +10,7 @@ import { IconTile } from "@/components/workspace/WorkspaceVisuals";
 import { SHARED } from "@/content/shared";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/faq" },
   title: SHARED.metadata.titleFaq,
   description: SHARED.metadata.descriptionFaq,
   openGraph: {

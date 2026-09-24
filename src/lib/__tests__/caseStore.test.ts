@@ -10,7 +10,7 @@ import {
   loadCaseFile,
   saveCaseLog,
   loadCaseLog,
-  deleteCaseFile,
+  deleteCase,
   listCases,
   getActiveCaseId,
   setActiveCaseId,
@@ -261,14 +261,56 @@ describe("caseStore", () => {
       ]);
     });
 
-    it("deleteCaseFile clears the active pointer so a fresh case starts genuinely clean", async () => {
+    it("deleteCase removes the last case completely, so a fresh case starts genuinely clean", async () => {
       const file = createCaseFile("POLICY");
       await saveCaseFile(v, file);
-      await deleteCaseFile(v);
+      await saveCaseLog(v, { state: "DECODED", attemptCount: 0 });
+      await v.add({
+        name: "invoice.pdf",
+        mimeType: "application/pdf",
+        data: "pdf",
+        caseId: file.id,
+        kind: "document",
+      });
 
+      expect(await deleteCase(v, file.id)).toEqual({ documents: 1 });
       expect(await loadCaseFile(v)).toBeNull();
       expect(await getActiveCaseId(v)).toBeNull();
       expect(await listCases(v)).toEqual([]);
+      // Nothing that belonged to the case is left behind — the old helper left its documents.
+      expect(await v.list({ caseId: file.id })).toEqual([]);
+    });
+
+    it("deleteCase leaves other cases untouched and makes the newest remaining one active", async () => {
+      const older = { ...createCaseFile("POLICY"), createdAt: "2026-09-01T00:00:00.000Z" };
+      const kept = { ...createCaseFile("LISTING"), createdAt: "2026-09-10T00:00:00.000Z" };
+      const doomed = { ...createCaseFile("FUNDS"), createdAt: "2026-09-20T00:00:00.000Z" };
+      await saveCaseFile(v, older);
+      await saveCaseFile(v, kept);
+      await v.add({
+        name: "kept.pdf",
+        mimeType: "application/pdf",
+        data: "pdf",
+        caseId: kept.id,
+        kind: "document",
+      });
+      await saveCaseFile(v, doomed);
+      expect(await getActiveCaseId(v)).toBe(doomed.id);
+
+      await deleteCase(v, doomed.id);
+      expect((await listCases(v)).map((c) => c.id)).toEqual([kept.id, older.id]);
+      expect(await getActiveCaseId(v)).toBe(kept.id);
+      expect((await v.list({ caseId: kept.id })).some((r) => r.name === "kept.pdf")).toBe(true);
+    });
+
+    it("deleteCase does not move the active case when deleting a different one", async () => {
+      const a = { ...createCaseFile("POLICY"), createdAt: "2026-09-01T00:00:00.000Z" };
+      const b = { ...createCaseFile("LISTING"), createdAt: "2026-09-10T00:00:00.000Z" };
+      await saveCaseFile(v, a);
+      await saveCaseFile(v, b);
+      await setActiveCaseId(v, a.id);
+      await deleteCase(v, b.id);
+      expect(await getActiveCaseId(v)).toBe(a.id);
     });
 
     it("setCaseArchived marks a case archived without touching its file or log", async () => {

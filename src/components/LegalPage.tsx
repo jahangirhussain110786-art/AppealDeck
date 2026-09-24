@@ -90,6 +90,8 @@ export function legalMetadata(doc: LegalDoc): Metadata {
   return {
     title: m.title,
     description: m.description,
+    // The page's own address, not the home page's (the root layout used to set "/" for all).
+    alternates: { canonical: `/${doc}` },
     openGraph: {
       title: m.title,
       description: m.description,

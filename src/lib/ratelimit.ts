@@ -10,7 +10,6 @@ export type RateLimitResult = {
 };
 
 let _compose: Ratelimit | null = null;
-let _interview: Ratelimit | null = null;
 let _analyzeReply: Ratelimit | null = null;
 let _documentRead: Ratelimit | null = null;
 let _outcome: Ratelimit | null = null;
@@ -34,23 +33,6 @@ function getComposeLimiter(): Ratelimit | null {
     });
   }
   return _compose;
-}
-
-function getInterviewLimiter(): Ratelimit | null {
-  if (!hasUpstashEnv()) return null;
-  if (!_interview) {
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    });
-    _interview = new Ratelimit({
-      redis,
-      limiter: Ratelimit.slidingWindow(60, "1 m"),
-      analytics: true,
-      prefix: "ratelimit:interview",
-    });
-  }
-  return _interview;
 }
 
 function getAnalyzeReplyLimiter(): Ratelimit | null {
@@ -117,25 +99,6 @@ export async function rateLimitCompose(user: AppUser): Promise<RateLimitResult> 
       success: process.env.NODE_ENV !== "production",
       limit: 30,
       remaining: 30,
-      reset: Date.now() + 60_000,
-    };
-  }
-  let r;
-  try {
-    r = await limiter.limit(user.id);
-  } catch {
-    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
-  }
-  return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
-}
-
-export async function rateLimitInterview(user: AppUser): Promise<RateLimitResult> {
-  const limiter = getInterviewLimiter();
-  if (!limiter) {
-    return {
-      success: process.env.NODE_ENV !== "production",
-      limit: 60,
-      remaining: 60,
       reset: Date.now() + 60_000,
     };
   }
