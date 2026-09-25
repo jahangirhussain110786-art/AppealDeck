@@ -28,4 +28,11 @@ describe("sitemap", () => {
     expect(listed).toContain("/");
     for (const page of publicPages) expect(listed, `${page} is missing`).toContain(page);
   });
+
+  it("gives only real page dates, never the build time", () => {
+    for (const entry of sitemap()) {
+      if (entry.lastModified === undefined) continue;
+      expect(String(entry.lastModified), entry.url).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  });
 });

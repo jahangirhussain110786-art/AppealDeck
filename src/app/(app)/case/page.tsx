@@ -1,6 +1,10 @@
+import type { Metadata } from "next";
 import { getOptionalUser } from "@/lib/auth";
 import { isViolationKind, type ViolationKind } from "@/core";
 import { CaseWorkspace } from "@/components/workspace/CaseWorkspace";
+import { APP } from "@/content/app";
+
+export const metadata: Metadata = { title: APP.metaTitles.case };
 
 // AA-39: this page used to restate the kind union and a matching literal array, both of which
 // silently drifted from core. `?kind=VERIFICATION` would have been dropped as invalid.

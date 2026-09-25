@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2, CreditCard, ArrowRight, ReceiptText, ArrowUpRight } from "lucide-react";
 import { requireUser } from "@/lib/auth";
@@ -11,6 +12,8 @@ import { DeviceManager } from "@/components/DeviceManager";
 import { APP } from "@/content/app";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = { title: APP.metaTitles.billing };
 
 export default async function BillingPage() {
   const user = await requireUser("/billing");

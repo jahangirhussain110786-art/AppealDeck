@@ -3,6 +3,12 @@
 // — Wave C owns restyling these surfaces.
 
 export const APP = {
+  // Browser-tab titles for the signed-in pages. These pages are kept out of search results.
+  metaTitles: {
+    case: "Your case",
+    vault: "Evidence vault",
+    billing: "Billing",
+  },
   checkout: {
     opening: "Opening checkout…",
     unavailableTitle: "Checkout unavailable",

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getOptionalUser } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
 import { VaultLockedState } from "@/components/VaultLockedState";
@@ -7,6 +8,8 @@ import { FolderLock } from "lucide-react";
 import { PageIntro } from "@/components/PageIntro";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = { title: APP.metaTitles.vault };
 
 export default async function VaultPage() {
   const user = await getOptionalUser();
