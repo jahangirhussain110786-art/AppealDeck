@@ -219,6 +219,13 @@ function ReadinessCard({ score, missingKinds }: { score: number; missingKinds: E
   );
 }
 
+/** Windows a notice states with nothing to count from. Shown so "Nothing is due" never hides them. */
+function undatedWindows<
+  T extends { kind: string; dueAt: unknown; dueOn?: string; setBy?: "seller" },
+>(deadlines: readonly T[] | undefined): T[] {
+  return deadlinesForDisplay(deadlines).filter((d) => !d.dueAt && !d.dueOn);
+}
+
 export function DashboardClient({ license, signedIn }: DashboardClientProps) {
   const vault = useVaultInstance();
   const [caseFile, setCaseFile] = useState<CaseFile | null>(null);
@@ -494,7 +501,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     const awaitingAmazon = file.state === "SUBMITTED";
     return (
       <div className="animate-fade-in space-y-6">
-        <ClockBriefCard brief={clockBrief} />
+        <ClockBriefCard brief={clockBrief} undated={undatedWindows(file.deadlines)} />
         {!log.resolution && (!awaitingAmazon || log.waitingOn) && (
           <WaitingOnCard log={log} onSaveLog={saveWorkspaceLog} />
         )}
@@ -663,7 +670,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
         return (
           <div className="animate-fade-in space-y-6">
             {/* AA-40: the clock speaks before anything else on the page. */}
-            <ClockBriefCard brief={clockBrief} />
+            <ClockBriefCard brief={clockBrief} undated={undatedWindows(caseFile.deadlines)} />
             <PassStatusRow license={license} />
             {cases.length > 1 && (
               <label className="block text-sm">

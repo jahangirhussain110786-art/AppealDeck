@@ -105,7 +105,7 @@ export const DECODE = {
   textarea: {
     label: "Your notice",
     placeholder: "Paste the full Amazon notice here…",
-    hint: "Paste the entire email, including the subject line and any stated dates.",
+    hint: "Include the subject line and the date at the top. With them, we can count the deadline from the notice's own date.",
   },
   charCounter: "{count} characters",
   privacyNote: "Your notice is sent to AppealDeck for analysis. Nothing is sent to Amazon.",
@@ -118,7 +118,22 @@ export const DECODE = {
   likenessHint:
     "This doesn't look like an Amazon notice yet. Paste the full email, including the subject line.",
   result: {
-    deadlinesTitle: "Deadlines",
+    briefEyebrow: "What this notice is about",
+    deadlinesTitle: "When it is due",
+    noDeadline:
+      "We could not read a deadline in this text. Check the date on your Account Health page in Seller Central.",
+    recordsTitle: "What to gather",
+    recordsAsked: "In your notice",
+    noRecords:
+      "This notice names no specific records. Check the response page in Seller Central before gathering anything.",
+    gatedTitle: "This case needs professional help",
+    gatedFallback: "This case needs professional help. A self-serve draft is not available.",
+    nextEyebrow: "Your next step",
+    nextTitle: "Turn this into your case",
+    nextDesc:
+      "Your notice, deadline and records list come with you. Free, and no sign-up needed to start.",
+    jumpTo: "Or go straight to",
+    wordingTitle: "What the wording in your notice means",
     doNow: "Do now",
     doNot: "Do not",
     copySummary: "Copy plain-English summary",
@@ -135,7 +150,7 @@ export const DECODE = {
     // B-10: the records list shows what the case will start with — what the notice names, and
     // what a case like this needs that it does not name, each labelled with who raised it.
     recordsNote:
-      "What your notice asks for, and what cases like yours usually need · Confirm against the current response page",
+      "“We added this” marks a record cases like yours usually need, even though your notice does not name it. Confirm the list against the response page in Seller Central.",
     recordsSource: "Source in your notice",
     entitiesTitle: "Details we found in your notice",
     entitiesNote:

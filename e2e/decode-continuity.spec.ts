@@ -118,7 +118,7 @@ test("re-entering the same decoded sample resumes edited work and creates no dup
   await page.getByRole("link", { name: "Open case workspace", exact: true }).click();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   await page
-    .getByLabel("Your factual explanation")
+    .getByLabel("Root cause")
     .fill("My saved explanation must survive opening this decoded notice again.");
   await page.getByRole("button", { name: "Save response facts" }).click();
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
@@ -127,7 +127,7 @@ test("re-entering the same decoded sample resumes edited work and creates no dup
     .getByRole("navigation", { name: "Case workspace views" })
     .getByRole("link", { name: "Response", exact: true })
     .click();
-  await expect(page.getByLabel("Your factual explanation")).toHaveValue(/My saved explanation/);
+  await expect(page.getByLabel("Root cause")).toHaveValue(/My saved explanation/);
   await page.goto("/dashboard");
   await expect(page.getByText("Your case, at a glance", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Current case")).toHaveCount(0);

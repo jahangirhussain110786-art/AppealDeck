@@ -241,6 +241,9 @@ export const APP = {
       titleDue: "Due today",
       titleUpcoming: "Coming up",
       titleClear: "Nothing is due",
+      titleUndated: "Your notice gives a window, not a date",
+      undatedBody:
+        "Open the notice in Account Health and enter the response date Amazon shows there on your case page. This page will then count down to it.",
       clearBody:
         "No follow-up dates are set for this case. If you are waiting on Amazon or on a supplier, set a date so this page can tell you when it arrives.",
       newSinceLastVisit: "New since you were last here",

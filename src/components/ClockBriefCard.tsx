@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { describeClockItem, type ClockBrief, type ClockItem } from "@/core";
 import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
+import { DeadlineChipList, type DeadlineLike } from "@/components/DeadlineChip";
 
 /**
  * AA-40: the part of "the clock speaks first" that works with no infrastructure at all.
@@ -19,10 +20,36 @@ import { cn } from "@/lib/utils";
  * manufactured pressure D6 rules out. Notice dates joined on 23 Sep 2026; before that the clock
  * accepted them and the dashboard never passed any.
  */
-export function ClockBriefCard({ brief }: { brief: ClockBrief | null }) {
+export function ClockBriefCard({
+  brief,
+  undated = [],
+}: {
+  brief: ClockBrief | null;
+  /**
+   * Windows the notice states with no date to count from ("90 days from the day you received
+   * this notice"). 25 Sep 2026: these were invisible here, so a case with a live appeal window
+   * opened on "Nothing is due" — the one message a seller must never read by mistake.
+   */
+  undated?: DeadlineLike[];
+}) {
   if (!brief) return null;
 
   const { items, newItems, hasOverdue } = brief;
+
+  if (items.length === 0 && undated.length > 0) {
+    return (
+      <Card className="border-warning/40">
+        <CardHeader className="flex-row items-center gap-3 space-y-0">
+          <CalendarClock className="size-5 text-warning" aria-hidden />
+          <CardTitle className="text-base">{APP.dashboard.clock.titleUndated}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <DeadlineChipList deadlines={undated} />
+          <p className="text-sm text-muted-foreground">{APP.dashboard.clock.undatedBody}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (items.length === 0) {
     return (

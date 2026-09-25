@@ -15,7 +15,7 @@ const invoiceNotice =
 async function startCase(page: Page, notice: string, form: string) {
   await page.goto("/case");
   await page.getByLabel("Amazon notice", { exact: true }).fill(notice);
-  await page.getByLabel("Current response instructions").fill(form);
+  await page.getByLabel("What the response page asks for").fill(form);
   await page.getByRole("button", { name: "Confirm this route" }).click();
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
 }
@@ -266,11 +266,11 @@ test("the decode lists the records a case like this needs, labelling the ones we
   await page.goto("/decode");
   await page.getByRole("button", { name: "Try a sample notice" }).click();
   await page.getByRole("button", { name: "Decode", exact: true }).click();
-  await expect(page.locator("summary", { hasText: "Supplier invoice" })).toBeVisible();
-  const inferred = page.locator("summary", { hasText: "Sales or performance record" });
-  await expect(inferred).toBeVisible();
-  await inferred.click();
-  await expect(page.getByText("We added this", { exact: true })).toBeVisible();
+  // Shown as a plain list, each labelled with who raised it, rather than folded away.
+  const supplier = page.getByRole("listitem").filter({ hasText: "Supplier invoice" });
+  await expect(supplier.getByText("In your notice", { exact: true })).toBeVisible();
+  const inferred = page.getByRole("listitem").filter({ hasText: "Sales or performance record" });
+  await expect(inferred.getByText("We added this", { exact: true })).toBeVisible();
 });
 
 /**
@@ -296,7 +296,7 @@ test("after two responses and another refusal, the case offers a change of appro
   const title = "Two responses have not resolved this. Change the approach, not only the words.";
   await expect(page.getByText(title)).toHaveCount(0);
 
-  await page.getByLabel("Current response instructions").fill("Submit your Plan of Action.");
+  await page.getByLabel("What the response page asks for").fill("Submit your Plan of Action.");
   await page.getByRole("button", { name: "Confirm this route" }).click();
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "History", exact: true }).click();

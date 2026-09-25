@@ -1,5 +1,6 @@
 export const WORKSPACE = {
   title: "Your case workspace",
+  round: "Round {n}",
   subtitle: "One case. Every record, response and reply.",
   // 24 Sep 2026 (ChatGPT audit §9). Said "Documents stay on this device" without exception, while a
   // document check sends that one file to be read. Every sentence here now matches what leaves the
@@ -21,7 +22,10 @@ export const WORKSPACE = {
   routeIntro: "Start with the actual request",
   routeHelp: "Add your notice, check the current request, then confirm your route.",
   notice: "Amazon notice",
-  form: "Current response instructions",
+  form: "What the response page asks for (optional)",
+  formHelp:
+    "In Seller Central, open the notice in Account Health and choose Appeal. If that page lists documents or questions, paste them here, because they can change the route. Leave out passwords and payment details.",
+  decodedHelp: "Your notice is saved. Check the route we suggest below, then confirm it.",
   reviewNotice: "Review the request",
   confirmRoute: "Confirm this route",
   allRequirements:
@@ -53,7 +57,7 @@ export const WORKSPACE = {
   openItemsNote:
     "You can still record what you sent. These items are kept with the record so it shows what was unresolved at the time.",
   finalReview:
-    "I reviewed the facts, attachment names and page references against the current response form.",
+    "I reviewed the facts, attachment names and page references against the response page in Seller Central.",
   // A-07 (classified 23 Sep 2026, built from founder feedback 12 Sep 2026): the completeness badge
   // answers "is every required record here", which a thin, blame-shifting draft can satisfy while
   // reading terribly. This second line is about the writing only. It describes the draft in front
@@ -175,6 +179,7 @@ export const WORKSPACE = {
     help: "We read your notice as the issue below. If that is wrong, change it. Nothing you have already reviewed is removed.",
     label: "The issue on this notice",
     apply: "Use this issue instead",
+    open: "Change the issue",
     applied: "Issue changed to {kind}. Records this issue usually needs have been added.",
     effect:
       "This changes what we explain about each record and which records we raise. It does not delete anything.",

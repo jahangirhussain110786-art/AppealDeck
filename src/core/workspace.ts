@@ -19,7 +19,7 @@ import { questionsIn } from "./questionnaire";
  */
 export const PROTOCOL_LABELS = {
   documents: "Document response",
-  operational: "Operational Plan of Action",
+  operational: "Plan of Action",
   questionnaire: "Questionnaire response",
   acknowledgement: "Acknowledgement",
   verification: "Identity or business verification",
@@ -673,22 +673,28 @@ export function routeWorkspace(
       reason:
         "Your disagreement is preserved. Organize your facts for qualified review before choosing dispute grounds.",
     };
-  if (w.notice.trim().length < 30 || !w.formInstructions.trim())
+  if (w.notice.trim().length < 30)
     return {
       protocol: "clarification",
-      reason:
-        w.notice.trim().length < 30
-          ? "Add the full notice and what the current response page asks you to provide."
-          : "Add what the current response page asks you to provide to confirm the route.",
+      reason: "Add the full notice and what the current response page asks you to provide.",
     };
   /**
    * AA-39: the route is now decided by `determineResponseType`, the same function `/decode` uses,
    * rather than by a second set of regexes maintained here. Two copies of this logic had already
    * drifted apart, which meant the free decoder and the workspace could tell one seller two
    * different things about the same notice.
+   *
+   * 25 Sep 2026: and they still did. An empty response-page field sent every case to
+   * "Clarification needed", so a seller told "Plan of Action" by /decode was told something else
+   * one click later and blocked on a field most sellers do not understand. The notice alone now
+   * decides, exactly as it does on /decode, and the reason says the response page can still
+   * change it. A notice that really is unclear still lands in clarification through the decision.
    */
   const decision = determineResponseType(w.notice, w.formInstructions);
-  return { protocol: PROTOCOL_FOR_RESPONSE_TYPE[decision.type], reason: decision.reason };
+  const reason = w.formInstructions.trim()
+    ? decision.reason
+    : `${decision.reason} This is read from your notice alone. If the response page in Seller Central asks for something different, add what it says and the route updates.`;
+  return { protocol: PROTOCOL_FOR_RESPONSE_TYPE[decision.type], reason };
 }
 
 /** Heading used for the seller's written answer, per protocol. `operational` is handled separately
@@ -801,10 +807,12 @@ export function workspaceGaps(w: Workspace): string[] {
   const gaps: string[] = [];
   const route = routeWorkspace(w);
   if (!w.confirmed || route.protocol !== w.protocol)
-    gaps.push("Confirm the requested route against the notice and form.");
+    gaps.push("Confirm the requested route against your notice and the response page.");
   if (!COMPOSABLE_PROTOCOLS.includes(route.protocol)) gaps.push(route.reason);
   if (!w.requirementsConfirmed)
-    gaps.push("Confirm that the list covers every item requested by the notice and form.");
+    gaps.push(
+      "Confirm that the list covers every item requested by your notice and the response page.",
+    );
   /*
     #86: a notice that raises two issues is refused for the one the response missed, so a case is
     not ready while a second issue is unaddressed. Only fires when more than one was actually
@@ -1115,7 +1123,7 @@ export function applyWorkspaceReply(w: Workspace, replyId: string): Workspace {
   return addWorkspaceEvent(
     updated,
     counts
-      ? `Started a new revision from the reply. Asked for again: ${counts.reopened}. New in this reply: ${counts.added}. Still on your list: ${counts.outstanding}. Kept as reviewed: ${counts.carried}. Review the current response form.`
-      : "Started a new revision from the reply. Review the current response form and evidence requirements.",
+      ? `Started a new revision from the reply. Asked for again: ${counts.reopened}. New in this reply: ${counts.added}. Still on your list: ${counts.outstanding}. Kept as reviewed: ${counts.carried}. Check the response page in Seller Central.`
+      : "Started a new revision from the reply. Check the response page in Seller Central and your records list.",
   );
 }

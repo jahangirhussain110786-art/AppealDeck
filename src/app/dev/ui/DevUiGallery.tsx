@@ -31,12 +31,10 @@ import {
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/EmptyState";
 import { CopyButton } from "@/components/CopyButton";
-import { SeverityBadge } from "@/components/SeverityBadge";
 import { CaseStateBadge } from "@/components/CaseStateBadge";
 import { EvidenceStatusBadge } from "@/components/EvidenceStatusBadge";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { DeadlineChipList } from "@/components/DeadlineChip";
-import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { ClockBriefCard } from "@/components/ClockBriefCard";
 import { DocumentCheckPanel } from "@/components/DocumentCheckPanel";
 import { buildClockBrief, requirementsFor } from "@/core";
@@ -198,15 +196,11 @@ export function DevUiGallery() {
             <Badge variant="success">Success</Badge>
             <Badge variant="warning">Warning</Badge>
             <Badge variant="destructive">Destructive</Badge>
-            <SeverityBadge severity="high" />
-            <SeverityBadge severity="medium" />
-            <SeverityBadge severity="low" />
             <CaseStateBadge kind="POLICY" />
             <CaseStateBadge kind="INAUTHENTIC_DOCUMENTS" />
             <EvidenceStatusBadge status="present" />
             <EvidenceStatusBadge status="missing" />
             <EvidenceStatusBadge status="pending" />
-            <LocalFirstBadge />
             <VerifiedStamp checkedOn="2026-09-01" />
           </CardContent>
         </Card>
@@ -510,7 +504,6 @@ export function DevUiGallery() {
               </div>
             </Alert>
             <div className="flex items-center gap-2">
-              <LocalFirstBadge />
               <VerifiedStamp checkedOn="2026-09-01" />
             </div>
             <Separator />

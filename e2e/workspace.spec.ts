@@ -8,7 +8,7 @@ async function configure(page: Page) {
   await page.goto("/case");
   await page.getByLabel("Amazon notice", { exact: true }).fill(notice);
   await page
-    .getByLabel("Current response instructions")
+    .getByLabel("What the response page asks for")
     .fill("Upload the invoice and explain how the product code matches the affected product.");
   await page.getByRole("button", { name: "Confirm this route" }).click();
   await expect(page.getByRole("button", { name: "Review evidence plan" })).toBeVisible();
@@ -146,7 +146,7 @@ test("unsaved edits are never reported as saved, and survive the sign-in redirec
   await page.reload();
   await page.getByRole("button", { name: "Review the request" }).click();
   const draftText = "Also explain the corrective packaging change made on receipt.";
-  await page.getByLabel("Current response instructions").fill(draftText);
+  await page.getByLabel("What the response page asks for").fill(draftText);
   await expect(page.getByText("Unsaved changes", { exact: false })).toBeVisible();
   await expect(page.getByText("Changes saved", { exact: true })).toHaveCount(0);
   await page
@@ -156,7 +156,7 @@ test("unsaved edits are never reported as saved, and survive the sign-in redirec
   await expect(page).toHaveURL(/\/login\?next=/);
   await page.goBack();
   await page.getByRole("button", { name: "Review the request" }).click();
-  await expect(page.getByLabel("Current response instructions")).toHaveValue(
+  await expect(page.getByLabel("What the response page asks for")).toHaveValue(
     new RegExp(draftText.slice(0, 20)),
   );
 });
@@ -183,7 +183,7 @@ test("every unsaved field survives leaving the page, not only the first one", as
     "Please provide the supplier invoice for the affected product. Also include the purchase order.";
   const formText = "Upload the invoice and the purchase order, and explain the product mapping.";
   await page.getByLabel("Amazon notice", { exact: true }).fill(noticeText);
-  await page.getByLabel("Current response instructions").fill(formText);
+  await page.getByLabel("What the response page asks for").fill(formText);
 
   await page
     .getByRole("complementary", { name: "Case context" })
@@ -194,7 +194,7 @@ test("every unsaved field survives leaving the page, not only the first one", as
   await page.getByRole("button", { name: "Review the request" }).click();
 
   await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(noticeText);
-  await expect(page.getByLabel("Current response instructions")).toHaveValue(formText);
+  await expect(page.getByLabel("What the response page asks for")).toHaveValue(formText);
 });
 
 test("informational updates avoid a purchase flow and replies reopen the request", async ({
@@ -206,7 +206,7 @@ test("informational updates avoid a purchase flow and replies reopen the request
     .fill(
       "Your response remains under review. No additional information is required at this stage.",
     );
-  await page.getByLabel("Current response instructions").fill("No action requested.");
+  await page.getByLabel("What the response page asks for").fill("No action requested.");
   await page.getByRole("button", { name: "Confirm this route" }).click();
   await expect(page.getByText("No new response is requested", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
@@ -216,7 +216,7 @@ test("informational updates avoid a purchase flow and replies reopen the request
   await page.getByRole("button", { name: "Save reply for review" }).click();
   await page.getByRole("button", { name: "Use reply for a new revision" }).click();
   await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(notice);
-  await expect(page.getByLabel("Current response instructions")).toBeEmpty();
+  await expect(page.getByLabel("What the response page asks for")).toBeEmpty();
 });
 
 test("starting from Decode carries the notice into a separate case", async ({ page }) => {
@@ -283,7 +283,7 @@ test("authenticated workspace preserves the exact response through submission an
   ).not.toContainText("Root Cause");
   await page
     .getByLabel(
-      "I reviewed the facts, attachment names and page references against the current response form.",
+      "I reviewed the facts, attachment names and page references against the response page in Seller Central.",
     )
     .check();
   await page
@@ -351,7 +351,7 @@ test("a refused outcome share keeps the offer and says so; a recorded one confir
   await page.getByRole("button", { name: "Prepare response", exact: true }).click();
   await page
     .getByLabel(
-      "I reviewed the facts, attachment names and page references against the current response form.",
+      "I reviewed the facts, attachment names and page references against the response page in Seller Central.",
     )
     .check();
   await page
@@ -402,7 +402,7 @@ test("a notice raising two issues names both, and blocks a response that has ans
         "Please provide the supplier invoice for the affected product.",
       ].join("\n"),
     );
-  await page.getByLabel("Current response instructions").fill("Upload the requested invoice.");
+  await page.getByLabel("What the response page asks for").fill("Upload the requested invoice.");
   await page.getByRole("button", { name: "Confirm this route" }).click();
 
   await page.getByRole("tab", { name: "Response", exact: true }).click();
@@ -523,7 +523,7 @@ test("a notice typed into the workspace is classified, and a seller's correction
     .fill(
       "Your account has been deactivated for repeated policy violations. Please provide the supplier invoice for the affected product.",
     );
-  await page.getByLabel("Current response instructions").fill("Upload the requested invoice.");
+  await page.getByLabel("What the response page asks for").fill("Upload the requested invoice.");
   await page.getByRole("button", { name: "Confirm this route" }).click();
 
   await page.getByRole("tab", { name: "Evidence", exact: true }).click();
@@ -539,7 +539,7 @@ test("a notice typed into the workspace is classified, and a seller's correction
   // A seller's own correction survives the next confirmation instead of being re-classified.
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
   await page.getByRole("button", { name: "Review the request" }).click();
-  await page.getByRole("button", { name: "Is this the right issue?" }).click();
+  await page.getByRole("button", { name: "Change the issue" }).click();
   await page.getByLabel("The issue on this notice").selectOption("FUNDS");
   await page.getByRole("button", { name: "Use this issue instead" }).click();
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
@@ -547,8 +547,10 @@ test("a notice typed into the workspace is classified, and a seller's correction
   await page.getByRole("button", { name: "Confirm this route" }).click();
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
   await page.reload();
+  // The case is now titled by its issue, so the correction shows in the heading as well.
+  await expect(page.getByRole("heading", { level: 1, name: "Funds hold" })).toBeVisible();
   await page.getByRole("button", { name: "Review the request" }).click();
-  await expect(page.getByText("Funds hold", { exact: true })).toBeVisible();
+  await expect(page.getByText("Funds hold", { exact: true }).last()).toBeVisible();
 });
 
 /**
@@ -564,7 +566,7 @@ test("a notice typed into the workspace shows its window, counted honestly", asy
     .fill(
       "Your account has been deactivated for repeated policy violations. You may appeal within 30 days. Please provide the supplier invoice.",
     );
-  await page.getByLabel("Current response instructions").fill("Upload the requested invoice.");
+  await page.getByLabel("What the response page asks for").fill("Upload the requested invoice.");
   await page.getByRole("button", { name: "Confirm this route" }).click();
   const context = page.getByRole("complementary", { name: "Case context" });
   await expect(context).toContainText(
@@ -639,7 +641,7 @@ test("a Plan of Action asks the seller to stand behind the work they describe", 
     .fill(
       "Your account has been deactivated. Please submit a Plan of Action explaining the root cause of the issue and the corrective actions you have taken.",
     );
-  await page.getByLabel("Current response instructions").fill("Submit a Plan of Action.");
+  await page.getByLabel("What the response page asks for").fill("Submit a Plan of Action.");
   await page.getByRole("button", { name: "Confirm this route" }).click();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
 
@@ -703,7 +705,7 @@ test("a seller can correct the issue we read, and we raise the records that issu
 
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
   await page.getByRole("button", { name: "Review the request" }).click();
-  await page.getByRole("button", { name: "Is this the right issue?" }).click();
+  await page.getByRole("button", { name: "Change the issue" }).click();
   await page.getByLabel("The issue on this notice").selectOption("POLICY");
   await page.getByRole("button", { name: "Use this issue instead" }).click();
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
@@ -766,7 +768,7 @@ test.describe("the dashboard for a workspace case", () => {
       .fill(
         "Your account has been deactivated for repeated policy violations. Please submit your appeal by 1 October 2026. Please provide the supplier invoice.",
       );
-    await page.getByLabel("Current response instructions").fill("Upload the requested invoice.");
+    await page.getByLabel("What the response page asks for").fill("Upload the requested invoice.");
     await page.getByRole("button", { name: "Confirm this route" }).click();
     await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
 

@@ -102,9 +102,7 @@ export function RequestReview({
             {workspace.decodedNoticeHash ? "Review your decoded request" : C.routeIntro}
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            {workspace.decodedNoticeHash
-              ? "Notice saved. Add the current response instructions to continue."
-              : C.routeHelp}
+            {workspace.decodedNoticeHash ? C.decodedHelp : C.routeHelp}
           </p>
         </div>
       </CardHeader>
@@ -182,9 +180,7 @@ export function RequestReview({
               );
             }}
           />
-          <p className="text-xs text-muted-foreground">
-            If no action is requested, say so. Leave out passwords and payment details.
-          </p>
+          <p className="text-xs text-muted-foreground">{C.formHelp}</p>
         </div>
         {/*
           B-06: beside the suggested route, because both answer "did you read my notice correctly"

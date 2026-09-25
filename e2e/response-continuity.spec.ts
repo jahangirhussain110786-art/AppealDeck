@@ -11,7 +11,7 @@ async function openQuestionnaire(page: Page) {
     .getByLabel("Amazon notice", { exact: true })
     .fill("Please complete the questionnaire below so we can review your account.");
   await page
-    .getByLabel("Current response instructions")
+    .getByLabel("What the response page asks for")
     .fill(`Answer the following questions.\n1. ${question}\n2. ${otherQuestion}`);
   await page.getByRole("button", { name: "Confirm this route" }).click();
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
@@ -42,7 +42,7 @@ test("reordering a questionnaire keeps drafts attached to their own questions", 
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
   await page.getByRole("button", { name: "Review the request", exact: true }).click();
   await page
-    .getByLabel("Current response instructions")
+    .getByLabel("What the response page asks for")
     .fill(`Answer the following questions.\n1. ${otherQuestion}\n2. ${question}`);
   await page.getByRole("button", { name: "Confirm this route" }).click();
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
@@ -74,7 +74,7 @@ test("confirming covered issues does not discard unfinished response text", asyn
     .fill(
       "We could not verify the authenticity of the invoices you supplied for the affected products. Separately, your detail page policy violation for ASIN B0EXAMPLE1 remains unresolved. Please provide the supplier invoice.",
     );
-  await page.getByLabel("Current response instructions").fill("Upload the invoice.");
+  await page.getByLabel("What the response page asks for").fill("Upload the invoice.");
   await page.getByRole("button", { name: "Confirm this route" }).click();
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Response", exact: true }).click();

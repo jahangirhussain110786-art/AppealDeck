@@ -1049,13 +1049,14 @@ function WorkspaceInner({
       <PageIntro
         icon={FileSearch}
         eyebrow={`Case workspace · ${w.marketplace === "US" ? "Amazon US" : "Marketplace to confirm"}`}
-        title={C.title}
+        // The case's own issue, once we know it: "Your case workspace" told the seller nothing.
+        title={file.kind === "UNKNOWN" ? C.title : APP.violationKinds[file.kind]}
         description={C.subtitle}
         actions={
           <>
             <Badge variant="secondary" className="font-mono">
-              R{w.revision}
-              <span className="sr-only"> · Revision {w.revision}</span>
+              {/* Each Amazon reply starts a new round; "R1" was shorthand only we used. */}
+              {C.round.replace("{n}", String(w.revision))}
             </Badge>
             <Button
               size="sm"

@@ -17,10 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { SeverityBadge } from "@/components/SeverityBadge";
-import { CaseStateBadge } from "@/components/CaseStateBadge";
 import { DeadlineChipList } from "@/components/DeadlineChip";
-import { LocalFirstBadge } from "@/components/LocalFirstBadge";
 import { CopyButton } from "@/components/CopyButton";
 import { OfflineNotice } from "@/components/OfflineNotice";
 import { DetailDisclosure, IconTile, VIEW_ICONS } from "@/components/workspace/WorkspaceVisuals";
@@ -34,7 +31,6 @@ import { WORKSPACE } from "@/content/workspace";
 import { proposedRequirements } from "@/core/workspace";
 import { DECODE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
-import { APP } from "@/content/app";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 import { ENTITY_LABELS, type ViolationKind, type ResponseType, type ExtractedEntity } from "@/core";
 import type { DeadlineLike } from "@/components/DeadlineChip";
@@ -159,8 +155,7 @@ export default function DecodeClient() {
             {DECODE.pageDescription}
           </p>
         </div>
-        <div className="flex w-full items-center justify-between gap-3">
-          <LocalFirstBadge className="hidden sm:inline-flex" />
+        <div className="flex w-full items-center justify-end gap-3">
           {status === "result" && (
             <Button type="button" variant="outline" size="sm" onClick={handleReset}>
               {DECODE.decodeAnotherButton}
@@ -269,8 +264,6 @@ function ResultView({
   guidance: ReturnType<typeof guidanceFor>;
   text: string;
 }) {
-  const severity = result.severityGated ? ("high" as const) : ("low" as const);
-
   const annotations = useMemo(
     () => buildNoticeAnnotations(text, result.kind, DECODE.annotations),
     [text, result.kind],
@@ -279,15 +272,24 @@ function ResultView({
     // Revision 1: no case exists yet, and a workspace started from this notice begins there. These
     // records are a preview only — nothing here is saved until the seller starts a case.
     //
-    // B-10, 24 Sep 2026: with the decoded kind, exactly as `importDecodedNotice` builds the case.
-    // Without it this listed only what the notice spelled out, so the free decode showed fewer
-    // records than the case it opened — and hid the one thing it can show before asking for anything:
-    // that we know what a case like this needs even when Amazon does not say so.
+    // B-10, 24 Sep 2026: with the decoded kind, exactly as `importDecodedNotice` builds the case,
+    // so the free decode shows the same list as the case it opens.
     () => proposedRequirements({ notice: text, formInstructions: "", revision: 1 }, result.kind),
     [text, result.kind],
   );
   const carryNotice = () => stashPendingNotice(text, result.deadlines);
+  const r = DECODE.result;
+  const hasType = Boolean(result.responseType);
+  // Requested records already appear under "What to gather"; listing them again here was noise.
+  const details = (result.entities ?? []).filter((e) => e.kind !== "requested_record");
 
+  /**
+   * 25 Sep 2026: the result is one numbered answer in the order a seller acts on it — what to
+   * send, by when, with what. A "Low" severity badge used to sit on every notice that was not
+   * gated (the badge had only two values), which told a seller whose account had just been
+   * deactivated that the matter was minor. Severity is shown only where it changes what the seller
+   * must do: the professional-help warning.
+   */
   return (
     <motion.div
       className="space-y-4"
@@ -298,259 +300,202 @@ function ResultView({
         show: { opacity: 1, transition: { staggerChildren: STAGGER } },
       }}
     >
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+      {/*
+        #87: first, because if this message is a forgery nothing below it matters. It states no
+        verdict — it cannot — and sends the seller to Seller Central, the one place that settles it.
+      */}
+      {result.authenticity && result.authenticity.length > 0 && (
+        <Alert variant="warning">
+          <ShieldAlert aria-hidden />
+          <div className="space-y-3">
+            <AlertTitle>{r.authenticityTitle}</AlertTitle>
+            <AlertDescription>{r.authenticityLead}</AlertDescription>
+            <div>
+              <p className="text-eyebrow uppercase text-muted-foreground">{r.authenticityFound}</p>
+              <ul className="mt-2 space-y-2">
+                {result.authenticity.map((signal) => (
+                  <li key={signal.id} className="text-sm">
+                    <span className="font-medium text-foreground">{signal.label}</span>
+                    <span className="block text-muted-foreground">{signal.detail}</span>
+                    <span className="mt-1 block break-words font-mono text-xs text-muted-foreground">
+                      {signal.match}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <AlertDescription className="font-medium">{r.authenticityAction}</AlertDescription>
+          </div>
+        </Alert>
+      )}
+      {result.severityGated && (
+        <Alert variant="warning">
+          <AlertTitle>{r.gatedTitle}</AlertTitle>
+          <AlertDescription>{guidance.severityNote ?? r.gatedFallback}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <Card className="overflow-hidden">
           <CardHeader className="flex-row items-start gap-3 border-b border-border/60 bg-surface-2/50">
             <IconTile icon={FileSearch} tone="info" />
-            <div className="min-w-0 space-y-2">
-              <p className="text-eyebrow uppercase text-muted-foreground">Notice brief</p>
+            <div className="min-w-0 space-y-1">
+              <p className="text-eyebrow uppercase text-muted-foreground">{r.briefEyebrow}</p>
               <h2 className="text-xl font-semibold leading-snug text-foreground">
                 {guidance.title}
               </h2>
-              <div className="flex flex-wrap gap-2">
-                <SeverityBadge severity={severity} />
-                <CaseStateBadge kind={result.kind} className="text-foreground" />
-              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground">{guidance.summary}</p>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4 pt-5">
-            <p className="text-sm leading-relaxed text-muted-foreground">{guidance.summary}</p>
-            {/*
-              #87: placed above the decision, because if this message is a forgery then nothing
-              below it matters and every minute spent answering it is spent helping a criminal.
-              It states no verdict — it cannot — and its only instruction is to go and look in
-              Seller Central, which is the one place that settles the question.
-            */}
-            {result.authenticity && result.authenticity.length > 0 && (
-              <Alert variant="warning">
-                <ShieldAlert aria-hidden />
-                <div className="space-y-3">
-                  <AlertTitle>{DECODE.result.authenticityTitle}</AlertTitle>
-                  <AlertDescription>{DECODE.result.authenticityLead}</AlertDescription>
-                  <div>
-                    <p className="text-eyebrow uppercase text-muted-foreground">
-                      {DECODE.result.authenticityFound}
+          <CardContent className="p-0">
+            <ol className="divide-y divide-border/60">
+              {result.responseType && (
+                <Step n={1} title={r.responseTypeTitle}>
+                  <p className="text-base font-semibold text-foreground">
+                    {result.responseType.label}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {result.responseType.reason}
+                  </p>
+                  {result.responseType.competing.length > 0 && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {r.responseTypeAlsoSeen}: {result.responseType.competing.join(", ")}
                     </p>
-                    <ul className="mt-2 space-y-2">
-                      {result.authenticity.map((signal) => (
-                        <li key={signal.id} className="text-sm">
-                          <span className="font-medium text-foreground">{signal.label}</span>
-                          <span className="block text-muted-foreground">{signal.detail}</span>
-                          <span className="mt-1 block break-words font-mono text-xs text-muted-foreground">
-                            {signal.match}
-                          </span>
+                  )}
+                  {result.responseType.matches.length > 0 && (
+                    <DetailDisclosure title={r.responseTypeSourceTitle} className="mt-3">
+                      <div className="space-y-2">
+                        {result.responseType.matches.map((m) => (
+                          <blockquote
+                            key={`${m.start}-${m.end}`}
+                            className="border-l-2 border-primary/40 pl-3 text-xs italic"
+                          >
+                            {m.quote}
+                          </blockquote>
+                        ))}
+                      </div>
+                    </DetailDisclosure>
+                  )}
+                </Step>
+              )}
+              <Step n={hasType ? 2 : 1} title={r.deadlinesTitle}>
+                {result.deadlines.length > 0 ? (
+                  <DeadlineChipList deadlines={result.deadlines} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">{r.noDeadline}</p>
+                )}
+              </Step>
+              <Step n={hasType ? 3 : 2} title={r.recordsTitle}>
+                {records.length ? (
+                  <>
+                    <ul className="space-y-2">
+                      {records.map((record) => (
+                        <li
+                          key={record.label}
+                          className="flex flex-wrap items-center gap-2 text-sm"
+                        >
+                          <FolderOpen aria-hidden className="size-4 shrink-0 text-warning" />
+                          <span className="font-medium text-foreground">{record.label}</span>
+                          {/* Ours, and said so — never passed off as something Amazon wrote. */}
+                          <Badge
+                            variant={record.source === "matrix" ? "secondary" : "info"}
+                            size="sm"
+                          >
+                            {record.source === "matrix" ? WORKSPACE.inferred.badge : r.recordsAsked}
+                          </Badge>
                         </li>
                       ))}
                     </ul>
-                  </div>
-                  <AlertDescription className="font-medium">
-                    {DECODE.result.authenticityAction}
-                  </AlertDescription>
-                </div>
-              </Alert>
-            )}
-            {/*
-              AA-39: the decision, placed above the deadlines because it changes what the seller
-              does, not merely when. `UNDETERMINED` is shown as prominently as any other answer —
-              "we could not tell, go and check the form" is a real result, not a failure to hide.
-            */}
-            {result.responseType && (
-              <div className="space-y-2 rounded-lg border border-border bg-surface-2/40 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {DECODE.result.responseTypeTitle}
-                </p>
-                <p className="text-base font-semibold text-foreground">
-                  {result.responseType.label}
-                </p>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {result.responseType.reason}
-                </p>
-                {result.responseType.competing.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {DECODE.result.responseTypeAlsoSeen}: {result.responseType.competing.join(", ")}
-                  </p>
+                    <p className="mt-3 text-xs text-muted-foreground">{r.recordsNote}</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{r.noRecords}</p>
                 )}
-                {result.responseType.matches.length > 0 && (
-                  <div className="space-y-1 pt-1">
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      {DECODE.result.responseTypeSourceTitle}
-                    </p>
-                    {result.responseType.matches.map((m) => (
-                      <blockquote
-                        key={`${m.start}-${m.end}`}
-                        className="border-l-2 border-primary/40 pl-3 text-xs italic text-muted-foreground"
-                      >
-                        {m.quote}
-                      </blockquote>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {result.entities && result.entities.length > 0 && (
-              <div className="space-y-2">
+              </Step>
+            </ol>
+            {details.length > 0 && (
+              <div className="space-y-2 border-t border-border/60 px-6 py-5">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {DECODE.result.entitiesTitle}
+                  {r.entitiesTitle}
                 </p>
                 <ul className="flex flex-wrap gap-2">
-                  {result.entities.map((e) => (
+                  {details.map((e) => (
                     <li
                       key={`${e.kind}-${e.start}`}
                       className="inline-flex items-baseline gap-1.5 rounded-md border border-border bg-surface-2/60 px-2 py-1 text-xs"
                     >
                       <span className="text-muted-foreground">{ENTITY_LABELS[e.kind]}</span>
                       <span className="font-mono tabular-nums text-foreground">{e.value}</span>
-                      {e.ambiguous && (
-                        <span className="text-warning">{DECODE.result.entitiesAmbiguous}</span>
-                      )}
+                      {e.ambiguous && <span className="text-warning">{r.entitiesAmbiguous}</span>}
                     </li>
                   ))}
                 </ul>
-                <p className="text-xs text-muted-foreground">{DECODE.result.entitiesNote}</p>
+                <p className="text-xs text-muted-foreground">{r.entitiesNote}</p>
               </div>
             )}
-            {result.deadlines.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {DECODE.result.deadlinesTitle}
-                </p>
-                <DeadlineChipList deadlines={result.deadlines} />
-              </div>
-            )}
-            <CopyButton text={guidance.summary} label={DECODE.result.copySummary} />
           </CardContent>
         </Card>
-        <Card className="workspace-hero border-primary/20">
+
+        <Card className="workspace-hero border-primary/20 lg:sticky lg:top-24">
           <CardHeader>
-            <p className="text-eyebrow uppercase text-primary">Next / Your case</p>
-            <CardTitle className="font-accent text-2xl font-medium">
-              Turn the notice into a plan.
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Your notice and deadlines come with you.
-            </p>
+            <p className="text-eyebrow uppercase text-primary">{r.nextEyebrow}</p>
+            <CardTitle className="font-accent text-2xl font-medium">{r.nextTitle}</CardTitle>
+            <p className="text-sm text-muted-foreground">{r.nextDesc}</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button asChild className="w-full">
+            <Button asChild size="lg" className="w-full">
               <Link href={`/case?kind=${result.kind}&view=overview`} onClick={carryNotice}>
-                {DECODE.result.startPoaCta}
+                {r.startPoaCta}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
             </Button>
-            <nav aria-label="Case workspace views" className="grid grid-cols-4 gap-1">
-              {Object.entries(WORKSPACE.tabs).map(([view, label]) => {
-                const Icon = VIEW_ICONS[view] ?? FileSearch;
-                return (
-                  <Link
-                    key={view}
-                    href={`/case?kind=${result.kind}&view=${view}`}
-                    onClick={carryNotice}
-                    className="flex min-w-0 flex-col items-center gap-2 rounded-lg py-3 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <Icon className="size-5 text-primary" aria-hidden />
-                    {label}
-                  </Link>
-                );
-              })}
-            </nav>
-            <p className="border-t border-primary/15 pt-3 text-xs text-muted-foreground">
-              Free to organize · You control submission
-            </p>
+            <div>
+              <p className="text-xs text-muted-foreground">{r.jumpTo}</p>
+              <nav aria-label="Case workspace views" className="mt-1 grid grid-cols-4 gap-1">
+                {Object.entries(WORKSPACE.tabs).map(([view, label]) => {
+                  const Icon = VIEW_ICONS[view] ?? FileSearch;
+                  return (
+                    <Link
+                      key={view}
+                      href={`/case?kind=${result.kind}&view=${view}`}
+                      onClick={carryNotice}
+                      className="flex min-w-0 flex-col items-center gap-2 rounded-lg py-3 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Icon className="size-5 text-primary" aria-hidden />
+                      {label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+            <div className="border-t border-primary/15 pt-3">
+              <CopyButton text={guidance.summary} label={r.copySummary} />
+            </div>
           </CardContent>
         </Card>
       </div>
-      {result.severityGated && (
-        <Alert variant="warning">
-          <AlertTitle>Professional review needed</AlertTitle>
-          <AlertDescription>
-            {guidance.severityNote ??
-              "This case needs professional help. A self-serve draft is not available."}
-          </AlertDescription>
-        </Alert>
-      )}
+
       <div className="grid items-start gap-4 md:grid-cols-2">
         {[
-          {
-            label: DECODE.result.doNow,
-            items: guidance.triage.doNow,
-            icon: Check,
-            tone: "primary" as const,
-          },
-          {
-            label: DECODE.result.doNot,
-            items: guidance.triage.doNot,
-            icon: Ban,
-            tone: "warning" as const,
-          },
+          { label: r.doNow, items: guidance.triage.doNow, icon: Check, tone: "primary" as const },
+          { label: r.doNot, items: guidance.triage.doNot, icon: Ban, tone: "warning" as const },
         ].map(({ label, items, icon, tone }) => (
           <Card key={label} className="p-5">
             <div className="mb-3 flex items-center gap-3">
               <IconTile icon={icon} tone={tone} />
               <h3 className="text-sm font-semibold text-foreground">{label}</h3>
             </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">{items[0]}</p>
-            {items.length > 1 && (
-              <DetailDisclosure
-                title={`${items.length - 1} more ${label === DECODE.result.doNow ? "actions" : "precautions"}`}
-                className="mt-3 border-0 bg-surface-2/60"
-              >
-                <ul className="list-disc space-y-2 pl-4">
-                  {items.slice(1).map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </DetailDisclosure>
-            )}
+            {/* All shown: each is one line, and "2 more actions" hid most of the advice. */}
+            <ul className="list-disc space-y-2 pl-4 text-sm leading-relaxed text-muted-foreground">
+              {items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </Card>
         ))}
       </div>
-      <Card>
-        <CardHeader className="flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <IconTile icon={FolderOpen} tone="warning" />
-            <div>
-              <CardTitle>{APP.access.casePreview.title}</CardTitle>
-              <p className="mt-1 text-xs text-muted-foreground">{DECODE.result.recordsNote}</p>
-            </div>
-          </div>
-          <span className="font-mono text-2xl text-foreground">{records.length}</span>
-        </CardHeader>
-        <CardContent>
-          {records.length ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {records.map((record) => (
-                <DetailDisclosure key={record.label} title={record.label}>
-                  {record.source === "matrix" ? (
-                    // Ours, and said so in plain words — never a blockquote, which would read as a
-                    // sentence Amazon wrote.
-                    <>
-                      <Badge variant="secondary" size="sm" className="mb-2">
-                        {WORKSPACE.inferred.badge}
-                      </Badge>
-                      <p>{WORKSPACE.inferred.help}</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="mb-2 text-xs uppercase tracking-wide">
-                        {DECODE.result.recordsSource}
-                      </p>
-                      <blockquote className="border-l-2 border-info/40 pl-3">
-                        {record.sourceQuote}
-                      </blockquote>
-                    </>
-                  )}
-                </DetailDisclosure>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No specific records detected. Check the notice and response page before adding tasks.
-            </p>
-          )}
-        </CardContent>
-      </Card>
       {annotations.length > 0 && (
-        <DetailDisclosure title="Understand the wording in your notice">
+        <DetailDisclosure title={r.wordingTitle}>
           <div className="grid gap-4 pt-2 sm:grid-cols-2">
             {annotations.map((a) => (
               <div key={a.id} className="space-y-2 border-l-2 border-info/30 pl-3">
@@ -563,5 +508,24 @@ function ResultView({
         </DetailDisclosure>
       )}
     </motion.div>
+  );
+}
+
+function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+  return (
+    <li className="flex gap-4 px-6 py-5">
+      <span
+        aria-hidden
+        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-sm text-primary"
+      >
+        {n}
+      </span>
+      <div className="min-w-0 flex-1">
+        <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {title}
+        </h3>
+        {children}
+      </div>
+    </li>
   );
 }

@@ -50,7 +50,7 @@ test.describe("Access ladder — signed-out workspace, gate, case preview", () =
       );
     await page.getByRole("button", { name: "Decode", exact: true }).click();
 
-    await expect(page.getByText("What this case will need", { exact: true })).toBeVisible();
+    await expect(page.getByText("What to gather", { exact: true })).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Open case workspace", exact: true }),
     ).toBeVisible();

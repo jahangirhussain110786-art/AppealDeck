@@ -178,7 +178,7 @@ export function WorkspaceSummary({
             <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-5">
               <dt className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <GitBranch className="size-4 text-info" aria-hidden />
-                Revision
+                Round
               </dt>
               <dd className="mt-3 font-mono text-2xl text-foreground">{w.revision}</dd>
             </div>

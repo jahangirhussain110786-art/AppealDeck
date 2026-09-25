@@ -77,7 +77,7 @@ export function KindOverride({
         </div>
       ) : (
         <Button variant="ghost" size="sm" disabled={busy} onClick={() => setOpen(true)}>
-          {C.kindOverride.title}
+          {C.kindOverride.open}
         </Button>
       )}
     </div>
