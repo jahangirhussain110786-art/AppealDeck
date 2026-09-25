@@ -474,8 +474,10 @@ decision (AM-20/AM-22) was wrong. This supersedes those palettes. The mark's sha
 checked", AM-20) is unchanged; only its colours move.
 
 - **Why the green was everywhere:** not only `--primary` but every neutral (backgrounds,
-  borders, secondary text) sat on a green 160° hue, strongest in dark mode. Neutrals are now a
-  cool slate on the navy's 216°.
+  borders, secondary text) sat on a green 160° hue, strongest in dark mode. Light neutrals are
+  now a cool slate on the navy's 216°. Dark neutrals are a near-neutral charcoal (220°, 4-6%
+  saturation): a first pass at 16-28% read as blue, and the founder asked for a proper dark,
+  the counterpart of light mode's near-white (same day).
 - **Roles, so the orange never floods the way the green did:** navy for structure (text, the
   logo tile, the announcement bar); orange (`--primary`, 30° against Amazon's 36°) only for the
   main button, the active step, focus rings, eyebrow labels and "Deck"; a separate `--link`
