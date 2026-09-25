@@ -299,3 +299,11 @@ Format:
 - Rationale: a decision recorded only where it was made is not found where it will be read (gap audit §5, mechanism 4).
 - Files affected: `Planning/03-PHASE-2-BUILD/02-BUILD-PLAN-AMENDMENTS.md` (AM-29), `Planning/03-PHASE-2-BUILD/09-MULTI-CASE-ARCHITECTURE-SPEC.md` (items ticked with evidence).
 - Decider: Founder (the 14 Sep direction); AI assistant (the backfill).
+
+## 25 Sep 2026 — AM-30: navy and orange replace the green; an announcement bar
+
+- Decision: Replace the green palette with navy structure and an Amazon-adjacent orange accent (30°, not Amazon's 36°), move all neutrals off the green hue, give text links their own blue, recolour the mark, and add a thin announcement bar above the header on public pages.
+- Alternatives considered: (1) orange as a straight swap for the green. Rejected: `text-primary` alone was used 63 times, so orange would flood the pages exactly as the green did; roles were split instead. (2) Copying Amazon's exact orange, navy header and layout. Rejected: trade-dress confusion, and phishing that imitates Amazon targets these sellers, which our own scam check warns about. (3) Promotional "deals" in the bar. Rejected until a real offer exists: the price is a flat $249 (D6).
+- Rationale: founder direction in chat; the earlier palette decision (AM-20/AM-22) judged wrong by the founder.
+- Files affected: `src/app/globals.css`, `tailwind.config.ts`, `src/components/AnnouncementBar.tsx`, `src/content/announcements.ts`, `src/components/MarketingShell.tsx`, `src/components/Logo.tsx`, link call sites, `public/brand/*`, `src/app/{icon.svg,favicon.ico,apple-icon.png,opengraph-image.png}`, `docs/handoffs/assets/brand-gen.js`, contrast and e2e tests.
+- Decider: Founder (the direction); AI assistant (the palette values, the role split, the bar's behaviour).

@@ -29,6 +29,13 @@ const config: Config = {
       },
       colors: {
         brand: "hsl(var(--brand) / <alpha-value>)",
+        link: "hsl(var(--link) / <alpha-value>)",
+        announce: {
+          DEFAULT: "hsl(var(--announce) / <alpha-value>)",
+          foreground: "hsl(var(--announce-foreground) / <alpha-value>)",
+          // The brand orange fill, readable on the navy bar (contrast.test.ts checks the pair).
+          accent: "hsl(var(--primary) / <alpha-value>)",
+        },
         border: "hsl(var(--border) / <alpha-value>)",
         input: "hsl(var(--input) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",

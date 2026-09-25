@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { AppHeader } from "@/components/AppHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ export function MarketingShell({
 }) {
   return (
     <div className="marketing-surface flex min-h-svh flex-col">
+      <AnnouncementBar />
       <AppHeader mode="marketing" />
       <main id="main" className={cn("mx-auto w-full flex-1 px-4 sm:px-6", WIDTH[width], className)}>
         {children}

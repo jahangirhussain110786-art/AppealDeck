@@ -127,7 +127,7 @@ function InsightsSection() {
               </p>
               <Link
                 href={item.link.href}
-                className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-link underline-offset-4 hover:underline"
               >
                 {item.link.label}
                 <ArrowRight aria-hidden className="size-3.5" />
@@ -164,7 +164,7 @@ function HowItWorksSection() {
                 {link && (
                   <Link
                     href={link.href}
-                    className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-link underline-offset-4 hover:underline"
                   >
                     {link.label}
                     <ArrowRight aria-hidden className="size-3.5" />

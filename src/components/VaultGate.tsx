@@ -437,10 +437,7 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
           </Button>
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
-          <a
-            href="/vault"
-            className="text-primary underline underline-offset-4 hover:text-primary/80"
-          >
+          <a href="/vault" className="text-link underline underline-offset-4 hover:text-link/80">
             {APP.vault.unlock.recoverLink}
           </a>
         </p>

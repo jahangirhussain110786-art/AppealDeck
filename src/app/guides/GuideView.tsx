@@ -124,7 +124,7 @@ export function GuideView({ guide }: { guide: Guide }) {
               {others.map((g) => (
                 <li key={g.slug}>
                   <Link
-                    className="text-primary underline underline-offset-4"
+                    className="text-link underline underline-offset-4"
                     href={`/guides/${g.slug}`}
                   >
                     {g.title}

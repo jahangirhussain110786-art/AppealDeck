@@ -25,7 +25,7 @@ export function LogoMark({ size = 28, className }: { size?: number; className?: 
       <path
         d="M9.9 19.4l2.8 2.8 5.3-5.8"
         fill="none"
-        className="stroke-brand"
+        className="stroke-primary"
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"

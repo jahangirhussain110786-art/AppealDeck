@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 function Mail({ address }: { address: string }) {
   return (
-    <a className="font-mono text-primary underline underline-offset-4" href={`mailto:${address}`}>
+    <a className="font-mono text-link underline underline-offset-4" href={`mailto:${address}`}>
       {address}
     </a>
   );
@@ -113,7 +113,7 @@ export default function SupportPage() {
                 { href: "/terms", label: SUPPORT.elsewhere.terms },
               ].map((link) => (
                 <li key={link.href}>
-                  <Link className="text-primary underline underline-offset-4" href={link.href}>
+                  <Link className="text-link underline underline-offset-4" href={link.href}>
                     {link.label}
                   </Link>
                 </li>

@@ -361,7 +361,7 @@ v1.0 §14.3–14.4 mentions `minSupportedVersion` and config-driven selectors as
 
 **The five decisions.**
 
-1. **The decoder must decide, not describe.** `parseNotice()` (66 lines of pattern-matching) and `classifyStage1()` produce a category and a deadline and nothing else. They must additionally determine the *response type Amazon is actually asking for* and extract the case's real entities — ASINs, case/order IDs, dates, and the specific records requested — because choosing the wrong response type is the single largest cause of failed appeals and no surface in the product makes that call today.
+1. **The decoder must decide, not describe.** `parseNotice()` (66 lines of pattern-matching) and `classifyStage1()` produce a category and a deadline and nothing else. They must additionally determine the _response type Amazon is actually asking for_ and extract the case's real entities — ASINs, case/order IDs, dates, and the specific records requested — because choosing the wrong response type is the single largest cause of failed appeals and no surface in the product makes that call today.
 
 2. **Every notice type gets a home.** `ViolationKind` has seven members and no category for identity/INFORM verification, performance metrics (ODR, late shipment, valid tracking), product safety, restricted products, or Seller Challenge. `routeWorkspace()` compounds this by sending every intellectual-property, related-account and product-safety notice to `specialist` (the product declines to help at all) and identity/funds notices to `clarification`. Both must change: a notice the product cannot fully handle must still be **identified, disclosed honestly, and guided** — silence and "please clarify" are not acceptable outcomes. The router exclusions were already established on 21 Sep to be implementation drift rather than a D6 lock; this amendment acts on that finding.
 
@@ -369,7 +369,7 @@ v1.0 §14.3–14.4 mentions `minSupportedVersion` and config-driven selectors as
 
 4. **The system must speak first.** `reminderAt` (`src/lib/caseStore.ts`) and `reminderDue` (`src/core/caseState.ts`) are written and read, and **no delivery mechanism exists anywhere in the app** — the only scheduled job is `/api/jobs/purchase-emails`. Reminders, follow-up prompts, and "since you were here" briefs must actually fire.
 
-5. **Both journeys stay for now; the choice is the founder's.** The classic interview (`InterviewFlow`) and the case workspace (`CaseWorkspace`) both remain. Note the two are *already* nested, not parallel: `/case` renders `CaseWorkspace` by default, `?mode=classic` is the only route to the standalone interview, and `CaseWorkspace.tsx:581` embeds `InterviewFlow` inside itself. The AI assistant's recommendation — workspace as the spine, the interview's one-question-at-a-time technique retained as a tool the workspace calls rather than a second front door — is recorded but **not executed**; the founder decides after reviewing the comparison. AM-26 therefore does **not** retire the classic interview, reversing the 19 Sep direction doc's question 1 default.
+5. **Both journeys stay for now; the choice is the founder's.** The classic interview (`InterviewFlow`) and the case workspace (`CaseWorkspace`) both remain. Note the two are _already_ nested, not parallel: `/case` renders `CaseWorkspace` by default, `?mode=classic` is the only route to the standalone interview, and `CaseWorkspace.tsx:581` embeds `InterviewFlow` inside itself. The AI assistant's recommendation — workspace as the spine, the interview's one-question-at-a-time technique retained as a tool the workspace calls rather than a second front door — is recorded but **not executed**; the founder decides after reviewing the comparison. AM-26 therefore does **not** retire the classic interview, reversing the 19 Sep direction doc's question 1 default.
 
 **Effect on D6 (ethics spine) — read this carefully, it is narrower than it reads.**
 
@@ -392,8 +392,8 @@ v1.0 §14.3–14.4 mentions `minSupportedVersion` and config-driven selectors as
 
 **This is not a deviation from D3. It is the branch D3 always named.** D3 reads "paste-mode primary;
 DOM-harvest gated on BSA §19 read; injector last-or-never", and `00-DECISION/03-GATES-AND-KILL-CRITERIA.md`
-pre-agreed the outcome as **K8**: *"any credible reading that DOM-harvest or the injector violates
-the Agent Policy → de-scope to paste-only extension; cancel the injector."* The gate has now been
+pre-agreed the outcome as **K8**: _"any credible reading that DOM-harvest or the injector violates
+the Agent Policy → de-scope to paste-only extension; cancel the injector."_ The gate has now been
 answered and the founder has taken that branch. No locked decision is reopened.
 
 **What answered it.** Amazon's Agent Policy took effect **4 March 2026**, and prohibits browser
@@ -418,8 +418,8 @@ the website today. Full functionality, zero page access.
 
 **Two consequences worth recording.**
 
-1. **Check 17 is satisfied, by its own terms.** That hard gate says *"A paste-only build with no
-   DOM-reading features may pass this check by confirming that scope in writing."* This amendment is
+1. **Check 17 is satisfied, by its own terms.** That hard gate says _"A paste-only build with no
+   DOM-reading features may pass this check by confirming that scope in writing."_ This amendment is
    that confirmation. **B-08** (retrieve the full BSA §19 text from behind a seller login) therefore
    stops blocking the extension. It remains worth doing for a different reason: it is the one place
    the legal-boundaries research rests on reporting rather than the source.
@@ -436,7 +436,7 @@ the website today. Full functionality, zero page access.
 
 **What changed.** The MV3 extension — third in D3's build order, cut to paste-only by AM-27 — is no
 longer planned at all. The founder took this recommendation from the 24 Sep verdict
-(`docs/handoffs/2026-09-24-remaining-items-verdict.md` §4) in chat: *"go ahead with all of them"*.
+(`docs/handoffs/2026-09-24-remaining-items-verdict.md` §4) in chat: _"go ahead with all of them"_.
 Nothing was ever built, so nothing is deleted from `src/`.
 
 **Why.** After AM-27, a paste-only extension is the web page in a popup: the seller copies the
@@ -465,6 +465,34 @@ multi-case work in the repository with no amendment record (gap C-08), so the ne
 not tell it was a decision rather than drift. Nothing changes in the product.
 
 **No AA item.** Shipped; see `docs/CURRENT-STATE.md`.
+
+### AM-30 — Navy and orange replace the green; an announcement bar (founder decision, 25 Sep 2026)
+
+The founder found the green overused, and heavier still in dark mode, and asked for an orange
+that "feels and looks like Amazon's orange but not the exactly same", saying the earlier palette
+decision (AM-20/AM-22) was wrong. This supersedes those palettes. The mark's shape ("the deck,
+checked", AM-20) is unchanged; only its colours move.
+
+- **Why the green was everywhere:** not only `--primary` but every neutral (backgrounds,
+  borders, secondary text) sat on a green 160° hue, strongest in dark mode. Neutrals are now a
+  cool slate on the navy's 216°.
+- **Roles, so the orange never floods the way the green did:** navy for structure (text, the
+  logo tile, the announcement bar); orange (`--primary`, 30° against Amazon's 36°) only for the
+  main button, the active step, focus rings, eyebrow labels and "Deck"; a separate `--link`
+  blue for text links, which the green had been doing; green only as `--success`.
+- **Related to Amazon, never mistakable for it:** a similar navy-and-orange family, not Amazon's
+  exact colours, logo, smile, fonts or page layout, and the non-affiliation line stays. This
+  matters beyond trademark: a frightened seller is the target of phishing that copies Amazon's
+  look, and our own scam check teaches them to distrust exactly that.
+- **Announcement bar** on the public pages only, above the header: static, rotating (fade,
+  slide-up or slide-left) or ticker, chosen in `src/content/announcements.ts`; pausable, still
+  under reduced motion, dismissible. Every message must be true today; no invented deals or
+  countdowns (D6). Not shown on the signed-in pages.
+- **Found and fixed on the way:** the social-share image still said "$199" and claimed the
+  decoder "runs in your browser" (decoding is server-side, as the privacy policy says).
+
+Enforced by `src/app/__tests__/contrast.test.ts` (now also checks links and the bar) and
+`e2e/announcement-bar.spec.ts`. **No AA item.** Shipped.
 
 ## 4. Facts in v1.0 that are RETIRED (do not repeat anywhere)
 

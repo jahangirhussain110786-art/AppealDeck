@@ -42,7 +42,7 @@ export function AuthShell({
               {footerPrompt}{" "}
               <a
                 href={footerHref}
-                className="text-primary underline underline-offset-4 hover:text-primary/80"
+                className="text-link underline underline-offset-4 hover:text-link/80"
               >
                 {footerAction}
               </a>

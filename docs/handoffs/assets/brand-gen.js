@@ -17,10 +17,14 @@ const opentype = require(path.join(HERE, "node_modules/opentype.js"));
 const { chromium } = require(path.join(REPO, "node_modules/playwright"));
 
 // ---- brand constants (must match docs/handoffs/2026-09-09-visual-refresh-spec.md §1–§2) ----
-const GREEN = "#1C7D5E"; // hsl(161 64% 30%)
-const MINT = "#6CD0AF"; // hsl(160 52% 62%)
-const NAVY = "#0D1017"; // hsl(224 28% 7%)
-const INK = "#13182A"; // hsl(224 32% 11%)
+// AM-30 (25 Sep 2026): navy tile + orange check replaces the green tile. TILE is --brand (216 33% 14%),
+// ORANGE is --primary (30 97% 52%), ORANGE_INK is --primary-ink (27 100% 33%) for "Deck" on light.
+const TILE = "#18212F";
+const ORANGE = "#FB850E";
+const ORANGE_INK = "#A84C00";
+const ORANGE_LIGHT = "#FAA142"; // --primary-ink dark (31 95% 62%): "Deck" on dark backgrounds
+const NAVY = "#0D1117"; // --background dark (216 28% 7%)
+const INK = "#141D29"; // --foreground light (216 33% 12%)
 const PAPER = "#F3F5F9";
 const CARD = "#151A28";
 const CARD_BORDER = "#26304A";
@@ -33,7 +37,7 @@ const GLYPHS = {
     `<rect x="14" y="5.5" width="12" height="15" rx="2.6" fill="#FFFFFF" fill-opacity="0.38"/>`,
     `<rect x="10.5" y="8" width="12.5" height="15.5" rx="2.6" fill="#FFFFFF" fill-opacity="0.66"/>`,
     `<rect x="6.5" y="10.5" width="13.5" height="16.5" rx="2.8" fill="#FFFFFF"/>`,
-    `<path d="M9.9 19.4l2.8 2.8 5.3-5.8" fill="none" stroke="${GREEN}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+    `<path d="M9.9 19.4l2.8 2.8 5.3-5.8" fill="none" stroke="${ORANGE}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`,
   ].join(""),
   // A — "an A built from three cards": two leaning cards form the letter, a short card is the crossbar.
   A: [
@@ -53,7 +57,7 @@ const GLYPHS = {
     `<g transform="rotate(-18)"><rect x="-5" y="-17" width="10" height="16" rx="2.4" fill="#FFFFFF" fill-opacity="0.45"/></g>`,
     `<g transform="rotate(18)"><rect x="-5" y="-17" width="10" height="16" rx="2.4" fill="#FFFFFF" fill-opacity="0.45"/></g>`,
     `<rect x="-5" y="-20" width="10" height="16" rx="2.4" fill="#FFFFFF"/>`,
-    `<path d="M-2.6 -12.4l1.9 1.9 3.6-3.8" fill="none" stroke="${GREEN}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+    `<path d="M-2.6 -12.4l1.9 1.9 3.6-3.8" fill="none" stroke="${ORANGE}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
     `</g>`,
   ].join(""),
   // C — "monogram A": a geometric letter A in one continuous stroke.
@@ -88,10 +92,10 @@ const glyphOf = (opt) => GLYPHS[opt] || GLYPHS.A;
 const GLYPH = glyphOf(MARK);
 
 const tile = (size, rx, glyph) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32"><rect width="32" height="32" rx="${rx}" fill="${GREEN}"/>${glyph}</svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32"><rect width="32" height="32" rx="${rx}" fill="${TILE}"/>${glyph}</svg>`;
 const markSvg = (size, rx) => tile(size, rx, GLYPH);
 const maskableSvg = (size) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32"><rect width="32" height="32" fill="${GREEN}"/><g transform="translate(16 16) scale(0.62) translate(-16 -16)">${GLYPH}</g></svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32"><rect width="32" height="32" fill="${TILE}"/><g transform="translate(16 16) scale(0.62) translate(-16 -16)">${GLYPH}</g></svg>`;
 const monoSvg = (size) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round">${MONO[MARK] || MONO.A}</svg>`;
 
@@ -124,11 +128,11 @@ function horizontalLogo(font, variant, glyph = GLYPH) {
   const { pathA, pathD, width } = wordmark(font, size, textX, baseline);
   const total = Math.ceil(textX + width + 2);
   const fgA = variant === "dark" ? PAPER : INK;
-  const fgD = variant === "dark" ? MINT : GREEN;
+  const fgD = variant === "dark" ? ORANGE_LIGHT : ORANGE_INK;
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${total}" height="64" viewBox="0 0 ${total} 64" role="img" aria-labelledby="t">` +
     `<title id="t">AppealDeck</title>` +
-    `<g transform="scale(2)"><rect width="32" height="32" rx="8" fill="${GREEN}"/>${glyph}</g>` +
+    `<g transform="scale(2)"><rect width="32" height="32" rx="8" fill="${TILE}"/>${glyph}</g>` +
     `<path d="${pathA}" fill="${fgA}"/><path d="${pathD}" fill="${fgD}"/></svg>`;
   return { svg, width: total, height: 64 };
 }
@@ -140,7 +144,7 @@ function wordmarkOnly(font, variant) {
   const total = Math.ceil(width + 6);
   const h = Math.round(size * 0.95);
   const fgA = variant === "dark" ? PAPER : INK;
-  const fgD = variant === "dark" ? MINT : GREEN;
+  const fgD = variant === "dark" ? ORANGE_LIGHT : ORANGE_INK;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${total}" height="${h}" viewBox="0 0 ${total} ${h}" role="img" aria-labelledby="t"><title id="t">AppealDeck</title><path d="${pathA}" fill="${fgA}"/><path d="${pathD}" fill="${fgD}"/></svg>`;
 }
 
@@ -212,19 +216,19 @@ function ogHtml() {
     `<div style="display:flex;flex-direction:column;gap:3px;line-height:1.2"><span style="font-size:15px;font-weight:600;color:#E6E9F0">${label}</span><span style="font-size:14px;color:${MUTED};font-variant-numeric:tabular-nums">${date}</span></div></div>`;
   const cal = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`;
   const info = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>`;
-  const shield = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${MINT}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`;
-  const check = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${MINT}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+  const shield = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${ORANGE_LIGHT}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`;
+  const check = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${ORANGE_LIGHT}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
   const bullet = (t) => `<div style="display:flex;align-items:flex-start;gap:10px;font-size:18px;line-height:1.35;color:#D8DDE8"><span style="display:flex;margin-top:3px">${check}</span><span>${t}</span></div>`;
   return (
     `<!doctype html><html><head><meta charset="utf-8">${INTER_LINK}<style>html,body{margin:0}body{width:1200px;height:630px;background:${NAVY};position:relative;overflow:hidden;font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#E6E9F0;-webkit-font-smoothing:antialiased}</style></head><body>` +
-    `<div style="position:absolute;inset:0;background:radial-gradient(760px 460px at 12% -4%, rgba(108,208,175,0.20), transparent 70%)"></div>` +
-    `<div style="position:absolute;inset:0;background:radial-gradient(520px 380px at 96% 110%, rgba(28,125,94,0.25), transparent 70%)"></div>` +
-    `<div style="position:absolute;left:80px;top:84px;display:flex;align-items:center;gap:20px">${markSvg(72, 8)}<div style="font-size:60px;font-weight:600;letter-spacing:-0.03em;line-height:1;color:${PAPER}">Appeal<span style="color:${MINT}">Deck</span></div></div>` +
+    `<div style="position:absolute;inset:0;background:radial-gradient(760px 460px at 12% -4%, rgba(251,133,14,0.16), transparent 70%)"></div>` +
+    `<div style="position:absolute;inset:0;background:radial-gradient(520px 380px at 96% 110%, rgba(59,130,246,0.16), transparent 70%)"></div>` +
+    `<div style="position:absolute;left:80px;top:84px;display:flex;align-items:center;gap:20px">${markSvg(72, 8)}<div style="font-size:60px;font-weight:600;letter-spacing:-0.03em;line-height:1;color:${PAPER}">Appeal<span style="color:${ORANGE_LIGHT}">Deck</span></div></div>` +
     `<div style="position:absolute;left:80px;top:206px;width:520px;font-size:34px;font-weight:600;letter-spacing:-0.02em;line-height:1.18;color:${PAPER}">Understand your Amazon notice today. Draft a Plan of Action Amazon can act on.</div>` +
-    `<div style="position:absolute;left:80px;top:392px;width:520px;display:flex;flex-direction:column;gap:12px">${bullet("Free decoder that runs in your browser")}${bullet("Deadlines and a do-now list for your case type")}${bullet(`<span style="white-space:nowrap">$199 one-time</span> Appeal Pass: drafted POA, evidence checklist, critic review`)}</div>` +
+    `<div style="position:absolute;left:80px;top:392px;width:520px;display:flex;flex-direction:column;gap:12px">${bullet("Free notice decoder, no account needed")}${bullet("Deadlines and a do-now list for your case type")}${bullet(`<span style="white-space:nowrap">$249 one-time</span> Appeal Pass per case: every revision included`)}</div>` +
     `<div style="position:absolute;right:80px;top:112px;width:440px;background:${CARD};border:1px solid ${CARD_BORDER};border-radius:20px;padding:26px 28px;box-shadow:0 40px 80px -40px rgba(0,0,0,.7)">` +
-    `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:${MUTED};font-weight:600">Decoded notice<span style="display:inline-flex;align-items:center;gap:6px;color:${MINT};text-transform:none;letter-spacing:0;font-weight:500;font-size:13px">${shield}In your browser</span></div>` +
-    `<div style="margin-top:22px;display:flex;gap:8px;align-items:center"><span style="border:1px solid ${CARD_BORDER};background:#1B2133;color:#C9D0DD;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600">Low</span><span style="border:1px solid rgba(108,208,175,.35);background:rgba(108,208,175,.12);color:${MINT};border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600">Policy violation</span></div>` +
+    `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:${MUTED};font-weight:600">Decoded notice<span style="display:inline-flex;align-items:center;gap:6px;color:${ORANGE_LIGHT};text-transform:none;letter-spacing:0;font-weight:500;font-size:13px">${shield}Example</span></div>` +
+    `<div style="margin-top:22px;display:flex;gap:8px;align-items:center"><span style="border:1px solid rgba(250,161,66,.35);background:rgba(250,161,66,.12);color:${ORANGE_LIGHT};border-radius:999px;padding:4px 10px;font-size:13px;font-weight:600">Policy violation</span></div>` +
     `<div style="margin-top:18px;font-size:16px;line-height:1.5;color:#D8DDE8">Your account was deactivated for one or more policy violations (for example listing practices or product-condition claims).</div>` +
     `<div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">${chip(cal, "Appeal window", "23 Sep 2026 · in 18 days")}${chip(info, "Funds appeal becomes available", "5 Nov 2026 · in 61 days")}</div>` +
     `</div></body></html>`
@@ -324,10 +328,10 @@ async function main() {
     write(`favicon-${s}.png`, fav[s]);
   }
   write("favicon.ico", buildIco([16, 32, 48].map((s) => ({ size: s, buf: fav[s] }))));
-  write("apple-icon-180.png", await shot(browser, page_(markSvg(180, 0), GREEN), 180, 180, 1));
-  write("icon-192.png", await shot(browser, page_(markSvg(192, 0), GREEN), 192, 192, 1));
-  write("icon-512.png", await shot(browser, page_(markSvg(512, 0), GREEN), 512, 512, 1));
-  write("icon-512-maskable.png", await shot(browser, page_(maskableSvg(512), GREEN), 512, 512, 1));
+  write("apple-icon-180.png", await shot(browser, page_(markSvg(180, 0), TILE), 180, 180, 1));
+  write("icon-192.png", await shot(browser, page_(markSvg(192, 0), TILE), 192, 192, 1));
+  write("icon-512.png", await shot(browser, page_(markSvg(512, 0), TILE), 512, 512, 1));
+  write("icon-512-maskable.png", await shot(browser, page_(maskableSvg(512), TILE), 512, 512, 1));
   write("logo-horizontal-light@2x.png", await shot(browser, page_(light.svg, "transparent"), light.width, 64, 2, { transparent: true }));
   write("logo-horizontal-dark@2x.png", await shot(browser, page_(dark.svg, "transparent"), dark.width, 64, 2, { transparent: true }));
   write("og-1200x630.png", await shot(browser, ogHtml(), 1200, 630, 1, { fonts: true }));

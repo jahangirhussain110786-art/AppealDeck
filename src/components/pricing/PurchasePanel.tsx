@@ -153,7 +153,7 @@ export function PurchasePanel() {
           {APP.access.composeGate.signInToActivate}{" "}
           <Link
             href="/login?next=/compose"
-            className="text-primary underline underline-offset-4 hover:text-primary/80"
+            className="text-link underline underline-offset-4 hover:text-link/80"
           >
             {SHARED.nav.signIn}
           </Link>
@@ -169,7 +169,7 @@ export function PurchasePanel() {
       {sessionState === "signed-in" && activeCase.status === "none" && (
         <p className="text-xs text-muted-foreground">
           Start your case before buying a Pass — each Pass covers one case.{" "}
-          <Link href="/case" className="text-primary underline underline-offset-4">
+          <Link href="/case" className="text-link underline underline-offset-4">
             Start your case
           </Link>
         </p>
@@ -179,7 +179,7 @@ export function PurchasePanel() {
         <p className="text-xs text-muted-foreground">
           Your active case ({activeCase.label}) already has its Appeal Pass. It covers every
           revision of that case, so there is nothing more to buy.{" "}
-          <Link href="/case" className="text-primary underline underline-offset-4">
+          <Link href="/case" className="text-link underline underline-offset-4">
             Open your case
           </Link>
         </p>
@@ -189,7 +189,7 @@ export function PurchasePanel() {
         <p className="text-xs text-muted-foreground">
           Your active case ({activeCase.label}) does not currently need a drafted response — confirm
           its response route in the case workspace first.{" "}
-          <Link href="/case" className="text-primary underline underline-offset-4">
+          <Link href="/case" className="text-link underline underline-offset-4">
             Open your case
           </Link>
         </p>

@@ -25,30 +25,46 @@
        hex->HSL, not eyeballed. --primary/--brand/--accent/--warning/--success/
        --info/--destructive are unchanged — out of this reconciliation's scope
        (--primary already matched the mockup's #1C7D5E to within 1% saturation). */
-    --background: 60 11% 98%;
-    --foreground: 160 23% 10%;
+    /* Navy + orange (AM-30, 25 Sep 2026, founder: "replace our green with a proper orange
+       that feels like Amazon's but is not the same"). This supersedes the green palette and
+       the warm-neutral reconciliation described above; the comment is kept for its history.
+       Roles, so the orange never becomes a flood the way the green did:
+       - navy (`--foreground`, `--brand`, `--surface-inverse`) carries structure;
+       - orange (`--primary`) marks action and emphasis only: the main button, the active
+         step, focus rings, eyebrow labels, and "Deck" in the wordmark;
+       - blue (`--link`) is for text links, the convention sellers already read on Amazon;
+       - green survives only as `--success`, where it means "done".
+       Neutrals are a cool slate on the navy's hue (216°) instead of the green-tinted 160°
+       family, which is what made dark mode read as green. The orange is 30° against
+       Amazon's 36°, and the navy is lighter and bluer than Amazon's, on purpose: related to
+       the marketplace, never mistakable for it. */
+    --background: 216 20% 98%;
+    --foreground: 216 33% 12%;
     --surface-1: 0 0% 100%;
-    --surface-2: 60 10% 96%;
-    --surface-inverse: 160 24% 9%;
-    --brand: 161 64% 30%;
-    --primary: 161 64% 30%;
-    --primary-foreground: 0 0% 100%;
-    --info: 221 72% 46%;
+    --surface-2: 216 20% 96%;
+    --surface-inverse: 216 33% 12%;
+    --brand: 216 33% 14%;
+    --primary: 30 97% 52%;
+    --primary-foreground: 216 33% 12%;
+    --info: 213 80% 42%;
     --info-foreground: 0 0% 100%;
-    --warning: 30 90% 36%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 42 90% 44%;
+    --warning-foreground: 216 33% 12%;
     --success: 152 58% 30%;
     --success-foreground: 0 0% 100%;
     --destructive: 0 68% 45%;
     --destructive-foreground: 0 0% 100%;
-    --muted: 60 10% 95%;
-    --muted-foreground: 156 9% 32%;
-    --accent: 161 64% 30%;
-    --accent-foreground: 0 0% 100%;
-    --border: 60 8% 92%;
-    --input: 60 8% 86%;
-    --ring: 161 64% 34%;
-    --shadow: 160 23% 10%;
+    --muted: 216 18% 95%;
+    --muted-foreground: 216 14% 36%;
+    --accent: 30 97% 52%;
+    --accent-foreground: 216 33% 12%;
+    --border: 216 16% 90%;
+    --input: 216 14% 82%;
+    --ring: 30 95% 48%;
+    --shadow: 216 33% 12%;
+    --link: 213 80% 38%;
+    --announce: 216 33% 12%;
+    --announce-foreground: 216 20% 96%;
 
     /* --- Reading-grade semantics (22 Sep 2026) ---
        The tokens above are FILL values: the approved brand colours, used for solid
@@ -66,10 +82,10 @@
        `--destructive-ink` already cleared AA here and are kept only so the set is
        complete and a later palette change has one obvious place to go.
        Enforced by src/app/__tests__/contrast.test.ts. */
-    --primary-ink: 161 64% 27%;
-    --warning-ink: 30 90% 32%;
+    --primary-ink: 27 100% 33%;
+    --warning-ink: 42 90% 25%;
     --success-ink: 152 58% 28%;
-    --info-ink: 221 72% 46%;
+    --info-ink: 213 80% 40%;
     --destructive-ink: 0 68% 44%;
     --radius-sm: 0.375rem;
     --radius-md: 0.625rem;
@@ -112,39 +128,45 @@
        same warm 60-165° family the light mode now uses, keeping the exact
        lightness/saturation this app's contrast was already tuned against —
        not a new set of values invented from nothing. */
-    --background: 160 22% 7%;
-    --foreground: 60 14% 92%;
-    --surface-1: 160 19% 10%;
-    --surface-2: 160 18% 13%;
-    --surface-inverse: 60 14% 96%;
-    --brand: 161 64% 30%;
-    --primary: 160 52% 62%;
-    --primary-foreground: 160 40% 8%;
-    --info: 217 85% 68%;
-    --info-foreground: 224 40% 8%;
-    --warning: 38 92% 62%;
-    --warning-foreground: 30 90% 10%;
-    --success: 152 52% 55%;
+    /* AM-30: navy-slate neutrals on 216° (was a green 160° family) and a brighter orange
+       that reads on dark. The navy of the logo tile is lifted so it separates from the
+       page instead of disappearing into it. */
+    --background: 216 28% 7%;
+    --foreground: 210 20% 94%;
+    --surface-1: 216 24% 10%;
+    --surface-2: 216 21% 13%;
+    --surface-inverse: 210 20% 96%;
+    --brand: 216 26% 24%;
+    --primary: 31 95% 58%;
+    --primary-foreground: 216 33% 10%;
+    --info: 213 90% 68%;
+    --info-foreground: 216 33% 8%;
+    --warning: 44 92% 58%;
+    --warning-foreground: 216 33% 8%;
+    --success: 152 48% 52%;
     --success-foreground: 152 80% 8%;
     --destructive: 0 70% 60%;
     --destructive-foreground: 0 0% 8%;
-    --muted: 160 15% 15%;
-    --muted-foreground: 60 8% 66%;
-    --accent: 160 52% 62%;
-    --accent-foreground: 160 40% 8%;
-    --border: 160 13% 18%;
-    --input: 160 13% 24%;
-    --ring: 160 52% 62%;
-    --shadow: 160 60% 2%;
+    --muted: 216 19% 15%;
+    --muted-foreground: 214 14% 68%;
+    --accent: 31 95% 58%;
+    --accent-foreground: 216 33% 10%;
+    --border: 216 18% 19%;
+    --input: 216 16% 26%;
+    --ring: 31 95% 58%;
+    --shadow: 216 60% 2%;
+    --link: 213 90% 72%;
+    --announce: 216 30% 4%;
+    --announce-foreground: 210 20% 92%;
 
     /* Dark mode's brighter fills already read well as text — except destructive, which
        at 60% lightness reached only 3.44:1 on its own tint over `--muted`, and info,
        which sat at 4.52:1 with no margin. Those two are lifted; the rest match their
        fill exactly, which is the honest result rather than a manufactured difference. */
-    --primary-ink: 160 52% 62%;
-    --warning-ink: 38 92% 62%;
-    --success-ink: 152 52% 55%;
-    --info-ink: 217 85% 69%;
+    --primary-ink: 31 95% 62%;
+    --warning-ink: 44 92% 62%;
+    --success-ink: 152 48% 56%;
+    --info-ink: 213 90% 70%;
     --destructive-ink: 0 70% 69%;
     color-scheme: dark;
   }
@@ -198,11 +220,11 @@
     color: inherit;
     text-underline-offset: 0.25em;
     text-decoration-thickness: 1px;
-    text-decoration-color: hsl(var(--primary) / 0.4);
+    text-decoration-color: hsl(var(--link) / 0.4);
   }
 
   a:hover {
-    text-decoration-color: hsl(var(--primary) / 0.7);
+    text-decoration-color: hsl(var(--link) / 0.7);
   }
 
   /* Headings — text-balance for titles */
@@ -252,7 +274,7 @@
   .marketing-surface {
     background-image: radial-gradient(
       60rem 30rem at 50% -10%,
-      hsl(var(--primary) / 0.07),
+      hsl(var(--primary) / 0.05),
       transparent 70%
     );
     background-repeat: no-repeat;
@@ -260,13 +282,13 @@
   .dark .marketing-surface {
     background-image: radial-gradient(
       60rem 30rem at 50% -10%,
-      hsl(var(--primary) / 0.1),
+      hsl(var(--primary) / 0.06),
       transparent 70%
     );
   }
 
   /* Hero-only flourish (AM-22/V2) — a dot-grid fading out by ~78% down the page,
-     plus two blurred aurora blobs (brand green + a small indigo), per
+     plus two blurred aurora blobs (brand orange + a small link blue, AM-30), per
      Main.dc.html §2.5. Purely decorative: pointer-events: none, static (no
      animation, so prefers-reduced-motion needs nothing extra), and used ONLY on
      the home hero — not a page-wide texture like .marketing-surface above. */
@@ -307,17 +329,34 @@
     background:
       radial-gradient(
         circle at 30% 30%,
-        hsl(var(--primary) / 0.3) 0%,
-        hsl(var(--primary) / 0.1) 45%,
+        hsl(var(--primary) / 0.16) 0%,
+        hsl(var(--primary) / 0.05) 45%,
         transparent 70%
       ),
       radial-gradient(
         circle at 75% 10%,
-        hsl(239 84% 67% / 0.22) 0%,
-        hsl(239 84% 67% / 0.06) 50%,
+        hsl(var(--link) / 0.14) 0%,
+        hsl(var(--link) / 0.04) 50%,
         transparent 72%
       );
     filter: blur(10px);
+  }
+  /* On a dark page an orange glow reads as brown haze, so dark mode leans on the blue and keeps
+     only a trace of orange (AM-30). */
+  .dark .marketing-surface-aurora::after {
+    background:
+      radial-gradient(
+        circle at 30% 30%,
+        hsl(var(--primary) / 0.07) 0%,
+        hsl(var(--primary) / 0.02) 45%,
+        transparent 70%
+      ),
+      radial-gradient(
+        circle at 75% 10%,
+        hsl(var(--link) / 0.12) 0%,
+        hsl(var(--link) / 0.03) 50%,
+        transparent 72%
+      );
   }
 
   /* Inline notice-annotation highlights (AM-22/V5, per Decode.dc.html) — mark a real
@@ -387,7 +426,7 @@
 }
 
 .prose a {
-  color: hsl(var(--primary));
+  color: hsl(var(--link));
   text-decoration: underline;
   text-underline-offset: 0.25em;
 }
@@ -472,5 +511,28 @@
   }
   .print-only {
     display: block !important;
+  }
+}
+
+/* Announcement bar ticker (AM-30). Two copies of the messages scroll by half their width, so the
+   loop is seamless. Paused on hover/focus or by the bar's pause button; never runs with reduced
+   motion (the component also switches to manual stepping then). */
+@keyframes announce-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.announce-ticker {
+  animation: announce-ticker var(--ticker-duration, 40s) linear infinite;
+}
+.announce-ticker[data-paused="true"] {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .announce-ticker {
+    animation: none;
   }
 }

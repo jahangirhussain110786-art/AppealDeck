@@ -126,6 +126,25 @@ describe.each(THEMES)("%s palette", (themeName, marker) => {
     expect(failures, failures.join("\n")).toEqual([]);
   });
 
+  // AM-30 (25 Sep 2026): text links and the announcement bar got their own colours.
+  it("keeps text links legible on every surface", () => {
+    const failures: string[] = [];
+    for (const surfaceName of SURFACES) {
+      const ratio = contrast(hslToRgb(t.link!), hslToRgb(t[surfaceName]!));
+      if (ratio < AA_NORMAL_TEXT)
+        failures.push(`text-link on bg-${surfaceName}: ${ratio.toFixed(2)}:1`);
+    }
+    expect(failures, failures.join("\n")).toEqual([]);
+  });
+
+  it("keeps announcement-bar text legible, including the orange highlight", () => {
+    const bg = hslToRgb(t.announce!);
+    expect(contrast(hslToRgb(t["announce-foreground"]!), bg)).toBeGreaterThanOrEqual(
+      AA_NORMAL_TEXT,
+    );
+    expect(contrast(hslToRgb(t.primary!), bg)).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+  });
+
   it("keeps the label on a solid semantic fill legible", () => {
     const failures: string[] = [];
     for (const s of SEMANTICS) {
