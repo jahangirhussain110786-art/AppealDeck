@@ -148,11 +148,7 @@ function PassStatusRow({ license }: { license: LicenseSummary }) {
       <span className="font-medium text-foreground">
         {active ? APP.dashboard.active.heading : APP.dashboard.inactive.heading}
       </span>
-      {active && license.plan && (
-        <span className="text-muted-foreground">
-          · {APP.dashboard.active.planLabel}: {license.plan}
-        </span>
-      )}
+      {/* The heading already names the Pass; "Plan: appeal_pass" printed an internal key. */}
       {!active && (
         <Link href="/pricing" className="ml-auto text-xs underline underline-offset-4">
           {APP.dashboard.inactive.cta}

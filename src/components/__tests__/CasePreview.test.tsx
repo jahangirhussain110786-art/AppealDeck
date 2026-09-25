@@ -10,8 +10,8 @@ describe("CasePreview", () => {
     expect(html).toContain(">Evidence Amazon will ask for<");
     expect(html).toContain(">Required<");
     expect(html).toContain(">Optional<");
-    expect(html).toContain("Metric export");
-    expect(html).toContain("SOP document");
+    expect(html).toContain("Sales or performance record");
+    expect(html).toContain("Written procedure");
   });
 
   it("renders the actions title and the next-best actions for the DECODED state", () => {

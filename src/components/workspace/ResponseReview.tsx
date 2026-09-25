@@ -418,13 +418,18 @@ export function ResponseReview({
                 </Alert>
               );
             })()}
-            {result.critique.findings.length > 0 && (
-              <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                {result.critique.findings.map((f, i) => (
-                  <li key={i}>{f.message}</li>
-                ))}
-              </ul>
-            )}
+            {(() => {
+              // Only notes the draft does not already list under its unresolved items.
+              const shown = new Set(gaps);
+              const fresh = result.critique.findings.filter((f) => !shown.has(f.message));
+              return fresh.length > 0 ? (
+                <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                  {fresh.map((f, i) => (
+                    <li key={i}>{f.message}</li>
+                  ))}
+                </ul>
+              ) : null;
+            })()}
             <label className="flex items-start gap-3 text-sm">
               <input
                 className="mt-1 h-4 w-4 accent-primary"
@@ -441,8 +446,8 @@ export function ResponseReview({
               />
             )}
             <p className="text-xs text-muted-foreground">
-              Download the linked originals from Evidence and attach them individually as the
-              response form requires. Copying does not record a submission.
+              Download the linked originals from Evidence and attach each one where the response
+              page in Seller Central asks for it. Copying does not record a submission.
             </p>
             {/*
               Retiring the classic interview (22 Sep 2026): `BeforeYouSubmitChecklist` used to live
@@ -458,6 +463,7 @@ export function ResponseReview({
               draftText={result.rendered}
               allChecked={result.critique.passed}
               priorSubmissions={w.submissions}
+              requirements={w.requirements}
             />
             {/*
               AA-42: the duplicate-submission guard, placed where the seller is about to record a

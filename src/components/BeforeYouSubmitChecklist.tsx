@@ -40,6 +40,12 @@ interface BeforeYouSubmitChecklistProps {
    * existing call sites that have no submission history keep working unchanged.
    */
   priorSubmissions?: readonly PriorSubmission[];
+  /**
+   * 25 Sep 2026: the workspace's own records list. Without it this row counted the retired case
+   * model's evidence, so a workspace case read "1 still missing · Missing: Metric export" beside a
+   * page listing two records by other names. When given, the row reports exactly that list.
+   */
+  requirements?: ReadonlyArray<{ label: string; status: string }>;
 }
 
 function fill(template: string, vars: Record<string, string | number>): string {
@@ -63,12 +69,18 @@ export function BeforeYouSubmitChecklist({
   draftText,
   allChecked,
   priorSubmissions,
+  requirements,
 }: BeforeYouSubmitChecklistProps) {
   const copy = APP.compose.checklist;
 
   const readiness = computeReadiness(caseFile);
-  const missing = readiness.missing.map((r) => evidenceLabel(r.kind));
-  const notAccepted = readiness.disqualifiedPresent.map(evidenceLabel);
+  // "Cannot obtain" is an answered record — the response states that gap under its own heading.
+  const missing = requirements
+    ? requirements
+        .filter((r) => r.status === "needed" || r.status === "waiting")
+        .map((r) => r.label)
+    : readiness.missing.map((r) => evidenceLabel(r.kind));
+  const notAccepted = requirements ? [] : readiness.disqualifiedPresent.map(evidenceLabel);
   const evidenceComplete = missing.length === 0 && notAccepted.length === 0;
   const templatePhrases = hasTemplatePhrases(draftText);
   /**
@@ -83,7 +95,9 @@ export function BeforeYouSubmitChecklist({
   const needsNovelty = novelty ? shouldWarnBeforeSubmit(novelty) : noveltyRequired(attemptCount);
 
   const evidenceDetail = evidenceComplete
-    ? fill(copy.evidenceComplete, { count: requiredKinds(caseFile.kind).length })
+    ? fill(copy.evidenceComplete, {
+        count: requirements ? requirements.length : requiredKinds(caseFile.kind).length,
+      })
     : [
         fill(copy.evidenceMissing, { count: missing.length + notAccepted.length }),
         missing.length > 0 ? fill(copy.evidenceMissingDetail, { kinds: missing.join(", ") }) : null,

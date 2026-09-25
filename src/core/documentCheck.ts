@@ -214,7 +214,11 @@ export function requirementForCheck(
 ): EvidenceRequirement | undefined {
   return (
     requirementsFor(kind).find((r) => r.kind === evidenceKind) ??
-    (kind === "UNKNOWN" ? canonicalRequirementFor(evidenceKind) : undefined)
+    // 25 Sep 2026: widened from UNKNOWN-only. A policy notice that asks for supplier invoices
+    // raised a "Supplier invoice" record, and its check was refused because the POLICY matrix
+    // does not list invoices — so the one record Amazon named could not be checked. What an
+    // invoice has to show does not depend on the violation, so the canonical fields apply.
+    canonicalRequirementFor(evidenceKind)
   );
 }
 

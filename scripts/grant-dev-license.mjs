@@ -65,6 +65,10 @@ if (existing) {
       activated_at: nowIso,
       canceled_at: null,
       paused_at: null,
+      // A Pass binds to the first case it prepares (claim_case_pass, migration 0009), and every
+      // fresh test browser makes a new case. Releasing it here is what makes this script a refresh:
+      // without it the dev Pass stays bound to a case nobody can open again (found 25 Sep 2026).
+      case_id: null,
     })
     .eq("id", existing.id);
   if (updateError) {

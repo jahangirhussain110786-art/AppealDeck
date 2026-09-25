@@ -123,14 +123,15 @@ describe("/api/read-document gates", () => {
     },
   );
 
-  it("rejects a document type Amazon does not ask for on this case", async () => {
-    // Was `kind: "UNKNOWN"`, which made this test pin a defect rather than a rule: UNKNOWN does not
-    // mean "Amazon does not ask for this", it means the case is not classified yet — and every case
-    // started by typing a notice into /case is UNKNOWN, so this assertion was quietly requiring the
-    // route to refuse the ordinary path. A classified violation whose matrix genuinely lacks the
-    // record is the real case this rule is about.
+  it("rejects a document type we have no checks for", async () => {
+    // Was "a document type Amazon does not ask for on this case", pinned with a classified violation
+    // whose matrix lacks the record. 25 Sep 2026: that premise was wrong. The sample policy notice
+    // asks for supplier invoices by name while the POLICY matrix lists none, so the rule refused the
+    // one record Amazon had named — and this route cannot see what the notice asked for. What it can
+    // know is whether it has a field list for the type at all. ("other" is refused earlier, by its
+    // own gate, so an unrecognised type is what reaches this one.)
     const res = await handleReadDocument(
-      makeReq({ ...valid, kind: "PERFORMANCE_METRIC", evidenceKind: "supplier_invoice" }),
+      makeReq({ ...valid, kind: "PERFORMANCE_METRIC", evidenceKind: "not_a_known_record" }),
     );
     expect(res.status).toBe(400);
     expect(callGeminiMock).not.toHaveBeenCalled();

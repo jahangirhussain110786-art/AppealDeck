@@ -167,7 +167,7 @@ describe("buildDocumentCheck", () => {
   });
 
   it("never reports all-present for an evidence kind with no requirements", () => {
-    const check = buildDocumentCheck("POLICY", "supplier_invoice", []);
+    const check = buildDocumentCheck("POLICY", "other", []);
     expect(check.allRequiredFieldsPresent).toBe(false);
     expect(check.findings).toHaveLength(0);
   });
@@ -178,6 +178,12 @@ describe("buildDocumentCheck", () => {
     const check = buildDocumentCheck("UNKNOWN", "supplier_invoice", []);
     expect(check.findings.map((f) => f.field)).toEqual([...INVOICE_FIELDS]);
     expect(requirementForCheck("UNKNOWN", "supplier_invoice")?.fields).toEqual([...INVOICE_FIELDS]);
+  });
+
+  it("checks a record the notice asked for even when this violation's matrix does not list it", () => {
+    // The sample policy notice asks for supplier invoices; the POLICY matrix lists none.
+    expect(requirementForCheck("POLICY", "supplier_invoice")?.fields).toEqual([...INVOICE_FIELDS]);
+    expect(requirementForCheck("POLICY", "other")).toBeUndefined();
   });
 });
 
