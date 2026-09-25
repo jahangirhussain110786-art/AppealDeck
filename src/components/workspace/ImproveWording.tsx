@@ -76,7 +76,9 @@ export function ImproveWording({
             ? C.improveWording.factChanged
             : body.reason === "too_short"
               ? C.improveWording.tooShort
-              : C.improveWording.unavailable,
+              : body.reason === "busy"
+                ? C.improveWording.busy
+                : C.improveWording.unavailable,
       });
     } catch {
       setState({ kind: "message", text: C.improveWording.unavailable });

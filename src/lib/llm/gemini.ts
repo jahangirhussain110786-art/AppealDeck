@@ -10,6 +10,21 @@ import type { NextRequest } from "next/server";
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const DEFAULT_MODEL = "gemini-3.5-flash";
 const REQUEST_TIMEOUT_MS = 8_000;
+/**
+ * Per-attempt limits and the total budget, by task. Reading a scanned multi-page invoice routinely
+ * takes longer than 8 s, so a check could time out while Google was healthy. The budgets stay
+ * under the 60 s the two routes are given in vercel.json.
+ */
+const TASK_TIMEOUT_MS: Record<string, number> = {
+  // Short enough that a stalled schema-mode attempt leaves room for the plain-JSON fallback below.
+  "read-document": 25_000,
+  "improve-wording": 12_000,
+};
+const TASK_BUDGET_MS: Record<string, number> = {
+  "read-document": 55_000,
+  "improve-wording": 40_000,
+};
+const RETRY_DELAYS_MS = [1_500, 4_000];
 const MAX_OUTPUT_TOKENS = 512;
 
 /**
@@ -87,7 +102,8 @@ export type GeminiCallResult =
   | { ok: true; text: string; model: string; usage?: { inputTokens: number; outputTokens: number } }
   | {
       ok: false;
-      reason: "not_configured" | "spend_cap" | "upstream_error" | "timeout" | "invalid_response";
+      reason:
+        "not_configured" | "spend_cap" | "upstream_error" | "busy" | "timeout" | "invalid_response";
       message: string;
     };
 
@@ -130,7 +146,23 @@ function getApiKey(): string {
   return k;
 }
 
+/**
+ * 25 Sep 2026: every failure used to be silent — the seller saw "not available right now" and the
+ * server logged nothing, so a broken key, a spend cap or a timeout looked identical from outside.
+ * One line per failure: the task, model, reason and our own message. Never the key, the prompt or
+ * the seller's document.
+ */
 export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResult> {
+  const result = await callGeminiOnce(input);
+  if (!result.ok) {
+    console.warn(
+      `[gemini] ${input.task ?? "default"} failed: ${result.reason} — ${result.message.replace(/key=[^&\s]+/g, "key=***")}`,
+    );
+  }
+  return result;
+}
+
+async function callGeminiOnce(input: GeminiCallInput): Promise<GeminiCallResult> {
   if (!isGeminiConfigured()) {
     return {
       ok: false,
@@ -190,9 +222,83 @@ export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResu
     generationConfig,
   };
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  /*
+    25 Sep 2026, found walking the paid path: Google answered a real document check with 503 "This
+    model is currently experiencing high demand", and the seller got a flat failure on the first
+    try. A 429/5xx is Google saying "not now", so wait and try again a couple of times inside a
+    fixed budget. The spend was reserved once above; a retry is the same request, not a new one.
+  */
+  const timeoutMs = TASK_TIMEOUT_MS[input.task ?? ""] ?? REQUEST_TIMEOUT_MS;
+  const deadline = Date.now() + (TASK_BUDGET_MS[input.task ?? ""] ?? timeoutMs);
+  let last: GeminiCallResult = {
+    ok: false,
+    reason: "upstream_error",
+    message: "Gemini was not called.",
+  };
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    const outcome = await attemptOnce(url, body, model, Math.min(timeoutMs, deadline - Date.now()));
+    last = outcome.result;
+    const delay = RETRY_DELAYS_MS[attempt];
+    if (last.ok || !outcome.retryable || delay === undefined) break;
+    if (Date.now() + delay + 2_000 > deadline) break;
+    await new Promise((r) => setTimeout(r, delay));
+  }
+  // A 429 for an exhausted quota is not "busy": it will not clear in a minute, so it is neither
+  // retried (see attemptOnce) nor worded as "try again in a minute" to the seller.
+  const busy =
+    !last.ok &&
+    last.reason === "upstream_error" &&
+    /^Gemini returned (429|5\d\d)/.test(last.message) &&
+    !isQuotaMessage(last.message);
 
+  /*
+    25 Sep 2026: with the paid key confirmed, every schema-constrained request to gemini-3.5-flash
+    hung until it timed out, while the same prompt in plain JSON mode answered in about 3 s. Both
+    callers validate the JSON they get back (Zod) and refuse anything malformed, so the schema is a
+    second layer, not the only one. When it stalls, ask once more in plain JSON mode with the schema
+    written into the instructions, and let the caller's validation decide as it always has.
+  */
+  const schema = input.responseJsonSchema;
+  if (!last.ok && schema && (last.reason === "timeout" || busy) && deadline - Date.now() > 5_000) {
+    console.warn(
+      `[gemini] ${input.task ?? "default"}: schema mode stalled, retrying as plain JSON`,
+    );
+    const plainConfig: Record<string, unknown> = { ...generationConfig };
+    delete plainConfig.responseSchema;
+    const fallback = {
+      ...body,
+      systemInstruction: {
+        role: "system",
+        parts: [
+          {
+            text: `${system?.text ?? ""}\n\nReply with a single JSON object that matches this JSON Schema exactly, and nothing else:\n${JSON.stringify(schema)}`.trim(),
+          },
+        ],
+      },
+      generationConfig: plainConfig,
+    };
+    const outcome = await attemptOnce(url, fallback, model, deadline - Date.now());
+    if (outcome.result.ok) return outcome.result;
+  }
+
+  if (busy) return { ...(last as Extract<GeminiCallResult, { ok: false }>), reason: "busy" };
+  return last;
+}
+
+/** Google's wording for a project that has used up its allowance (typically a free-tier key). */
+function isQuotaMessage(text: string): boolean {
+  return /exceeded your current quota|check your plan and billing/i.test(text);
+}
+
+/** One request. `retryable` is true only for Google's "not now" answers and dropped connections. */
+async function attemptOnce(
+  url: string,
+  body: unknown,
+  model: string,
+  timeoutMs: number,
+): Promise<{ result: GeminiCallResult; retryable: boolean }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.max(1_000, timeoutMs));
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -204,9 +310,12 @@ export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResu
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       return {
-        ok: false,
-        reason: "upstream_error",
-        message: `Gemini returned ${res.status}: ${text.slice(0, 200)}`,
+        retryable: (res.status === 429 && !isQuotaMessage(text)) || res.status >= 500,
+        result: {
+          ok: false,
+          reason: "upstream_error",
+          message: `Gemini returned ${res.status}: ${text.slice(0, 200)}`,
+        },
       };
     }
 
@@ -214,24 +323,32 @@ export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResu
     const parsed = parseGeminiResponse(data);
     if (!parsed) {
       return {
-        ok: false,
-        reason: "invalid_response",
-        message: "Gemini response did not match expected shape.",
-      };
-    }
-    return { ok: true, text: parsed.text, model, usage: parsed.usage };
-  } catch (err) {
-    if (err instanceof Error && err.name === "AbortError") {
-      return {
-        ok: false,
-        reason: "timeout",
-        message: `Gemini timed out after ${REQUEST_TIMEOUT_MS}ms.`,
+        retryable: false,
+        result: {
+          ok: false,
+          reason: "invalid_response",
+          message: "Gemini response did not match expected shape.",
+        },
       };
     }
     return {
-      ok: false,
-      reason: "upstream_error",
-      message: err instanceof Error ? err.message : "Unknown network error.",
+      retryable: false,
+      result: { ok: true, text: parsed.text, model, usage: parsed.usage },
+    };
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return {
+        retryable: false,
+        result: { ok: false, reason: "timeout", message: `Gemini timed out after ${timeoutMs}ms.` },
+      };
+    }
+    return {
+      retryable: true,
+      result: {
+        ok: false,
+        reason: "upstream_error",
+        message: err instanceof Error ? err.message : "Unknown network error.",
+      },
     };
   } finally {
     clearTimeout(timer);

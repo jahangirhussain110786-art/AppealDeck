@@ -109,6 +109,14 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
     if (res.status === 413) {
       return { kind: "unavailable", message: tooLargeMessage(input.bytes.byteLength) };
     }
+    // 25 Sep 2026: an expired session reached the seller as the bare word "Unauthorized".
+    if (res.status === 401) {
+      return {
+        kind: "unavailable",
+        message:
+          "Your sign-in has expired. Sign in again to check documents; nothing about your case has changed.",
+      };
+    }
     const body = await res.json().catch(() => null);
     if (!res.ok) {
       return {

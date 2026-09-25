@@ -214,7 +214,7 @@ test("informational updates avoid a purchase flow and replies reopen the request
   await page.getByRole("tab", { name: "History", exact: true }).click();
   await page.getByLabel("Add Amazon’s next reply").fill(notice);
   await page.getByRole("button", { name: "Save reply for review" }).click();
-  await page.getByRole("button", { name: "Use reply for a new revision" }).click();
+  await page.getByRole("button", { name: "Start the next round with this reply" }).click();
   await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(notice);
   await expect(page.getByLabel("What the response page asks for")).toBeEmpty();
 });
@@ -299,7 +299,7 @@ test("authenticated workspace preserves the exact response through submission an
       "Please provide the sales report for the affected product, showing the relevant sales period.",
     );
   await page.getByRole("button", { name: "Save reply for review" }).click();
-  await page.getByRole("button", { name: "Use reply for a new revision" }).click();
+  await page.getByRole("button", { name: "Start the next round with this reply" }).click();
   await page.getByRole("tab", { name: "History", exact: true }).click();
   await page.getByText(/Attempt 1 ·/).click();
   await expect(
@@ -479,7 +479,7 @@ test("an Amazon reply keeps the evidence a seller already reviewed, and says so 
   await expect(page.getByText("Asked for again", { exact: true })).toHaveCount(0);
   await expect(delta).toBeVisible();
 
-  await page.getByRole("button", { name: "Use reply for a new revision" }).click();
+  await page.getByRole("button", { name: "Start the next round with this reply" }).click();
   // Same race as above: the revision is written to the vault before the tab switch means anything.
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
 

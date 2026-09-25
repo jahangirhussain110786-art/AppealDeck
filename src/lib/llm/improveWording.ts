@@ -75,7 +75,7 @@ export type ImproveWordingResult =
   | { ok: true; text: string; unchanged: boolean }
   | {
       ok: false;
-      reason: "too_short" | "fact_changed" | "rejected_content" | "unavailable";
+      reason: "too_short" | "fact_changed" | "rejected_content" | "busy" | "unavailable";
       /** The facts a discarded suggestion added or dropped, for the seller's information. */
       changed?: { added: string[]; dropped: string[] };
     };
@@ -116,7 +116,7 @@ export async function improveWording(
     maxOutputTokens: Math.min(4096, Math.ceil(original.length / 2) + 256),
     responseJsonSchema: RESPONSE_JSON_SCHEMA,
   });
-  if (!result.ok) return { ok: false, reason: "unavailable" };
+  if (!result.ok) return { ok: false, reason: result.reason === "busy" ? "busy" : "unavailable" };
 
   let parsed: unknown;
   try {

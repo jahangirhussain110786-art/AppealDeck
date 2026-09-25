@@ -54,6 +54,15 @@ Following our review, your selling privileges have been restored. Your account i
     expected: { category: "reinstated" },
   },
   {
+    id: "refused-not-final-1",
+    source:
+      "Synthetic — the reply used in the 25 Sep 2026 walk-through. Amazon's usual refusal: it declines now and says what to send next.",
+    raw: `Hello, we reviewed your Plan of Action. We are unable to reinstate your account at this time. Your plan does not explain the root cause. Please also provide invoices dated within the last 365 days for ASIN B0EXAMPLE1.`,
+    expected: { category: "needs_more_information" },
+    adversarial:
+      "Starts with the same words as a final decision. Without Amazon's own finality wording it is a refusal with a next step, and must not be recorded as a final rejection.",
+  },
+  {
     id: "final-negative-1",
     source: "Synthetic — paraphrased from Amazon's published final-decision wording.",
     raw: `Hello,

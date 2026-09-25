@@ -202,3 +202,104 @@ describe("the paid-tier switch", () => {
     expect(isGeminiConfigured()).toBe(true);
   });
 });
+
+/**
+ * 25 Sep 2026: a real document check got Google's 503 "high demand" and failed the seller on the
+ * first try. A "not now" answer is retried inside the task's budget; if Google stays busy, the
+ * result says so, so the seller is told to try again rather than that their document failed.
+ */
+describe("callGemini retries Google's 'not now' answers", () => {
+  const originalFetch = globalThis.fetch;
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  function respond(statuses: number[]) {
+    const fetchMock = vi.fn(async () => {
+      const status = statuses.shift() ?? 200;
+      return status === 200
+        ? {
+            ok: true,
+            status,
+            json: async () => ({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }),
+          }
+        : { ok: false, status, text: async () => '{"error":{"message":"high demand"}}' };
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    return fetchMock;
+  }
+
+  async function run() {
+    vi.useFakeTimers();
+    vi.stubEnv("GEMINI_API_KEY", "test-key");
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const pending = callGemini({ task: "read-document", messages: [{ role: "user", text: "hi" }] });
+    await vi.runAllTimersAsync();
+    return pending;
+  }
+
+  it("succeeds when Google is busy once and then answers", async () => {
+    const fetchMock = respond([503]);
+    const result = await run();
+    expect(result.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("reports 'busy' when Google stays busy, after a bounded number of tries", async () => {
+    const fetchMock = respond([503, 503, 503, 503]);
+    const result = await run();
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe("busy");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not retry or call it 'busy' when the project's quota is used up", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: false,
+      status: 429,
+      text: async () =>
+        '{"error":{"message":"You exceeded your current quota, please check your plan and billing details."}}',
+    }));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const result = await run();
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe("upstream_error");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry an answer that will not change, such as a bad request", async () => {
+    const fetchMock = respond([400]);
+    const result = await run();
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe("upstream_error");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  /** 25 Sep 2026: schema-constrained requests hung while plain JSON mode answered in seconds. */
+  it("falls back to plain JSON mode, with the schema in the instructions, when schema mode stalls", async () => {
+    const fetchMock = respond([503, 503, 503]);
+    vi.useFakeTimers();
+    vi.stubEnv("GEMINI_API_KEY", "test-key");
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const schema = { type: "object", properties: { text: { type: "string" } } };
+    const pending = callGemini({
+      task: "read-document",
+      messages: [{ role: "user", text: "hi" }],
+      responseJsonSchema: schema,
+    });
+    await vi.runAllTimersAsync();
+    const result = await pending;
+    expect(result.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    const calls = fetchMock.mock.calls as unknown as Array<[unknown, RequestInit]>;
+    const first = JSON.parse(calls[0]![1].body as string);
+    const last = JSON.parse(calls[3]![1].body as string);
+    expect(first.generationConfig.responseSchema).toEqual(schema);
+    expect(last.generationConfig.responseSchema).toBeUndefined();
+    expect(last.generationConfig.responseMimeType).toBe("application/json");
+    expect(last.systemInstruction.parts[0].text).toContain(JSON.stringify(schema));
+  });
+});

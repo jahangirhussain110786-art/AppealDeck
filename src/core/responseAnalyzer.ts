@@ -30,7 +30,10 @@ const RULES: ReadonlyArray<PatternRule> = [
       /no further consideration/i,
       /we will not be able to respond to further appeals/i,
       /permanently deactivated/i,
-      /we are unable to reinstate/i,
+      // "We are unable to reinstate" is deliberately not here (25 Sep 2026). It opens Amazon's
+      // ordinary refusal — "...at this time. Please also provide invoices..." — which invites the
+      // next attempt. Filing it as final told a seller the case was over, and recorded the case as
+      // a final rejection in the outcome data. Final means Amazon says so, in the words above.
     ],
   },
   {
@@ -67,6 +70,8 @@ const RULES: ReadonlyArray<PatternRule> = [
       /please provide more (?:detail|information)/i,
       /your plan of action (?:is|was) (?:insufficient|incomplete|unclear)/i,
       /we need more details about/i,
+      // A refusal that does not say it is final: the case goes on (see final_decision_negative).
+      /we are unable to reinstate/i,
     ],
   },
   {

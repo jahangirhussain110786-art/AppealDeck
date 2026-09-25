@@ -1,6 +1,29 @@
 export const WORKSPACE = {
   title: "Your case workspace",
   round: "Round {n}",
+  // How we read a reply. Our reading, never presented as Amazon's words (25 Sep 2026).
+  replyReading: {
+    title: "What this reply says",
+    reasons: "What Amazon says was wrong, in its own words",
+    note: "This is our reading of the wording. Read the reply itself before you act on it.",
+    categories: {
+      needs_more_information:
+        "Amazon did not reinstate the account this time and wants a better answer or more information.",
+      document_request: "Amazon is asking for documents before it decides.",
+      identity_verification: "Amazon wants you to verify your identity or business details.",
+      final_decision_negative:
+        "Amazon says this decision is final. Read the whole reply before deciding what to do next.",
+      reinstated: "Amazon says the account is reinstated. Check Account Health to confirm it.",
+      funds_decision: "This reply is about your funds.",
+      unrecognized: "We could not tell what this reply decides. Read it in full.",
+    },
+  },
+  // A saved, unread Amazon reply outranks every other next step (25 Sep 2026).
+  replyPending: {
+    title: "Amazon replied. Read what it changes",
+    body: "Nothing in your case has changed yet. The reply is in History with what it asks for again, what is new, and what you can keep. Start the next round from there.",
+    cta: "Read Amazon's reply",
+  },
   subtitle: "One case. Every record, response and reply.",
   // 24 Sep 2026 (ChatGPT audit §9). Said "Documents stay on this device" without exception, while a
   // document check sends that one file to be read. Every sentence here now matches what leaves the
@@ -138,6 +161,7 @@ export const WORKSPACE = {
     needsPass: "Wording help comes with the Appeal Pass for this case.",
     signIn: "Sign in to use wording help.",
     unavailable: "Wording help is not available right now. Your wording is unchanged.",
+    busy: "Google's AI service is busy right now. Try again in a minute. Your wording is unchanged.",
     tooMany: "You have asked for a lot of suggestions today. Try again tomorrow.",
   },
   // 24 Sep 2026. When a notice states no date we send the seller to Account Health, and until now

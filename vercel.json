@@ -36,6 +36,12 @@
     "src/app/api/webhooks/paddle/route.ts": {
       "maxDuration": 30
     },
+    "src/app/api/read-document/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/improve-wording/route.ts": {
+      "maxDuration": 60
+    },
     "src/app/api/jobs/purchase-emails/route.ts": {
       "maxDuration": 60
     },

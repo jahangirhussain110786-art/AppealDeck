@@ -872,8 +872,10 @@ export function workspaceGaps(w: Workspace): string[] {
     if (w.preventiveMeasures.trim().length < 40)
       gaps.push("Describe the preventive process and its adoption status.");
   }
+  // First, not last: a reply changes what every other item means, and the dashboard shows only
+  // the first gap — so a case with an unread reply used to open on "Review Supplier invoice".
   if (w.replies.some((r) => !r.applied))
-    gaps.push("Review the new reply before preparing another response.");
+    gaps.unshift("Amazon replied. Read what the reply changes before doing anything else.");
   return gaps;
 }
 

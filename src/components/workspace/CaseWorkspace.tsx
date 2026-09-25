@@ -58,6 +58,8 @@ import {
   disagreementsFromDocumentCheck,
 } from "@/core/factsLedger";
 import { runDocumentCheck, type CheckOutcome } from "@/lib/documentChecks/runCheck";
+import { analyzeReply } from "@/core/responseAnalyzer";
+import { replyCriticisms } from "@/core/replyFeedback";
 import { checkCaseDataForWorkspace } from "@/lib/documentChecks/context";
 import {
   checkContextKey,
@@ -965,6 +967,7 @@ function WorkspaceInner({
   const gaps = workspaceGaps(w);
   const next = w.requirements.find((r) => r.status !== "reviewed");
   const awaiting = file.state === "SUBMITTED" && !w.replies.some((r) => !r.applied);
+  const replyPending = w.replies.some((r) => !r.applied);
   const confirmRequest = async (updated: Workspace) => {
     cancelDraftFields(REQUEST_DRAFT_KEYS);
     /*
@@ -1234,37 +1237,41 @@ function WorkspaceInner({
                       <CardTitle as="h2" className="text-xl">
                         {gated
                           ? "Get professional help with this allegation"
-                          : awaiting
-                            ? "Keep the next reply with this attempt"
-                            : w.protocol === "information"
-                              ? "No new response is requested"
-                              : !workspaceCanCompose(w)
-                                ? "Clarify the requested response"
-                                : next
-                                  ? next.status === "waiting"
-                                    ? "Continue while you wait"
-                                    : `Review ${next.label}`
-                                  : !w.requirementsConfirmed
-                                    ? "Check the requested records"
-                                    : "Prepare your factual response"}
+                          : replyPending
+                            ? C.replyPending.title
+                            : awaiting
+                              ? "Keep the next reply with this attempt"
+                              : w.protocol === "information"
+                                ? "No new response is requested"
+                                : !workspaceCanCompose(w)
+                                  ? "Clarify the requested response"
+                                  : next
+                                    ? next.status === "waiting"
+                                      ? "Continue while you wait"
+                                      : `Review ${next.label}`
+                                    : !w.requirementsConfirmed
+                                      ? "Check the requested records"
+                                      : "Prepare your factual response"}
                       </CardTitle>
                       <p className="text-sm leading-relaxed text-muted-foreground">
                         {gated
                           ? C.unsupported
-                          : awaiting
-                            ? "Your submitted text and document references are preserved in History. Add a reply when one arrives."
-                            : next
-                              ? next.status === "waiting"
-                                ? C.waitingHelp
-                                : "Read the original, record what it supports, and resolve anything unclear."
-                              : route.reason}
+                          : replyPending
+                            ? C.replyPending.body
+                            : awaiting
+                              ? "Your submitted text and document references are preserved in History. Add a reply when one arrives."
+                              : next
+                                ? next.status === "waiting"
+                                  ? C.waitingHelp
+                                  : "Read the original, record what it supports, and resolve anything unclear."
+                                : route.reason}
                       </p>
                     </CardHeader>
                     <CardContent className="flex flex-wrap gap-3">
                       <Button
                         onClick={() =>
                           setTab(
-                            awaiting || !workspaceCanCompose(w)
+                            replyPending || awaiting || !workspaceCanCompose(w)
                               ? "history"
                               : next || !w.requirementsConfirmed
                                 ? "evidence"
@@ -1272,13 +1279,15 @@ function WorkspaceInner({
                           )
                         }
                       >
-                        {awaiting
-                          ? "Add a reply"
-                          : !workspaceCanCompose(w)
-                            ? "View case notes"
-                            : next || !w.requirementsConfirmed
-                              ? "Review evidence plan"
-                              : "Review response facts"}
+                        {replyPending
+                          ? C.replyPending.cta
+                          : awaiting
+                            ? "Add a reply"
+                            : !workspaceCanCompose(w)
+                              ? "View case notes"
+                              : next || !w.requirementsConfirmed
+                                ? "Review evidence plan"
+                                : "Review response facts"}
                         <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                       </Button>
                       <Button variant="outline" onClick={() => setReviewRequest(true)}>
@@ -1708,6 +1717,7 @@ function WorkspaceInner({
                       <DetailDisclosure title={`Read reply · ${formatDate(r.at)}`}>
                         <p className="whitespace-pre-wrap break-words">{r.text}</p>
                       </DetailDisclosure>
+                      {!r.applied && <ReplyReading text={r.text} />}
                       {!r.applied && (
                         <>
                           {/*
@@ -1718,7 +1728,8 @@ function WorkspaceInner({
                           */}
                           <ReplyDeltaReview workspace={w} replyId={r.id} />
                           <p className="text-xs text-muted-foreground">
-                            Use this reply as the new request. Earlier submissions stay unchanged.
+                            The reply becomes the request for the next round. What you already sent
+                            stays unchanged.
                           </p>
                           <Button
                             disabled={busy}
@@ -1755,7 +1766,7 @@ function WorkspaceInner({
                               }
                             }}
                           >
-                            Use reply for a new revision
+                            Start the next round with this reply
                           </Button>
                         </>
                       )}
@@ -2021,6 +2032,35 @@ function WorkspaceInner({
           </div>
         </aside>
       </div>
+    </div>
+  );
+}
+
+/**
+ * What the reply means, before the records delta (25 Sep 2026). The reading is ours and says so;
+ * the reasons are Amazon's sentences, quoted exactly, so the seller can check both against the text.
+ */
+function ReplyReading({ text }: { text: string }) {
+  const { category } = analyzeReply(text);
+  const reasons = replyCriticisms(text);
+  const reading = C.replyReading.categories[category];
+  return (
+    <div className="space-y-2 rounded-md border border-border/70 bg-background/60 p-3 text-sm">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        {C.replyReading.title}
+      </p>
+      <p className="font-medium text-foreground">{reading}</p>
+      {reasons.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground">{C.replyReading.reasons}</p>
+          {reasons.map((q) => (
+            <blockquote key={q} className="border-l-2 border-warning/50 pl-3 text-foreground">
+              {q}
+            </blockquote>
+          ))}
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">{C.replyReading.note}</p>
     </div>
   );
 }

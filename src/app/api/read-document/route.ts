@@ -285,7 +285,9 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
             ? "Document reading is not switched on."
             : result.reason === "spend_cap"
               ? "Document reading has reached today's limit for the whole service. It resets at midnight UTC; nothing about your case has changed."
-              : "We could not read that document. Nothing about your case has changed.",
+              : result.reason === "busy"
+                ? "Google's AI service is busy right now. Try again in a minute; nothing about your case has changed."
+                : "We could not read that document. Nothing about your case has changed.",
       },
       { status: 200 },
     );
