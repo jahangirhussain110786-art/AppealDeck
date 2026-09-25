@@ -3,6 +3,8 @@ import { ArrowRight, Check, X } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { JsonLd } from "@/components/JsonLd";
+import { SITE_URL } from "@/lib/urls";
 import { GUIDES, GUIDES_COMMON, type Guide } from "@/content/guides";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -16,21 +18,28 @@ function formatDay(isoDay: string): string {
 /** One guide page. Content lives in `src/content/guides.ts`; this only lays it out. */
 export function GuideView({ guide }: { guide: Guide }) {
   const others = GUIDES.filter((g) => g.slug !== guide.slug);
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: guide.title,
-    description: guide.description,
-    dateModified: guide.lastVerified,
-    author: { "@type": "Organization", name: "AppealDeck" },
-  };
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: guide.title,
+      description: guide.description,
+      dateModified: guide.lastVerified,
+      author: { "@type": "Organization", name: "AppealDeck" },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "AppealDeck", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Guides", item: `${SITE_URL}/guides` },
+        { "@type": "ListItem", position: 3, name: guide.navLabel },
+      ],
+    },
+  ];
   return (
     <MarketingShell className="max-w-app">
-      <script
-        type="application/ld+json"
-        // Static content from our own module, never user input.
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
       <article className="py-10 sm:py-14">
         <header className="mb-8 sm:mb-10">
           <p className="text-eyebrow uppercase text-primary">

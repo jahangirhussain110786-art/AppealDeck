@@ -7,12 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -294,25 +288,6 @@ export function DevUiGallery() {
             Drafted Plan of Action.
           </TabsContent>
         </Tabs>
-      </Section>
-
-      <Section title="Accordion">
-        <Card>
-          <CardContent className="pt-5">
-            <Accordion type="single" collapsible>
-              <AccordionItem value="a">
-                <AccordionTrigger>What is local-first?</AccordionTrigger>
-                <AccordionContent>Notice text is processed in your browser.</AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="b">
-                <AccordionTrigger>Do you submit to Amazon?</AccordionTrigger>
-                <AccordionContent>
-                  No. You submit the appeal yourself in Seller Central.
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </CardContent>
-        </Card>
       </Section>
 
       <Section title="Form controls">

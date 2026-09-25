@@ -2,52 +2,106 @@
 // Headline = outcome the seller controls. Sub-line = boundary. Button = verb + object.
 // No banned-pattern / banned-number strings. Banned-list enforced by scripts/lint-copy.mjs.
 
+/**
+ * The home page tells one story, once, in the order a frightened seller needs it (25 Sep 2026):
+ * their problem in their own words → what the notice does not tell them → how the work goes →
+ * what happens to their case → start. Each point is made in one section only; the refund and the
+ * pass details belong to /pricing, and the full questions list to /faq.
+ */
 export const HOME = {
   hero: {
-    eyebrow: "A case workspace for Amazon sellers",
-    headline: "A clearer path from notice to response.",
+    eyebrow: "For Amazon sellers with a suspension or policy notice",
+    headline: "Amazon account suspended? Know what to send back.",
+    accent: "what to send back",
     subline:
-      "Understand the request. Organize your evidence. Prepare a factual response—all in one case workspace.",
+      "Paste your deactivation or policy notice. See what Amazon is asking for, the deadline it states and the records to gather. Free, with no sign-up.",
     primaryCta: "Decode my notice — free",
-    secondaryCta: "See the Appeal Pass",
-    reassuranceLine:
-      "For Amazon US, English-language notices. Start free — no Seller Central login, you submit the response.",
+    reassuranceLine: "AppealDeck never logs in to your Amazon account. You decide what gets sent.",
+  },
+  insights: {
+    eyebrow: "What the notice does not tell you",
+    title: "Four things that shape an appeal before you write a word",
+    items: [
+      {
+        title: "The section number says very little",
+        body: "Section 3 is cited for failed verification, related accounts, policy breaches and complaints alike. The sentence that asks you for something is what decides your answer.",
+        link: { label: "Section 3, explained", href: "/guides/section-3" },
+      },
+      {
+        title: "Not every notice wants a Plan of Action",
+        body: "A verification request wants a document that matches your account, letter for letter. An apology letter answers a question Amazon did not ask.",
+        link: { label: "Identity verification", href: "/guides/identity-verification" },
+      },
+      {
+        title: "The same text twice shows nothing changed",
+        body: "After a refusal, Amazon looks for what is new. A copied template, or last time's wording, gives it nothing to go on.",
+        link: { label: "Writing a Plan of Action", href: "/guides/plan-of-action" },
+      },
+      {
+        title: "Fake notices target suspended sellers",
+        body: "A message asking for a fee, a password or a WhatsApp chat is worth checking in Seller Central before you act on it.",
+        link: { label: "Check a notice free", href: "/decode" },
+      },
+    ],
   },
   howItWorks: {
     eyebrow: "How it works",
-    step1: {
-      title: "Paste your notice",
-      desc: "See the detected issue, stated deadlines and next steps.",
-    },
-    step2: {
-      title: "Build your evidence",
-      desc: "Keep original files, review notes and missing records together.",
-    },
-    step3: {
-      title: "Prepare and track",
-      desc: "Use an Appeal Pass to prepare a supported response. Keep submissions and replies in your case.",
-    },
+    title: "From notice to response",
+    steps: [
+      {
+        title: "Decode the notice",
+        tag: "Free",
+        desc: "What Amazon is asking for, the deadline it states, the IDs it names, and anything in the message worth checking.",
+      },
+      {
+        title: "Build the case",
+        tag: "Free",
+        desc: "The records your case needs, including ones the notice does not name. Your files kept encrypted with the case, and the deadline tracked.",
+      },
+      {
+        title: "Prepare, send, follow up",
+        tag: "Appeal Pass",
+        desc: "A response built from the facts you confirm and checked for gaps. Every submission and Amazon reply kept together.",
+        link: { label: "What the Appeal Pass covers", href: "/pricing" },
+      },
+    ],
   },
-  howItWorksTitle: "One connected workflow",
-  howItWorksSub: "Your notice stays with you at every step.",
-  included: {
-    eyebrow: "What you get",
-    title: "A place for every part of the case",
-    sub: "From the first request to the next reply.",
+  trust: {
+    eyebrow: "Before you paste anything",
+    title: "What happens to your case",
+    items: [
+      {
+        label: "No access to your Amazon account",
+        desc: "AppealDeck never logs in, never submits and never contacts Amazon. You send the response yourself.",
+      },
+      {
+        label: "Your files stay encrypted on your device",
+        desc: "Your notice is sent to AppealDeck to decode it. A file leaves your device only when you ask for it to be checked.",
+      },
+      {
+        label: "Amazon makes the decision",
+        desc: "We help you answer clearly and completely. Nobody outside Amazon can promise reinstatement, and we do not.",
+      },
+    ],
   },
-  proof: {
-    eyebrow: "Trust",
-    title: "Your records. Your decisions.",
+  guides: {
+    eyebrow: "Guides",
+    title: "Start from your situation",
   },
   closing: {
-    title: "Start with the free decoder",
-    desc: "Understand the request before deciding your next move.",
+    title: "Your notice is the place to start",
+    desc: "Paste it and see what it asks for before you decide anything else.",
   },
 } as const;
 
 export const DECODE = {
-  pageTitle: "Decode your Amazon notice",
-  pageDescription: "See the issue, the time window and your next action.",
+  pageTitle: "What is your Amazon notice asking for?",
+  pageDescription:
+    "Paste the full notice. See the response Amazon wants, the deadline it states, the IDs it names and the records to gather.",
+  metaTitle: "Amazon suspension notice decoder — free",
+  metaDescription:
+    "Paste an Amazon deactivation or policy notice. See what it asks for, the deadline it states, the IDs it names and anything that looks fake. Free, no sign-up.",
+  guidesTitle: "Read about your kind of notice",
   textarea: {
     label: "Your notice",
     placeholder: "Paste the full Amazon notice here…",
@@ -124,7 +178,6 @@ export const DECODE = {
 } as const;
 
 export const PRICING = {
-  pageTitle: "Pricing — AppealDeck",
   headline: "Understand your case before you pay.",
   subline:
     "Start with a free notice brief and case workspace. Choose an Appeal Pass when you need to prepare a response for an eligible case.",
@@ -164,28 +217,6 @@ export const PRICING = {
     },
     devices: { feature: "Encrypted backup & restore", free: "—", account: "—", pass: "Yes" },
   },
-  trust: {
-    title: "Built so you can check it yourself",
-    submit: {
-      label: "You submit, we never log in",
-      desc: "The draft is yours to edit; you submit it in Seller Central.",
-    },
-    localFirst: {
-      label: "Nothing sent to Amazon",
-      desc: "AppealDeck analyzes the notice. You control what you submit.",
-    },
-    vault: {
-      label: "Encrypted on your device",
-      // AA-43: the label is about storage and remains true — files are stored encrypted in the
-      // browser. The description now says plainly when one leaves, so "on your device" cannot be
-      // read as "never goes anywhere" once document checking exists.
-      desc: "Encrypted storage with optional passphrase protection. A file is sent for checking only when you ask us to check it.",
-    },
-    refund: {
-      label: "7-day refund",
-      desc: "Request a refund within 7 days. Read the full policy before buying.",
-    },
-  },
   samplePoa: {
     trigger: "View a sample Plan of Action",
     watermark: "ILLUSTRATIVE — not a real appeal",
@@ -193,7 +224,8 @@ export const PRICING = {
     title: "Sample Plan of Action",
   },
   cta: "Get the Appeal Pass",
-  faqTitle: "A few questions before you decide.",
+  faqTitle: "Before you buy",
+  faqIds: ["pass", "outcome", "refund", "files"],
   purchaseTitle: "Ready to prepare your response?",
   expectationsTitle: "What to expect",
 } as const;

@@ -1,99 +1,75 @@
-"use client";
-
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  Compass,
-  CreditCard,
-  FileCheck2,
-  ShieldCheck,
-  type LucideIcon,
-} from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { IconTile } from "@/components/workspace/WorkspaceVisuals";
-import { faqByGroup } from "@/content/marketing";
+import { ArrowUpRight, ChevronDown } from "lucide-react";
+import { FAQ, faqByGroup, type FaqItem } from "@/content/marketing";
 
-const TOPICS: Record<string, { icon: LucideIcon; tone: "primary" | "info" | "warning" }> = {
-  start: { icon: Compass, tone: "primary" },
-  response: { icon: FileCheck2, tone: "info" },
-  privacy: { icon: ShieldCheck, tone: "primary" },
-  pass: { icon: CreditCard, tone: "warning" },
-};
-const groups = faqByGroup();
-
-export function FaqAccordion() {
+/**
+ * 25 Sep 2026: this was a set of tabs holding accordions, and both unmount what is hidden — so the
+ * page's HTML carried 1 of 13 answers and search engines could read no others. Native
+ * `<details>` keeps every answer in the document, opens by keyboard and needs no script.
+ *
+ * `ids` shows a chosen set in one list (the buyer's questions on /pricing); without it, every
+ * question renders under its topic heading (/faq).
+ */
+export function FaqAccordion({ ids }: { ids?: readonly string[] }) {
+  if (ids) {
+    const byId = new Map<string, FaqItem>(FAQ.items.map((i) => [i.id, i]));
+    const items = ids.map((id) => byId.get(id)).filter((i): i is FaqItem => Boolean(i));
+    return <QuestionList items={items} />;
+  }
   return (
-    <Tabs defaultValue="start" className="min-w-0">
-      <TabsList
-        aria-label="Question topics"
-        className="grid h-auto grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-4 sm:gap-3"
-      >
-        {groups.map((group) => {
-          const topic = TOPICS[group.id] ?? { icon: Compass, tone: "primary" as const };
-          return (
-            <TabsTrigger
-              key={group.id}
-              value={group.id}
-              // No aria-label: it named the tab by its topic alone while the tab also shows a hint,
-              // and a voice-control user saying the words on screen could not reach it (Lighthouse
-              // label-content-name-mismatch, 24 Sep 2026). The name now comes from what is shown.
-              className="flex h-full min-w-0 flex-col items-start gap-3 whitespace-normal rounded-xl border border-border/80 bg-card px-4 py-4 text-left shadow-card hover:bg-surface-2 data-[state=active]:border-primary/40 data-[state=active]:bg-primary/5 data-[state=active]:shadow-none"
-            >
-              <IconTile icon={topic.icon} tone={topic.tone} />
-              <span className="text-sm font-semibold text-foreground">{group.name}</span>
-              <span className="hidden text-xs font-normal leading-relaxed text-muted-foreground sm:block">
-                {group.hint}
-              </span>
-            </TabsTrigger>
-          );
-        })}
-      </TabsList>
-      {groups.map((group) => (
-        <TabsContent
-          key={group.id}
-          value={group.id}
-          className="mt-4 overflow-hidden rounded-xl border border-border/80 bg-card shadow-card"
-        >
-          <div className="flex items-center justify-between gap-3 border-b border-border/70 bg-surface-2/40 px-5 py-4 sm:px-6">
-            {/* h2, not h3: the page goes h1 → this heading, and a skipped level fails heading-order. */}
-            <h2 className="text-sm font-semibold text-foreground">{group.name}</h2>
-            <span className="text-xs text-muted-foreground">{group.items.length} questions</span>
-          </div>
-          <Accordion
-            type="single"
-            collapsible
-            defaultValue={group.items[0]?.id}
-            className="px-5 sm:px-6"
-          >
-            {group.items.map((item) => (
-              <AccordionItem key={item.id} value={item.id}>
-                <AccordionTrigger className="min-h-14 rounded-sm py-5 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  {item.q}
-                </AccordionTrigger>
-                <AccordionContent className="max-w-prose pr-5 text-sm leading-relaxed">
-                  <p className="font-medium text-foreground">{item.a}</p>
-                  {item.detail && <p className="mt-2">{item.detail}</p>}
-                  {item.link && (
-                    <Link
-                      href={item.link.href}
-                      className="mt-3 inline-flex min-h-8 items-center gap-1.5 rounded-sm font-medium text-foreground underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      {item.link.label}
-                      <ArrowUpRight className="size-3.5" aria-hidden />
-                    </Link>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </TabsContent>
+    <div className="space-y-8">
+      {faqByGroup().map((group) => (
+        <section key={group.id} aria-labelledby={`faq-${group.id}`}>
+          <h2 id={`faq-${group.id}`} className="font-accent text-2xl font-medium text-foreground">
+            {group.name}
+          </h2>
+          <QuestionList items={group.items} />
+        </section>
       ))}
-    </Tabs>
+    </div>
   );
+}
+
+function QuestionList({ items }: { items: FaqItem[] }) {
+  return (
+    <div className="mt-3 divide-y divide-border/70 overflow-hidden rounded-xl border border-border/80 bg-card shadow-card">
+      {items.map((item) => (
+        <details key={item.id} id={item.id} className="group px-5 sm:px-6">
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-sm py-4 text-left text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            {item.q}
+            <ChevronDown
+              aria-hidden
+              className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+            />
+          </summary>
+          <div className="max-w-prose pb-5 pr-5 text-sm leading-relaxed text-muted-foreground">
+            <p className="font-medium text-foreground">{item.a}</p>
+            {item.detail && <p className="mt-2">{item.detail}</p>}
+            {item.link && (
+              <Link
+                href={item.link.href}
+                className="mt-3 inline-flex min-h-8 items-center gap-1.5 rounded-sm font-medium text-foreground underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {item.link.label}
+                <ArrowUpRight className="size-3.5" aria-hidden />
+              </Link>
+            )}
+          </div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
+/** schema.org FAQPage for the /faq page only — one page should own each question. */
+export function faqJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: (FAQ.items as readonly FaqItem[]).map((i) => ({
+      "@type": "Question",
+      name: i.q,
+      acceptedAnswer: { "@type": "Answer", text: i.detail ? `${i.a} ${i.detail}` : i.a },
+    })),
+  };
 }

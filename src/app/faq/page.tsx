@@ -5,7 +5,8 @@ import { MarketingShell } from "@/components/MarketingShell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FAQ } from "@/content/marketing";
-import { FaqAccordion } from "@/components/pricing/FaqAccordion";
+import { FaqAccordion, faqJsonLd } from "@/components/pricing/FaqAccordion";
+import { JsonLd } from "@/components/JsonLd";
 import { IconTile } from "@/components/workspace/WorkspaceVisuals";
 import { SHARED } from "@/content/shared";
 
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
 export default function FaqPage() {
   return (
     <MarketingShell className="max-w-app">
+      <JsonLd data={faqJsonLd()} />
       <div className="py-10 sm:py-14">
         <header className="mb-8 flex items-start gap-4 sm:mb-10">
           <IconTile icon={MessagesSquare} tone="info" className="mt-1 hidden sm:inline-flex" />

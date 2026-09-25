@@ -1,56 +1,51 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * A topic tab is named by everything it shows — the topic, then its hint on wider screens — so it
- * is found by the words it starts with. It used to carry an aria-label of the topic alone, which
- * Lighthouse flags: a voice-control user saying the words on screen could not reach it.
+ * 25 Sep 2026: the FAQ was tabs holding accordions, which kept 12 of its 13 answers out of the
+ * page's HTML, so search engines could read none of them. Every answer must now be in the
+ * document before anyone clicks, and each question opens by keyboard.
  */
-const topic = (name: string) => new RegExp(`^${name}(?:\\s|$)`);
+test("/faq: every answer is in the page before any click, and questions open by keyboard", async ({
+  page,
+  request,
+}) => {
+  const html = await (await request.get("/faq")).text();
+  for (const answer of [
+    "Decode your notice and organize your case before you decide to pay.",
+    "Original files are encrypted in your vault on this device.",
+    "You can request a refund within 7 days of purchase.",
+  ]) {
+    expect(html, answer).toContain(answer);
+  }
+  expect(html).toContain('"@type":"FAQPage"');
 
-for (const path of ["/faq", "/pricing"]) {
-  test(`${path}: topics and answers work by keyboard and lead to the free decoder`, async ({
-    page,
-  }) => {
-    await page.goto(path);
-    const start = page.getByRole("tab", { name: topic("Getting started") });
-    await expect(start).toHaveAttribute("aria-selected", "true");
-    await start.focus();
-    await page.keyboard.press("ArrowRight");
-    await expect(page.getByRole("tab", { name: topic("Your response") })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    await page.keyboard.press("ArrowRight");
-    await expect(page.getByRole("tab", { name: topic("Files & privacy") })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+  await page.goto("/faq");
+  for (const topic of ["Getting started", "Your response", "Files & privacy", "Pass & refunds"]) {
+    await expect(page.getByRole("heading", { level: 2, name: topic, exact: true })).toBeVisible();
+  }
+  const processing = page.locator("summary", { hasText: "What leaves my browser?" });
+  await processing.focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("link", { name: "How processing works", exact: true }),
+  ).toHaveAttribute("href", "/privacy#how-we-use");
 
-    const files = page.getByRole("button", { name: "Where are my files saved?", exact: true });
-    await expect(files).toHaveAttribute("aria-expanded", "true");
-    const processing = page.getByRole("button", { name: "What leaves my browser?", exact: true });
-    await processing.focus();
-    await page.keyboard.press("Enter");
-    await expect(files).toHaveAttribute("aria-expanded", "false");
-    await expect(processing).toHaveAttribute("aria-expanded", "true");
-    await expect(
-      page.getByRole("link", { name: "How processing works", exact: true }),
-    ).toHaveAttribute("href", "/privacy#how-we-use");
+  await page.locator("summary", { hasText: "What can I do for free?" }).click();
+  await page.getByRole("link", { name: "Try the free decoder", exact: true }).click();
+  await expect(page).toHaveURL(/\/decode$/);
+});
 
-    await page.getByRole("tab", { name: topic("Pass & refunds") }).click();
-    await expect(page.getByText(/The pass is \$249 once, with no subscription/)).toBeVisible();
-    await page.getByRole("button", { name: "What is your refund policy?", exact: true }).click();
-    await expect(
-      page.getByText("You can request a refund within 7 days of purchase.", { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "Read the refund policy", exact: true }),
-    ).toHaveAttribute("href", "/refund");
-    await start.click();
-    await page.getByRole("link", { name: "Try the free decoder", exact: true }).click();
-    await expect(page).toHaveURL(/\/decode$/);
-  });
-}
+test("/pricing shows only the buyer's questions, not the whole FAQ", async ({ page }) => {
+  await page.goto("/pricing");
+  await expect(
+    page.locator("summary", { hasText: "What does the Appeal Pass add?" }),
+  ).toBeVisible();
+  await page.locator("summary", { hasText: "What is your refund policy?" }).click();
+  await expect(
+    page.getByRole("link", { name: "Read the refund policy", exact: true }),
+  ).toHaveAttribute("href", "/refund");
+  await expect(page.locator("summary", { hasText: "How does the decoder work?" })).toHaveCount(0);
+});
 
 test("pricing keeps the expectations visible before an unchecked delivery consent", async ({
   page,

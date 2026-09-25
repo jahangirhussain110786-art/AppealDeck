@@ -1,15 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Check,
-  Lock,
-  MonitorSmartphone,
-  RotateCcw,
-  ShieldCheck,
-  FileSearch,
-  MessagesSquare,
-} from "lucide-react";
+import { ArrowRight, Check, FileSearch, MessagesSquare } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
 import { IconTile } from "@/components/workspace/WorkspaceVisuals";
 import { Button } from "@/components/ui/button";
@@ -39,13 +30,6 @@ export const metadata: Metadata = {
     description: SHARED.metadata.descriptionPricing,
   },
 };
-
-const TRUST_ITEMS = [
-  { icon: ShieldCheck, ...PRICING.trust.submit },
-  { icon: MonitorSmartphone, ...PRICING.trust.localFirst },
-  { icon: Lock, ...PRICING.trust.vault },
-  { icon: RotateCcw, ...PRICING.trust.refund },
-];
 
 const PASS_ONLY_ROWS = [PRICING.rows.poa, PRICING.rows.critic, PRICING.rows.devices];
 
@@ -151,32 +135,15 @@ export default function PricingPage() {
       </section>
 
       <section className="pb-16 sm:pb-20">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {TRUST_ITEMS.map((item) => (
-            <Card key={item.label} className="p-5">
-              <div className="flex items-start gap-3">
-                <IconTile icon={item.icon} tone={item.icon === RotateCcw ? "warning" : "primary"} />
-                <div>
-                  <p className="text-sm font-medium text-foreground">{item.label}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="pb-16 sm:pb-20">
         <div className="mb-6 flex items-center gap-3">
           <IconTile icon={MessagesSquare} tone="info" />
           <div>
-            <p className="text-eyebrow uppercase text-muted-foreground">Quick answers</p>
-            <h2 className="mt-1 font-accent text-2xl font-medium text-foreground sm:text-3xl">
+            <h2 className="font-accent text-2xl font-medium text-foreground sm:text-3xl">
               {PRICING.faqTitle}
             </h2>
           </div>
         </div>
-        <FaqAccordion />
+        <FaqAccordion ids={PRICING.faqIds} />
       </section>
 
       <section id="purchase" className="pb-16 sm:pb-20">

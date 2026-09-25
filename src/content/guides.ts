@@ -14,6 +14,8 @@ export type GuideSection = { heading: string; body?: string; points?: string[] }
 export type Guide = {
   slug: string;
   title: string;
+  /** Short link text where the full title is too long (the decoder's guide links). */
+  navLabel: string;
   metaTitle: string;
   description: string;
   lastVerified: string;
@@ -45,8 +47,9 @@ export const GUIDES_COMMON = {
 export const GUIDES: Guide[] = [
   {
     slug: "section-3",
+    navLabel: "Section 3 deactivation",
     title: "Your Amazon account was deactivated under Section 3. What it means and what to do",
-    metaTitle: "Amazon Section 3 deactivation: what it means and how to respond",
+    metaTitle: "Amazon Section 3 deactivation: what to do",
     description:
       "What a Section 3 deactivation notice actually says, why the response depends on its wording, and the mistakes that cost sellers an appeal.",
     lastVerified: "2026-09-25",
@@ -110,8 +113,9 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: "plan-of-action",
+    navLabel: "Writing a Plan of Action",
     title: "How to write an Amazon Plan of Action, and why templates get rejected",
-    metaTitle: "Amazon Plan of Action (POA): structure, examples and why templates fail",
+    metaTitle: "Amazon Plan of Action: how to write one",
     description:
       "The three parts of an Amazon Plan of Action, what belongs in each, and why a copied template is a common reason a POA is refused.",
     lastVerified: "2026-09-25",
@@ -171,8 +175,9 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: "identity-verification",
+    navLabel: "Identity verification",
     title: "Amazon seller identity verification failed or stuck: what to check",
-    metaTitle: "Amazon seller identity verification failed: why, and what to resubmit",
+    metaTitle: "Amazon identity verification failed: what now",
     description:
       "Why Amazon seller identity verification fails, why a Plan of Action is the wrong answer, and what to check before you resubmit documents.",
     lastVerified: "2026-09-25",
@@ -224,8 +229,9 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: "ip-complaint",
+    navLabel: "IP complaint",
     title: "Amazon intellectual property complaint: your options and what to gather",
-    metaTitle: "Amazon IP complaint on your listing: options, evidence and next steps",
+    metaTitle: "Amazon IP complaint: your options and evidence",
     description:
       "What an Amazon intellectual property complaint means, the ways it can be resolved, and what to gather before you respond.",
     lastVerified: "2026-09-25",
