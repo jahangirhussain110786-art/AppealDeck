@@ -10,6 +10,7 @@ export const SHARED = {
     pricing: "Pricing",
     billing: "Billing",
     faq: "FAQ",
+    guides: "Guides",
     signIn: "Sign in",
     signOut: "Sign out",
     menu: "Menu",

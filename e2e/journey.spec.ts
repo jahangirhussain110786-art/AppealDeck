@@ -159,6 +159,11 @@ test("every public page names itself as canonical, not the home page", async ({ 
     "/privacy",
     "/terms",
     "/refund",
+    "/guides",
+    "/guides/section-3",
+    "/guides/plan-of-action",
+    "/guides/identity-verification",
+    "/guides/ip-complaint",
   ]) {
     await page.goto(path);
     const href = await page.locator('link[rel="canonical"]').getAttribute("href");

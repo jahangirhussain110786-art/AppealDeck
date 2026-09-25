@@ -42,6 +42,7 @@ export function SiteFooter() {
             { href: "/decode", label: SHARED.nav.decode },
             { href: "/pricing", label: SHARED.nav.pricing },
             { href: "/faq", label: SHARED.nav.faq },
+            { href: "/guides", label: SHARED.nav.guides },
           ]}
         />
         <FooterGroup

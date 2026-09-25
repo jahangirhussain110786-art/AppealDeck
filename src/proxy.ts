@@ -21,7 +21,17 @@ const APP_PREFIXES = [
   "/forgot-password",
   "/reset-password",
 ];
-const MARKETING_PATHS = ["/", "/decode", "/pricing", "/privacy", "/terms", "/refund", "/faq"];
+const MARKETING_PATHS = [
+  "/",
+  "/decode",
+  "/pricing",
+  "/privacy",
+  "/terms",
+  "/refund",
+  "/faq",
+  "/support",
+  "/guides",
+];
 
 function hostOf(req: NextRequest): string {
   return (req.headers.get("host") ?? "").split(":")[0]?.toLowerCase() ?? "";
