@@ -2,18 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  ArrowRight,
-  Check,
-  Clock3,
-  FileSearch,
-  FileText,
-  FolderOpen,
-  History,
-  ListChecks,
-  Plus,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowRight, Check, FileSearch, FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +16,16 @@ import { VaultGate } from "@/components/VaultGate";
 import { VerificationChecklistCard } from "@/components/VerificationChecklistCard";
 import { FactsLedgerCard } from "@/components/FactsLedgerCard";
 import { CaseFactsCard } from "./CaseFactsCard";
-import { PageIntro } from "@/components/PageIntro";
+import Image from "next/image";
+import { AppBarSlot } from "@/components/AppBarSlot";
+import {
+  CaseChecklist,
+  CaseTimeline,
+  NextRecordPaper,
+  NextStepCard,
+  type ChecklistRow,
+  type TimelineDeadline,
+} from "./CaseOverview";
 import { RequestReview } from "./RequestReview";
 import { EvidenceReview } from "./EvidenceReview";
 import { ResponseReview, type WorkspaceResponse } from "./ResponseReview";
@@ -36,7 +34,7 @@ import { SellerDeadlineField } from "./SellerDeadlineField";
 import { ChangeOfApproach } from "./ChangeOfApproach";
 import { shouldOfferChangeOfApproach } from "@/core/escalation";
 import { deadlinesForDisplay, sellerDeadline, withSellerDeadlines } from "@/core/deadlinesModel";
-import { DetailDisclosure, IconTile, VIEW_ICONS } from "./WorkspaceVisuals";
+import { DetailDisclosure, VIEW_ICONS } from "./WorkspaceVisuals";
 import { createCaseFile, type CaseFile } from "@/core/caseFile";
 import {
   isSeverityGated,
@@ -83,7 +81,6 @@ import {
   questionnaireQuestions,
   routeWorkspace,
   workspaceCanCompose,
-  workspaceGaps,
   type Requirement,
   type Workspace,
 } from "@/core/workspace";
@@ -91,7 +88,15 @@ import { getBrowserVault } from "@/lib/vault/browser";
 import { ensureFreshGuestSession } from "@/lib/vault/guestSession";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
 import { withCaseEvidence } from "@/lib/caseEvidence";
-import { loadCaseFile, saveCaseFile, loadCaseLog, saveCaseLog } from "@/lib/caseStore";
+import {
+  loadCaseFile,
+  saveCaseFile,
+  loadCaseLog,
+  saveCaseLog,
+  setActiveCaseId,
+} from "@/lib/caseStore";
+import { loadCaseSummaries, type CaseSummary } from "@/lib/caseSummary";
+import { usePublishCases } from "@/components/CaseListContext";
 import { WorkspaceSchema } from "@/lib/workspaceSchema";
 import { proposedIssues, totalAttempts } from "@/core/workspace";
 import { buildCaseExport } from "@/lib/workspaceExport";
@@ -252,6 +257,25 @@ function WorkspaceInner({
   const draftTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const draftPending = useRef<Map<string, string | undefined>>(new Map());
   const draftCaseId = useRef<Map<string, string>>(new Map());
+  // The sidebar's case list, read from the vault this page already has open (see CaseListContext).
+  const [caseSummaries, setCaseSummaries] = useState<CaseSummary[] | null>(null);
+  const fileId = file?.id;
+  const fileState = file?.state;
+  const deadlineKey = JSON.stringify(file?.deadlines ?? null);
+  useEffect(() => {
+    if (!fileId) return;
+    let alive = true;
+    void loadCaseSummaries(vault, fileId)
+      .then((s) => {
+        if (alive) setCaseSummaries(s);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [vault, fileId, fileState, deadlineKey]);
+  const openCase = useCallback((id: string) => setActiveCaseId(vault, id), [vault]);
+  usePublishCases(caseSummaries, openCase);
   const setCurrent = useCallback((next: CaseFile) => {
     fileRef.current = next;
     setFile(next);
@@ -964,7 +988,6 @@ function WorkspaceInner({
     // sources, listed with every other disagreement (ChatGPT audit item G, 24 Sep 2026).
     checkedFiles.flatMap((c) => disagreementsFromDocumentCheck(c.filename, c.result)),
   );
-  const gaps = workspaceGaps(w);
   const next = w.requirements.find((r) => r.status !== "reviewed");
   const awaiting = file.state === "SUBMITTED" && !w.replies.some((r) => !r.applied);
   const replyPending = w.replies.some((r) => !r.applied);
@@ -1040,8 +1063,135 @@ function WorkspaceInner({
     if (ok) setReviewRequest(false);
     return ok;
   };
+  /*
+    The time windows, said once and used twice: the first dated one heads the next-step card, and
+    the timeline lists them all. The wording is the notice's own ("Appeal by 1 Oct 2026"), or says
+    plainly that the date must come from Account Health; no countdown is invented for an undated one.
+  */
+  const deadlineLines: TimelineDeadline[] = file.deadlines?.length
+    ? deadlinesForDisplay(file.deadlines).map((d) => ({
+        hot: Boolean(d.dueOn || d.dueAt) && !d.isIndefinite,
+        text: d.isIndefinite
+          ? `${d.label} — no countdown to track`
+          : d.dueOn
+            ? // The day as the notice gives it; a stated date is already in its own label
+              // ("Appeal by 1 Oct 2026").
+              d.startsOn
+              ? `${d.label}, closes ${formatDay(d.dueOn)}`
+              : d.label
+            : d.dueAt
+              ? `${d.label}: ${formatDate(d.dueAt)}`
+              : d.startsOnReceipt
+                ? // Amazon gave the length; the notice did not carry its date.
+                  `${d.label}, from the day you received this notice`
+                : `${d.label} · confirm the date in Account Health`,
+      }))
+    : [];
+  const caseTitle = file.kind === "UNKNOWN" ? C.title : APP.violationKinds[file.kind];
+  const nextTab =
+    replyPending || awaiting || !workspaceCanCompose(w)
+      ? "history"
+      : next || !w.requirementsConfirmed
+        ? "evidence"
+        : "response";
+  const responseText = [w.explanation, w.correctiveActions, w.preventiveMeasures]
+    .join("")
+    .trim().length;
+  const sentThisRound = w.submissions.some(
+    (s) => s.source !== "prior" && s.revision === w.revision,
+  );
+  const checklistRows: ChecklistRow[] = [
+    ...w.requirements.map((r): ChecklistRow => ({
+      id: r.id,
+      title: r.label,
+      sub: C.overview.source[r.source ?? "notice"],
+      tone: r.status === "reviewed" ? "ok" : r.status === "waiting" ? "todo" : ("need" as const),
+      pill: {
+        tone:
+          r.status === "reviewed"
+            ? "ok"
+            : r.status === "waiting"
+              ? "new"
+              : r.status === "cannot_obtain"
+                ? "mute"
+                : "need",
+        label: C.status[r.status],
+        dot: r.status === "needed",
+      },
+      detail: r.filename,
+      mono: Boolean(r.filename),
+      onOpen: () => setTab("evidence"),
+    })),
+    ...(w.issues && w.issues.length > 1
+      ? [
+          {
+            id: "issues",
+            title: C.overview.issuesRow,
+            tone: w.issuesConfirmed ? ("ok" as const) : ("need" as const),
+            pill: w.issuesConfirmed
+              ? { tone: "ok" as const, label: C.overview.doneLabel }
+              : { tone: "need" as const, label: C.status.needed, dot: true },
+            detail: C.overview.issuesCount.replace("{n}", String(w.issues.length)),
+            onOpen: () => setTab("response"),
+          },
+        ]
+      : []),
+    ...(workspaceCanCompose(w)
+      ? [
+          {
+            id: "response",
+            title: C.overview.responseRow,
+            tone: sentThisRound ? ("ok" as const) : ("todo" as const),
+            pill: sentThisRound
+              ? { tone: "ok" as const, label: C.overview.responseSent }
+              : responseText
+                ? { tone: "mute" as const, label: C.overview.responseDraft }
+                : { tone: "mute" as const, label: C.overview.responseEmpty },
+            detail: responseText
+              ? C.overview.characters.replace("{n}", responseText.toLocaleString("en-US"))
+              : undefined,
+            onOpen: () => setTab(sentThisRound ? "history" : "response"),
+          },
+        ]
+      : []),
+  ];
   return (
     <div className="space-y-5">
+      <AppBarSlot target="title">
+        {/* The case's own issue, once we know it: "Your case workspace" told the seller nothing. */}
+        <h1 className="truncate text-sm font-semibold text-foreground">{caseTitle}</h1>
+        {/* Each Amazon reply starts a new round; "R1" was shorthand only we used. */}
+        <span className="hidden shrink-0 font-mono text-xs sm:inline">
+          {C.round.replace("{n}", String(w.revision))}
+        </span>
+      </AppBarSlot>
+      <AppBarSlot target="actions">
+        <p
+          role="status"
+          className="flex max-w-[40vw] items-center gap-1.5 text-[0.8125rem] leading-tight text-muted-foreground sm:max-w-none"
+        >
+          {dirtyKeys.size === 0 && !busy && saved && (
+            <Check className="size-3.5 text-success" aria-hidden />
+          )}
+          {dirtyKeys.size > 0
+            ? "Unsaved changes — saving to this device…"
+            : busy
+              ? "Saving or processing…"
+              : saved
+                ? C.saved
+                : "Save each review to keep changes."}
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() => setNewCasePrompt(true)}
+          className="hidden sm:inline-flex"
+        >
+          <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+          New case
+        </Button>
+      </AppBarSlot>
       {/* Explains a case that has visibly changed shape since the seller last opened it. */}
       {migrationNote && (
         <Alert>
@@ -1049,33 +1199,6 @@ function WorkspaceInner({
           <AlertDescription>{migrationNote}</AlertDescription>
         </Alert>
       )}
-      <PageIntro
-        icon={FileSearch}
-        eyebrow={`Case workspace · ${w.marketplace === "US" ? "Amazon US" : "Marketplace to confirm"}`}
-        // The case's own issue, once we know it: "Your case workspace" told the seller nothing.
-        title={file.kind === "UNKNOWN" ? C.title : APP.violationKinds[file.kind]}
-        description={C.subtitle}
-        actions={
-          <>
-            <Badge variant="secondary" className="font-mono">
-              {/* Each Amazon reply starts a new round; "R1" was shorthand only we used. */}
-              {C.round.replace("{n}", String(w.revision))}
-            </Badge>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              onClick={() => setNewCasePrompt(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" aria-hidden />
-              New case
-            </Button>
-            <Button asChild size="sm" variant="outline">
-              <Link href="/dashboard">All cases</Link>
-            </Button>
-          </>
-        }
-      />
       {w.decodedNoticeHash && !w.confirmed && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-1 text-sm">
           <Check className="size-4 shrink-0 text-primary" aria-hidden />
@@ -1156,11 +1279,13 @@ function WorkspaceInner({
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_16rem]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_21.25rem]">
         <div className="min-w-0 space-y-5">
           <Tabs value={tab} onValueChange={setTab}>
+            {/* An underlined row, the way the public header marks the current page: the case reads
+                as one page with four views, not as a control panel. */}
             <TabsList
-              className="grid h-auto w-full grid-cols-4 rounded-2xl border border-border/70 bg-muted p-1.5"
+              className="flex h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b border-border bg-transparent p-0 [scrollbar-width:none]"
               aria-label="Case workspace views"
             >
               {Object.entries(C.tabs).map(([id, label]) => {
@@ -1169,7 +1294,7 @@ function WorkspaceInner({
                   <TabsTrigger
                     key={id}
                     value={id}
-                    className="flex min-h-12 min-w-0 flex-col items-center justify-center gap-1.5 rounded-lg px-1 py-2 text-xs data-[state=active]:text-primary sm:flex-row sm:gap-2 sm:px-2 sm:text-sm"
+                    className="-mb-px flex h-11 shrink-0 items-center gap-2 rounded-none border-b-2 border-transparent px-3 text-sm data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
                   >
                     <Icon className="size-4 shrink-0" aria-hidden />
                     {label}
@@ -1185,169 +1310,126 @@ function WorkspaceInner({
               {/* B-04: after two responses and another refusal, a different route, not a third copy. */}
               {shouldOfferChangeOfApproach(w) && <ChangeOfApproach />}
               {!w.confirmed || reviewRequest ? (
-                <RequestReview
-                  key={`${file.id}-${w.revision}-${reviewRequest}-${file.kind}`}
-                  workspace={w}
-                  kind={file.kind}
-                  busy={busy}
-                  onSave={confirmRequest}
-                  /*
+                <>
+                  {!w.confirmed && (
+                    <NextStepCard
+                      due={deadlineLines.find((d) => d.hot)?.text}
+                      title={C.overview.confirmTitle}
+                      body={C.overview.confirmBody}
+                    />
+                  )}
+                  <RequestReview
+                    key={`${file.id}-${w.revision}-${reviewRequest}-${file.kind}`}
+                    workspace={w}
+                    kind={file.kind}
+                    busy={busy}
+                    onSave={confirmRequest}
+                    /*
                     B-06: additive by construction. Rebuilding the list would delete records the
                     seller has already reviewed and linked a file to — punishing them for telling
                     us we read the notice wrong, which is the opposite of the point.
                   */
-                  onKindChange={(next) =>
-                    commit(
-                      (old) => ({
-                        ...old,
-                        requirements: requirementsAfterKindChange(
-                          old.requirements,
-                          next,
-                          old.dismissed,
-                        ),
-                        requirementsConfirmed: false,
-                      }),
-                      C.kindOverride.applied.replace("{kind}", APP.violationKinds[next]),
-                      undefined,
-                      // Marked as the seller's, so the classification that now runs on every route
-                      // confirmation never overwrites a correction they made on purpose.
-                      { kind: next, kindSetBy: "seller" },
-                    )
-                  }
-                  /*
+                    onKindChange={(next) =>
+                      commit(
+                        (old) => ({
+                          ...old,
+                          requirements: requirementsAfterKindChange(
+                            old.requirements,
+                            next,
+                            old.dismissed,
+                          ),
+                          requirementsConfirmed: false,
+                        }),
+                        C.kindOverride.applied.replace("{kind}", APP.violationKinds[next]),
+                        undefined,
+                        // Marked as the seller's, so the classification that now runs on every route
+                        // confirmation never overwrites a correction they made on purpose.
+                        { kind: next, kindSetBy: "seller" },
+                      )
+                    }
+                    /*
                     #91 needs a save that keeps the whole workspace. `confirmRequest` deliberately
                     enumerates the fields a route confirmation may change and re-uses `old` for the
                     rest — including `submissions` — so putting a recorded prior attempt through it
                     would drop it on the way to the vault.
                   */
-                  onCommitWorkspace={(updated) =>
-                    commit(() => updated, "Recorded a response sent before this case was created.")
-                  }
-                  draft={w.draft}
-                  onDraftChange={setDraftField}
-                />
+                    onCommitWorkspace={(updated) =>
+                      commit(
+                        () => updated,
+                        "Recorded a response sent before this case was created.",
+                      )
+                    }
+                    draft={w.draft}
+                    onDraftChange={setDraftField}
+                  />
+                </>
               ) : (
                 <>
-                  <Card className="stage stage-plain dark border-0 text-foreground shadow-lift">
-                    <CardHeader>
-                      <div className="flex items-center gap-2 text-primary">
-                        <FileSearch className="h-4 w-4" aria-hidden />
-                        <p className="text-eyebrow">Next action</p>
-                      </div>
-                      <CardTitle as="h2" className="text-xl">
-                        {gated
-                          ? "Get professional help with this allegation"
-                          : replyPending
-                            ? C.replyPending.title
-                            : awaiting
-                              ? "Keep the next reply with this attempt"
-                              : w.protocol === "information"
-                                ? "No new response is requested"
-                                : !workspaceCanCompose(w)
-                                  ? "Clarify the requested response"
-                                  : next
-                                    ? next.status === "waiting"
-                                      ? "Continue while you wait"
-                                      : `Review ${next.label}`
-                                    : !w.requirementsConfirmed
-                                      ? "Check the requested records"
-                                      : "Prepare your factual response"}
-                      </CardTitle>
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        {gated
-                          ? C.unsupported
-                          : replyPending
-                            ? C.replyPending.body
-                            : awaiting
-                              ? "Your submitted text and document references are preserved in History. Add a reply when one arrives."
-                              : next
-                                ? next.status === "waiting"
-                                  ? C.waitingHelp
-                                  : "Read the original, record what it supports, and resolve anything unclear."
-                                : route.reason}
-                      </p>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap gap-3">
-                      <Button
-                        onClick={() =>
-                          setTab(
-                            replyPending || awaiting || !workspaceCanCompose(w)
-                              ? "history"
-                              : next || !w.requirementsConfirmed
-                                ? "evidence"
-                                : "response",
-                          )
-                        }
-                      >
-                        {replyPending
-                          ? C.replyPending.cta
+                  <NextStepCard
+                    due={deadlineLines.find((d) => d.hot)?.text}
+                    aside={
+                      next && !gated && !replyPending && !awaiting ? (
+                        <NextRecordPaper requirement={next} />
+                      ) : undefined
+                    }
+                    title={
+                      gated
+                        ? "Get professional help with this allegation"
+                        : replyPending
+                          ? C.replyPending.title
                           : awaiting
-                            ? "Add a reply"
-                            : !workspaceCanCompose(w)
-                              ? "View case notes"
-                              : next || !w.requirementsConfirmed
-                                ? "Review evidence plan"
-                                : "Review response facts"}
-                        <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
-                      </Button>
-                      <Button variant="outline" onClick={() => setReviewRequest(true)}>
-                        {C.reviewNotice}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle as="h2" className="text-base">
-                        Your plan
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ol className="space-y-4">
-                        <li className="flex items-start gap-3">
-                          <Check className="mt-0.5 h-4 w-4 text-primary" aria-hidden />
-                          <div>
-                            <p className="text-sm font-medium">Understand the request</p>
-                            <p className="text-xs text-muted-foreground">
-                              {PROTOCOL_LABELS[w.protocol]}
-                            </p>
-                          </div>
-                        </li>
-                        {w.requirements.map((r) => (
-                          <li
-                            className="flex items-start justify-between gap-3 border-t border-border pt-3"
-                            key={r.id}
-                          >
-                            <div className="flex items-start gap-3">
-                              <ListChecks
-                                className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
-                                aria-hidden
-                              />
-                              <button
-                                className="text-left text-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                onClick={() => setTab("evidence")}
-                              >
-                                {r.label}
-                              </button>
-                            </div>
-                            <Badge variant={r.status === "reviewed" ? "success" : "secondary"}>
-                              {C.status[r.status]}
-                            </Badge>
-                          </li>
-                        ))}
-                        <li className="flex items-start gap-3 border-t border-border pt-3">
-                          <FileText className="mt-0.5 h-4 w-4 text-muted-foreground" aria-hidden />
-                          <div>
-                            <p className="text-sm font-medium">
-                              Respond through the official channel
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              You review the wording and control submission.
-                            </p>
-                          </div>
-                        </li>
-                      </ol>
-                    </CardContent>
-                  </Card>
+                            ? "Keep the next reply with this attempt"
+                            : w.protocol === "information"
+                              ? "No new response is requested"
+                              : !workspaceCanCompose(w)
+                                ? "Clarify the requested response"
+                                : next
+                                  ? next.status === "waiting"
+                                    ? "Continue while you wait"
+                                    : `Review ${next.label}`
+                                  : !w.requirementsConfirmed
+                                    ? "Check the requested records"
+                                    : "Prepare your factual response"
+                    }
+                    body={
+                      gated
+                        ? C.unsupported
+                        : replyPending
+                          ? C.replyPending.body
+                          : awaiting
+                            ? "Your submitted text and document references are preserved in History. Add a reply when one arrives."
+                            : next
+                              ? next.status === "waiting"
+                                ? C.waitingHelp
+                                : "Read the original, record what it supports, and resolve anything unclear."
+                              : route.reason
+                    }
+                    actions={
+                      <>
+                        <Button onClick={() => setTab(nextTab)}>
+                          {replyPending
+                            ? C.replyPending.cta
+                            : awaiting
+                              ? "Add a reply"
+                              : !workspaceCanCompose(w)
+                                ? "View case notes"
+                                : next || !w.requirementsConfirmed
+                                  ? "Review evidence plan"
+                                  : "Review response facts"}
+                          <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+                        </Button>
+                        <Button variant="outline" onClick={() => setReviewRequest(true)}>
+                          {C.reviewNotice}
+                        </Button>
+                      </>
+                    }
+                  />
+                  {/* The route itself, said once, then everything that has to be done for it. */}
+                  <p className="px-1 text-[0.8125rem] text-muted-foreground">
+                    {PROTOCOL_LABELS[w.protocol]} · You review the wording and send it yourself
+                    through Amazon’s own page.
+                  </p>
+                  {checklistRows.length > 0 && <CaseChecklist rows={checklistRows} />}
                 </>
               )}
             </TabsContent>
@@ -1358,15 +1440,9 @@ function WorkspaceInner({
             >
               <Card>
                 <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <IconTile icon={FolderOpen} tone="warning" />
-                    <div>
-                      <p className="text-eyebrow text-muted-foreground">02 / Evidence</p>
-                      <CardTitle as="h2" className="mt-1 text-lg">
-                        Requested records
-                      </CardTitle>
-                    </div>
-                  </div>
+                  <CardTitle as="h2" className="text-[1.375rem] tracking-[-0.025em]">
+                    Requested records
+                  </CardTitle>
                   <p className="text-sm text-muted-foreground">
                     Attach originals. Review each record. Note what it supports.
                   </p>
@@ -1596,15 +1672,9 @@ function WorkspaceInner({
             >
               <Card>
                 <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <IconTile icon={History} tone="info" />
-                    <div>
-                      <p className="text-eyebrow text-muted-foreground">04 / History</p>
-                      <CardTitle as="h2" className="mt-1 text-lg">
-                        Submissions and replies
-                      </CardTitle>
-                    </div>
-                  </div>
+                  <CardTitle as="h2" className="text-[1.375rem] tracking-[-0.025em]">
+                    Submissions and replies
+                  </CardTitle>
                   <p className="text-sm text-muted-foreground">
                     Earlier attempts stay unchanged when you revise the plan.
                   </p>
@@ -1879,138 +1949,74 @@ function WorkspaceInner({
             </TabsContent>
           </Tabs>
         </div>
-        <aside className="space-y-4 lg:sticky lg:top-24" aria-label="Case context">
-          <Card className="overflow-hidden">
-            <CardHeader className="pb-3">
-              <CardTitle as="h2" className="text-xsr text-muted-foreground">
-                Case snapshot
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3">
-                <IconTile icon={FileSearch} tone="info" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Requested route</p>
-                  <p className="mt-1 text-sm font-semibold text-foreground">
-                    {PROTOCOL_LABELS[w.protocol]}
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-lg bg-primary/5 px-3 py-2.5 ring-1 ring-inset ring-primary/15">
-                <p className="text-xs text-muted-foreground">Current focus</p>
-                <p className="mt-1 text-sm font-medium text-foreground">
-                  {gated
-                    ? "Professional review"
-                    : awaiting
-                      ? "Awaiting a reply"
-                      : !w.confirmed
-                        ? "Confirm the request"
-                        : next
-                          ? C.status[next.status]
-                          : gaps.length
-                            ? "Review remaining items"
-                            : "Final factual review"}
+        <aside className="space-y-5 xl:sticky xl:top-[5.25rem]" aria-label="Case context">
+          <CaseTimeline
+            workspace={w}
+            createdAt={file.createdAt}
+            deadlines={deadlineLines}
+            action={
+              w.confirmed && !gated ? (
+                <Button size="sm" variant="outline" onClick={() => setTab("history")}>
+                  {C.overview.timeline.replyAgain}
+                </Button>
+              ) : undefined
+            }
+          >
+            <SellerDeadlineField
+              key={file.deadlines?.find((d) => d.setBy === "seller")?.dueOn ?? "none"}
+              entered={file.deadlines?.find((d) => d.setBy === "seller")}
+              busy={busy}
+              onSave={(dueOn) =>
+                commit(
+                  (old) => old,
+                  C.sellerDeadline.saved.replace("{date}", formatDay(dueOn)),
+                  undefined,
+                  {
+                    keepState: true,
+                    deadlines: [
+                      ...(fileRef.current?.deadlines ?? []).filter((d) => d.setBy !== "seller"),
+                      sellerDeadline(dueOn),
+                    ],
+                  },
+                )
+              }
+              onRemove={() =>
+                commit((old) => old, C.sellerDeadline.removed, undefined, {
+                  keepState: true,
+                  deadlines: (fileRef.current?.deadlines ?? []).filter((d) => d.setBy !== "seller"),
+                })
+              }
+            />
+          </CaseTimeline>
+          <div className="rounded-[18px] bg-card p-5 shadow-card ring-1 ring-inset ring-border">
+            <div className="flex items-center gap-3.5">
+              <Image
+                src="/illustrations/vault.svg"
+                alt=""
+                width={64}
+                height={54}
+                className="h-auto w-16 shrink-0"
+                unoptimized
+              />
+              <div className="min-w-0 text-[0.84375rem]">
+                <p className="text-sm font-semibold">
+                  {records.length === 0
+                    ? C.overview.noFiles
+                    : records.length === 1
+                      ? C.overview.oneFile
+                      : C.overview.files.replace("{n}", String(records.length))}
+                </p>
+                <p className="text-muted-foreground">
+                  {C.local}.{" "}
+                  <Link
+                    href="/vault"
+                    className="font-medium text-link underline underline-offset-4"
+                  >
+                    {C.overview.openVault}
+                  </Link>
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  className="rounded-lg border border-border/80 bg-surface-2/50 p-3 text-left transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  onClick={() => setTab("evidence")}
-                >
-                  <FolderOpen className="mb-2 size-4 text-warning" aria-hidden />
-                  <span className="block font-mono text-xl font-medium text-foreground">
-                    {w.requirements.filter((r) => r.status === "reviewed").length}
-                    <span className="text-sm text-muted-foreground">
-                      {" "}
-                      / {w.requirements.length}
-                    </span>
-                  </span>
-                  <span className="mt-1 block text-xs">Records reviewed</span>
-                </button>
-                <button
-                  className="rounded-lg border border-border/80 bg-surface-2/50 p-3 text-left transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  onClick={() => setTab("history")}
-                >
-                  <History className="mb-2 size-4 text-info" aria-hidden />
-                  <span className="block font-mono text-xl font-medium text-foreground">
-                    {w.submissions.length}
-                  </span>
-                  <span className="mt-1 block text-xs">Submissions</span>
-                </button>
-              </div>
-              <div className="flex items-start gap-2 rounded-lg border border-warning/20 bg-warning/5 p-3">
-                <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
-                <div>
-                  <p className="mb-1 text-xs font-semibold text-foreground">Time window</p>
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    {file.deadlines?.length
-                      ? deadlinesForDisplay(file.deadlines)
-                          .map((d) =>
-                            d.isIndefinite
-                              ? `${d.label} — no countdown to track`
-                              : d.dueOn
-                                ? // The day as the notice gives it; a stated date is already in
-                                  // its own label ("Appeal by 1 Oct 2026").
-                                  d.startsOn
-                                  ? `${d.label}, closes ${formatDay(d.dueOn)}`
-                                  : d.label
-                                : d.dueAt
-                                  ? `${d.label}: ${formatDate(d.dueAt)}`
-                                  : d.startsOnReceipt
-                                    ? // Amazon gave the length; the notice did not carry its date.
-                                      `${d.label}, from the day you received this notice`
-                                    : `${d.label} · confirm the date in Account Health`,
-                          )
-                          .join(" · ")
-                      : "No confirmed deadline recorded. Check your current notice."}
-                  </p>
-                  <SellerDeadlineField
-                    key={file.deadlines?.find((d) => d.setBy === "seller")?.dueOn ?? "none"}
-                    entered={file.deadlines?.find((d) => d.setBy === "seller")}
-                    busy={busy}
-                    onSave={(dueOn) =>
-                      commit(
-                        (old) => old,
-                        C.sellerDeadline.saved.replace("{date}", formatDay(dueOn)),
-                        undefined,
-                        {
-                          keepState: true,
-                          deadlines: [
-                            ...(fileRef.current?.deadlines ?? []).filter(
-                              (d) => d.setBy !== "seller",
-                            ),
-                            sellerDeadline(dueOn),
-                          ],
-                        },
-                      )
-                    }
-                    onRemove={() =>
-                      commit((old) => old, C.sellerDeadline.removed, undefined, {
-                        keepState: true,
-                        deadlines: (fileRef.current?.deadlines ?? []).filter(
-                          (d) => d.setBy !== "seller",
-                        ),
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <div className="rounded-lg border border-border/70 bg-surface-1/70 p-4">
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-              <ShieldCheck className="h-4 w-4 text-primary" aria-hidden />
-              {C.local}
             </div>
-            <p role="status" className="mt-3 text-xs text-muted-foreground">
-              {dirtyKeys.size > 0
-                ? "Unsaved changes — saving to this device…"
-                : busy
-                  ? "Saving or processing…"
-                  : saved
-                    ? C.saved
-                    : "Save each review to keep changes."}
-            </p>
             <DetailDisclosure
               title="Storage & privacy"
               className="mt-3 border-0 bg-transparent [&>summary]:px-0 [&>div]:px-0 [&>div]:text-xs"
@@ -2029,6 +2035,22 @@ function WorkspaceInner({
                 to move work to your account vault.
               </p>
             )}
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
+              <Button asChild size="sm" variant="outline">
+                <Link href="/dashboard">{C.overview.allCases}</Link>
+              </Button>
+              {/* The bar's "New case" is hidden on a phone, where the bar has no room for it. */}
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() => setNewCasePrompt(true)}
+                className="sm:hidden"
+              >
+                <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+                New case
+              </Button>
+            </div>
           </div>
         </aside>
       </div>

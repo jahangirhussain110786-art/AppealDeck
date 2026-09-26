@@ -69,6 +69,9 @@ import type { LicenseSummary } from "@/lib/license";
 import type { EvidenceKind } from "@/core";
 import { cn } from "@/lib/utils";
 import { WorkspaceSummary } from "@/components/workspace/WorkspaceSummary";
+import { DashboardCases, DashboardWelcome } from "@/components/DashboardCases";
+import { loadCaseSummaries, type CaseSummary } from "@/lib/caseSummary";
+import { usePublishCases } from "@/components/CaseListContext";
 
 interface ReplyAnalysis {
   category: ReplyCategory;
@@ -233,6 +236,11 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
   const [submitting, setSubmitting] = useState(false);
 
   const [cases, setCases] = useState<CaseIndexEntry[]>([]);
+  /** Null until the vault has been read, so the greeting never claims nothing is due too early. */
+  const [summaries, setSummaries] = useState<CaseSummary[] | null>(null);
+  const [switching, setSwitching] = useState<string | null>(null);
+  const openCase = useCallback((id: string) => setActiveCaseId(vault, id), [vault]);
+  usePublishCases(summaries, openCase);
   const [clockBrief, setClockBrief] = useState<ClockBrief | null>(null);
   /**
    * AA-40: `lastSeenAt` must be stamped exactly once per visit, and only AFTER the brief has been
@@ -247,6 +255,8 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
       const stored = await loadCaseFile(vault);
       const file = stored ? await withCaseEvidence(vault, stored) : null;
       setCases(await listCases(vault));
+      // Each card reads its own case, so a case that is not current still says what it needs.
+      setSummaries(await loadCaseSummaries(vault, file?.id ?? null));
       const log = file ? await loadCaseLog(vault) : null;
       // Real evidence documents only — case-file/case-log bookkeeping records share the same
       // vault under kind "case" and aren't something a seller thinks of as "a file I uploaded".
@@ -313,6 +323,8 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
           await ensureFreshGuestSession(vault, signedIn);
           const unlocked = await openVaultForVisitor(vault);
           if (!cancelled && unlocked) await loadFromVault();
+          // A visitor with nothing saved has no vault to read: they have no cases, and are told so.
+          else if (!cancelled) setSummaries([]);
           return;
         }
         await vault.open();
@@ -495,421 +507,453 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
       attemptCount: file.workspace!.submissions.length,
     };
     const awaitingAmazon = file.state === "SUBMITTED";
+    const select = async (id: string) => {
+      setSwitching(id);
+      try {
+        await setActiveCaseId(vault, id);
+        await loadFromVault();
+      } catch {
+        toast.error("Could not switch cases");
+      } finally {
+        setSwitching(null);
+      }
+    };
     return (
       <div className="animate-fade-in space-y-6">
+        {summaries && summaries.length > 0 && (
+          <DashboardCases
+            summaries={summaries}
+            busy={switching !== null}
+            switching={switching}
+            onSelect={(id) => void select(id)}
+            onReopen={(id) => {
+              void archiveCase(id, false).then((ok) => (ok ? select(id) : undefined));
+            }}
+          />
+        )}
         <ClockBriefCard brief={clockBrief} undated={undatedWindows(file.deadlines)} />
         {!log.resolution && (!awaitingAmazon || log.waitingOn) && (
           <WaitingOnCard log={log} onSaveLog={saveWorkspaceLog} />
         )}
         <WorkspaceSummary
           file={file}
-          cases={cases}
           log={caseLog}
           signedIn={signedIn}
           onSaveLog={saveWorkspaceLog}
           onArchive={archiveCase}
           onDelete={() => removeCase(file)}
-          onSelect={async (id) => {
-            try {
-              await setActiveCaseId(vault, id);
-              await loadFromVault();
-            } catch {
-              toast.error("Could not switch cases");
-            }
-          }}
         />
       </div>
     );
   };
 
-  if (!signedIn) {
-    if (!caseFile) {
+  const renderBody = () => {
+    if (!signedIn) {
+      if (!caseFile) {
+        return (
+          <div className="animate-fade-in space-y-6">
+            <EmptyState
+              icon={FileText}
+              title={APP.access.dashboardSignedOut.emptyTitle}
+              description={APP.access.dashboardSignedOut.emptyDesc}
+              action={
+                <div className="flex flex-wrap justify-center gap-3">
+                  <Button asChild variant="outline">
+                    <Link href="/decode">{APP.access.dashboardSignedOut.decode}</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link href="/case">{APP.access.dashboardSignedOut.start}</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link href="/login?next=/dashboard">{SHARED.nav.signIn}</Link>
+                  </Button>
+                </div>
+              }
+            />
+          </div>
+        );
+      }
+
+      if (caseFile.workspace) return renderWorkspace(caseFile);
+      const draftLog: CaseLog = caseLog ?? {
+        state: caseFile.state,
+        attemptCount: caseFile.attemptCount,
+      };
+      const draftCtx = buildContext(caseFile, draftLog);
+      const draftCurrent: CaseState = draftLog.state;
+      const draftNext = nextState(draftCtx, draftCurrent);
+      const draftReadiness = computeReadiness(caseFile);
+      const draftActions = nextBestActions(
+        draftNext,
+        missingLabelsFor(
+          draftNext,
+          draftReadiness.missing.map((m) => m.kind),
+          draftLog.lastReply?.extractedAsks,
+        ),
+      );
+
       return (
         <div className="animate-fade-in space-y-6">
-          <EmptyState
-            icon={FileText}
-            title={APP.access.dashboardSignedOut.emptyTitle}
-            description={APP.access.dashboardSignedOut.emptyDesc}
-            action={
-              <div className="flex flex-wrap justify-center gap-3">
-                <Button asChild variant="outline">
-                  <Link href="/decode">{APP.access.dashboardSignedOut.decode}</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="/case">{APP.access.dashboardSignedOut.start}</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="/login?next=/dashboard">{SHARED.nav.signIn}</Link>
-                </Button>
-              </div>
-            }
+          <h2 className="text-h3 text-foreground">{APP.access.dashboardSignedOut.title}</h2>
+          <div className="flex items-center gap-2">
+            <CaseStateBadge kind={caseFile.kind} />
+            <span className="text-sm font-medium">{APP.dashboard.stateLabels[draftCurrent]}</span>
+          </div>
+
+          <ReadinessCard
+            score={draftReadiness.score}
+            missingKinds={draftReadiness.missing.map((m) => m.kind)}
           />
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{APP.dashboard.actions.nextBestActions}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                {draftActions.map((action, i) => (
+                  <li key={i}>{action}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          <CasePreview kind={caseFile.kind} caseFile={caseFile} />
+
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-5">
+              <p className="text-sm text-muted-foreground">
+                {APP.access.dashboardSignedOut.draftNote}
+              </p>
+              <Button asChild>
+                <Link href="/login?next=/dashboard">{APP.access.keepCaseLink}</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       );
     }
 
-    if (caseFile.workspace) return renderWorkspace(caseFile);
-    const draftLog: CaseLog = caseLog ?? {
-      state: caseFile.state,
-      attemptCount: caseFile.attemptCount,
-    };
-    const draftCtx = buildContext(caseFile, draftLog);
-    const draftCurrent: CaseState = draftLog.state;
-    const draftNext = nextState(draftCtx, draftCurrent);
-    const draftReadiness = computeReadiness(caseFile);
-    const draftActions = nextBestActions(
-      draftNext,
-      missingLabelsFor(
-        draftNext,
-        draftReadiness.missing.map((m) => m.kind),
-        draftLog.lastReply?.extractedAsks,
-      ),
-    );
-
     return (
-      <div className="animate-fade-in space-y-6">
-        <h2 className="text-h3 text-foreground">{APP.access.dashboardSignedOut.title}</h2>
-        <div className="flex items-center gap-2">
-          <CaseStateBadge kind={caseFile.kind} />
-          <span className="text-sm font-medium">{APP.dashboard.stateLabels[draftCurrent]}</span>
-        </div>
+      <VaultGate
+        vault={vault}
+        deviceMode
+        autoUnlock
+        onUnlocked={() => {
+          void loadFromVault();
+        }}
+        onLocked={() => {
+          setCaseFile(null);
+          setCaseLog(null);
+          setReplyText("");
+          setReplyResult(null);
+        }}
+      >
+        {() => {
+          if (!caseFile) {
+            return (
+              <div className="animate-fade-in space-y-4">
+                <PassStatusRow license={license} />
+                <EmptyState
+                  icon={FileText}
+                  title={APP.dashboard.caseSummary.noCase.title}
+                  description={APP.dashboard.caseSummary.noCase.description}
+                  action={
+                    <Button asChild>
+                      <Link href="/case">{APP.dashboard.caseSummary.noCase.cta}</Link>
+                    </Button>
+                  }
+                />
+              </div>
+            );
+          }
 
-        <ReadinessCard
-          score={draftReadiness.score}
-          missingKinds={draftReadiness.missing.map((m) => m.kind)}
-        />
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{APP.dashboard.actions.nextBestActions}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-              {draftActions.map((action, i) => (
-                <li key={i}>{action}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        <CasePreview kind={caseFile.kind} caseFile={caseFile} />
-
-        <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-5">
-            <p className="text-sm text-muted-foreground">
-              {APP.access.dashboardSignedOut.draftNote}
-            </p>
-            <Button asChild>
-              <Link href="/login?next=/dashboard">{APP.access.keepCaseLink}</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <VaultGate
-      vault={vault}
-      deviceMode
-      autoUnlock
-      onUnlocked={() => {
-        void loadFromVault();
-      }}
-      onLocked={() => {
-        setCaseFile(null);
-        setCaseLog(null);
-        setReplyText("");
-        setReplyResult(null);
-      }}
-    >
-      {() => {
-        if (!caseFile) {
-          return (
-            <div className="animate-fade-in space-y-4">
-              <PassStatusRow license={license} />
-              <EmptyState
-                icon={FileText}
-                title={APP.dashboard.caseSummary.noCase.title}
-                description={APP.dashboard.caseSummary.noCase.description}
-                action={
-                  <Button asChild>
-                    <Link href="/case">{APP.dashboard.caseSummary.noCase.cta}</Link>
-                  </Button>
-                }
-              />
-            </div>
-          );
-        }
-
-        if (caseFile.workspace) return renderWorkspace(caseFile);
-        const currentLog: CaseLog = caseLog ?? {
-          state: caseFile.state,
-          attemptCount: caseFile.attemptCount,
-        };
-        const ctx = buildContext(caseFile, currentLog);
-        const current: CaseState = currentLog.state;
-        const next = nextState(ctx, current);
-        const readiness = computeReadiness(caseFile);
-        const actions = nextBestActions(
-          next,
-          missingLabelsFor(
+          if (caseFile.workspace) return renderWorkspace(caseFile);
+          const currentLog: CaseLog = caseLog ?? {
+            state: caseFile.state,
+            attemptCount: caseFile.attemptCount,
+          };
+          const ctx = buildContext(caseFile, currentLog);
+          const current: CaseState = currentLog.state;
+          const next = nextState(ctx, current);
+          const readiness = computeReadiness(caseFile);
+          const actions = nextBestActions(
             next,
-            readiness.missing.map((m) => m.kind),
-            currentLog.lastReply?.extractedAsks,
-          ),
-        );
-        const expCopy = expectationsCopy(next);
-        const noticeDate = caseFile.timelineEvents[0]?.date ?? null;
-        const isNoveltyRequired = noveltyRequired(currentLog.attemptCount);
+            missingLabelsFor(
+              next,
+              readiness.missing.map((m) => m.kind),
+              currentLog.lastReply?.extractedAsks,
+            ),
+          );
+          const expCopy = expectationsCopy(next);
+          const noticeDate = caseFile.timelineEvents[0]?.date ?? null;
+          const isNoveltyRequired = noveltyRequired(currentLog.attemptCount);
 
-        return (
-          <div className="animate-fade-in space-y-6">
-            {/* AA-40: the clock speaks before anything else on the page. */}
-            <ClockBriefCard brief={clockBrief} undated={undatedWindows(caseFile.deadlines)} />
-            <PassStatusRow license={license} />
-            {cases.length > 1 && (
-              <label className="block text-sm">
-                Current case
-                <select
-                  className="ml-2 h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  value={caseFile.id}
-                  onChange={(event) => {
-                    void setActiveCaseId(vault, event.target.value)
-                      .then(loadFromVault)
-                      .catch(() => toast.error("Could not switch cases"));
-                  }}
-                >
-                  {cases.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.kind.replaceAll("_", " ")} · {formatDate(c.createdAt)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            {ctx.submitted && !ctx.hasReply && (
-              <ReminderControl
-                caseId={caseFile.id}
-                kind={caseFile.kind}
-                log={currentLog}
-                signedIn={signedIn}
-                onSaveLog={saveWorkspaceLog}
-              />
-            )}
-            {/*
+          return (
+            <div className="animate-fade-in space-y-6">
+              {/* AA-40: the clock speaks before anything else on the page. */}
+              <ClockBriefCard brief={clockBrief} undated={undatedWindows(caseFile.deadlines)} />
+              <PassStatusRow license={license} />
+              {cases.length > 1 && (
+                <label className="block text-sm">
+                  Current case
+                  <select
+                    className="ml-2 h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    value={caseFile.id}
+                    onChange={(event) => {
+                      void setActiveCaseId(vault, event.target.value)
+                        .then(loadFromVault)
+                        .catch(() => toast.error("Could not switch cases"));
+                    }}
+                  >
+                    {cases.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.kind.replaceAll("_", " ")} · {formatDate(c.createdAt)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {ctx.submitted && !ctx.hasReply && (
+                <ReminderControl
+                  caseId={caseFile.id}
+                  kind={caseFile.kind}
+                  log={currentLog}
+                  signedIn={signedIn}
+                  onSaveLog={saveWorkspaceLog}
+                />
+              )}
+              {/*
               AA-40: a case blocked on a supplier used to sit in "Evidence gathering", which reads
               as the seller not having done their homework. Recording who they are waiting on moves
               it to WAITING_THIRD_PARTY and gives the clock a date to chase.
             */}
-            {(!ctx.submitted || currentLog.waitingOn) && (
-              <WaitingOnCard log={currentLog} onSaveLog={saveWorkspaceLog} />
-            )}
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <CaseStateBadge kind={caseFile.kind} />
-                  <span className="text-sm font-medium">{APP.dashboard.stateLabels[next]}</span>
-                </div>
-                {expCopy && <p className="text-sm text-muted-foreground">{expCopy}</p>}
-              </div>
-            </div>
-
-            <ReadinessCard
-              score={readiness.score}
-              missingKinds={readiness.missing.map((m) => m.kind)}
-            />
-
-            <EvidenceActivityCard records={evidenceRecords} />
-
-            {noticeDate && (
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  <span
-                    data-tn
-                    className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-1 font-mono text-xs tabular-nums text-foreground"
-                  >
-                    {APP.dashboard.deadlines.noticeReceived} · {formatDate(noticeDate)}
-                  </span>
-                  {caseFile.deadlines && caseFile.deadlines.length > 0 ? (
-                    <DeadlineChipList deadlines={deadlinesForDisplay(caseFile.deadlines)} />
-                  ) : (
-                    <DeadlineChip
-                      deadline={{
-                        kind: "appeal_window",
-                        dueAt: null,
-                        label: APP.dashboard.deadlines.appealWindow,
-                      }}
-                    />
-                  )}
-                </div>
-                {(!caseFile.deadlines || caseFile.deadlines.length === 0) && (
-                  <p className="text-xs text-muted-foreground">
-                    <Link href="/decode" className="underline underline-offset-4">
-                      {APP.dashboard.deadlines.decoderHint}
-                    </Link>
-                  </p>
-                )}
-              </div>
-            )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{APP.dashboard.actions.nextBestActions}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ol className="list-decimal space-y-2 pl-5 text-sm">
-                  {actions.map((action) => (
-                    <li key={action}>{action}</li>
-                  ))}
-                </ol>
-                <Button asChild className="mt-4">
-                  <Link
-                    href={
-                      next === "SUBMITTED" || next === "REVISION" || next === "APPROVED"
-                        ? "/compose"
-                        : "/case"
-                    }
-                  >
-                    {next === "SUBMITTED" || next === "REVISION" || next === "APPROVED"
-                      ? APP.dashboard.actions.reviewPoa
-                      : APP.dashboard.actions.continueCase}
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {isNoveltyRequired && (
-              <Card className="border-warning/40 bg-warning/5">
-                <CardContent className="pt-5">
-                  <div className="flex items-start gap-3">
-                    <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
-                    <div>
-                      <h3 className="font-medium text-foreground">{APP.dashboard.novelty.title}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {APP.dashboard.novelty.description}
-                      </p>
-                    </div>
+              {(!ctx.submitted || currentLog.waitingOn) && (
+                <WaitingOnCard log={currentLog} onSaveLog={saveWorkspaceLog} />
+              )}
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="mb-2 flex items-center gap-2">
+                    <CaseStateBadge kind={caseFile.kind} />
+                    <span className="text-sm font-medium">{APP.dashboard.stateLabels[next]}</span>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  {expCopy && <p className="text-sm text-muted-foreground">{expCopy}</p>}
+                </div>
+              </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
-              <Card data-no-print>
-                <CardHeader>
-                  <CardTitle className="text-base">{APP.dashboard.replyCard.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {APP.dashboard.replyCard.description}
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  {!replyResult ? (
-                    <div className="space-y-3">
-                      <Textarea
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        spellCheck={false}
-                        placeholder={APP.dashboard.replyCard.placeholder}
-                        rows={4}
+              <ReadinessCard
+                score={readiness.score}
+                missingKinds={readiness.missing.map((m) => m.kind)}
+              />
+
+              <EvidenceActivityCard records={evidenceRecords} />
+
+              {noticeDate && (
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <span
+                      data-tn
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-1 font-mono text-xs tabular-nums text-foreground"
+                    >
+                      {APP.dashboard.deadlines.noticeReceived} · {formatDate(noticeDate)}
+                    </span>
+                    {caseFile.deadlines && caseFile.deadlines.length > 0 ? (
+                      <DeadlineChipList deadlines={deadlinesForDisplay(caseFile.deadlines)} />
+                    ) : (
+                      <DeadlineChip
+                        deadline={{
+                          kind: "appeal_window",
+                          dueAt: null,
+                          label: APP.dashboard.deadlines.appealWindow,
+                        }}
                       />
-                      <Button
-                        onClick={analyzeReply}
-                        disabled={busy || !replyText.trim()}
-                        variant="outline"
-                        size="sm"
-                      >
-                        {busy ? (
-                          <>
-                            <Loader2 className="size-4 animate-spin" />
-                            {APP.dashboard.replyCard.analyzing}
-                          </>
-                        ) : (
-                          <>
-                            <Send className="size-4" />
-                            {APP.dashboard.replyCard.submit}
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="animate-fade-in space-y-3">
-                      <p>
-                        {APP.dashboard.replyCard.markedAs}{" "}
-                        <ReplyCategoryLabel category={replyResult.category} />
-                      </p>
-                      {replyResult.extractedAsks.length > 0 && (
-                        <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                          {replyResult.extractedAsks.map((ask, i) => (
-                            <li key={i}>{APP.evidenceKinds[ask]}</li>
-                          ))}
-                        </ul>
-                      )}
-                      <div className="flex gap-2">
-                        <Button onClick={confirmReply} variant="outline" size="sm">
-                          {APP.dashboard.replyCard.updateButton}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setReplyResult(null);
-                            setReplyText("");
-                          }}
-                        >
-                          {APP.dashboard.replyCard.cancelButton}
-                        </Button>
-                      </div>
-                    </div>
+                    )}
+                  </div>
+                  {(!caseFile.deadlines || caseFile.deadlines.length === 0) && (
+                    <p className="text-xs text-muted-foreground">
+                      <Link href="/decode" className="underline underline-offset-4">
+                        {APP.dashboard.deadlines.decoderHint}
+                      </Link>
+                    </p>
                   )}
-                </CardContent>
-              </Card>
-
-              {caseFile &&
-                caseLog?.lastReply &&
-                !caseLog.outcomePromptResolved &&
-                (() => {
-                  const outcome = outcomeFromReplyCategory(caseLog.lastReply.category);
-                  if (!outcome) return null;
-                  const record = buildOutcomeRecord({
-                    kind: caseFile.kind,
-                    marketplace: "unknown",
-                    docType: defaultDocumentType(caseFile.kind),
-                    attempts: caseLog.attemptCount,
-                    readinessAtSubmit:
-                      caseLog.readinessAtSubmit ??
-                      Math.round(computeReadiness(caseFile).score * 100),
-                    outcome,
-                    submittedAt: caseLog.submittedAt ?? caseLog.lastReply.at,
-                    outcomeAt: caseLog.lastReply.at,
-                  });
-                  return <OutcomeShareCard record={record} onResolved={resolveOutcomePrompt} />;
-                })()}
+                </div>
+              )}
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">{APP.dashboard.submitCard.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {APP.dashboard.submitCard.description}
-                  </p>
+                  <CardTitle className="text-base">
+                    {APP.dashboard.actions.nextBestActions}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Button onClick={markSubmitted} disabled={submitting} variant="outline" size="sm">
-                    {submitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-                    {APP.dashboard.submitCard.button}
+                  <ol className="list-decimal space-y-2 pl-5 text-sm">
+                    {actions.map((action) => (
+                      <li key={action}>{action}</li>
+                    ))}
+                  </ol>
+                  <Button asChild className="mt-4">
+                    <Link
+                      href={
+                        next === "SUBMITTED" || next === "REVISION" || next === "APPROVED"
+                          ? "/compose"
+                          : "/case"
+                      }
+                    >
+                      {next === "SUBMITTED" || next === "REVISION" || next === "APPROVED"
+                        ? APP.dashboard.actions.reviewPoa
+                        : APP.dashboard.actions.continueCase}
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
-            </div>
 
-            <HonestExpectationsCard
-              summary={GLOBAL_EXPECTATIONS.typicalNote}
-              weDo={GLOBAL_EXPECTATIONS.whatWeDo}
-              weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
-            />
-          </div>
-        );
-      }}
-    </VaultGate>
+              {isNoveltyRequired && (
+                <Card className="border-warning/40 bg-warning/5">
+                  <CardContent className="pt-5">
+                    <div className="flex items-start gap-3">
+                      <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
+                      <div>
+                        <h3 className="font-medium text-foreground">
+                          {APP.dashboard.novelty.title}
+                        </h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {APP.dashboard.novelty.description}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card data-no-print>
+                  <CardHeader>
+                    <CardTitle className="text-base">{APP.dashboard.replyCard.title}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {APP.dashboard.replyCard.description}
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    {!replyResult ? (
+                      <div className="space-y-3">
+                        <Textarea
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          spellCheck={false}
+                          placeholder={APP.dashboard.replyCard.placeholder}
+                          rows={4}
+                        />
+                        <Button
+                          onClick={analyzeReply}
+                          disabled={busy || !replyText.trim()}
+                          variant="outline"
+                          size="sm"
+                        >
+                          {busy ? (
+                            <>
+                              <Loader2 className="size-4 animate-spin" />
+                              {APP.dashboard.replyCard.analyzing}
+                            </>
+                          ) : (
+                            <>
+                              <Send className="size-4" />
+                              {APP.dashboard.replyCard.submit}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="animate-fade-in space-y-3">
+                        <p>
+                          {APP.dashboard.replyCard.markedAs}{" "}
+                          <ReplyCategoryLabel category={replyResult.category} />
+                        </p>
+                        {replyResult.extractedAsks.length > 0 && (
+                          <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                            {replyResult.extractedAsks.map((ask, i) => (
+                              <li key={i}>{APP.evidenceKinds[ask]}</li>
+                            ))}
+                          </ul>
+                        )}
+                        <div className="flex gap-2">
+                          <Button onClick={confirmReply} variant="outline" size="sm">
+                            {APP.dashboard.replyCard.updateButton}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setReplyResult(null);
+                              setReplyText("");
+                            }}
+                          >
+                            {APP.dashboard.replyCard.cancelButton}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {caseFile &&
+                  caseLog?.lastReply &&
+                  !caseLog.outcomePromptResolved &&
+                  (() => {
+                    const outcome = outcomeFromReplyCategory(caseLog.lastReply.category);
+                    if (!outcome) return null;
+                    const record = buildOutcomeRecord({
+                      kind: caseFile.kind,
+                      marketplace: "unknown",
+                      docType: defaultDocumentType(caseFile.kind),
+                      attempts: caseLog.attemptCount,
+                      readinessAtSubmit:
+                        caseLog.readinessAtSubmit ??
+                        Math.round(computeReadiness(caseFile).score * 100),
+                      outcome,
+                      submittedAt: caseLog.submittedAt ?? caseLog.lastReply.at,
+                      outcomeAt: caseLog.lastReply.at,
+                    });
+                    return <OutcomeShareCard record={record} onResolved={resolveOutcomePrompt} />;
+                  })()}
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">{APP.dashboard.submitCard.title}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {APP.dashboard.submitCard.description}
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      onClick={markSubmitted}
+                      disabled={submitting}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {submitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+                      {APP.dashboard.submitCard.button}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <HonestExpectationsCard
+                summary={GLOBAL_EXPECTATIONS.typicalNote}
+                weDo={GLOBAL_EXPECTATIONS.whatWeDo}
+                weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
+              />
+            </div>
+          );
+        }}
+      </VaultGate>
+    );
+  };
+
+  // v5 (26 Sep 2026): the greeting leads every state of the page, including the empty ones.
+  return (
+    <div className="space-y-6">
+      <DashboardWelcome summaries={summaries} />
+      {renderBody()}
+    </div>
   );
 }

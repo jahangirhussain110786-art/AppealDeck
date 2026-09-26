@@ -1,12 +1,12 @@
 "use client";
 import { useState } from "react";
 import { Check, Download, FileText, ClipboardCheck } from "lucide-react";
-import { DetailDisclosure, IconTile } from "./WorkspaceVisuals";
+import { DetailDisclosure } from "./WorkspaceVisuals";
+import { StatusPill } from "./CaseOverview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileDropZone } from "@/components/FileDropZone";
 import { CopyButton } from "@/components/CopyButton";
@@ -68,30 +68,37 @@ export function EvidenceReview({
   const [removeReason, setRemoveReason] = useState("");
   const request = `Hello,\n\nI need your help with the following records: ${item.label}.\n\nThe request I received says:\n${item.sourceQuote}\n\nPlease provide the genuine records or clarify any missing information. If a correction is needed, please issue it yourself while preserving the original transaction details. Thank you.`;
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <IconTile
-              icon={item.status === "reviewed" ? ClipboardCheck : FileText}
-              tone={item.status === "reviewed" ? "primary" : "warning"}
-            />
-            <CardTitle className="text-base">{item.label}</CardTitle>
-          </div>
-          <Badge
-            variant={item.status === "reviewed" ? "success" : "warning"}
-            className="text-foreground"
+    // v5 (26 Sep 2026, prototype record.html): each record reads as its own page — what it is and
+    // Amazon's words, then the file and what a check found, then what the seller will do.
+    <Card className="overflow-hidden rounded-[18px]">
+      <CardHeader className="gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill
+            tone={
+              item.status === "reviewed"
+                ? "ok"
+                : item.status === "waiting"
+                  ? "new"
+                  : item.status === "cannot_obtain"
+                    ? "mute"
+                    : "need"
+            }
+            dot={item.status === "needed"}
           >
             {C.status[item.status]}
-          </Badge>
+          </StatusPill>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        <CardTitle
+          as="h3"
+          className="text-balance text-[clamp(1.4rem,1.1rem+1vw,1.875rem)] font-semibold leading-[1.1] tracking-[-0.03em]"
+        >
+          {item.label}
+        </CardTitle>
         {/*
           B-05: a record Amazon named is shown as their sentence, quoted. A record we inferred from
           the evidence matrix is shown as ours, and said so plainly. A seller in a crisis must
-          always be able to tell the two apart, and a blockquote around our own words would be the
-          quickest way to blur that.
+          always be able to tell the two apart, and a quotation mark around our own words would be
+          the quickest way to blur that.
         */}
         {item.source === "matrix" || item.source === "seller" ? (
           <div className="rounded-row border border-border/60 bg-surface-2 p-3">
@@ -103,73 +110,93 @@ export function EvidenceReview({
             </p>
           </div>
         ) : (
-          <DetailDisclosure title="Why this record is requested">
-            <blockquote className="border-l-2 border-info/30 pl-3">{item.sourceQuote}</blockquote>
-          </DetailDisclosure>
+          item.sourceQuote && (
+            <blockquote className="max-w-[46em] font-accent text-[1.0625rem] italic leading-snug text-foreground/80">
+              “{item.sourceQuote}”
+            </blockquote>
+          )
         )}
-        {item.recordId ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-surface-2 p-4">
-            <div className="flex min-w-0 items-center gap-2">
-              <FileText className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-              <span className="break-all text-sm">{item.filename}</span>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              onClick={() => onDownload(item.recordId!)}
-            >
-              <Download className="mr-2 h-4 w-4" aria-hidden />
-              Read original
-            </Button>
-          </div>
-        ) : (
-          <FileDropZone
-            disabled={busy}
-            multiple={false}
-            accept="application/pdf,image/png,image/jpeg"
-            onFile={onUpload}
-            hint="PDF, PNG or JPEG · up to 10 MB stored, up to 3 MB checked"
-          />
-        )}
-        {records.length > 0 && (
-          <DetailDisclosure
-            title={item.recordId ? "Change linked file" : "Use a file already in this case"}
-          >
-            <div className="space-y-2">
-              <Label htmlFor={`file-${item.id}`}>Link an existing file from this case</Label>
-              <select
-                id={`file-${item.id}`}
-                className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="warm-stage space-y-3 rounded-[18px] p-3 sm:p-4">
+          {item.recordId ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-surface-1 p-4 shadow-card ring-1 ring-inset ring-border">
+              <div className="flex min-w-0 items-center gap-2">
+                <FileText className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                <span className="break-all text-sm">{item.filename}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
                 disabled={busy}
-                value={item.recordId ?? ""}
-                onChange={(e) => {
-                  const r = records.find((v) => v.id === e.target.value);
-                  if (r) {
-                    setChecked(false);
-                    void onChange({
-                      ...item,
-                      recordId: r.id,
-                      filename: r.name,
-                      contentHash: r.plaintextHash,
-                      status: "needed",
-                    });
-                  }
-                }}
+                onClick={() => onDownload(item.recordId!)}
               >
-                <option value="">Choose a file</option>
-                {records.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
+                <Download className="mr-2 h-4 w-4" aria-hidden />
+                Read original
+              </Button>
             </div>
-          </DetailDisclosure>
-        )}
-        <div className="flex items-center gap-2 border-t border-border/70 pt-4 text-xs text-muted-foreground">
-          <ClipboardCheck className="size-4 text-primary" aria-hidden />
-          <p>Manual review · Original files stay unchanged</p>
+          ) : (
+            <FileDropZone
+              disabled={busy}
+              multiple={false}
+              accept="application/pdf,image/png,image/jpeg"
+              onFile={onUpload}
+              hint="PDF, PNG or JPEG · up to 10 MB stored, up to 3 MB checked"
+            />
+          )}
+          {records.length > 0 && (
+            <DetailDisclosure
+              title={item.recordId ? "Change linked file" : "Use a file already in this case"}
+            >
+              <div className="space-y-2">
+                <Label htmlFor={`file-${item.id}`}>Link an existing file from this case</Label>
+                <select
+                  id={`file-${item.id}`}
+                  className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  disabled={busy}
+                  value={item.recordId ?? ""}
+                  onChange={(e) => {
+                    const r = records.find((v) => v.id === e.target.value);
+                    if (r) {
+                      setChecked(false);
+                      void onChange({
+                        ...item,
+                        recordId: r.id,
+                        filename: r.name,
+                        contentHash: r.plaintextHash,
+                        status: "needed",
+                      });
+                    }
+                  }}
+                >
+                  <option value="">Choose a file</option>
+                  {records.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </DetailDisclosure>
+          )}
+          {/* AA-41: only offered once a file is actually linked to this requirement. */}
+          {onCheck && item.recordId && (
+            <DocumentCheckPanel
+              outcome={checkOutcome ?? null}
+              checkedAt={checkedAt}
+              stale={checkStale}
+              busy={Boolean(checking)}
+              onCheck={onCheck}
+              processing={checkProcessing(item)}
+            />
+          )}
+        </div>
+        <div className="flex flex-wrap items-baseline justify-between gap-2 pt-2">
+          <h4 className="text-lg font-semibold tracking-[-0.02em]">{C.evidenceReview.heading}</h4>
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ClipboardCheck className="size-3.5 text-primary" aria-hidden />
+            Manual review · Original files stay unchanged
+          </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem]">
           <div className="space-y-2">
@@ -309,17 +336,6 @@ export function EvidenceReview({
             </Button>
           </div>
         </details>
-        {/* AA-41: only offered once a file is actually linked to this requirement. */}
-        {onCheck && item.recordId && (
-          <DocumentCheckPanel
-            outcome={checkOutcome ?? null}
-            checkedAt={checkedAt}
-            stale={checkStale}
-            busy={Boolean(checking)}
-            onCheck={onCheck}
-            processing={checkProcessing(item)}
-          />
-        )}
         {showRequest && (
           <div className="space-y-3 rounded-lg border border-border bg-surface-2 p-4">
             <h3 className="font-medium">Request to the record issuer</h3>

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Plus } from "lucide-react";
+import { Check, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -107,9 +107,11 @@ export function FileDropZone({
   };
 
   return (
+    // v5 (26 Sep 2026): the prototype's drop strip, a faint diagonal hatch with the action on the
+    // right, instead of a centred dashed box.
     <Card
-      className={`flex flex-col items-center justify-center gap-2 border-dashed p-6 text-sm transition-colors ${
-        dragging ? "border-primary bg-accent/10" : "border-border"
+      className={`flex flex-col gap-3 rounded-[16px] p-4 text-sm shadow-none transition-colors [background-image:repeating-linear-gradient(135deg,transparent_0_10px,hsl(var(--muted))_10px_20px)] ${
+        dragging ? "border-primary bg-primary/5" : "border-border bg-surface-2"
       }`}
       onDragOver={(e) => {
         e.preventDefault();
@@ -141,26 +143,34 @@ export function FileDropZone({
         </ul>
       )}
 
-      <Plus className="size-5 text-muted-foreground" />
-      <p className="text-muted-foreground">{APP.upload.drop}</p>
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => inputRef.current?.click()}
-          disabled={disabled}
-        >
-          {APP.upload.choose}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="hidden [@media(pointer:coarse)]:inline-flex"
-          onClick={() => cameraInputRef.current?.click()}
-          disabled={disabled}
-        >
-          {APP.upload.takePhoto}
-        </Button>
+      <div className="flex flex-wrap items-center gap-3.5">
+        <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-surface-1 shadow-card ring-1 ring-inset ring-border">
+          <Upload className="size-[18px] text-foreground" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-foreground">{APP.upload.drop}</p>
+          <p className="text-xs text-muted-foreground">{hint ?? APP.upload.maxMb}</p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            size="sm"
+            variant="secondary"
+            className="bg-foreground text-background hover:bg-foreground/90"
+            onClick={() => inputRef.current?.click()}
+            disabled={disabled}
+          >
+            {APP.upload.choose}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden [@media(pointer:coarse)]:inline-flex"
+            onClick={() => cameraInputRef.current?.click()}
+            disabled={disabled}
+          >
+            {APP.upload.takePhoto}
+          </Button>
+        </div>
       </div>
       <input
         ref={inputRef}
@@ -184,8 +194,6 @@ export function FileDropZone({
           e.target.value = "";
         }}
       />
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-      {!hint && <p className="text-xs text-muted-foreground">{APP.upload.maxMb}</p>}
     </Card>
   );
 }

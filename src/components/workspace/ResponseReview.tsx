@@ -3,7 +3,6 @@ import * as React from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, FileCheck2, FilePenLine, CircleDot } from "lucide-react";
-import { DetailDisclosure, IconTile } from "./WorkspaceVisuals";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -149,24 +148,25 @@ export function ResponseReview({
   const supported = workspaceCanCompose(w);
   return (
     <div className="space-y-5">
-      <Card>
-        <CardHeader className="border-b border-border/60 bg-surface-2/50">
-          <div className="flex items-center gap-3">
-            <IconTile icon={FilePenLine} />
-            <div>
-              <p className="text-eyebrow text-muted-foreground">03 / Response</p>
-              <CardTitle className="mt-1 text-lg">
-                {w.protocol === "operational"
-                  ? "What happened. What changed."
-                  : "Your response brief"}
-              </CardTitle>
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground">
+      {/* v5 (26 Sep 2026, prototype response.html): the facts read as the document they become —
+          a sheet of paper with a heading per section, not a form in a box. */}
+      <Card className="rounded-[18px] shadow-lift">
+        <CardHeader className="gap-2 px-6 pb-2 pt-8 sm:px-12 sm:pt-10">
+          <p className="flex items-center gap-2 text-sm font-semibold text-primary">
+            <FilePenLine className="size-4" aria-hidden />
+            {C.responseSheet.eyebrow}
+          </p>
+          <CardTitle
+            as="h2"
+            className="text-balance text-[clamp(1.5rem,1.2rem+1vw,2rem)] font-semibold leading-[1.1] tracking-[-0.03em]"
+          >
+            {w.protocol === "operational" ? "What happened. What changed." : "Your response brief"}
+          </CardTitle>
+          <p className="text-[0.9375rem] text-muted-foreground">
             Use confirmed facts. Your wording is preserved in the response.
           </p>
         </CardHeader>
-        <CardContent className="space-y-4 pt-5">
+        <CardContent className="response-sheet space-y-7 px-6 pb-10 pt-6 sm:px-12">
           {/*
             Audit item L (23 Sep 2026): a questionnaire is answered question by question, in
             Amazon's order and under Amazon's wording — not as one essay under one heading.
@@ -334,26 +334,27 @@ export function ResponseReview({
           ) : (
             <>
               {gaps.length > 0 && (
-                <div className="rounded-lg border border-warning/20 bg-warning/5 p-4">
-                  <div className="mb-2 flex items-center gap-2">
-                    <CircleDot className="size-4 text-warning" aria-hidden />
-                    <p className="text-sm font-semibold text-foreground">
+                <div className="overflow-hidden rounded-[16px] bg-surface-1 ring-1 ring-inset ring-border">
+                  <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
+                    <p className="text-[0.9375rem] font-semibold text-foreground">
+                      {C.responseSheet.beforeSend}
+                    </p>
+                    <p className="flex items-center gap-1.5 text-[0.8125rem] tabular-nums text-muted-foreground">
+                      <CircleDot className="size-3.5 text-primary" aria-hidden />
                       {gaps.length} {gaps.length === 1 ? "item" : "items"} to resolve
                     </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">{gaps[0]}</p>
-                  {gaps.length > 1 && (
-                    <DetailDisclosure
-                      title="See all unresolved items"
-                      className="mt-3 border-warning/15 bg-background/50"
-                    >
-                      <ul className="list-disc space-y-2 pl-4">
-                        {gaps.slice(1).map((gap, i) => (
-                          <li key={i}>{gap}</li>
-                        ))}
-                      </ul>
-                    </DetailDisclosure>
-                  )}
+                  <ul>
+                    {gaps.map((gap, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-3 border-b border-border px-5 py-3 text-sm last:border-b-0"
+                      >
+                        <span className="check-mark mt-0.5" data-tone="need" aria-hidden />
+                        <span className="text-foreground/90">{gap}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
               {!signedIn ? (

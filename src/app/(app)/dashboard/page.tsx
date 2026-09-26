@@ -1,9 +1,7 @@
 import { Metadata } from "next";
 import { getOptionalUser } from "@/lib/auth";
 import { fetchLicenseForUser } from "@/lib/license";
-import { LayoutGrid } from "lucide-react";
 import { DashboardClient } from "@/components/DashboardClient";
-import { PageIntro } from "@/components/PageIntro";
 import { APP } from "@/content/app";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +11,7 @@ export const metadata: Metadata = {
   description: APP.dashboard.subtitle,
 };
 
+/** The page heading is the greeting's sentence, which `DashboardClient` writes once the cases are read. */
 export default async function DashboardPage() {
   const user = await getOptionalUser();
   const signedIn = Boolean(user);
@@ -21,17 +20,7 @@ export default async function DashboardPage() {
     : { status: "none" as const, plan: null, licenseKey: null };
 
   return (
-    <div className="space-y-6">
-      <PageIntro
-        icon={LayoutGrid}
-        eyebrow={APP.dashboard.eyebrow}
-        title={APP.dashboard.title}
-        description={APP.dashboard.subtitle}
-        illustration={{
-          src: "/illustrations/step-calendar.svg",
-          alt: APP.dashboard.illustrationAlt,
-        }}
-      />
+    <div className="max-w-[67.5rem]">
       <DashboardClient license={license} signedIn={signedIn} />
     </div>
   );

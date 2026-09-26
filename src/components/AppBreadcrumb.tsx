@@ -2,53 +2,44 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, Home } from "lucide-react";
-import { cn } from "@/lib/utils";
 
-const BREADCRUMB_MAP: Record<string, string> = {
+/**
+ * Where the seller is, in the app's top bar (v5). A section page names itself; the case page is
+ * "Cases / <this case>", and the case supplies its own name through the title slot, since only it
+ * knows what the case is about.
+ */
+const PAGE_NAMES: Record<string, string> = {
   "/dashboard": "Dashboard",
-  "/case": "Case",
   "/compose": "Compose",
   "/vault": "Vault",
   "/billing": "Billing",
 };
 
-export function AppBreadcrumb() {
-  const pathname = usePathname();
-
-  if (!pathname || pathname === "/") return null;
-
-  const segments = Object.keys(BREADCRUMB_MAP).filter(
-    (p) => pathname === p || pathname.startsWith(`${p}/`),
-  );
+export function AppBreadcrumb({ titleSlotId }: { titleSlotId: string }) {
+  const pathname = usePathname() ?? "";
+  const isCase = pathname === "/case" || pathname.startsWith("/case/");
+  const page = Object.keys(PAGE_NAMES).find((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   return (
     <nav
       aria-label="Breadcrumb"
-      className="mb-6 flex items-center gap-1 text-sm text-muted-foreground"
+      className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground"
     >
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
-      >
-        <Home className="h-3 w-3" />
-        Home
-      </Link>
-      {segments.map((seg) => (
-        <span key={seg} className="flex items-center gap-1">
-          <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-          <Link
-            href={seg}
-            aria-current={pathname === seg ? "page" : undefined}
-            className={cn(
-              "text-muted-foreground hover:text-foreground",
-              pathname === seg && "text-foreground",
-            )}
-          >
-            {BREADCRUMB_MAP[seg]}
+      {isCase ? (
+        <>
+          <Link href="/dashboard" className="shrink-0 hover:text-foreground">
+            Cases
           </Link>
-        </span>
-      ))}
+          <span aria-hidden>/</span>
+        </>
+      ) : (
+        page && (
+          <span aria-current="page" className="text-[0.9375rem] font-semibold text-foreground">
+            {PAGE_NAMES[page]}
+          </span>
+        )
+      )}
+      <span id={titleSlotId} className="flex min-w-0 items-center gap-2" />
     </nav>
   );
 }

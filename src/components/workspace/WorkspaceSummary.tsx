@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, FileSearch, FolderOpen, History, GitBranch, Trash2 } from "lucide-react";
-import { IconTile } from "./WorkspaceVisuals";
+import { ArrowRight, Trash2 } from "lucide-react";
 import { CaseOutcome } from "./CaseOutcome";
+import { StatusPill } from "./CaseOverview";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -17,112 +15,23 @@ import {
 import { APP } from "@/content/app";
 import { PROTOCOL_LABELS, workspaceGaps } from "@/core/workspace";
 import type { CaseFile } from "@/core/caseFile";
-import type { CaseIndexEntry, CaseLog } from "@/lib/caseStore";
-import { formatDate } from "@/lib/format";
+import type { CaseLog } from "@/lib/caseStore";
 
-function caseLabel(c: CaseIndexEntry): string {
-  // The same names the rest of the product uses. This list turned the enum into title case, so a
-  // fabrication case read "Inauthentic Documents" here and "Falsified documents alleged" elsewhere.
-  const kind = APP.violationKinds[c.kind] ?? c.kind;
-  // The id suffix keeps same-kind, same-day cases distinguishable from each other in the list.
-  return `${kind} · #${c.id.slice(0, 6)}`;
-}
-
-function CaseList({
-  cases,
-  activeId,
-  busy,
-  switching,
-  onSelect,
-  onReopen,
-}: {
-  cases: CaseIndexEntry[];
-  activeId: string;
-  busy: boolean;
-  /** Id of the case a switch is currently in flight for, so the row can say so. */
-  switching: string | null;
-  onSelect: (id: string) => Promise<void>;
-  onReopen: (id: string) => void;
-}) {
-  const active = cases.filter((c) => !c.archived);
-  const archived = cases.filter((c) => c.archived);
-  return (
-    <Card role="region" aria-label="Your cases">
-      <CardHeader>
-        <CardTitle className="text-base">Your cases</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {active.map((c) => (
-          <button
-            key={c.id}
-            disabled={busy}
-            aria-current={c.id === activeId ? "true" : undefined}
-            onClick={() => void onSelect(c.id)}
-            className="flex w-full items-center justify-between gap-3 rounded-lg border border-border/70 bg-card/60 px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2 disabled:opacity-60"
-          >
-            <span className="min-w-0">
-              <span className="block truncate font-medium text-foreground">{caseLabel(c)}</span>
-              <span className="text-xs text-muted-foreground">
-                Started {formatDate(c.createdAt)}
-              </span>
-            </span>
-            {switching === c.id ? (
-              <Badge variant="secondary">Opening…</Badge>
-            ) : (
-              c.id === activeId && <Badge variant="secondary">Current</Badge>
-            )}
-          </button>
-        ))}
-        {archived.length > 0 && (
-          <details className="pt-2">
-            <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
-              Archived cases ({archived.length})
-            </summary>
-            <div className="mt-2 space-y-2">
-              {archived.map((c) => (
-                <div
-                  key={c.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-border px-4 py-3 text-sm"
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate text-foreground">{caseLabel(c)}</span>
-                    <span className="text-xs text-muted-foreground">
-                      Started {formatDate(c.createdAt)}
-                    </span>
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => onReopen(c.id)}
-                  >
-                    Reopen
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </details>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
+/**
+ * The current case under the case list (v5, 26 Sep 2026): its route, the one thing still open,
+ * three counts and the way back in. The list of every case lives above it, in `DashboardCases`.
+ */
 export function WorkspaceSummary({
   file,
-  cases,
   log,
   signedIn,
-  onSelect,
   onSaveLog,
   onArchive,
   onDelete,
 }: {
   file: CaseFile;
-  cases: CaseIndexEntry[];
   log: CaseLog | null;
   signedIn: boolean;
-  onSelect: (id: string) => Promise<void>;
   onSaveLog: (log: CaseLog) => Promise<boolean>;
   onArchive: (id: string, archived: boolean) => Promise<boolean>;
   onDelete: () => Promise<boolean>;
@@ -130,84 +39,52 @@ export function WorkspaceSummary({
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const del = APP.dashboard.deleteCase;
-  // Switching cases writes to the vault. Until that returns the list is disabled and the row says
-  // what is happening, so the seller is not left clicking a list that looks inert — and cannot
-  // start a second switch over the top of the first.
-  const [switching, setSwitching] = useState<string | null>(null);
   const w = file.workspace!;
   const gaps = workspaceGaps(w);
+  const stats = [
+    { label: "Round", value: String(w.revision) },
+    {
+      label: "Records reviewed",
+      value: `${w.requirements.filter((r) => r.status === "reviewed").length} / ${w.requirements.length}`,
+    },
+    { label: "Submissions", value: String(w.submissions.length) },
+  ];
   return (
     <div className="space-y-5">
-      {cases.length > 1 && (
-        <CaseList
-          cases={cases}
-          activeId={file.id}
-          busy={busy || switching !== null}
-          switching={switching}
-          onSelect={(id) => {
-            setSwitching(id);
-            return onSelect(id).finally(() => setSwitching(null));
-          }}
-          onReopen={(id) => {
-            setBusy(true);
-            void onArchive(id, false)
-              .then(async (ok) => {
-                if (ok) await onSelect(id);
-              })
-              .finally(() => setBusy(false));
-          }}
-        />
-      )}
-      <Card className="stage stage-plain dark border-0 text-foreground shadow-lift">
-        <CardHeader>
-          <div className="flex flex-wrap items-center gap-2">
-            <IconTile icon={FileSearch} tone="info" />
-            <Badge variant="secondary">{PROTOCOL_LABELS[w.protocol]}</Badge>
+      <section
+        aria-labelledby="case-at-a-glance"
+        className="overflow-hidden rounded-[18px] bg-card shadow-card ring-1 ring-inset ring-border"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4 px-6 pb-5 pt-6">
+          <div className="min-w-0 space-y-2">
+            <StatusPill tone="mute">{PROTOCOL_LABELS[w.protocol]}</StatusPill>
+            <h2 id="case-at-a-glance" className="text-[1.375rem] font-semibold tracking-[-0.025em]">
+              Your case, at a glance
+            </h2>
+            <p className="max-w-[40em] text-sm text-muted-foreground">
+              {file.state === "SUBMITTED"
+                ? "Your response is recorded. Keep the next reply with this case."
+                : (gaps[0] ?? "Your facts and evidence are ready for a final review.")}
+            </p>
           </div>
-          <CardTitle className="pt-3 text-[1.9rem] font-semibold tracking-[-0.035em]">
-            Your case, at a glance
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {file.state === "SUBMITTED"
-              ? "Your response is recorded. Keep the next reply with this case."
-              : (gaps[0] ?? "Your facts and evidence are ready for a final review.")}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <dl className="grid grid-cols-3 gap-2 text-sm sm:gap-4">
-            <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-5">
-              <dt className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <GitBranch className="size-4 text-info" aria-hidden />
-                Round
-              </dt>
-              <dd className="mt-3 font-mono text-2xl text-foreground">{w.revision}</dd>
-            </div>
-            <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-5">
-              <dt className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <FolderOpen className="size-4 text-warning" aria-hidden />
-                Records reviewed
-              </dt>
-              <dd className="mt-3 font-mono text-2xl text-foreground">
-                {w.requirements.filter((r) => r.status === "reviewed").length}
-                <span className="text-sm text-muted-foreground"> / {w.requirements.length}</span>
-              </dd>
-            </div>
-            <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-5">
-              <dt className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <History className="size-4 text-primary" aria-hidden />
-                Submissions
-              </dt>
-              <dd className="mt-3 font-mono text-2xl text-foreground">{w.submissions.length}</dd>
-            </div>
-          </dl>
           <Button asChild>
             <Link href="/case">
               Continue your case
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
             </Link>
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+        <dl className="grid grid-cols-3 border-t border-border">
+          {stats.map((s) => (
+            <div key={s.label} className="border-l border-border px-6 py-4 first:border-l-0">
+              <dt className="text-xs text-muted-foreground">{s.label}</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums tracking-[-0.02em]">
+                {s.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
       <CaseOutcome
         file={file}
         log={log}

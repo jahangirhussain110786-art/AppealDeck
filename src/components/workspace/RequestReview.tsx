@@ -1,12 +1,12 @@
 "use client";
 import { useMemo, useState } from "react";
-import { ArrowRight, Check, FileSearch, FileText, ShieldAlert, Signpost } from "lucide-react";
+import { ArrowRight, Check, FileText, ShieldAlert, Signpost } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { DetailDisclosure, IconTile } from "./WorkspaceVisuals";
+import { DetailDisclosure } from "./WorkspaceVisuals";
 import { PriorAttempts } from "./PriorAttempts";
 import { IssuesRaised } from "./IssuesRaised";
 import { PROTOCOL_LABELS, routeWorkspace, type Workspace } from "@/core/workspace";
@@ -94,11 +94,9 @@ export function RequestReview({
   );
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-start gap-4 border-b border-border/60 bg-surface-2/50">
-        <IconTile icon={FileSearch} tone="info" />
+      <CardHeader className="border-b border-border/60">
         <div className="space-y-1">
-          <p className="text-eyebrow text-muted-foreground">01 / Request review</p>
-          <CardTitle className="text-lg">
+          <CardTitle as="h2" className="text-[1.375rem] tracking-[-0.025em]">
             {workspace.decodedNoticeHash ? "Review your decoded request" : C.routeIntro}
           </CardTitle>
           <p className="text-sm text-muted-foreground">

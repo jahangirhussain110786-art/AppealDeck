@@ -76,7 +76,11 @@ test("a case can be deleted, and its attached files go with it", async ({ page }
       mimeType: "application/pdf",
       buffer: Buffer.from("%PDF-1.4"),
     });
-  await expect(page.getByText("invoice.pdf").first()).toBeVisible();
+  // Scoped to Evidence (26 Sep 2026): the file name is also on the Overview tab's checklist now,
+  // which is hidden while Evidence is open.
+  await expect(
+    page.getByRole("tabpanel", { name: "Evidence", exact: true }).getByText("invoice.pdf").first(),
+  ).toBeVisible();
 
   await page.goto("/dashboard");
   await page.getByRole("button", { name: "Delete this case" }).click();

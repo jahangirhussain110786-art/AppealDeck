@@ -25,6 +25,45 @@ export const WORKSPACE = {
     cta: "Read Amazon's reply",
   },
   subtitle: "One case. Every record, response and reply.",
+  evidenceReview: { heading: "What does this file show?" },
+  responseSheet: { eyebrow: "Your response", beforeSend: "Before you send" },
+  // The v5 overview (26 Sep 2026): next step, checklist, timeline.
+  overview: {
+    nextStep: "Next step",
+    checklist: "Checklist",
+    done: "{done} of {total} done",
+    noFile: "No file linked yet",
+    confirmTitle: "Check how we read your notice",
+    confirmBody:
+      "Confirm what Amazon is asking for below. Nothing is sent to Amazon, and you can change it later.",
+    source: {
+      notice: "Named in your notice",
+      matrix: "Usually asked for in cases like this",
+      seller: "Added by you",
+    },
+    issuesRow: "Every issue in the notice answered",
+    issuesCount: "{n} issues",
+    responseRow: "Write and check your response",
+    responseSent: "Sent",
+    responseDraft: "In progress",
+    responseEmpty: "Not started",
+    characters: "{n} characters",
+    doneLabel: "Done",
+    timeline: {
+      title: "Timeline",
+      replyAgain: "Amazon replied?",
+      replied: "Amazon replied",
+      sent: "You sent response {n}",
+      prior: "A response you sent before this case",
+      started: "Case started",
+      noDeadline: "No confirmed deadline recorded. Check your current notice.",
+    },
+    files: "{n} files in this case",
+    oneFile: "1 file in this case",
+    noFiles: "No files yet",
+    openVault: "Open vault",
+    allCases: "All cases",
+  },
   // 24 Sep 2026 (ChatGPT audit §9). Said "Documents stay on this device" without exception, while a
   // document check sends that one file to be read. Every sentence here now matches what leaves the
   // browser, and `legalDisclosures.test.ts` pins it alongside the privacy policy.

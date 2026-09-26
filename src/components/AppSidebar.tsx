@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useCaseList } from "@/components/CaseListContext";
 import { CreditCard, FilePlus2, LayoutGrid, Lock, Tag } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Logo, LogoMark } from "@/components/Logo";
@@ -57,7 +59,7 @@ export function AppSidebar({
       {/* Wide screens: the navy sidebar. */}
       <aside
         aria-label={SHARED.nav.appNav}
-        className="dark sticky top-0 hidden h-svh flex-col gap-1 border-r border-white/[0.06] bg-[hsl(var(--stage))] px-3 py-4 text-foreground lg:flex"
+        className="dark sticky top-0 hidden h-svh flex-col gap-1 self-start border-r border-white/[0.06] bg-[hsl(var(--stage-2))] px-3 py-4 text-foreground lg:flex"
         data-no-print
       >
         <div className="px-2 pb-5 pt-1">
@@ -85,10 +87,8 @@ export function AppSidebar({
             );
           })}
         </nav>
-        <div className="mt-auto flex items-center justify-between gap-2 rounded-xl bg-white/[0.05] p-2.5 ring-1 ring-inset ring-white/[0.08]">
-          {account}
-          <ThemeToggle />
-        </div>
+        <SidebarCases />
+        <SidebarStatus signedIn={signedIn} email={user?.email} signInHref={signInHref} />
       </aside>
 
       {/* Phones and small tablets: a compact navy top bar. */}
@@ -126,5 +126,131 @@ export function AppSidebar({
         </div>
       </header>
     </TooltipProvider>
+  );
+}
+
+/**
+ * The cases on this device (v5), each with the one fact that matters at a glance: days to a stated
+ * date, or that it is waiting. Shown only once a page that reads the vault has published them.
+ */
+function SidebarCases() {
+  const { cases, open } = useCaseList();
+  const [opening, setOpening] = useState<string | null>(null);
+  const pathname = usePathname();
+  const router = useRouter();
+  const shown = cases?.filter((c) => !c.archived) ?? [];
+  if (shown.length === 0) return null;
+  return (
+    <div className="mt-4">
+      <p className="px-2.5 pb-1.5 text-[0.71875rem] font-semibold text-muted-foreground">
+        {SHARED.nav.cases}
+      </p>
+      <ul className="flex flex-col gap-0.5">
+        {shown.map((c) => {
+          const tail =
+            c.status === "waiting"
+              ? SHARED.nav.caseWaiting
+              : c.due?.days !== undefined
+                ? c.due.days <= 0
+                  ? SHARED.nav.caseToday
+                  : `${c.due.days}d`
+                : "";
+          const inner = (
+            <>
+              <span
+                aria-hidden
+                className={cn("size-2 rounded-full", c.status === "act" ? "bg-primary" : "bg-info")}
+              />
+              <span className="truncate">{c.title.split(" · ")[0]}</span>
+              <span
+                className={cn(
+                  "text-xs tabular-nums",
+                  c.status === "act" && tail ? "text-primary" : "text-muted-foreground",
+                )}
+              >
+                {opening === c.id ? "…" : tail}
+              </span>
+            </>
+          );
+          const cls = cn(
+            "grid min-h-10 w-full grid-cols-[0.5rem_minmax(0,1fr)_auto] items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[0.84375rem] transition-colors",
+            c.current
+              ? "bg-white/[0.09] text-foreground"
+              : "text-muted-foreground hover:bg-white/[0.05] hover:text-foreground",
+          );
+          return (
+            <li key={c.id}>
+              {open ? (
+                <button
+                  type="button"
+                  className={cls}
+                  aria-current={c.current ? "true" : undefined}
+                  disabled={opening !== null}
+                  onClick={async () => {
+                    setOpening(c.id);
+                    try {
+                      await open(c.id);
+                      // The case page reads the active case when it mounts, so an open case page
+                      // is reloaded to pick up the new choice; from anywhere else it is opened.
+                      if (pathname === "/case") window.location.reload();
+                      else router.push("/case");
+                      setOpening(null);
+                    } catch {
+                      setOpening(null);
+                    }
+                  }}
+                >
+                  {inner}
+                </button>
+              ) : (
+                <Link href="/dashboard" className={cls}>
+                  {inner}
+                </Link>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+/**
+ * The sidebar's foot card (v5): who this session belongs to. It states only what the page knows
+ * for certain. An Appeal Pass belongs to one case, so whether one is active is said on that case
+ * and on Billing, never here as if it covered the account.
+ */
+function SidebarStatus({
+  signedIn,
+  email,
+  signInHref,
+}: {
+  signedIn: boolean;
+  email?: string | null;
+  signInHref: string;
+}) {
+  return (
+    <div className="mt-auto rounded-[14px] bg-white/[0.05] p-3.5 text-[0.8125rem] text-muted-foreground ring-1 ring-inset ring-white/[0.08]">
+      <p className="flex items-center gap-2 font-semibold text-foreground">
+        <span
+          aria-hidden
+          className={cn("size-[7px] rounded-full", signedIn ? "bg-success" : "bg-primary")}
+        />
+        {signedIn ? SHARED.nav.statusSignedIn : SHARED.nav.statusGuest}
+      </p>
+      {signedIn ? (
+        email && <p className="mt-1 truncate">{email}</p>
+      ) : (
+        <p className="mt-1">
+          {SHARED.nav.statusGuestBody}{" "}
+          <Link
+            href={signInHref}
+            className="font-medium text-foreground underline underline-offset-4"
+          >
+            {SHARED.nav.signIn}
+          </Link>
+        </p>
+      )}
+    </div>
   );
 }

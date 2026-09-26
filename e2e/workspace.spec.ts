@@ -300,6 +300,12 @@ test("authenticated workspace preserves the exact response through submission an
     );
   await page.getByRole("button", { name: "Save reply for review" }).click();
   await page.getByRole("button", { name: "Start the next round with this reply" }).click();
+  // A new round opens on Overview once it is saved; wait for that before choosing History, or the
+  // save can land after the click and move the page back.
+  await expect(page.getByRole("tab", { name: "Overview", exact: true })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   await page.getByRole("tab", { name: "History", exact: true }).click();
   await page.getByText(/Attempt 1 ·/).click();
   await expect(

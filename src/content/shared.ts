@@ -20,6 +20,12 @@ export const SHARED = {
     themeToggle: "Toggle colour theme",
     lockedHint: "Sign in to unlock",
     profileMenu: "Account menu",
+    cases: "Cases",
+    caseWaiting: "Waiting",
+    caseToday: "Today",
+    statusSignedIn: "Signed in",
+    statusGuest: "Guest session",
+    statusGuestBody: "Your case is kept in this browser tab.",
   },
   footer: {
     tagline: "Understand the notice. Organize the evidence. Prepare your response.",
