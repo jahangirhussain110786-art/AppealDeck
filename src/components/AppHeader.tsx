@@ -23,11 +23,13 @@ interface NavItem {
 function NavPill({ href, label, lock, mobile }: NavItem & { mobile?: boolean }) {
   const pathname = usePathname();
   const active = pathname === href || pathname.startsWith(`${href}/`);
+  // 26 Sep 2026 (the prototype pass): plain text links with a hairline under the current page,
+  // in place of pill backgrounds, so the header carries no boxes.
   const className = cn(
     mobile
       ? "flex h-11 items-center rounded-md px-3 text-base font-medium hover:bg-muted"
-      : "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-[var(--dur-fast)] hover:bg-muted hover:text-foreground",
-    !mobile && active && "bg-muted text-foreground",
+      : "relative px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-[var(--dur-fast)] hover:text-foreground after:absolute after:inset-x-2.5 after:-bottom-[1.3rem] after:h-0.5 after:rounded-full after:bg-transparent",
+    !mobile && active && "text-foreground after:bg-primary",
     mobile && active && "bg-muted",
   );
 
@@ -97,7 +99,7 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
         <div
           className={cn(
             "mx-auto flex items-center justify-between gap-4 px-4 sm:px-6",
-            mode === "app" ? "h-14 max-w-app" : "h-16 max-w-marketing",
+            mode === "app" ? "h-14 max-w-app" : "h-[4.25rem] max-w-marketing",
           )}
         >
           <Logo href="/" />
@@ -119,6 +121,11 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
                 aria-label={SHARED.nav.signIn}
               >
                 <Link href={signInHref}>{SHARED.nav.signIn}</Link>
+              </Button>
+            )}
+            {mode === "marketing" && isSignedOut && !pathname.startsWith("/decode") && (
+              <Button asChild size="sm" className="hidden md:inline-flex">
+                <Link href="/decode">{SHARED.nav.decodeCta}</Link>
               </Button>
             )}
             {isSignedIn && <ProfileMenu email={user?.email} />}

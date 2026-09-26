@@ -12,6 +12,7 @@ export const SHARED = {
     faq: "FAQ",
     guides: "Guides",
     signIn: "Sign in",
+    decodeCta: "Decode a notice",
     signOut: "Sign out",
     menu: "Menu",
     openMenu: "Open menu",
@@ -34,8 +35,10 @@ export const SHARED = {
       "AppealDeck is an independent service and is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon and Seller Central are trademarks of Amazon.com, Inc. or its affiliates.",
     groups: {
       product: "Product",
+      guides: "Guides",
       legal: "Legal",
     },
+    notLegalAdvice: "Software, not legal advice.",
     copyright: "© {year} Hawlton",
   },
   expectations: {

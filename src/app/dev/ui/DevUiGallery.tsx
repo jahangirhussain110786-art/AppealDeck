@@ -46,7 +46,7 @@ import { VerifiedStamp } from "@/components/VerifiedStamp";
 import { Stepper } from "@/components/Stepper";
 import { Logo, LogoMark } from "@/components/Logo";
 import { SectionHeading } from "@/components/SectionHeading";
-import { HeroArtifact } from "@/components/marketing/HeroArtifact";
+import { WorkspacePreview } from "@/components/marketing/WorkspacePreview";
 import { ShieldCheckIllustration } from "@/components/illustrations/ShieldCheckIllustration";
 import { VaultDoorIllustration } from "@/components/illustrations/VaultDoorIllustration";
 import { MagnifierDocumentIllustration } from "@/components/illustrations/MagnifierDocumentIllustration";
@@ -385,8 +385,8 @@ export function DevUiGallery() {
         <DeadlineChipList deadlines={sampleDeadlines} />
       </Section>
 
-      <Section title="Patterns - HeroArtifact">
-        <HeroArtifact />
+      <Section title="Patterns - WorkspacePreview">
+        <WorkspacePreview />
       </Section>
 
       <Section title="Patterns - HonestExpectationsCard (single list)">

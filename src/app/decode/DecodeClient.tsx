@@ -18,6 +18,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { DeadlineChipList } from "@/components/DeadlineChip";
+import { MarkedNotice, type NoticeSpan } from "@/components/MarkedNotice";
 import { CopyButton } from "@/components/CopyButton";
 import { OfflineNotice } from "@/components/OfflineNotice";
 import { DetailDisclosure, IconTile, VIEW_ICONS } from "@/components/workspace/WorkspaceVisuals";
@@ -32,6 +33,7 @@ import { proposedRequirements } from "@/core/workspace";
 import { DECODE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
+import { cn } from "@/lib/utils";
 import { ENTITY_LABELS, type ViolationKind, type ResponseType, type ExtractedEntity } from "@/core";
 import type { DeadlineLike } from "@/components/DeadlineChip";
 
@@ -145,7 +147,12 @@ export default function DecodeClient() {
   }
 
   return (
-    <div className="flex flex-col gap-6 py-8 sm:py-10">
+    <div
+      className={cn(
+        "flex flex-col gap-6 py-8 sm:py-10",
+        status !== "result" && "mx-auto w-full max-w-tool",
+      )}
+    >
       <OfflineNotice />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -282,6 +289,23 @@ function ResultView({
   const hasType = Boolean(result.responseType);
   // Requested records already appear under "What to gather"; listing them again here was noise.
   const details = (result.entities ?? []).filter((e) => e.kind !== "requested_record");
+  // 26 Sep 2026: the seller's notice stays on screen beside the decision, with the phrases that
+  // decided the response and the records it names marked in place. Every span is an offset the
+  // engine reported into this same text, so nothing is marked that the notice does not say.
+  const spans = useMemo<NoticeSpan[]>(
+    () => [
+      ...(result.responseType?.matches ?? []).map((m) => ({
+        start: m.start,
+        end: m.end,
+        tone: "risk" as const,
+        title: result.responseType?.label,
+      })),
+      ...(result.entities ?? [])
+        .filter((e) => e.kind === "requested_record")
+        .map((e) => ({ start: e.start, end: e.end, tone: "clear" as const, title: e.value })),
+    ],
+    [result],
+  );
 
   /**
    * 25 Sep 2026: the result is one numbered answer in the order a seller acts on it — what to
@@ -335,144 +359,172 @@ function ResultView({
         </Alert>
       )}
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-        <Card className="overflow-hidden">
-          <CardHeader className="flex-row items-start gap-3 border-b border-border/60 bg-surface-2/50">
-            <IconTile icon={FileSearch} tone="info" />
-            <div className="min-w-0 space-y-1">
-              <p className="text-eyebrow uppercase text-muted-foreground">{r.briefEyebrow}</p>
-              <h2 className="text-xl font-semibold leading-snug text-foreground">
-                {guidance.title}
-              </h2>
-              <p className="text-sm leading-relaxed text-muted-foreground">{guidance.summary}</p>
-            </div>
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <Card className="overflow-hidden lg:sticky lg:top-24">
+          <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-surface-2/50 py-4">
+            <p className="text-eyebrow uppercase text-muted-foreground">{r.markedTitle}</p>
+            <span className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <span aria-hidden className="hl-risk inline-block size-3 rounded-sm" />
+                {r.markedRisk}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span aria-hidden className="hl-clear inline-block size-3 rounded-sm" />
+                {r.markedClear}
+              </span>
+            </span>
           </CardHeader>
-          <CardContent className="p-0">
-            <ol className="divide-y divide-border/60">
-              {result.responseType && (
-                <Step n={1} title={r.responseTypeTitle}>
-                  <p className="text-base font-semibold text-foreground">
-                    {result.responseType.label}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    {result.responseType.reason}
-                  </p>
-                  {result.responseType.competing.length > 0 && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {r.responseTypeAlsoSeen}: {result.responseType.competing.join(", ")}
-                    </p>
-                  )}
-                  {result.responseType.matches.length > 0 && (
-                    <DetailDisclosure title={r.responseTypeSourceTitle} className="mt-3">
-                      <div className="space-y-2">
-                        {result.responseType.matches.map((m) => (
-                          <blockquote
-                            key={`${m.start}-${m.end}`}
-                            className="border-l-2 border-primary/40 pl-3 text-xs italic"
-                          >
-                            {m.quote}
-                          </blockquote>
-                        ))}
-                      </div>
-                    </DetailDisclosure>
-                  )}
-                </Step>
-              )}
-              <Step n={hasType ? 2 : 1} title={r.deadlinesTitle}>
-                {result.deadlines.length > 0 ? (
-                  <DeadlineChipList deadlines={result.deadlines} />
-                ) : (
-                  <p className="text-sm text-muted-foreground">{r.noDeadline}</p>
-                )}
-              </Step>
-              <Step n={hasType ? 3 : 2} title={r.recordsTitle}>
-                {records.length ? (
-                  <>
-                    <ul className="space-y-2">
-                      {records.map((record) => (
-                        <li
-                          key={record.label}
-                          className="flex flex-wrap items-center gap-2 text-sm"
-                        >
-                          <FolderOpen aria-hidden className="size-4 shrink-0 text-warning" />
-                          <span className="font-medium text-foreground">{record.label}</span>
-                          {/* Ours, and said so — never passed off as something Amazon wrote. */}
-                          <Badge
-                            variant={record.source === "matrix" ? "secondary" : "info"}
-                            size="sm"
-                          >
-                            {record.source === "matrix" ? WORKSPACE.inferred.badge : r.recordsAsked}
-                          </Badge>
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="mt-3 text-xs text-muted-foreground">{r.recordsNote}</p>
-                  </>
-                ) : (
-                  <p className="text-sm text-muted-foreground">{r.noRecords}</p>
-                )}
-              </Step>
-            </ol>
-            {details.length > 0 && (
-              <div className="space-y-2 border-t border-border/60 px-6 py-5">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {r.entitiesTitle}
-                </p>
-                <ul className="flex flex-wrap gap-2">
-                  {details.map((e) => (
-                    <li
-                      key={`${e.kind}-${e.start}`}
-                      className="inline-flex items-baseline gap-1.5 rounded-md border border-border bg-surface-2/60 px-2 py-1 text-xs"
-                    >
-                      <span className="text-muted-foreground">{ENTITY_LABELS[e.kind]}</span>
-                      <span className="font-mono tabular-nums text-foreground">{e.value}</span>
-                      {e.ambiguous && <span className="text-warning">{r.entitiesAmbiguous}</span>}
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-xs text-muted-foreground">{r.entitiesNote}</p>
-              </div>
-            )}
+          <CardContent className="p-6">
+            <MarkedNotice
+              text={text}
+              spans={spans}
+              label={r.markedTitle}
+              className="max-h-[70vh] overflow-y-auto pr-2"
+            />
           </CardContent>
         </Card>
 
-        <Card className="workspace-hero border-primary/20 lg:sticky lg:top-24">
-          <CardHeader>
-            <p className="text-eyebrow uppercase text-primary">{r.nextEyebrow}</p>
-            <CardTitle className="font-accent text-2xl font-medium">{r.nextTitle}</CardTitle>
-            <p className="text-sm text-muted-foreground">{r.nextDesc}</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button asChild size="lg" className="w-full">
-              <Link href={`/case?kind=${result.kind}&view=overview`} onClick={carryNotice}>
-                {r.startPoaCta}
-                <ArrowRight className="size-4" aria-hidden />
-              </Link>
-            </Button>
-            <div>
-              <p className="text-xs text-muted-foreground">{r.jumpTo}</p>
-              <nav aria-label="Case workspace views" className="mt-1 grid grid-cols-4 gap-1">
-                {Object.entries(WORKSPACE.tabs).map(([view, label]) => {
-                  const Icon = VIEW_ICONS[view] ?? FileSearch;
-                  return (
-                    <Link
-                      key={view}
-                      href={`/case?kind=${result.kind}&view=${view}`}
-                      onClick={carryNotice}
-                      className="flex min-w-0 flex-col items-center gap-2 rounded-lg py-3 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <Icon className="size-5 text-primary" aria-hidden />
-                      {label}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-            <div className="border-t border-primary/15 pt-3">
-              <CopyButton text={guidance.summary} label={r.copySummary} />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <Card className="overflow-hidden">
+            <CardHeader className="flex-row items-start gap-3 border-b border-border/60 bg-surface-2/50">
+              <IconTile icon={FileSearch} tone="info" />
+              <div className="min-w-0 space-y-1">
+                <p className="text-eyebrow uppercase text-muted-foreground">{r.briefEyebrow}</p>
+                <h2 className="text-xl font-semibold leading-snug text-foreground">
+                  {guidance.title}
+                </h2>
+                <p className="text-sm leading-relaxed text-muted-foreground">{guidance.summary}</p>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ol className="divide-y divide-border/60">
+                {result.responseType && (
+                  <Step n={1} title={r.responseTypeTitle}>
+                    <p className="text-base font-semibold text-foreground">
+                      {result.responseType.label}
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      {result.responseType.reason}
+                    </p>
+                    {result.responseType.competing.length > 0 && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {r.responseTypeAlsoSeen}: {result.responseType.competing.join(", ")}
+                      </p>
+                    )}
+                    {result.responseType.matches.length > 0 && (
+                      <DetailDisclosure title={r.responseTypeSourceTitle} className="mt-3">
+                        <div className="space-y-2">
+                          {result.responseType.matches.map((m) => (
+                            <blockquote
+                              key={`${m.start}-${m.end}`}
+                              className="border-l-2 border-primary/40 pl-3 text-xs italic"
+                            >
+                              {m.quote}
+                            </blockquote>
+                          ))}
+                        </div>
+                      </DetailDisclosure>
+                    )}
+                  </Step>
+                )}
+                <Step n={hasType ? 2 : 1} title={r.deadlinesTitle}>
+                  {result.deadlines.length > 0 ? (
+                    <DeadlineChipList deadlines={result.deadlines} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{r.noDeadline}</p>
+                  )}
+                </Step>
+                <Step n={hasType ? 3 : 2} title={r.recordsTitle}>
+                  {records.length ? (
+                    <>
+                      <ul className="space-y-2">
+                        {records.map((record) => (
+                          <li
+                            key={record.label}
+                            className="flex flex-wrap items-center gap-2 text-sm"
+                          >
+                            <FolderOpen aria-hidden className="size-4 shrink-0 text-warning" />
+                            <span className="font-medium text-foreground">{record.label}</span>
+                            {/* Ours, and said so — never passed off as something Amazon wrote. */}
+                            <Badge
+                              variant={record.source === "matrix" ? "secondary" : "info"}
+                              size="sm"
+                            >
+                              {record.source === "matrix"
+                                ? WORKSPACE.inferred.badge
+                                : r.recordsAsked}
+                            </Badge>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-3 text-xs text-muted-foreground">{r.recordsNote}</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{r.noRecords}</p>
+                  )}
+                </Step>
+              </ol>
+              {details.length > 0 && (
+                <div className="space-y-2 border-t border-border/60 px-6 py-5">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {r.entitiesTitle}
+                  </p>
+                  <ul className="flex flex-wrap gap-2">
+                    {details.map((e) => (
+                      <li
+                        key={`${e.kind}-${e.start}`}
+                        className="inline-flex items-baseline gap-1.5 rounded-md border border-border bg-surface-2/60 px-2 py-1 text-xs"
+                      >
+                        <span className="text-muted-foreground">{ENTITY_LABELS[e.kind]}</span>
+                        <span className="font-mono tabular-nums text-foreground">{e.value}</span>
+                        {e.ambiguous && <span className="text-warning">{r.entitiesAmbiguous}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-muted-foreground">{r.entitiesNote}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="workspace-hero border-primary/20">
+            <CardHeader>
+              <p className="text-eyebrow uppercase text-primary">{r.nextEyebrow}</p>
+              <CardTitle className="font-accent text-2xl font-medium">{r.nextTitle}</CardTitle>
+              <p className="text-sm text-muted-foreground">{r.nextDesc}</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button asChild size="lg" className="w-full">
+                <Link href={`/case?kind=${result.kind}&view=overview`} onClick={carryNotice}>
+                  {r.startPoaCta}
+                  <ArrowRight className="size-4" aria-hidden />
+                </Link>
+              </Button>
+              <div>
+                <p className="text-xs text-muted-foreground">{r.jumpTo}</p>
+                <nav aria-label="Case workspace views" className="mt-1 grid grid-cols-4 gap-1">
+                  {Object.entries(WORKSPACE.tabs).map(([view, label]) => {
+                    const Icon = VIEW_ICONS[view] ?? FileSearch;
+                    return (
+                      <Link
+                        key={view}
+                        href={`/case?kind=${result.kind}&view=${view}`}
+                        onClick={carryNotice}
+                        className="flex min-w-0 flex-col items-center gap-2 rounded-lg py-3 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <Icon className="size-5 text-primary" aria-hidden />
+                        {label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+              <div className="border-t border-primary/15 pt-3">
+                <CopyButton text={guidance.summary} label={r.copySummary} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid items-start gap-4 md:grid-cols-2">

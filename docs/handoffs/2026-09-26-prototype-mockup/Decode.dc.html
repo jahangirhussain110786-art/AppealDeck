@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Decode result</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;font-family:"Instrument Sans",system-ui,sans-serif;background:#FAFAF7;color:#0F1728;-webkit-font-smoothing:antialiased}
+a{color:#1D4ED8}a:hover{color:#1E40AF}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1720px; box-sizing: border-box; display: flex; flex-direction: column; background: #FAFAF7; color: #0F1728; font-family: 'Instrument Sans', system-ui, sans-serif; overflow: hidden">
+
+  <header style="height: 68px; display: flex; align-items: center; justify-content: space-between; padding: 0 80px; border-bottom: 1px solid #E4E6EB; background: #FAFAF7">
+    <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0F1728">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#0F1728"></rect><path d="M8 14.5l4 4 8-9" stroke="#F97316" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <span style="font-weight: 600; font-size: 17px; letter-spacing: -0.01em">AppealDeck</span>
+    </a>
+    <nav style="display: flex; gap: 32px; font-size: 15px; font-weight: 500">
+      <a href="Decode.dc.html" style="color: #0F1728; text-decoration: none; border-bottom: 2px solid #C2410C; padding-bottom: 2px">Decode</a>
+      <a href="Case.dc.html" style="color: #0F1728; text-decoration: none">Case</a>
+      <a href="Main.dc.html#guides" style="color: #0F1728; text-decoration: none">Guides</a>
+      <a href="Pricing.dc.html" style="color: #0F1728; text-decoration: none">Pricing</a>
+      <a href="Main.dc.html#support" style="color: #0F1728; text-decoration: none">Support</a>
+    </nav>
+    <div style="display: flex; align-items: center; gap: 20px">
+      <a href="Main.dc.html#signin" style="font-size: 15px; font-weight: 500; color: #0F1728; text-decoration: none">Sign in</a>
+      <a href="Case.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 18px; border-radius: 10px; background: {{accent}}; color: #FFFFFF; font-size: 15px; font-weight: 600; text-decoration: none">Start your case</a>
+    </div>
+  </header>
+
+  <!-- Page title row -->
+  <div style="padding: 48px 80px 32px; display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; border-bottom: 1px solid #E4E6EB">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5B6472">Decoded · sample notice</div>
+      <h1 style="margin: 0; font-size: 40px; line-height: 1.1; letter-spacing: -0.03em; font-weight: 600">Amazon wants a Plan of Action with supplier invoices.</h1>
+      <p style="margin: 0; font-size: 17px; color: #3E4756; line-height: 1.5; max-width: 760px">Inauthentic item complaint under section 3. Two things are required, in one reply, inside the window the notice states. Nothing below is a prediction.</p>
+    </div>
+    <div style="display: flex; gap: 12px; flex-shrink: 0">
+      <a href="Decode.dc.html" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #D8DBE2; background: #FFFFFF; color: #0F1728; font-size: 15px; font-weight: 500; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path></svg>Decode another</a>
+      <a href="Case.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 20px; border-radius: 10px; background: {{accent}}; color: #FFFFFF; font-size: 15px; font-weight: 600; text-decoration: none">Start your case, free</a>
+    </div>
+  </div>
+
+  <!-- Scam check: silent, but visibly so -->
+  <div style="margin: 24px 80px 0; padding: 14px 18px; border: 1px solid #C6E2CF; border-radius: 12px; background: #F1F8F3; display: flex; align-items: center; gap: 12px; font-size: 14px; color: #14532D">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg>
+    <span><strong style="font-weight: 600">Nothing in this message looks like a scam signal.</strong> No fee demand, no request for a password or code, no move to WhatsApp, no non-Amazon links. That is not a verdict: confirm the notice exists in your own Account Health page before you act on it.</span>
+  </div>
+
+  <!-- Two columns: the notice, annotated · the decision -->
+  <div style="padding: 32px 80px 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start">
+
+    <!-- Left: notice with marks -->
+    <div style="border: 1px solid #D8DBE2; border-radius: 16px; background: #FFFFFF; overflow: hidden">
+      <div style="padding: 16px 24px; border-bottom: 1px solid #E4E6EB; display: flex; align-items: center; justify-content: space-between">
+        <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5B6472">The notice, marked up</span>
+        <span style="display: flex; gap: 14px; font-size: 12px; color: #5B6472"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 2px; background: #FDE7D3; box-shadow: inset 0 -2px 0 #F97316"></span>Decides the response</span><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 2px; background: #E3EEDD; box-shadow: inset 0 -2px 0 #15803D"></span>A record you must supply</span></span>
+      </div>
+      <div style="padding: 24px; font-size: 16px; line-height: 1.7; color: #1C2536">
+        <p style="margin: 0 0 14px">Hello,</p>
+        <p style="margin: 0 0 14px">Your Amazon seller account has been deactivated in accordance with <mark style="background: #FDE7D3; color: #0F1728; padding: 1px 3px; border-radius: 3px; box-shadow: inset 0 -2px 0 #F97316">section 3 of Amazon&#39;s Business Solutions Agreement</mark>. We took this measure because we have concerns about <mark style="background: #FDE7D3; color: #0F1728; padding: 1px 3px; border-radius: 3px; box-shadow: inset 0 -2px 0 #F97316">the authenticity of the items</mark> listed at the end of this email. Listings for these items have been removed.</p>
+        <p style="margin: 0 0 14px">To reactivate your account, please send us <mark style="background: #E3EEDD; color: #0F1728; padding: 1px 3px; border-radius: 3px; box-shadow: inset 0 -2px 0 #15803D">copies of invoices or receipts from your supplier issued in the last 365 days</mark>. These should reflect your sales volume during that time and include the supplier&#39;s contact information. Also send <mark style="background: #E3EEDD; color: #0F1728; padding: 1px 3px; border-radius: 3px; box-shadow: inset 0 -2px 0 #15803D">a plan that explains the root cause of the issue and the steps you have taken</mark> to prevent it from happening again.</p>
+        <p style="margin: 0 0 14px">You have <mark style="background: #FDE7D3; color: #0F1728; padding: 1px 3px; border-radius: 3px; box-shadow: inset 0 -2px 0 #F97316">72 hours</mark> to respond. If we do not receive the requested information, your account will remain deactivated and <mark style="background: #FDE7D3; color: #0F1728; padding: 1px 3px; border-radius: 3px; box-shadow: inset 0 -2px 0 #F97316">funds will be held in your account</mark> while we review.</p>
+        <p style="margin: 0 0 14px">You can see your account&#39;s status and submit this information in the Account Health section of Seller Central.</p>
+        <p style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #3E4756; line-height: 1.8">ASIN: B0SAMPLE01<br>ASIN: B0SAMPLE02</p>
+      </div>
+    </div>
+
+    <!-- Right: decision cards -->
+    <div style="display: flex; flex-direction: column; gap: 20px">
+
+      <div style="border: 1px solid #D8DBE2; border-radius: 16px; background: #FFFFFF; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5B6472">Dates, counted from the notice</div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <div style="padding: 16px; border-radius: 12px; background: #FFF7ED; border: 1px solid #FED7AA; display: flex; flex-direction: column; gap: 4px">
+            <div style="font-size: 12px; color: #9A3412; font-weight: 600">Reply window · stated</div>
+            <div style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">Mon 28 Sep, 09:14</div>
+            <div style="font-size: 13px; color: #9A3412">72 hours from when you received it. Tell us the time if this is wrong.</div>
+          </div>
+          <div style="padding: 16px; border-radius: 12px; border: 1px solid #E4E6EB; display: flex; flex-direction: column; gap: 4px">
+            <div style="font-size: 12px; color: #5B6472; font-weight: 600">Funds request · 60 days</div>
+            <div style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">Tue 24 Nov</div>
+            <div style="font-size: 13px; color: #5B6472">A separate request, after the appeal. We will remind you.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border: 1px solid #D8DBE2; border-radius: 16px; background: #FFFFFF; padding: 24px; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5B6472; padding-bottom: 14px">Issues in this notice · 1</div>
+        <div style="display: flex; gap: 14px; padding: 14px 0; border-top: 1px solid #E4E6EB">
+          <span style="width: 24px; height: 24px; border-radius: 12px; background: #FDE7D3; color: #C2410C; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0">1</span>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <div style="font-size: 16px; font-weight: 600">Inauthentic item complaint</div>
+            <div style="font-size: 14px; color: #3E4756; line-height: 1.5">Raised by: <span style="font-family: 'Newsreader', serif; font-style: italic; font-size: 16px">&#8220;concerns about the authenticity of the items&#8221;</span>. Two ASINs named. Not a counterfeit claim, not an IP complaint.</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 14px; padding: 14px 0 4px; border-top: 1px solid #E4E6EB; font-size: 14px; color: #5B6472">
+          <span style="width: 24px; flex-shrink: 0"></span>
+          <span>Read the notice differently? <a href="Decode.dc.html" style="font-weight: 500">Correct the reading</a>. Nothing you have done is removed when you do.</span>
+        </div>
+      </div>
+
+      <div style="border: 1px solid #D8DBE2; border-radius: 16px; background: #FFFFFF; padding: 24px; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5B6472; padding-bottom: 14px">Records this case needs · 4</div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 13px 0; border-top: 1px solid #E4E6EB; font-size: 15px"><span style="flex-grow: 1">Supplier invoices, dated within 365 days, for both ASINs</span><span style="font-size: 12px; font-weight: 500; color: #15803D">In the notice</span></div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 13px 0; border-top: 1px solid #E4E6EB; font-size: 15px"><span style="flex-grow: 1">Root cause, in your own words, past tense</span><span style="font-size: 12px; font-weight: 500; color: #15803D">In the notice</span></div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 13px 0; border-top: 1px solid #E4E6EB; font-size: 15px"><span style="flex-grow: 1">Preventive steps, each with a date</span><span style="font-size: 12px; font-weight: 500; color: #15803D">In the notice</span></div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 13px 0; border-top: 1px solid #E4E6EB; font-size: 15px"><span style="flex-grow: 1">Supplier contact details and order history</span><span style="font-size: 12px; font-weight: 500; color: #5B6472">Not in the notice · we raise it</span></div>
+      </div>
+
+      <!-- Do now / do not -->
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+        <div style="border-radius: 16px; background: #0F1728; color: #EDEEF2; padding: 22px; display: flex; flex-direction: column; gap: 12px">
+          <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #FDBA74">Do now</div>
+          <ul style="margin: 0; padding: 0 0 0 18px; font-size: 14px; line-height: 1.6; display: flex; flex-direction: column; gap: 4px"><li>Open Account Health and confirm the notice is there.</li><li>Find the invoices before you write a word.</li><li>Note the exact time you received the notice.</li></ul>
+        </div>
+        <div style="border-radius: 16px; border: 1px solid #D8DBE2; background: #FFFFFF; padding: 22px; display: flex; flex-direction: column; gap: 12px">
+          <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #B91C1C">Do not</div>
+          <ul style="margin: 0; padding: 0 0 0 18px; font-size: 14px; line-height: 1.6; color: #1C2536; display: flex; flex-direction: column; gap: 4px"><li>Send a pro-forma invoice, a quote, or an edited PDF.</li><li>Open a second seller account.</li><li>Reply twice with the same text and hope.</li></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer style="margin-top: auto; padding: 24px 80px; border-top: 1px solid #D8DBE2; display: flex; justify-content: space-between; font-size: 13px; color: #5B6472; background: #F4F4F0">
+    <span>Not affiliated with Amazon. Amazon is a trademark of Amazon.com, Inc.</span>
+    <span>Notice text is read on our server and not stored.</span>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C2410C","options":["#C2410C","#0F1728","#1D4ED8"]},"$preview":{"width":1440,"height":1720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#C2410C' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,11 +1,13 @@
-import { Inter, JetBrains_Mono, Newsreader } from "next/font/google";
+import { Instrument_Sans, JetBrains_Mono, Newsreader } from "next/font/google";
 
-// Variable Inter with the optical-size axis: display sizes get display letterforms automatically.
-export const fontSans = Inter({
+// Instrument Sans (26 Sep 2026, the prototype pass): a variable grotesk with a distinct voice at
+// display sizes, in place of Inter, which had become the default face of every tool on the web.
+// Weights 400-700 cover body, medium labels and the semibold headlines the type scale uses.
+export const fontSans = Instrument_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
-  axes: ["opsz"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const fontMono = JetBrains_Mono({

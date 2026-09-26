@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { SHARED } from "@/content/shared";
+import { GUIDES } from "@/content/guides";
 
 function FooterGroup({
   title,
@@ -28,8 +29,8 @@ function FooterGroup({
 export function SiteFooter() {
   const year = new Date().getFullYear();
   return (
-    <footer className="border-t border-border/60 bg-surface-2/50">
-      <div className="mx-auto grid max-w-marketing gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr]">
+    <footer className="border-t border-border bg-surface-2/60">
+      <div className="mx-auto grid max-w-marketing gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
         <div>
           <Logo size="sm" />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
@@ -42,8 +43,11 @@ export function SiteFooter() {
             { href: "/decode", label: SHARED.nav.decode },
             { href: "/pricing", label: SHARED.nav.pricing },
             { href: "/faq", label: SHARED.nav.faq },
-            { href: "/guides", label: SHARED.nav.guides },
           ]}
+        />
+        <FooterGroup
+          title={SHARED.footer.groups.guides}
+          links={GUIDES.map((g) => ({ href: `/guides/${g.slug}`, label: g.navLabel }))}
         />
         <FooterGroup
           title={SHARED.footer.groups.legal}
@@ -57,15 +61,18 @@ export function SiteFooter() {
           ]}
         />
       </div>
-      <div className="border-t border-border/60">
+      <div className="border-t border-border">
         <div className="mx-auto flex max-w-marketing flex-col gap-2 px-4 py-6 text-xs leading-relaxed text-muted-foreground sm:px-6 md:flex-row md:items-start md:justify-between md:gap-8">
           <div className="max-w-3xl space-y-1.5">
             <p>{SHARED.footer.neverSubmits}</p>
             <p>{SHARED.footer.independence}</p>
           </div>
-          <p className="shrink-0 tabular-nums">
-            {SHARED.footer.copyright.replace("{year}", String(year))}
-          </p>
+          <div className="flex shrink-0 flex-col gap-1.5 md:items-end">
+            <p>{SHARED.footer.notLegalAdvice}</p>
+            <p className="tabular-nums">
+              {SHARED.footer.copyright.replace("{year}", String(year))}
+            </p>
+          </div>
         </div>
       </div>
     </footer>

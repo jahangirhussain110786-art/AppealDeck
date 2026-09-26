@@ -1,0 +1,20 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-09-26T12:00:00Z" },
+  "title": "AppealDeck Prototype",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 4640, "title": "Home", "is_interactive": true },
+    "Mobile.dc.html": { "x": 1520, "y": 0, "w": 390, "h": 2140, "title": "Home · phone", "is_interactive": true },
+    "Decode.dc.html": { "x": 1990, "y": 0, "w": 1440, "h": 1720, "title": "Decode result", "is_interactive": true },
+    "Pricing.dc.html": { "x": 1990, "y": 1840, "w": 1440, "h": 2080, "title": "Pricing and checkout", "is_interactive": true },
+    "Case.dc.html": { "x": 3510, "y": 0, "w": 1440, "h": 1560, "title": "Case workspace (signed in, Pass active)", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "Mobile.dc.html", "Decode.dc.html", "Pricing.dc.html", "Case.dc.html"],
+  "notes": {
+    "t-public": { "x": 0, "y": -300, "text": "Public: home, phone, decode, pricing", "kind": "title1", "maxW": 3430 },
+    "t-app": { "x": 3510, "y": -300, "text": "Signed in: case workspace", "kind": "title1", "maxW": 1440 }
+  },
+  "designSystems": []
+}

@@ -18,6 +18,91 @@ export const HOME = {
     primaryCta: "Decode my notice — free",
     reassuranceLine: "AppealDeck never logs in to your Amazon account. You decide what gets sent.",
   },
+  /**
+   * The decoder demo under the hero (26 Sep 2026). The sample notice is decoded by the real engine
+   * at render time; these are only the labels around that result.
+   */
+  demo: {
+    noticeEyebrow: "The notice",
+    pasteYourOwn: "Paste your own notice instead",
+    resultEyebrow: "What it means",
+    readFromText: "Read from the text, not guessed",
+    askingFor: "Amazon is asking for",
+    whenDue: "When it is due",
+    recordsTitle: "Records this case starts with",
+    primaryCta: "Decode my notice — free",
+    secondaryCta: "See the full decode",
+  },
+  /** Shown as numbers before any claim. Each is a fact the product already states elsewhere. */
+  numbers: {
+    items: [
+      {
+        value: "$249",
+        label: "One Appeal Pass covers one case, every revision, no expiry. Nothing else to buy.",
+      },
+      {
+        value: "0",
+        label:
+          "Logins to Seller Central. AppealDeck never touches your Amazon account. You send every reply yourself.",
+      },
+      {
+        value: "60",
+        unit: "days",
+        label:
+          "The window to request held funds. Tracked apart from the appeal, because Amazon treats it apart.",
+      },
+      {
+        value: "7",
+        unit: "days",
+        label:
+          "Refund window, no questions asked. And no promise of an outcome, because nobody can honestly make one.",
+      },
+    ],
+  },
+  workspace: {
+    title: "One place that knows what your case still needs.",
+    desc: "A still of the case workspace, with sample data. Every record carries where it came from: the notice, or us.",
+  },
+  plans: {
+    title: "Free until you need the response.",
+    link: "Full pricing and questions",
+    items: [
+      {
+        name: "Free",
+        note: "No account",
+        price: "$0",
+        features: [
+          "Decode any notice",
+          "Scam signals, quoted from the message",
+          "Deadlines and the records list",
+          "Do-now and do-not cards",
+        ],
+      },
+      {
+        name: "Free account",
+        note: "Saved and tracked",
+        price: "$0",
+        features: [
+          "Everything in Free, saved to your case",
+          "Encrypted vault on your device",
+          "Deadlines, and who you are waiting on",
+          "Amazon's replies applied: reopened, added, carried",
+        ],
+      },
+      {
+        name: "Appeal Pass",
+        note: "Per case, one time",
+        price: "$249",
+        features: [
+          "Documents checked field by field against the notice",
+          "The response prepared from your confirmed facts, every revision",
+          "Wording help that cannot change a fact",
+          "7-day refund, no questions asked",
+        ],
+        cta: "Get the Appeal Pass",
+      },
+    ],
+  },
   insights: {
     eyebrow: "What the notice does not tell you",
     title: "Four things that shape an appeal before you write a word",
@@ -68,7 +153,8 @@ export const HOME = {
   },
   trust: {
     eyebrow: "Before you paste anything",
-    title: "What happens to your case",
+    title: "What this is, and what it is not.",
+    accent: "not.",
     items: [
       {
         label: "No access to your Amazon account",
@@ -81,6 +167,10 @@ export const HOME = {
       {
         label: "Amazon makes the decision",
         desc: "We help you answer clearly and completely. Nobody outside Amazon can promise reinstatement, and we do not.",
+      },
+      {
+        label: "Software, not a law firm",
+        desc: "Nothing here is legal advice and nothing you tell it is privileged. Forged documents, fraud and child-safety matters are routed to professional help, never sold a Pass.",
       },
     ],
   },
@@ -134,6 +224,9 @@ export const DECODE = {
       "Your notice, deadline and records list come with you. Free, and no sign-up needed to start.",
     jumpTo: "Or go straight to",
     wordingTitle: "What the wording in your notice means",
+    markedTitle: "Your notice, marked up",
+    markedRisk: "Decides the response",
+    markedClear: "A record to supply",
     doNow: "Do now",
     doNot: "Do not",
     copySummary: "Copy plain-English summary",
@@ -194,6 +287,12 @@ export const DECODE = {
 
 export const PRICING = {
   headline: "Understand your case before you pay.",
+  accent: "before you pay.",
+  compareTitle: "Choose the access you need",
+  createAccount: "Create an account",
+  readFirst: "Read before you buy",
+  checkoutNote:
+    "Paid through Paddle, our merchant of record. A case that already has its Pass is not charged again.",
   subline:
     "Start with a free notice brief and case workspace. Choose an Appeal Pass when you need to prepare a response for an eligible case.",
   price: "$249",

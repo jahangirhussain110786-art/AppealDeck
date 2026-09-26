@@ -87,7 +87,10 @@ test.describe("Marketing site (public)", () => {
     const main = page.locator("main");
     await expect(main.getByText("Check this message before you act on it")).toBeVisible();
     await expect(main.getByText("This message mentions a payment")).toBeVisible();
-    await expect(main.getByText("amaz0n-seller-appeal.com")).toBeVisible();
+    // 26 Sep 2026: the pasted notice now stays on screen beside the result, so the domain appears
+    // twice: once in the notice, once quoted by the scam check. The signal's own quote is the one
+    // this asserts.
+    await expect(main.getByText("amaz0n-seller-appeal.com", { exact: true })).toBeVisible();
     // It points at Seller Central and reaches no verdict of its own.
     await expect(
       main.getByText(/Open Seller Central yourself and look at Account Health/),

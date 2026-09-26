@@ -4,7 +4,7 @@ import { Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LogoMark } from "@/components/Logo";
-import { HeroArtifact } from "@/components/marketing/HeroArtifact";
+import { WorkspacePreview } from "@/components/marketing/WorkspacePreview";
 import { AUTH } from "@/content/auth";
 import type { ReactNode } from "react";
 
@@ -67,7 +67,7 @@ function AuthPreviewPanel() {
           {AUTH.preview.description}
         </p>
       </div>
-      <HeroArtifact />
+      <WorkspacePreview />
     </aside>
   );
 }

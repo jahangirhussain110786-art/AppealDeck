@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Case workspace</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;font-family:"Instrument Sans",system-ui,sans-serif;background:#F4F4F0;color:#0F1728;-webkit-font-smoothing:antialiased}
+a{color:#1D4ED8}a:hover{color:#1E40AF}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1560px; box-sizing: border-box; display: flex; flex-direction: column; background: #F4F4F0; color: #0F1728; font-family: 'Instrument Sans', system-ui, sans-serif; overflow: hidden">
+
+  <!-- App header (same tokens as marketing) -->
+  <header style="height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; border-bottom: 1px solid #E4E6EB; background: #FAFAF7">
+    <div style="display: flex; align-items: center; gap: 28px">
+      <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0F1728">
+        <svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#0F1728"></rect><path d="M8 14.5l4 4 8-9" stroke="#F97316" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span style="font-weight: 600; font-size: 16px; letter-spacing: -0.01em">AppealDeck</span>
+      </a>
+      <nav style="display: flex; gap: 24px; font-size: 14px; font-weight: 500">
+        <a href="Decode.dc.html" style="color: #3E4756; text-decoration: none">Decode</a>
+        <a href="Case.dc.html" style="color: #0F1728; text-decoration: none; border-bottom: 2px solid #C2410C; padding-bottom: 2px">Case</a>
+        <a href="Case.dc.html#vault" style="color: #3E4756; text-decoration: none">Vault</a>
+      </nav>
+    </div>
+    <div style="display: flex; align-items: center; gap: 16px; font-size: 13px; color: #5B6472">
+      <span style="display: inline-flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>Saved on this device, 12 s ago</span>
+      <span style="width: 1px; height: 18px; background: #D8DBE2"></span>
+      <a href="Pricing.dc.html" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 500; color: #0F1728; text-decoration: none"><span style="width: 8px; height: 8px; border-radius: 4px; background: #15803D"></span>Appeal Pass active</a>
+      <button type="button" aria-label="Account menu" style="width: 32px; height: 32px; border-radius: 16px; border: 1px solid #D8DBE2; background: #FFFFFF; color: #0F1728; font-size: 12px; font-weight: 600; cursor: pointer">NT</button>
+    </div>
+  </header>
+
+  <!-- Case bar -->
+  <div style="padding: 28px 32px 20px; display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; background: #FAFAF7; border-bottom: 1px solid #E4E6EB">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #5B6472"><a href="Case.dc.html" style="color: #5B6472; text-decoration: none">All cases</a><span>/</span><span style="font-family: 'JetBrains Mono', monospace">case_7f3a</span></div>
+      <h1 style="margin: 0; font-size: 32px; line-height: 1.1; letter-spacing: -0.03em; font-weight: 600">Inauthentic item · US · Northline Trading LLC</h1>
+      <div style="display: flex; align-items: center; gap: 16px; font-size: 14px; color: #3E4756"><span>Response 2 of this case</span><span style="width: 4px; height: 4px; border-radius: 2px; background: #C9CDD6"></span><span>Amazon replied Thu 24 Sep, asking again for invoices</span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 20px; padding: 16px 20px; border: 1px solid #FED7AA; border-radius: 14px; background: #FFF7ED">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9A3412" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 12px; font-weight: 600; color: #9A3412">Next date</div>
+        <div style="font-size: 20px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">Mon 28 Sep, 09:14 · 1 day 19 h</div>
+        <div style="font-size: 12px; color: #9A3412">Reply window, from the notice. Reminder set for tomorrow 09:00.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body: main + rail -->
+  <div style="padding: 28px 32px 32px; display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start">
+
+    <div style="display: flex; flex-direction: column; gap: 24px">
+
+      <!-- Amazon's reply first -->
+      <section style="border: 1px solid #D8DBE2; border-radius: 16px; background: #FFFFFF; overflow: hidden">
+        <div style="padding: 16px 24px; border-bottom: 1px solid #E4E6EB; display: flex; align-items: center; justify-content: space-between">
+          <h2 style="margin: 0; font-size: 15px; font-weight: 600">Amazon&#39;s reply, Thu 24 Sep · what changed</h2>
+          <span style="font-size: 12px; color: #5B6472">Not a final decision. They asked for more.</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr))">
+          <div style="padding: 16px 24px; border-right: 1px solid #E4E6EB; display: flex; flex-direction: column; gap: 4px"><div style="font-size: 12px; color: #9A3412; font-weight: 600">Reopened · 1</div><div style="font-size: 14px; line-height: 1.45">Supplier invoices. You marked it reviewed; Amazon asks again.</div></div>
+          <div style="padding: 16px 24px; border-right: 1px solid #E4E6EB; display: flex; flex-direction: column; gap: 4px"><div style="font-size: 12px; color: #1D4ED8; font-weight: 600">Added · 1</div><div style="font-size: 14px; line-height: 1.45">Proof of delivery for recent orders.</div></div>
+          <div style="padding: 16px 24px; border-right: 1px solid #E4E6EB; display: flex; flex-direction: column; gap: 4px"><div style="font-size: 12px; color: #5B6472; font-weight: 600">Outstanding · 0</div><div style="font-size: 14px; line-height: 1.45; color: #5B6472">Nothing left unanswered from round one.</div></div>
+          <div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 4px"><div style="font-size: 12px; color: #15803D; font-weight: 600">Carried · 3</div><div style="font-size: 14px; line-height: 1.45">Root cause, preventive steps, supplier contact. Kept as you wrote them.</div></div>
+        </div>
+      </section>
+
+      <!-- Task list (GOV.UK pattern) -->
+      <section style="border: 1px solid #D8DBE2; border-radius: 16px; background: #FFFFFF; overflow: hidden">
+        <div style="padding: 16px 24px; border-bottom: 1px solid #E4E6EB; display: flex; align-items: center; justify-content: space-between">
+          <h2 style="margin: 0; font-size: 15px; font-weight: 600">What this case needs</h2>
+          <span style="font-size: 13px; color: #5B6472; font-variant-numeric: tabular-nums">3 of 6 done</span>
+        </div>
+        <div style="height: 3px; background: #EEF0F4; display: flex"><span style="width: 50%; background: #0F1728"></span></div>
+
+        <a href="Case.dc.html#req-1" style="display: grid; grid-template-columns: 28px 1fr 180px 120px; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #E4E6EB; text-decoration: none; color: #0F1728">
+          <span style="width: 24px; height: 24px; border-radius: 12px; background: #FDE7D3; color: #C2410C; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 8v5"></path><circle cx="12" cy="16.5" r="0.6" fill="currentColor"></circle><circle cx="12" cy="12" r="9"></circle></svg></span>
+          <span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 15px; font-weight: 600">Supplier invoices, within 365 days, both ASINs</span><span style="font-size: 13px; color: #9A3412">Reopened: <span style="font-family: 'Newsreader', serif; font-style: italic; font-size: 14px">&#8220;the invoice provided does not meet our requirements&#8221;</span></span></span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5B6472">inv_0412.pdf · 1 check stale</span>
+          <span style="justify-self: end; height: 26px; padding: 0 10px; border-radius: 6px; background: #FFF7ED; color: #9A3412; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">Needs attention</span>
+        </a>
+        <a href="Case.dc.html#req-2" style="display: grid; grid-template-columns: 28px 1fr 180px 120px; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #E4E6EB; text-decoration: none; color: #0F1728">
+          <span style="width: 24px; height: 24px; border-radius: 12px; background: #DCFCE7; color: #15803D; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg></span>
+          <span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 15px; font-weight: 600">Root cause, in your own words</span><span style="font-size: 13px; color: #5B6472">312 words · past tense · names the supplier and the batch</span></span>
+          <span style="font-size: 12px; color: #5B6472">Carried from round 1</span>
+          <span style="justify-self: end; height: 26px; padding: 0 10px; border-radius: 6px; background: #DCFCE7; color: #15803D; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">Done</span>
+        </a>
+        <a href="Case.dc.html#req-3" style="display: grid; grid-template-columns: 28px 1fr 180px 120px; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #E4E6EB; text-decoration: none; color: #0F1728">
+          <span style="width: 24px; height: 24px; border-radius: 12px; background: #DCFCE7; color: #15803D; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg></span>
+          <span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 15px; font-weight: 600">Preventive steps, each dated</span><span style="font-size: 13px; color: #5B6472">4 steps · you confirmed each is done, not planned</span></span>
+          <span style="font-size: 12px; color: #5B6472">Attested Wed 23 Sep</span>
+          <span style="justify-self: end; height: 26px; padding: 0 10px; border-radius: 6px; background: #DCFCE7; color: #15803D; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">Done</span>
+        </a>
+        <a href="Case.dc.html#req-4" style="display: grid; grid-template-columns: 28px 1fr 180px 120px; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #E4E6EB; text-decoration: none; color: #0F1728">
+          <span style="width: 24px; height: 24px; border-radius: 12px; background: #DCFCE7; color: #15803D; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg></span>
+          <span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 15px; font-weight: 600">Supplier contact and order history</span><span style="font-size: 13px; color: #5B6472">Not in the notice; raised by us. Website, phone, 6 orders linked.</span></span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5B6472">orders_2026.csv</span>
+          <span style="justify-self: end; height: 26px; padding: 0 10px; border-radius: 6px; background: #DCFCE7; color: #15803D; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">Done</span>
+        </a>
+        <a href="Case.dc.html#req-5" style="display: grid; grid-template-columns: 28px 1fr 180px 120px; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #E4E6EB; text-decoration: none; color: #0F1728">
+          <span style="width: 24px; height: 24px; border-radius: 12px; border: 1.5px solid #C9CDD6; display: inline-flex"></span>
+          <span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 15px; font-weight: 600">Proof of delivery for recent orders</span><span style="font-size: 13px; color: #1D4ED8">Added by Amazon&#39;s reply on Thu 24 Sep</span></span>
+          <span style="font-size: 12px; color: #5B6472">Carrier records, screenshots</span>
+          <span style="justify-self: end; height: 26px; padding: 0 10px; border-radius: 6px; background: #EEF0F4; color: #3E4756; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">Not started</span>
+        </a>
+        <a href="Case.dc.html#req-6" style="display: grid; grid-template-columns: 28px 1fr 180px 120px; align-items: center; gap: 16px; padding: 16px 24px; text-decoration: none; color: #0F1728">
+          <span style="width: 24px; height: 24px; border-radius: 12px; border: 1.5px solid #C9CDD6; display: inline-flex"></span>
+          <span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 15px; font-weight: 600">Confirm every issue is answered, then send</span><span style="font-size: 13px; color: #5B6472">The pre-send checklist. Blocks nothing; it tells you what a reader will notice.</span></span>
+          <span></span>
+          <span style="justify-self: end; height: 26px; padding: 0 10px; border-radius: 6px; background: #EEF0F4; color: #3E4756; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">Not started</span>
+        </a>
+      </section>
+
+      <!-- Evidence table (Mercury discipline) -->
+      <section style="border: 1px solid #D8DBE2; border-radius: 16px; background: #FFFFFF; overflow: hidden">
+        <div style="padding: 16px 24px; border-bottom: 1px solid #E4E6EB; display: flex; align-items: center; justify-content: space-between">
+          <h2 style="margin: 0; font-size: 15px; font-weight: 600">Documents in the vault · 3</h2>
+          <button type="button" style="height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid #D8DBE2; background: #FFFFFF; color: #0F1728; font: 500 13px 'Instrument Sans', sans-serif; cursor: pointer">Add a document</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.4fr 110px; gap: 16px; padding: 10px 24px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #5B6472; border-bottom: 1px solid #E4E6EB"><span>File</span><span>Added</span><span>Linked to</span><span>Check</span><span></span></div>
+        <div style="display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.4fr 110px; gap: 16px; padding: 14px 24px; font-size: 14px; border-bottom: 1px solid #E4E6EB; align-items: center"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">inv_0412.pdf</span><span style="font-variant-numeric: tabular-nums; color: #3E4756">22 Sep · 1.2 MB</span><span>Supplier invoices</span><span style="color: #9A3412">Stale: the ASIN list changed since this check</span><a href="Case.dc.html#doc-1" style="justify-self: end; font-weight: 500">Re-check</a></div>
+        <div style="display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.4fr 110px; gap: 16px; padding: 14px 24px; font-size: 14px; border-bottom: 1px solid #E4E6EB; align-items: center"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">orders_2026.csv</span><span style="font-variant-numeric: tabular-nums; color: #3E4756">22 Sep · 84 KB</span><span>Supplier history</span><span style="color: #15803D">Found: 6 orders naming the supplier</span><a href="Case.dc.html#doc-2" style="justify-self: end; font-weight: 500">View</a></div>
+        <div style="display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.4fr 110px; gap: 16px; padding: 14px 24px; font-size: 14px; align-items: center"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">supplier_site.png</span><span style="font-variant-numeric: tabular-nums; color: #3E4756">23 Sep · 640 KB</span><span>Supplier history</span><span style="color: #5B6472">Not checked: images are not read</span><a href="Case.dc.html#doc-3" style="justify-self: end; font-weight: 500">View</a></div>
+      </section>
+    </div>
+
+    <!-- Right rail -->
+    <aside style="display: flex; flex-direction: column; gap: 20px">
+      <div style="border: 1px solid #D8DBE2; border-radius: 16px; background: #FFFFFF; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 15px; font-weight: 600">Your response</h2><span style="font-size: 12px; color: #5B6472">Draft 2</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: #3E4756">Draft strength</span><span style="font-weight: 600">Working draft</span></div>
+          <div style="height: 6px; border-radius: 3px; background: #EEF0F4; display: flex"><span style="width: 62%; border-radius: 3px; background: #0F1728"></span></div>
+          <div style="font-size: 13px; color: #5B6472; line-height: 1.5">Says what is missing about the case file, never about Amazon&#39;s decision. Invoices are the gap.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; border-top: 1px solid #E4E6EB">
+          <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E4E6EB; font-size: 14px"><span>Root cause</span><span style="color: #15803D; font-weight: 500">Written</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E4E6EB; font-size: 14px"><span>Actions taken</span><span style="color: #15803D; font-weight: 500">Written</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E4E6EB; font-size: 14px"><span>Prevention</span><span style="color: #15803D; font-weight: 500">Written</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px"><span>Evidence referenced</span><span style="color: #9A3412; font-weight: 500">1 gap named</span></div>
+        </div>
+        <a href="Case.dc.html#response" style="display: inline-flex; align-items: center; justify-content: center; height: 44px; border-radius: 10px; background: {{accent}}; color: #FFFFFF; font-size: 15px; font-weight: 600; text-decoration: none">Open the response</a>
+        <div style="font-size: 12px; color: #5B6472; line-height: 1.5; text-align: center">You copy it into Seller Central yourself. We never send anything.</div>
+      </div>
+
+      <div style="border: 1px solid #D8DBE2; border-radius: 16px; background: #FFFFFF; padding: 22px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 15px; font-weight: 600">Dates on this case</h2>
+        <div style="display: flex; flex-direction: column">
+          <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E4E6EB; font-size: 14px; font-variant-numeric: tabular-nums"><span style="color: #3E4756">Notice received</span><span>Fri 25 Sep, 09:14</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E4E6EB; font-size: 14px; font-variant-numeric: tabular-nums"><span style="color: #3E4756">Response 1 sent</span><span>Tue 22 Sep</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E4E6EB; font-size: 14px; font-variant-numeric: tabular-nums"><span style="color: #3E4756">Amazon replied</span><span>Thu 24 Sep</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E4E6EB; font-size: 14px; font-variant-numeric: tabular-nums"><span style="color: #9A3412; font-weight: 500">Reply due</span><span style="font-weight: 600">Mon 28 Sep, 09:14</span></div>
+          <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; font-variant-numeric: tabular-nums"><span style="color: #3E4756">Funds request by</span><span>Tue 24 Nov</span></div>
+        </div>
+        <label style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; padding-top: 4px"><span>Email me the day before each date</span><input type="checkbox" checked="checked" style="width: 18px; height: 18px; accent-color: #0F1728"></label>
+      </div>
+
+      <div style="border-radius: 16px; background: #0F1728; color: #EDEEF2; padding: 22px; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 15px; font-weight: 600">Before you send again</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #A3ABBA">Amazon&#39;s reply reopened one record. Sending the same invoice again with new wording is the best-documented way to be refused twice. Replace the invoice or explain, under its own heading, why you cannot.</p>
+        <a href="Case.dc.html#alternatives" style="font-size: 14px; font-weight: 500; color: #FDBA74; text-decoration: none">What to do if you cannot get a compliant invoice</a>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C2410C","options":["#C2410C","#0F1728","#1D4ED8"]},"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#C2410C' };
+  }
+}
+</script>
+</body>
+</html>

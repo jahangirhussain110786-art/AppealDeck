@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function DecodePage() {
   return (
-    <MarketingShell width="tool">
+    <MarketingShell>
       <DecodeClient />
       <nav aria-labelledby="decode-guides" className="mb-12 border-t border-border/60 pt-6">
         <h2 id="decode-guides" className="text-sm font-medium text-foreground">

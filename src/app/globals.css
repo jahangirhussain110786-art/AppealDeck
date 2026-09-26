@@ -5,16 +5,19 @@
 @layer base {
   :root {
     /* --- Typography (fluid scale via clamp) --- */
-    --text-display: clamp(2.5rem, 1.6rem + 3vw, 3.75rem);
-    --text-h1: clamp(2rem, 1.4rem + 2vw, 2.75rem);
-    --text-h2: clamp(1.5rem, 1.2rem + 1vw, 1.875rem);
-    --text-h3: 1.25rem;
+    /* Bigger jumps between steps (26 Sep 2026, the prototype pass): the display size is now
+       about 4.5x the body instead of 2.5x, so hierarchy comes from size and weight rather than
+       from colour or boxes. Body stays at 1rem. */
+    --text-display: clamp(2.5rem, 1.2rem + 4.2vw, 4.75rem);
+    --text-h1: clamp(2rem, 1.3rem + 2.4vw, 3.25rem);
+    --text-h2: clamp(1.625rem, 1.1rem + 1.6vw, 2.5rem);
+    --text-h3: 1.375rem;
     --text-body: 1rem;
     --text-small: 0.875rem;
     --text-micro: 0.75rem;
 
     /* --- Fonts --- */
-    --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, monospace;
     --font-accent: "Newsreader", Georgia, serif;
 
@@ -38,11 +41,15 @@
        family, which is what made dark mode read as green. The orange is 30° against
        Amazon's 36°, and the navy is lighter and bluer than Amazon's, on purpose: related to
        the marketplace, never mistakable for it. */
-    --background: 216 20% 98%;
-    --foreground: 216 33% 12%;
+    /* 26 Sep 2026 (the prototype pass): the page ground moves from a cool near-white to a warm
+       paper (#FAFAF7), with the ink a shade deeper (#0F1728) and the hairlines a touch cooler,
+       so a card reads as paper on paper rather than a white box on a grey field. Exact
+       hex→HSL. The orange, link blue and semantic fills are the AM-30 values, untouched. */
+    --background: 60 23% 97%;
+    --foreground: 221 45% 11%;
     --surface-1: 0 0% 100%;
-    --surface-2: 216 20% 96%;
-    --surface-inverse: 216 33% 12%;
+    --surface-2: 60 18% 96%;
+    --surface-inverse: 221 45% 11%;
     --brand: 216 33% 14%;
     --primary: 30 97% 52%;
     --primary-foreground: 216 33% 12%;
@@ -54,12 +61,12 @@
     --success-foreground: 0 0% 100%;
     --destructive: 0 68% 45%;
     --destructive-foreground: 0 0% 100%;
-    --muted: 216 18% 95%;
-    --muted-foreground: 216 14% 36%;
+    --muted: 60 15% 95%;
+    --muted-foreground: 217 11% 38%;
     --accent: 30 97% 52%;
     --accent-foreground: 216 33% 12%;
-    --border: 216 16% 90%;
-    --input: 216 14% 82%;
+    --border: 223 15% 91%;
+    --input: 220 12% 81%;
     --ring: 30 95% 48%;
     --shadow: 216 33% 12%;
     --link: 213 80% 38%;
@@ -260,15 +267,29 @@
     outline-offset: 2px;
   }
 
-  /* Inter: single-storey a, disambiguated 0/O and I/l — IDs and ASINs read unambiguously */
-  body {
-    font-feature-settings: "cv11", "ss03";
-  }
+  /* Identifiers (ASINs, case IDs, hashes) always render in the mono face, where 0/O and I/l are
+     unambiguous by design, so the body face needs no feature overrides. */
   h1,
   h2,
   h3,
   h4 {
     letter-spacing: -0.02em;
+  }
+
+  /* Hairline rows (26 Sep 2026): the list pattern the prototype uses instead of a card per item.
+     Each child gets a top rule; the group carries the bottom one. */
+  .hairline-rows > * {
+    border-top: 1px solid hsl(var(--border));
+  }
+  .hairline-rows {
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  /* Text highlights inside a quoted notice: the phrase that decided the response, and a record the
+     seller must supply. Same tokens as .hl-risk/.hl-clear below, as <mark> defaults. */
+  mark.hl-risk,
+  mark.hl-clear {
+    color: inherit;
   }
   .lucide {
     stroke-width: 1.5;
