@@ -5,7 +5,8 @@ module.exports = {
         "http://127.0.0.1:3000/",
         "http://127.0.0.1:3000/pricing",
         "http://127.0.0.1:3000/decode",
-        "http://127.0.0.1:3000/login",
+        // /login is deliberately `noindex` since 25 Sep 2026 (dfc5718), which Lighthouse scores as
+        // an SEO failure (0.63) by design. Its accessibility is covered by e2e/a11y.spec.ts.
         "http://127.0.0.1:3000/privacy",
         "http://127.0.0.1:3000/terms",
         "http://127.0.0.1:3000/refund",

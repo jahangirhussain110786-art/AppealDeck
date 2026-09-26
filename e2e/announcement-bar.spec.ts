@@ -13,6 +13,10 @@ test.describe("Announcement bar", () => {
     test.skip(ANNOUNCEMENT_BAR.mode !== "rotate", "the bar is not configured to rotate");
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.goto("/");
+    // The pointer starts at (0,0), which is on the bar, and a hovered bar holds still by design.
+    // That is why this test failed on every CI attempt from 25 Sep: nothing was moving because
+    // the mouse was resting on it. Move it off before expecting rotation.
+    await page.mouse.move(0, 400);
     await expect(bar(page)).toContainText(first.text);
     await expect(bar(page)).toContainText(second.text, {
       timeout: ANNOUNCEMENT_BAR.intervalMs + 3000,
@@ -20,6 +24,9 @@ test.describe("Announcement bar", () => {
 
     await bar(page).getByRole("button", { name: ANNOUNCEMENT_BAR.labels.pause }).click();
     await page.mouse.move(0, 400); // off the bar, so hovering is not what holds it
+    // The message that was leaving keeps animating out for 320 ms after the pause; a snapshot
+    // taken inside that window holds both messages and can never match the settled bar.
+    await page.waitForTimeout(600);
     const shown = await bar(page).innerText();
     await page.waitForTimeout(ANNOUNCEMENT_BAR.intervalMs + 1000);
     expect(await bar(page).innerText()).toBe(shown);
