@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supplier invoices · AppealDeck</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 28 28%27%3E%3Crect width=%2728%27 height=%2728%27 rx=%277%27 fill=%27%230B1224%27/%3E%3Cpath d=%27M8 14.5l4 4 8-9%27 stroke=%27%23EA580C%27 stroke-width=%272.8%27 fill=%27none%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="v5.css">
+<style>
+  .doc-stage { border-radius: 22px; padding: 36px; background: radial-gradient(520px 260px at 90% 0%, rgba(234,88,12,0.14), transparent 70%), linear-gradient(180deg, #efede6, #e9e6dd); display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: center; }
+  .invoice { background: #fff; border-radius: 10px; padding: 26px 26px 22px; box-shadow: 0 30px 60px -30px rgba(11,18,36,0.45), 0 0 0 1px #e4e2da; font-size: 12.5px; color: var(--ink-2); display: flex; flex-direction: column; gap: 12px; transform: rotate(-1deg); position: relative; }
+  .hl { position: relative; padding: 6px 8px; margin: 0 -8px; border-radius: 6px; }
+  .hl.ok { background: var(--ok-soft); box-shadow: 0 0 0 1.5px #86efac inset; }
+  .hl.miss { background: #fff7f0; box-shadow: 0 0 0 1.5px var(--accent-glow) inset; color: var(--accent-ink); font-weight: 600; }
+  .pin { position: absolute; right: -40px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 12px; color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px -4px rgba(0,0,0,0.4); }
+  .pin.ok { background: var(--ok); } .pin.miss { background: var(--accent-deep); }
+  .res li { display: grid; grid-template-columns: 26px 1fr auto; gap: 12px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line-2); }
+  .res li:last-child { border-bottom: 0; }
+  .res .pin { position: static; transform: none; }
+  .drop { margin-left: 34px; padding: 22px; border-radius: 14px; background: repeating-linear-gradient(-45deg, #fbfaf6, #fbfaf6 10px, #f6f4ee 10px, #f6f4ee 20px); box-shadow: 0 0 0 1.5px #d8d5cb inset; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  @media (max-width: 1100px) { .doc-stage { grid-template-columns: 1fr; padding: 22px 56px 22px 22px; } }
+  @media (max-width: 760px) { .drop { margin-left: 0; flex-direction: column; align-items: flex-start; } }
+</style>
+</head>
+<body class="app-body">
+<a class="skip" href="#main">Skip to content</a>
+<div class="app">
+  <aside class="side" aria-label="App">
+    <a class="logo" href="home.html"><svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#fff"/><path d="M8 14.5l4 4 8-9" stroke="#EA580C" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>AppealDeck</a>
+    <a class="nav" href="home.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lg">Decode a new notice</span><span class="sm">New case</span></a>
+    <a class="nav" href="dashboard.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+    <a class="nav" href="vault.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Vault</a>
+    <div class="h">Cases</div>
+    <a class="case on" href="case.html"><span style="width:8px;height:8px;border-radius:4px;background:var(--accent-glow)"></span><span>Inauthentic item</span><span class="num" style="font-size:12px;color:#fdba74">2d</span></a>
+    <a class="case" href="case.html"><span style="width:8px;height:8px;border-radius:4px;background:#60a5fa"></span><span>Held funds</span><span style="font-size:12px;color:var(--stage-ink-3)">Waiting</span></a>
+    <div class="foot-card"><div style="display:flex;align-items:center;gap:8px;color:#fff;font-weight:600"><span style="width:7px;height:7px;border-radius:4px;background:#4ade80"></span>Appeal Pass active</div><div style="margin-top:4px">Inauthentic item case</div></div>
+  </aside>
+
+  <div class="main" id="main" role="main">
+    <div class="bar">
+      <nav style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-3);min-width:0" aria-label="Breadcrumb"><a href="case.html" style="color:var(--ink-3);text-decoration:none">Inauthentic item</a><span>/</span><strong style="color:var(--ink)">Supplier invoices</strong></nav>
+      <div style="display:flex;align-items:center;gap:10px"><span class="pill need num"><span class="d"></span>Due Mon 28 Sep · 1d 19h</span><button type="button" aria-label="Account menu" style="width:32px;height:32px;border-radius:16px;border:0;background:#0b1224;color:#fff;font-size:12px;font-weight:600;cursor:pointer">NT</button></div>
+    </div>
+
+    <div style="padding:28px;max-width:1100px;display:flex;flex-direction:column;gap:22px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span class="pill need" style="align-self:flex-start"><span class="d"></span>Amazon asked for this again · Thu 24 Sep</span>
+        <h1 style="font-size:34px;line-height:1.08;letter-spacing:-0.04em;font-weight:600">Supplier invoices, both ASINs</h1>
+        <p class="serif" style="font-size:19px;color:var(--ink-2)">&#8220;copies of invoices or receipts from your supplier issued in the last 365 days&#8221;</p>
+      </div>
+
+      <!-- The invoice, pinned, beside what each pin means -->
+      <section class="doc-stage" aria-labelledby="h-check">
+        <div class="invoice" role="img" aria-label="Invoice 0412: date and buyer found; one of two ASINs; no supplier phone">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><strong style="font-size:15px;color:var(--ink)">Harbor Goods Ltd</strong><strong style="color:var(--ink)">INVOICE 0412</strong></div>
+          <div class="hl ok">Issued 14 March 2026<span class="pin ok">1</span></div>
+          <div class="hl ok">Bill to: Northline Trading LLC, Newark NJ<span class="pin ok">2</span></div>
+          <div style="display:grid;grid-template-columns:1.6fr .5fr .7fr;gap:6px;padding-top:8px;border-top:1px solid var(--line-2);font-weight:600;color:var(--ink)"><span>Item</span><span>Qty</span><span>Total</span></div>
+          <div class="hl ok" style="display:grid;grid-template-columns:1.6fr .5fr .7fr;gap:6px"><span class="mono">B0SAMPLE01</span><span>40</span><span>$1,120</span><span class="pin ok">3</span></div>
+          <div class="hl miss">B0SAMPLE02 is not on this invoice<span class="pin miss">3</span></div>
+          <div class="hl miss">Supplier phone: none shown<span class="pin miss">4</span></div>
+        </div>
+        <div style="background:#fff;border-radius:16px;box-shadow:var(--shadow-2);overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line-2)"><span><strong id="h-check" style="display:block">Check of <span class="mono">inv_0412.pdf</span></strong><span style="font-size:12.5px;color:var(--ink-3)">Tue 22 Sep · Amazon replied since</span></span><button type="button" class="btn btn-light btn-sm">Check again</button></div>
+          <ol class="res" style="list-style:none;margin:0;padding:0">
+            <li><span class="pin ok">1</span><span><strong style="display:block;font-size:14.5px">Invoice date</strong><span style="font-size:12.5px;color:var(--ink-3)">196 days old · under 365</span></span><span class="pill ok">Found</span></li>
+            <li><span class="pin ok">2</span><span><strong style="display:block;font-size:14.5px">Your business name</strong><span style="font-size:12.5px;color:var(--ink-3)">Matches your account</span></span><span class="pill ok">Found</span></li>
+            <li><span class="pin miss">3</span><span><strong style="display:block;font-size:14.5px">Both ASINs</strong><span style="font-size:12.5px;color:var(--ink-3)">1 of 2 on this invoice</span></span><span class="pill need">Missing 1</span></li>
+            <li><span class="pin miss">4</span><span><strong style="display:block;font-size:14.5px">Supplier phone</strong><span style="font-size:12.5px;color:var(--ink-3)">Amazon may call the supplier</span></span><span class="pill mute">Not found</span></li>
+          </ol>
+          <p style="padding:12px 18px;font-size:12.5px;color:var(--ink-3);border-top:1px solid var(--line-2)">Compares text only. It cannot tell if a document is genuine.</p>
+        </div>
+      </section>
+
+      <!-- One question -->
+      <fieldset style="margin:0;padding:0;border:0;display:flex;flex-direction:column;gap:10px">
+        <legend style="font-size:18px;font-weight:600;letter-spacing:-0.02em;margin-bottom:12px">What will you do?</legend>
+        <label class="choice"><input type="radio" name="c" checked data-reveal="r1"><span><strong>Add a different invoice</strong><span class="s">One that names both ASINs.</span></span></label>
+        <div class="drop" id="r1">
+          <span style="display:flex;align-items:center;gap:14px"><span style="width:44px;height:44px;border-radius:12px;background:#fff;box-shadow:var(--shadow-1);display:inline-flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0b1224" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></span><span><strong style="display:block;font-size:14.5px">Drop a PDF, photo or CSV</strong><span style="font-size:12.5px;color:var(--ink-3)">Encrypted on this device · up to 3 MB</span></span></span>
+          <button type="button" class="btn btn-ink btn-sm">Choose a file</button>
+        </div>
+        <label class="choice"><input type="radio" name="c" data-reveal="r2"><span><strong>I cannot get one</strong><span class="s">Your reason goes into the response, plainly.</span></span></label>
+        <div id="r2" hidden style="margin-left:34px;display:grid;gap:12px">
+          <div class="field"><label for="why">Why not, in your words</label><textarea class="textarea" id="why"></textarea></div>
+          <div class="field"><label for="alt">What you can send instead</label><select class="select" id="alt"><option>Order confirmations from the supplier</option><option>Bank payments to the supplier</option></select></div>
+        </div>
+        <label class="choice"><input type="radio" name="c" data-reveal="r3"><span><strong>I asked the supplier and I am waiting</strong><span class="s">We remind you the day before it is due.</span></span></label>
+        <div id="r3" hidden></div>
+      </fieldset>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:6px;border-top:1px solid #e5e3db;padding-top:18px">
+        <a class="tap" href="case.html" style="font-weight:500;text-decoration:none">&#8592; Back to the case</a>
+        <a class="btn btn-accent" href="case.html">Save</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('input[type=radio][name]').forEach((r) => r.addEventListener('change', () => {
+    document.querySelectorAll(`input[name="${r.name}"]`).forEach((x) => { const el = document.getElementById(x.dataset.reveal); if (el) el.hidden = !x.checked; });
+  }));
+</script>
+</body>
+</html>

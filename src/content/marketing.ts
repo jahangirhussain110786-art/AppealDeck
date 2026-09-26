@@ -10,6 +10,7 @@
  */
 export const HOME = {
   hero: {
+    badge: "Free",
     eyebrow: "For Amazon sellers with a suspension or policy notice",
     headline: "Amazon account suspended? Know what to send back.",
     accent: "what to send back",
@@ -32,6 +33,56 @@ export const HOME = {
     recordsTitle: "Records this case starts with",
     primaryCta: "Decode my notice — free",
     secondaryCta: "See the full decode",
+  },
+  /** The paste tool in the hero (v5, 26 Sep 2026). It hands the text to /decode, never via the URL. */
+  tool: {
+    label: "Amazon's email",
+    placeholder: "Paste the whole email here…",
+    sample: "Use a sample",
+    note: "No Amazon login. Not stored.",
+    submit: "Decode",
+  },
+  /** The layered product view beside the hero tool. Sample data, and labelled as such. */
+  composition: {
+    label: "The case workspace, with sample data",
+    replied: "Amazon replied",
+    repliedDetail: "1 asked again · 1 new · 3 kept",
+    dueIn: "Reply due in",
+    reminder: "Email reminder set",
+    nextStep: "Next step",
+    nextAction: "Replace the supplier invoice",
+    start: "Start",
+    checklist: "Checklist",
+  },
+  /** One large product visual, switched by these four (v5 feature switcher). */
+  features: {
+    eyebrow: "From notice to response",
+    title: "Everything a case needs, in one place.",
+    accent: "one place.",
+    sample: "Sample data",
+    items: [
+      {
+        title: "Decode the notice",
+        body: "The phrases that decide your reply, marked in Amazon's own words.",
+      },
+      {
+        title: "Gather every record",
+        body: "One checklist, built from the notice, including records it does not name.",
+      },
+      {
+        title: "Check your documents",
+        body: "Invoices read against the notice: dates, ASINs, your business name.",
+      },
+      {
+        title: "Answer every reply",
+        body: "Paste Amazon's reply. See what changed. Your finished work stays.",
+      },
+    ],
+  },
+  /** The navy promise band. Its items are `numbers` below. */
+  band: {
+    title: "Your account stays yours.",
+    accent: "yours.",
   },
   /** Shown as numbers before any claim. Each is a fact the product already states elsewhere. */
   numbers: {
@@ -66,6 +117,7 @@ export const HOME = {
   plans: {
     title: "Free until you need the response.",
     link: "Full pricing and questions",
+    accountCta: "Create a free account",
     items: [
       {
         name: "Free",
@@ -185,6 +237,8 @@ export const HOME = {
 } as const;
 
 export const DECODE = {
+  eyebrow: "Notice decoder",
+  illustrationAlt: "An email from Amazon with the phrase that matters highlighted",
   pageTitle: "What is your Amazon notice asking for?",
   pageDescription:
     "Paste the full notice. See the response Amazon wants, the deadline it states, the IDs it names and the records to gather.",
@@ -208,6 +262,12 @@ export const DECODE = {
   likenessHint:
     "This doesn't look like an Amazon notice yet. Paste the full email, including the subject line.",
   result: {
+    factReply: "Amazon is asking for",
+    factDue: "Reply due",
+    factNoDate: "No date stated",
+    factScam: "Scam check",
+    factScamClear: "No warning signs",
+    factScamFlagged: "Worth checking",
     briefEyebrow: "What this notice is about",
     deadlinesTitle: "When it is due",
     noDeadline:
@@ -355,6 +415,7 @@ export type FaqItem = {
 };
 
 export const FAQ = {
+  eyebrow: "Help & answers",
   title: "Questions, answered.",
   description: "Choose a topic. Get a clear answer. Decide your next step.",
   items: [

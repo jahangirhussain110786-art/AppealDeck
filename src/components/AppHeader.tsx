@@ -28,7 +28,7 @@ function NavPill({ href, label, lock, mobile }: NavItem & { mobile?: boolean }) 
   const className = cn(
     mobile
       ? "flex h-11 items-center rounded-md px-3 text-base font-medium hover:bg-muted"
-      : "relative px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-[var(--dur-fast)] hover:text-foreground after:absolute after:inset-x-2.5 after:-bottom-[1.3rem] after:h-0.5 after:rounded-full after:bg-transparent",
+      : "relative px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-[var(--dur-fast)] hover:text-foreground after:absolute after:inset-x-2.5 after:-bottom-[1.2rem] after:h-0.5 after:rounded-full after:bg-transparent",
     !mobile && active && "text-foreground after:bg-primary",
     mobile && active && "bg-muted",
   );
@@ -93,13 +93,20 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
   return (
     <TooltipProvider>
       <header
-        className="sticky top-0 z-[var(--z-sticky)] border-b border-border/60 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/70"
+        className={cn(
+          "sticky top-0 z-[var(--z-sticky)] border-b backdrop-blur-md",
+          // v5: the public header is the translucent navy bar over the stage; `dark` flips every
+          // token inside it so text and controls read on navy in both themes.
+          mode === "marketing"
+            ? "dark border-white/[0.08] bg-[hsl(var(--stage)/0.92)] text-foreground"
+            : "border-border/60 bg-background/80 supports-[backdrop-filter]:bg-background/70",
+        )}
         data-no-print
       >
         <div
           className={cn(
             "mx-auto flex items-center justify-between gap-4 px-4 sm:px-6",
-            mode === "app" ? "h-14 max-w-app" : "h-[4.25rem] max-w-marketing",
+            mode === "app" ? "h-14 max-w-app" : "h-16 max-w-marketing",
           )}
         >
           <Logo href="/" />

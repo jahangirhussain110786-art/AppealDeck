@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingShell } from "@/components/MarketingShell";
+import { PageHero } from "@/components/PageHero";
 import { Card } from "@/components/ui/card";
 import { GUIDES, GUIDES_COMMON } from "@/content/guides";
 
@@ -13,18 +14,22 @@ export const metadata: Metadata = {
 
 export default function GuidesIndexPage() {
   return (
-    <MarketingShell className="max-w-app">
-      <div className="py-10 sm:py-14">
-        <header className="mb-8 sm:mb-10">
-          <p className="text-eyebrow uppercase text-primary">{GUIDES_COMMON.eyebrow}</p>
-          <h1 className="mt-2 font-accent text-h1 text-foreground">{GUIDES_COMMON.indexTitle}</h1>
-          <p className="mt-3 text-base text-muted-foreground">{GUIDES_COMMON.indexIntro}</p>
-        </header>
+    <MarketingShell
+      className="max-w-app"
+      hero={
+        <PageHero
+          eyebrow={GUIDES_COMMON.eyebrow}
+          title={GUIDES_COMMON.indexTitle}
+          intro={GUIDES_COMMON.indexIntro}
+        />
+      }
+    >
+      <div className="py-12 sm:py-16">
         <ul className="space-y-4">
           {GUIDES.map((g) => (
             <li key={g.slug}>
-              <Card className="p-5 transition-colors hover:border-primary/40 sm:p-6">
-                <h2 className="font-accent text-xl font-medium text-foreground">
+              <Card className="rounded-[20px] p-6 shadow-lift transition-colors hover:border-primary/40 sm:p-7">
+                <h2 className="tracking-[-0.03em] text-xl font-semibold text-foreground">
                   <Link href={`/guides/${g.slug}`} className="hover:underline">
                     {g.title}
                   </Link>

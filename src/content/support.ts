@@ -12,6 +12,15 @@ export const BILLING_EMAIL = "billing@appealdeck.com";
 
 export const SUPPORT = {
   eyebrow: "Support",
+  /** The v5 hero (26 Sep 2026). The founder's name as he writes it; the operator paragraph below
+   *  keeps the legal name used in the Terms. */
+  hero: {
+    title: "Write to the person who built it.",
+    accent: "built it.",
+    lede: "Cihangir reads and answers every message.",
+    emailCta: "Email support",
+    illustration: "A person at a desk, reading a reply on a laptop",
+  },
   title: "Who runs this, and how to reach them",
   intro:
     "AppealDeck is run by one person. That is worth knowing before you rely on it during an appeal, so this page says exactly who answers, how quickly, and what they can and cannot do.",

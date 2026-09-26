@@ -42,11 +42,9 @@ import { FactsLedgerCard } from "@/components/FactsLedgerCard";
 import { buildFactsLedger } from "@/core/factsLedger";
 import { buildDocumentCheck } from "@/core/documentCheck";
 import type { CheckOutcome } from "@/lib/documentChecks/runCheck";
-import { VerifiedStamp } from "@/components/VerifiedStamp";
 import { Stepper } from "@/components/Stepper";
 import { Logo, LogoMark } from "@/components/Logo";
 import { SectionHeading } from "@/components/SectionHeading";
-import { WorkspacePreview } from "@/components/marketing/WorkspacePreview";
 import { ShieldCheckIllustration } from "@/components/illustrations/ShieldCheckIllustration";
 import { VaultDoorIllustration } from "@/components/illustrations/VaultDoorIllustration";
 import { MagnifierDocumentIllustration } from "@/components/illustrations/MagnifierDocumentIllustration";
@@ -201,7 +199,6 @@ export function DevUiGallery() {
             <EvidenceStatusBadge status="present" />
             <EvidenceStatusBadge status="missing" />
             <EvidenceStatusBadge status="pending" />
-            <VerifiedStamp checkedOn="2026-09-01" />
           </CardContent>
         </Card>
       </Section>
@@ -385,10 +382,6 @@ export function DevUiGallery() {
         <DeadlineChipList deadlines={sampleDeadlines} />
       </Section>
 
-      <Section title="Patterns - WorkspacePreview">
-        <WorkspacePreview />
-      </Section>
-
       <Section title="Patterns - HonestExpectationsCard (single list)">
         <HonestExpectationsCard
           summary="We decode the notice in your browser. We draft a Plan of Action grounded in the notice and your evidence."
@@ -503,9 +496,6 @@ export function DevUiGallery() {
                 </AlertDescription>
               </div>
             </Alert>
-            <div className="flex items-center gap-2">
-              <VerifiedStamp checkedOn="2026-09-01" />
-            </div>
             <Separator />
             <HonestExpectationsCard
               summary={GLOBAL_EXPECTATIONS.typicalNote}
@@ -762,9 +752,7 @@ function demoBrief(offsets: number[]) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        {title}
-      </h2>
+      <h2 className="text-sm font-semibold text-muted-foreground">{title}</h2>
       {children}
     </section>
   );

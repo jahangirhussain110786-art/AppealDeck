@@ -53,6 +53,7 @@ export default async function VaultPage() {
         eyebrow={APP.vault.eyebrow}
         title={APP.vault.title}
         description={APP.vault.subtitle}
+        illustration={{ src: "/illustrations/vault.svg", alt: APP.vault.illustrationAlt }}
       />
       <VaultView userId={user.id} />
     </div>

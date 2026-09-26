@@ -309,7 +309,7 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
     <Card className="w-full max-w-form">
       <CardContent className="p-5 sm:p-6">
         <IconTile icon={ShieldCheck} className="mb-4" />
-        <h2 className="mb-2 font-accent text-2xl font-medium">{APP.vault.create.title}</h2>
+        <h2 className="mb-2 tracking-[-0.03em] text-2xl font-semibold">{APP.vault.create.title}</h2>
         <p className="mb-4 text-sm text-muted-foreground">{APP.vault.create.body}</p>
 
         <Alert variant="warning" className="mb-4">
@@ -401,7 +401,7 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
     <Card className="w-full max-w-form">
       <CardContent className="p-5 sm:p-6">
         <IconTile icon={ShieldCheck} className="mb-4" />
-        <h2 className="mb-2 font-accent text-2xl font-medium">{APP.vault.unlock.title}</h2>
+        <h2 className="mb-2 tracking-[-0.03em] text-2xl font-semibold">{APP.vault.unlock.title}</h2>
         <p className="mb-4 text-sm text-muted-foreground">{APP.vault.unlock.desc}</p>
         <div className="flex flex-col gap-3">
           <div>
@@ -480,7 +480,9 @@ function VaultDeviceRelockForm({ vault, onDone }: VaultDeviceRelockProps) {
     <Card className="w-full max-w-form">
       <CardContent className="p-5 sm:p-6">
         <IconTile icon={ShieldCheck} className="mb-4" />
-        <h2 className="mb-2 font-accent text-2xl font-medium">{APP.access.setPassphrase.title}</h2>
+        <h2 className="mb-2 tracking-[-0.03em] text-2xl font-semibold">
+          {APP.access.setPassphrase.title}
+        </h2>
         <p className="mb-4 text-sm text-muted-foreground">{APP.access.setPassphrase.body}</p>
 
         <div className="flex flex-col gap-3">

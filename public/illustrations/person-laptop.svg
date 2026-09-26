@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-label="A person at a desk, reading a reply on a laptop">
+  <title>Someone at a laptop, reading a reply</title>
+  <defs>
+    <radialGradient id="p-shadow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0B1224" stop-opacity="0.18"/><stop offset="1" stop-color="#0B1224" stop-opacity="0"/></radialGradient>
+    <linearGradient id="p-desk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6F3EC"/><stop offset="1" stop-color="#E7E2D6"/></linearGradient>
+    <linearGradient id="p-screen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EEF1F8"/></linearGradient>
+    <linearGradient id="p-top" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1B2542"/><stop offset="1" stop-color="#0B1224"/></linearGradient>
+    <linearGradient id="p-chair" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E6E2D8"/><stop offset="1" stop-color="#D6D1C4"/></linearGradient>
+    <linearGradient id="p-accent" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FB923C"/><stop offset="1" stop-color="#EA580C"/></linearGradient>
+  </defs>
+
+  <ellipse cx="170" cy="222" rx="140" ry="10" fill="url(#p-shadow)"/>
+
+  <!-- plant -->
+  <path d="M28 196 h30 l-4 26 h-22 z" fill="#F3EFE6" stroke="#0B1224" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M43 196 c-2 -18 -14 -26 -20 -24 c2 12 10 20 20 24 z" fill="#CDE9D6" stroke="#0B1224" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M43 196 c2 -22 12 -32 20 -30 c-2 14 -10 24 -20 30 z" fill="#B7DFC4" stroke="#0B1224" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M43 196 c0 -16 2 -30 6 -38" fill="none" stroke="#0B1224" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- chair -->
+  <path d="M82 104 c-6 2 -10 8 -10 16 l4 50 h16 l-2 -62 c0 -3 -3 -5 -8 -4 z" fill="url(#p-chair)" stroke="#0B1224" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="78" y="166" width="72" height="11" rx="5.5" fill="url(#p-chair)" stroke="#0B1224" stroke-width="2"/>
+  <path d="M112 177 v26" stroke="#0B1224" stroke-width="3" stroke-linecap="round"/>
+  <path d="M90 208 h44" stroke="#0B1224" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="92" cy="213" r="3.5" fill="#FFFFFF" stroke="#0B1224" stroke-width="2"/><circle cx="132" cy="213" r="3.5" fill="#FFFFFF" stroke="#0B1224" stroke-width="2"/>
+
+  <!-- desk -->
+  <rect x="150" y="146" width="160" height="9" rx="4" fill="url(#p-desk)" stroke="#0B1224" stroke-width="2"/>
+  <path d="M164 155 v64 M296 155 v64" stroke="#0B1224" stroke-width="3" stroke-linecap="round"/>
+  <path d="M164 188 h132" stroke="#0B1224" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- legs -->
+  <path d="M104 166 C124 164 146 162 160 164" fill="none" stroke="#1F2A44" stroke-width="17" stroke-linecap="round"/>
+  <path d="M160 164 L162 204" fill="none" stroke="#1F2A44" stroke-width="15" stroke-linecap="round"/>
+  <path d="M156 211 h20 a4 4 0 0 1 0 8 h-20 z" fill="#0B1224"/>
+
+  <!-- torso -->
+  <path d="M92 168 C86 140 88 112 108 102 C116 98 128 98 136 102 C150 110 154 132 148 168 Z" fill="url(#p-top)" stroke="#0B1224" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M118 104 c2 6 8 8 14 6" fill="none" stroke="#2E3A5C" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- neck + head -->
+  <path d="M114 90 v12 h14 v-12" fill="#E9C4A2" stroke="#0B1224" stroke-width="2" stroke-linejoin="round"/>
+  <ellipse cx="122" cy="72" rx="20" ry="21" fill="#F0CFAE" stroke="#0B1224" stroke-width="2"/>
+  <path d="M102 74 C98 52 112 44 126 46 C140 48 146 58 142 66 C134 60 122 60 114 64 C112 70 110 78 104 84 Z" fill="#0B1224"/>
+  <ellipse cx="112" cy="75" rx="3.6" ry="4.4" fill="#E9C4A2" stroke="#0B1224" stroke-width="1.8"/>
+  <circle cx="134" cy="73" r="1.8" fill="#0B1224"/>
+  <path d="M141 76 c2 2 2 4 0 5" fill="none" stroke="#0B1224" stroke-width="1.8" stroke-linecap="round"/>
+
+  <!-- arm -->
+  <path d="M130 114 C140 128 150 136 170 138" fill="none" stroke="#1B2542" stroke-width="15" stroke-linecap="round"/>
+  <path d="M130 114 C140 128 150 136 170 138" fill="none" stroke="#0B1224" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+  <ellipse cx="176" cy="139" rx="7" ry="6" fill="#F0CFAE" stroke="#0B1224" stroke-width="2"/>
+
+  <!-- laptop -->
+  <path d="M176 146 h70" stroke="#0B1224" stroke-width="4" stroke-linecap="round"/>
+  <path d="M192 146 L206 90 H262 L248 146 Z" fill="url(#p-screen)" stroke="#0B1224" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M209 104 h34 M206 114 h24" stroke="#C9CFDC" stroke-width="3" stroke-linecap="round"/>
+  <path d="M212 129 l6 6 l13 -14" fill="none" stroke="url(#p-accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- mug -->
+  <path d="M270 124 h18 v18 a4 4 0 0 1 -4 4 h-10 a4 4 0 0 1 -4 -4 z" fill="#FFF1E6" stroke="#0B1224" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M288 128 c7 0 8 10 0 10" fill="none" stroke="#0B1224" stroke-width="2"/>
+  <path d="M276 118 c-2 -4 2 -6 0 -10 M282 118 c-2 -4 2 -6 0 -10" fill="none" stroke="#C9CDD6" stroke-width="1.8" stroke-linecap="round"/>
+
+  <!-- reply bubble -->
+  <path d="M214 22 h70 a10 10 0 0 1 10 10 v24 a10 10 0 0 1 -10 10 h-38 l-12 11 v-11 h-20 a10 10 0 0 1 -10 -10 v-24 a10 10 0 0 1 10 -10 z" fill="#FFFFFF" stroke="#0B1224" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="224" cy="44" r="8" fill="url(#p-accent)"/>
+  <path d="M220.5 44 l2.5 2.5 l5 -5" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M240 38 h40 M240 50 h26" stroke="#0B1224" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+</svg>

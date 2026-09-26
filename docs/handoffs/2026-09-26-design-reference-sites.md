@@ -1,5 +1,14 @@
 # Ten reference websites for the AppealDeck look (26 Sep 2026)
 
+> **Checked against real user feedback later on 26 Sep. This section replaces the list below where the two disagree.** The list below was drawn mostly from design roundups. It was then re-checked against what real people say: Hacker News, NN/g, G2, Trustpilot, Product Hunt, and the GOV.UK accessibility blog.
+>
+> - **Keep:** GOV.UK Design System (the strongest evidence of the ten), Mercury (the best model for the signed-in app; its real complaints are about unexplained account restrictions, not the interface), and Wise (price and timing shown up front).
+> - **Keep, but only one part:** Linear (the app's speed, not the dark "Linear-style" marketing look, which is now criticised as samey), Stripe (only its real product previews), Apple (only its type and spacing; its scroll-jacking is the standard NN/g example of what not to do), and Attio (only its record tables; new users say they feel lost without a template).
+> - **Drop:** Vercel and Raycast (they appear in design galleries, but no real user praise was found, and both are dark developer looks), and Notion as an app reference (people have complained about its slowness for years).
+> - **Add:** Ramp (G2 4.8 from 2,452 reviews, "absurdly simple interface"), Things 3 (two Apple Design Awards; a calm model for the checklist), Monzo (its public tone-of-voice guide says to avoid idioms that confuse non-native speakers, and many of our sellers are non-native speakers), and Baymard's checkout research (a clean design without bugs is what makes people trust a site with their card).
+> - **Complaints to avoid:** low-contrast grey text, scroll-jacking, vague hero copy, hidden prices, and slow pages.
+> - Prototype v3 (plain HTML, open `docs/handoffs/2026-09-26-prototype-v3/index.html`) applies all of this, plus a second research pass on showing instead of telling. v2 (`2026-09-26-prototype-v2/`, design-canvas format) is superseded.
+
 Purpose: the founder wants to raise the current look to a professional standard and asked for ten of the most praised, best-crafted websites to study. Apple was the founder's own pick; the other nine were chosen on two tests, in this order:
 
 1. **Praised by the design community, verifiably** (cited as benchmarks in 2025–26 roundups, design-token teardowns, or awards), not just liked by me.

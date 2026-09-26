@@ -146,6 +146,8 @@ export const APP = {
     },
   },
   dashboard: {
+    eyebrow: "Your cases",
+    illustrationAlt: "A calendar with the due date circled",
     title: "Your dashboard",
     subtitle:
       "Your case at a glance: what to do next, your deadlines, and how complete the file is.",
@@ -416,6 +418,7 @@ export const APP = {
     refundLink: "Refund policy & contact",
   },
   vault: {
+    illustrationAlt: "Your files in a locked folder on your own laptop",
     title: "Your evidence library",
     eyebrow: "Workspace tools",
     subtitle: "Find original files, manage backups and choose how your vault unlocks.",

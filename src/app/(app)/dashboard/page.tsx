@@ -1,7 +1,9 @@
 import { Metadata } from "next";
 import { getOptionalUser } from "@/lib/auth";
 import { fetchLicenseForUser } from "@/lib/license";
+import { LayoutGrid } from "lucide-react";
 import { DashboardClient } from "@/components/DashboardClient";
+import { PageIntro } from "@/components/PageIntro";
 import { APP } from "@/content/app";
 
 export const dynamic = "force-dynamic";
@@ -20,12 +22,16 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-accent text-h2 text-foreground">{APP.dashboard.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{APP.dashboard.subtitle}</p>
-        </div>
-      </div>
+      <PageIntro
+        icon={LayoutGrid}
+        eyebrow={APP.dashboard.eyebrow}
+        title={APP.dashboard.title}
+        description={APP.dashboard.subtitle}
+        illustration={{
+          src: "/illustrations/step-calendar.svg",
+          alt: APP.dashboard.illustrationAlt,
+        }}
+      />
       <DashboardClient license={license} signedIn={signedIn} />
     </div>
   );

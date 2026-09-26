@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" role="img" aria-label="Your response is sent; now waiting for Amazon">
+  <title>Sent. Waiting for Amazon.</title>
+  <path d="M28 128 q40 -10 60 -40 t70 -40" fill="none" stroke="#C9CDD6" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 9"/>
+  <!-- paper plane -->
+  <path d="M150 52 L214 24 L196 104 L176 80 Z" fill="#FFFFFF" stroke="#0F1728" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M176 80 L214 24" stroke="#0F1728" stroke-width="2.5"/>
+  <path d="M176 80 v22 l10 -12" fill="#FDE7D3" stroke="#0F1728" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- hourglass -->
+  <path d="M40 60 h32 M40 112 h32" stroke="#0F1728" stroke-width="3" stroke-linecap="round"/>
+  <path d="M44 62 c0 18 24 18 24 24 c0 6 -24 6 -24 24" fill="none" stroke="#0F1728" stroke-width="2.5"/>
+  <path d="M68 62 c0 18 -24 18 -24 24 c0 6 24 6 24 24" fill="none" stroke="#0F1728" stroke-width="2.5"/>
+  <path d="M48 106 q8 -10 16 0 z" fill="#F97316"/>
+</svg>

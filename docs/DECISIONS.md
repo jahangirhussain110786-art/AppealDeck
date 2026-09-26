@@ -307,3 +307,11 @@ Format:
 - Rationale: founder direction in chat; the earlier palette decision (AM-20/AM-22) judged wrong by the founder.
 - Files affected: `src/app/globals.css`, `tailwind.config.ts`, `src/components/AnnouncementBar.tsx`, `src/content/announcements.ts`, `src/components/MarketingShell.tsx`, `src/components/Logo.tsx`, link call sites, `public/brand/*`, `src/app/{icon.svg,favicon.ico,apple-icon.png,opengraph-image.png}`, `docs/handoffs/assets/brand-gen.js`, contrast and e2e tests.
 - Decider: Founder (the direction); AI assistant (the palette values, the role split, the bar's behaviour).
+
+## 26 Sep 2026 — AM-31: the v5 visual system
+
+- Decision: Implement the founder-approved v5 prototype across the public site and the signed-in app (navy stage, action-orange buttons, tool-first home, sidebar app shell, owned illustrations).
+- Alternatives considered: (1) keeping the 26 Sep morning "prototype look" (warm paper, hairlines). Rejected by the founder in favour of v5 after v4 was judged too plain. (2) Swapping the prototype's headline in for the SEO-tuned one. Rejected: the 25 Sep keyword research chose the current wording; the design changed, the words did not. (3) Storing the home-to-decode notice in sessionStorage. Rejected: `pendingNotice.ts` already forbids persisting raw notices; an in-memory bridge (`src/lib/decodeDraft.ts`) was used instead.
+- Rationale: the founder asked for a site that looks and feels like the best product sites; v5 was calibrated against Linear, Mercury, Stripe and Wise and approved after inspection.
+- Files affected: `src/app/globals.css`, `tailwind.config.ts`, `src/components/{AppHeader,AppShell,AppSidebar,SiteFooter,MarketingShell,PageIntro,PageHero,DataFlow,AuthCard,AnnouncementBar}.tsx`, `src/components/marketing/*`, `src/components/ui/{button,card}.tsx`, the public pages, the dashboard and vault pages, `src/content/*`, `public/illustrations/*`.
+- Decider: Founder (the direction and approval); AI assistant (the implementation).

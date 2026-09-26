@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { AnimatePresence, m, useReducedMotion, type TargetAndTransition } from "framer-motion";
+import { AnimatePresence, m, type TargetAndTransition } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play, X } from "lucide-react";
 import {
   ANNOUNCEMENT_BAR,
@@ -62,9 +62,7 @@ function Message({ item, inert = false }: { item: Announcement; inert?: boolean 
   const body = (
     <>
       {item.tag && (
-        <span className="mr-2 shrink-0 font-semibold uppercase tracking-wide text-announce-accent">
-          {item.tag}
-        </span>
+        <span className="mr-2 shrink-0 font-semibold text-announce-accent">{item.tag}</span>
       )}
       <span className="truncate">{item.text}</span>
       {item.href && item.linkLabel && (
@@ -113,9 +111,22 @@ function IconButton({
   );
 }
 
+const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
+function subscribeReducedMotion(onChange: () => void) {
+  const mq = window.matchMedia(REDUCED_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+function readReducedMotion() {
+  return window.matchMedia(REDUCED_QUERY).matches;
+}
+
 export function AnnouncementBar() {
   const { items, labels, intervalMs, tickerSeconds } = ANNOUNCEMENT_BAR;
-  const reduced = useReducedMotion() ?? false;
+  // Read through useSyncExternalStore with a server value of false: framer's useReducedMotion
+  // returned the real setting during hydration, so anyone with reduced motion turned on got a
+  // hydration mismatch (the server had rendered the ticker's pause button). Found 26 Sep 2026.
+  const reduced = useSyncExternalStore(subscribeReducedMotion, readReducedMotion, () => false);
   const [dismissed, setDismissed] = useState(false);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);

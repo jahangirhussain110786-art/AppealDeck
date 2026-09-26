@@ -25,7 +25,8 @@ const config: Config = {
         h1: ["var(--text-h1)", { lineHeight: "1.1", letterSpacing: "-0.025em", fontWeight: "600" }],
         h2: ["var(--text-h2)", { lineHeight: "1.2", letterSpacing: "-0.02em", fontWeight: "600" }],
         h3: ["var(--text-h3)", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "600" }],
-        eyebrow: ["0.75rem", { lineHeight: "1rem", letterSpacing: "0.08em", fontWeight: "600" }],
+        // v5: sentence case, no tracking; weight carries it (no all-caps labels anywhere).
+        eyebrow: ["0.8125rem", { lineHeight: "1.25rem", letterSpacing: "0", fontWeight: "600" }],
       },
       colors: {
         brand: "hsl(var(--brand) / <alpha-value>)",

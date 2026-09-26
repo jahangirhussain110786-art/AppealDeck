@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" role="img" aria-label="An email from Amazon with one phrase highlighted">
+  <title>Amazon's email, the key phrase marked</title>
+  <ellipse cx="120" cy="164" rx="86" ry="8" fill="#ECE7DC"/>
+  <!-- envelope back -->
+  <path d="M40 78 L120 124 L200 78 V150 a6 6 0 0 1 -6 6 H46 a6 6 0 0 1 -6 -6 Z" fill="#F3EFE6" stroke="#0F1728" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- letter -->
+  <rect x="62" y="22" width="116" height="104" rx="6" fill="#FFFFFF" stroke="#0F1728" stroke-width="2.5"/>
+  <path d="M76 40 H132" stroke="#0F1728" stroke-width="3" stroke-linecap="round"/>
+  <path d="M76 56 H164 M76 68 H150" stroke="#C9CDD6" stroke-width="3" stroke-linecap="round"/>
+  <!-- the one phrase that matters -->
+  <rect x="72" y="76" width="92" height="16" rx="4" fill="#FDE7D3"/>
+  <path d="M76 84 H158" stroke="#C2410C" stroke-width="3" stroke-linecap="round"/>
+  <path d="M72 93 H164" stroke="#F97316" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M76 104 H140" stroke="#C9CDD6" stroke-width="3" stroke-linecap="round"/>
+  <!-- envelope front flaps -->
+  <path d="M40 150 L100 110 M200 150 L140 110" stroke="#0F1728" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M40 78 L120 124 L200 78" fill="none" stroke="#0F1728" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- marker pen -->
+  <g transform="rotate(-38 196 60)">
+    <rect x="182" y="40" width="16" height="46" rx="4" fill="#F97316" stroke="#0F1728" stroke-width="2.5"/>
+    <path d="M184 86 L190 98 L196 86" fill="#FDE7D3" stroke="#0F1728" stroke-width="2.5" stroke-linejoin="round"/>
+  </g>
+</svg>

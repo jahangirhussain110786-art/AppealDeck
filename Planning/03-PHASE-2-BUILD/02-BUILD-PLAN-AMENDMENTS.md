@@ -512,6 +512,15 @@ Enforced by `src/app/__tests__/contrast.test.ts` (now also checks links and the 
 
 Also binding here: the playbook-wide banned-numbers list (invented win rates, "$2.3M ARR", "2M+ active sellers", "17 days to submit", "24–48h decisions", etc.) — none may appear in any document or copy derived from the spec. See `../07-REFERENCE/01-MARKET-EVIDENCE.md` §4.
 
+
+### AM-31 — The v5 visual system, from the approved prototype (founder decision, 26 Sep 2026)
+
+Founder approved the v5 prototype (`docs/handoffs/2026-09-26-prototype-v5/`) after three rounds of review, then asked for it to be implemented in the app. Presentation only: no route, rule, gate or piece of copy governed by D1–D10 changed.
+
+- **What changed:** a navy stage (glow + fine grid) for the public heroes, the header and the footer; a deeper "action" orange with white text for the main button (the brighter `--primary` stays for accents and the announcement bar, `contrast.test.ts` checks both); pill buttons, larger radii and layered shadows; the home page rebuilt tool-first (paste box → `/decode` in memory, a layered product view, a switched feature visual whose first panel still runs the real `runDecode`); `/decode`, `/pricing`, `/support`, `/faq`, `/guides`, the legal pages and the sign-in split redrawn on the same system; the signed-in app moved from a top header to a navy sidebar (a compact top bar on phones); whole-heading serif and all-caps labels removed; a data-flow diagram above the privacy policy; seven owned SVG illustrations in `public/illustrations/`.
+- **Kept deliberately:** the 25 Sep SEO wording, AM-25's destinations, the logo, the consent order on `/pricing`, every e2e-asserted label.
+- **Founder's name:** shown as "Cihangir" on `/support` at his request; the operator paragraph keeps the legal name used in the Terms.
+
 ---
 
 ## Definition of done

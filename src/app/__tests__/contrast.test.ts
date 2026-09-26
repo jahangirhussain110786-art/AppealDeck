@@ -145,6 +145,14 @@ describe.each(THEMES)("%s palette", (themeName, marker) => {
     expect(contrast(hslToRgb(t.primary!), bg)).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
   });
 
+  // v5 (26 Sep 2026): the main button is white text on a deep-orange gradient. The lighter end
+  // is the worst case, so it is the one checked.
+  it("keeps white button text legible on the action orange", () => {
+    const white = hslToRgb(t["action-foreground"]!);
+    expect(contrast(white, hslToRgb(t["action-hi"]!))).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+    expect(contrast(white, hslToRgb(t.action!))).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+  });
+
   it("keeps the label on a solid semantic fill legible", () => {
     const failures: string[] = [];
     for (const s of SEMANTICS) {

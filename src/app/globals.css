@@ -3,7 +3,10 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  /* `.light` re-applies the light tokens inside a `.dark` section (v5, 26 Sep 2026): a white
+     card sitting on the navy stage, such as the home page's paste tool, stays light. */
+  :root,
+  .light {
     /* --- Typography (fluid scale via clamp) --- */
     /* Bigger jumps between steps (26 Sep 2026, the prototype pass): the display size is now
        about 4.5x the body instead of 2.5x, so hierarchy comes from size and weight rather than
@@ -72,6 +75,13 @@
     --link: 213 80% 38%;
     --announce: 216 33% 12%;
     --announce-foreground: 216 20% 96%;
+    /* The action orange (v5, 26 Sep 2026): the main button is a deeper orange with white text,
+       top-to-bottom gradient. The brighter `--primary` stays for accents, rings and the navy
+       announcement bar, where it has to read as text. contrast.test.ts checks white on the
+       lighter end. */
+    --action-hi: 21 90% 41%;
+    --action: 19 88% 35%;
+    --action-foreground: 0 0% 100%;
 
     /* --- Reading-grade semantics (22 Sep 2026) ---
        The tokens above are FILL values: the approved brand colours, used for solid
@@ -167,6 +177,9 @@
     --link: 213 90% 72%;
     --announce: 220 5% 4%;
     --announce-foreground: 220 6% 92%;
+    --action-hi: 21 90% 41%;
+    --action: 19 88% 35%;
+    --action-foreground: 0 0% 100%;
 
     /* Dark mode's brighter fills already read well as text — except destructive, which
        at 60% lightness reached only 3.44:1 on its own tint over `--muted`, and info,
@@ -182,7 +195,8 @@
 }
 
 /* Backward-compat aliases so existing components keep working */
-:root {
+:root,
+.light {
   --card: var(--surface-1);
   --card-foreground: var(--foreground);
   --popover: var(--surface-1);
@@ -505,15 +519,14 @@
   content: none;
 }
 
+/* v5 warm-glow card (26 Sep 2026): a light card with a soft orange light in one corner and the
+   layered shadow, for the few hero cards that stay light (FAQ intro, compose gate, expectations). */
 .workspace-hero {
-  background-color: hsl(var(--card) / 0.9);
-  background-image: radial-gradient(
-    ellipse at top right,
-    hsl(var(--primary) / 0.1),
-    transparent 65%
-  );
-  box-shadow: inset 0 1px 0 hsl(var(--foreground) / 0.04);
-  backdrop-filter: blur(12px);
+  background-color: hsl(var(--card));
+  background-image:
+    radial-gradient(520px 240px at 100% 0%, hsl(var(--primary) / 0.14), transparent 70%),
+    linear-gradient(180deg, hsl(var(--card)), hsl(var(--surface-2)));
+  box-shadow: var(--shadow-lift);
 }
 
 @media print {
@@ -558,4 +571,121 @@
   .announce-ticker {
     animation: none;
   }
+}
+
+/* ---------------------------------------------------------------------------------------------
+   v5 visual system (26 Sep 2026, founder-approved prototype docs/handoffs/2026-09-26-prototype-v5).
+   Calibrated against Linear, Mercury, Stripe and Wise: a navy stage with an orange glow and a
+   fine grid for the public heroes, the product shown in real window frames with layered depth,
+   floating detail cards. Every rule below is presentation only.
+   --------------------------------------------------------------------------------------------- */
+:root {
+  --stage: 226 53% 6%;
+  --stage-2: 224 49% 10%;
+  --stage-line: 0 0% 100% / 0.08;
+  --shadow-stage:
+    0 0 0 1px rgb(255 255 255 / 0.06), 0 30px 80px -20px rgb(0 0 0 / 0.7),
+    0 60px 120px -40px rgb(234 88 12 / 0.18);
+  --shadow-lift:
+    0 1px 1px rgb(11 18 36 / 0.04), 0 10px 24px -10px rgb(11 18 36 / 0.2),
+    0 32px 64px -32px rgb(11 18 36 / 0.35);
+}
+
+/* The navy stage. Always navy, in both themes: it is the brand ground, not a theme surface.
+   Sections that use it also carry `.dark`, so every token inside reads correctly on it. */
+.stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: hsl(var(--stage));
+}
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 520px at 78% 8%, rgb(234 88 12 / 0.28), transparent 60%),
+    radial-gradient(700px 480px at 8% 30%, rgb(59 91 219 / 0.22), transparent 60%),
+    radial-gradient(1200px 600px at 50% 110%, rgb(234 88 12 / 0.12), transparent 60%);
+}
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 75%);
+}
+.stage-plain::after {
+  display: none;
+}
+.shadow-stage {
+  box-shadow: var(--shadow-stage);
+}
+.shadow-lift {
+  box-shadow: var(--shadow-lift);
+}
+
+/* A browser-window frame around a product screen: three dots and an address pill. */
+.window-frame {
+  overflow: hidden;
+  border-radius: 14px;
+  background: hsl(var(--surface-1));
+  box-shadow: var(--shadow-stage);
+}
+.window-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--surface-2));
+}
+.window-bar > i {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 6px;
+  background: hsl(var(--border));
+}
+
+/* The warm stage behind a large product panel on light pages (feature switcher, document check). */
+.warm-stage {
+  background:
+    radial-gradient(600px 300px at 80% 0%, rgb(234 88 12 / 0.14), transparent 70%),
+    linear-gradient(180deg, hsl(var(--surface-2)), hsl(var(--muted)));
+}
+
+/* The main action button: deep orange, white text, a gradient with a soft glow. */
+.btn-action {
+  background-image: linear-gradient(180deg, hsl(var(--action-hi)), hsl(var(--action)));
+  color: hsl(var(--action-foreground));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 8px 20px -8px rgb(194 65 12 / 0.7);
+}
+.btn-action:hover {
+  filter: brightness(0.95);
+}
+
+@keyframes panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.panel-rise {
+  animation: panel-rise 280ms var(--ease-out) both;
 }

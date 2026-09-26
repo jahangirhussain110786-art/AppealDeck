@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard · AppealDeck</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 28 28%27%3E%3Crect width=%2728%27 height=%2728%27 rx=%277%27 fill=%27%230B1224%27/%3E%3Cpath d=%27M8 14.5l4 4 8-9%27 stroke=%27%23EA580C%27 stroke-width=%272.8%27 fill=%27none%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="v5.css">
+<style>
+  .case-card { display: grid; grid-template-columns: 64px 1fr 220px 24px; gap: 20px; align-items: center; padding: 22px 24px; background: #fff; border-radius: 18px; box-shadow: var(--shadow-1), 0 0 0 1px #e7e5dd inset; text-decoration: none; color: var(--ink); transition: box-shadow 140ms, transform 140ms; position: relative; overflow: hidden; }
+  .case-card:hover { box-shadow: var(--shadow-2), 0 0 0 1px #d8d6cd inset; transform: translateY(-1px); color: var(--ink); }
+  .case-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--bar, #d9d7cf); }
+  .dial { position: relative; width: 64px; height: 64px; }
+  .dial span { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; line-height: 1.1; color: var(--ink-3); }
+  .dial b { font-size: 17px; color: var(--ink); letter-spacing: -0.02em; }
+  .welcome { border-radius: 22px; padding: 26px 28px; background: radial-gradient(520px 220px at 100% 0%, rgba(234,88,12,0.28), transparent 70%), #0b1224; color: var(--stage-ink); display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 22px; box-shadow: var(--shadow-2); }
+  @media (max-width: 860px) { .case-card { grid-template-columns: 56px 1fr; } .case-card .c3, .case-card .c4 { display: none; } .welcome { flex-direction: column; align-items: flex-start; } }
+</style>
+</head>
+<body class="app-body">
+<a class="skip" href="#main">Skip to content</a>
+<div class="app">
+  <aside class="side" aria-label="App">
+    <a class="logo" href="home.html"><svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#fff"/><path d="M8 14.5l4 4 8-9" stroke="#EA580C" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>AppealDeck</a>
+    <a class="nav" href="home.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lg">Decode a new notice</span><span class="sm">New case</span></a>
+    <a class="nav on" href="dashboard.html" aria-current="page"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+    <a class="nav" href="vault.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Vault</a>
+    <div class="h">Cases</div>
+    <a class="case" href="case.html"><span style="width:8px;height:8px;border-radius:4px;background:var(--accent-glow)"></span><span>Inauthentic item</span><span class="num" style="font-size:12px;color:#fdba74">2d</span></a>
+    <a class="case" href="case.html"><span style="width:8px;height:8px;border-radius:4px;background:#60a5fa"></span><span>Held funds</span><span style="font-size:12px;color:var(--stage-ink-3)">Waiting</span></a>
+    <div class="foot-card"><div style="display:flex;align-items:center;gap:8px;color:#fff;font-weight:600"><span style="width:7px;height:7px;border-radius:4px;background:#4ade80"></span>Appeal Pass active</div><div style="margin-top:4px">Inauthentic item case</div></div>
+  </aside>
+
+  <div class="main" id="main" role="main">
+    <div class="bar">
+      <strong style="font-size:15px">Dashboard</strong>
+      <button type="button" aria-label="Account menu" style="width:32px;height:32px;border-radius:16px;border:0;background:#0b1224;color:#fff;font-size:12px;font-weight:600;cursor:pointer">NT</button>
+    </div>
+    <div style="padding:28px;max-width:1080px">
+      <!-- One sentence of what matters today, with its one action -->
+      <section class="welcome" aria-labelledby="today">
+        <div><div style="font-size:13px;color:var(--stage-ink-3)">Saturday 26 September</div><h1 id="today" style="font-size:28px;letter-spacing:-0.035em;font-weight:600;margin-top:4px">One case needs you before <span class="serif" style="color:var(--accent-glow)">Monday.</span></h1></div>
+        <img src="images/step-calendar.svg" alt="" style="width:150px;margin:-18px 0 -24px">
+      </section>
+
+      <div class="page-head" style="margin-bottom:14px"><h2 style="font-size:20px;letter-spacing:-0.02em;font-weight:600">Your cases</h2><div class="seg" role="group" aria-label="Filter"><button type="button" aria-pressed="true">Open · 2</button><button type="button" aria-pressed="false">Closed · 1</button></div></div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <a class="case-card" href="case.html" style="--bar:#ea580c">
+          <span class="dial"><svg width="64" height="64" viewBox="0 0 46 46" class="ring" aria-hidden="true"><circle cx="23" cy="23" r="19" fill="none" stroke="#fde2cc" stroke-width="4"/><circle cx="23" cy="23" r="19" fill="none" stroke="#EA580C" stroke-width="4" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="29"/></svg><span><b class="num">1d</b>19h</span></span>
+          <span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><strong style="font-size:17px;letter-spacing:-0.015em">Inauthentic item · Northline Trading LLC</strong><span class="pill need"><span class="d"></span>You need to act</span></span><span style="font-size:14px;color:var(--ink-2)">Next: replace the supplier invoice Amazon refused</span><span class="mono" style="font-size:12px;color:var(--ink-3)">case_7f3a · B0SAMPLE01, B0SAMPLE02</span></span>
+          <span class="c3" style="display:flex;flex-direction:column;gap:8px"><span style="display:flex;justify-content:space-between;font-size:13px;color:var(--ink-3)" class="num"><span>Checklist</span><span>4 of 7</span></span><span style="height:6px;border-radius:3px;background:#eeede7;overflow:hidden"><span style="display:block;width:57%;height:100%;background:var(--ink);border-radius:3px"></span></span><span style="font-size:12.5px;color:var(--ink-3)">Reply due Mon 28 Sep, 09:14</span></span>
+          <svg class="c4" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa1ae" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+        </a>
+        <a class="case-card" href="case.html" style="--bar:#60a5fa">
+          <span class="dial" style="display:flex;align-items:center;justify-content:center;border-radius:32px;background:linear-gradient(180deg,#f2f5ff,#e6ecff);box-shadow:0 0 0 1px #d6e0ff inset"><img src="images/waiting.svg" alt="" style="width:38px"></span>
+          <span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><strong style="font-size:17px;letter-spacing:-0.015em">Held funds · account level</strong><span class="pill new"><span class="d"></span>Waiting on Amazon</span></span><span style="font-size:14px;color:var(--ink-2)">Sent Tue 22 Sep. Nothing to do until they reply.</span><span class="mono" style="font-size:12px;color:var(--ink-3)">case_2b91</span></span>
+          <span class="c3" style="display:flex;flex-direction:column;gap:8px"><span style="display:flex;justify-content:space-between;font-size:13px;color:var(--ink-3)"><span>Your follow-up</span><span class="num">Tue 6 Oct</span></span><span style="height:6px;border-radius:3px;background:#eeede7;overflow:hidden"><span style="display:block;width:100%;height:100%;background:#60a5fa;border-radius:3px"></span></span><span style="font-size:12.5px;color:var(--ink-3)">Funds request by Fri 13 Nov</span></span>
+          <svg class="c4" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa1ae" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

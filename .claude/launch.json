@@ -14,6 +14,24 @@
       "port": 3000
     },
     {
+      "name": "prototype-v3",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "4400", "--directory", "docs/handoffs/2026-09-26-prototype-v3"],
+      "port": 4400
+    },
+    {
+      "name": "prototype-v4",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "4401", "--directory", "docs/handoffs/2026-09-26-prototype-v4"],
+      "port": 4401
+    },
+    {
+      "name": "prototype-v5",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "4402", "--directory", "docs/handoffs/2026-09-26-prototype-v5"],
+      "port": 4402
+    },
+    {
       "name": "appealdeck-prod-3100",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["next", "start", "-p", "3100"],

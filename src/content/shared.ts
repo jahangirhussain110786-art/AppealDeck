@@ -4,6 +4,7 @@ export const SHARED = {
   brand: { name: "AppealDeck" },
   nav: {
     primary: "Primary",
+    appNav: "App",
     decode: "Decode",
     dashboard: "Dashboard",
     vault: "Vault",
@@ -28,6 +29,7 @@ export const SHARED = {
       refund: "Refund",
       faq: "FAQ",
       support: "Support",
+      dataFlow: "Where your data goes",
     },
     neverSubmits:
       "You submit your appeal yourself in Seller Central. AppealDeck never logs in to your account.",

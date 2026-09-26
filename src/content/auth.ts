@@ -101,6 +101,7 @@ export const AUTH = {
     },
   },
   preview: {
+    dueIn: "Reply due in",
     eyebrow: "Your case workspace",
     title: "One place for your next step.",
     description:

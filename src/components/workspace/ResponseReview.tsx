@@ -154,7 +154,7 @@ export function ResponseReview({
           <div className="flex items-center gap-3">
             <IconTile icon={FilePenLine} />
             <div>
-              <p className="text-eyebrow uppercase text-muted-foreground">03 / Response</p>
+              <p className="text-eyebrow text-muted-foreground">03 / Response</p>
               <CardTitle className="mt-1 text-lg">
                 {w.protocol === "operational"
                   ? "What happened. What changed."

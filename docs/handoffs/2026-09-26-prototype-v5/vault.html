@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vault · AppealDeck</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 28 28%27%3E%3Crect width=%2728%27 height=%2728%27 rx=%277%27 fill=%27%230B1224%27/%3E%3Cpath d=%27M8 14.5l4 4 8-9%27 stroke=%27%23EA580C%27 stroke-width=%272.8%27 fill=%27none%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="v5.css">
+<style>
+  .vault-hero { border-radius: 22px; padding: 26px 28px; background: radial-gradient(480px 240px at 100% 100%, rgba(34,197,94,0.18), transparent 70%), radial-gradient(420px 200px at 0% 0%, rgba(59,91,219,0.25), transparent 70%), #0b1224; color: var(--stage-ink); display: grid; grid-template-columns: 120px 1fr auto; gap: 24px; align-items: center; box-shadow: var(--shadow-2); }
+  .files { background: #fff; border-radius: 18px; box-shadow: var(--shadow-1), 0 0 0 1px #e7e5dd inset; overflow: hidden; }
+  .fr { display: grid; grid-template-columns: 2fr 1.4fr 0.9fr 1.3fr 150px; gap: 16px; align-items: center; padding: 14px 20px; border-top: 1px solid var(--line-2); font-size: 14px; }
+  .fr.head { border-top: 0; background: #fbfaf7; font-size: 12.5px; font-weight: 500; color: var(--ink-3); padding-top: 11px; padding-bottom: 11px; }
+  .ficon { width: 36px; height: 44px; border-radius: 7px; background: linear-gradient(180deg, #fff, #f6f5f0); box-shadow: 0 0 0 1px #e4e2da inset, 0 2px 4px -2px rgba(0,0,0,.1); font-family: var(--mono); font-size: 10px; font-weight: 600; display: inline-flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; flex-shrink: 0; }
+  @media (max-width: 900px) { .vault-hero { grid-template-columns: 1fr; } .fr { grid-template-columns: 1fr auto; } .fr .c2, .fr .c3, .fr .c4 { display: none; } .fr.head { display: none; } }
+</style>
+</head>
+<body class="app-body">
+<a class="skip" href="#main">Skip to content</a>
+<div class="app">
+  <aside class="side" aria-label="App">
+    <a class="logo" href="home.html"><svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#fff"/><path d="M8 14.5l4 4 8-9" stroke="#EA580C" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>AppealDeck</a>
+    <a class="nav" href="home.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lg">Decode a new notice</span><span class="sm">New case</span></a>
+    <a class="nav" href="dashboard.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+    <a class="nav on" href="vault.html" aria-current="page"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Vault</a>
+    <div class="h">Cases</div>
+    <a class="case" href="case.html"><span style="width:8px;height:8px;border-radius:4px;background:var(--accent-glow)"></span><span>Inauthentic item</span><span class="num" style="font-size:12px;color:#fdba74">2d</span></a>
+    <a class="case" href="case.html"><span style="width:8px;height:8px;border-radius:4px;background:#60a5fa"></span><span>Held funds</span><span style="font-size:12px;color:var(--stage-ink-3)">Waiting</span></a>
+    <div class="foot-card"><div style="display:flex;align-items:center;gap:8px;color:#fff;font-weight:600"><span style="width:7px;height:7px;border-radius:4px;background:#4ade80"></span>Appeal Pass active</div><div style="margin-top:4px">Inauthentic item case</div></div>
+  </aside>
+
+  <div class="main" id="main" role="main">
+    <div class="bar"><strong style="font-size:15px">Vault</strong><div style="display:flex;gap:10px;align-items:center"><button type="button" class="btn btn-accent btn-sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a file</button><button type="button" aria-label="Account menu" style="width:32px;height:32px;border-radius:16px;border:0;background:#0b1224;color:#fff;font-size:12px;font-weight:600;cursor:pointer">NT</button></div></div>
+
+    <div style="padding:28px;max-width:1140px;display:flex;flex-direction:column;gap:22px">
+      <section class="vault-hero" aria-labelledby="h-vault">
+        <img src="images/vault.svg" alt="" style="width:120px;filter:drop-shadow(0 16px 30px rgba(0,0,0,.45))">
+        <div><h1 id="h-vault" style="font-size:26px;letter-spacing:-0.03em;font-weight:600">Encrypted, and only on this device.</h1><p style="color:var(--stage-ink-2);margin-top:6px">No recovery copy yet. If this laptop is lost, so are the files. <a href="privacy.html" style="color:#fdba74">How it works</a></p></div>
+        <button type="button" class="btn btn-ghost-dark">Download a recovery copy</button>
+      </section>
+
+      <div class="page-head" style="margin:6px 0 0"><h2 style="font-size:19px;font-weight:600;letter-spacing:-0.02em">Files <span style="color:var(--ink-3);font-weight:400">· 4 · 2.9 MB</span></h2><div class="seg" role="group" aria-label="Filter"><button type="button" aria-pressed="true">All</button><button type="button" aria-pressed="false">Inauthentic item</button><button type="button" aria-pressed="false">Held funds</button></div></div>
+      <div class="files">
+        <div class="fr head"><span>File</span><span class="c2">Used for</span><span class="c3">Added</span><span class="c4">Last check</span><span></span></div>
+        <div class="fr"><span style="display:flex;align-items:center;gap:12px"><span class="ficon" style="color:#c2410c">PDF</span><span><span class="mono" style="display:block">inv_0412.pdf</span><span style="font-size:12px;color:var(--ink-3)">1.2 MB</span></span></span><span class="c2">Supplier invoices<br><span style="font-size:12px;color:var(--ink-3)">Inauthentic item</span></span><span class="c3 num" style="color:var(--ink-2)">22 Sep</span><span class="c4"><span class="pill need">Check again</span></span><span style="display:flex;gap:6px;justify-content:flex-end;font-weight:500"><a class="btn btn-light btn-sm" href="#">View</a><a class="btn btn-light btn-sm" href="#">Save</a></span></div>
+        <div class="fr"><span style="display:flex;align-items:center;gap:12px"><span class="ficon" style="color:#15803d">CSV</span><span><span class="mono" style="display:block">orders_2026.csv</span><span style="font-size:12px;color:var(--ink-3)">84 KB</span></span></span><span class="c2">Supplier contact<br><span style="font-size:12px;color:var(--ink-3)">Inauthentic item</span></span><span class="c3 num" style="color:var(--ink-2)">22 Sep</span><span class="c4"><span class="pill ok">6 orders found</span></span><span style="display:flex;gap:6px;justify-content:flex-end;font-weight:500"><a class="btn btn-light btn-sm" href="#">View</a><a class="btn btn-light btn-sm" href="#">Save</a></span></div>
+        <div class="fr"><span style="display:flex;align-items:center;gap:12px"><span class="ficon" style="color:#1d4ed8">PNG</span><span><span class="mono" style="display:block">supplier_site.png</span><span style="font-size:12px;color:var(--ink-3)">640 KB</span></span></span><span class="c2">Supplier contact<br><span style="font-size:12px;color:var(--ink-3)">Inauthentic item</span></span><span class="c3 num" style="color:var(--ink-2)">23 Sep</span><span class="c4"><span class="pill mute">Images not read</span></span><span style="display:flex;gap:6px;justify-content:flex-end;font-weight:500"><a class="btn btn-light btn-sm" href="#">View</a><a class="btn btn-light btn-sm" href="#">Save</a></span></div>
+        <div class="fr"><span style="display:flex;align-items:center;gap:12px"><span class="ficon" style="color:#c2410c">PDF</span><span><span class="mono" style="display:block">bank_statement_aug.pdf</span><span style="font-size:12px;color:var(--ink-3)">1.0 MB</span></span></span><span class="c2">Bank account<br><span style="font-size:12px;color:var(--ink-3)">Held funds</span></span><span class="c3 num" style="color:var(--ink-2)">21 Sep</span><span class="c4"><span class="pill ok">Name matches</span></span><span style="display:flex;gap:6px;justify-content:flex-end;font-weight:500"><a class="btn btn-light btn-sm" href="#">View</a><a class="btn btn-light btn-sm" href="#">Save</a></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

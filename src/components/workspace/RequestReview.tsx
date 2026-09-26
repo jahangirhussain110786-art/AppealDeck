@@ -97,7 +97,7 @@ export function RequestReview({
       <CardHeader className="flex-row items-start gap-4 border-b border-border/60 bg-surface-2/50">
         <IconTile icon={FileSearch} tone="info" />
         <div className="space-y-1">
-          <p className="text-eyebrow uppercase text-muted-foreground">01 / Request review</p>
+          <p className="text-eyebrow text-muted-foreground">01 / Request review</p>
           <CardTitle className="text-lg">
             {workspace.decodedNoticeHash ? "Review your decoded request" : C.routeIntro}
           </CardTitle>

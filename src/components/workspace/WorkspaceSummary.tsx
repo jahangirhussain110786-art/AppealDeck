@@ -158,13 +158,13 @@ export function WorkspaceSummary({
           }}
         />
       )}
-      <Card className="workspace-hero">
+      <Card className="stage stage-plain dark border-0 text-foreground shadow-lift">
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
             <IconTile icon={FileSearch} tone="info" />
             <Badge variant="secondary">{PROTOCOL_LABELS[w.protocol]}</Badge>
           </div>
-          <CardTitle className="pt-3 font-accent text-3xl font-medium">
+          <CardTitle className="pt-3 text-[1.9rem] font-semibold tracking-[-0.035em]">
             Your case, at a glance
           </CardTitle>
           <p className="text-sm text-muted-foreground">

@@ -53,8 +53,8 @@ export function HonestExpectationsCard({
           <div className="workspace-hero flex items-center gap-4 border-b border-border/70 p-5 sm:px-6">
             <IconTile icon={ShieldCheck} />
             <div>
-              <p className="text-eyebrow uppercase text-primary">{SHARED.expectations.eyebrow}</p>
-              <h2 className="mt-1 font-accent text-2xl font-medium leading-tight text-foreground sm:text-3xl">
+              <p className="text-eyebrow text-primary">{SHARED.expectations.eyebrow}</p>
+              <h2 className="mt-1 tracking-[-0.03em] text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
                 {SHARED.expectations.title}
               </h2>
             </div>
@@ -68,9 +68,7 @@ export function HonestExpectationsCard({
                 key={title}
                 className="p-5 even:border-t even:border-border/70 even:bg-surface-2/40 sm:p-6 sm:even:border-l sm:even:border-t-0"
               >
-                <h3 className="mb-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {title}
-                </h3>
+                <h3 className="mb-5 text-xs font-semiboldr text-muted-foreground">{title}</h3>
                 <ul className="space-y-5">
                   {items.map((item) => (
                     <li key={item.kind} className="flex items-start gap-3">

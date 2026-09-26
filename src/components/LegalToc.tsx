@@ -64,7 +64,7 @@ export function LegalToc({ sections }: { sections: { id: string; title: string }
         <div className="mt-3">{links}</div>
       </details>
       <div className="hidden space-y-3 rounded-xl border border-border/80 bg-card p-3 lg:block">
-        <p className="flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground">
           <List className="size-4" aria-hidden />
           {SHARED.tocHeading}
         </p>

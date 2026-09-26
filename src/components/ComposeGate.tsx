@@ -87,7 +87,7 @@ export function ComposeGate({
     <Card>
       <CardHeader className="workspace-hero gap-3 border-b border-border/70">
         <IconTile icon={FilePenLine} tone="info" />
-        <CardTitle className="font-accent text-h2 font-medium">
+        <CardTitle className="tracking-[-0.03em] text-h2 font-semibold">
           {APP.access.composeGate.title}
         </CardTitle>
       </CardHeader>

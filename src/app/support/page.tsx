@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LifeBuoy } from "lucide-react";
+import Image from "next/image";
+import { Mail as MailIcon } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { IconTile } from "@/components/workspace/WorkspaceVisuals";
+import { Button } from "@/components/ui/button";
+import { AccentWord } from "@/components/ui/accent-word";
+import { splitAccent } from "@/lib/splitAccent";
 import { SUPPORT, SUPPORT_EMAIL, BILLING_EMAIL } from "@/content/support";
 import { SHARED } from "@/content/shared";
 
@@ -26,23 +29,54 @@ function Mail({ address }: { address: string }) {
   );
 }
 
+const HERO = splitAccent(SUPPORT.hero.title, SUPPORT.hero.accent);
+
 export default function SupportPage() {
   const contactBody = SUPPORT.contact.body.split(/(\{support\}|\{billing\})/);
   return (
-    <MarketingShell className="max-w-app">
-      <div className="py-10 sm:py-14">
-        <header className="mb-8 flex items-start gap-4 sm:mb-10">
-          <IconTile icon={LifeBuoy} tone="info" className="mt-1 hidden sm:inline-flex" />
-          <div>
-            <p className="text-eyebrow uppercase text-primary">{SUPPORT.eyebrow}</p>
-            <h1 className="mt-2 font-accent text-h1 text-foreground">{SUPPORT.title}</h1>
-            <p className="mt-3 text-base text-muted-foreground">{SUPPORT.intro}</p>
+    <MarketingShell bleed>
+      <section className="stage dark text-foreground">
+        <div className="mx-auto grid max-w-marketing items-center gap-12 px-4 pb-36 pt-16 sm:px-8 sm:pt-20 lg:grid-cols-2">
+          <div className="flex flex-col items-start gap-6">
+            <p className="text-sm font-semibold text-primary">{SUPPORT.eyebrow}</p>
+            <h1 className="text-balance text-[clamp(2.4rem,1.3rem+3.4vw,4.25rem)] font-semibold leading-[1.02] tracking-[-0.045em]">
+              {HERO ? (
+                <>
+                  {HERO.pre}
+                  <AccentWord className="text-primary">{HERO.accent}</AccentWord>
+                  {HERO.post}
+                </>
+              ) : (
+                SUPPORT.hero.title
+              )}
+            </h1>
+            <p className="max-w-[34rem] text-lg leading-relaxed text-muted-foreground">
+              {SUPPORT.hero.lede} {SUPPORT.intro}
+            </p>
+            <Button asChild size="lg">
+              <a href={`mailto:${SUPPORT_EMAIL}`}>
+                <MailIcon aria-hidden />
+                {SUPPORT.hero.emailCta}
+              </a>
+            </Button>
           </div>
-        </header>
-
+          <div className="w-full max-w-md justify-self-center rounded-[28px] bg-white p-6 shadow-stage lg:justify-self-end">
+            <Image
+              src="/illustrations/person-laptop.svg"
+              alt={SUPPORT.hero.illustration}
+              width={320}
+              height={240}
+              className="h-auto w-full"
+              priority
+              unoptimized
+            />
+          </div>
+        </div>
+      </section>
+      <div className="relative mx-auto -mt-24 w-full max-w-app px-4 pb-20 sm:px-8">
         <div className="space-y-5">
-          <Card className="p-5 sm:p-6">
-            <h2 className="font-accent text-2xl font-medium text-foreground">
+          <Card className="rounded-[20px] p-6 shadow-lift sm:p-7">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
               {SUPPORT.operator.title}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -50,8 +84,8 @@ export default function SupportPage() {
             </p>
           </Card>
 
-          <Card className="p-5 sm:p-6">
-            <h2 className="font-accent text-2xl font-medium text-foreground">
+          <Card className="rounded-[20px] p-6 shadow-lift sm:p-7">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
               {SUPPORT.contact.title}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -73,8 +107,8 @@ export default function SupportPage() {
             </p>
           </Card>
 
-          <Card className="p-5 sm:p-6">
-            <h2 className="font-accent text-2xl font-medium text-foreground">
+          <Card className="rounded-[20px] p-6 shadow-lift sm:p-7">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
               {SUPPORT.include.title}
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">{SUPPORT.include.body}</p>
@@ -89,8 +123,8 @@ export default function SupportPage() {
             </Alert>
           </Card>
 
-          <Card className="p-5 sm:p-6">
-            <h2 className="font-accent text-2xl font-medium text-foreground">
+          <Card className="rounded-[20px] p-6 shadow-lift sm:p-7">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
               {SUPPORT.limits.title}
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">{SUPPORT.limits.body}</p>
@@ -101,8 +135,8 @@ export default function SupportPage() {
             </ul>
           </Card>
 
-          <Card className="p-5 sm:p-6">
-            <h2 className="font-accent text-2xl font-medium text-foreground">
+          <Card className="rounded-[20px] p-6 shadow-lift sm:p-7">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
               {SUPPORT.elsewhere.title}
             </h2>
             <ul className="mt-3 space-y-2 text-sm">

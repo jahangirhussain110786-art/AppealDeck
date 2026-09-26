@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your response · AppealDeck</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 28 28%27%3E%3Crect width=%2728%27 height=%2728%27 rx=%277%27 fill=%27%230B1224%27/%3E%3Cpath d=%27M8 14.5l4 4 8-9%27 stroke=%27%23EA580C%27 stroke-width=%272.8%27 fill=%27none%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="v5.css">
+<style>
+  .ed { display: grid; grid-template-columns: 210px minmax(0, 1fr) 320px; gap: 20px; padding: 24px 28px 48px; align-items: start; }
+  .outline { position: sticky; top: 84px; display: flex; flex-direction: column; gap: 2px; }
+  .outline a { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 10px; border-radius: 9px; color: var(--ink-2); text-decoration: none; font-size: 14px; }
+  .outline a.on { background: #fff; color: var(--ink); font-weight: 600; box-shadow: var(--shadow-1), 0 0 0 1px #e7e5dd inset; }
+  .sheet { background: #fff; border-radius: 18px; box-shadow: var(--shadow-2), 0 0 0 1px #e7e5dd inset; padding: 44px clamp(22px, 4vw, 56px) 56px; display: flex; flex-direction: column; gap: 34px; }
+  .sheet section { display: flex; flex-direction: column; gap: 10px; }
+  .sheet h2 { font-size: 22px; letter-spacing: -0.025em; font-weight: 600; }
+  .sheet textarea { border: 0; resize: vertical; min-height: 200px; padding: 0; font: 17px/1.75 var(--sans); color: var(--ink); background: transparent; }
+  .sheet textarea:focus { outline: none; }
+  .suggest { border-radius: 14px; overflow: hidden; box-shadow: 0 0 0 1px #c9d6ff inset; background: linear-gradient(180deg, #f6f8ff, #fff); }
+  .del { background: #fdecec; text-decoration: line-through; text-decoration-color: #d14343; color: #7a2b2b; border-radius: 3px; }
+  .ins { background: #e3eaff; border-radius: 3px; }
+  .checks { position: sticky; top: 84px; background: #fff; border-radius: 18px; box-shadow: var(--shadow-1), 0 0 0 1px #e7e5dd inset; overflow: hidden; }
+  .ck { display: grid; grid-template-columns: 20px 1fr; gap: 12px; padding: 13px 18px; border-top: 1px solid var(--line-2); font-size: 14px; }
+  @media (max-width: 1200px) { .ed { grid-template-columns: minmax(0, 1fr); padding-left: 16px; padding-right: 16px; } .outline, .checks { position: static; } .outline { flex-direction: row; overflow-x: auto; } }
+</style>
+</head>
+<body class="app-body">
+<a class="skip" href="#main">Skip to content</a>
+<div class="app">
+  <aside class="side" aria-label="App">
+    <a class="logo" href="home.html"><svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#fff"/><path d="M8 14.5l4 4 8-9" stroke="#EA580C" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>AppealDeck</a>
+    <a class="nav" href="home.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lg">Decode a new notice</span><span class="sm">New case</span></a>
+    <a class="nav" href="dashboard.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+    <a class="nav" href="vault.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Vault</a>
+    <div class="h">Cases</div>
+    <a class="case on" href="case.html"><span style="width:8px;height:8px;border-radius:4px;background:var(--accent-glow)"></span><span>Inauthentic item</span><span class="num" style="font-size:12px;color:#fdba74">2d</span></a>
+    <a class="case" href="case.html"><span style="width:8px;height:8px;border-radius:4px;background:#60a5fa"></span><span>Held funds</span><span style="font-size:12px;color:var(--stage-ink-3)">Waiting</span></a>
+    <div class="foot-card"><div style="display:flex;align-items:center;gap:8px;color:#fff;font-weight:600"><span style="width:7px;height:7px;border-radius:4px;background:#4ade80"></span>Appeal Pass active</div><div style="margin-top:4px">Inauthentic item case</div></div>
+  </aside>
+
+  <div class="main" id="main" role="main">
+    <div class="bar">
+      <nav style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-3);min-width:0" aria-label="Breadcrumb"><a href="case.html" style="color:var(--ink-3);text-decoration:none">Inauthentic item</a><span>/</span><h1 style="font-size:14px;font-weight:600;color:var(--ink);margin:0">Response · draft 2</h1><span class="pill mute">Working draft</span></nav>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:var(--ink-3)" class="hide-sm">Saved</span><button type="button" class="btn btn-light btn-sm">Export</button><button type="button" class="btn btn-accent btn-sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>Copy for Amazon</button></div>
+    </div>
+
+    <div class="ed">
+      <nav class="outline" aria-label="Sections">
+        <a class="on" href="#s1"><span class="chk ok"></span>Root cause</a>
+        <a href="#s2"><span class="chk ok"></span>Actions taken</a>
+        <a href="#s3"><span class="chk ok"></span>Prevention</a>
+        <a href="#s4"><span class="chk need"></span>Evidence</a>
+        <div style="margin-top:18px;padding:14px 10px 0;border-top:1px solid #e5e3db;font-size:12.5px;color:var(--ink-3)" class="num">3,412 characters<div style="height:5px;border-radius:3px;background:#e9e7df;margin-top:8px;overflow:hidden"><span style="display:block;width:42%;height:100%;background:var(--ink)"></span></div></div>
+      </nav>
+
+      <article class="sheet" aria-label="Your response">
+        <section id="s1">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2>Root cause</h2><span style="display:flex;gap:6px"><span class="pill ok">Past tense</span><span class="pill ok">Names the supplier</span></span></div>
+          <label class="sr-only" for="t1">Root cause</label>
+          <textarea id="t1">In February 2026 we added a new supplier, Harbor Goods Ltd, for two ASINs (B0SAMPLE01 and B0SAMPLE02). We did not ask for the supplier's business registration before the first order. We accepted 40 units without checking them against the brand's packaging. Two buyers reported that the packaging was different from earlier units.</textarea>
+        </section>
+
+        <section id="s2">
+          <h2>Actions taken</h2>
+          <div class="suggest">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #dde5ff;flex-wrap:wrap"><strong style="font-size:14px;color:var(--info);display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/></svg>Suggested wording</strong><span class="pill" style="background:#e3eaff;color:var(--info)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Dates, numbers, names locked</span></div>
+            <p style="padding:16px;font-size:16px;line-height:1.8"><span class="del">we stopped selling them and got rid of the rest of the stock on 3 march and we dont use that supplier anymore</span> <span class="ins">On 3 March, we removed both listings, disposed of the remaining stock, and ended our relationship with the supplier.</span></p>
+            <div style="display:flex;justify-content:flex-end;gap:8px;padding:0 16px 14px"><button type="button" class="btn btn-light btn-sm">Keep mine</button><button type="button" class="btn btn-sm" style="background:var(--info);color:#fff">Use suggestion</button></div>
+          </div>
+        </section>
+
+        <section id="s4">
+          <h2>Evidence</h2>
+          <ol style="margin:0;padding-left:22px;font-size:16px;line-height:1.75;display:flex;flex-direction:column;gap:6px"><li>Supplier invoice No. 0412, 14 March 2026, Harbor Goods Ltd, ASIN B0SAMPLE01.</li><li>Order history with the supplier: 6 orders, January to March 2026.</li></ol>
+          <div style="padding:14px 16px;border-radius:12px;background:#fff7f0;box-shadow:0 0 0 1px #f6d9c1 inset;font-size:15px;color:#7c2d12"><strong>Records we could not supply.</strong> We could not obtain an invoice for ASIN B0SAMPLE02 because <span style="color:var(--accent-deep);font-weight:600">[your reason]</span>.</div>
+        </section>
+      </article>
+
+      <aside class="checks" aria-labelledby="h-checks">
+        <div style="padding:18px"><h2 id="h-checks" style="font-size:16px;font-weight:600">Before you send</h2><div style="display:flex;align-items:center;gap:12px;margin-top:12px"><span class="num" style="font-size:34px;font-weight:600;letter-spacing:-0.04em;line-height:1">4<span style="font-size:16px;color:var(--ink-3);font-weight:500">/6</span></span><span style="flex:1;height:6px;border-radius:3px;background:#eeede7;overflow:hidden"><span style="display:block;width:66%;height:100%;background:var(--ink)"></span></span></div></div>
+        <div class="ck"><span class="chk ok"></span>Every issue in the email answered</div>
+        <div class="ck"><span class="chk ok"></span>Actions written as done, with dates</div>
+        <div class="ck"><span class="chk ok"></span>No blame on Amazon or buyers</div>
+        <div class="ck"><span class="chk ok"></span>Fits the Amazon text box</div>
+        <div class="ck" style="background:#fffaf5"><span class="chk need"></span><span><strong>Changed since last time?</strong><br><span style="color:var(--ink-3)">Evidence matches response 1.</span> <a href="record.html">Fix the invoice</a></span></div>
+        <div class="ck"><span class="chk todo"></span><label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer"><input type="checkbox" style="margin-top:3px;accent-color:#0b1224">I have done every action described</label></div>
+      </aside>
+    </div>
+  </div>
+</div>
+</body>
+</html>

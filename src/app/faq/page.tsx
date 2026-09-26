@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, MessagesSquare } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
+import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FAQ } from "@/content/marketing";
 import { FaqAccordion, faqJsonLd } from "@/components/pricing/FaqAccordion";
 import { JsonLd } from "@/components/JsonLd";
-import { IconTile } from "@/components/workspace/WorkspaceVisuals";
 import { SHARED } from "@/content/shared";
 
 export const metadata: Metadata = {
@@ -22,20 +22,17 @@ export const metadata: Metadata = {
 
 export default function FaqPage() {
   return (
-    <MarketingShell className="max-w-app">
+    <MarketingShell
+      className="max-w-app"
+      hero={<PageHero eyebrow={FAQ.eyebrow} title={FAQ.title} intro={FAQ.description} />}
+    >
       <JsonLd data={faqJsonLd()} />
-      <div className="py-10 sm:py-14">
-        <header className="mb-8 flex items-start gap-4 sm:mb-10">
-          <IconTile icon={MessagesSquare} tone="info" className="mt-1 hidden sm:inline-flex" />
-          <div>
-            <p className="text-eyebrow uppercase text-primary">Help & answers</p>
-            <h1 className="mt-2 font-accent text-h1 text-foreground">{FAQ.title}</h1>
-            <p className="mt-3 text-base text-muted-foreground">{FAQ.description}</p>
-          </div>
-        </header>
+      <div className="py-12 sm:py-16">
         <FaqAccordion />
         <Card className="workspace-hero mt-8 p-5 sm:p-6">
-          <h2 className="font-accent text-2xl font-medium text-foreground">{FAQ.cta.title}</h2>
+          <h2 className="tracking-[-0.03em] text-2xl font-semibold text-foreground">
+            {FAQ.cta.title}
+          </h2>
           <p className="mt-2 text-sm text-muted-foreground">{FAQ.cta.desc}</p>
           <div className="mt-4">
             <Button asChild>

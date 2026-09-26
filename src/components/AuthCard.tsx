@@ -3,8 +3,8 @@
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LogoMark } from "@/components/Logo";
-import { WorkspacePreview } from "@/components/marketing/WorkspacePreview";
+import { Logo } from "@/components/Logo";
+import { ChecklistPanel, CountdownRing } from "@/components/marketing/ProductPanels";
 import { AUTH } from "@/content/auth";
 import type { ReactNode } from "react";
 
@@ -26,23 +26,23 @@ export function AuthShell({
   children: ReactNode;
 }) {
   return (
-    <div className="grid overflow-hidden rounded-xl border border-border/80 bg-card shadow-card lg:grid-cols-2">
-      <div className="mx-auto flex w-full max-w-form items-center p-5 sm:p-8 lg:p-10">
-        <div className="w-full">
-          <div className="flex flex-col items-start">
-            <LogoMark size={36} />
-            <h1 className="mt-4 font-accent text-h2 font-medium text-foreground">{title}</h1>
-            <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
-              {subtitle}
-            </p>
-          </div>
-          <div className="mt-6">
+    <div className="grid min-h-svh lg:grid-cols-[1fr_1.05fr]">
+      <div className="flex flex-col bg-background px-5 py-7 sm:px-10 lg:px-16 xl:px-20">
+        <Logo href="/" />
+        <div className="my-auto w-full max-w-[26rem] py-10">
+          <h1 className="text-balance text-[2.1rem] font-semibold leading-[1.08] tracking-[-0.04em] text-foreground">
+            {title}
+          </h1>
+          <p className="mt-3 max-w-prose text-base leading-relaxed text-muted-foreground">
+            {subtitle}
+          </p>
+          <div className="mt-7">
             {children}
-            <p className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="mt-6 text-sm text-muted-foreground">
               {footerPrompt}{" "}
               <a
                 href={footerHref}
-                className="text-link underline underline-offset-4 hover:text-link/80"
+                className="font-medium text-link underline underline-offset-4 hover:text-link/80"
               >
                 {footerAction}
               </a>
@@ -57,17 +57,35 @@ export function AuthShell({
 
 function AuthPreviewPanel() {
   return (
-    <aside className="workspace-hero hidden min-w-0 flex-col justify-center gap-8 border-l border-border/70 p-8 lg:flex">
+    <aside className="stage dark hidden min-w-0 flex-col justify-center gap-9 px-10 py-16 text-foreground lg:flex xl:px-16">
       <div>
-        <p className="text-eyebrow uppercase text-primary">{AUTH.preview.eyebrow}</p>
-        <h2 className="mt-3 font-accent text-3xl font-medium text-foreground">
+        <p className="text-sm font-semibold text-primary">{AUTH.preview.eyebrow}</p>
+        <h2 className="mt-3 max-w-[16ch] text-balance text-[2.1rem] font-semibold leading-[1.08] tracking-[-0.04em]">
           {AUTH.preview.title}
         </h2>
-        <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-3 max-w-prose text-base leading-relaxed text-muted-foreground">
           {AUTH.preview.description}
         </p>
       </div>
-      <WorkspacePreview />
+      <div className="light relative w-full max-w-lg pb-10 text-foreground" aria-hidden>
+        <div className="window-frame">
+          <div className="window-bar">
+            <i />
+            <i />
+            <i />
+          </div>
+          <div className="p-4 [&>div]:shadow-none">
+            <ChecklistPanel />
+          </div>
+        </div>
+        <div className="absolute -right-4 bottom-0 flex items-center gap-3 rounded-2xl bg-card p-4 shadow-stage">
+          <CountdownRing size={42} />
+          <div>
+            <p className="text-[11px] font-semibold text-primary">{AUTH.preview.dueIn}</p>
+            <p className="text-xl font-semibold tracking-tight tabular-nums">1d 19h</p>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }

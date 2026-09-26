@@ -15,7 +15,7 @@ export function SectionHeading({
 }) {
   return (
     <div className={cn(align === "center" && "text-center", className)}>
-      {eyebrow && <p className="text-eyebrow uppercase text-primary">{eyebrow}</p>}
+      {eyebrow && <p className="text-eyebrow text-primary">{eyebrow}</p>}
       <h2 className="mt-3 text-balance text-h2 text-foreground">{title}</h2>
       {description && (
         <p className="mt-3 max-w-prose text-base text-muted-foreground">{description}</p>

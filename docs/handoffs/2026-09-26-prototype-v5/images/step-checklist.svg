@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" role="img" aria-label="A case checklist: two records done, one next, with a document attached">
+  <title>Your records, as a checklist</title>
+  <defs>
+    <radialGradient id="k-shadow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000" stop-opacity="0.24"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    <linearGradient id="k-board" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6F3EC"/><stop offset="1" stop-color="#E6E1D5"/></linearGradient>
+    <linearGradient id="k-paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F6F4EF"/></linearGradient>
+    <linearGradient id="k-ok" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="#15803D"/></linearGradient>
+    <linearGradient id="k-acc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FB923C"/><stop offset="1" stop-color="#EA580C"/></linearGradient>
+  </defs>
+  <ellipse cx="120" cy="186" rx="88" ry="9" fill="url(#k-shadow)"/>
+
+  <!-- clipboard -->
+  <rect x="52" y="24" width="124" height="152" rx="13" fill="url(#k-board)" stroke="#0B1224" stroke-width="2"/>
+  <rect x="62" y="38" width="104" height="128" rx="7" fill="url(#k-paper)" stroke="#0B1224" stroke-width="1.8"/>
+  <path d="M92 18 h44 a6 6 0 0 1 6 6 v10 a4 4 0 0 1 -4 4 h-48 a4 4 0 0 1 -4 -4 v-10 a6 6 0 0 1 6 -6 z" fill="#0B1224"/>
+  <circle cx="114" cy="24" r="3" fill="#F6F3EC"/>
+
+  <!-- rows -->
+  <circle cx="80" cy="64" r="8" fill="url(#k-ok)"/><path d="M76.2 64.2 l2.6 2.6 l5.2 -5.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M96 61 h52" stroke="#C9CDD6" stroke-width="3" stroke-linecap="round"/><path d="M96 68 h30" stroke="#E3E1DA" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M70 80 h88" stroke="#EEEBE4" stroke-width="1.5"/>
+  <circle cx="80" cy="96" r="8" fill="url(#k-ok)"/><path d="M76.2 96.2 l2.6 2.6 l5.2 -5.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M96 93 h44" stroke="#C9CDD6" stroke-width="3" stroke-linecap="round"/><path d="M96 100 h36" stroke="#E3E1DA" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M70 112 h88" stroke="#EEEBE4" stroke-width="1.5"/>
+  <rect x="66" y="117" width="96" height="24" rx="6" fill="#FFF4EA"/>
+  <circle cx="80" cy="129" r="7" fill="#FFFFFF" stroke="url(#k-acc)" stroke-width="3"/>
+  <path d="M96 126 h50" stroke="#0B1224" stroke-width="3" stroke-linecap="round"/><path d="M96 133 h28" stroke="#F3C9A4" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="80" cy="154" r="7" fill="#FFFFFF" stroke="#C9CDD6" stroke-width="2"/>
+  <path d="M96 154 h40" stroke="#E3E1DA" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- attached invoice -->
+  <g transform="rotate(9 190 120)">
+    <path d="M168 90 h30 l12 12 v50 a4 4 0 0 1 -4 4 h-38 a4 4 0 0 1 -4 -4 v-58 a4 4 0 0 1 4 -4 z" fill="#FFFFFF" stroke="#0B1224" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M198 90 v8 a4 4 0 0 0 4 4 h8" fill="#EEEBE4" stroke="#0B1224" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M172 112 h24 M172 121 h30 M172 130 h18" stroke="#C9CDD6" stroke-width="2.6" stroke-linecap="round"/>
+    <rect x="171" y="138" width="30" height="10" rx="3" fill="#FFE4CF"/>
+    <path d="M174 143 h20" stroke="#EA580C" stroke-width="2.4" stroke-linecap="round"/>
+  </g>
+  <!-- paper clip -->
+  <path d="M172 84 v-10 a6 6 0 0 1 12 0 v22 a3.5 3.5 0 0 1 -7 0 v-16" fill="none" stroke="#8C95A8" stroke-width="2.2" stroke-linecap="round"/>
+</svg>

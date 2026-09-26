@@ -1160,7 +1160,7 @@ function WorkspaceInner({
         <div className="min-w-0 space-y-5">
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList
-              className="grid h-auto w-full grid-cols-4 rounded-xl border border-border/80 bg-surface-2/70 p-1.5"
+              className="grid h-auto w-full grid-cols-4 rounded-2xl border border-border/70 bg-muted p-1.5"
               aria-label="Case workspace views"
             >
               {Object.entries(C.tabs).map(([id, label]) => {
@@ -1228,11 +1228,11 @@ function WorkspaceInner({
                 />
               ) : (
                 <>
-                  <Card className="workspace-hero border-primary/25">
+                  <Card className="stage stage-plain dark border-0 text-foreground shadow-lift">
                     <CardHeader>
                       <div className="flex items-center gap-2 text-primary">
                         <FileSearch className="h-4 w-4" aria-hidden />
-                        <p className="text-eyebrow uppercase">Next action</p>
+                        <p className="text-eyebrow">Next action</p>
                       </div>
                       <CardTitle as="h2" className="text-xl">
                         {gated
@@ -1361,7 +1361,7 @@ function WorkspaceInner({
                   <div className="flex items-center gap-3">
                     <IconTile icon={FolderOpen} tone="warning" />
                     <div>
-                      <p className="text-eyebrow uppercase text-muted-foreground">02 / Evidence</p>
+                      <p className="text-eyebrow text-muted-foreground">02 / Evidence</p>
                       <CardTitle as="h2" className="mt-1 text-lg">
                         Requested records
                       </CardTitle>
@@ -1599,7 +1599,7 @@ function WorkspaceInner({
                   <div className="flex items-center gap-3">
                     <IconTile icon={History} tone="info" />
                     <div>
-                      <p className="text-eyebrow uppercase text-muted-foreground">04 / History</p>
+                      <p className="text-eyebrow text-muted-foreground">04 / History</p>
                       <CardTitle as="h2" className="mt-1 text-lg">
                         Submissions and replies
                       </CardTitle>
@@ -1882,7 +1882,7 @@ function WorkspaceInner({
         <aside className="space-y-4 lg:sticky lg:top-24" aria-label="Case context">
           <Card className="overflow-hidden">
             <CardHeader className="pb-3">
-              <CardTitle as="h2" className="text-xs uppercase tracking-wider text-muted-foreground">
+              <CardTitle as="h2" className="text-xsr text-muted-foreground">
                 Case snapshot
               </CardTitle>
             </CardHeader>
@@ -2046,9 +2046,7 @@ function ReplyReading({ text }: { text: string }) {
   const reading = C.replyReading.categories[category];
   return (
     <div className="space-y-2 rounded-md border border-border/70 bg-background/60 p-3 text-sm">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        {C.replyReading.title}
-      </p>
+      <p className="text-xs text-muted-foreground">{C.replyReading.title}</p>
       <p className="font-medium text-foreground">{reading}</p>
       {reasons.length > 0 && (
         <div className="space-y-1">

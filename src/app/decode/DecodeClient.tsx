@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -28,6 +29,8 @@ import { stripInvisibleChars } from "@/lib/idNormalize";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
 import { buildNoticeAnnotations } from "@/lib/decodeAnnotations";
 import { stashPendingNotice } from "@/lib/pendingNotice";
+import { peekDecodeDraft, clearDecodeDraft } from "@/lib/decodeDraft";
+import { CountdownRing } from "@/components/marketing/ProductPanels";
 import { WORKSPACE } from "@/content/workspace";
 import { proposedRequirements } from "@/core/workspace";
 import { DECODE } from "@/content/marketing";
@@ -63,12 +66,14 @@ const STAGGER = 0.04;
 const charFmt = new Intl.NumberFormat("en-US", { useGrouping: true });
 
 export default function DecodeClient() {
-  const [text, setText] = useState("");
-  const [status, setStatus] = useState<Status>("empty");
+  // v5: a notice pasted into the home page's tool arrives here in memory. It is read at first
+  // render and decoded straight away, because the seller already pressed Decode there.
+  const [text, setText] = useState(() => peekDecodeDraft()?.text ?? "");
+  const [status, setStatus] = useState<Status>(() => (peekDecodeDraft() ? "loading" : "empty"));
   const [result, setResult] = useState<DecodeResponse | null>(null);
   const [decodedText, setDecodedText] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [usingSample, setUsingSample] = useState(false);
+  const [usingSample, setUsingSample] = useState(() => peekDecodeDraft()?.sample ?? false);
 
   const likeness = useMemo(() => assessNoticeLikeness(text), [text]);
   const guidance = result ? guidanceFor(result.kind) : null;
@@ -76,8 +81,12 @@ export default function DecodeClient() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!text.trim() || text.trim().length < 1) return;
-    const submitted = text.trim();
+    await submitText(text);
+  }
+
+  async function submitText(value: string) {
+    if (!value.trim()) return;
+    const submitted = value.trim();
     setStatus("loading");
     setError(null);
     trackFunnelEvent(FUNNEL_EVENTS.decoderSession);
@@ -103,6 +112,15 @@ export default function DecodeClient() {
       setStatus("error");
     }
   }
+
+  const startedDraft = useRef(false);
+  useEffect(() => {
+    if (startedDraft.current) return;
+    startedDraft.current = true;
+    const draft = peekDecodeDraft();
+    clearDecodeDraft();
+    if (draft) void submitText(draft.text);
+  });
 
   function handleSample() {
     setText(SAMPLE_NOTICE_TEXT);
@@ -146,102 +164,189 @@ export default function DecodeClient() {
     );
   }
 
+  const WRAP = "mx-auto w-full max-w-marketing px-4 sm:px-8";
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-6 py-8 sm:py-10",
-        status !== "result" && "mx-auto w-full max-w-tool",
-      )}
-    >
-      <OfflineNotice />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="mb-2 text-eyebrow uppercase text-primary">Notice decoder</p>
-          <h1 className="font-accent text-h1 text-foreground">{DECODE.pageTitle}</h1>
-          <p className="mt-2 max-w-prose text-base text-muted-foreground">
-            {DECODE.pageDescription}
-          </p>
-        </div>
-        <div className="flex w-full items-center justify-end gap-3">
-          {status === "result" && (
-            <Button type="button" variant="outline" size="sm" onClick={handleReset}>
-              {DECODE.decodeAnotherButton}
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {status !== "result" && (
-        <Card className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex items-center justify-between gap-2">
-              <label htmlFor="notice" className="text-sm font-medium text-foreground">
-                {DECODE.textarea.label}
-              </label>
-              <p className="text-xs tabular-nums text-muted-foreground" data-tn>
-                {DECODE.charCounter.replace("{count}", charFmt.format(text.length))}
+    <div className="flex flex-col">
+      <section className="stage dark text-foreground">
+        <div className={cn(WRAP, "pb-28 pt-12 sm:pt-16")}>
+          <OfflineNotice />
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="max-w-3xl">
+              <p className="mb-3 text-sm font-semibold text-primary">{DECODE.eyebrow}</p>
+              <h1 className="text-balance text-[clamp(2.4rem,1.4rem+3.4vw,4.1rem)] font-semibold leading-[1.0] tracking-[-0.04em] text-foreground">
+                {DECODE.pageTitle}
+              </h1>
+              <p className="mt-4 max-w-prose text-lg leading-relaxed text-muted-foreground">
+                {DECODE.pageDescription}
               </p>
             </div>
-            <Textarea
-              id="notice"
-              placeholder={DECODE.textarea.placeholder}
-              value={text}
-              onChange={(e) => {
-                const value = stripInvisibleChars(e.target.value);
-                setText(value);
-                // Emptied by typing: back to the empty state, as the clear button does.
-                if (value.length < 1) setStatus("empty");
-              }}
-              spellCheck={false}
-              aria-describedby="notice-help notice-hint"
-              className="min-h-[14rem] font-mono text-sm leading-relaxed"
-            />
-            {/* Shown, not only written down (it sat unused until 24 Sep 2026): a pasted header is
-                what lets a deadline be counted from the notice's own date instead of "from
-                receipt". */}
-            <p id="notice-help" className="text-xs text-muted-foreground">
-              {DECODE.textarea.hint}
-            </p>
-            <div id="notice-hint" className="sr-only" aria-live="polite">
-              {likeness.hint ?? ""}
-            </div>
-
-            {usingSample && (
-              <div className="flex items-center gap-2">
-                <Badge variant="info">{DECODE.sampleBadge}</Badge>
-                <Button type="button" variant="link" size="sm" onClick={handleClear}>
-                  {DECODE.clearButton}
-                </Button>
-              </div>
-            )}
-
-            {showHint && (
-              <Alert variant="info">
-                <AlertTitle>{DECODE.noticeLikenessTitle}</AlertTitle>
-                <AlertDescription>{likeness.hint}</AlertDescription>
-              </Alert>
-            )}
-
-            <p className="text-xs text-muted-foreground">{DECODE.privacyNote}</p>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button type="submit" size="lg" disabled={status === "loading" || !canSubmit}>
-                {status === "loading" && <RefreshCw className="animate-spin" />}
-                {DECODE.submitButton}
+            {status === "result" && (
+              <Button type="button" variant="outline" onClick={handleReset}>
+                <RefreshCw aria-hidden />
+                {DECODE.decodeAnotherButton}
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleSample}
-                disabled={status === "loading"}
+            )}
+          </div>
+
+          {status === "result" && result && guidance && (
+            <ResultFacts result={result} guidance={guidance} />
+          )}
+
+          {status !== "result" && (
+            <div className="mt-10 grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_17rem]">
+              <form
+                onSubmit={handleSubmit}
+                className="light max-w-tool rounded-[22px] bg-card p-2 text-foreground shadow-stage"
               >
-                {DECODE.sampleButton}
-              </Button>
+                <div className="overflow-hidden rounded-2xl border border-border">
+                  <div className="flex items-center justify-between gap-2 border-b border-border/70 bg-surface-2 px-4 py-2.5">
+                    <label htmlFor="notice" className="text-sm font-medium text-foreground">
+                      {DECODE.textarea.label}
+                    </label>
+                    <p className="text-xs tabular-nums text-muted-foreground" data-tn>
+                      {DECODE.charCounter.replace("{count}", charFmt.format(text.length))}
+                    </p>
+                  </div>
+                  <Textarea
+                    id="notice"
+                    placeholder={DECODE.textarea.placeholder}
+                    value={text}
+                    onChange={(e) => {
+                      const value = stripInvisibleChars(e.target.value);
+                      setText(value);
+                      // Emptied by typing: back to the empty state, as the clear button does.
+                      if (value.length < 1) setStatus("empty");
+                    }}
+                    spellCheck={false}
+                    aria-describedby="notice-help notice-hint"
+                    className="min-h-[14rem] rounded-none border-0 font-mono text-sm leading-relaxed shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                  <div className="space-y-3 border-t border-border/70 bg-surface-2 px-4 py-3">
+                    {/* Shown, not only written down (it sat unused until 24 Sep 2026): a pasted header
+                      is what lets a deadline be counted from the notice's own date instead of
+                      from receipt. */}
+                    <p id="notice-help" className="text-xs text-muted-foreground">
+                      {DECODE.textarea.hint}
+                    </p>
+                    <div id="notice-hint" className="sr-only" aria-live="polite">
+                      {likeness.hint ?? ""}
+                    </div>
+                    {usingSample && (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="info">{DECODE.sampleBadge}</Badge>
+                        <Button type="button" variant="link" size="sm" onClick={handleClear}>
+                          {DECODE.clearButton}
+                        </Button>
+                      </div>
+                    )}
+                    {showHint && (
+                      <Alert variant="info">
+                        <AlertTitle>{DECODE.noticeLikenessTitle}</AlertTitle>
+                        <AlertDescription>{likeness.hint}</AlertDescription>
+                      </Alert>
+                    )}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-xs text-muted-foreground">{DECODE.privacyNote}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={handleSample}
+                          disabled={status === "loading"}
+                        >
+                          {DECODE.sampleButton}
+                        </Button>
+                        <Button
+                          type="submit"
+                          size="lg"
+                          disabled={status === "loading" || !canSubmit}
+                        >
+                          {status === "loading" && <RefreshCw className="animate-spin" />}
+                          {DECODE.submitButton}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+              <div className="hidden justify-self-center rounded-[28px] bg-white p-6 shadow-stage lg:block">
+                <Image
+                  src="/illustrations/step-email.svg"
+                  alt={DECODE.illustrationAlt}
+                  width={240}
+                  height={180}
+                  className="h-auto w-56"
+                  unoptimized
+                />
+              </div>
             </div>
-          </form>
-        </Card>
-      )}
+          )}
+        </div>
+      </section>
 
-      {main}
+      {main && <div className={cn(WRAP, "relative -mt-16 pb-10")}>{main}</div>}
+    </div>
+  );
+}
+
+/** The answer, before any detail: what the reply is, when it is due, whether it looks forged. */
+function ResultFacts({
+  result,
+  guidance,
+}: {
+  result: DecodeResponse;
+  guidance: ReturnType<typeof guidanceFor>;
+}) {
+  const r = DECODE.result;
+  const firstDue = result.deadlines.find((d) => d.dueAt && d.dueOn);
+  const flagged = (result.authenticity?.length ?? 0) > 0;
+  return (
+    <div className="mt-10 grid gap-3.5 md:grid-cols-[1.3fr_1fr_1fr]">
+      <div className="flex items-center gap-4 rounded-[18px] bg-white/[0.05] p-5 ring-1 ring-inset ring-white/[0.08]">
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/[0.08]">
+          <FileSearch aria-hidden className="size-5 text-primary" />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-xs text-muted-foreground">{r.factReply}</span>
+          <span className="block text-lg font-semibold leading-snug tracking-tight">
+            {result.responseType?.label ?? guidance.title}
+          </span>
+        </span>
+      </div>
+      <div className="flex items-center gap-4 rounded-[18px] bg-primary/15 p-5 ring-1 ring-inset ring-primary/35">
+        <CountdownRing size={48} tone="stage" />
+        <span className="min-w-0">
+          <span className="block text-xs font-semibold text-primary">{r.factDue}</span>
+          <span className="block text-lg font-semibold leading-snug tracking-tight tabular-nums">
+            {firstDue?.dueAt
+              ? new Date(firstDue.dueAt).toLocaleDateString("en-GB", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                })
+              : r.factNoDate}
+          </span>
+        </span>
+      </div>
+      <div className="flex items-center gap-4 rounded-[18px] bg-white/[0.05] p-5 ring-1 ring-inset ring-white/[0.08]">
+        <span
+          className={cn(
+            "grid size-12 shrink-0 place-items-center rounded-2xl",
+            flagged ? "bg-warning/15" : "bg-success/15",
+          )}
+        >
+          <ShieldAlert
+            aria-hidden
+            className={cn("size-5", flagged ? "text-warning" : "text-success")}
+          />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-xs text-muted-foreground">{r.factScam}</span>
+          <span className="block text-lg font-semibold leading-snug tracking-tight">
+            {flagged ? r.factScamFlagged : r.factScamClear}
+          </span>
+        </span>
+      </div>
     </div>
   );
 }
@@ -335,7 +440,7 @@ function ResultView({
             <AlertTitle>{r.authenticityTitle}</AlertTitle>
             <AlertDescription>{r.authenticityLead}</AlertDescription>
             <div>
-              <p className="text-eyebrow uppercase text-muted-foreground">{r.authenticityFound}</p>
+              <p className="text-eyebrow text-muted-foreground">{r.authenticityFound}</p>
               <ul className="mt-2 space-y-2">
                 {result.authenticity.map((signal) => (
                   <li key={signal.id} className="text-sm">
@@ -362,7 +467,7 @@ function ResultView({
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <Card className="overflow-hidden lg:sticky lg:top-24">
           <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-surface-2/50 py-4">
-            <p className="text-eyebrow uppercase text-muted-foreground">{r.markedTitle}</p>
+            <p className="text-eyebrow text-muted-foreground">{r.markedTitle}</p>
             <span className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <span aria-hidden className="hl-risk inline-block size-3 rounded-sm" />
@@ -389,7 +494,7 @@ function ResultView({
             <CardHeader className="flex-row items-start gap-3 border-b border-border/60 bg-surface-2/50">
               <IconTile icon={FileSearch} tone="info" />
               <div className="min-w-0 space-y-1">
-                <p className="text-eyebrow uppercase text-muted-foreground">{r.briefEyebrow}</p>
+                <p className="text-eyebrow text-muted-foreground">{r.briefEyebrow}</p>
                 <h2 className="text-xl font-semibold leading-snug text-foreground">
                   {guidance.title}
                 </h2>
@@ -466,9 +571,7 @@ function ResultView({
               </ol>
               {details.length > 0 && (
                 <div className="space-y-2 border-t border-border/60 px-6 py-5">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {r.entitiesTitle}
-                  </p>
+                  <p className="text-sm font-semibold text-muted-foreground">{r.entitiesTitle}</p>
                   <ul className="flex flex-wrap gap-2">
                     {details.map((e) => (
                       <li
@@ -489,8 +592,10 @@ function ResultView({
 
           <Card className="workspace-hero border-primary/20">
             <CardHeader>
-              <p className="text-eyebrow uppercase text-primary">{r.nextEyebrow}</p>
-              <CardTitle className="font-accent text-2xl font-medium">{r.nextTitle}</CardTitle>
+              <p className="text-eyebrow text-primary">{r.nextEyebrow}</p>
+              <CardTitle className="tracking-[-0.03em] text-2xl font-semibold">
+                {r.nextTitle}
+              </CardTitle>
               <p className="text-sm text-muted-foreground">{r.nextDesc}</p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -573,9 +678,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
         {n}
       </span>
       <div className="min-w-0 flex-1">
-        <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {title}
-        </h3>
+        <h3 className="mb-2 text-sm font-semibold text-muted-foreground">{title}</h3>
         {children}
       </div>
     </li>

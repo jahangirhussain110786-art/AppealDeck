@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AppealDeck prototype v5 · contents</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 28 28%27%3E%3Crect width=%2728%27 height=%2728%27 rx=%277%27 fill=%27%230B1224%27/%3E%3Cpath d=%27M8 14.5l4 4 8-9%27 stroke=%27%23EA580C%27 stroke-width=%272.8%27 fill=%27none%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="v5.css">
+<style>
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .tile { padding: 22px; border-radius: 18px; background: rgba(255,255,255,0.05); box-shadow: 0 0 0 1px var(--stage-line) inset; color: #fff; text-decoration: none; display: flex; flex-direction: column; gap: 6px; transition: background 140ms; }
+  .tile:hover { background: rgba(255,255,255,0.09); color: #fff; }
+  .tile span { color: var(--stage-ink-2); font-size: 14px; }
+</style>
+</head>
+<body style="background:var(--stage);color:var(--stage-ink)">
+<main class="wrap" style="padding-top:72px;padding-bottom:96px;display:flex;flex-direction:column;gap:32px">
+  <a class="logo" href="home.html"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#fff"/><path d="M8 14.5l4 4 8-9" stroke="#EA580C" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>AppealDeck</a>
+  <div><h1 class="display" style="font-size:56px">Prototype <span class="serif">v5</span></h1><p class="hero-sub" style="margin-top:12px">Every screen, one standard. Sample data. Click through: each page links to the next.</p></div>
+  <h2 style="font-size:15px;color:var(--stage-ink-3);font-weight:600">Public</h2>
+  <div class="tiles">
+    <a class="tile" href="home.html"><strong>Home</strong><span>The tool, the product view, features, plans</span></a>
+    <a class="tile" href="decode.html"><strong>Decode result</strong><span>The answer, the marked email, what to gather</span></a>
+    <a class="tile" href="pricing.html"><strong>Pricing</strong><span>Plans, comparison, limits, checkout</span></a>
+    <a class="tile" href="privacy.html"><strong>Where your data goes</strong><span>The data flow, three answers</span></a>
+    <a class="tile" href="support.html"><strong>Support</strong><span>Who to write to, what support cannot do</span></a>
+    <a class="tile" href="signin.html"><strong>Sign in</strong><span>Your case is safe; where you come back to</span></a>
+  </div>
+  <h2 style="font-size:15px;color:var(--stage-ink-3);font-weight:600">Signed in</h2>
+  <div class="tiles">
+    <a class="tile" href="dashboard.html"><strong>Dashboard</strong><span>Your cases, each with its countdown and next step</span></a>
+    <a class="tile" href="case.html"><strong>Case workspace</strong><span>Next step, checklist, timeline</span></a>
+    <a class="tile" href="record.html"><strong>One record</strong><span>The invoice with pinned checks; one question</span></a>
+    <a class="tile" href="response.html"><strong>Response editor</strong><span>The letter, wording help, before-you-send checks</span></a>
+    <a class="tile" href="vault.html"><strong>Vault</strong><span>Your encrypted files</span></a>
+  </div>
+</main>
+</body>
+</html>

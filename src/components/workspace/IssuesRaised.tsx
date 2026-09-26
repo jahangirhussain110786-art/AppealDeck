@@ -45,7 +45,7 @@ export function IssuesRaised({
               <p className="text-sm font-semibold text-foreground">
                 {APP.violationKinds[issue.kind] ?? issue.kind}
               </p>
-              <p className="text-eyebrow uppercase text-muted-foreground">{C.issuesSourceLabel}</p>
+              <p className="text-eyebrow text-muted-foreground">{C.issuesSourceLabel}</p>
               <p className="text-sm italic text-muted-foreground">{issue.sourceQuote}</p>
             </li>
           ))}

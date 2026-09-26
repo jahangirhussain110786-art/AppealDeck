@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Check, X } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
+import { PageHero } from "@/components/PageHero";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/JsonLd";
@@ -38,27 +39,33 @@ export function GuideView({ guide }: { guide: Guide }) {
     },
   ];
   return (
-    <MarketingShell className="max-w-app">
-      <JsonLd data={jsonLd} />
-      <article className="py-10 sm:py-14">
-        <header className="mb-8 sm:mb-10">
-          <p className="text-eyebrow uppercase text-primary">
+    <MarketingShell
+      className="max-w-app"
+      hero={
+        <PageHero
+          eyebrow={
             <Link href="/guides" className="hover:underline">
               {GUIDES_COMMON.eyebrow}
             </Link>
-          </p>
-          <h1 className="mt-2 font-accent text-h1 text-foreground">{guide.title}</h1>
-          <p className="mt-2 text-xs text-muted-foreground tabular-nums">
+          }
+          title={guide.title}
+          intro={guide.intro}
+        >
+          <p className="mt-4 text-sm tabular-nums text-muted-foreground">
             {GUIDES_COMMON.lastVerifiedLabel}{" "}
             <time dateTime={guide.lastVerified}>{formatDay(guide.lastVerified)}</time>
           </p>
-          <p className="mt-4 text-base leading-relaxed text-muted-foreground">{guide.intro}</p>
-        </header>
-
+        </PageHero>
+      }
+    >
+      <JsonLd data={jsonLd} />
+      <article className="py-12 sm:py-16">
         <div className="space-y-8">
           {guide.sections.map((s) => (
             <section key={s.heading}>
-              <h2 className="font-accent text-2xl font-medium text-foreground">{s.heading}</h2>
+              <h2 className="tracking-[-0.03em] text-2xl font-semibold text-foreground">
+                {s.heading}
+              </h2>
               {s.body && (
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
               )}
@@ -73,7 +80,7 @@ export function GuideView({ guide }: { guide: Guide }) {
           ))}
 
           <Card className="p-5 sm:p-6">
-            <h2 className="font-accent text-2xl font-medium text-foreground">
+            <h2 className="tracking-[-0.03em] text-2xl font-semibold text-foreground">
               {guide.appealDeck.heading}
             </h2>
             <div className="mt-4 grid gap-5 sm:grid-cols-2">
@@ -117,7 +124,7 @@ export function GuideView({ guide }: { guide: Guide }) {
           </Card>
 
           <nav aria-label={GUIDES_COMMON.related}>
-            <h2 className="font-accent text-2xl font-medium text-foreground">
+            <h2 className="tracking-[-0.03em] text-2xl font-semibold text-foreground">
               {GUIDES_COMMON.related}
             </h2>
             <ul className="mt-3 space-y-2 text-sm">

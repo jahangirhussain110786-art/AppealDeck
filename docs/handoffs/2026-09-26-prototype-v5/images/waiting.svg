@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sent, waiting for Amazon">
+  <title>Sent, waiting</title>
+  <defs>
+    <linearGradient id="w-plane" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E8EEFF"/></linearGradient>
+  </defs>
+  <path d="M8 48 C18 46 22 38 28 34" fill="none" stroke="#93A6D9" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1 5"/>
+  <path d="M26 28 L56 12 L48 50 L38 40 Z" fill="url(#w-plane)" stroke="#1E3A8A" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M38 40 L56 12" stroke="#1E3A8A" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M38 40 v10 l5 -5" fill="#C9D6FF" stroke="#1E3A8A" stroke-width="2.2" stroke-linejoin="round"/>
+</svg>

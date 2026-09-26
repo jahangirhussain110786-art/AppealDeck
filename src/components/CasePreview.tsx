@@ -19,12 +19,10 @@ export function CasePreview({ kind, caseFile }: CasePreviewProps) {
 
   return (
     <div className="rounded-lg border border-border/80 bg-surface-2 p-5">
-      <p className="text-eyebrow uppercase text-muted-foreground">{APP.access.casePreview.title}</p>
+      <p className="text-eyebrow text-muted-foreground">{APP.access.casePreview.title}</p>
 
       <div className="mt-4">
-        <p className="text-eyebrow uppercase text-muted-foreground">
-          {APP.access.casePreview.evidenceTitle}
-        </p>
+        <p className="text-eyebrow text-muted-foreground">{APP.access.casePreview.evidenceTitle}</p>
         <ul className="mt-2 space-y-2">
           {reqs.map((r) => {
             const present = caseFile?.evidenceSlots[r.kind]?.present === true;
@@ -52,9 +50,7 @@ export function CasePreview({ kind, caseFile }: CasePreviewProps) {
       </div>
 
       <div className="mt-5">
-        <p className="text-eyebrow uppercase text-muted-foreground">
-          {APP.access.casePreview.actionsTitle}
-        </p>
+        <p className="text-eyebrow text-muted-foreground">{APP.access.casePreview.actionsTitle}</p>
         <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
           {nextBestActions(state).map((action, i) => (
             <li key={i}>{action}</li>

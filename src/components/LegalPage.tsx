@@ -4,6 +4,7 @@ import { FileText, RotateCcw, ShieldCheck, CalendarDays, ArrowUpRight } from "lu
 import { MarketingShell } from "@/components/MarketingShell";
 import { LegalToc } from "@/components/LegalToc";
 import { PageIntro } from "@/components/PageIntro";
+import { DataFlow } from "@/components/DataFlow";
 import { SURFACES } from "@/content/surfaces";
 import { LEGAL, type LegalDoc } from "@/content/legal";
 import { SHARED } from "@/content/shared";
@@ -46,6 +47,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
             </Link>
           ))}
         </nav>
+        {doc === "privacy" && <DataFlow />}
         <div className="grid items-start gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
           <LegalToc sections={sections.map((s) => ({ id: s.id, title: s.title }))} />
           <div className="min-w-0 space-y-4">

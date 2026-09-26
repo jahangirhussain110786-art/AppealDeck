@@ -20,7 +20,10 @@ export function FaqAccordion({ ids }: { ids?: readonly string[] }) {
     <div className="space-y-8">
       {faqByGroup().map((group) => (
         <section key={group.id} aria-labelledby={`faq-${group.id}`}>
-          <h2 id={`faq-${group.id}`} className="font-accent text-2xl font-medium text-foreground">
+          <h2
+            id={`faq-${group.id}`}
+            className="tracking-[-0.03em] text-2xl font-semibold text-foreground"
+          >
             {group.name}
           </h2>
           <QuestionList items={group.items} />

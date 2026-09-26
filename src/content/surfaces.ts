@@ -1,4 +1,17 @@
 export const SURFACES = {
+  /** The data-flow picture at the top of /privacy (v5, 26 Sep 2026). Summarises the policy
+   *  below it; every line matches a section of legal.ts. */
+  dataFlow: {
+    title: "Where your case goes, in one picture",
+    device: { title: "Your device", body: "Your case and files, encrypted. The only copy." },
+    toServer: "The notice text. A file, only when you ask for a check.",
+    server: {
+      title: "AppealDeck's server",
+      body: "Reads it to answer and keeps no copy. A document check or wording help also passes through Google Gemini.",
+    },
+    never: "Never connected",
+    amazon: { title: "Your Amazon account", body: "You paste your response in yourself." },
+  },
   legal: {
     eyebrow: "Policies & support",
     navigation: "Policy navigation",

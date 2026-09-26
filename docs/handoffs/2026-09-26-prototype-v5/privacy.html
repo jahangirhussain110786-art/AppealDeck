@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where your data goes · AppealDeck</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 28 28%27%3E%3Crect width=%2728%27 height=%2728%27 rx=%277%27 fill=%27%230B1224%27/%3E%3Cpath d=%27M8 14.5l4 4 8-9%27 stroke=%27%23EA580C%27 stroke-width=%272.8%27 fill=%27none%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="v5.css">
+<style>
+  .flow { display: grid; grid-template-columns: 1fr 120px 1fr 120px 1fr; align-items: center; }
+  .node { background: #fff; border-radius: 20px; padding: 28px 24px; box-shadow: var(--shadow-2), 0 0 0 1px var(--line) inset; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+  .node.off { background: #f7f6f2; box-shadow: 0 0 0 1.5px #d7d5cc inset; }
+  .node .ic { width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; }
+  .link { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); text-align: center; line-height: 1.4; }
+  .qa { background: #fff; border-radius: 20px; box-shadow: var(--shadow-1), 0 0 0 1px var(--line) inset; padding: 0 24px; }
+  @media (max-width: 1000px) { .flow { grid-template-columns: 1fr; gap: 12px; } .link svg { transform: rotate(90deg); } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <div class="wrap">
+    <a class="logo" href="home.html"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#fff"/><path d="M8 14.5l4 4 8-9" stroke="#EA580C" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>AppealDeck</a>
+    <nav class="topnav" aria-label="Main"><a href="home.html">Decode</a><a href="dashboard.html">Dashboard</a><a href="signin.html">Vault</a><a href="pricing.html">Pricing</a></nav>
+    <div class="right"><details class="mnav"><summary aria-label="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary><nav aria-label="Menu"><a href="home.html">Decode a notice</a><a href="pricing.html">Pricing</a><a href="dashboard.html">Dashboard</a><a href="signin.html">Vault</a><a href="support.html">Support</a><a href="signin.html">Sign in</a></nav></details><a class="signin" href="signin.html">Sign in</a></div>
+  </div>
+</header>
+<main id="main">
+  <section class="stage">
+    <div class="wrap subhero" style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:40px;align-items:center" id="top">
+      <div style="display:flex;flex-direction:column;gap:16px"><h1 class="display" style="font-size:clamp(40px,5vw,68px)">Where your data <span class="serif">goes.</span></h1><p class="hero-sub">And the one place it never goes.</p></div>
+      <img src="images/vault.svg" alt="" style="width:100%;max-width:300px;justify-self:end;filter:drop-shadow(0 30px 50px rgba(0,0,0,.5))">
+    </div>
+  </section>
+  <div class="wrap overlap">
+    <div class="flow">
+      <div class="node"><span class="ic" style="background:var(--ok-soft)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/><rect x="9" y="8" width="6" height="5" rx="1"/></svg></span><strong style="font-size:19px">Your device</strong><span style="color:var(--ink-2);font-size:15px">Case and files, encrypted. The only copy.</span></div>
+      <div class="link"><svg width="100" height="20" viewBox="0 0 100 20" aria-hidden="true"><path d="M4 10h88M84 4l8 6-8 6" fill="none" stroke="#0b1224" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Email text.<br>A file, only on Check.</div>
+      <div class="node"><span class="ic" style="background:#f1f0ea"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0b1224" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="1.5"/><rect x="4" y="13" width="16" height="7" rx="1.5"/><path d="M8 7.5h.01M8 16.5h.01"/></svg></span><strong style="font-size:19px">Our server</strong><span style="color:var(--ink-2);font-size:15px">Reads it, answers, keeps nothing.</span></div>
+      <div class="link" style="color:var(--bad);font-weight:600"><svg width="100" height="20" viewBox="0 0 100 20" aria-hidden="true"><path d="M4 10h92" stroke="#cfcdc4" stroke-width="2" stroke-dasharray="5 5"/><path d="M43 3l14 14M57 3L43 17" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round"/></svg>Never connected</div>
+      <div class="node off"><span class="ic" style="background:#fff"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4b5466" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg></span><strong style="font-size:19px">Your Amazon account</strong><span style="color:var(--ink-2);font-size:15px">You paste your reply in yourself.</span></div>
+    </div>
+
+    <div class="faq qa" style="margin-top:56px;border-top:0">
+      <details><summary>Which AI reads the text?</summary><p>Google Gemini, paid tier. Google does not use it to improve its products, and keeps logs up to 55 days only to detect abuse.</p></details>
+      <details><summary>What if I clear my browser?</summary><p>Your case and files are deleted. There is no copy on our server. Keep a recovery copy from the Vault.</p></details>
+      <details style="border-bottom:0"><summary>Can I add a passphrase?</summary><p>Yes, in the Vault. If you forget it, nobody can recover the files.</p></details>
+    </div>
+  </div>
+</main>
+<footer class="foot"><div class="wrap"><div class="legal" style="margin-top:0;padding-top:0;border-top:0">Not affiliated with Amazon. <a href="#" style="display:inline;color:inherit;text-decoration:underline">Full privacy policy</a></div></div></footer>
+<style>@media (max-width: 800px) { #top { grid-template-columns: 1fr !important; } #top img { justify-self: start !important; max-width: 200px !important; } }</style>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pricing · AppealDeck</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 28 28%27%3E%3Crect width=%2728%27 height=%2728%27 rx=%277%27 fill=%27%230B1224%27/%3E%3Cpath d=%27M8 14.5l4 4 8-9%27 stroke=%27%23EA580C%27 stroke-width=%272.8%27 fill=%27none%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="v5.css">
+<style>
+  .cmp { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .cmp th, .cmp td { padding: 16px 20px; border-top: 1px solid var(--line-2); text-align: center; }
+  .cmp th:first-child, .cmp td:first-child { text-align: left; font-weight: 500; }
+  .cmp thead th { border-top: 0; background: #fbfaf7; font-size: 14px; font-weight: 600; }
+  .cmp thead th.pass { background: var(--stage); color: #fff; }
+  .cmp td.pass { background: #fbf6f0; }
+  .yes { display: inline-flex; width: 24px; height: 24px; border-radius: 12px; background: var(--ok-soft); align-items: center; justify-content: center; }
+  .no { color: var(--ink-3); }
+  .receipt { background: #fff; border-radius: 18px; padding: 26px; box-shadow: var(--shadow-2), 0 0 0 1px var(--line) inset; position: relative; }
+  .rl { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px dashed #dcdad2; font-size: 15px; }
+  .limit { display: grid; grid-template-columns: 36px 1fr; gap: 14px; padding: 18px 0; border-top: 1px solid var(--line); }
+  .limit:first-child { border-top: 0; }
+  .limit i { width: 36px; height: 36px; border-radius: 10px; background: #f4f3ee; display: inline-flex; align-items: center; justify-content: center; }
+  @media (max-width: 900px) { #buygrid, #faqgrid { grid-template-columns: 1fr !important; } .cmp th, .cmp td { padding: 12px 8px; font-size: 13.5px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <div class="wrap">
+    <a class="logo" href="home.html"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#fff"/><path d="M8 14.5l4 4 8-9" stroke="#EA580C" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>AppealDeck</a>
+    <nav class="topnav" aria-label="Main"><a href="home.html">Decode</a><a href="dashboard.html">Dashboard</a><a href="signin.html">Vault <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="needs sign-in"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></a><a href="pricing.html" aria-current="page" style="color:#fff">Pricing</a></nav>
+    <div class="right"><details class="mnav"><summary aria-label="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary><nav aria-label="Menu"><a href="home.html">Decode a notice</a><a href="pricing.html">Pricing</a><a href="dashboard.html">Dashboard</a><a href="signin.html">Vault</a><a href="support.html">Support</a><a href="signin.html">Sign in</a></nav></details><a class="signin" href="signin.html">Sign in</a><a class="btn btn-accent btn-sm" href="home.html#tool">Decode a notice</a></div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="stage">
+    <div class="wrap subhero" style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px">
+      <span class="eyebrow" style="align-self:center"><b>USD</b>Same price in every country</span>
+      <h1 class="display" style="font-size:clamp(42px,5.4vw,72px)">One price per case. Every round <span class="serif">included.</span></h1>
+      <p class="hero-sub">Decoding is free. Pay once, only when you want the full response.</p>
+    </div>
+  </section>
+
+  <div class="wrap overlap">
+    <div class="plans" style="margin-top:0">
+      <div class="plan"><div style="font-weight:600;color:var(--ink-3)">Decode</div><div class="price">$0</div><ul><li>Any Amazon notice</li><li>Due date and records</li><li>Scam check</li></ul><a class="btn btn-light" href="home.html#tool" style="margin-top:auto">Decode a notice</a></div>
+      <div class="plan"><div style="font-weight:600;color:var(--ink-3)">Free account</div><div class="price">$0</div><ul><li>Your case checklist</li><li>Encrypted file vault</li><li>Email reminders</li><li>Amazon&#39;s replies tracked</li></ul><a class="btn btn-light" href="signin.html" style="margin-top:auto">Create an account</a></div>
+      <div class="plan feature"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;color:#fdba74">Appeal Pass</span><span class="pill" style="background:rgba(255,255,255,0.08);color:var(--stage-ink-2)">per case</span></div><div class="price">$249</div><ul><li>Documents checked against the notice</li><li>The full response, every round</li><li>Wording help that keeps your facts</li></ul><a class="btn btn-accent" href="#buy" style="margin-top:auto">Get the Appeal Pass</a></div>
+    </div>
+  </div>
+
+  <section class="section" aria-labelledby="h-cmp" style="padding-top:104px">
+    <div class="wrap">
+      <h2 class="h2" id="h-cmp" style="font-size:clamp(28px,3vw,40px)">What each one includes</h2>
+      <div style="margin-top:28px;background:#fff;border-radius:20px;box-shadow:var(--shadow-1),0 0 0 1px var(--line) inset;overflow:hidden">
+        <table class="cmp">
+          <caption class="sr-only">Plan comparison</caption>
+          <thead><tr><th scope="col">Feature</th><th scope="col">Decode</th><th scope="col">Free account</th><th scope="col" class="pass">Appeal Pass</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Reply type, due date, records</th><td><span class="yes" aria-label="Included"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></td><td><span class="yes" aria-label="Included"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></td><td class="pass"><span class="yes" aria-label="Included"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></td></tr>
+            <tr><th scope="row">Scam check</th><td><span class="yes" aria-label="Included"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></td><td><span class="yes" aria-label="Included"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></td><td class="pass"><span class="yes" aria-label="Included"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></td></tr>
+            <tr><th scope="row">Saved checklist, vault, reminders</th><td class="no"><span aria-hidden="true">—</span><span class="sr-only">Not included</span></td><td><span class="yes" aria-label="Included"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></td><td class="pass"><span class="yes" aria-label="Included"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></td></tr>
+            <tr><th scope="row">Documents checked against the notice</th><td class="no"><span aria-hidden="true">—</span><span class="sr-only">Not included</span></td><td class="no"><span aria-hidden="true">—</span><span class="sr-only">Not included</span></td><td class="pass"><span class="yes" aria-label="Included"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></td></tr>
+            <tr><th scope="row">The full response, every round</th><td class="no"><span aria-hidden="true">—</span><span class="sr-only">Not included</span></td><td class="no"><span aria-hidden="true">—</span><span class="sr-only">Not included</span></td><td class="pass"><span class="yes" aria-label="Included"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></td></tr>
+            <tr><th scope="row">Wording help, facts locked</th><td class="no"><span aria-hidden="true">—</span><span class="sr-only">Not included</span></td><td class="no"><span aria-hidden="true">—</span><span class="sr-only">Not included</span></td><td class="pass"><span class="yes" aria-label="Included"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="buy" style="padding-top:104px" aria-labelledby="h-buy">
+    <div class="wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start" id="buygrid">
+      <div>
+        <h2 class="h2" id="h-buy" style="font-size:clamp(28px,3vw,40px)">Read this before you <span class="serif">pay.</span></h2>
+        <div style="margin-top:20px">
+          <div class="limit"><i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0b1224" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M5 7h14M5 7l-2 6a3 3 0 0 0 4 0zM19 7l-2 6a3 3 0 0 0 4 0z"/></svg></i><span><strong>Amazon decides.</strong><br><span style="color:var(--ink-2)">No outcome is promised, and we show no win rates.</span></span></div>
+          <div class="limit"><i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0b1224" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></i><span><strong>Software, not a law firm.</strong><br><span style="color:var(--ink-2)">Nothing here is legal advice or privileged.</span></span></div>
+          <div class="limit"><i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0b1224" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></i><span><strong>Your files stay on your device.</strong><br><span style="color:var(--ink-2)">Clear your browser and they are gone. Keep a recovery copy.</span></span></div>
+          <div class="limit"><i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0b1224" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 9l6 6M15 9l-6 6"/></svg></i><span><strong>Some cases we refuse.</strong><br><span style="color:var(--ink-2)">Fraud, forged documents and child safety go to a professional.</span></span></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="receipt">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:14px"><strong style="font-size:18px;letter-spacing:-0.02em">Appeal Pass</strong><span class="mono" style="font-size:12px;color:var(--ink-3)">case_7f3a</span></div>
+          <div class="rl"><span>One case, every round</span><span class="num">$249.00</span></div>
+          <div class="rl"><span style="color:var(--ink-3)">Tax</span><span style="color:var(--ink-3)">Included</span></div>
+          <div class="rl"><span style="color:var(--ink-3)">Expires</span><span style="color:var(--ink-3)">Never</span></div>
+          <div class="rl" style="font-weight:600;font-size:18px"><span>Total, once</span><span class="num">$249.00</span></div>
+        </div>
+        <label class="choice"><input type="checkbox"><span class="s" style="color:var(--ink-2)">Start now. I understand the EU right of withdrawal ends once the response is prepared.</span></label>
+        <a class="btn btn-accent btn-lg" href="dashboard.html" style="width:100%">Continue to payment</a>
+        <span style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;color:var(--ink-3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Paid through Paddle · refund within 7 days, no reason needed</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:104px" aria-labelledby="h-faq">
+    <div class="wrap" style="display:grid;grid-template-columns:0.7fr 1.3fr;gap:64px;align-items:start" id="faqgrid">
+      <h2 class="h2" id="h-faq" style="font-size:clamp(28px,3vw,40px)">About paying</h2>
+      <div class="faq">
+        <details><summary>Does one Pass cover a second response?</summary><p>Yes. One Pass covers every round of the same case, with no expiry.</p></details>
+        <details><summary>Can I start free and pay later?</summary><p>Yes. Your saved case carries over when you buy the Pass.</p></details>
+        <details><summary>Do I pay again for a different case?</summary><p>Yes. Each case is a separate notice with its own records.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot"><div class="wrap"><div class="cols"><div><a class="logo" href="home.html"><svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="7" fill="#fff"/><path d="M8 14.5l4 4 8-9" stroke="#EA580C" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>AppealDeck</a></div><div><h2>Product</h2><a href="home.html">Decode</a><a href="pricing.html">Pricing</a><a href="privacy.html">Where your data goes</a></div><div><h2>Guides</h2><a href="#">Inauthentic item notices</a><a href="#">Section 3 deactivation</a><a href="#">Held funds</a></div><div><h2>Help</h2><a href="support.html">Support</a><a href="#">Terms and refunds</a><a href="#">Privacy</a></div></div><div class="legal">Not affiliated with, endorsed by, or sponsored by Amazon. Amazon is a trademark of Amazon.com, Inc.</div></div></footer>
+</body>
+</html>

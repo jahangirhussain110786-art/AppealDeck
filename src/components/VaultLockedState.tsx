@@ -24,8 +24,8 @@ export function VaultLockedState({
   return (
     <section className="workspace-hero rounded-xl border border-border/80 p-6 sm:p-10">
       <IconTile icon={Lock} tone="info" />
-      <p className="mt-6 text-eyebrow uppercase text-primary">{APP.vault.eyebrow}</p>
-      <h1 className="mt-2 font-accent text-h2 font-medium text-foreground">{title}</h1>
+      <p className="mt-6 text-eyebrow text-primary">{APP.vault.eyebrow}</p>
+      <h1 className="mt-2 tracking-[-0.03em] text-h2 font-semibold text-foreground">{title}</h1>
       <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground">
         {description}
       </p>
