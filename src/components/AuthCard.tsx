@@ -31,7 +31,7 @@ export function AuthShell({
     <div className="grid min-h-svh lg:grid-cols-[1fr_1.05fr]">
       <div className="flex flex-col bg-background px-5 py-7 sm:px-10 lg:px-16 xl:px-20">
         <Logo href="/" />
-        <div className="my-auto w-full max-w-[26rem] py-10">
+        <div className="mx-auto my-auto w-full max-w-[26rem] py-10 lg:mx-0">
           <h1 className="text-balance text-[2.1rem] font-semibold leading-[1.08] tracking-[-0.04em] text-foreground">
             {title}
           </h1>

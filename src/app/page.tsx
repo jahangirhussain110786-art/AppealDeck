@@ -243,7 +243,7 @@ function PlansSection() {
           <ArrowRight aria-hidden className="size-4" />
         </Link>
       </div>
-      <ul className="mt-12 grid gap-4 md:grid-cols-3">
+      <ul className="mt-12 grid gap-4 lg:grid-cols-3">
         {HOME.plans.items.map((plan, i) => {
           const featured = i === HOME.plans.items.length - 1;
           return (

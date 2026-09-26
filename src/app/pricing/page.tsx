@@ -96,7 +96,7 @@ export default function PricingPage() {
 
       <div className="mx-auto w-full max-w-marketing px-4 sm:px-8">
         <section className="relative -mt-28 pb-6">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-3">
             {plans.map((plan, i) => {
               const pass = i === plans.length - 1;
               return (

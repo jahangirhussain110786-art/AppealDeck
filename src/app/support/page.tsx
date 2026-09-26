@@ -106,7 +106,7 @@ export default function SupportPage() {
           >
             {SUPPORT.about}
           </h2>
-          <div className="mt-4 grid gap-8 border-t border-border pt-6 md:grid-cols-3">
+          <div className="mt-4 grid gap-8 border-t border-border pt-6 lg:grid-cols-3">
             <div>
               <h3 className="text-sm font-semibold text-foreground">{SUPPORT.operator.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
