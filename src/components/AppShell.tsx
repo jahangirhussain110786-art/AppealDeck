@@ -52,8 +52,9 @@ export function AppShell({
             <div className="flex shrink-0 items-center gap-2.5">
               <div id={APP_BAR_IDS.actions} className="flex items-center gap-2.5" />
               <TooltipProvider>
+                <ThemeToggle />
+                {/* On a phone the account sits in the navy top bar above; here it is desktop only. */}
                 <div className="hidden items-center gap-1 lg:flex">
-                  <ThemeToggle />
                   {user ? (
                     <ProfileMenu email={user.email} />
                   ) : (

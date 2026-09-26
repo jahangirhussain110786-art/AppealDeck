@@ -8,7 +8,6 @@ import { CreditCard, FilePlus2, LayoutGrid, Lock, Tag } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Logo, LogoMark } from "@/components/Logo";
 import { ProfileMenu } from "@/components/ProfileMenu";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SHARED } from "@/content/shared";
 import { cn } from "@/lib/utils";
@@ -48,7 +47,7 @@ export function AppSidebar({
   ) : (
     <Link
       href={signInHref}
-      className="inline-flex h-9 items-center rounded-full px-3.5 text-sm font-medium text-foreground ring-1 ring-inset ring-white/15 transition-colors hover:bg-white/10"
+      className="inline-flex h-9 items-center rounded-full px-3 text-[0.8125rem] font-medium sm:px-3.5 sm:text-sm text-foreground ring-1 ring-inset ring-white/15 transition-colors hover:bg-white/10"
     >
       {SHARED.nav.signIn}
     </Link>
@@ -93,10 +92,10 @@ export function AppSidebar({
 
       {/* Phones and small tablets: a compact navy top bar. */}
       <header
-        className="dark sticky top-0 z-[var(--z-sticky)] flex h-14 items-center gap-1 border-b border-white/[0.08] bg-[hsl(var(--stage)/0.95)] px-2 text-foreground backdrop-blur-md lg:hidden"
+        className="dark sticky top-0 z-[var(--z-sticky)] flex h-14 items-center gap-0.5 border-b border-white/[0.08] bg-[hsl(var(--stage)/0.95)] px-2 text-foreground backdrop-blur-md lg:hidden"
         data-no-print
       >
-        <Link href="/" aria-label={SHARED.brand.name} className="shrink-0 px-2">
+        <Link href="/" aria-label={SHARED.brand.name} className="shrink-0 px-1 sm:px-2">
           <LogoMark size={26} />
         </Link>
         <nav
@@ -111,7 +110,7 @@ export function AppSidebar({
                 href={item.href}
                 aria-current={on ? "page" : undefined}
                 className={cn(
-                  "inline-flex h-9 shrink-0 items-center rounded-lg px-2.5 text-sm font-medium",
+                  "inline-flex h-9 shrink-0 items-center rounded-lg px-1.5 text-[0.8125rem] font-medium sm:px-2.5 sm:text-sm",
                   on ? "bg-white/[0.1] text-foreground" : "text-muted-foreground",
                 )}
               >
@@ -120,10 +119,8 @@ export function AppSidebar({
             );
           })}
         </nav>
-        <div className="flex shrink-0 items-center gap-1">
-          <ThemeToggle />
-          {account}
-        </div>
+        {/* The theme switch lives in the page bar below on a phone, so all four links fit here. */}
+        <div className="flex shrink-0 items-center gap-1">{account}</div>
       </header>
     </TooltipProvider>
   );

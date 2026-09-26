@@ -415,7 +415,8 @@ export const PRICING = {
     },
     {
       title: "Your files are kept on your device.",
-      body: "Clearing your browser removes them. Keep a copy of anything you need.",
+      // Hedged like every other "on your device" line: an encrypted backup is a second copy.
+      body: "Clearing your browser removes them, unless you made an encrypted backup. Keep a copy of anything you need.",
     },
     {
       title: "Some cases we do not take.",
