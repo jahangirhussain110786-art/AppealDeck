@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, CreditCard, ArrowRight, ReceiptText, ArrowUpRight } from "lucide-react";
+import { CreditCard, ArrowRight } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { fetchLicenseForUser } from "@/lib/license";
 import { formatDate } from "@/lib/format";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PageIntro } from "@/components/PageIntro";
-import { IconTile } from "@/components/workspace/WorkspaceVisuals";
+import { StatusPill } from "@/components/workspace/CaseOverview";
 import { DeviceManager } from "@/components/DeviceManager";
 import { APP } from "@/content/app";
 
@@ -15,6 +13,10 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: APP.metaTitles.billing };
 
+/**
+ * Billing (v5, 26 Sep 2026): a navy header like every app page, the Pass as a white card with its
+ * status, the devices it works on, and where receipts and refunds are handled.
+ */
 export default async function BillingPage() {
   const user = await requireUser("/billing");
 
@@ -22,99 +24,106 @@ export default async function BillingPage() {
   const active = license.status === "active";
 
   return (
-    <div className="space-y-6">
-      <PageIntro
-        icon={CreditCard}
-        eyebrow={APP.billing.eyebrow}
-        title={APP.billing.title}
-        description={APP.billing.subtitle}
-        actions={
-          <Button asChild variant="outline">
-            <Link href="/dashboard">
-              {APP.billing.continue}
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
-          </Button>
-        }
-      />
+    <div className="max-w-[67.5rem] space-y-6">
+      <section
+        aria-labelledby="billing-title"
+        className="next-card dark flex flex-wrap items-center justify-between gap-6 px-6 py-6 text-foreground sm:px-8 sm:py-7"
+      >
+        <div className="min-w-0">
+          <p className="text-[0.8125rem] text-muted-foreground">{APP.billing.eyebrow}</p>
+          <h1
+            id="billing-title"
+            className="mt-1 text-[clamp(1.5rem,1.2rem+1vw,1.75rem)] font-semibold tracking-[-0.035em]"
+          >
+            {APP.billing.title}
+          </h1>
+          <p className="mt-1.5 text-muted-foreground">{APP.billing.subtitle}</p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/dashboard">
+            {APP.billing.continue}
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </Button>
+      </section>
 
-      <Card>
-        <CardContent className="p-5 sm:p-6">
-          {active ? (
-            <div className="flex items-start gap-3">
-              <IconTile icon={CheckCircle2} />
-              <div>
-                <h2 className="font-medium text-foreground">{APP.billing.active.title}</h2>
-                <dl className="my-5 grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <dt className="text-xs text-muted-foreground">
-                      {APP.billing.active.planLabel}
-                    </dt>
-                    <dd className="mt-1 text-sm font-medium">
-                      {license.plan === "appeal_pass"
-                        ? APP.billing.planName
-                        : license.plan?.replace(/_/g, " ")}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">
-                      {APP.billing.active.purchasedLabel}
-                    </dt>
-                    <dd className="mt-1 font-mono text-sm">
-                      {license.createdAt
-                        ? formatDate(license.createdAt)
-                        : APP.billing.dateUnavailable}
-                    </dd>
-                  </div>
-                </dl>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {APP.billing.active.receiptText}
-                </p>
+      <section className="overflow-hidden rounded-[18px] bg-card shadow-card ring-1 ring-inset ring-border">
+        {active ? (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
+              <h2 className="text-[0.9375rem] font-semibold text-foreground">
+                {APP.billing.active.title}
+              </h2>
+              <StatusPill tone="ok" dot>
+                {APP.billing.planName}
+              </StatusPill>
+            </div>
+            <dl className="grid border-b border-border sm:grid-cols-2">
+              <div className="px-6 py-4">
+                <dt className="text-xs text-muted-foreground">{APP.billing.active.planLabel}</dt>
+                <dd className="mt-1 text-lg font-semibold tracking-[-0.02em]">
+                  {license.plan === "appeal_pass"
+                    ? APP.billing.planName
+                    : license.plan?.replace(/_/g, " ")}
+                </dd>
               </div>
-            </div>
-          ) : (
-            <div>
-              <h2 className="font-medium text-foreground">{APP.billing.inactive.title}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{APP.billing.inactive.desc}</p>
-              <Button asChild className="mt-4">
-                <Link href="/pricing">
-                  <CreditCard className="size-4" /> {APP.billing.inactive.cta}
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              <div className="border-t border-border px-6 py-4 sm:border-l sm:border-t-0">
+                <dt className="text-xs text-muted-foreground">
+                  {APP.billing.active.purchasedLabel}
+                </dt>
+                <dd className="mt-1 text-lg font-semibold tabular-nums tracking-[-0.02em]">
+                  {license.createdAt ? formatDate(license.createdAt) : APP.billing.dateUnavailable}
+                </dd>
+              </div>
+            </dl>
+            <p className="px-6 py-4 text-sm text-muted-foreground">
+              {APP.billing.active.receiptText}
+            </p>
+          </>
+        ) : (
+          <div className="px-6 py-6">
+            <h2 className="text-lg font-semibold text-foreground">{APP.billing.inactive.title}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{APP.billing.inactive.desc}</p>
+            <Button asChild className="mt-4">
+              <Link href="/pricing">
+                <CreditCard className="size-4" /> {APP.billing.inactive.cta}
+              </Link>
+            </Button>
+          </div>
+        )}
+      </section>
 
       {active ? <DeviceManager /> : null}
 
-      <Card>
-        <CardContent className="flex items-start gap-4 p-5 sm:p-6">
-          <IconTile icon={ReceiptText} tone="info" />
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold">{APP.billing.supportTitle}</h2>
-            <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
-              {APP.billing.supportDesc}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
-              <Link
-                href="/refund"
-                className="inline-flex min-h-9 items-center gap-2 rounded-sm text-sm underline"
-              >
-                {APP.billing.refundLink}
-                <ArrowUpRight className="size-4" aria-hidden />
-              </Link>
-              <Link
-                href="/privacy"
-                className="inline-flex min-h-9 items-center gap-2 rounded-sm text-sm underline"
-              >
-                {APP.billing.policyLink}
-                <ArrowUpRight className="size-4" aria-hidden />
-              </Link>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <section aria-labelledby="billing-support">
+        <h2
+          id="billing-support"
+          className="text-lg font-semibold tracking-[-0.02em] text-foreground"
+        >
+          {APP.billing.supportTitle}
+        </h2>
+        <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground">
+          {APP.billing.supportDesc}
+        </p>
+        <div className="mt-4 grid gap-3.5 sm:grid-cols-2">
+          {[
+            { href: "/refund", label: APP.billing.refundLink },
+            { href: "/privacy", label: APP.billing.policyLink },
+          ].map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="group flex items-center justify-between gap-2 rounded-[18px] bg-card p-5 font-semibold text-foreground shadow-card ring-1 ring-inset ring-border transition-shadow hover:shadow-lift"
+            >
+              {l.label}
+              <ArrowRight
+                aria-hidden
+                className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+              />
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

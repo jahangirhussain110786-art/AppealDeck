@@ -178,7 +178,7 @@ export function CaseChecklist({ rows }: { rows: ChecklistRow[] }) {
               type="button"
               onClick={row.onOpen}
               className={cn(
-                "grid w-full grid-cols-[1.375rem_minmax(0,1fr)_auto_1.25rem] items-center gap-3.5 px-5 py-3.5 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:grid-cols-[1.375rem_minmax(0,1fr)_9.5rem_7rem_1.25rem]",
+                "grid w-full grid-cols-[1.375rem_minmax(0,1fr)_1.25rem] items-center gap-3.5 px-5 py-3.5 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:grid-cols-[1.375rem_minmax(0,1fr)_9.5rem_7rem_1.25rem]",
                 row.tone === "need" && "bg-primary/[0.035]",
               )}
             >
@@ -198,7 +198,8 @@ export function CaseChecklist({ rows }: { rows: ChecklistRow[] }) {
                   </span>
                 )}
               </span>
-              <span>
+              {/* On a phone the status moves under the name (row 2), so the name keeps the width. */}
+              <span className="col-start-2 row-start-2 -mt-1.5 sm:col-start-auto sm:row-start-auto sm:mt-0">
                 <StatusPill tone={row.pill.tone} dot={row.pill.dot}>
                   {row.pill.label}
                 </StatusPill>

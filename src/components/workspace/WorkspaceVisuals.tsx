@@ -16,10 +16,12 @@ export const VIEW_ICONS: Record<string, LucideIcon> = {
   history: History,
 };
 
+// v5 (26 Sep 2026): a neutral tile with a fine ring, as in the prototype's gather rows and file
+// table; only the icon carries the tone, so a page of tiles no longer reads as a colour chart.
 const tones = {
-  primary: "bg-primary/10 text-primary ring-primary/15",
-  info: "bg-info/10 text-info ring-info/15",
-  warning: "bg-warning/10 text-warning ring-warning/15",
+  primary: "bg-surface-2 text-primary ring-border",
+  info: "bg-surface-2 text-info ring-border",
+  warning: "bg-surface-2 text-warning ring-border",
 };
 
 export function IconTile({
@@ -34,7 +36,7 @@ export function IconTile({
   return (
     <span
       className={cn(
-        "inline-flex size-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset",
+        "inline-flex size-10 shrink-0 items-center justify-center rounded-[10px] ring-1 ring-inset",
         tones[tone],
         className,
       )}

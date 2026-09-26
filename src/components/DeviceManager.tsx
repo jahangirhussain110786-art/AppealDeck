@@ -138,26 +138,23 @@ export function DeviceManager() {
 
   return (
     <>
-      <Card>
-        <CardContent className="space-y-5 p-5 sm:p-6">
-          <div className="flex items-start gap-3">
-            <IconTile icon={MonitorSmartphone} tone="info" />
-            <div className="flex-1">
-              <h2 className="text-base font-semibold text-foreground">
-                {APP.billing.deviceCap.title}{" "}
-                <span
-                  data-tn
-                  className="ml-2 whitespace-nowrap font-mono text-sm font-normal text-muted-foreground"
-                >
-                  ({devices.length} of {cap})
-                </span>
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {APP.billing.deviceCap.subtitle.replace("{cap}", String(cap))}
-              </p>
-            </div>
-          </div>
-
+      {/* v5 (26 Sep 2026): a card with a header row and one hairline row per device. */}
+      <Card className="overflow-hidden rounded-[18px] border-0 ring-1 ring-inset ring-border">
+        <div className="border-b border-border px-6 py-4">
+          <h2 className="text-[0.9375rem] font-semibold text-foreground">
+            {APP.billing.deviceCap.title}{" "}
+            <span
+              data-tn
+              className="ml-1 whitespace-nowrap text-sm font-normal tabular-nums text-muted-foreground"
+            >
+              ({devices.length} of {cap})
+            </span>
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {APP.billing.deviceCap.subtitle.replace("{cap}", String(cap))}
+          </p>
+        </div>
+        <CardContent className="p-0">
           {devices.length === 0 ? (
             <EmptyState
               icon={MonitorSmartphone}
@@ -165,20 +162,15 @@ export function DeviceManager() {
               description={APP.billing.deviceCap.noneDesc}
             />
           ) : (
-            <div
-              className={cn(
-                "grid gap-3",
-                devices.length === 1 ? "sm:grid-cols-1" : "sm:grid-cols-2",
-              )}
-            >
+            <div>
               {devices.map((d) => {
                 const isCurrent = d.id === currentDeviceId;
                 return (
                   <div
                     key={d.id}
                     className={cn(
-                      "flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-surface-2/30 p-4",
-                      isCurrent && "border-primary/40 bg-primary/5",
+                      "grid min-w-0 items-center gap-2 border-b border-border px-6 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:gap-4",
+                      isCurrent && "bg-primary/[0.04]",
                     )}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">

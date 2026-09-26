@@ -4,7 +4,6 @@ import Image from "next/image";
 import { FileText, RotateCcw, ShieldCheck, CalendarDays, ArrowUpRight, Plus } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
 import { LegalToc } from "@/components/LegalToc";
-import { PageIntro } from "@/components/PageIntro";
 import { DataFlow } from "@/components/DataFlow";
 import { AccentWord } from "@/components/ui/accent-word";
 import { splitAccent } from "@/lib/splitAccent";
@@ -30,16 +29,26 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
 
   if (doc === "privacy") return <PrivacyPage updated={updated} />;
 
+  const Icon = icons[doc];
+  // v5 (26 Sep 2026): the same navy stage as every other public page, then the document itself.
   return (
-    <MarketingShell>
-      <div className="space-y-6 py-10 sm:py-14">
-        <PageIntro
-          icon={icons[doc]}
-          eyebrow={SURFACES.legal.eyebrow}
-          title={LEGAL[doc].title}
-          description={SURFACES.legal[doc]}
-          actions={updated}
-        />
+    <MarketingShell bleed>
+      <section className="stage dark text-foreground">
+        <div className="mx-auto flex max-w-marketing flex-col gap-4 px-4 pb-20 pt-16 sm:px-8 sm:pt-20">
+          <p className="flex items-center gap-2 text-sm font-semibold text-primary">
+            <Icon aria-hidden className="size-4" />
+            {SURFACES.legal.eyebrow}
+          </p>
+          <h1 className="text-balance text-[clamp(2.4rem,1.3rem+3.4vw,4.25rem)] font-semibold leading-[1.02] tracking-[-0.045em]">
+            {LEGAL[doc].title}
+          </h1>
+          <p className="max-w-[40rem] text-lg leading-relaxed text-muted-foreground">
+            {SURFACES.legal[doc]}
+          </p>
+          <div className="[&_p]:text-muted-foreground">{updated}</div>
+        </div>
+      </section>
+      <div className="mx-auto w-full max-w-marketing space-y-6 px-4 py-12 sm:px-8 sm:py-14">
         <LegalBody doc={doc} />
       </div>
     </MarketingShell>
@@ -137,33 +146,39 @@ function LegalBody({ doc }: { doc: LegalDoc }) {
       </nav>
       <div className="grid items-start gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
         <LegalToc sections={sections.map((s) => ({ id: s.id, title: s.title }))} />
-        <div className="min-w-0 space-y-4">
+        {/* One sheet of paper with a hairline between sections, not a box per section. */}
+        <div className="min-w-0 rounded-[20px] bg-card px-6 shadow-card ring-1 ring-inset ring-border sm:px-10">
           {sections.map((s, index) => (
-            <section key={s.id} className="rounded-xl border border-border/80 bg-card p-5 sm:p-7">
-              <div className="mb-4 flex items-start gap-3">
-                <span
-                  className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 font-mono text-xs text-foreground"
-                  aria-hidden
+            <section
+              key={s.id}
+              className="grid gap-3 border-b border-border py-8 last:border-b-0 sm:grid-cols-[3rem_minmax(0,1fr)]"
+            >
+              <span className="pt-1 font-mono text-xs text-muted-foreground" aria-hidden>
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div>
+                <h2
+                  id={s.id}
+                  className="scroll-mt-24 text-xl font-semibold tracking-[-0.02em] text-foreground"
                 >
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h2 id={s.id} className="scroll-mt-24 pt-1 text-base font-semibold text-foreground">
                   {s.title}
                 </h2>
-              </div>
-              <div className="max-w-reading space-y-3 text-sm leading-7 text-muted-foreground">
-                {s.body.map((p, i) => (
-                  <p key={`${s.id}-${i}`}>{p}</p>
-                ))}
+                <div className="mt-3 max-w-reading space-y-3 text-[0.9375rem] leading-7 text-muted-foreground">
+                  {s.body.map((p, i) => (
+                    <p key={`${s.id}-${i}`}>{p}</p>
+                  ))}
+                </div>
               </div>
             </section>
           ))}
-          <Link
-            href="/faq"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm text-foreground underline"
-          >
-            {SHARED.nav.faq} <ArrowUpRight className="size-4" aria-hidden />
-          </Link>
+          <div className="py-5">
+            <Link
+              href="/faq"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm text-foreground underline"
+            >
+              {SHARED.nav.faq} <ArrowUpRight className="size-4" aria-hidden />
+            </Link>
+          </div>
         </div>
       </div>
     </>

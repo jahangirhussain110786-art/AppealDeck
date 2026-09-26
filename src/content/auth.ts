@@ -103,7 +103,8 @@ export const AUTH = {
   },
   preview: {
     dueIn: "Reply due in",
-    eyebrow: "Your case workspace",
+    // The panel shows made-up case data, so it says so (v5 prototype signin.html).
+    eyebrow: "Sample data",
     title: "Come back to exactly where you stopped.",
     accent: "stopped.",
     description:

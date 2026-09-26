@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingShell } from "@/components/MarketingShell";
 import { PageHero } from "@/components/PageHero";
-import { Card } from "@/components/ui/card";
+import { ArrowRight } from "lucide-react";
 import { GUIDES, GUIDES_COMMON } from "@/content/guides";
 
 export const metadata: Metadata = {
@@ -25,17 +25,28 @@ export default function GuidesIndexPage() {
       }
     >
       <div className="py-12 sm:py-16">
-        <ul className="space-y-4">
-          {GUIDES.map((g) => (
-            <li key={g.slug}>
-              <Card className="rounded-[20px] p-6 shadow-lift transition-colors hover:border-primary/40 sm:p-7">
-                <h2 className="tracking-[-0.03em] text-xl font-semibold text-foreground">
-                  <Link href={`/guides/${g.slug}`} className="hover:underline">
+        {/* v5 (26 Sep 2026): hairline rows, a large title and an arrow, like the prototype's lists. */}
+        <ul className="border-t border-border">
+          {GUIDES.map((g, i) => (
+            <li key={g.slug} className="border-b border-border">
+              <Link
+                href={`/guides/${g.slug}`}
+                className="group grid gap-4 py-7 sm:grid-cols-[3rem_minmax(0,1fr)_2rem] sm:items-center"
+              >
+                <span className="font-mono text-sm text-primary-ink" aria-hidden>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span>
+                  <h2 className="text-balance text-[clamp(1.25rem,1rem+0.8vw,1.625rem)] font-semibold tracking-[-0.03em] text-foreground group-hover:underline">
                     {g.title}
-                  </Link>
-                </h2>
-                <p className="mt-2 text-sm text-muted-foreground">{g.description}</p>
-              </Card>
+                  </h2>
+                  <p className="mt-2 max-w-[48rem] text-muted-foreground">{g.description}</p>
+                </span>
+                <ArrowRight
+                  aria-hidden
+                  className="hidden size-5 text-muted-foreground transition-transform group-hover:translate-x-1 sm:block"
+                />
+              </Link>
             </li>
           ))}
         </ul>
