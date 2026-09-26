@@ -7,7 +7,7 @@
 > - **Drop:** Vercel and Raycast (they appear in design galleries, but no real user praise was found, and both are dark developer looks), and Notion as an app reference (people have complained about its slowness for years).
 > - **Add:** Ramp (G2 4.8 from 2,452 reviews, "absurdly simple interface"), Things 3 (two Apple Design Awards; a calm model for the checklist), Monzo (its public tone-of-voice guide says to avoid idioms that confuse non-native speakers, and many of our sellers are non-native speakers), and Baymard's checkout research (a clean design without bugs is what makes people trust a site with their card).
 > - **Complaints to avoid:** low-contrast grey text, scroll-jacking, vague hero copy, hidden prices, and slow pages.
-> - Prototype v3 (plain HTML, open `docs/handoffs/2026-09-26-prototype-v3/index.html`) applies all of this, plus a second research pass on showing instead of telling. v2 (`2026-09-26-prototype-v2/`, design-canvas format) is superseded.
+> - The approved prototype is v5 (plain HTML, `docs/handoffs/2026-09-26-prototype-v5/`), built into the app as AM-31. Drafts v2-v4 were deleted on 26 Sep 2026 at the founder's request.
 
 Purpose: the founder wants to raise the current look to a professional standard and asked for ten of the most praised, best-crafted websites to study. Apple was the founder's own pick; the other nine were chosen on two tests, in this order:
 
