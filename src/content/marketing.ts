@@ -84,6 +84,30 @@ export const HOME = {
     title: "Your account stays yours.",
     accent: "yours.",
   },
+  /** v5 (26 Sep 2026): the band's three facts. Each is true of the product as built. */
+  bandFacts: [
+    {
+      value: "0",
+      title: "logins to Seller Central",
+      body: "We never touch your Amazon account. Amazon's rules bind you, so we stay out.",
+    },
+    {
+      value: "1",
+      title: "copy of your files, on your device",
+      body: "Encrypted in your browser. A file leaves it only for a check you ask for, or an encrypted backup you choose.",
+      link: { href: "/privacy", label: "Where your data goes" },
+    },
+    {
+      value: "You",
+      title: "send every reply",
+      body: "We help you prepare it. You paste it into Amazon, and Amazon decides.",
+    },
+  ],
+  questions: {
+    title: "Questions",
+    // Not "independence": its answer repeats the footer's not-affiliated line word for word.
+    ids: ["outcome", "replies", "start-free", "submit"],
+  },
   /** Shown as numbers before any claim. Each is a fact the product already states elsewhere. */
   numbers: {
     items: [
@@ -115,7 +139,9 @@ export const HOME = {
     desc: "A still of the case workspace, with sample data. Every record carries where it came from: the notice, or us.",
   },
   plans: {
+    eyebrow: "Pricing",
     title: "Free until you need the response.",
+    accent: "response.",
     link: "Full pricing and questions",
     accountCta: "Create a free account",
     items: [
@@ -263,6 +289,26 @@ export const DECODE = {
     "This doesn't look like an Amazon notice yet. Paste the full email, including the subject line.",
   result: {
     factReply: "Amazon is asking for",
+    // v5 (26 Sep 2026): the result's headline is the answer. The accent is the part a seller acts on.
+    headline: {
+      PLAN_OF_ACTION: { lead: "Amazon wants a", accent: "Plan of Action." },
+      SUPPORTING_DOCUMENTS: { lead: "Amazon wants", accent: "supporting documents." },
+      ACKNOWLEDGEMENT: { lead: "Amazon wants an", accent: "acknowledgement." },
+      QUESTIONNAIRE: { lead: "Amazon wants", accent: "answers to its questions." },
+      NO_ACTION_REQUESTED: { lead: "Amazon is not asking for", accent: "a response." },
+      UNDETERMINED: { lead: "Check what Amazon", accent: "is asking for." },
+    },
+    factProblem: "The problem",
+    decodeAnother: "Decode another",
+    recordsCount: "{n} records",
+    recordsCountOne: "1 record",
+    recordNamed: "Named in the notice you pasted",
+    recordInferred: "Usually needed in cases like this",
+    saveTitle: "Turn this into a checklist you can finish.",
+    saveNote: "Free. Kept on this device. No account needed yet.",
+    triageTitle: "Do now, and what to avoid",
+    howRead: "How we read it",
+    notAdvice: "Software, not legal advice. Amazon decides.",
     factDue: "Reply due",
     factNoDate: "No date stated",
     factScam: "Scam check",
@@ -346,19 +392,57 @@ export const DECODE = {
 } as const;
 
 export const PRICING = {
-  headline: "Understand your case before you pay.",
-  accent: "before you pay.",
-  compareTitle: "Choose the access you need",
+  // v5 (26 Sep 2026, prototype pricing.html). "Every round included" is the Terms' licence clause:
+  // one Pass covers every revision of its case, with no expiry (see legal.ts).
+  headline: "One price per case. Every round included.",
+  accent: "included.",
+  currency: "USD",
+  currencyNote: "Same price in every country",
+  compareTitle: "What each one includes",
+  readFirstTitle: "Read this before you pay.",
+  readFirstAccent: "pay.",
+  // The honest-expectations disclosure the checkout spec requires before the pay button
+  // (legal/withdrawal-consent.md item 1): software, not legal advice; no promised outcome; the
+  // price once per case; the refund route. The last two are on the order summary beside it.
+  limits: [
+    {
+      title: "Amazon decides.",
+      body: "No outcome is promised, and nobody here can predict one.",
+    },
+    {
+      title: "Software, not a law firm.",
+      body: "Nothing here is legal advice, and nothing you tell us is legally privileged.",
+    },
+    {
+      title: "Your files are kept on your device.",
+      body: "Clearing your browser removes them. Keep a copy of anything you need.",
+    },
+    {
+      title: "Some cases we do not take.",
+      body: "Allegations of fraud, forged documents or child safety go to a professional instead.",
+    },
+  ],
+  order: {
+    title: "Appeal Pass",
+    line: "One case, every round",
+    tax: "Tax",
+    taxValue: "Included",
+    expires: "Expires",
+    expiresValue: "Never",
+    total: "Total, once",
+    amount: "$249.00",
+    paidThrough: "Paid through Paddle · refund within 7 days, no reason needed",
+  },
   createAccount: "Create an account",
   readFirst: "Read before you buy",
   checkoutNote:
     "Paid through Paddle, our merchant of record. A case that already has its Pass is not charged again.",
-  subline:
-    "Start with a free notice brief and case workspace. Choose an Appeal Pass when you need to prepare a response for an eligible case.",
+  subline: "Decoding is free. Pay once, only when you want the full response.",
   price: "$249",
   priceNote: "One-time. One case.",
   included: "Included",
-  jumpToPurchase: "See pass details",
+  notIncluded: "Not included",
+  jumpToPurchase: "Get the Appeal Pass",
   free: "Free",
   pass: "Appeal Pass",
   tableHeadings: {
@@ -398,7 +482,7 @@ export const PRICING = {
     title: "Sample Plan of Action",
   },
   cta: "Get the Appeal Pass",
-  faqTitle: "Before you buy",
+  faqTitle: "About paying",
   faqIds: ["pass", "outcome", "refund", "files"],
   purchaseTitle: "Ready to prepare your response?",
   expectationsTitle: "What to expect",

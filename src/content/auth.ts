@@ -3,8 +3,9 @@
 
 export const AUTH = {
   login: {
-    title: "Sign in",
-    subtitle: "Continue with your case, files and response.",
+    // v5 (26 Sep 2026, prototype signin.html).
+    title: "Sign in to keep your case",
+    subtitle: "Free. Add documents and get reminders.",
     subtitleContinue: "Sign in on this tab to keep your guest case and continue.",
     google: "Continue with Google",
     divider: "or sign in with email",
@@ -103,7 +104,8 @@ export const AUTH = {
   preview: {
     dueIn: "Reply due in",
     eyebrow: "Your case workspace",
-    title: "One place for your next step.",
+    title: "Come back to exactly where you stopped.",
+    accent: "stopped.",
     description:
       "Understand the request. Organize your evidence. Prepare a response you can review.",
   },

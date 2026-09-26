@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -74,6 +73,14 @@ function mimeTypeToIcon(mimeType: string): React.ReactNode {
 // The tagging menu offers every kind, from the one registry (`core/workspace`) — a hand-kept list
 // here fell behind the day a kind was added.
 const EVIDENCE_KINDS: readonly EvidenceKind[] = ALL_EVIDENCE_KINDS;
+
+/** The short type shown in a file's tile, from its extension ("PDF", "CSV"), as in the prototype. */
+function fileTypeLabel(name: string, mimeType: string): string | null {
+  const ext = name.includes(".") ? name.split(".").pop()!.slice(0, 4) : "";
+  if (ext) return ext.toUpperCase();
+  if (mimeType.includes("pdf")) return "PDF";
+  return null;
+}
 
 function evidenceKindLabel(kind: EvidenceKind): string {
   return kind.replace(/_/g, " ");
@@ -585,90 +592,117 @@ export default function VaultView({ userId }: { userId: string }) {
                       </CardContent>
                     </Card>
                   ) : (
-                    <ul className="flex flex-col gap-2">
-                      <AnimatePresence initial={false}>
-                        {filteredItems.map((it) => (
-                          <motion.li
-                            key={it.id}
-                            layout
-                            initial={{ opacity: 0, y: 4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -4 }}
-                            transition={{ duration: 0.15 }}
-                          >
-                            <Card className="flex flex-col items-stretch gap-3 rounded-row p-4 sm:flex-row sm:items-center sm:justify-between">
-                              <div className="flex min-w-0 items-center gap-3">
-                                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-info/10 text-info">
-                                  {mimeTypeToIcon(it.mimeType)}
+                    // v5 (26 Sep 2026, prototype vault.html): one table of files, a hairline per row.
+                    <div className="overflow-hidden rounded-[18px] bg-card shadow-card ring-1 ring-inset ring-border">
+                      <div
+                        aria-hidden
+                        className="hidden grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_7rem_auto] gap-4 border-b border-border bg-surface-2 px-5 py-2.5 text-xs font-semibold text-muted-foreground md:grid"
+                      >
+                        <span>{APP.vault.columns.file}</span>
+                        <span>{APP.vault.columns.usedFor}</span>
+                        <span>{APP.vault.columns.added}</span>
+                        <span className="w-[7.5rem]" />
+                      </div>
+                      <ul>
+                        <AnimatePresence initial={false}>
+                          {filteredItems.map((it) => (
+                            <motion.li
+                              key={it.id}
+                              layout
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className="border-b border-border last:border-b-0"
+                            >
+                              <div className="grid items-center gap-3 px-5 py-3.5 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_7rem_auto] md:gap-4">
+                                <div className="flex min-w-0 items-center gap-3">
+                                  <span className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-surface-2 text-[0.625rem] font-bold uppercase tracking-wide text-foreground ring-1 ring-inset ring-border">
+                                    {fileTypeLabel(it.name, it.mimeType) ??
+                                      mimeTypeToIcon(it.mimeType)}
+                                  </span>
+                                  <span className="min-w-0">
+                                    <span className="block break-all font-mono text-sm">
+                                      {it.name}
+                                    </span>
+                                    <span className="flex flex-wrap items-center gap-1.5 text-xs tabular-nums text-muted-foreground">
+                                      {formatBytes(it.sizeBytes)}
+                                      <span aria-hidden>·</span>
+                                      {APP.vault.encryptedBadge}
+                                    </span>
+                                  </span>
                                 </div>
-                                <div className="min-w-0">
-                                  <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                                    <span className="break-all">{it.name}</span>
-                                    {it.evidenceKind && <EvidenceStatusBadge status="present" />}
-                                    <Badge variant="outline">{APP.vault.encryptedBadge}</Badge>
-                                  </div>
-                                  <div className="mt-1 break-words text-xs leading-relaxed tabular-nums text-muted-foreground">
-                                    {it.mimeType} · {formatBytes(it.sizeBytes)} ·{" "}
-                                    <span data-tn>{formatDateTime(it.createdAt)}</span>
-                                    {it.evidenceKind
-                                      ? ` · ${APP.evidenceKinds[it.evidenceKind as EvidenceKind] ?? evidenceKindLabel(it.evidenceKind as EvidenceKind)}`
-                                      : ""}
-                                  </div>
+                                <div className="text-sm text-foreground/85">
+                                  {it.evidenceKind ? (
+                                    <span className="inline-flex items-center gap-2">
+                                      {APP.evidenceKinds[it.evidenceKind as EvidenceKind] ??
+                                        evidenceKindLabel(it.evidenceKind as EvidenceKind)}
+                                      <EvidenceStatusBadge status="present" />
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">—</span>
+                                  )}
+                                </div>
+                                <span
+                                  className="text-sm tabular-nums text-muted-foreground"
+                                  data-tn
+                                >
+                                  {formatDateTime(it.createdAt)}
+                                </span>
+                                <div className="flex shrink-0 items-center justify-end gap-1">
+                                  <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          size="icon-sm"
+                                          variant="ghost"
+                                          onClick={() => void openPreview(it)}
+                                          aria-label={`${APP.vault.actions.view} ${it.name}`}
+                                        >
+                                          <Eye className="size-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>{APP.vault.actions.view}</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          size="icon-sm"
+                                          variant="ghost"
+                                          onClick={() => void onDownload(it.id)}
+                                          aria-label={`${APP.vault.actions.download} ${it.name}`}
+                                        >
+                                          <Download className="size-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>{APP.vault.actions.download}</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          size="icon-sm"
+                                          variant="ghost"
+                                          className="text-muted-foreground hover:text-destructive"
+                                          onClick={() => setDeleteTarget(it)}
+                                          aria-label={`${APP.vault.actions.delete} ${it.name}`}
+                                        >
+                                          <Trash2 className="size-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>{`${APP.vault.actions.delete} ${it.name}`}</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 </div>
                               </div>
-                              <div className="flex shrink-0 items-center justify-end gap-1">
-                                <TooltipProvider delayDuration={200}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        size="icon-sm"
-                                        variant="ghost"
-                                        onClick={() => void openPreview(it)}
-                                        aria-label={`${APP.vault.actions.view} ${it.name}`}
-                                      >
-                                        <Eye className="size-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>{APP.vault.actions.view}</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                                <TooltipProvider delayDuration={200}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        size="icon-sm"
-                                        variant="ghost"
-                                        onClick={() => void onDownload(it.id)}
-                                        aria-label={`${APP.vault.actions.download} ${it.name}`}
-                                      >
-                                        <Download className="size-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>{APP.vault.actions.download}</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                                <TooltipProvider delayDuration={200}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        size="icon-sm"
-                                        variant="ghost"
-                                        className="text-muted-foreground hover:text-destructive"
-                                        onClick={() => setDeleteTarget(it)}
-                                        aria-label={`${APP.vault.actions.delete} ${it.name}`}
-                                      >
-                                        <Trash2 className="size-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>{`${APP.vault.actions.delete} ${it.name}`}</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>
-                            </Card>
-                          </motion.li>
-                        ))}
-                      </AnimatePresence>
-                    </ul>
+                            </motion.li>
+                          ))}
+                        </AnimatePresence>
+                      </ul>
+                    </div>
                   )}
 
                   <p className="text-xs text-muted-foreground">{APP.vault.caseRecordsHidden}</p>

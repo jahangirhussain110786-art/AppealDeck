@@ -31,6 +31,7 @@ export function HonestExpectationsCard({
   whatToDo,
   severityNote,
   className,
+  layout = "card",
 }: {
   summary: string;
   weDo?: readonly ExpectationItem[];
@@ -38,7 +39,51 @@ export function HonestExpectationsCard({
   whatToDo?: readonly string[];
   severityNote?: string;
   className?: string;
+  /**
+   * "rows" (v5, 26 Sep 2026): the same disclosure, every item and the summary, drawn as hairline
+   * rows for /pricing's "Read this before you pay". The content is D6's and does not change with
+   * the layout; only the box around it does.
+   */
+  layout?: "card" | "rows";
 }) {
+  if (layout === "rows") {
+    return (
+      <section aria-label="How AppealDeck helps" className={cn("space-y-3", className)}>
+        <h3 className="text-sm font-semibold text-foreground">{SHARED.expectations.title}</h3>
+        <p className="flex items-start gap-2 text-sm leading-relaxed text-foreground">
+          <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+          {summary}
+        </p>
+        <div className="grid gap-x-8 border-t border-border sm:grid-cols-2">
+          {[
+            { title: SHARED.expectations.weDo, items: weDo ?? [] },
+            { title: SHARED.expectations.weDoNot, items: weDoNot ?? [] },
+          ].map(({ title, items }) => (
+            <div key={title}>
+              <h4 className="pb-1 pt-4 text-xs font-semibold text-muted-foreground">{title}</h4>
+              <ul>
+                {items.map((item) => {
+                  const Icon = ICONS[item.kind];
+                  return (
+                    <li
+                      key={item.kind}
+                      className="flex items-start gap-2.5 border-b border-border py-3 last:border-b-0"
+                    >
+                      <Icon aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      <span className="text-sm">
+                        <span className="font-semibold text-foreground">{item.title}.</span>{" "}
+                        <span className="text-muted-foreground">{item.description}</span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
   const twoColumn = weDo !== undefined || weDoNot !== undefined;
   return (
     <section

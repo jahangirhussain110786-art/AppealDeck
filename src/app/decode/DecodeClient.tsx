@@ -4,25 +4,18 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  Ban,
-  Check,
-  FileSearch,
-  FolderOpen,
-  RefreshCw,
-  ShieldAlert,
-} from "lucide-react";
+import { ArrowRight, Ban, Check, FileSearch, FileText, RefreshCw, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { StatusPill } from "@/components/workspace/CaseOverview";
 import { DeadlineChipList } from "@/components/DeadlineChip";
 import { MarkedNotice, type NoticeSpan } from "@/components/MarkedNotice";
 import { CopyButton } from "@/components/CopyButton";
 import { OfflineNotice } from "@/components/OfflineNotice";
-import { DetailDisclosure, IconTile, VIEW_ICONS } from "@/components/workspace/WorkspaceVisuals";
+import { DetailDisclosure, VIEW_ICONS } from "@/components/workspace/WorkspaceVisuals";
 import { guidanceFor } from "@/core/guidance";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { stripInvisibleChars } from "@/lib/idNormalize";
@@ -34,6 +27,8 @@ import { CountdownRing } from "@/components/marketing/ProductPanels";
 import { WORKSPACE } from "@/content/workspace";
 import { proposedRequirements } from "@/core/workspace";
 import { DECODE } from "@/content/marketing";
+import { APP } from "@/content/app";
+import { AccentWord } from "@/components/ui/accent-word";
 import { SHARED } from "@/content/shared";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 import { cn } from "@/lib/utils";
@@ -171,20 +166,34 @@ export default function DecodeClient() {
         <div className={cn(WRAP, "pb-28 pt-12 sm:pt-16")}>
           <OfflineNotice />
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <div className="max-w-3xl">
-              <p className="mb-3 text-sm font-semibold text-primary">{DECODE.eyebrow}</p>
-              <h1 className="text-balance text-[clamp(2.4rem,1.4rem+3.4vw,4.1rem)] font-semibold leading-[1.0] tracking-[-0.04em] text-foreground">
-                {DECODE.pageTitle}
-              </h1>
-              <p className="mt-4 max-w-prose text-lg leading-relaxed text-muted-foreground">
-                {DECODE.pageDescription}
-              </p>
-            </div>
-            {status === "result" && (
-              <Button type="button" variant="outline" onClick={handleReset}>
-                <RefreshCw aria-hidden />
-                {DECODE.decodeAnotherButton}
-              </Button>
+            {status === "result" && result ? (
+              // v5 (26 Sep 2026, prototype decode.html): once decoded, the headline is the answer.
+              <div className="max-w-4xl">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <span aria-hidden>← </span>
+                  {DECODE.result.decodeAnother}
+                </button>
+                <h1 className="mt-4 text-balance text-[clamp(2.4rem,1.4rem+3.2vw,3.875rem)] font-semibold leading-[1.02] tracking-[-0.04em] text-foreground">
+                  {DECODE.result.headline[result.responseType?.type ?? "UNDETERMINED"].lead}{" "}
+                  <AccentWord className="text-primary">
+                    {DECODE.result.headline[result.responseType?.type ?? "UNDETERMINED"].accent}
+                  </AccentWord>
+                </h1>
+              </div>
+            ) : (
+              <div className="max-w-3xl">
+                <p className="mb-3 text-sm font-semibold text-primary">{DECODE.eyebrow}</p>
+                <h1 className="text-balance text-[clamp(2.4rem,1.4rem+3.4vw,4.1rem)] font-semibold leading-[1.0] tracking-[-0.04em] text-foreground">
+                  {DECODE.pageTitle}
+                </h1>
+                <p className="mt-4 max-w-prose text-lg leading-relaxed text-muted-foreground">
+                  {DECODE.pageDescription}
+                </p>
+              </div>
             )}
           </div>
 
@@ -307,9 +316,10 @@ function ResultFacts({
           <FileSearch aria-hidden className="size-5 text-primary" />
         </span>
         <span className="min-w-0">
-          <span className="block text-xs text-muted-foreground">{r.factReply}</span>
+          {/* The headline already says what to send; this tile names what it is about. */}
+          <span className="block text-xs text-muted-foreground">{r.factProblem}</span>
           <span className="block text-lg font-semibold leading-snug tracking-tight">
-            {result.responseType?.label ?? guidance.title}
+            {result.kind === "UNKNOWN" ? guidance.title : APP.violationKinds[result.kind]}
           </span>
         </span>
       </div>
@@ -391,7 +401,6 @@ function ResultView({
   );
   const carryNotice = () => stashPendingNotice(text, result.deadlines);
   const r = DECODE.result;
-  const hasType = Boolean(result.responseType);
   // Requested records already appear under "What to gather"; listing them again here was noise.
   const details = (result.entities ?? []).filter((e) => e.kind !== "requested_record");
   // 26 Sep 2026: the seller's notice stays on screen beside the decision, with the phrases that
@@ -464,10 +473,10 @@ function ResultView({
         </Alert>
       )}
 
-      <div className="grid items-start gap-4 lg:grid-cols-2">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <Card className="overflow-hidden lg:sticky lg:top-24">
-          <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-surface-2/50 py-4">
-            <p className="text-eyebrow text-muted-foreground">{r.markedTitle}</p>
+          <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 space-y-0 border-b border-border px-5 py-3.5">
+            <h2 className="text-[0.9375rem] font-semibold text-foreground">{r.markedTitle}</h2>
             <span className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <span aria-hidden className="hl-risk inline-block size-3 rounded-sm" />
@@ -479,177 +488,199 @@ function ResultView({
               </span>
             </span>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="px-6 py-6 sm:px-7">
             <MarkedNotice
               text={text}
               spans={spans}
               label={r.markedTitle}
-              className="max-h-[70vh] overflow-y-auto pr-2"
+              className="max-h-[70vh] overflow-y-auto pr-2 text-base leading-[1.8]"
             />
           </CardContent>
         </Card>
 
+        {/* v5 (26 Sep 2026, prototype decode.html): what to gather, the way into a case, what to
+            do and avoid now, and only then how we read the notice. */}
         <div className="space-y-4">
           <Card className="overflow-hidden">
-            <CardHeader className="flex-row items-start gap-3 border-b border-border/60 bg-surface-2/50">
-              <IconTile icon={FileSearch} tone="info" />
-              <div className="min-w-0 space-y-1">
-                <p className="text-eyebrow text-muted-foreground">{r.briefEyebrow}</p>
-                <h2 className="text-xl font-semibold leading-snug text-foreground">
-                  {guidance.title}
-                </h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">{guidance.summary}</p>
+            <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
+              <h2 className="text-[0.9375rem] font-semibold">{r.recordsTitle}</h2>
+              {records.length > 0 && (
+                <StatusPill tone="mute">
+                  {records.length === 1
+                    ? r.recordsCountOne
+                    : r.recordsCount.replace("{n}", String(records.length))}
+                </StatusPill>
+              )}
+            </div>
+            {records.length ? (
+              <>
+                <ul>
+                  {records.map((record) => (
+                    <li
+                      key={record.label}
+                      className="grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3.5 border-b border-border px-5 py-3.5 last:border-b-0"
+                    >
+                      <span className="inline-flex size-10 items-center justify-center rounded-[10px] bg-surface-2 ring-1 ring-inset ring-border">
+                        <FileText aria-hidden className="size-5 text-foreground" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block font-semibold text-foreground">{record.label}</span>
+                        <span className="block text-sm text-muted-foreground">
+                          {record.source === "matrix" ? r.recordInferred : r.recordNamed}
+                        </span>
+                      </span>
+                      {/* Ours, and said so — never passed off as something Amazon wrote. */}
+                      <Badge variant={record.source === "matrix" ? "info" : "secondary"} size="sm">
+                        {record.source === "matrix" ? WORKSPACE.inferred.badge : r.recordsAsked}
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
+                <p className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
+                  {r.recordsNote}
+                </p>
+              </>
+            ) : (
+              <p className="px-5 py-4 text-sm text-muted-foreground">{r.noRecords}</p>
+            )}
+          </Card>
+
+          <Card className="overflow-hidden bg-[linear-gradient(180deg,hsl(var(--surface-1)),hsl(var(--primary)/0.06))]">
+            <div className="grid items-center gap-x-4 gap-y-2 p-6 sm:grid-cols-[minmax(0,1fr)_8rem]">
+              <div className="flex flex-col items-start gap-3.5">
+                <h2 className="text-[1.1875rem] font-semibold tracking-[-0.02em]">{r.saveTitle}</h2>
+                <Button asChild size="lg">
+                  <Link href={`/case?kind=${result.kind}&view=overview`} onClick={carryNotice}>
+                    {r.startPoaCta}
+                    <ArrowRight className="size-4" aria-hidden />
+                  </Link>
+                </Button>
+                <p className="text-[0.84375rem] text-muted-foreground">{r.saveNote}</p>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ol className="divide-y divide-border/60">
-                {result.responseType && (
-                  <Step n={1} title={r.responseTypeTitle}>
-                    <p className="text-base font-semibold text-foreground">
-                      {result.responseType.label}
-                    </p>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                      {result.responseType.reason}
-                    </p>
-                    {result.responseType.competing.length > 0 && (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {r.responseTypeAlsoSeen}: {result.responseType.competing.join(", ")}
-                      </p>
+              <Image
+                src="/illustrations/step-checklist.svg"
+                alt=""
+                width={128}
+                height={110}
+                className="-my-2 hidden h-auto w-32 sm:block"
+                unoptimized
+              />
+            </div>
+            <div className="space-y-3 border-t border-border px-6 py-4">
+              <p className="text-xs text-muted-foreground">{r.jumpTo}</p>
+              <nav aria-label="Case workspace views" className="mt-1 grid grid-cols-4 gap-1">
+                {Object.entries(WORKSPACE.tabs).map(([view, label]) => {
+                  const Icon = VIEW_ICONS[view] ?? FileSearch;
+                  return (
+                    <Link
+                      key={view}
+                      href={`/case?kind=${result.kind}&view=${view}`}
+                      onClick={carryNotice}
+                      className="flex min-w-0 flex-col items-center gap-2 rounded-lg py-3 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Icon className="size-5 text-primary" aria-hidden />
+                      {label}
+                    </Link>
+                  );
+                })}
+              </nav>
+              <CopyButton text={guidance.summary} label={r.copySummary} />
+            </div>
+          </Card>
+
+          {/* Shown open, not folded: the e2e and a panicking seller both need to see it at once. */}
+          <Card className="p-5 sm:p-6">
+            <h2 className="text-[0.9375rem] font-semibold">{r.triageTitle}</h2>
+            <div className="mt-4 grid gap-5 sm:grid-cols-2">
+              {[
+                { label: r.doNow, items: guidance.triage.doNow, icon: Check, bad: false },
+                { label: r.doNot, items: guidance.triage.doNot, icon: Ban, bad: true },
+              ].map(({ label, items, icon: Icon, bad }) => (
+                <div key={label}>
+                  <h3
+                    className={cn(
+                      "mb-2 flex items-center gap-2 text-sm font-semibold",
+                      bad ? "text-destructive" : "text-success",
                     )}
-                    {result.responseType.matches.length > 0 && (
-                      <DetailDisclosure title={r.responseTypeSourceTitle} className="mt-3">
-                        <div className="space-y-2">
-                          {result.responseType.matches.map((m) => (
-                            <blockquote
-                              key={`${m.start}-${m.end}`}
-                              className="border-l-2 border-primary/40 pl-3 text-xs italic"
-                            >
-                              {m.quote}
-                            </blockquote>
-                          ))}
-                        </div>
-                      </DetailDisclosure>
-                    )}
-                  </Step>
-                )}
-                <Step n={hasType ? 2 : 1} title={r.deadlinesTitle}>
-                  {result.deadlines.length > 0 ? (
-                    <DeadlineChipList deadlines={result.deadlines} />
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{r.noDeadline}</p>
-                  )}
-                </Step>
-                <Step n={hasType ? 3 : 2} title={r.recordsTitle}>
-                  {records.length ? (
-                    <>
-                      <ul className="space-y-2">
-                        {records.map((record) => (
-                          <li
-                            key={record.label}
-                            className="flex flex-wrap items-center gap-2 text-sm"
-                          >
-                            <FolderOpen aria-hidden className="size-4 shrink-0 text-warning" />
-                            <span className="font-medium text-foreground">{record.label}</span>
-                            {/* Ours, and said so — never passed off as something Amazon wrote. */}
-                            <Badge
-                              variant={record.source === "matrix" ? "secondary" : "info"}
-                              size="sm"
-                            >
-                              {record.source === "matrix"
-                                ? WORKSPACE.inferred.badge
-                                : r.recordsAsked}
-                            </Badge>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="mt-3 text-xs text-muted-foreground">{r.recordsNote}</p>
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{r.noRecords}</p>
-                  )}
-                </Step>
-              </ol>
-              {details.length > 0 && (
-                <div className="space-y-2 border-t border-border/60 px-6 py-5">
-                  <p className="text-sm font-semibold text-muted-foreground">{r.entitiesTitle}</p>
-                  <ul className="flex flex-wrap gap-2">
-                    {details.map((e) => (
-                      <li
-                        key={`${e.kind}-${e.start}`}
-                        className="inline-flex items-baseline gap-1.5 rounded-md border border-border bg-surface-2/60 px-2 py-1 text-xs"
-                      >
-                        <span className="text-muted-foreground">{ENTITY_LABELS[e.kind]}</span>
-                        <span className="font-mono tabular-nums text-foreground">{e.value}</span>
-                        {e.ambiguous && <span className="text-warning">{r.entitiesAmbiguous}</span>}
-                      </li>
+                  >
+                    <Icon aria-hidden className="size-4" />
+                    {label}
+                  </h3>
+                  {/* All shown: each is one line, and "2 more actions" hid most of the advice. */}
+                  <ul className="list-disc space-y-1.5 pl-4 text-sm leading-relaxed text-foreground/85">
+                    {items.map((item) => (
+                      <li key={item}>{item}</li>
                     ))}
                   </ul>
-                  <p className="text-xs text-muted-foreground">{r.entitiesNote}</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="workspace-hero border-primary/20">
-            <CardHeader>
-              <p className="text-eyebrow text-primary">{r.nextEyebrow}</p>
-              <CardTitle className="tracking-[-0.03em] text-2xl font-semibold">
-                {r.nextTitle}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">{r.nextDesc}</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button asChild size="lg" className="w-full">
-                <Link href={`/case?kind=${result.kind}&view=overview`} onClick={carryNotice}>
-                  {r.startPoaCta}
-                  <ArrowRight className="size-4" aria-hidden />
-                </Link>
-              </Button>
-              <div>
-                <p className="text-xs text-muted-foreground">{r.jumpTo}</p>
-                <nav aria-label="Case workspace views" className="mt-1 grid grid-cols-4 gap-1">
-                  {Object.entries(WORKSPACE.tabs).map(([view, label]) => {
-                    const Icon = VIEW_ICONS[view] ?? FileSearch;
-                    return (
-                      <Link
-                        key={view}
-                        href={`/case?kind=${result.kind}&view=${view}`}
-                        onClick={carryNotice}
-                        className="flex min-w-0 flex-col items-center gap-2 rounded-lg py-3 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <Icon className="size-5 text-primary" aria-hidden />
-                        {label}
-                      </Link>
-                    );
-                  })}
-                </nav>
-              </div>
-              <div className="border-t border-primary/15 pt-3">
-                <CopyButton text={guidance.summary} label={r.copySummary} />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      <div className="grid items-start gap-4 md:grid-cols-2">
-        {[
-          { label: r.doNow, items: guidance.triage.doNow, icon: Check, tone: "primary" as const },
-          { label: r.doNot, items: guidance.triage.doNot, icon: Ban, tone: "warning" as const },
-        ].map(({ label, items, icon, tone }) => (
-          <Card key={label} className="p-5">
-            <div className="mb-3 flex items-center gap-3">
-              <IconTile icon={icon} tone={tone} />
-              <h3 className="text-sm font-semibold text-foreground">{label}</h3>
-            </div>
-            {/* All shown: each is one line, and "2 more actions" hid most of the advice. */}
-            <ul className="list-disc space-y-2 pl-4 text-sm leading-relaxed text-muted-foreground">
-              {items.map((item) => (
-                <li key={item}>{item}</li>
               ))}
-            </ul>
+            </div>
           </Card>
-        ))}
+
+          <Card className="p-5 sm:p-6">
+            <h2 className="text-[0.9375rem] font-semibold">{r.howRead}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{guidance.summary}</p>
+            {result.responseType && (
+              <div className="mt-4 border-t border-border pt-4">
+                <h3 className="text-xs font-semibold text-muted-foreground">
+                  {r.responseTypeTitle}
+                </h3>
+                <p className="mt-1 font-semibold text-foreground">{result.responseType.label}</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {result.responseType.reason}
+                </p>
+                {result.responseType.competing.length > 0 && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {r.responseTypeAlsoSeen}: {result.responseType.competing.join(", ")}
+                  </p>
+                )}
+                {result.responseType.matches.length > 0 && (
+                  <DetailDisclosure title={r.responseTypeSourceTitle} className="mt-3">
+                    <div className="space-y-2">
+                      {result.responseType.matches.map((m) => (
+                        <blockquote
+                          key={`${m.start}-${m.end}`}
+                          className="border-l-2 border-primary/40 pl-3 text-xs italic"
+                        >
+                          {m.quote}
+                        </blockquote>
+                      ))}
+                    </div>
+                  </DetailDisclosure>
+                )}
+              </div>
+            )}
+            <div className="mt-4 border-t border-border pt-4">
+              <h3 className="mb-2 text-xs font-semibold text-muted-foreground">
+                {r.deadlinesTitle}
+              </h3>
+              {result.deadlines.length > 0 ? (
+                <DeadlineChipList deadlines={result.deadlines} />
+              ) : (
+                <p className="text-sm text-muted-foreground">{r.noDeadline}</p>
+              )}
+            </div>
+            {details.length > 0 && (
+              <div className="mt-4 space-y-2 border-t border-border pt-4">
+                <h3 className="text-xs font-semibold text-muted-foreground">{r.entitiesTitle}</h3>
+                <ul className="flex flex-wrap gap-2">
+                  {details.map((e) => (
+                    <li
+                      key={`${e.kind}-${e.start}`}
+                      className="inline-flex items-baseline gap-1.5 rounded-md border border-border bg-surface-2/60 px-2 py-1 text-xs"
+                    >
+                      <span className="text-muted-foreground">{ENTITY_LABELS[e.kind]}</span>
+                      <span className="font-mono tabular-nums text-foreground">{e.value}</span>
+                      {e.ambiguous && <span className="text-warning">{r.entitiesAmbiguous}</span>}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground">{r.entitiesNote}</p>
+              </div>
+            )}
+          </Card>
+          <p className="px-1 text-[0.84375rem] text-muted-foreground">{r.notAdvice}</p>
+        </div>
       </div>
       {annotations.length > 0 && (
         <DetailDisclosure title={r.wordingTitle}>
@@ -665,22 +696,5 @@ function ResultView({
         </DetailDisclosure>
       )}
     </motion.div>
-  );
-}
-
-function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
-  return (
-    <li className="flex gap-4 px-6 py-5">
-      <span
-        aria-hidden
-        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-sm text-primary"
-      >
-        {n}
-      </span>
-      <div className="min-w-0 flex-1">
-        <h3 className="mb-2 text-sm font-semibold text-muted-foreground">{title}</h3>
-        {children}
-      </div>
-    </li>
   );
 }

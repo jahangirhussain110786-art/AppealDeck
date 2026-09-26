@@ -13,7 +13,7 @@ export function ConsentRow({ checked, onCheckedChange, idPrefix = "eu-consent" }
   const labelId = `${idPrefix}-label`;
   return (
     <div className="space-y-3">
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 rounded-[14px] bg-card p-4 ring-1 ring-inset ring-border">
         <Checkbox
           id={idPrefix}
           checked={checked}

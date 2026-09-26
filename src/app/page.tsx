@@ -13,6 +13,7 @@ import {
 } from "@/components/marketing/ProductPanels";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/JsonLd";
+import { FaqAccordion } from "@/components/pricing/FaqAccordion";
 import { HOME, FOUNDER_NOTE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { SITE_URL } from "@/lib/urls";
@@ -86,9 +87,8 @@ export default function HomePage() {
       <HeroSection />
       <FeaturesSection />
       <BandSection />
-      <InsightsSection />
-      <TrustSection />
       <PlansSection />
+      <QuestionsSection />
       {FOUNDER_NOTE && <FounderNoteSection note={FOUNDER_NOTE} />}
     </MarketingShell>
   );
@@ -160,26 +160,30 @@ function BandSection() {
         <h2 className="max-w-[16ch] text-balance text-[clamp(2.1rem,1.4rem+2.4vw,3.4rem)] font-semibold leading-[1.02] tracking-[-0.04em]">
           <Accented text={HOME.band.title} accent={HOME.band.accent} className="text-primary" />
         </h2>
-        <dl className="mt-14 grid border-t border-white/[0.08] sm:grid-cols-2 lg:grid-cols-4">
-          {HOME.numbers.items.map((n, i) => (
+        <dl className="mt-14 grid border-t border-white/[0.08] md:grid-cols-3">
+          {HOME.bandFacts.map((n, i) => (
             <div
-              key={n.value + n.label}
+              key={n.title}
               className={cn(
-                "flex flex-col gap-3 border-b border-white/[0.08] py-8 sm:pr-8 lg:border-b-0",
-                i > 0 && "lg:border-l lg:pl-8",
-                i % 2 === 1 && "sm:border-l sm:pl-8",
+                "flex flex-col gap-2 border-b border-white/[0.08] py-8 md:border-b-0 md:pr-8",
+                i > 0 && "md:border-l md:pl-8",
               )}
             >
+              <dt className="order-2 text-lg font-semibold text-foreground">{n.title}</dt>
               <dd
-                className="order-1 text-5xl font-semibold tracking-[-0.04em] tabular-nums"
+                className="order-1 text-6xl font-semibold tracking-[-0.045em] tabular-nums"
                 data-tn
               >
                 {n.value}
-                {"unit" in n && n.unit && (
-                  <span className="ml-1.5 text-xl font-medium text-muted-foreground">{n.unit}</span>
+              </dd>
+              <dd className="order-3 text-base leading-relaxed text-muted-foreground">
+                {n.body}{" "}
+                {"link" in n && n.link && (
+                  <Link href={n.link.href} className="text-primary underline underline-offset-4">
+                    {n.link.label}
+                  </Link>
                 )}
               </dd>
-              <dt className="order-2 text-base leading-relaxed text-muted-foreground">{n.label}</dt>
             </div>
           ))}
         </dl>
@@ -199,62 +203,38 @@ function SectionTitle({ eyebrow, title }: { eyebrow?: string; title: string }) {
   );
 }
 
-function InsightsSection() {
+/**
+ * The prototype's closing questions. They are the /faq page's own answers, shown here without their
+ * structured data: one page owns each question for search (see `faqJsonLd`).
+ */
+function QuestionsSection() {
   return (
-    <section className={cn(WRAP, "pt-28 sm:pt-32")}>
-      <SectionTitle eyebrow={HOME.insights.eyebrow} title={HOME.insights.title} />
-      <ol className="mt-12 grid gap-4 sm:grid-cols-2">
-        {HOME.insights.items.map((item, i) => (
-          <li
-            key={item.title}
-            className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card p-7 shadow-card"
-          >
-            <span className="font-mono text-sm text-primary">0{i + 1}</span>
-            <h3 className="text-xl font-semibold tracking-tight text-foreground">{item.title}</h3>
-            <p className="text-base leading-relaxed text-muted-foreground">{item.body}</p>
-            <Link
-              href={item.link.href}
-              className="mt-auto inline-flex items-center gap-1 pt-2 text-sm font-medium text-link underline-offset-4 hover:underline"
-            >
-              {item.link.label}
-              <ArrowRight aria-hidden className="size-3.5" />
-            </Link>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-function TrustSection() {
-  return (
-    <section className={cn(WRAP, "grid gap-10 pt-28 sm:pt-32 lg:grid-cols-[1fr_1.4fr] lg:gap-20")}>
+    <section className={cn(WRAP, "grid gap-8 pb-28 sm:pb-32 lg:grid-cols-[0.7fr_1.3fr] lg:gap-16")}>
+      <SectionTitle title={HOME.questions.title} />
       <div>
-        <p className="text-sm font-semibold text-primary">{HOME.trust.eyebrow}</p>
-        <h2 className="mt-3 max-w-[16ch] text-balance text-[clamp(1.9rem,1.3rem+2vw,2.9rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-foreground">
-          <Accented text={HOME.trust.title} accent={HOME.trust.accent} className="text-primary" />
-        </h2>
+        <FaqAccordion ids={HOME.questions.ids} />
+        <Link
+          href="/faq"
+          className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-link underline-offset-4 hover:underline"
+        >
+          {SHARED.nav.faq}
+          <ArrowRight aria-hidden className="size-3.5" />
+        </Link>
       </div>
-      <dl className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-card">
-        {HOME.trust.items.map((item) => (
-          <div
-            key={item.label}
-            className="grid gap-2 border-b border-border/70 px-6 py-5 last:border-b-0 sm:grid-cols-[13rem_1fr] sm:gap-8"
-          >
-            <dt className="text-base font-semibold text-foreground">{item.label}</dt>
-            <dd className="text-base leading-relaxed text-muted-foreground">{item.desc}</dd>
-          </div>
-        ))}
-      </dl>
     </section>
   );
 }
 
 function PlansSection() {
   return (
-    <section className={cn(WRAP, "pb-28 pt-28 sm:pb-32 sm:pt-32")}>
+    <section className={cn(WRAP, "pb-24 pt-28 sm:pb-28 sm:pt-32")}>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <SectionTitle title={HOME.plans.title} />
+        <div>
+          <p className="text-sm font-semibold text-primary">{HOME.plans.eyebrow}</p>
+          <h2 className="mt-3 text-balance text-[clamp(1.9rem,1.3rem+2vw,2.9rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-foreground">
+            <Accented text={HOME.plans.title} accent={HOME.plans.accent} className="text-primary" />
+          </h2>
+        </div>
         <Link
           href="/pricing"
           className="inline-flex items-center gap-1 text-base font-medium text-link underline-offset-4 hover:underline"

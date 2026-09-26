@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, ChevronDown } from "lucide-react";
+import { ArrowUpRight, Plus } from "lucide-react";
 import { FAQ, faqByGroup, type FaqItem } from "@/content/marketing";
 
 /**
@@ -35,17 +35,24 @@ export function FaqAccordion({ ids }: { ids?: readonly string[] }) {
 
 function QuestionList({ items }: { items: FaqItem[] }) {
   return (
-    <div className="mt-3 divide-y divide-border/70 overflow-hidden rounded-xl border border-border/80 bg-card shadow-card">
+    // v5 (26 Sep 2026): hairline rows, a larger question, and a plus in a ring that turns to a cross.
+    <div className="mt-3 border-y border-border">
       {items.map((item) => (
-        <details key={item.id} id={item.id} className="group px-5 sm:px-6">
-          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-sm py-4 text-left text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        <details
+          key={item.id}
+          id={item.id}
+          className="group border-b border-border last:border-b-0"
+        >
+          <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 rounded-sm py-5 text-left text-[1.0625rem] font-semibold tracking-[-0.01em] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
             {item.q}
-            <ChevronDown
+            <span
               aria-hidden
-              className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
-            />
+              className="inline-flex size-[30px] shrink-0 items-center justify-center rounded-full ring-1 ring-inset ring-border transition-transform group-open:rotate-45"
+            >
+              <Plus className="size-3.5 text-foreground" />
+            </span>
           </summary>
-          <div className="max-w-prose pb-5 pr-5 text-sm leading-relaxed text-muted-foreground">
+          <div className="max-w-[40em] pb-6 pr-5 text-[0.9375rem] leading-relaxed text-muted-foreground">
             <p className="font-medium text-foreground">{item.a}</p>
             {item.detail && <p className="mt-2">{item.detail}</p>}
             {item.link && (

@@ -325,7 +325,10 @@ test("a document check is saved with the case and survives a reload", async ({ p
   );
   await page.getByRole("tab", { name: "Evidence", exact: true }).click();
   await page.locator('input[type="file"]').first().setInputFiles("public/brand/icon-512.png");
-  await expect(page.getByText("icon-512.png").first()).toBeVisible();
+  // Scoped to Evidence: Overview's hidden checklist names the file too (26 Sep 2026).
+  await expect(
+    page.getByRole("tabpanel", { name: "Evidence", exact: true }).getByText("icon-512.png").first(),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Check this document" }).first().click();
   await expect(page.getByText("How the picture looks").first()).toBeVisible();
   // The saved copy carries the day it ran; waiting for it means the vault write has landed.

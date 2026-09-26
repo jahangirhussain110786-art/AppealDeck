@@ -4,8 +4,8 @@ import { isLicenseActive } from "@/lib/license";
 import { VaultLockedState } from "@/components/VaultLockedState";
 import VaultView from "@/components/VaultView";
 import { APP } from "@/content/app";
-import { FolderLock } from "lucide-react";
-import { PageIntro } from "@/components/PageIntro";
+import Image from "next/image";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -47,14 +47,35 @@ export default async function VaultPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageIntro
-        icon={FolderLock}
-        eyebrow={APP.vault.eyebrow}
-        title={APP.vault.title}
-        description={APP.vault.subtitle}
-        illustration={{ src: "/illustrations/vault.svg", alt: APP.vault.illustrationAlt }}
-      />
+    <div className="max-w-[71.25rem] space-y-6">
+      {/* v5 (26 Sep 2026, prototype vault.html): what the vault is, in one sentence, on navy. */}
+      <section
+        aria-labelledby="vault-title"
+        className="next-card dark flex flex-wrap items-center gap-6 px-6 py-6 text-foreground sm:px-8"
+      >
+        <Image
+          src="/illustrations/vault.svg"
+          alt={APP.vault.illustrationAlt}
+          width={120}
+          height={100}
+          className="hidden h-auto w-[7.5rem] shrink-0 drop-shadow-[0_16px_30px_rgba(0,0,0,0.45)] sm:block"
+          unoptimized
+        />
+        <div className="min-w-0 flex-1">
+          <h1
+            id="vault-title"
+            className="text-[1.625rem] font-semibold leading-tight tracking-[-0.03em]"
+          >
+            {APP.vault.heroTitle}
+          </h1>
+          <p className="mt-1.5 text-muted-foreground">
+            {APP.vault.heroBody}{" "}
+            <Link href="/privacy" className="text-primary underline underline-offset-4">
+              {APP.vault.heroLink}
+            </Link>
+          </p>
+        </div>
+      </section>
       <VaultView userId={user.id} />
     </div>
   );

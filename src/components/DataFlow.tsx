@@ -6,12 +6,17 @@ import { SURFACES } from "@/content/surfaces";
  * privacy policy it sits above: the device holds the only copy, the server reads and keeps
  * nothing, and there is no connection to the seller's Amazon account at all.
  */
-export function DataFlow() {
+export function DataFlow({ quietTitle = false }: { quietTitle?: boolean }) {
   const d = SURFACES.dataFlow;
   const node = "flex flex-col items-center gap-2.5 rounded-[20px] p-6 text-center";
   return (
     <section aria-labelledby="data-flow" id="data-flow" className="space-y-5">
-      <h2 id="data-flow" className="text-xl font-semibold tracking-tight text-foreground">
+      {/* Under the privacy hero the page heading already says this, so it is kept for
+          assistive technology only. */}
+      <h2
+        id="data-flow"
+        className={quietTitle ? "sr-only" : "text-xl font-semibold tracking-tight text-foreground"}
+      >
         {d.title}
       </h2>
       <div className="grid items-center gap-3 lg:grid-cols-[1fr_8rem_1fr_8rem_1fr]">

@@ -469,6 +469,13 @@ export const APP = {
     tabs: { files: "Files", backup: "Backup", security: "Security" },
     localLabel: "Encrypted on this device",
     libraryTitle: "Original files",
+    columns: { file: "File", usedFor: "Used for", added: "Added" },
+    // The v5 header (26 Sep 2026). Hedged on purpose: a seller who makes an encrypted backup has a
+    // second copy, so "only on this device" would not be true for everyone.
+    heroTitle: "Encrypted, and kept on this device.",
+    heroBody:
+      "If this browser's data is cleared, the files go with it, unless you make an encrypted backup.",
+    heroLink: "Where your data goes",
     addTitle: "Add a file",
     addDescription:
       "Choose a document type, then add the original file. Review what it supports in your case.",

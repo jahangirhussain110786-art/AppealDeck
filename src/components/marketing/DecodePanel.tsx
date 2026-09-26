@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { DeadlineChipList } from "@/components/DeadlineChip";
 import { MarkedNotice, type NoticeSpan } from "@/components/MarkedNotice";
 import { runDecode, RESPONSE_TYPE_LABELS } from "@/core";
+import { assessNoticeAuthenticity } from "@/core/noticeAuthenticity";
 import { HOME, DECODE } from "@/content/marketing";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 
@@ -30,6 +31,7 @@ export function DecodePanel() {
       .map((e) => ({ start: e.start, end: e.end, tone: "clear" as const, title: e.value })),
   ];
   const demo = HOME.demo;
+  const flagged = assessNoticeAuthenticity(text).signals.length > 0;
 
   return (
     <div className="grid items-start gap-4 md:grid-cols-[1.1fr_0.9fr]">
@@ -62,10 +64,26 @@ export function DecodePanel() {
             <p className="text-sm text-muted-foreground">{DECODE.result.noDeadline}</p>
           )}
         </div>
-        <div className="flex items-center gap-2.5 rounded-2xl bg-card px-5 py-3.5 text-sm shadow-lift">
-          <ShieldCheck aria-hidden className="size-4 text-success" />
-          <span className="text-muted-foreground">{demo.readFromText}</span>
+        {/* v5: the scam check, run on the same sample text, exactly as /decode runs it. */}
+        <div className="flex items-center gap-3 rounded-2xl bg-card px-5 py-4 shadow-lift">
+          <span
+            aria-hidden
+            className={
+              flagged
+                ? "grid size-9 place-items-center rounded-xl bg-warning/15"
+                : "grid size-9 place-items-center rounded-xl bg-success/15"
+            }
+          >
+            <ShieldCheck className={flagged ? "size-4 text-warning" : "size-4 text-success"} />
+          </span>
+          <span>
+            <span className="block text-xs text-muted-foreground">{DECODE.result.factScam}</span>
+            <span className="block font-semibold text-foreground">
+              {flagged ? DECODE.result.factScamFlagged : DECODE.result.factScamClear}
+            </span>
+          </span>
         </div>
+        <p className="px-1 text-xs text-muted-foreground">{demo.readFromText}</p>
       </div>
     </div>
   );

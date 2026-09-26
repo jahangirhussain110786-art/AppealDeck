@@ -32,7 +32,8 @@ export const SUPPORT = {
 
   contact: {
     title: "Getting help",
-    body: "Email {support} for anything about your case, the software or your account. For a receipt, a licence key or a refund, email {billing} — it reaches the same person, and it keeps payment questions together.",
+    // The support address is the hero's button (v5); said once, so it is one link on the page.
+    body: "Write to the address above for anything about your case, the software or your account. For a receipt, a licence key or a refund, email {billing} — it reaches the same person, and it keeps payment questions together.",
     windowTitle: "How long a reply takes",
     window:
       "You will normally have a reply within two business days. One person answers every message, so a reply may take longer at a weekend or over a public holiday. If you have not heard back in three business days, send the message again — it is far more likely to have gone astray than to have been ignored.",
@@ -52,7 +53,7 @@ export const SUPPORT = {
   },
 
   limits: {
-    title: "What support cannot do",
+    title: "So you never wait on us, support cannot:",
     body: "These are not policies that could be relaxed for an urgent case. They are things this service does not do at all.",
     items: [
       "It cannot log in to your Amazon account, submit anything on your behalf, or contact Amazon for you. You submit your response yourself.",
@@ -63,6 +64,20 @@ export const SUPPORT = {
     ],
   },
 
+  about: "About this service",
+  // The v5 link tiles: what a seller usually wants answered before they write.
+  tiles: {
+    title: "Often faster than writing",
+    items: [
+      {
+        href: "/privacy",
+        title: "Where your data goes",
+        body: "What we read, and what we never keep",
+      },
+      { href: "/refund", title: "Paying and refunds", body: "One price per case, 7-day refund" },
+      { href: "/guides", title: "Guides", body: "Notice types, explained in plain words" },
+    ],
+  },
   elsewhere: {
     title: "Answered elsewhere",
     faq: "How the decoder works, what the Appeal Pass covers and how your documents are held",

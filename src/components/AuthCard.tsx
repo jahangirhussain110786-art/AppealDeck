@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/Logo";
 import { ChecklistPanel, CountdownRing } from "@/components/marketing/ProductPanels";
 import { AUTH } from "@/content/auth";
+import { AccentWord } from "@/components/ui/accent-word";
+import { splitAccent } from "@/lib/splitAccent";
 import type { ReactNode } from "react";
 
 export type AuthStatus = "idle" | "loading" | "sent" | "done" | "error";
@@ -55,13 +57,23 @@ export function AuthShell({
   );
 }
 
+const PREVIEW_TITLE = splitAccent(AUTH.preview.title, AUTH.preview.accent);
+
 function AuthPreviewPanel() {
   return (
     <aside className="stage dark hidden min-w-0 flex-col justify-center gap-9 px-10 py-16 text-foreground lg:flex xl:px-16">
       <div>
         <p className="text-sm font-semibold text-primary">{AUTH.preview.eyebrow}</p>
         <h2 className="mt-3 max-w-[16ch] text-balance text-[2.1rem] font-semibold leading-[1.08] tracking-[-0.04em]">
-          {AUTH.preview.title}
+          {PREVIEW_TITLE ? (
+            <>
+              {PREVIEW_TITLE.pre}
+              <AccentWord className="text-primary">{PREVIEW_TITLE.accent}</AccentWord>
+              {PREVIEW_TITLE.post}
+            </>
+          ) : (
+            AUTH.preview.title
+          )}
         </h2>
         <p className="mt-3 max-w-prose text-base leading-relaxed text-muted-foreground">
           {AUTH.preview.description}

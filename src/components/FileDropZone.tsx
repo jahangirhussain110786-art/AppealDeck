@@ -147,7 +147,8 @@ export function FileDropZone({
         <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-surface-1 shadow-card ring-1 ring-inset ring-border">
           <Upload className="size-[18px] text-foreground" aria-hidden />
         </span>
-        <div className="min-w-0 flex-1">
+        {/* A floor on the text's width, so in a narrow column the button wraps below instead. */}
+        <div className="min-w-[11rem] flex-1">
           <p className="font-semibold text-foreground">{APP.upload.drop}</p>
           <p className="text-xs text-muted-foreground">{hint ?? APP.upload.maxMb}</p>
         </div>

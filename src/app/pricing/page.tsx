@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Info } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,8 +16,8 @@ import {
 import { FaqAccordion } from "@/components/pricing/FaqAccordion";
 import { PurchasePanel } from "@/components/pricing/PurchasePanel";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
-import { AccentWord } from "@/components/ui/accent-word";
 import { GLOBAL_EXPECTATIONS } from "@/core/guidance";
+import { AccentWord } from "@/components/ui/accent-word";
 import { HOME, PRICING } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { splitAccent } from "@/lib/splitAccent";
@@ -34,18 +34,27 @@ export const metadata: Metadata = {
 };
 
 const HEADLINE = splitAccent(PRICING.headline, PRICING.accent);
+const READ_FIRST = splitAccent(PRICING.readFirstTitle, PRICING.readFirstAccent);
 
 function ValueCell({ value }: { value: string }) {
+  // v5: a tick disc and a dash, each with its meaning spoken to a screen reader.
   if (value === "Yes") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-foreground">
-        <Check className="size-4 text-success" />
-        {value}
+      <span className="inline-flex size-[22px] items-center justify-center rounded-full bg-success/15">
+        <Check aria-hidden className="size-3 text-success" strokeWidth={3.5} />
+        <span className="sr-only">{PRICING.included}</span>
       </span>
     );
   }
   if (value === "—") {
-    return <span className="text-muted-foreground/60">{value}</span>;
+    return (
+      <>
+        <span aria-hidden className="text-muted-foreground/60">
+          {value}
+        </span>
+        <span className="sr-only">{PRICING.notIncluded}</span>
+      </>
+    );
   }
   return <span className="text-sm text-foreground">{value}</span>;
 }
@@ -62,6 +71,12 @@ export default function PricingPage() {
     <MarketingShell bleed>
       <section className="stage dark text-foreground">
         <div className="mx-auto flex max-w-[56rem] flex-col items-center px-4 pb-40 pt-16 text-center sm:px-8 sm:pt-20">
+          <p className="mb-5 inline-flex h-8 items-center gap-2.5 rounded-full bg-white/[0.06] pl-1.5 pr-3.5 text-[0.84375rem] text-muted-foreground ring-1 ring-inset ring-white/[0.08]">
+            <b className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+              {PRICING.currency}
+            </b>
+            {PRICING.currencyNote}
+          </p>
           <h1 className="text-balance text-[clamp(2.4rem,1.3rem+3.6vw,4.4rem)] font-semibold leading-[1.02] tracking-[-0.045em] text-foreground">
             {HEADLINE ? (
               <>
@@ -94,31 +109,22 @@ export default function PricingPage() {
                       : "border border-border/80 bg-card shadow-lift",
                   )}
                 >
-                  <div>
-                    <p
-                      className={cn(
-                        "text-sm font-semibold",
-                        pass ? "text-primary" : "text-muted-foreground",
-                      )}
-                    >
-                      {plan.name}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">{plan.note}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p
+                        className={cn(
+                          "text-sm font-semibold",
+                          pass ? "text-primary" : "text-muted-foreground",
+                        )}
+                      >
+                        {plan.name}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">{plan.note}</p>
+                    </div>
                   </div>
                   <p className="text-5xl font-semibold tracking-[-0.045em] text-foreground" data-tn>
                     {plan.price}
                   </p>
-                  {pass ? (
-                    <Button asChild size="lg">
-                      <a href="#purchase">{PRICING.jumpToPurchase}</a>
-                    </Button>
-                  ) : (
-                    <Button asChild size="lg" variant="outline">
-                      <Link href={i === 0 ? "/decode" : "/signup"}>
-                        {i === 0 ? SHARED.nav.decodeCta : PRICING.createAccount}
-                      </Link>
-                    </Button>
-                  )}
                   <ul className="flex flex-col gap-2.5 text-[0.95rem] text-muted-foreground">
                     {plan.features.map((f) => (
                       <li key={f} className="grid grid-cols-[1.25rem_1fr] gap-2.5">
@@ -129,6 +135,20 @@ export default function PricingPage() {
                       </li>
                     ))}
                   </ul>
+                  {/* The action after the features, at the foot of every card, as in the prototype. */}
+                  <div className="mt-auto">
+                    {pass ? (
+                      <Button asChild size="lg" className="w-full">
+                        <a href="#purchase">{PRICING.jumpToPurchase}</a>
+                      </Button>
+                    ) : (
+                      <Button asChild size="lg" variant="outline" className="w-full">
+                        <Link href={i === 0 ? "/decode" : "/signup"}>
+                          {i === 0 ? SHARED.nav.decodeCta : PRICING.createAccount}
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -148,7 +168,9 @@ export default function PricingPage() {
                     <TableHead>{PRICING.tableHeadings.feature}</TableHead>
                     <TableHead className="text-center">{PRICING.tableHeadings.free}</TableHead>
                     <TableHead className="text-center">{PRICING.tableHeadings.account}</TableHead>
-                    <TableHead className="text-center">{PRICING.tableHeadings.pass}</TableHead>
+                    <TableHead className="bg-[hsl(var(--stage-2))] text-center text-white">
+                      {PRICING.tableHeadings.pass}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -172,29 +194,89 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <section id="purchase" className="grid gap-6 pb-16 lg:grid-cols-2 lg:items-start">
-          {/* Honest-expectations card renders before the purchase panel, per the checkout-consent
-            spec (legal/withdrawal-consent.md item 1) and D8's intent — a visitor must see the
-            expectations disclosure before they reach the pay button, not after. Fixed 11 Sep 2026;
-            see docs/handoffs/2026-09-11-full-repo-audit-guidebook.md Section F3. */}
-          <HonestExpectationsCard
-            summary={GLOBAL_EXPECTATIONS.typicalNote}
-            weDo={GLOBAL_EXPECTATIONS.whatWeDo}
-            weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
-          />
-          <Card className="rounded-[20px] shadow-lift">
-            <CardHeader>
-              <CardTitle as="h2" className="text-h3">
-                {PRICING.purchaseTitle}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Start your case and confirm the request first. Your pass applies to that case.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <PurchasePanel />
-            </CardContent>
-          </Card>
+        <section
+          id="purchase"
+          aria-labelledby="pricing-read-first"
+          className="grid gap-10 py-16 lg:grid-cols-2 lg:items-start lg:gap-12"
+        >
+          {/* The honest-expectations disclosure comes before the pay button, per the checkout-
+            consent spec (legal/withdrawal-consent.md item 1) and D8: software and not legal advice,
+            no promised outcome, here; the price once per case and the refund route on the order
+            summary beside it. Order fixed 11 Sep 2026 (audit guidebook §F3); v5 look 26 Sep 2026. */}
+          <div>
+            <h2
+              id="pricing-read-first"
+              className="text-[clamp(1.75rem,1.2rem+1.6vw,2.5rem)] font-semibold tracking-[-0.035em] text-foreground"
+            >
+              {READ_FIRST ? (
+                <>
+                  {READ_FIRST.pre}
+                  <AccentWord className="text-primary-ink">{READ_FIRST.accent}</AccentWord>
+                  {READ_FIRST.post}
+                </>
+              ) : (
+                PRICING.readFirstTitle
+              )}
+            </h2>
+            <ul className="mt-6 border-t border-border">
+              {PRICING.limits.map((l) => (
+                <li
+                  key={l.title}
+                  className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-3 border-b border-border py-4"
+                >
+                  <span
+                    aria-hidden
+                    className="mt-0.5 inline-flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary"
+                  >
+                    <Info className="size-3.5" />
+                  </span>
+                  <span>
+                    <strong className="block font-semibold text-foreground">{l.title}</strong>
+                    <span className="text-muted-foreground">{l.body}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {/* D6's honest-expectations card, before the pay button (faq.spec pins the order). */}
+            <HonestExpectationsCard
+              layout="rows"
+              className="mt-8"
+              summary={GLOBAL_EXPECTATIONS.typicalNote}
+              weDo={GLOBAL_EXPECTATIONS.whatWeDo}
+              weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
+            />
+          </div>
+          <div className="space-y-4">
+            <div className="rounded-[20px] bg-card p-6 shadow-lift ring-1 ring-inset ring-border">
+              <p className="pb-3 text-lg font-semibold tracking-[-0.02em]">{PRICING.order.title}</p>
+              <dl className="divide-y divide-border border-t border-border text-[0.9375rem]">
+                {[
+                  [PRICING.order.line, PRICING.order.amount, false],
+                  [PRICING.order.tax, PRICING.order.taxValue, true],
+                  [PRICING.order.expires, PRICING.order.expiresValue, true],
+                ].map(([k, v, quiet]) => (
+                  <div
+                    key={String(k)}
+                    className={cn(
+                      "flex justify-between py-3",
+                      quiet ? "text-muted-foreground" : "text-foreground",
+                    )}
+                  >
+                    <dt>{k}</dt>
+                    <dd className="tabular-nums">{v}</dd>
+                  </div>
+                ))}
+                <div className="flex justify-between py-3 text-lg font-semibold">
+                  <dt>{PRICING.order.total}</dt>
+                  <dd className="tabular-nums">{PRICING.order.amount}</dd>
+                </div>
+              </dl>
+            </div>
+            <PurchasePanel />
+            <p className="text-center text-[0.84375rem] text-muted-foreground">
+              {PRICING.order.paidThrough}
+            </p>
+          </div>
         </section>
 
         <section className="grid gap-8 pb-16 sm:pb-20 lg:grid-cols-[18rem_1fr] lg:gap-16">
