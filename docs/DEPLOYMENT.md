@@ -26,23 +26,23 @@ Set these for **Production**, **Preview**, and **Development** scopes (Vercel no
 
 ### Required (app will crash without these)
 
-| Variable                               | Source                                 | Production value                                                                               |
-| -------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL`                 | this file                              | `https://<project>.vercel.app` now → `https://appealdeck.com` when the domain is connected     |
-| `NEXT_PUBLIC_MARKETING_HOST`           | this file                              | `<project>.vercel.app` now → `appealdeck.com` later                                            |
-| `NEXT_PUBLIC_APP_HOST`                 | this file                              | **leave unset** (single host). Set only for a later `app.` split — AGENTS.md "Domain topology" |
-| `NEXT_PUBLIC_APP_URL`                  | this file                              | **leave unset** (resolves to `NEXT_PUBLIC_SITE_URL` via `src/lib/urls.ts`)                     |
-| `NEXT_PUBLIC_SUPABASE_URL`             | Supabase dashboard                     | `https://<project-ref>.supabase.co`                                                            |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`        | Supabase dashboard                     | `eyJ...`                                                                                       |
-| `SUPABASE_SERVICE_ROLE_KEY`            | Supabase dashboard                     | `eyJ...` (sensitive — keep "Sensitive" toggle ON)                                              |
-| `GEMINI_API_KEY`                       | https://aistudio.google.com/app/apikey | `AIzaSy...` (sensitive)                                                                        |
-| `GEMINI_MODEL`                         | optional                               | `gemini-3.5-flash` (default in code)                                                           |
-| `UPSTASH_REDIS_REST_URL`               | https://console.upstash.com            | `https://<db>.upstash.io` (sensitive)                                                          |
-| `UPSTASH_REDIS_REST_TOKEN`             | Upstash dashboard                      | (sensitive)                                                                                    |
-| `PADDLE_WEBHOOK_SECRET`                | Paddle dashboard → Notifications       | (sensitive)                                                                                    |
-| `NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS` | Paddle dashboard → catalog             | `pri_...`                                                                                      |
-| `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`      | Paddle dashboard → Developer tools     | `live_...`                                                                                     |
-| `NEXT_PUBLIC_PADDLE_ENV`               | this file                              | `production`                                                                                   |
+| Variable                               | Source                                 | Production value                                                                                                                                                                                                                               |
+| -------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`                 | this file                              | `https://<project>.vercel.app` now → `https://appealdeck.com` when the domain is connected. If unset, the code falls back to `https://appealdeck.com` for canonicals, the sitemap and social cards, so set it even on the `vercel.app` address |
+| `NEXT_PUBLIC_MARKETING_HOST`           | this file                              | `<project>.vercel.app` now → `appealdeck.com` later                                                                                                                                                                                            |
+| `NEXT_PUBLIC_APP_HOST`                 | this file                              | **leave unset** (single host). Set only for a later `app.` split — AGENTS.md "Domain topology"                                                                                                                                                 |
+| `NEXT_PUBLIC_APP_URL`                  | this file                              | **leave unset** (resolves to `NEXT_PUBLIC_SITE_URL` via `src/lib/urls.ts`)                                                                                                                                                                     |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Supabase dashboard                     | `https://<project-ref>.supabase.co`                                                                                                                                                                                                            |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`        | Supabase dashboard                     | `eyJ...`                                                                                                                                                                                                                                       |
+| `SUPABASE_SERVICE_ROLE_KEY`            | Supabase dashboard                     | `eyJ...` (sensitive — keep "Sensitive" toggle ON)                                                                                                                                                                                              |
+| `GEMINI_API_KEY`                       | https://aistudio.google.com/app/apikey | `AIzaSy...` (sensitive)                                                                                                                                                                                                                        |
+| `GEMINI_MODEL`                         | optional                               | `gemini-3.5-flash` (default in code)                                                                                                                                                                                                           |
+| `UPSTASH_REDIS_REST_URL`               | https://console.upstash.com            | `https://<db>.upstash.io` (sensitive)                                                                                                                                                                                                          |
+| `UPSTASH_REDIS_REST_TOKEN`             | Upstash dashboard                      | (sensitive)                                                                                                                                                                                                                                    |
+| `PADDLE_WEBHOOK_SECRET`                | Paddle dashboard → Notifications       | (sensitive)                                                                                                                                                                                                                                    |
+| `NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS` | Paddle dashboard → catalog             | `pri_...`                                                                                                                                                                                                                                      |
+| `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`      | Paddle dashboard → Developer tools     | `live_...`                                                                                                                                                                                                                                     |
+| `NEXT_PUBLIC_PADDLE_ENV`               | this file                              | `production`                                                                                                                                                                                                                                   |
 
 ### Required for a feature (the app runs without them; that feature does not)
 
@@ -89,18 +89,21 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
    Email reminders still need `RESEND_API_KEY` and `CRON_SECRET` (the latter shared with the purchase-email job) on the deployed project. Without the key no reminder email is sent and the feature stays visibly off rather than silently failing; the reminder date still saves to the seller's vault and still shows on the page either way.
 
 3. Supabase dashboard → Settings → API: copy `URL`, `anon` key, `service_role` key to Vercel env.
+4. **Custom SMTP (added 28 Sep 2026; do it before launch).** Magic-link sign-in and password reset go out through Supabase's built-in mailer, which sends only a few emails an hour for the whole project. Once the limit is used up, the next seller's sign-in link simply never arrives. Supabase → Authentication → Emails → SMTP Settings → enable custom SMTP with your Resend account: host `smtp.resend.com`, port `465`, username `resend`, password = a Resend API key, sender = an address on the domain you verified in Resend (for example `AppealDeck <login@appealdeck.com>`). Then raise the email rate limit under Authentication → Rate Limits, and send yourself one magic link to confirm it arrives.
+5. **Google sign-in:** in the Google Cloud OAuth client used by Supabase → Authentication → Providers → Google, the authorised redirect URI must be `https://<project-ref>.supabase.co/auth/v1/callback`, and the production origin must be listed under authorised JavaScript origins. Sign in with Google once on the deployed site.
 
 ## 5. Paddle production setup (founder action)
 
-1. Paddle dashboard → Catalog → create 2 products:
+1. Paddle dashboard → Catalog → create 1 product:
    - **Appeal Pass** (one-time, $249 — flat, worldwide, no country tiering; 21 Sep 2026 commercial reset)
-   - **Guardian Subscription** (monthly, TBD)
-2. For each product, create a price. Copy the `pri_...` IDs into the env vars above.
+   - _Corrected 28 Sep 2026:_ this step used to add a **Guardian Subscription** product. Guardian is deferred (D7) and nothing in the app sells it, so do not create it.
+2. Create the price. Copy the `pri_...` ID into `NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS`.
 3. Paddle dashboard → Developer tools → Authentication: copy the live client token.
 4. Paddle dashboard → Notifications → create endpoint:
    - URL: `https://appealdeck.com/api/webhooks/paddle`
-   - Events: `transaction.completed`, `subscription.activated`, `subscription.created`, `subscription.canceled`, `subscription.paused`
+   - Events: `transaction.completed`, `adjustment.created`, `adjustment.updated`
    - Copy the signing secret into `PADDLE_WEBHOOK_SECRET`.
+   - _Corrected 28 Sep 2026:_ this list used to name five `subscription.*` events. `apply_paddle_event` (migration `0009`) grants a Pass on `transaction.completed` and removes it on an `adjustment.*` refund or chargeback, and ignores the subscription events. Following the old list, a refunded buyer would have kept the Pass.
 5. Paddle dashboard → Checkout → Live: confirm your business details (Pakistan Individual seller — set country to PK; Paddle will tell you at checkout which countries can't be sold to and handle VAT for the rest).
 
 ## 6. Upstash production setup (founder action)
@@ -251,8 +254,8 @@ Vercel keeps every deployment. If a release breaks:
 
 ## 12. What this guide does NOT cover
 
-- Analytics (Plausible/Umami) — not yet wired. Plan: add `<Script>` tag in marketing pages, use `NEXT_PUBLIC_ANALYTICS_SCRIPT_SRC` env. Estimated: 1 hour.
-- Error tracking (Sentry) — not wired. Plan: `@sentry/nextjs` + DSN env var. Estimated: 2 hours.
+- _Corrected 28 Sep 2026:_ this list used to say analytics was "not yet wired". It has been wired since 11 Sep (`src/lib/analytics.ts`); it needs only `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` (§2).
+- Error tracking (Sentry) — deliberately not added; see §9 step 15 for why.
 - E&O insurance — separate from hosting. See AGENTS.md Gate 2.
 - GDPR Art. 30 records — separate from hosting. See AGENTS.md Gate 2.
 

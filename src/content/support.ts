@@ -17,7 +17,7 @@ export const SUPPORT = {
   hero: {
     title: "Write to the person who built it.",
     accent: "built it.",
-    lede: "Cihangir reads and answers every message.",
+    lede: "Jhangir reads and answers every message.",
     emailCta: "Email support",
     illustration: "A person at a desk, reading a reply on a laptop",
   },
