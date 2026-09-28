@@ -2,7 +2,9 @@
 
 **How to use.** Copy the block below into a fresh coding-AI session, unchanged. When a pass is complete and a new pass prompt exists, change only the two `PATH` lines. Keep this file in the repo; the reviewing AI updates the two paths whenever it writes a new pass prompt.
 
-**Current pass (AM-26, 22 Sep 2026):** the founder ratified Case OS v2 in chat — product capability before price and channel, because the 21 Sep plan's next action (ten seller conversations) rests on seller access the founder does not have. Work is **AA-39 → AA-40 → AA-41+AA-43 → AA-42**, in that order; AA-39 (the decoder decides) blocks everything else. Direction, the two-journey comparison and a verified-code table: `docs/handoffs/2026-09-22-case-os-v2-ratified-direction.md`. **Two hard rules for this pass:** AA-43 (correcting `legal/privacy.md` §1's "We cannot read your case vault", `LocalFirstBadge`, and the "Encrypted on your device" label) ships in the **same commit** as AA-41, never after — the claim becomes false the moment document reading lands; and AM-26 narrows **local-first only** — D6's **read-only** (never touching the seller's Amazon account) is untouched. Two founder calls ride the build and neither blocks starting: classic-interview keep/retire (AA-40) and the identity-document processing split (AA-41).
+**Current pass (v6.1 simple case, 28 Sep 2026):** the founder approved prototype v6.1 — the case page as a home plus five plain steps in any order, every sentence in plain words, same v5 design, **nothing removed**. The pass prompt is `docs/handoffs/2026-09-28-v6.1-build-handoff.md` (short: read all of it, not only §0–§2); its checklist is `docs/handoffs/2026-09-28-case-page-inventory.md`, and every line of it must survive. Batches per the founder's standing rule (3–4 tasks per commit, gates once per batch, push when green).
+
+**Earlier pass (AM-26, 22 Sep 2026):** the founder ratified Case OS v2 in chat — product capability before price and channel, because the 21 Sep plan's next action (ten seller conversations) rests on seller access the founder does not have. Work is **AA-39 → AA-40 → AA-41+AA-43 → AA-42**, in that order; AA-39 (the decoder decides) blocks everything else. Direction, the two-journey comparison and a verified-code table: `docs/handoffs/2026-09-22-case-os-v2-ratified-direction.md`. **Two hard rules for this pass:** AA-43 (correcting `legal/privacy.md` §1's "We cannot read your case vault", `LocalFirstBadge`, and the "Encrypted on your device" label) ships in the **same commit** as AA-41, never after — the claim becomes false the moment document reading lands; and AM-26 narrows **local-first only** — D6's **read-only** (never touching the seller's Amazon account) is untouched. Two founder calls ride the build and neither blocks starting: classic-interview keep/retire (AA-40) and the identity-document processing split (AA-41).
 
 **Superseded pass (AM-22, 11 Sep 2026):** the founder-issues fix pass is complete (Tasks 1–3 done at `6436aba`/`ed44480`/`e7a3dfb`; Task 4 founder-gated; all gates green at `1e4dd05`). A fresh session's first job was to write the formal AM-22 task prompt and evidence log per the handoff's §3 order — that paperwork is now done (committed as V0). The pass prompt is `docs/handoffs/2026-09-11-visual-overhaul-v4-prompt.md`; the evidence log is `docs/handoffs/2026-09-11-visual-overhaul-v4.md`. Two founder-gated decisions remain pending before V1 and V6: color reconciliation (warm-neutral vs current cooler-neutral) and vault theme override (permanent dark obsidian vs site-wide theme).
 
@@ -10,8 +12,8 @@
 You are the coding agent for AppealDeck. Repo root: V:\AppealDeck1, branch master, Windows machine.
 Work only from the files below, in this order. Do not edit anything before step 5.
 
-PASS PROMPT PATH: docs/handoffs/2026-09-22-case-os-v2-ratified-direction.md
-EVIDENCE LOG PATH: docs/handoffs/2026-09-22-case-os-v2-build.md
+PASS PROMPT PATH: docs/handoffs/2026-09-28-v6.1-build-handoff.md
+EVIDENCE LOG PATH: docs/handoffs/2026-09-28-v6.1-build.md
 
 1. Read CLAUDE.md in full. Sections 1–3 are absolute (product, locked decisions D1–D10, FORBIDDEN SOURCES). Section 4 is the current state.
 2. Read the pass prompt: only its STATUS banner, §0, §0.A, §1, §2 and Appendix A. Do not read the task sections yet.
