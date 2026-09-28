@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step 3 · Write your answers · AppealDeck</title>
+<link rel="stylesheet" href="../2026-09-26-prototype-v5/v5.css">
+<link rel="stylesheet" href="../2026-09-28-prototype-v6-simple-case/v6.css">
+<link rel="stylesheet" href="v61.css">
+</head>
+<body class="app-body" data-step="3">
+<a class="skip" href="#main">Skip to content</a>
+<div class="main" id="main" role="main">
+  <div class="content" style="grid-template-columns:1fr">
+    <div class="v6-page">
+      <header class="v6-step-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+        <div>
+          <span class="k">Step 3 of 5 · 15 min</span>
+          <h1>Write your answers</h1>
+          <p>Write the way you talk. Short, true, specific. We use your words, not ours.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><span id="count" class="num" style="font-size:13px;color:var(--ink-3)">Question 1 of 3</span><span class="v61-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></span></div>
+      </header>
+
+      <div class="v61-qs" id="qs">
+        <section class="card v6-q on">
+          <h2 style="font-size:21px">What went wrong?</h2>
+          <p class="help">Say what caused it. Name the product. Don't blame Amazon or buyers.</p>
+          <textarea class="textarea" style="min-height:170px" aria-label="What went wrong" placeholder="For example: We listed returned items as new. Our team did not check returns before putting them back on sale."></textarea>
+        </section>
+
+        <section class="card v6-q">
+          <h2 style="font-size:21px">What have you fixed already?</h2>
+          <p class="help">Say what is <strong>finished</strong> and what is <strong>still in progress</strong>, with dates.</p>
+          <textarea class="textarea" style="min-height:170px" aria-label="What you fixed" placeholder="For example: Finished: we removed all 12 listings on 20 Sep. In progress: checking the rest of our stock, done by 5 Oct."></textarea>
+          <label style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px"><input type="checkbox" style="width:18px;height:18px;margin-top:2px">What I call finished really is finished. <span style="color:var(--ink-3)">(We can't check this. Amazon can.)</span></label>
+        </section>
+
+        <section class="card v6-q">
+          <h2 style="font-size:21px">How will you stop it happening again?</h2>
+          <p class="help">Who does what, and how often.</p>
+          <textarea class="textarea" style="min-height:170px" aria-label="How you will stop it" placeholder="For example: Our warehouse lead now checks every return before it goes back on sale. We check a sample every Friday."></textarea>
+        </section>
+      </div>
+
+      <div class="v6-actions">
+        <button class="btn btn-light" type="button" id="back">Back</button>
+        <button class="btn btn-accent" type="button" id="next">Next question</button>
+        <span style="font-size:13px;color:var(--ink-3)">Saved as you type.</span>
+      </div>
+      <p style="font-size:13.5px;color:var(--ink-3);margin:0">With the Appeal Pass you can tap <strong style="color:var(--ink-2)">Make it clearer</strong> under an answer. Your facts stay the same.</p>
+    </div>
+  </div>
+</div>
+<script src="../2026-09-28-prototype-v6-simple-case/shell.js"></script>
+<script>
+  // One question at a time. Back/Next move between them; the last Next goes to step 4.
+  const qs = [...document.querySelectorAll("#qs > section")];
+  const dots = [...document.querySelectorAll(".v61-dots i")];
+  let i = 0;
+  function show() {
+    qs.forEach((q, k) => q.classList.toggle("on", k === i));
+    dots.forEach((d, k) => d.classList.toggle("on", k <= i));
+    document.getElementById("count").textContent = `Question ${i + 1} of 3`;
+    document.getElementById("back").style.visibility = i ? "visible" : "hidden";
+    document.getElementById("next").textContent = i === 2 ? "Done. Next step" : "Next question";
+  }
+  document.getElementById("next").onclick = () => (i === 2 ? (location.href = "step-4.html") : (i++, show()));
+  document.getElementById("back").onclick = () => (i && i--, show());
+  show();
+</script>
+</body>
+</html>

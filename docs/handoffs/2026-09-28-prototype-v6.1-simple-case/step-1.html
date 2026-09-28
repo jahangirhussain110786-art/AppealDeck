@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step 1 · Check what Amazon wants · AppealDeck</title>
+<link rel="stylesheet" href="../2026-09-26-prototype-v5/v5.css">
+<link rel="stylesheet" href="../2026-09-28-prototype-v6-simple-case/v6.css">
+<link rel="stylesheet" href="v61.css">
+</head>
+<body class="app-body" data-step="1">
+<a class="skip" href="#main">Skip to content</a>
+<div class="main" id="main" role="main">
+  <div class="content" style="grid-template-columns:1fr">
+    <div class="v6-page">
+      <header class="v6-step-head">
+        <span class="k">Step 1 of 5 · 1 min</span>
+        <h1>Check what Amazon wants</h1>
+        <p>We read your notice. Is this right?</p>
+      </header>
+
+      <section class="card v6-q">
+        <dl class="v61-sum">
+          <div><dt>The problem</dt><dd>Policy violation: used items sold as new, and product claims Amazon could not check</dd></div>
+          <div><dt>Amazon store</dt><dd>Amazon US</dd></div>
+          <div><dt>Your reply</dt><dd>Your first reply to this notice</dd></div>
+          <div><dt>What Amazon wants</dt><dd>A letter (Plan of Action) and 2 documents</dd></div>
+        </dl>
+        <div class="v6-actions v61-desk-only" style="margin-top:6px">
+          <a class="btn btn-accent" href="step-2.html">Yes, that's right</a>
+        </div>
+      </section>
+
+      <details class="card v6-q v6-more">
+        <summary>Something is wrong? Change it</summary>
+        <div style="display:flex;flex-direction:column;gap:18px;margin-top:14px">
+          <div class="field"><label>The problem</label><select class="input"><option>Policy violation</option><option>Inauthentic items</option><option>Something else…</option></select></div>
+          <div class="field"><label>Do you agree with Amazon? <span style="font-weight:400;color:var(--ink-3)">Any answer is fine.</span></label>
+            <div class="seg" role="group"><button type="button" aria-pressed="true">Not sure yet</button><button type="button">Yes, it happened</button><button type="button">No, I disagree</button></div></div>
+          <div class="field"><label>Replied to this notice before?</label>
+            <div class="seg" role="group"><button type="button" aria-pressed="true">No</button><button type="button">Yes, I replied before</button></div>
+            <span style="font-size:13.5px;color:var(--ink-3)">If yes, paste what you sent. We'll warn you before you send the same thing again.</span></div>
+          <div class="field"><label>Amazon store</label>
+            <div class="seg" role="group"><button type="button" aria-pressed="true">Amazon US</button><button type="button">Another store or not sure</button></div></div>
+          <div class="field"><label>Did Amazon's appeal page ask for more? <span style="font-weight:400;color:var(--ink-3)">(optional)</span></label>
+            <span style="font-size:13.5px;color:var(--ink-3)">In Account Health, click <strong>Appeal</strong> on this notice. If it lists documents or questions, paste them here.</span>
+            <textarea class="textarea" style="min-height:80px" placeholder="Paste the list here…"></textarea></div>
+          <button class="btn btn-light" type="button" style="align-self:flex-start">Save changes</button>
+        </div>
+      </details>
+
+      <p style="font-size:13.5px;color:var(--ink-3);margin:0">Nothing is sent to Amazon. <a href="#">See your notice</a></p>
+    </div>
+  </div>
+  <div class="v61-dock"><a class="btn btn-accent" href="step-2.html">Yes, that's right</a></div>
+</div>
+<script src="../2026-09-28-prototype-v6-simple-case/shell.js"></script>
+</body>
+</html>

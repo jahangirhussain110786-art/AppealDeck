@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step 5 · Send it to Amazon · AppealDeck</title>
+<link rel="stylesheet" href="../2026-09-26-prototype-v5/v5.css">
+<link rel="stylesheet" href="../2026-09-28-prototype-v6-simple-case/v6.css">
+<link rel="stylesheet" href="v61.css">
+</head>
+<body class="app-body" data-step="5">
+<a class="skip" href="#main">Skip to content</a>
+<div class="main" id="main" role="main">
+  <div class="content" style="grid-template-columns:1fr">
+    <div class="v6-page">
+      <header class="v6-step-head">
+        <span class="k">Step 5 of 5 · 5 min</span>
+        <h1>Send it to Amazon</h1>
+        <p>You send it yourself. We never log in to your Amazon account. Tick each step as you go.</p>
+      </header>
+
+      <div class="v61-todo">
+        <label><input type="checkbox"><span>Open <strong>Seller Central → Performance → Account Health</strong>.</span></label>
+        <label><input type="checkbox"><span>Find this notice and click <strong>Appeal</strong>.</span></label>
+        <label style="justify-content:space-between;align-items:center"><span style="display:flex;gap:12px;align-items:flex-start"><input type="checkbox"><span>Paste your letter.</span></span><button class="btn btn-accent btn-sm" type="button">Copy the letter</button></label>
+        <label><input type="checkbox"><span>Attach your documents: <span class="mono" style="font-size:13.5px">supplier-invoice.pdf</span> and <span class="mono" style="font-size:13.5px">sales-record.pdf</span>.</span></label>
+        <label><input type="checkbox"><span>Click <strong>Submit</strong> on Amazon's page.</span></label>
+      </div>
+
+      <section class="card v6-q">
+        <h2>Sent it?</h2>
+        <p class="help">Tell us, and we'll keep a copy and remind you to check for Amazon's reply.</p>
+        <div class="v6-choices">
+          <label class="choice"><input type="radio" name="sent"><span><strong>Yes, as it is</strong></span></label>
+          <label class="choice"><input type="radio" name="sent"><span><strong>Yes, but I changed it</strong><span class="s">Paste what you sent.</span></span></label>
+        </div>
+        <button class="btn btn-accent" type="button" style="align-self:flex-start">Save</button>
+      </section>
+
+      <details class="card v6-q v6-more" id="reply">
+        <summary>Amazon replied? Paste the reply here</summary>
+        <p class="help" style="margin-top:10px">We show what Amazon wants now and keep everything you've done.</p>
+        <textarea class="textarea" aria-label="Amazon's reply" placeholder="Paste Amazon's whole reply…"></textarea>
+        <button class="btn btn-light" type="button" style="align-self:flex-start">Read the reply</button>
+      </details>
+
+      <p style="font-size:13.5px;color:var(--ink-3);margin:0"><a href="#">Download my case</a> to share it with an adviser.</p>
+    </div>
+  </div>
+  <div class="v61-dock"><a class="btn btn-light" href="case.html">My steps</a><button class="btn btn-accent" type="button">Copy the letter</button></div>
+</div>
+<script src="../2026-09-28-prototype-v6-simple-case/shell.js"></script>
+</body>
+</html>
