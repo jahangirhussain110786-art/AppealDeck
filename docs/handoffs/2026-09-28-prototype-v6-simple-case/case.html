@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your case · AppealDeck</title>
+<link rel="stylesheet" href="../2026-09-26-prototype-v5/v5.css">
+<link rel="stylesheet" href="v6.css">
+</head>
+<body class="app-body" data-step="0">
+<a class="skip" href="#main">Skip to content</a>
+<div class="main" id="main" role="main">
+  <div class="content">
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+
+      <!-- What this case is, in one breath -->
+      <section class="hero-card" aria-labelledby="what">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <span class="pill" style="background:rgba(234,88,12,0.25);color:#fdba74;align-self:flex-start"><span class="d"></span>Policy violation</span>
+          <h1 id="what" style="font-size:30px;line-height:1.12;letter-spacing:-0.03em;font-weight:600">Amazon wants a letter from you.</h1>
+          <p style="color:var(--stage-ink-2);max-width:32em;font-size:16px;line-height:1.55">It is called a Plan of Action. It says <strong style="color:#fff">what went wrong</strong>, <strong style="color:#fff">what you fixed</strong>, and <strong style="color:#fff">how you will stop it happening again</strong>. We help you write it in 5 steps.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-accent" href="step-2.html">Continue: step 2</a></div>
+        </div>
+        <div style="background:#fff;color:var(--ink);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:6px;box-shadow:0 20px 40px -20px rgba(0,0,0,0.6)">
+          <span style="font-size:13px;color:var(--ink-3)">You are here</span>
+          <strong style="font-size:34px;letter-spacing:-0.03em" class="num">1 of 5</strong>
+          <span style="font-size:14px;color:var(--ink-2)">steps done</span>
+          <span style="height:6px;border-radius:3px;background:#eeede7;overflow:hidden;margin-top:6px"><span style="display:block;width:20%;height:100%;background:var(--ink)"></span></span>
+        </div>
+      </section>
+
+      <!-- The five steps. Every row is a link: any order is fine. -->
+      <section class="card v6-steps" aria-labelledby="h-steps">
+        <div class="card-h"><h2 id="h-steps" style="font-size:15px">Your 5 steps</h2><span style="font-size:13px;color:var(--ink-3)">Do them in any order. We keep track.</span></div>
+
+        <a class="v6-row" href="step-1.html">
+          <span class="chk ok"></span>
+          <span><span class="t">Check what Amazon wants</span><span class="s" style="display:block">Done. We read your notice together.</span></span>
+          <span class="pill ok">Done</span>
+        </a>
+        <a class="v6-row next" href="step-2.html">
+          <span class="v6-big">2</span>
+          <span><span class="t">Gather your documents</span><span class="s" style="display:block">2 documents: your supplier invoice and a sales record.</span></span>
+          <span class="pill need"><span class="d"></span>Start here</span>
+        </a>
+        <a class="v6-row" href="step-3.html">
+          <span class="v6-big">3</span>
+          <span><span class="t">Write your answers</span><span class="s" style="display:block">3 short questions, in your own words. About 15 minutes.</span></span>
+          <span class="pill mute">Not started</span>
+        </a>
+        <a class="v6-row" href="step-4.html">
+          <span class="v6-big">4</span>
+          <span><span class="t">Check your letter</span><span class="s" style="display:block">We put your answers into one letter. You read it and copy it.</span></span>
+          <span class="pill mute">Not started</span>
+        </a>
+        <a class="v6-row" href="step-5.html">
+          <span class="v6-big">5</span>
+          <span><span class="t">Send it to Amazon</span><span class="s" style="display:block">You paste it into Seller Central. Then tell us you sent it.</span></span>
+          <span class="pill mute">Not started</span>
+        </a>
+      </section>
+
+      <section class="card" style="padding:18px 20px;display:flex;gap:14px;align-items:flex-start">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px"><path d="M4 4h16v12H5.2L4 17.2z"/></svg>
+        <span style="font-size:14.5px;line-height:1.55"><strong>Did Amazon reply?</strong> Paste its reply here. We show what it wants now, and keep everything you have already done. <a href="step-5.html#reply">Add Amazon's reply</a></span>
+      </section>
+    </div>
+
+    <!-- One side card, not four: the date and where the files are. -->
+    <aside style="display:flex;flex-direction:column;gap:20px">
+      <section class="card" aria-labelledby="h-due">
+        <div class="card-h"><h2 id="h-due" style="font-size:15px">Your deadline</h2></div>
+        <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;font-size:14.5px;line-height:1.5">
+          <p style="margin:0"><strong>90 days</strong> from the date on your notice.</p>
+          <p style="margin:0;color:var(--ink-3)">Your notice has no date on it. Seller Central shows the exact date under <strong style="color:var(--ink-2)">Performance → Account Health</strong>. Add it here and we count down for you.</p>
+          <div style="display:flex;gap:8px"><input class="input" type="date" aria-label="Your reply date" style="flex:1"><button class="btn btn-light btn-sm" type="button">Save</button></div>
+        </div>
+      </section>
+      <section class="card" style="padding:18px 20px;display:flex;align-items:center;gap:14px">
+        <img src="../2026-09-26-prototype-v5/images/vault.svg" alt="" style="width:56px">
+        <span style="font-size:14px;line-height:1.5"><strong style="display:block">No files yet</strong><span style="color:var(--ink-3)">Your files stay on this computer.</span> <a href="../2026-09-26-prototype-v5/privacy.html">Where is my data?</a></span>
+      </section>
+    </aside>
+  </div>
+</div>
+<script src="shell.js"></script>
+</body>
+</html>

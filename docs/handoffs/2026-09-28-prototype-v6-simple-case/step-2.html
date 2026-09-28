@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step 2 · Gather your documents · AppealDeck</title>
+<link rel="stylesheet" href="../2026-09-26-prototype-v5/v5.css">
+<link rel="stylesheet" href="v6.css">
+</head>
+<body class="app-body" data-step="2">
+<a class="skip" href="#main">Skip to content</a>
+<div class="main" id="main" role="main">
+  <div class="content" style="grid-template-columns:1fr">
+    <div class="v6-page">
+      <header class="v6-step-head">
+        <span class="k">Step 2 of 5 · 0 of 2 documents added</span>
+        <h1>Gather your documents</h1>
+        <p>Amazon wants proof. Add each document below. If you don't have one yet, that's fine: do the other steps and come back.</p>
+      </header>
+
+      <!-- Document 1, open -->
+      <section class="card v6-q" aria-labelledby="d1">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+          <h2 id="d1" style="font-size:20px">Supplier invoice</h2>
+          <span class="pill need"><span class="d"></span>To do</span>
+        </div>
+        <div class="v6-tag"><strong style="color:var(--ink)">Amazon asked for this.</strong> Your notice says:</div>
+        <p class="v6-quote" style="margin:0">"Include supporting documents, such as supplier invoices for the ASINs listed above."</p>
+
+        <p style="margin:0;font-size:15px;line-height:1.55"><strong>Why:</strong> it proves you bought real stock from a real supplier. Amazon may phone the supplier to check.</p>
+
+        <details class="v6-more">
+          <summary>What a good invoice shows</summary>
+          <ul class="v6-list" style="margin-top:10px">
+            <li>The supplier's name, address and phone number</li>
+            <li>Your business name and address, the same as on your seller account</li>
+            <li>A date in the last 12 months</li>
+            <li>The products (ASINs) and how many you bought, at least as many as you sold</li>
+          </ul>
+          <p style="margin:10px 0 0;font-size:14px;color:var(--ink-3)"><strong style="color:var(--ink-2)">Amazon will not accept:</strong> quotes, pro-forma invoices, order screenshots, shop receipts, spreadsheets you made, or edited PDFs.</p>
+        </details>
+
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:4px">
+          <div><strong style="font-size:15px">a. Add the file</strong>
+            <div class="v6-drop" style="margin-top:8px"><span style="font-size:14px;color:var(--ink-2)">Drop it here, or choose it<br><span style="font-size:12.5px;color:var(--ink-3)">PDF or photo. It stays on this computer.</span></span><button class="btn btn-ink btn-sm" type="button">Choose a file</button></div>
+          </div>
+          <div class="field"><label for="shows">b. What does it show? <span style="font-weight:400;color:var(--ink-3)">(one line is enough)</span></label>
+            <textarea id="shows" class="textarea" style="min-height:80px" placeholder="For example: 40 units of B0EXAMPLE1 from Harbor Goods, 14 March 2026"></textarea>
+          </div>
+          <label style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px"><input type="checkbox" style="width:18px;height:18px;margin-top:2px">c. I looked at this file myself and what I wrote is true.</label>
+          <div class="v6-actions"><button class="btn btn-accent" type="button">Save this document</button><button class="btn btn-light" type="button">Check it for me</button><span style="font-size:13px;color:var(--ink-3)">Checking needs the Appeal Pass.</span></div>
+        </div>
+
+        <div style="border-top:1px solid var(--line-2);padding-top:12px">
+          <span style="font-size:13.5px;color:var(--ink-3)">Don't have it?</span>
+          <div class="v6-links" style="margin-top:6px"><a href="#">Ask the supplier for it (we write the email)</a><a href="#">I'm waiting for it</a><a href="#">I can't get it</a><a href="#">This doesn't apply to me</a></div>
+        </div>
+      </section>
+
+      <!-- Document 2, closed until opened -->
+      <details class="card v6-q v6-more">
+        <summary style="display:flex;justify-content:space-between;gap:12px;align-items:center"><span style="font-size:18px">Sales record</span><span style="display:flex;gap:12px;align-items:center"><span class="pill need"><span class="d"></span>To do</span><span style="font-size:14px;font-weight:500;color:var(--link, #1d4ed8)">Open</span></span></summary>
+        <div class="v6-tag" style="margin-top:12px"><strong style="color:var(--ink)">We added this.</strong> Your notice doesn't name it, but cases like yours usually need it. If it doesn't fit your case, remove it.</div>
+        <p style="margin:0;font-size:15px;line-height:1.55"><strong>Why:</strong> it shows how many you sold, so Amazon can match it to your invoices.</p>
+        <p style="margin:0;font-size:14px;color:var(--ink-3)">Open it to add the file, the same way as above.</p>
+      </details>
+
+      <!-- Business details: needed only to compare invoices, so optional and folded -->
+      <details class="card v6-q v6-more">
+        <summary>Optional: your business name and address</summary>
+        <p class="help" style="margin-top:10px">Amazon checks that your invoices match your seller account. Type them once, exactly as in Seller Central, and we compare them for you.</p>
+        <div class="field"><label>Business name</label><input class="input"></div>
+        <div class="field"><label>Business address</label><textarea class="textarea" style="min-height:70px"></textarea></div>
+        <div class="field"><label>Your suppliers <span style="font-weight:400;color:var(--ink-3)">(one per line)</span></label><textarea class="textarea" style="min-height:70px"></textarea></div>
+        <button class="btn btn-light btn-sm" type="button" style="align-self:flex-start">Save</button>
+      </details>
+
+      <div class="v6-actions">
+        <a class="btn btn-accent" href="step-3.html">Next step</a>
+        <a class="btn btn-light" href="case.html">Back to my steps</a>
+        <a href="#" style="font-size:14px">Amazon asked for something that isn't here?</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="shell.js"></script>
+</body>
+</html>

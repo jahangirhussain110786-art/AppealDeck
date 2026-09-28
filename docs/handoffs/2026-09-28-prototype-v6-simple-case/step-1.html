@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step 1 · Check what Amazon wants · AppealDeck</title>
+<link rel="stylesheet" href="../2026-09-26-prototype-v5/v5.css">
+<link rel="stylesheet" href="v6.css">
+</head>
+<body class="app-body" data-step="1">
+<a class="skip" href="#main">Skip to content</a>
+<div class="main" id="main" role="main">
+  <div class="content" style="grid-template-columns:1fr">
+    <div class="v6-page">
+      <header class="v6-step-head">
+        <span class="k">Step 1 of 5 · about 1 minute</span>
+        <h1>Check what Amazon wants</h1>
+        <p>We read your notice. Tell us if we got it right. You can change any answer later.</p>
+      </header>
+
+      <section class="card v6-q">
+        <h2>1. Is this what Amazon says went wrong?</h2>
+        <div class="v6-tag"><strong style="color:var(--ink)">Policy violation.</strong> Items were listed as new but buyers got used items, and some product pages had claims Amazon could not check.</div>
+        <div class="v6-choices">
+          <label class="choice"><input type="radio" name="kind" checked><span><strong>Yes, that's right</strong></span></label>
+          <label class="choice"><input type="radio" name="kind"><span><strong>No, it's something else</strong><span class="s">Pick the right problem from a list.</span></span></label>
+        </div>
+      </section>
+
+      <section class="card v6-q">
+        <h2>2. Do you agree with what Amazon says?</h2>
+        <p class="help">Any answer is fine. It changes how we help you write.</p>
+        <div class="v6-choices">
+          <label class="choice"><input type="radio" name="pos" checked><span><strong>I'm not sure yet</strong></span></label>
+          <label class="choice"><input type="radio" name="pos"><span><strong>Yes, it happened</strong></span></label>
+          <label class="choice"><input type="radio" name="pos"><span><strong>No, I disagree</strong></span></label>
+        </div>
+      </section>
+
+      <section class="card v6-q">
+        <h2>3. Have you already replied to this notice?</h2>
+        <p class="help">Many sellers have. If you tell us what you sent, we warn you before you send the same thing again.</p>
+        <div class="v6-choices">
+          <label class="choice"><input type="radio" name="prior" checked><span><strong>No, this is my first reply</strong></span></label>
+          <label class="choice"><input type="radio" name="prior"><span><strong>Yes, I replied before</strong><span class="s">You can paste what you sent.</span></span></label>
+        </div>
+      </section>
+
+      <section class="card v6-q">
+        <h2>4. Which Amazon store is this for?</h2>
+        <div class="v6-choices">
+          <label class="choice"><input type="radio" name="mkt" checked><span><strong>Amazon US</strong></span></label>
+          <label class="choice"><input type="radio" name="mkt"><span><strong>Another store, or not sure</strong></span></label>
+        </div>
+      </section>
+
+      <details class="card v6-q v6-more">
+        <summary>Optional: did Amazon's appeal page ask for more?</summary>
+        <p class="help">In Seller Central, go to Account Health and click <strong>Appeal</strong> on this notice. If that page lists documents or questions, paste them here. We will add them to your steps. Do not paste passwords or card details.</p>
+        <textarea class="textarea" aria-label="What the appeal page asks for" placeholder="Paste the list from the appeal page…"></textarea>
+      </details>
+
+      <div class="v6-actions">
+        <a class="btn btn-accent" href="step-2.html">Looks right. Next step</a>
+        <a class="btn btn-light" href="case.html">Back to my steps</a>
+      </div>
+      <p style="font-size:13.5px;color:var(--ink-3);margin:0">Nothing is sent to Amazon. Your notice: <a href="#">read or edit it</a>.</p>
+    </div>
+  </div>
+</div>
+<script src="shell.js"></script>
+</body>
+</html>

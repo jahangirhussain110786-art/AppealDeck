@@ -1,0 +1,45 @@
+/* v6 additions on top of v5.css: the step rail, step rows and a few text helpers. No new colours. */
+.v6-rail { display: flex; gap: 6px; padding: 14px 28px 0; overflow-x: auto; }
+.v6-rail a { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; font-size: 13.5px; color: var(--ink-2); text-decoration: none; white-space: nowrap; background: #fff; box-shadow: 0 0 0 1px var(--line-2) inset; }
+.v6-rail a[aria-current="step"] { background: var(--ink); color: #fff; box-shadow: none; }
+.v6-n { width: 20px; height: 20px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; box-shadow: 0 0 0 1.5px #c6c9d0 inset; }
+.v6-rail a[aria-current="step"] .v6-n { box-shadow: 0 0 0 1.5px rgba(255,255,255,0.6) inset; }
+
+.v6-page { max-width: 760px; display: flex; flex-direction: column; gap: 20px; }
+.v6-step-head .k { font-size: 13px; font-weight: 600; color: var(--accent-ink); }
+.v6-step-head h1 { font-size: 30px; line-height: 1.12; letter-spacing: -0.03em; font-weight: 600; margin: 6px 0 8px; }
+.v6-step-head p { color: var(--ink-2); font-size: 16px; line-height: 1.55; max-width: 36em; margin: 0; }
+
+.v6-q { padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
+.v6-q h2 { font-size: 17px; margin: 0; }
+.v6-q .help { font-size: 14px; color: var(--ink-3); line-height: 1.5; margin: 0; }
+.v6-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+
+.v6-steps .v6-row { display: grid; grid-template-columns: 36px 1fr auto; gap: 16px; align-items: center; padding: 18px 20px; border-bottom: 1px solid var(--line-2); text-decoration: none; color: var(--ink); }
+.v6-steps .v6-row:last-child { border-bottom: 0; }
+.v6-steps .v6-row:hover { background: #fbfaf7; }
+.v6-steps .v6-big { width: 32px; height: 32px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; box-shadow: 0 0 0 1.5px #c6c9d0 inset; }
+.v6-steps .v6-row.next { background: #fffaf5; }
+.v6-steps .v6-row.next .v6-big { box-shadow: 0 0 0 2px var(--accent) inset; color: var(--accent-ink); }
+.v6-steps .v6-row .t { font-weight: 600; font-size: 16px; }
+.v6-steps .v6-row .s { font-size: 14px; color: var(--ink-3); margin-top: 2px; }
+.v6-steps .v6-row .chk { width: 32px; height: 32px; border-radius: 16px; }
+
+.v6-links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; }
+.v6-links a { color: var(--link, #1d4ed8); }
+.v6-tag { font-size: 13px; padding: 10px 12px; border-radius: 10px; background: #f4f3ee; color: var(--ink-2); line-height: 1.5; }
+.v6-quote { font-family: var(--serif, Georgia, serif); font-style: italic; font-size: 15px; color: var(--ink-2); border-left: 3px solid var(--accent-glow); padding: 2px 0 2px 12px; }
+.v6-list { margin: 0; padding-left: 20px; line-height: 1.7; font-size: 14.5px; color: var(--ink-2); }
+.v6-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.v6-drop { border: 1.5px dashed #d6d3c8; border-radius: 14px; padding: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #fcfbf8; }
+details.v6-more > summary { cursor: pointer; font-weight: 600; font-size: 14.5px; }
+.v6-letter { background: #fff; border-radius: 14px; box-shadow: 0 0 0 1px var(--line-2) inset; padding: 22px 24px; font-size: 15px; line-height: 1.65; }
+.v6-letter h3 { font-size: 14px; text-transform: none; margin: 18px 0 6px; }
+.v6-letter h3:first-child { margin-top: 0; }
+.v6-miss { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-2); font-size: 14.5px; }
+.v6-miss:last-child { border-bottom: 0; }
+.v6-table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.v6-table th, .v6-table td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line-2); }
+.v6-table th { font-size: 13px; color: var(--ink-3); font-weight: 600; }
+.v6-table td:first-child { color: var(--ink-3); text-decoration: line-through; text-decoration-color: #c9c7be; }
+@media (max-width: 860px) { .v6-rail { padding: 12px 16px 0; } .v6-steps .v6-row { grid-template-columns: 32px 1fr; } .v6-steps .v6-row > :last-child { grid-column: 2; justify-self: start; } }
