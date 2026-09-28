@@ -69,3 +69,6 @@ appealdeck.md
 
 # Local compatibility junctions; canonical skills live in .agents/skills.
 .claude/skills/
+
+# Vercel CLI project link (vercel link)
+.vercel

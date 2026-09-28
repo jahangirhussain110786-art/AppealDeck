@@ -108,8 +108,11 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
 
 ## 6. Upstash production setup (founder action)
 
-1. https://console.upstash.com → Create database (free tier, single region, closest to your Vercel region = `us-east-1`).
-2. Database details → REST API → copy the `UPSTASH_REDIS_REST_URL` (https form, NOT the rediss:// URL) and `UPSTASH_REDIS_REST_TOKEN` into Vercel.
+**Done 28 Sep 2026 through Vercel → Storage → Upstash (Redis).** The integration created the database and injected `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN`, `KV_URL` and `REDIS_URL` into Preview and Production. The app reads `KV_REST_API_URL` / `KV_REST_API_TOKEN` when the `UPSTASH_` names are absent (`src/lib/redisEnv.ts`), so nothing needs copying. Local development keeps its own database in `.env.local` under the `UPSTASH_` names, so local testing never uses up production's rate limits or the Gemini spend cap.
+
+To set it up by hand instead: https://console.upstash.com → Create database (free tier, closest to the Vercel region `iad1` = `us-east-1`) → REST API → copy the https URL (not `rediss://`) and the normal token (not the read-only one) into `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`.
+
+Check after the first deploy: `/decode` answers normally, and a signed-in action such as recording an outcome does not answer "too many requests".
 
 ## 6a. Backups and the support address (founder action) — do these before the first sale
 

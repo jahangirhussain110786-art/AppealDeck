@@ -1,5 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { redisCredentials } from "@/lib/redisEnv";
 import type { NextRequest } from "next/server";
 
 export type DegradedResponse = {
@@ -40,7 +41,7 @@ let _redis: Redis | null = null;
 let _rateLimiters = new Map<string, Ratelimit>();
 
 function hasUpstashEnv(): boolean {
-  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+  return redisCredentials() !== null;
 }
 
 export function isBreakerEnabled(): boolean {
@@ -50,10 +51,7 @@ export function isBreakerEnabled(): boolean {
 function getRedis(): Redis | null {
   if (!hasUpstashEnv()) return null;
   if (!_redis) {
-    _redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    });
+    _redis = new Redis(redisCredentials()!);
   }
   return _redis;
 }

@@ -20,7 +20,9 @@ production until a founder step is done · **Not built** — deliberately absent
 and `_TOKEN`, DEPLOYMENT §6). The rate limiter fails closed in production (`src/lib/ratelimit.ts`),
 so without it buying a Pass, preparing a response, document checks, wording help, reminders,
 outcome sharing and reply reading all answer "too many requests". "Live" below means live once
-Upstash is set. Added 24 Sep 2026: this file did not mention Upstash at all.
+Upstash is set. Added 24 Sep 2026: this file did not mention Upstash at all. **28 Sep 2026:** connected
+to the Vercel project through the Storage integration (`KV_REST_API_*` names, read by
+`src/lib/redisEnv.ts`); not yet proven on a deployment, because the project has never been deployed.
 
 ## The case, from notice to outcome
 

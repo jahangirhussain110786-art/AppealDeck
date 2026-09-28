@@ -1,5 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { redisCredentials } from "@/lib/redisEnv";
 import type { AppUser } from "@/lib/auth";
 
 export type RateLimitResult = {
@@ -16,16 +17,13 @@ let _outcome: Ratelimit | null = null;
 let _wording: Ratelimit | null = null;
 
 function hasUpstashEnv(): boolean {
-  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+  return redisCredentials() !== null;
 }
 
 function getComposeLimiter(): Ratelimit | null {
   if (!hasUpstashEnv()) return null;
   if (!_compose) {
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    });
+    const redis = new Redis(redisCredentials()!);
     _compose = new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(30, "1 m"),
@@ -39,10 +37,7 @@ function getComposeLimiter(): Ratelimit | null {
 function getAnalyzeReplyLimiter(): Ratelimit | null {
   if (!hasUpstashEnv()) return null;
   if (!_analyzeReply) {
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    });
+    const redis = new Redis(redisCredentials()!);
     _analyzeReply = new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(60, "1 m"),
@@ -56,10 +51,7 @@ function getAnalyzeReplyLimiter(): Ratelimit | null {
 function getDocumentReadLimiter(): Ratelimit | null {
   if (!hasUpstashEnv()) return null;
   if (!_documentRead) {
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    });
+    const redis = new Redis(redisCredentials()!);
     _documentRead = new Ratelimit({
       redis,
       limiter: Ratelimit.fixedWindow(20, "1 d"),
@@ -73,10 +65,7 @@ function getDocumentReadLimiter(): Ratelimit | null {
 function getOutcomeLimiter(): Ratelimit | null {
   if (!hasUpstashEnv()) return null;
   if (!_outcome) {
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    });
+    const redis = new Redis(redisCredentials()!);
     // A seller shares an outcome once per case, rarely more than a handful of times ever —
     // a generous daily cap is purely an abuse guard, not an expected-usage ceiling.
     _outcome = new Ratelimit({
@@ -92,10 +81,7 @@ function getOutcomeLimiter(): Ratelimit | null {
 function getWordingLimiter(): Ratelimit | null {
   if (!hasUpstashEnv()) return null;
   if (!_wording) {
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    });
+    const redis = new Redis(redisCredentials()!);
     // Wording help is asked for one section at a time and often more than once while a seller
     // works, so the cap is higher than document reading's — and it is a short text call, not a file.
     _wording = new Ratelimit({
