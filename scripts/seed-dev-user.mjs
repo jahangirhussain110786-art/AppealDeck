@@ -4,9 +4,14 @@
 // Supabase project so the founder + design partners can sign in without
 // having to go through the email-confirmation loop.
 //
-// NOT for production. NOT committed. Idempotent — deletes any existing user
-// with the same email first, then creates a fresh one with a new random
-// password. Safe to re-run at any time on a dev project.
+// NOT for production. Idempotent — gives an existing user with the same email
+// a new random password, or creates the user if there is none. Safe to re-run
+// at any time on a dev project.
+//
+// It used to delete the existing user and create a fresh one. Since the Pass,
+// case and reminder tables reference auth.users, that delete fails ("Database
+// error deleting user") once the account has been used, and would lose the
+// account's records if it succeeded. Updating keeps the same user id.
 //
 // Usage: node scripts/seed-dev-user.mjs
 // Output: prints the email, user id, and new password.
@@ -36,25 +41,15 @@ if (listError) {
 }
 
 const existing = list.users.find((u) => u.email === EMAIL);
-if (existing) {
-  const { error: delError } = await supabase.auth.admin.deleteUser(existing.id);
-  if (delError) {
-    console.error(`Failed to delete existing user ${existing.id}: ${delError.message}`);
-    process.exit(1);
-  }
-  console.log(`Deleted existing user ${existing.id} (${EMAIL}).`);
-}
-
-const { data, error } = await supabase.auth.admin.createUser({
-  email: EMAIL,
-  password,
-  email_confirm: true,
-});
+const { data, error } = existing
+  ? await supabase.auth.admin.updateUserById(existing.id, { password, email_confirm: true })
+  : await supabase.auth.admin.createUser({ email: EMAIL, password, email_confirm: true });
 
 if (error) {
-  console.error(`Failed to create user: ${error.message}`);
+  console.error(`Failed to ${existing ? "update" : "create"} user: ${error.message}`);
   process.exit(1);
 }
+console.log(existing ? `Updated existing user ${existing.id}.` : "Created user.");
 
 console.log("OK");
 console.log(`EMAIL=${data.user.email}`);
