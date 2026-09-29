@@ -1094,8 +1094,15 @@ function WorkspaceInner({
       }))
     : [];
   const caseTitle = file.kind === "UNKNOWN" ? C.title : APP.violationKinds[file.kind];
-  const nextTab =
-    replyPending || awaiting || !workspaceCanCompose(w)
+  /*
+    A verification case is not composable, so it fell into the "clarify" branch: headed "Clarify the
+    requested response" and pointed at the case notes, although the Response tab holds its
+    preparation checklist. Found by the researched test notices, 29 Sep 2026.
+  */
+  const verifying = !gated && !replyPending && !awaiting && w.protocol === "verification";
+  const nextTab = verifying
+    ? "response"
+    : replyPending || awaiting || !workspaceCanCompose(w)
       ? "history"
       : next || !w.requirementsConfirmed
         ? "evidence"
@@ -1390,15 +1397,17 @@ function WorkspaceInner({
                             ? "Keep the next reply with this attempt"
                             : w.protocol === "information"
                               ? "No new response is requested"
-                              : !workspaceCanCompose(w)
-                                ? "Clarify the requested response"
-                                : next
-                                  ? next.status === "waiting"
-                                    ? "Continue while you wait"
-                                    : `Review ${next.label}`
-                                  : !w.requirementsConfirmed
-                                    ? "Check the requested records"
-                                    : "Prepare your factual response"
+                              : verifying
+                                ? C.overview.verifyTitle
+                                : !workspaceCanCompose(w)
+                                  ? "Clarify the requested response"
+                                  : next
+                                    ? next.status === "waiting"
+                                      ? "Continue while you wait"
+                                      : `Review ${next.label}`
+                                    : !w.requirementsConfirmed
+                                      ? "Check the requested records"
+                                      : "Prepare your factual response"
                     }
                     body={
                       gated
@@ -1407,11 +1416,15 @@ function WorkspaceInner({
                           ? C.replyPending.body
                           : awaiting
                             ? "Your submitted text and document references are preserved in History. Add a reply when one arrives."
-                            : next
-                              ? next.status === "waiting"
-                                ? C.waitingHelp
-                                : C.overview.reviewBody
-                              : route.reason
+                            : verifying
+                              ? C.overview.verifyBody
+                              : !workspaceCanCompose(w) && w.protocol !== "information"
+                                ? route.reason
+                                : next
+                                  ? next.status === "waiting"
+                                    ? C.waitingHelp
+                                    : C.overview.reviewBody
+                                  : route.reason
                     }
                     actions={
                       <>
@@ -1420,11 +1433,13 @@ function WorkspaceInner({
                             ? C.replyPending.cta
                             : awaiting
                               ? "Add a reply"
-                              : !workspaceCanCompose(w)
-                                ? "View case notes"
-                                : next || !w.requirementsConfirmed
-                                  ? C.overview.toDocuments
-                                  : C.overview.toResponse}
+                              : verifying
+                                ? C.overview.verifyCta
+                                : !workspaceCanCompose(w)
+                                  ? "View case notes"
+                                  : next || !w.requirementsConfirmed
+                                    ? C.overview.toDocuments
+                                    : C.overview.toResponse}
                           <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                         </Button>
                         <Button variant="outline" onClick={() => setReviewRequest(true)}>

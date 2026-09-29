@@ -310,6 +310,9 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{ pattern: RegExp; evidenceKind: Evidenc
     pattern: /\b(sales report|sales records?|order report|metrics? report)\b/i,
     evidenceKind: "metric_export",
   },
+  // 29 Sep 2026: a funds notice asking for "a bank statement showing the account holder name" had
+  // the bank record raised as ours ("We added this") although Amazon named it.
+  { pattern: /\bbank statements?\b/i, evidenceKind: "financial_instrument_doc" },
   {
     pattern: /\b(proof of (?:correction|changes)|listing screenshots?)\b/i,
     evidenceKind: "listing_fix_proof",
@@ -382,6 +385,53 @@ export function requirementEvidenceKind(
 const REQUIREMENT_NEGATION =
   /\b(do not|don't|does not need|not required|not necessary|not needed|no need to|no longer|no additional|no further)\b/i;
 
+const REQUEST_WORD = /\b(provide|submit|upload|send|include|request(?:ed|ing)?)\b/i;
+/** "- Copies of invoices…", "-- …", "• …", "1. …", "2) …": one item of a list. */
+const LIST_ITEM = /^(?:[-–—*•]+|\(?\d{1,2}[.)])\s+/;
+
+/**
+ * The sentences that ask for something, as `proposedRequirements` reads them.
+ *
+ * 29 Sep 2026: Amazon usually writes a request as a lead-in and a list — "To reactivate your
+ * selling account, please send us:" followed by "-- Copies of invoices or receipts from your
+ * supplier…" on its own line. Each item then had no request verb of its own and was dropped, so a
+ * researched Section 3 notice naming supplier invoices raised no record at all, and a product-safety
+ * notice listing a test report showed it as something we had added rather than something Amazon
+ * named. A list item now counts as a request when the line introducing its list asks for something
+ * and ends with a colon. The item is kept as its own sentence, so the quote shown to the seller is
+ * the item Amazon wrote. A line that is not a list item ends the list.
+ */
+function requestSentences(text: string): string[] {
+  const out: string[] = [];
+  let inRequestList = false;
+  for (const rawLine of text.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const isItem = LIST_ITEM.test(line);
+    // The marker goes before splitting, or "1. A test report…" splits after "1.".
+    const sentences = line
+      .replace(LIST_ITEM, "")
+      .split(/(?<=[.!?])\s+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (isItem && inRequestList) {
+      out.push(sentences[0]!);
+      out.push(...sentences.slice(1).filter((s) => REQUEST_WORD.test(s)));
+      continue;
+    }
+    out.push(...sentences.filter((s) => REQUEST_WORD.test(s)));
+    // A negated or historical lead-in ("You do not need to send:", "You previously provided:")
+    // introduces a list of things that are not being asked for.
+    if (!isItem)
+      inRequestList =
+        /:\s*$/.test(line) &&
+        REQUEST_WORD.test(line) &&
+        !REQUIREMENT_NEGATION.test(line) &&
+        !describesThePast(line);
+  }
+  return out;
+}
+
 export function proposedRequirements(
   /**
    * `revision` is here so a named requirement records which request its quote came from. Callers
@@ -392,18 +442,14 @@ export function proposedRequirements(
   /** Omit on surfaces that must show only what Amazon actually said — see the union note below. */
   violationKind?: ViolationKind,
 ): Requirement[] {
-  const sources = `${w.notice}\n${w.formInstructions}`
-    .split(/\n|(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter(
-      (s) =>
-        s.length <= 2000 &&
-        /\b(provide|submit|upload|send|include|request(?:ed|ing)?)\b/i.test(s) &&
-        !REQUIREMENT_NEGATION.test(s) &&
-        // "Invoices were requested earlier", "thank you for providing your invoices": the notice
-        // describing what already happened. The same rule `determineResponseType` applies.
-        !describesThePast(s),
-    );
+  const sources = requestSentences(`${w.notice}\n${w.formInstructions}`).filter(
+    (s) =>
+      s.length <= 2000 &&
+      !REQUIREMENT_NEGATION.test(s) &&
+      // "Invoices were requested earlier", "thank you for providing your invoices": the notice
+      // describing what already happened. The same rule `determineResponseType` applies.
+      !describesThePast(s),
+  );
   const named = REQUIREMENT_CANDIDATES.flatMap(({ pattern, label, evidenceKind }) => {
     const sourceQuote = sources.find((s) => pattern.test(s));
     return sourceQuote

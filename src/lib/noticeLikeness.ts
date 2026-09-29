@@ -16,7 +16,8 @@ const AMAZON_MARKERS: RegExp[] = [
   /suspended/i,
   /plan of action/i,
   /\bASIN/i,
-  /policy/i,
+  // "policies" as well (29 Sep 2026): "a serious violation of our policies" matched nothing.
+  /polic(?:y|ies)/i,
   /account health/i,
   /selling privileges/i,
   /disbursement/i,
@@ -32,6 +33,17 @@ const AMAZON_MARKERS: RegExp[] = [
   /prohibited/i,
 ];
 
+/**
+ * How many Amazon-notice markers the text carries. Shared with `/api/decode`'s prefilter
+ * (29 Sep 2026), which kept its own six-marker list and so refused a genuine short notice about
+ * falsified documents — the one kind of case D6 routes to professional help — that this page's own
+ * check accepted. One list now decides both.
+ */
+export function noticeMarkerHits(text: string): number {
+  const trimmed = text.trim();
+  return AMAZON_MARKERS.filter((re) => re.test(trimmed)).length;
+}
+
 export function assessNoticeLikeness(text: string): NoticeLikeness {
   const trimmed = text.trim();
   const length = trimmed.length;
@@ -41,7 +53,7 @@ export function assessNoticeLikeness(text: string): NoticeLikeness {
   if (length >= 300) score = 2;
   if (length >= 800) score = 3;
 
-  const hits = AMAZON_MARKERS.filter((re) => re.test(trimmed)).length;
+  const hits = noticeMarkerHits(trimmed);
   if (hits >= 2) score = Math.max(score, 2);
   if (hits >= 4) score = Math.max(score, 3);
 

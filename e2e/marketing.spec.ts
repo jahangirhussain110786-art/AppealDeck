@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 
 test.describe("Marketing site (public)", () => {
@@ -85,6 +87,10 @@ test.describe("Marketing site (public)", () => {
     await page.getByRole("button", { name: "Decode", exact: true }).click();
 
     const main = page.locator("main");
+    // 29 Sep 2026: headed by the warning, not by a response type, as though Amazon had sent it.
+    await expect(main.getByRole("heading", { level: 1 })).toHaveText(
+      "This message has warning signs.",
+    );
     await expect(main.getByText("Check this message before you act on it")).toBeVisible();
     await expect(main.getByText("This message mentions a payment")).toBeVisible();
     // 26 Sep 2026: the pasted notice now stays on screen beside the result, so the domain appears
@@ -96,6 +102,31 @@ test.describe("Marketing site (public)", () => {
       main.getByText(/Open Seller Central yourself and look at Account Health/),
     ).toBeVisible();
     await expect(main.getByText(/is a scam|fraudulent|is genuine/i)).toHaveCount(0);
+  });
+
+  /**
+   * 29 Sep 2026, from the researched test notices: a short falsified-documents notice was refused
+   * as "not an Amazon notice", and once accepted it was headed "Amazon wants supporting documents"
+   * while the case sent the seller to professional help.
+   */
+  test("a falsified-documents notice is accepted and headed as needing professional help", async ({
+    page,
+  }) => {
+    const notices: Array<{ id: string; text: string }> = JSON.parse(
+      readFileSync(
+        join(process.cwd(), "docs/handoffs/2026-09-29-test-notices/notices.json"),
+        "utf8",
+      ),
+    );
+    await page.goto("/decode");
+    await page
+      .getByRole("textbox", { name: /notice/i })
+      .first()
+      .fill(notices.find((n) => n.id === "t09-forged-documents")!.text);
+    await page.getByRole("button", { name: "Decode", exact: true }).click();
+    await expect(page.locator("main").getByRole("heading", { level: 1 })).toHaveText(
+      "This case needs professional help.",
+    );
   });
 
   test("a genuine notice is not questioned", async ({ page }) => {

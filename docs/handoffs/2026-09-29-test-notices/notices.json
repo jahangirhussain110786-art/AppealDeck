@@ -1,0 +1,179 @@
+[
+  {
+    "id": "t01-inauthentic-section3",
+    "title": "Inauthentic complaint, Section 3 deactivation (retail-arbitrage style)",
+    "basis": "Seller Forums UK thread quoting 'deactivated ... in accordance with Section 3 of Amazon's Business Solutions Agreement' and 'Copies of invoices or receipts from your supplier issued in the last 365 days'; US forum threads listing the invoice fields Amazon requires.",
+    "expected": {
+      "kind": "INAUTHENTIC",
+      "responseType": "PLAN_OF_ACTION",
+      "documents": ["invoice"],
+      "deadline": "none stated",
+      "scam": false,
+      "gated": false
+    },
+    "text": "Subject: Your Amazon.co.uk selling account\n\nHello,\n\nYour Amazon Seller account has been deactivated and your listings have been removed in accordance with Section 3 of Amazon's Business Solutions Agreement. Funds will not be transferred to you but will stay in your account while we review.\n\nWhy is this happening?\nWe received complaints from customers about the authenticity of items you listed. The ASINs affected are:\nASIN: B07KJ3M8QA\nASIN: B08RT2N6LX\n\nHow do I reactivate my account?\nTo reactivate your selling account, please send us:\n-- Copies of invoices or receipts from your supplier issued in the last 365 days for the ASINs listed above. The invoices must show the supplier's name, address and phone number, your name and address, and the quantity purchased.\n-- A plan of action that explains the root cause of the complaints, the actions you have taken to resolve them, and the steps you have taken to prevent them in the future.\n\nYou can submit an appeal from the Account Health page in Seller Central.\n\nSeller Performance Team\nAmazon.co.uk"
+  },
+  {
+    "id": "t02-performance-odr",
+    "title": "Order Defect Rate deactivation (seller-fulfilled)",
+    "basis": "ODR deactivation email quoted by consultants: 'removed your selling privileges, canceled your listings, and placed a temporary hold on any funds ... your order defect rate (ODR) does not meet Amazon's performance target of less than 1%'.",
+    "expected": {
+      "kind": "PERFORMANCE_METRIC",
+      "responseType": "PLAN_OF_ACTION",
+      "documents": ["order / metric export"],
+      "deadline": "none stated",
+      "scam": false,
+      "gated": false
+    },
+    "text": "Subject: Your Amazon.com selling privileges have been removed\n\nHello,\n\nWe are writing to let you know that we have removed your selling privileges, canceled your listings, and placed a temporary hold on any funds in your seller account. Any new selling accounts you open will be closed.\n\nWe took this action because your order defect rate (ODR) does not meet Amazon's performance target of less than 1%. Your ODR for seller-fulfilled orders over the last 60 days is 3.4%. ODR is the percentage of orders that received negative feedback, an A-to-z Guarantee claim, or a service chargeback.\n\nAny amounts paid as a result of A-to-z Guarantee claims and chargebacks may be deducted from your seller account. After 90 days, the hold will be removed and any remaining funds will be available according to your settlement schedule.\n\nTo reactivate your account, submit a plan of action that explains the root cause of the defects, the steps you have taken to resolve them, and how you will prevent them going forward. Go to Account Health in Seller Central and click Appeal.\n\nSeller Performance\nAmazon.com"
+  },
+  {
+    "id": "t03-ip-trademark",
+    "title": "Trademark complaint from a rights owner (listing removed)",
+    "basis": "Forum-quoted wording: 'We removed one or more of your listings because we received a notice from a rights owner that the product detail page may infringe the rights owner's trademark' and 'We may only accept retractions that the rights owner submits to us directly'.",
+    "expected": {
+      "kind": "INTELLECTUAL_PROPERTY",
+      "responseType": "SUPPORTING_DOCUMENTS or dispute route",
+      "documents": ["retraction or authorization / invoice"],
+      "deadline": "none stated",
+      "scam": false,
+      "gated": false
+    },
+    "text": "Subject: Notice: Policy Warning\n\nHello,\n\nWe removed one or more of your listings because we received a notice from a rights owner that the product detail page may infringe the rights owner's trademark. The rights owner communication about the alleged infringement and the listings containing the trademarked terms are at the bottom of this message.\n\nASIN: B09WQ4ZP7C\nInfringement type: Trademark\nTrademark number: 5123456\nComplaint ID: 11223344556\nRights owner: Northfield Outdoor Gear LLC\nRights owner email: legal@northfield-outdoor.example\n\nIf you believe the rights owner made an error, contact them and ask them to submit a retraction. We may only accept retractions that the rights owner submits to us directly. We do not accept forwarded or attached retractions.\n\nIf you have a letter of authorization from the rights owner or an invoice showing you purchased the items from the rights owner or an authorised distributor, you can submit an appeal from the Account Health page.\n\nFurther intellectual property complaints may result in the deactivation of your selling account.\n\nAmazon.com"
+  },
+  {
+    "id": "t04-related-account",
+    "title": "Related account deactivation",
+    "basis": "Forum-quoted wording: 'We found that your account is related to another account that may not be used to sell on the site. As a result, you may no longer sell on Amazon.com through this account' and 'we do not provide details on our investigation methods'.",
+    "expected": {
+      "kind": "RELATED_ACCOUNT",
+      "responseType": "explanation or PLAN_OF_ACTION",
+      "documents": ["linked-account resolution / business records"],
+      "deadline": "none stated",
+      "scam": false,
+      "gated": false
+    },
+    "text": "Subject: Your Amazon.com seller account\n\nHello,\n\nWe found that your account is related to another account that may not be used to sell on our site. As a result, you may no longer sell on Amazon.com through this account. Any listings in this account have been removed and funds have been placed on hold.\n\nDue to the nature of our business, we do not provide details on our investigation methods.\n\nIf you believe we made this decision in error, go to the Account Health page in Seller Central and submit an appeal. Explain how your account is connected to the related account and provide supporting documents, such as a business license or utility bill showing the business address, and evidence that any related account issues have been resolved.\n\nAmazon.com Seller Performance"
+  },
+  {
+    "id": "t05-verification-video",
+    "title": "Identity verification required (video call)",
+    "basis": "Forum-quoted wording: 'We have received your request to reactivate your account, but we do not have sufficient information to complete your request. Read the instructions in this email to complete your identity verification'.",
+    "expected": {
+      "kind": "VERIFICATION",
+      "responseType": "SUPPORTING_DOCUMENTS (verify, not a letter)",
+      "documents": ["government ID", "business / utility document"],
+      "deadline": "none stated",
+      "scam": false,
+      "gated": false
+    },
+    "text": "Subject: Action required: verify your identity\n\nHello,\n\nWe have received your request to reactivate your account, but we do not have sufficient information to complete your request. Read the instructions in this email to complete your identity verification and reactivate your account.\n\nTo verify your identity, you need to join a video call with an Amazon associate. During the call you will be asked to show:\n- The original of the government-issued ID you provided during registration\n- The original of the document you provided as proof of address, such as a bank statement or utility bill\n\nTo schedule your video call, go to the Account Health page in Seller Central and choose an available time. You must be the primary contact person on the account.\n\nThank you,\nAmazon Seller Identity Verification"
+  },
+  {
+    "id": "t06-funds-disbursement",
+    "title": "Funds withheld after deactivation (disbursement request)",
+    "basis": "Recorded Amazon wording: 'your disbursements were temporarily disabled for a period of 90 days, pending settlement of returns, refunds, A-to-z claims ... in accordance with the Funds Withholding Policy' and 'send a request to disbursement-appeals@amazon.com'.",
+    "expected": {
+      "kind": "FUNDS",
+      "responseType": "SUPPORTING_DOCUMENTS or explanation",
+      "documents": ["bank / identity / sourcing records"],
+      "deadline": "90-day hold mentioned",
+      "scam": false,
+      "gated": false
+    },
+    "text": "Subject: Update about the funds in your seller account\n\nHello,\n\nDue to the recent deactivation of your seller account, your disbursements were temporarily disabled for a period of 90 days, pending settlement of returns, refunds, A-to-z claims from customers, inventory removal costs, outstanding fees and other transactions in accordance with the Funds Withholding Policy.\n\nThe 90-day settlement period has ended and requests for disbursement can now be considered. To request a disbursement of your remaining balance, send a request to disbursement-appeals@amazon.com from the email address associated with your seller account. Include your merchant token, the original notification you received at the time of deactivation, and a bank statement showing the account holder name matches your seller account.\n\nAmazon Services"
+  },
+  {
+    "id": "t07-product-safety",
+    "title": "Product safety complaint (test report and certificate requested)",
+    "basis": "Compliance guides and seller forum threads: Amazon's Product Safety team requests test reports from an ISO/IEC 17025 accredited lab, certificates of compliance, and product/label images after customer safety complaints.",
+    "expected": {
+      "kind": "PRODUCT_SAFETY",
+      "responseType": "SUPPORTING_DOCUMENTS",
+      "documents": ["test report / compliance certificate", "product images"],
+      "deadline": "stated date 20 October 2026",
+      "scam": false,
+      "gated": false
+    },
+    "text": "Subject: Product safety concern about your listing\n\nHello,\n\nWe received customer reports that the product listed below may present a safety risk. Customers reported that the charging cable overheated during use. As a precaution, we have removed the listing while we review it.\n\nASIN: B0CX9L4TQ2\nProduct: 20W USB-C wall charger\n\nTo have the listing reviewed for reinstatement, provide the following by 20 October 2026:\n1. A test report from an ISO/IEC 17025 accredited laboratory showing the product complies with UL 62368-1.\n2. A Certificate of Compliance that lists the product, the manufacturer and the safety standard.\n3. Images of the product, its packaging and its label showing the manufacturer's name and model number.\n\nSubmit the documents from the Account Health page in Seller Central. If you do not respond, the listing will remain removed.\n\nAmazon Product Safety Team"
+  },
+  {
+    "id": "t08-restricted-gated",
+    "title": "Restricted product, category requires approval",
+    "basis": "Taxonomy-v2 research (19 Sep 2026): listings pulled because the category is 'restricted to qualified sellers' / 'requires approval to sell'.",
+    "expected": {
+      "kind": "RESTRICTED_PRODUCT",
+      "responseType": "SUPPORTING_DOCUMENTS or NO_ACTION",
+      "documents": ["invoice / approval documents"],
+      "deadline": "none stated",
+      "scam": false,
+      "gated": false
+    },
+    "text": "Subject: Notification of Restricted Products Removal\n\nHello,\n\nWe removed the following listing because the product is in a category that is restricted to qualified sellers. Selling in this category requires approval to sell.\n\nASIN: B0BZ6H3KMP\nCategory: Dietary supplements\n\nIf you would like to sell this product, request approval from the Add a Product page in Seller Central. You may be asked to provide invoices from the manufacturer or distributor and product labels that meet the category requirements.\n\nPlease note that continued listing of restricted products may result in the loss of selling privileges.\n\nAmazon.com Seller Performance"
+  },
+  {
+    "id": "t09-forged-documents",
+    "title": "Documents judged altered or falsified (severity-gated)",
+    "basis": "D6 severity gating: forged or fabricated documents are routed to professional help. Wording modelled on consultant descriptions of 'falsified invoice' deactivations.",
+    "expected": {
+      "kind": "INAUTHENTIC_DOCUMENTS",
+      "responseType": "professional help",
+      "documents": [],
+      "deadline": "none stated",
+      "scam": false,
+      "gated": true
+    },
+    "text": "Subject: Your Amazon selling account\n\nHello,\n\nWe reviewed the invoices you submitted to reactivate your account. We determined that the documents were altered or falsified. Providing falsified documents is a serious violation of our policies.\n\nAs a result, your selling privileges have been removed and your account will not be reactivated. Funds in your account will be held.\n\nAmazon.com"
+  },
+  {
+    "id": "t10-questionnaire",
+    "title": "Appeal form with set questions (questionnaire)",
+    "basis": "Account Health appeal flows 'can include submitting a questionnaire, acknowledging a violation, completing a quiz, or providing supporting documents' (recorded research).",
+    "expected": {
+      "kind": "PERFORMANCE_METRIC or POLICY",
+      "responseType": "QUESTIONNAIRE",
+      "documents": [],
+      "deadline": "none stated",
+      "scam": false,
+      "gated": false
+    },
+    "text": "Subject: Your appeal: please answer the questions below\n\nHello,\n\nYour account was deactivated because your late shipment rate did not meet the target of less than 4%. To help us review your appeal, answer each of the following questions:\n\n1. What caused the late shipments on your seller-fulfilled orders?\n2. What actions have you taken to resolve the orders that shipped late?\n3. What changes have you made to prevent late shipments in the future?\n\nSubmit your answers from the Account Health page in Seller Central.\n\nSeller Performance"
+  },
+  {
+    "id": "t11-listing-policy-header-date",
+    "title": "Listing policy violation, with the email's own date (30-day window)",
+    "basis": "Tests the date logic: a notice that states a length ('within 30 days') and carries its own sent date should count from that date, not from today.",
+    "expected": {
+      "kind": "LISTING",
+      "responseType": "PLAN_OF_ACTION",
+      "documents": ["listing correction proof"],
+      "deadline": "30 days from 3 Sep 2026 = 3 Oct 2026",
+      "scam": false,
+      "gated": false
+    },
+    "text": "From: Amazon Seller Performance <seller-performance@amazon.com>\nSent: Thursday, September 3, 2026 9:14 AM\nSubject: Listing policy violation\n\nHello,\n\nWe removed your listing for ASIN B0D2KX7RFN because it violates our detail page policy. The product title and bullet points contain medical claims (\"cures joint pain\") that are not allowed.\n\nTo reinstate the listing, remove the claims from the detail page and submit a plan of action that explains why the claims were added and how you will prevent it from happening again. Include screenshots or other proof of the corrected listing.\n\nYou can appeal within 30 days of this notice from the Account Health page in Seller Central.\n\nAmazon Seller Performance"
+  },
+  {
+    "id": "t12-phishing",
+    "title": "Fake 'Amazon' email (phishing): fee, password, WhatsApp, lookalike link",
+    "basis": "Seller-forum phishing reports: fake 'Seller Performance' emails with urgency, lookalike domains (e.g. cs-amazon.com), requests for bank or login details, and 'reactivation fees'.",
+    "expected": {
+      "kind": "any",
+      "responseType": "any",
+      "documents": [],
+      "deadline": "any",
+      "scam": true,
+      "gated": false
+    },
+    "text": "From: Amazon Seller Performance <support@amazon-sellercentral-verify.com>\nSubject: URGENT: Your Selling Account will be permanently closed in 24 hours\n\nDear Seller,\n\nWe detected unusual activity on your account and your selling privileges have been suspended. To avoid permanent closure you must verify your account within 24 hours.\n\nClick here to verify: https://sellercentral-amazon-verify.com/login\n\nYou will need to confirm your Seller Central password and the one-time code sent to your phone. A reinstatement fee of $99 is required to restore your account; you can pay it with gift cards.\n\nFor faster help, message our account specialist on WhatsApp at +1 555 0100 199.\n\nAmazon Seller Performance Team"
+  },
+  {
+    "id": "t13-reply-refusal",
+    "title": "Amazon's reply to a first appeal (not enough information)",
+    "basis": "Consultant write-ups of denial wording: 'the information provided does not address our concerns', 'your appeal does not identify the root cause of the issue'. Used as a REPLY in the History tab of case t01, not as a new notice.",
+    "expected": {
+      "reply": "needs more information / not reinstated; asks again for invoices and root cause"
+    },
+    "text": "Hello,\n\nWe reviewed the information you provided. At this time we are unable to reinstate your account.\n\nThe information provided does not address our concerns. Your appeal does not identify the root cause of the authenticity complaints, and the invoices you provided do not show the supplier's address and phone number.\n\nTo reactivate your account, send us copies of complete supplier invoices issued in the last 365 days for the ASINs listed in our previous message, and a plan of action that explains the root cause.\n\nSeller Performance Team"
+  }
+]

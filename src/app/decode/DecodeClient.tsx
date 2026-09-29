@@ -184,9 +184,9 @@ export default function DecodeClient() {
                   {DECODE.result.decodeAnother}
                 </button>
                 <h1 className="mt-4 text-balance text-[clamp(2.4rem,1.4rem+3.2vw,3.875rem)] font-semibold leading-[1.02] tracking-[-0.04em] text-foreground">
-                  {DECODE.result.headline[result.responseType?.type ?? "UNDETERMINED"].lead}{" "}
+                  {DECODE.result.headline[headlineKey(result)].lead}{" "}
                   <AccentWord className="text-primary">
-                    {DECODE.result.headline[result.responseType?.type ?? "UNDETERMINED"].accent}
+                    {DECODE.result.headline[headlineKey(result)].accent}
                   </AccentWord>
                 </h1>
               </div>
@@ -302,6 +302,17 @@ export default function DecodeClient() {
       {main && <div className={cn(WRAP, "relative -mt-16 pb-10")}>{main}</div>}
     </div>
   );
+}
+
+/**
+ * What the headline says. A gated case is never headed with a response the case will not prepare,
+ * and a verification notice says what it is even when it names no response type.
+ */
+function headlineKey(result: DecodeResponse): keyof typeof DECODE.result.headline {
+  if (result.severityGated) return "GATED";
+  if ((result.authenticity?.length ?? 0) > 0) return "SUSPECT";
+  if (result.kind === "VERIFICATION") return "VERIFICATION";
+  return result.responseType?.type ?? "UNDETERMINED";
 }
 
 /** The answer, before any detail: what the reply is, when it is due, whether it looks forged. */
@@ -465,35 +476,45 @@ function ResultView({
         #87: first, because if this message is a forgery nothing below it matters. It states no
         verdict — it cannot — and sends the seller to Seller Central, the one place that settles it.
       */}
+      {/*
+        On a solid card (29 Sep 2026): the result column rises over the navy stage, and the alert's
+        see-through tint let its title sit dark-on-navy — the most important warning on the page was
+        the one line nobody could read. Found decoding a researched phishing email. A wrapper, not a
+        class on the Alert: `cn`'s merge dropped `bg-card` there and the tint stayed see-through.
+      */}
       {result.authenticity && result.authenticity.length > 0 && (
-        <Alert variant="warning">
-          <ShieldAlert aria-hidden />
-          <div className="space-y-3">
-            <AlertTitle>{r.authenticityTitle}</AlertTitle>
-            <AlertDescription>{r.authenticityLead}</AlertDescription>
-            <div>
-              <p className="text-eyebrow text-muted-foreground">{r.authenticityFound}</p>
-              <ul className="mt-2 space-y-2">
-                {result.authenticity.map((signal) => (
-                  <li key={signal.id} className="text-sm">
-                    <span className="font-medium text-foreground">{signal.label}</span>
-                    <span className="block text-muted-foreground">{signal.detail}</span>
-                    <span className="mt-1 block break-words font-mono text-xs text-muted-foreground">
-                      {signal.match}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+        <div className="rounded-lg bg-card shadow-card">
+          <Alert variant="warning">
+            <ShieldAlert aria-hidden />
+            <div className="space-y-3">
+              <AlertTitle>{r.authenticityTitle}</AlertTitle>
+              <AlertDescription>{r.authenticityLead}</AlertDescription>
+              <div>
+                <p className="text-eyebrow text-muted-foreground">{r.authenticityFound}</p>
+                <ul className="mt-2 space-y-2">
+                  {result.authenticity.map((signal) => (
+                    <li key={signal.id} className="text-sm">
+                      <span className="font-medium text-foreground">{signal.label}</span>
+                      <span className="block text-muted-foreground">{signal.detail}</span>
+                      <span className="mt-1 block break-words font-mono text-xs text-muted-foreground">
+                        {signal.match}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <AlertDescription className="font-medium">{r.authenticityAction}</AlertDescription>
             </div>
-            <AlertDescription className="font-medium">{r.authenticityAction}</AlertDescription>
-          </div>
-        </Alert>
+          </Alert>
+        </div>
       )}
       {result.severityGated && (
-        <Alert variant="warning">
-          <AlertTitle>{r.gatedTitle}</AlertTitle>
-          <AlertDescription>{guidance.severityNote ?? r.gatedFallback}</AlertDescription>
-        </Alert>
+        <div className="rounded-lg bg-card shadow-card">
+          <Alert variant="warning">
+            <AlertTitle>{r.gatedTitle}</AlertTitle>
+            <AlertDescription>{guidance.severityNote ?? r.gatedFallback}</AlertDescription>
+          </Alert>
+        </div>
       )}
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">

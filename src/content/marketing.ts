@@ -297,6 +297,14 @@ export const DECODE = {
       QUESTIONNAIRE: { lead: "Amazon wants", accent: "answers to its questions." },
       NO_ACTION_REQUESTED: { lead: "Amazon is not asking for", accent: "a response." },
       UNDETERMINED: { lead: "Check what Amazon", accent: "is asking for." },
+      // 29 Sep 2026, from the researched test notices: a severity-gated case was headed with a
+      // response type the case then refused to prepare, and a verification notice (which names no
+      // response type) was headed "Check what Amazon is asking for" although the tool knew.
+      GATED: { lead: "This case needs", accent: "professional help." },
+      // A message with warning signs is not headed as though Amazon had sent it.
+      // No verdict: it has signs worth checking, which the warning below lists.
+      SUSPECT: { lead: "This message has", accent: "warning signs." },
+      VERIFICATION: { lead: "Amazon wants to", accent: "verify your identity." },
     },
     factProblem: "The problem",
     decodeAnother: "Decode another",

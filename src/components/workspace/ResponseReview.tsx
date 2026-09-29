@@ -219,7 +219,11 @@ export function ResponseReview({
                 w.protocol === "operational" ? "workspace-explanation-hint" : undefined
               }
               placeholder={
-                w.protocol === "operational" ? F.rootCausePlaceholder : F.explanationPlaceholder
+                w.protocol === "operational"
+                  ? F.rootCausePlaceholder
+                  : questions.length > 0
+                    ? F.additionalPlaceholder
+                    : F.explanationPlaceholder
               }
               onChange={(e) => changeExplanation(e.target.value)}
             />

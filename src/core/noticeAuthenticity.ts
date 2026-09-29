@@ -27,6 +27,9 @@ const AMAZON_HOST = /(^|\.)(amazon\.[a-z.]{2,6}|sellercentral\.amazon\.[a-z.]{2,
  * Listed so a real notice that names one of them is not flagged for naming it.
  */
 const AMAZON_EMAIL = /@(amazon\.[a-z.]{2,6})$/i;
+/** "Rights owner email:", "Complainant contact:" — on the same line, just before the address. */
+const RIGHTS_OWNER_CONTACT =
+  /(?:rights?[\s-](?:owner|holder)|complainant|brand owner)(?:'s)?[^\n]{0,25}?(?:e-?mail|contact)(?: address)?\s*:?\s*$/i;
 
 export type AuthenticitySignalId =
   | "payment_requested"
@@ -158,7 +161,16 @@ export function assessNoticeAuthenticity(raw: string): AuthenticityAssessment {
   }
 
   // Reply addresses. Amazon's own teams write from amazon.* — a reply-to elsewhere is worth a look.
-  const emails = text.match(/\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b/gi) ?? [];
+  /*
+    Except the one address a genuine notice is meant to carry (29 Sep 2026). Amazon's intellectual
+    property notices give the rights owner's own email so the seller can ask them for a retraction,
+    and a researched trademark notice was flagged here as a possible forgery for doing exactly what
+    Amazon does. Only an address labelled as the rights owner's or complainant's contact is exempt; a
+    "From:" line or an unlabelled address elsewhere is still checked.
+  */
+  const emails = [...text.matchAll(/\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b/gi)]
+    .filter((m) => !RIGHTS_OWNER_CONTACT.test(text.slice(Math.max(0, m.index - 60), m.index)))
+    .map((m) => m[0]);
   const foreignEmails = [...new Set(emails.filter((e) => !AMAZON_EMAIL.test(e)))];
   if (foreignEmails.length > 0) {
     signals.push({

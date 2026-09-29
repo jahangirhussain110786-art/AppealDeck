@@ -88,6 +88,8 @@ export const WORKSPACE = {
     explanationPlaceholder:
       "For example: The invoice is from our supplier Harbor Goods and covers the 40 units of B0EXAMPLE1 we sold.",
     answerPlaceholder: "Answer in your own words, with dates and numbers where you have them.",
+    additionalPlaceholder:
+      "Only if something important is not covered by the questions above. Leave it empty otherwise.",
     save: "Save my answers",
     saveFirst: "Save your answers above before you prepare the response.",
     sendNote:
@@ -105,6 +107,10 @@ export const WORKSPACE = {
     reviewBody: "Add the file and note what it shows. If you can't get it, say so there.",
     toDocuments: "Go to your documents",
     toResponse: "Go to your response",
+    verifyTitle: "Get ready to verify your identity",
+    verifyBody:
+      "Amazon wants to check who runs this account. There is nothing to write. See what to have ready before the call or upload.",
+    verifyCta: "See what to prepare",
     source: {
       notice: "Named in your notice",
       matrix: "Usually asked for in cases like this",

@@ -72,6 +72,9 @@ const RULES: ReadonlyArray<PatternRule> = [
       /we need more details about/i,
       // A refusal that does not say it is final: the case goes on (see final_decision_negative).
       /we are unable to reinstate/i,
+      // Amazon's usual reasons for refusing an appeal, added 29 Sep 2026 from researched wording.
+      /does not address our concerns/i,
+      /does not identify the root cause/i,
     ],
   },
   {
@@ -122,8 +125,28 @@ export function analyzeReply(raw: string): AnalysisResult {
       overridden = true;
     }
   }
+  /*
+    29 Sep 2026: a refusal that also names what to send — "we are unable to reinstate your account …
+    send us copies of complete supplier invoices" — was read as a document request, "Amazon is asking
+    for documents before it decides", when Amazon had already decided. The refusal is the decision;
+    the documents are what it wants next, and they are still reported below. Not "ambiguous": the
+    two readings agree, one is simply the more complete.
+  */
+  if (chosen.category === "document_request") {
+    const refusal = matches.find((m) => m.category === "needs_more_information");
+    if (refusal) chosen = refusal;
+  }
 
-  const extractedAsks: EvidenceKind[] = chosen.evidenceKind ? [chosen.evidenceKind] : [];
+  // Every record the reply names, not only the chosen rule's: a refusal still asks for invoices.
+  const extractedAsks: EvidenceKind[] = [
+    ...new Set(
+      [chosen, ...matches].flatMap((m) =>
+        m.evidenceKind && (m === chosen || m.category === "document_request")
+          ? [m.evidenceKind]
+          : [],
+      ),
+    ),
+  ];
   // Reported honestly: the message carried two readings, and this is the safe one, not a certain
   // one. `/api/analyze-reply` passes this through, so a caller can say so rather than assert.
   return {

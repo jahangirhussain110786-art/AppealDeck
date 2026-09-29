@@ -135,8 +135,17 @@ const REQUEST_VERB_SOURCE =
  * must / need to / should" counts, so "thank you for providing your invoices; please allow 48 hours"
  * stays in the past.
  */
+/*
+  An instruction opening the clause counts too (29 Sep 2026): "To reactivate your account, send us
+  copies of supplier invoices ... for the ASINs listed in our previous message" was read as history,
+  because "previous" names where the ASINs are, and so an Amazon refusal that asked for invoices
+  again raised nothing. Only the bare imperative at the start — optionally after a "To …," purpose
+  phrase — so "thank you for providing" and "you previously sent" still read as the past.
+*/
+const IMPERATIVE_ASK =
+  /^\s*(?:to [^,]{1,80},\s*)?(?:please\s+)?(?:re-?)?(?:provide|submit|send|upload|include|attach|furnish|supply)\b/i;
 const PRESENT_ASK = new RegExp(
-  `\\bplease\\s+(?:re-?)?${REQUEST_VERB_SOURCE}\\b|\\byou (?:must|need to|should) (?:now )?(?:re-?)?${REQUEST_VERB_SOURCE}\\b`,
+  `\\bplease\\s+(?:re-?)?${REQUEST_VERB_SOURCE}\\b|\\byou (?:must|need to|should) (?:now )?(?:re-?)?${REQUEST_VERB_SOURCE}\\b|${IMPERATIVE_ASK.source}`,
   "i",
 );
 
@@ -151,6 +160,16 @@ export function describesThePast(clause: string): boolean {
   return HISTORICAL.test(clause) && !PRESENT_ASK.test(clause);
 }
 
+/**
+ * A request verb used as the subject of a statement: "Providing falsified documents is a serious
+ * violation of our policies." Added 29 Sep 2026, when a researched falsified-documents notice was
+ * headed "Amazon wants supporting documents" on the decode page while the case itself (correctly)
+ * sent the seller to professional help. Only a clause that opens with the gerund and then says
+ * "is/are/was/were" — a gerund after "by" or "for" ("by providing your ID") is still a request.
+ */
+const GERUND_SUBJECT =
+  /^\s*(?:providing|submitting|sending|uploading|supplying|furnishing)\b[^.!?\n]{0,120}?\b(?:is|are|was|were|can be|may be|will be)\b/i;
+
 /** In prose, the plan-of-action terms only count when something actually asks for them. */
 const POA_REQUESTED = new RegExp(
   `\\b(?:${REQUEST_VERB_SOURCE}|explain(?:s|ing)?|describ(?:e|es|ing)|writ(?:e|ing)|prepar(?:e|es|ing)|complet(?:e|es|ing))\\b[^\\n]{0,120}?(?:\\bplan of action\\b|\\bPOA\\b|\\broot cause\\b|\\bcorrective action)`,
@@ -161,14 +180,19 @@ const POA_REQUESTED = new RegExp(
  * Document nouns Amazon names. `identification` and the identity documents were missing from the
  * first version, so a verification notice asking for a passport produced no request at all.
  */
+// Bank statements, utility bills and business licences added 29 Sep 2026: a funds notice asking for
+// "a bank statement showing the account holder name" was read as "not yet clear".
 const DOCUMENT_NOUN =
-  "(?:invoice|receipt|document|documentation|record|proof|certificate|certification|identification|identity document|government[\\s-]issued (?:ID|identification)|passport|letter of authori[sz]ation|authori[sz]ation letter|sales report|order report|tracking|screenshot|test report)";
+  "(?:invoice|receipt|document|documentation|record|proof|certificate|certification|identification|identity document|government[\\s-]issued (?:ID|identification)|passport|letter of authori[sz]ation|authori[sz]ation letter|sales report|order report|tracking|screenshot|test report|bank statement|utility bill|business licen[cs]e)";
 
 const PATTERNS: ReadonlyArray<readonly [Exclude<ResponseType, "UNDETERMINED">, RegExp]> = [
   ["PLAN_OF_ACTION", POA_REQUESTED],
   [
     "QUESTIONNAIRE",
-    /\bquestionnaire\b|\bquiz\b|answer the following question|complete (?:the|this) (?:form|questionnaire)|respond to (?:the|these) question/i,
+    // "answer each of the following questions" and "answer the questions below" added 29 Sep 2026:
+    // a researched appeal form worded that way was read as "not yet clear", so the seller got one
+    // essay box instead of a box per question.
+    /\bquestionnaire\b|\bquiz\b|answer (?:each of |all of )?the (?:following )?questions?(?: below)?|complete (?:the|this) (?:form|questionnaire)|respond to (?:the|these) question/i,
   ],
   [
     "ACKNOWLEDGEMENT",
@@ -176,7 +200,13 @@ const PATTERNS: ReadonlyArray<readonly [Exclude<ResponseType, "UNDETERMINED">, R
   ],
   [
     "SUPPORTING_DOCUMENTS",
-    new RegExp(`\\b${REQUEST_VERB_SOURCE}\\b[^\\n]{0,120}?\\b${DOCUMENT_NOUN}s?\\b`, "i"),
+    // The second form is Amazon's conditional, added 29 Sep 2026 from a researched trademark
+    // notice: "If you have a letter of authorization … or an invoice …, you can submit an appeal".
+    // The document comes first and the verb after, so the first form never saw it.
+    new RegExp(
+      `\\b${REQUEST_VERB_SOURCE}\\b[^\\n]{0,120}?\\b${DOCUMENT_NOUN}s?\\b|\\bif you have\\b[^\\n]{0,40}?\\b${DOCUMENT_NOUN}s?\\b[^\\n]{0,160}?,\\s*you (?:can|may) (?:submit|send|upload|provide)\\b`,
+      "i",
+    ),
   ],
   [
     "NO_ACTION_REQUESTED",
@@ -236,7 +266,8 @@ export function determineResponseType(raw: string, formInstructions = ""): Respo
   const matches: ResponseTypeMatch[] = [];
   for (const source of sources) {
     for (const clause of splitClauses(source.text)) {
-      const past = describesThePast(clause.text);
+      // "Providing falsified documents is a serious violation" states a rule; it asks for nothing.
+      const past = describesThePast(clause.text) || GERUND_SUBJECT.test(clause.text);
       const negated = NEGATION.test(clause.text);
       for (const [type, basePattern] of PATTERNS) {
         /*

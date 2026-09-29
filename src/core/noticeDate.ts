@@ -161,7 +161,9 @@ const LAST_DAY_CUE = /\b(?:no later than|not later than|on or before|before|by|u
 const DEADLINE_NOUN_CUE =
   /\b(?:(?:appeal|response|submission|reply)\s+deadline(?:\s+is)?|deadline\s+to\s+(?:appeal|respond|reply))\s*:?\s*/gi;
 
-const RESPONDING = /\b(?:appeal|plan of action|poa|submit|resubmit|respond|reply)\b/i;
+// "provide" and "send" added 29 Sep 2026: a product-safety notice saying "provide the following by
+// 20 October 2026" was shown as having no stated date, the last day the seller most needed to see.
+const RESPONDING = /\b(?:appeal|plan of action|poa|submit|resubmit|respond|reply|provide|send)\b/i;
 /** "You have until 1 October 2026 to submit an appeal" — the action comes after the date. */
 const RESPONDING_AFTER = /^[^.!?\n]{0,40}?\bto\s+(?:appeal|submit|resubmit|respond|reply)\b/i;
 /** Amazon's timetable or the state of the money, not the seller's last day. */

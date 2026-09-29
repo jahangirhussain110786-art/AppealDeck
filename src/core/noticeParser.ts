@@ -42,9 +42,13 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   // complaint that way at least as often as it says "inauthentic", and UNKNOWN costs the seller the
   // violation-specific guidance and evidence list. Both require "authenticity" to be what the
   // complaint is about, so a notice that merely mentions the word elsewhere does not match.
+  // 29 Sep 2026: "We received complaints from customers about the authenticity of items you listed"
+  // — Amazon's own Section 3 wording, from a researched test notice — classified UNKNOWN, because
+  // the pattern needed "complaints about" with nothing between. A short gap within the sentence is
+  // now allowed; "authenticity" still has to be what the complaint is about.
   [
     "INAUTHENTIC",
-    /inauthentic|not authentic|(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)|(?:complaints?|concerns?|reports?) (?:about|regarding|concerning|related to) the authenticity|authenticity (?:complaints?|concerns?)/i,
+    /inauthentic|not authentic|(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)|(?:complaints?|concerns?|reports?)[^.!?\n]{0,40}?\b(?:about|regarding|concerning|related to) the authenticity|authenticity (?:complaints?|concerns?)/i,
   ],
   ["RELATED_ACCOUNT", /related[\s-]?account/i],
   [

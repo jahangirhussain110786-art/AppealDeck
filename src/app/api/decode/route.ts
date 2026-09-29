@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { runDecode, isSeverityGated, RESPONSE_TYPE_LABELS, assessNoticeAuthenticity } from "@/core";
+import { noticeMarkerHits } from "@/lib/noticeLikeness";
 
 export const dynamic = "force-dynamic";
 
-const AMAZON_MARKERS = [
-  /amazon/i,
-  /seller central/i,
-  /asin/i,
-  /notice/i,
-  /policy/i,
-  /account health/i,
-];
-
+// The decode page's own marker list, not a second copy: see `noticeMarkerHits`.
 function looksLikeNotice(text: string): boolean {
   if (text.length < 50) return false;
-  const hits = AMAZON_MARKERS.filter((re) => re.test(text)).length;
-  return hits >= 2;
+  return noticeMarkerHits(text) >= 2;
 }
 
 const DecodeBody = z.object({
