@@ -112,12 +112,12 @@ describe("a case built from a notice raising two issues", () => {
   it("will not report itself ready while an issue is unanswered", () => {
     const w = twoIssueWorkspace();
     expect(w.issues).toHaveLength(2);
-    expect(workspaceGaps(w).some((g) => /raises 2 separate issues/i.test(g))).toBe(true);
+    expect(workspaceGaps(w).some((g) => /raises 2 separate problems/i.test(g))).toBe(true);
   });
 
   it("clears once the seller confirms the response covers both", () => {
     const w = { ...twoIssueWorkspace(), issuesConfirmed: true };
-    expect(workspaceGaps(w).some((g) => /separate issues/i.test(g))).toBe(false);
+    expect(workspaceGaps(w).some((g) => /separate problems/i.test(g))).toBe(false);
   });
 
   it("asks nothing extra of a single-issue case", () => {
@@ -130,6 +130,6 @@ describe("a case built from a notice raising two issues", () => {
       requirementsConfirmed: true,
     };
     const w = { ...base, issues: proposedIssues(base) };
-    expect(workspaceGaps(w).some((g) => /separate issues/i.test(g))).toBe(false);
+    expect(workspaceGaps(w).some((g) => /separate problems/i.test(g))).toBe(false);
   });
 });

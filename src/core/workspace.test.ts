@@ -202,7 +202,7 @@ describe("response and provenance", () => {
       requirements: [],
     };
     expect(workspaceGaps(workspace)).toContain(
-      "Describe corrective actions, distinguishing completed work from plans.",
+      "Answer “What have you fixed already?”, saying what is finished and what is still in progress.",
     );
     expect(
       workspaceGaps({
@@ -492,8 +492,8 @@ describe("a record the seller cannot obtain", () => {
 
   it("is a named gap, not an instruction to do the impossible", () => {
     const gaps = workspaceGaps(declined("The supplier closed in 2025 and issues no invoices."));
-    expect(gaps).toContain("Named as unobtainable, and stated in the response: Supplier invoice");
-    expect(gaps).not.toContain("Review and link evidence for: Supplier invoice");
+    expect(gaps).toContain("You can't get this, and your response says so: Supplier invoice");
+    expect(gaps).not.toContain("Add the file, say what it shows, and save it: Supplier invoice");
   });
 
   it("still keeps the draft a working draft, because the evidence really is missing", () => {
@@ -522,7 +522,9 @@ describe("a record the seller cannot obtain", () => {
     const w = documentWorkspace();
     w.requirements = w.requirements.map((r) => ({ ...r, status: "cannot_obtain" as const }));
     // An empty decline is not an explanation, and must not buy the seller a softer message.
-    expect(workspaceGaps(w)).toContain("Review and link evidence for: Supplier invoice");
+    expect(workspaceGaps(w)).toContain(
+      "Add the file, say what it shows, and save it: Supplier invoice",
+    );
   });
 
   it("survives the schema that guards every save", () => {
@@ -813,7 +815,7 @@ describe("source provenance across revisions", () => {
     expect(sourceQuoteResolves(next, carried)).toBe(true);
     // And it is not reported as a defect in the seller's own text.
     expect(workspaceGaps(next)).not.toContain(
-      "Check the source of the request for: Supplier invoice",
+      "Check Amazon's words for this document against your notice: Supplier invoice",
     );
   });
 
@@ -862,7 +864,9 @@ describe("source provenance across revisions", () => {
     expect(sourceQuoteResolves(w, invented)).toBe(false);
 
     w.requirements = [{ ...w.requirements[0]!, ...invented }];
-    expect(workspaceGaps(w)).toContain("Check the source of the request for: Supplier invoice");
+    expect(workspaceGaps(w)).toContain(
+      "Check Amazon's words for this document against your notice: Supplier invoice",
+    );
   });
 
   it("treats an empty quote as unresolved rather than vacuously true", () => {

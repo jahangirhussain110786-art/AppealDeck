@@ -68,9 +68,9 @@ describe("a questionnaire case", () => {
         ],
       }),
     );
-    expect(gaps).toContain("Answer the question: When did the change take effect?");
+    expect(gaps).toContain("Answer Amazon's question: When did the change take effect?");
     expect(gaps).not.toContain(
-      "Answer the question: What caused the late shipments on the listed orders?",
+      "Answer Amazon's question: What caused the late shipments on the listed orders?",
     );
   });
 
@@ -114,7 +114,9 @@ describe("an acknowledgement", () => {
       protocol: "acknowledgement",
       explanation: "I acknowledge the policy.",
     };
-    expect(workspaceGaps(w)).not.toContain("Explain how the supplied records answer the request.");
+    expect(workspaceGaps(w)).not.toContain(
+      "Say in a few sentences what your documents show Amazon.",
+    );
     expect(workspaceGaps(w)).not.toContain("Write the acknowledgement Amazon asked for.");
   });
 

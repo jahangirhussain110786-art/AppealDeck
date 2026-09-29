@@ -803,15 +803,20 @@ export function answerFor(w: Pick<Workspace, "answers">, question: string): stri
   return w.answers?.find((a) => a.question === question)?.answer ?? "";
 }
 
+/*
+  The seller reads every line below as a to-do: in "Before you send", as the dashboard's next step,
+  in the export and in a submission's "still open" note. Reworded 29 Sep 2026 (AM-32) from engine
+  wording ("Review and link evidence for", "adoption status") into the same plain questions the
+  Response tab asks. Each line keeps its meaning and its condition; none is matched on elsewhere.
+*/
 export function workspaceGaps(w: Workspace): string[] {
   const gaps: string[] = [];
   const route = routeWorkspace(w);
-  if (!w.confirmed || route.protocol !== w.protocol)
-    gaps.push("Confirm the requested route against your notice and the response page.");
+  if (!w.confirmed || route.protocol !== w.protocol) gaps.push("Confirm how we read your notice.");
   if (!COMPOSABLE_PROTOCOLS.includes(route.protocol)) gaps.push(route.reason);
   if (!w.requirementsConfirmed)
     gaps.push(
-      "Confirm that the list covers every item requested by your notice and the response page.",
+      "Tick that your document list is complete, once you have checked the notice and the appeal page.",
     );
   /*
     #86: a notice that raises two issues is refused for the one the response missed, so a case is
@@ -820,10 +825,10 @@ export function workspaceGaps(w: Workspace): string[] {
   */
   if (hasMultipleIssues(w.issues ?? []) && !w.issuesConfirmed)
     gaps.push(
-      `This notice raises ${(w.issues ?? []).length} separate issues. Confirm your response addresses each one.`,
+      `Your notice raises ${(w.issues ?? []).length} separate problems. Tick that your response answers each one.`,
     );
   if (w.protocol === "documents" && !w.requirements.length)
-    gaps.push("Add the requested document to your plan.");
+    gaps.push("Add the document Amazon asked for.");
   for (const r of w.requirements) {
     if (r.status === "cannot_obtain" && r.declined?.reason.trim()) {
       /*
@@ -832,7 +837,7 @@ export function workspaceGaps(w: Workspace): string[] {
         and saying "review and link evidence" to someone who has already explained they cannot get
         it is the dead end this feature exists to remove. The response names it in their words.
       */
-      gaps.push(`Named as unobtainable, and stated in the response: ${r.label}`);
+      gaps.push(`You can't get this, and your response says so: ${r.label}`);
     } else if (
       r.status !== "reviewed" ||
       !r.recordId ||
@@ -841,11 +846,12 @@ export function workspaceGaps(w: Workspace): string[] {
       !r.page ||
       !r.note.trim()
     )
-      gaps.push(`Review and link evidence for: ${r.label}`);
+      gaps.push(`Add the file, say what it shows, and save it: ${r.label}`);
     // Shared with the UI's write path — see `sourceQuoteResolves`. This check used to inline its
     // own `includes` test against the *current* notice only, which flagged every requirement
     // carried through a reply round.
-    if (!sourceQuoteResolves(w, r)) gaps.push(`Check the source of the request for: ${r.label}`);
+    if (!sourceQuoteResolves(w, r))
+      gaps.push(`Check Amazon's words for this document against your notice: ${r.label}`);
   }
   /*
     What the written part must contain depends on what was asked (audit item L, 23 Sep 2026). A
@@ -855,22 +861,24 @@ export function workspaceGaps(w: Workspace): string[] {
   const questions = questionnaireQuestions(w);
   if (questions.length) {
     for (const q of questions) {
-      if (!answerFor(w, q).trim()) gaps.push(`Answer the question: ${q}`);
+      if (!answerFor(w, q).trim()) gaps.push(`Answer Amazon's question: ${q}`);
     }
   } else if (w.protocol === "acknowledgement") {
     if (!w.explanation.trim()) gaps.push("Write the acknowledgement Amazon asked for.");
   } else if (w.explanation.trim().length < 40) {
     gaps.push(
       w.protocol === "operational"
-        ? "Describe the specific root cause."
-        : "Explain how the supplied records answer the request.",
+        ? "Answer “What went wrong?” in a few sentences, naming the cause."
+        : "Say in a few sentences what your documents show Amazon.",
     );
   }
   if (w.protocol === "operational") {
     if (w.correctiveActions.trim().length < 40)
-      gaps.push("Describe corrective actions, distinguishing completed work from plans.");
+      gaps.push(
+        "Answer “What have you fixed already?”, saying what is finished and what is still in progress.",
+      );
     if (w.preventiveMeasures.trim().length < 40)
-      gaps.push("Describe the preventive process and its adoption status.");
+      gaps.push("Answer “How will you stop it happening again?”: who does what, and how often.");
   }
   // First, not last: a reply changes what every other item means, and the dashboard shows only
   // the first gap — so a case with an unread reply used to open on "Review Supplier invoice".

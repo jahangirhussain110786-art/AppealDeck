@@ -83,12 +83,37 @@ The baseline was CI green at `5b781bd`. No code had changed since `5f3a07a`.
 
 3. **The summary's document count** comes from `proposedRequirements(value, kind)` before confirming, and from the saved list after. This is a read of existing core code; nothing in `src/core` changed.
 
-## Found, not fixed
+## Found, then fixed (founder approved in chat, 29 Sep 2026)
 
-These are outside a presentation pass, because the wording is in `src/core`. They are the founder's call.
+Both are wording in `src/core`, so they were left out of the presentation pass until the founder said to fix them. Only the wording changed. The conditions, the records raised, and whether a record is required are unchanged.
 
-1. **"Before you send" gap lines** come from `workspaceGaps` in `src/core` and still use engine wording, e.g. "Review and link evidence for: Supplier invoice" and "Describe the preventive process and its adoption status". They are the last jargon on the Response tab.
-2. **`src/core/evidenceModel.ts:187`** tells a listing and condition policy case that Amazon wants "the specific metric failure". That reason fits a performance-metrics case. It shows as the "Why Amazon asks for this" line when the Sales or performance record card is opened.
+1. **"Before you send" gap lines** (`workspaceGaps` in `src/core/workspace.ts`) used engine wording. They are shown in "Before you send", as the dashboard's next step, in the export, and in a submission's "still open" note. Before and after:
+
+   | Before                                                                                  | After                                                                                           |
+   | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+   | Confirm the requested route against your notice and the response page.                  | Confirm how we read your notice.                                                                |
+   | Confirm that the list covers every item requested by your notice and the response page. | Tick that your document list is complete, once you have checked the notice and the appeal page. |
+   | This notice raises N separate issues. Confirm your response addresses each one.         | Your notice raises N separate problems. Tick that your response answers each one.               |
+   | Add the requested document to your plan.                                                | Add the document Amazon asked for.                                                              |
+   | Named as unobtainable, and stated in the response: X                                    | You can't get this, and your response says so: X                                                |
+   | Review and link evidence for: X                                                         | Add the file, say what it shows, and save it: X                                                 |
+   | Check the source of the request for: X                                                  | Check Amazon's words for this document against your notice: X                                   |
+   | Answer the question: Q                                                                  | Answer Amazon's question: Q                                                                     |
+   | Describe the specific root cause.                                                       | Answer “What went wrong?” in a few sentences, naming the cause.                                 |
+   | Explain how the supplied records answer the request.                                    | Say in a few sentences what your documents show Amazon.                                         |
+   | Describe corrective actions, distinguishing completed work from plans.                  | Answer “What have you fixed already?”, saying what is finished and what is still in progress.   |
+   | Describe the preventive process and its adoption status.                                | Answer “How will you stop it happening again?”: who does what, and how often.                   |
+
+   Unchanged: "Write the acknowledgement Amazon asked for." and "Amazon replied. Read what the reply changes before doing anything else." Both were already plain. The dashboard's fallback line became "Your answers and documents are ready for a final check."
+
+   Already-saved "still open" notes keep the wording they were saved with. Nothing reads them back or matches on them.
+
+2. **The POLICY entry in `src/core/evidenceModel.ts`** had been worded like the performance-metric one: "the specific metric failure", "the defect window", "apology text in place of metrics". POLICY is the general policy-violation kind, and PERFORMANCE_METRIC has its own entry, so the reason, fields and not-accepted list were rewritten for it:
+   - **Reason:** "Amazon wants to see which orders the problem affected, and that every customer complaint or claim on them was dealt with."
+   - **Fields:** the order or sales report for the affected listings; each complaint, return or claim and how it was resolved.
+   - **Not accepted:** an apology in place of the order records; a summary total without the orders behind it.
+
+**Gates after the fix:** typecheck, lint, lint:copy, reachability, sources and format all 0 · vitest 1170/1170 · build 0 · Playwright chromium CI 124/0/0. Unit tests updated for the new wording: `workspace.test.ts`, `questionnaire.test.ts`, `noticeIssues.test.ts`.
 
 ## Tests changed (labels only, meaning kept)
 

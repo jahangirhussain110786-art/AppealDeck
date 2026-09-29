@@ -178,13 +178,26 @@ const FUNDS: EvidenceRequirement[] = [
 ];
 
 const POLICY: EvidenceRequirement[] = [
+  /*
+    29 Sep 2026: this entry was worded as the performance-metric one ("the specific metric failure",
+    "the defect window"), so a listing or product-condition case was told Amazon wanted a metric it
+    never mentioned. POLICY is the general policy-violation kind — PERFORMANCE_METRIC has its own
+    entry below — so the record is the orders the problem touched and what happened to each
+    complaint on them. Which records are raised, and whether this one is required, is unchanged.
+  */
   {
     kind: "metric_export",
     required: true,
-    fields: ["metric export or breakdown of the defect window", "per-claim resolution status"],
-    disqualifiers: ["apology text in place of metrics"],
+    fields: [
+      "an order or sales report for the affected listings, covering the period in the notice",
+      "each customer complaint, return or claim on those orders, and how it was resolved",
+    ],
+    disqualifiers: [
+      "an apology or explanation in place of the order records",
+      "a summary total without the orders behind it",
+    ],
     whyAmazonWantsIt:
-      "Amazon wants to see the specific metric failure and that each claim or defect is addressed.",
+      "Amazon wants to see which orders the problem affected, and that every customer complaint or claim on them was dealt with.",
   },
   {
     kind: "sop_document",

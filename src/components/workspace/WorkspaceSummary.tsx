@@ -64,7 +64,7 @@ export function WorkspaceSummary({
             <p className="max-w-[40em] text-sm text-muted-foreground">
               {file.state === "SUBMITTED"
                 ? "Your response is recorded. Keep the next reply with this case."
-                : (gaps[0] ?? "Your facts and evidence are ready for a final review.")}
+                : (gaps[0] ?? "Your answers and documents are ready for a final check.")}
             </p>
           </div>
           <Button asChild>

@@ -549,6 +549,7 @@ Prototype v6.1 was approved on 28 Sep 2026: the case as a home plus five steps. 
   - The first screen's main column went from 224 to 122 words.
   - The Documents tab went from 422 to 168 words, and from 4,854 to 2,628 px tall on a phone.
   - All gates green: vitest 1170, Playwright chromium CI 124/0/0.
+- **Follow-up the same day, founder-approved:** two wording fixes in `src/core`, the only code the pass left for the founder's decision. The `workspaceGaps` to-do lines now use the Response tab's plain questions. The POLICY entry in `evidenceModel.ts` no longer uses performance-metric wording. Conditions, the records raised and `required` are unchanged.
 - **Evidence:** `docs/handoffs/2026-09-29-calm-case-pass.md` (brief: `…-calm-case-pass-prompt.md`).
 
 ---
