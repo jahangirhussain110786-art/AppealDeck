@@ -1,0 +1,1 @@
+TEST FILE. A plain text file, to check that the upload refuses a type other than PDF, PNG or JPEG.

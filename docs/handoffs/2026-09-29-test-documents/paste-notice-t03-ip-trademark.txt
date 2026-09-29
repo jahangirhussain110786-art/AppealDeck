@@ -1,0 +1,20 @@
+Subject: Notice: Policy Warning
+
+Hello,
+
+We removed one or more of your listings because we received a notice from a rights owner that the product detail page may infringe the rights owner's trademark. The rights owner communication about the alleged infringement and the listings containing the trademarked terms are at the bottom of this message.
+
+ASIN: B09WQ4ZP7C
+Infringement type: Trademark
+Trademark number: 5123456
+Complaint ID: 11223344556
+Rights owner: Northfield Outdoor Gear LLC
+Rights owner email: legal@northfield-outdoor.example
+
+If you believe the rights owner made an error, contact them and ask them to submit a retraction. We may only accept retractions that the rights owner submits to us directly. We do not accept forwarded or attached retractions.
+
+If you have a letter of authorization from the rights owner or an invoice showing you purchased the items from the rights owner or an authorised distributor, you can submit an appeal from the Account Health page.
+
+Further intellectual property complaints may result in the deactivation of your selling account.
+
+Amazon.com

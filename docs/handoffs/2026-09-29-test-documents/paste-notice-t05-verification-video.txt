@@ -1,0 +1,14 @@
+Subject: Action required: verify your identity
+
+Hello,
+
+We have received your request to reactivate your account, but we do not have sufficient information to complete your request. Read the instructions in this email to complete your identity verification and reactivate your account.
+
+To verify your identity, you need to join a video call with an Amazon associate. During the call you will be asked to show:
+- The original of the government-issued ID you provided during registration
+- The original of the document you provided as proof of address, such as a bank statement or utility bill
+
+To schedule your video call, go to the Account Health page in Seller Central and choose an available time. You must be the primary contact person on the account.
+
+Thank you,
+Amazon Seller Identity Verification

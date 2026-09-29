@@ -1,0 +1,20 @@
+Subject: Your Amazon.co.uk selling account
+
+Hello,
+
+Your Amazon Seller account has been deactivated and your listings have been removed in accordance with Section 3 of Amazon's Business Solutions Agreement. Funds will not be transferred to you but will stay in your account while we review.
+
+Why is this happening?
+We received complaints from customers about the authenticity of items you listed. The ASINs affected are:
+ASIN: B07KJ3M8QA
+ASIN: B08RT2N6LX
+
+How do I reactivate my account?
+To reactivate your selling account, please send us:
+-- Copies of invoices or receipts from your supplier issued in the last 365 days for the ASINs listed above. The invoices must show the supplier's name, address and phone number, your name and address, and the quantity purchased.
+-- A plan of action that explains the root cause of the complaints, the actions you have taken to resolve them, and the steps you have taken to prevent them in the future.
+
+You can submit an appeal from the Account Health page in Seller Central.
+
+Seller Performance Team
+Amazon.co.uk

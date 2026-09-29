@@ -112,11 +112,13 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
       return { kind: "unavailable", message: tooLargeMessage(input.bytes.byteLength) };
     }
     // 25 Sep 2026: an expired session reached the seller as the bare word "Unauthorized".
+    // 29 Sep 2026: a guest who never signed in was told their sign-in had expired, so the message
+    // now holds for both.
     if (res.status === 401) {
       return {
         kind: "unavailable",
         message:
-          "Your sign-in has expired. Sign in again to check documents; nothing about your case has changed.",
+          "Checking a document needs you to be signed in. Sign in, then check it again; nothing about your case has changed.",
       };
     }
     const body = await res.json().catch(() => null);

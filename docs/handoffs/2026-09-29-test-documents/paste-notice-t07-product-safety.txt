@@ -1,0 +1,17 @@
+Subject: Product safety concern about your listing
+
+Hello,
+
+We received customer reports that the product listed below may present a safety risk. Customers reported that the charging cable overheated during use. As a precaution, we have removed the listing while we review it.
+
+ASIN: B0CX9L4TQ2
+Product: 20W USB-C wall charger
+
+To have the listing reviewed for reinstatement, provide the following by 20 October 2026:
+1. A test report from an ISO/IEC 17025 accredited laboratory showing the product complies with UL 62368-1.
+2. A Certificate of Compliance that lists the product, the manufacturer and the safety standard.
+3. Images of the product, its packaging and its label showing the manufacturer's name and model number.
+
+Submit the documents from the Account Health page in Seller Central. If you do not respond, the listing will remain removed.
+
+Amazon Product Safety Team
