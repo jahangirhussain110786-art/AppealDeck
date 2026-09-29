@@ -16,8 +16,20 @@
     {
       "name": "prototype-v5",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "4402", "--directory", "docs/handoffs/2026-09-26-prototype-v5"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4402",
+        "--directory",
+        "docs/handoffs/2026-09-26-prototype-v5"
+      ],
       "port": 4402
+    },
+    {
+      "name": "prototype-handoffs",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "4403", "--directory", "docs/handoffs"],
+      "port": 4403
     },
     {
       "name": "appealdeck-prod-3100",
