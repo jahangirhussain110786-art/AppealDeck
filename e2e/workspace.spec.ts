@@ -109,6 +109,29 @@ test("workspace persists a sourced evidence plan, waiting state and factual revi
   await expect(page.getByRole("link", { name: "Continue your case" })).toBeVisible();
 });
 
+/**
+ * 29 Sep 2026. The founder found the case had no way on: the Documents view simply ended, and only
+ * the tab row said the answers came next. Each view now ends with Back and Next, and Next brings
+ * the next view to the top with the keyboard on its tab.
+ */
+test("the documents view ends with the way on to the answers, and back", async ({ page }) => {
+  await configure(page);
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
+  const documents = page.getByRole("tabpanel", { name: "Documents", exact: true });
+  await expect(documents.getByText(/^Documents ready: 0 of \d+\.$/)).toBeVisible();
+  await expect(
+    documents.getByText("You can write your answers now and add the rest later."),
+  ).toBeVisible();
+  await documents.getByRole("button", { name: "Next: write your answers" }).click();
+  await expect(page.getByRole("tab", { name: "Response", exact: true })).toBeFocused();
+  await expect(page.getByRole("tablist", { name: "Case workspace views" })).toBeInViewport();
+  await expect(page.getByLabel("Your explanation, in your own words")).toBeVisible();
+  await page.getByRole("button", { name: "Back to documents" }).click();
+  await expect(page.getByRole("tab", { name: "Documents", exact: true })).toBeFocused();
+  await documents.getByRole("button", { name: "Back to overview" }).click();
+  await expect(page.getByRole("tab", { name: "Overview", exact: true })).toBeFocused();
+});
+
 test("switching views retains unfinished text and a separate case preserves saved work", async ({
   page,
 }) => {
@@ -337,10 +360,10 @@ test("a refused outcome share keeps the offer and says so; a recorded one confir
   await page
     .getByLabel("Your explanation, in your own words")
     .fill("The supplier invoice identifies the product by code J-104 and records the purchase.");
-  await page.getByRole("button", { name: "Save my answers" }).click();
-  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  // Not saved first: "Prepare response" saves the answers itself (29 Sep 2026).
   await page.route("**/api/compose", async (route) => {
     const { caseData, attemptNumber } = route.request().postDataJSON();
+    expect(caseData.workspace.explanation).toContain("J-104");
     const draft = composePoa(caseData, attemptNumber);
     await route.fulfill({
       status: 200,
@@ -353,6 +376,9 @@ test("a refused outcome share keeps the offer and says so; a recorded one confir
     });
   });
   await page.getByRole("button", { name: "Prepare response", exact: true }).click();
+  // The prepared response opens below the fold; the seller is taken to it.
+  await expect(page.getByRole("heading", { name: "Review the exact response" })).toBeFocused();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page
     .getByLabel(
       "I reviewed the facts, attachment names and page references against the response page in Seller Central.",

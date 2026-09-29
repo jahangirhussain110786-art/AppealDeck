@@ -128,3 +128,31 @@ Both are wording in `src/core`, so they were left out of the presentation pass u
   - "Save evidence review" → "Save document"
   - …and the other field labels in the brief.
 - **Steps added:** four tests now open the fold, or the card, that holds what they check. No test was deleted, and no assertion's meaning changed.
+
+## Follow-up: the way forward (29 Sep 2026, later)
+
+The founder asked: "there is not any next button … which leads his filled data to next steps to the finalization of a proper response". This was not a misunderstanding. I walked the live case and found:
+
+- **Overview** had a forward button ("Go to your documents").
+- **Documents** ended at "What this case knows". Only the tab row showed that the answers came next, and nothing said the final response is prepared there.
+- **Response:** "Prepare response" stayed disabled until the seller had also pressed "Save my answers". Two buttons did one job, and the second was greyed out right after the seller finished writing.
+- **The prepared response,** with its last steps (read, copy, record what you sent), opened below the fold with nothing pointing at it.
+
+What changed (no feature removed, nothing in `src/core`, the vault, the API or the Pass):
+
+- **`StepNav`** (`src/components/workspace/StepNav.tsx`) sits at the bottom of Documents and Response.
+  - **Documents:** "Documents ready: {done} of {n}.", "You can write your answers now and add the rest later.", the "Amazon asked for nothing else" tick (moved here from the top card, so it follows the list it confirms), then "Back to overview" and "Next: write your answers". A verification case gets "Next: see what to prepare"; a gated case gets no Next.
+  - **Response:** "Back to documents".
+  - **Pressing either button** brings the next view to the top and moves the keyboard focus to its tab. This runs in an effect, not an animation frame, because an animation frame never runs in a background tab.
+- **"Prepare response" now saves the answers itself,** then prepares from what was saved. The "Save your answers above…" warning is gone because it no longer applies. "Save my answers" stays, for saving without preparing.
+- **"Before you send" and the button's wording now read the answers as typed,** so an answer the seller has just written no longer appears as still missing.
+- **The prepared response scrolls into view with its heading focused,** and says in one line what to do: "Read it, then copy it into Amazon's appeal page and attach your files. Come back and record what you sent."
+- **"Download the linked originals from Evidence"** now says "Documents", the tab's current name.
+
+**Checked:** walked as a guest and signed in (the prepared response, heading focused) at 1440 and 390 px, light and dark, with no sideways scroll.
+
+**Gates:** typecheck, lint, lint:copy, reachability, sources and format all 0 · vitest 1187/1187 · build · Playwright chromium CI 126/0/0.
+
+**Tests:**
+- New: `e2e/workspace.spec.ts` "the documents view ends with the way on to the answers, and back".
+- Changed: the refused-outcome test now presses "Prepare response" without saving first, and asserts that the prepared response's heading is focused.

@@ -145,8 +145,49 @@ export function ResponseReview({
     // stays disabled and the attestation never reaches the vault.
     attested !== Boolean(w.correctiveActionsAttested) ||
     answersDirty;
-  const gaps = workspaceGaps(w);
   const supported = workspaceCanCompose(w);
+  /** The case with the answers as typed; `now` dates a first attestation when it is saved. */
+  const withAnswers = (now = ""): Workspace => ({
+    ...w,
+    explanation,
+    correctiveActions,
+    preventiveMeasures,
+    // Answers to questions no longer on the form are kept, not discarded: a re-pasted form that
+    // words one question differently should not cost the seller their work.
+    answers: [
+      ...(w.answers ?? []).filter((a) => !questions.includes(a.question)),
+      ...questions
+        .map((q) => ({ question: q, answer: answerValue(q) }))
+        .filter((a) => a.answer.trim()),
+    ],
+    correctiveActionsAttested: attested ? (w.correctiveActionsAttested ?? { at: now }) : undefined,
+  });
+  /*
+    "Before you send" and the button's own wording read the answers as typed, not as last saved:
+    "Prepare response" saves them first, so a list still asking for an answer the seller has just
+    written would be asking for something already done.
+  */
+  const gaps = workspaceGaps(withAnswers());
+  /*
+    One press (29 Sep 2026). "Prepare response" used to stay disabled until the seller had also
+    pressed "Save my answers", under a small warning line: two buttons for one intention, the second
+    greyed out exactly when the seller had just finished writing. It now saves first and prepares
+    from what was saved, so the response is still built only from answers that reached the vault.
+  */
+  const prepare = async () => {
+    if (dirty && !(await onSave(withAnswers(new Date().toISOString())))) return;
+    onGenerate();
+  };
+  // The prepared response opens below the fold, and the steps that finish the case are inside it.
+  const reviewHeading = React.useRef<HTMLHeadingElement>(null);
+  const shownResult = React.useRef(result);
+  React.useEffect(() => {
+    if (!result || result === shownResult.current) return;
+    shownResult.current = result;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    reviewHeading.current?.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "start" });
+    reviewHeading.current?.focus({ preventScroll: true });
+  }, [result]);
   return (
     <div className="space-y-5">
       {/* v5 (26 Sep 2026, prototype response.html): the facts read as the document they become —
@@ -318,25 +359,7 @@ export function ResponseReview({
           <Button
             variant="outline"
             disabled={busy || !dirty}
-            onClick={() =>
-              void onSave({
-                ...w,
-                explanation,
-                correctiveActions,
-                preventiveMeasures,
-                // Answers to questions no longer on the form are kept, not discarded: a re-pasted
-                // form that words one question differently should not cost the seller their work.
-                answers: [
-                  ...(w.answers ?? []).filter((a) => !questions.includes(a.question)),
-                  ...questions
-                    .map((q) => ({ question: q, answer: answerValue(q) }))
-                    .filter((a) => a.answer.trim()),
-                ],
-                correctiveActionsAttested: attested
-                  ? (w.correctiveActionsAttested ?? { at: new Date().toISOString() })
-                  : undefined,
-              })
-            }
+            onClick={() => void onSave(withAnswers(new Date().toISOString()))}
           >
             {F.save}
           </Button>
@@ -387,13 +410,10 @@ export function ResponseReview({
               ) : purchase ? (
                 <ComposeGate vault={vault} caseId={file.id} onActivated={onGenerate} />
               ) : (
-                <div className="space-y-2">
-                  <Button disabled={busy || dirty} onClick={onGenerate}>
-                    <FileCheck2 className="mr-2 h-4 w-4" aria-hidden />
-                    {gaps.length ? "Prepare working draft" : "Prepare response"}
-                  </Button>
-                  {dirty && !busy && <p className="text-xs text-warning">{F.saveFirst}</p>}
-                </div>
+                <Button disabled={busy} onClick={() => void prepare()}>
+                  <FileCheck2 className="mr-2 h-4 w-4" aria-hidden />
+                  {gaps.length ? "Prepare working draft" : "Prepare response"}
+                </Button>
               )}
               <p className="text-xs text-muted-foreground">{F.sendNote}</p>
             </>
@@ -403,7 +423,15 @@ export function ResponseReview({
       {result && !dirty && (
         <Card>
           <CardHeader>
-            <CardTitle>Review the exact response</CardTitle>
+            <CardTitle
+              as="h2"
+              ref={reviewHeading}
+              tabIndex={-1}
+              className="scroll-mt-28 text-lg focus:outline-none"
+            >
+              Review the exact response
+            </CardTitle>
+            <p className="text-sm text-foreground">{C.steps.finish}</p>
             <p className="text-sm text-muted-foreground">{result.draft.mode.reason}</p>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -459,10 +487,7 @@ export function ResponseReview({
                 label={gaps.length ? "Copy working draft" : "Copy response"}
               />
             )}
-            <p className="text-xs text-muted-foreground">
-              Download the linked originals from Evidence and attach each one where the response
-              page in Seller Central asks for it. Copying does not record a submission.
-            </p>
+            <p className="text-xs text-muted-foreground">{C.steps.attachFrom}</p>
             {/*
               Retiring the classic interview (22 Sep 2026): `BeforeYouSubmitChecklist` used to live
               only in `ComposeView`, which was that path's drafting step. Removing the path without

@@ -68,6 +68,20 @@ export const WORKSPACE = {
     recordedOn: "Recorded {date}. Change it any time.",
   },
   responseSheet: { eyebrow: "Your response", beforeSend: "Before you send" },
+  // The way on at the foot of each view (29 Sep 2026): the tabs alone never said what came next.
+  steps: {
+    toOverview: "Back to overview",
+    toDocuments: "Back to documents",
+    toAnswers: "Next: write your answers",
+    toVerify: "Next: see what to prepare",
+    progress: "Documents ready: {done} of {n}.",
+    allReady: "Every document is ready.",
+    later: "You can write your answers now and add the rest later.",
+    finish:
+      "Read it, then copy it into Amazon's appeal page and attach your files. Come back and record what you sent.",
+    attachFrom:
+      "Download the linked originals from Documents and attach each one where the response page in Seller Central asks for it. Copying does not record a submission.",
+  },
   // The Response tab (29 Sep 2026): plain questions, a one-line hint, and an example in every box.
   responseFields: {
     operationalTitle: "What happened. What changed.",
@@ -92,7 +106,6 @@ export const WORKSPACE = {
     additionalPlaceholder:
       "Only if something important is not covered by the questions above. Leave it empty otherwise.",
     save: "Save my answers",
-    saveFirst: "Save your answers above before you prepare the response.",
     sendNote:
       "Needs an Appeal Pass for this case. Your answers and file names go to AppealDeck; your files stay in your vault. Nothing is sent to Amazon.",
     signIn: "Sign in to prepare your response",

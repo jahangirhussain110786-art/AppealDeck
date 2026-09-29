@@ -32,6 +32,7 @@ import { ResponseReview, type WorkspaceResponse } from "./ResponseReview";
 import { ReplyDeltaReview } from "./ReplyDeltaReview";
 import { SellerDeadlineField } from "./SellerDeadlineField";
 import { ChangeOfApproach } from "./ChangeOfApproach";
+import { StepNav } from "./StepNav";
 import { shouldOfferChangeOfApproach } from "@/core/escalation";
 import { deadlinesForDisplay, sellerDeadline, withSellerDeadlines } from "@/core/deadlinesModel";
 import { DetailDisclosure, VIEW_ICONS } from "./WorkspaceVisuals";
@@ -241,6 +242,26 @@ function WorkspaceInner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
   const signInHref = `/login?next=${encodeURIComponent(`/case?view=${tab}`)}`;
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const movedByStep = useRef(false);
+  /*
+    For the Back and Next buttons at the foot of a view. The button that was pressed is hidden with
+    its view, so the next view is brought to the top and the keyboard lands on its tab, instead of
+    the seller arriving at the bottom of a page with focus nowhere. Done in an effect, after the new
+    view has rendered: an animation frame never fires in a background tab.
+  */
+  const goToStep = (next: string) => {
+    movedByStep.current = true;
+    setTab(next);
+  };
+  useEffect(() => {
+    if (!movedByStep.current) return;
+    movedByStep.current = false;
+    tabsRef.current?.scrollIntoView({ block: "start" });
+    tabsRef.current
+      ?.querySelector<HTMLElement>('[role="tab"][data-state="active"]')
+      ?.focus({ preventScroll: true });
+  }, [tab]);
   const [reviewRequest, setReviewRequest] = useState(false);
   /*
     Which document card is open (calm pass, 29 Sep 2026). `undefined` means "the first one that still
@@ -1172,6 +1193,18 @@ function WorkspaceInner({
     openDocument === undefined
       ? (w.requirements.find((r) => r.status === "needed" || r.status === "waiting")?.id ?? null)
       : openDocument;
+  // A document the seller has said they cannot get is settled for this step: the response says so.
+  const documentsReady = w.requirements.filter(
+    (r) => r.status === "reviewed" || r.status === "cannot_obtain",
+  ).length;
+  // The Response tab holds a verification case's checklist, and nothing for a gated one.
+  const toResponse = gated
+    ? undefined
+    : route.protocol === "verification"
+      ? C.steps.toVerify
+      : workspaceCanCompose(w)
+        ? C.steps.toAnswers
+        : undefined;
   return (
     <div className="space-y-5">
       <AppBarSlot target="title">
@@ -1296,7 +1329,7 @@ function WorkspaceInner({
       )}
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_21.25rem]">
         <div className="min-w-0 space-y-5">
-          <Tabs value={tab} onValueChange={setTab}>
+          <Tabs ref={tabsRef} value={tab} onValueChange={setTab} className="scroll-mt-24">
             {/* An underlined row, the way the public header marks the current page: the case reads
                 as one page with four views, not as a control panel. */}
             <TabsList
@@ -1561,23 +1594,6 @@ function WorkspaceInner({
                       </Button>
                     </div>
                   </details>
-                  <label className="flex items-start gap-3 border-t border-border pt-4 text-sm">
-                    <input
-                      className="mt-1 h-4 w-4 accent-primary"
-                      type="checkbox"
-                      checked={w.requirementsConfirmed}
-                      disabled={busy || !w.confirmed}
-                      onChange={(e) => {
-                        // Read now, not inside the updater. `commit` runs its updater after any
-                        // save already in flight, which is after this handler has returned — and
-                        // by then React has reset this controlled input to the saved value, so a
-                        // lazy `e.target.checked` reads `false` and the tick silently undoes itself.
-                        const confirmed = e.target.checked;
-                        void commit((old) => ({ ...old, requirementsConfirmed: confirmed }));
-                      }}
-                    />
-                    {C.documents.allListed}
-                  </label>
                 </CardContent>
               </Card>
               {/* Before the records: a check compares each document with these. */}
@@ -1643,8 +1659,56 @@ function WorkspaceInner({
               ))}
               {/* The ledger sits after the evidence, because it is the comparison across it. */}
               <FactsLedgerCard ledger={ledger} />
+              {/*
+                The tick used to sit in the card at the top, before the seller had seen the list it
+                vouches for. Here it closes the list, beside the button that moves on.
+              */}
+              <StepNav
+                back={{ label: C.steps.toOverview, onClick: () => goToStep("overview") }}
+                next={
+                  toResponse
+                    ? { label: toResponse, onClick: () => goToStep("response") }
+                    : undefined
+                }
+              >
+                {w.requirements.length > 0 && (
+                  <div>
+                    <p className="text-[0.9375rem] font-medium text-foreground">
+                      {documentsReady === w.requirements.length
+                        ? C.steps.allReady
+                        : C.steps.progress
+                            .replace("{done}", String(documentsReady))
+                            .replace("{n}", String(w.requirements.length))}
+                    </p>
+                    {documentsReady < w.requirements.length && toResponse && (
+                      <p className="text-sm text-muted-foreground">{C.steps.later}</p>
+                    )}
+                  </div>
+                )}
+                <label className="flex items-start gap-3 text-sm">
+                  <input
+                    className="mt-1 h-4 w-4 accent-primary"
+                    type="checkbox"
+                    checked={w.requirementsConfirmed}
+                    disabled={busy || !w.confirmed}
+                    onChange={(e) => {
+                      // Read now, not inside the updater. `commit` runs its updater after any
+                      // save already in flight, which is after this handler has returned — and
+                      // by then React has reset this controlled input to the saved value, so a
+                      // lazy `e.target.checked` reads `false` and the tick silently undoes itself.
+                      const confirmed = e.target.checked;
+                      void commit((old) => ({ ...old, requirementsConfirmed: confirmed }));
+                    }}
+                  />
+                  {C.documents.allListed}
+                </label>
+              </StepNav>
             </TabsContent>
-            <TabsContent forceMount value="response" className="mt-5 data-[state=inactive]:hidden">
+            <TabsContent
+              forceMount
+              value="response"
+              className="mt-5 space-y-5 data-[state=inactive]:hidden"
+            >
               {gated ? (
                 <Alert variant="warning">
                   <AlertTitle>Professional review needed</AlertTitle>
@@ -1695,6 +1759,8 @@ function WorkspaceInner({
                   onSubmit={recordSubmission}
                 />
               )}
+              {/* The way forward is inside the response sheet ("Prepare response"); this is the way back. */}
+              <StepNav back={{ label: C.steps.toDocuments, onClick: () => goToStep("evidence") }} />
             </TabsContent>
             <TabsContent
               forceMount
