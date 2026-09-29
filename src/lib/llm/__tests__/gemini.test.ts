@@ -248,12 +248,17 @@ describe("callGemini retries Google's 'not now' answers", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  const urlOf = (fetchMock: ReturnType<typeof respond>, i: number) =>
+    String((fetchMock.mock.calls as unknown as Array<[string]>)[i]![0]);
+
   it("reports 'busy' when Google stays busy, after a bounded number of tries", async () => {
     const fetchMock = respond([503, 503, 503, 503]);
     const result = await run();
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe("busy");
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    // Three tries of the task's model, then one of the fallback model.
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(urlOf(fetchMock, 3)).toContain("/models/gemini-3-flash-preview:");
   });
 
   it("does not retry or call it 'busy' when the project's quota is used up", async () => {
@@ -267,7 +272,49 @@ describe("callGemini retries Google's 'not now' answers", () => {
     const result = await run();
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe("upstream_error");
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Not retried; the fallback model has its own quota, so it is asked once.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  /**
+   * 29 Sep 2026: gemini-3.5-flash and the newer flash models answered "high demand" or a quota 429
+   * to most requests, and every document check failed, while gemini-3-flash-preview answered.
+   */
+  it("asks the fallback model when the task's model stays busy, and returns its answer", async () => {
+    const fetchMock = respond([503, 503, 503]);
+    const result = await run();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.model).toBe("gemini-3-flash-preview");
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(urlOf(fetchMock, 0)).toContain("/models/gemini-3.5-flash:");
+    expect(urlOf(fetchMock, 3)).toContain("/models/gemini-3-flash-preview:");
+  });
+
+  it("uses GEMINI_FALLBACK_MODEL, and 'none' switches the fallback off", async () => {
+    vi.stubEnv("GEMINI_FALLBACK_MODEL", "gemini-other-flash");
+    let fetchMock = respond([503, 503, 503]);
+    await run();
+    expect(urlOf(fetchMock, 3)).toContain("/models/gemini-other-flash:");
+
+    vi.stubEnv("GEMINI_FALLBACK_MODEL", "none");
+    fetchMock = respond([503, 503, 503, 503]);
+    const result = await run();
+    expect(result.ok).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("keeps a model the caller chose, rather than swapping it for the fallback", async () => {
+    const fetchMock = respond([503, 503, 503, 503]);
+    vi.useFakeTimers();
+    vi.stubEnv("GEMINI_API_KEY", "test-key");
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const pending = callGemini({
+      model: "gemini-chosen",
+      messages: [{ role: "user", text: "hi" }],
+    });
+    await vi.runAllTimersAsync();
+    expect((await pending).ok).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it("does not retry an answer that will not change, such as a bad request", async () => {
@@ -283,6 +330,8 @@ describe("callGemini retries Google's 'not now' answers", () => {
     const fetchMock = respond([503, 503, 503]);
     vi.useFakeTimers();
     vi.stubEnv("GEMINI_API_KEY", "test-key");
+    // The plain-JSON retry on its own, without the fallback model answering first.
+    vi.stubEnv("GEMINI_FALLBACK_MODEL", "none");
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const schema = { type: "object", properties: { text: { type: "string" } } };
     const pending = callGemini({

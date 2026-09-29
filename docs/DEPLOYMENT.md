@@ -58,10 +58,11 @@ Added 24 Sep 2026. These were missing from this guide, so following it would hav
 
 ### Optional
 
-| Variable                       | Purpose                                | Notes                          |
-| ------------------------------ | -------------------------------------- | ------------------------------ |
-| `GEMINI_MODEL_READ_DOCUMENT`   | override the model for document checks | defaults to `gemini-3.5-flash` |
-| `GEMINI_MODEL_IMPROVE_WORDING` | override the model for wording help    | defaults to `gemini-3.5-flash` |
+| Variable                       | Purpose                                                             | Notes                                                        |
+| ------------------------------ | ------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `GEMINI_MODEL_READ_DOCUMENT`   | override the model for document checks                              | defaults to `gemini-3.5-flash`                               |
+| `GEMINI_MODEL_IMPROVE_WORDING` | override the model for wording help                                 | defaults to `gemini-3.5-flash`                               |
+| `GEMINI_FALLBACK_MODEL`        | asked once when the main model is busy, stalls or is over its quota | defaults to `gemini-3-flash-preview`; `none` switches it off |
 
 Overrides exist only for tasks the app calls. The three earlier listed here (`CRITIQUE_POA`, `PHRASE_ENGINE_OUTPUT`, `TRIAGE_ROUTER`) belonged to tasks that were never called, and setting them did nothing; removed 24 Sep 2026.
 

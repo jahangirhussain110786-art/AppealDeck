@@ -55,6 +55,24 @@ function envForTask(task: LlmTask): string | undefined {
   return raw && raw.trim().length > 0 ? raw.trim() : undefined;
 }
 
+/**
+ * The model to ask once when the task's own model is busy, stalls or is over its quota (29 Sep
+ * 2026). Measured that day: gemini-3.5-flash, 3.6, 3.7 and 3.8 all answered 503 "high demand" or a
+ * quota 429 for most requests, and a document check failed every time, while gemini-3-flash-preview
+ * answered every request shape in 2 to 3 s and read the test invoice correctly. It is a full flash
+ * model, not a lite one, for the reason `TASK_MODELS` gives. Quotas are per model, so a second
+ * model also helps when the first has used its allowance.
+ *
+ * `GEMINI_FALLBACK_MODEL` replaces it, and `none` switches the fallback off.
+ */
+const FALLBACK_MODEL = "gemini-3-flash-preview";
+
+export function getGeminiFallbackModel(): string | undefined {
+  const raw = process.env.GEMINI_FALLBACK_MODEL?.trim();
+  if (raw === "none") return undefined;
+  return raw || FALLBACK_MODEL;
+}
+
 export function getGeminiModel(task?: LlmTask): string {
   if (task) {
     const override = envForTask(task);
@@ -184,7 +202,8 @@ async function callGeminiOnce(input: GeminiCallInput): Promise<GeminiCallResult>
 
   const apiKey = getApiKey();
   const model = input.model ?? getGeminiModel(input.task);
-  const url = `${GEMINI_API_BASE}/models/${model}:generateContent?key=${apiKey}`;
+  const urlFor = (m: string) => `${GEMINI_API_BASE}/models/${m}:generateContent?key=${apiKey}`;
+  const url = urlFor(model);
 
   const system = input.messages.find((m) => m.role === "system");
   const contents = input.messages
@@ -250,6 +269,32 @@ async function callGeminiOnce(input: GeminiCallInput): Promise<GeminiCallResult>
     last.reason === "upstream_error" &&
     /^Gemini returned (429|5\d\d)/.test(last.message) &&
     !isQuotaMessage(last.message);
+  const overQuota = !last.ok && last.reason === "upstream_error" && isQuotaMessage(last.message);
+
+  // Another model before another request shape: when the model itself is overloaded, rewording
+  // the request to it does not help. An explicitly chosen model is the caller's, so it is kept.
+  const fallbackModel = input.model ? undefined : getGeminiFallbackModel();
+  if (
+    !last.ok &&
+    fallbackModel &&
+    fallbackModel !== model &&
+    (busy || overQuota || last.reason === "timeout") &&
+    deadline - Date.now() > 5_000
+  ) {
+    console.warn(
+      `[gemini] ${input.task ?? "default"}: ${model} ${overQuota ? "is over its quota" : busy ? "is busy" : "stalled"}, asking ${fallbackModel}`,
+    );
+    const outcome = await attemptOnce(
+      urlFor(fallbackModel),
+      body,
+      fallbackModel,
+      Math.min(timeoutMs, deadline - Date.now()),
+    );
+    if (outcome.result.ok) return outcome.result;
+    console.warn(
+      `[gemini] ${input.task ?? "default"}: ${fallbackModel} failed too: ${outcome.result.message.replace(/key=[^&\s]+/g, "key=***")}`,
+    );
+  }
 
   /*
     25 Sep 2026: with the paid key confirmed, every schema-constrained request to gemini-3.5-flash
