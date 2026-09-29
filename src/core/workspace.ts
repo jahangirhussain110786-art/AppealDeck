@@ -282,6 +282,8 @@ export const EVIDENCE_KIND_LABELS: Readonly<Record<EvidenceKind, string>> = {
   sop_document: "Written procedure",
   compliance_report: "Test report or compliance certificate",
   account_resolution_proof: "Linked-account resolution record",
+  address_proof: "Proof of address",
+  product_images: "Product and label photos",
   other: "Other requested record",
 };
 
@@ -296,14 +298,25 @@ export const EVIDENCE_KINDS = Object.keys(EVIDENCE_KIND_LABELS) as [
   ...EvidenceKind[],
 ];
 
-const CANDIDATE_PATTERNS: ReadonlyArray<{ pattern: RegExp; evidenceKind: EvidenceKind }> = [
+/**
+ * `unless`: the same words can name two different records. "Proof of address, such as a bank
+ * statement or utility bill" is one proof-of-address record, not a proof of address and a separate
+ * bank record, so the bank pattern steps aside when the sentence is about an address.
+ */
+const CANDIDATE_PATTERNS: ReadonlyArray<{
+  pattern: RegExp;
+  evidenceKind: EvidenceKind;
+  unless?: RegExp;
+}> = [
   { pattern: /\binvoices?\b/i, evidenceKind: "supplier_invoice" },
   {
     pattern: /\b(letter of authorization|authori[sz]ation letter|LOA)\b/i,
     evidenceKind: "brand_authorization",
   },
   {
-    pattern: /\b(identity document|government.issued (?:ID|identification))\b/i,
+    // Passports and driving licences added 29 Sep 2026 with the researched verification notice.
+    pattern:
+      /\b(identity document|government.issued (?:ID|identification)|passport|driv(?:er'?s|ing) licen[cs]e|national ID(?: card)?)\b/i,
     evidenceKind: "identity_doc",
   },
   {
@@ -312,7 +325,34 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{ pattern: RegExp; evidenceKind: Evidenc
   },
   // 29 Sep 2026: a funds notice asking for "a bank statement showing the account holder name" had
   // the bank record raised as ours ("We added this") although Amazon named it.
-  { pattern: /\bbank statements?\b/i, evidenceKind: "financial_instrument_doc" },
+  {
+    pattern: /\bbank statements?\b/i,
+    evidenceKind: "financial_instrument_doc",
+    unless:
+      /\bproof of (?:address|residence)\b|\baddress\b[^.!?\n]{0,40}\b(?:such as|like|e\.g\.)/i,
+  },
+  // The rest added 29 Sep 2026 from the researched test notices, each a record Amazon named that
+  // the notice's own list could not raise.
+  {
+    pattern:
+      /\b(proof of (?:address|residence)|utility bills?|business licen[cs]es?|business registration(?: documents?| certificates?)?)\b/i,
+    evidenceKind: "address_proof",
+  },
+  {
+    pattern:
+      /\b(?:images?|photos?|photographs?|pictures?) of (?:the |your )?(?:product|packaging|label)s?\b|\b(?:product|label) (?:images?|photos?)\b/i,
+    evidenceKind: "product_images",
+  },
+  {
+    pattern:
+      /\b(?:related|linked)[\s-]accounts?\b[^.!?\n]{0,50}\b(?:resolved|closed)\b|\bresolution of the (?:related|linked) account/i,
+    evidenceKind: "account_resolution_proof",
+  },
+  {
+    pattern:
+      /\b(proof of (?:disposal|destruction|removal)|disposal (?:records?|confirmation|orders?)|recall (?:notices?|plans?|documentation|records?))\b/i,
+    evidenceKind: "disposal_or_recall_proof",
+  },
   {
     pattern: /\b(proof of (?:correction|changes)|listing screenshots?)\b/i,
     evidenceKind: "listing_fix_proof",
@@ -329,6 +369,7 @@ export const REQUIREMENT_CANDIDATES: ReadonlyArray<{
   pattern: RegExp;
   label: string;
   evidenceKind: EvidenceKind;
+  unless?: RegExp;
 }> = CANDIDATE_PATTERNS.map((c) => ({ ...c, label: EVIDENCE_KIND_LABELS[c.evidenceKind] }));
 
 /**
@@ -386,8 +427,26 @@ const REQUIREMENT_NEGATION =
   /\b(do not|don't|does not need|not required|not necessary|not needed|no need to|no longer|no additional|no further)\b/i;
 
 const REQUEST_WORD = /\b(provide|submit|upload|send|include|request(?:ed|ing)?)\b/i;
+/**
+ * A line introducing a list can ask in more ways than a sentence can: "During the call you will be
+ * asked to show:", "Have the following ready:". Only ever read on a line that ends with a colon, so
+ * "the invoices must show the supplier's name" is never taken for a request.
+ */
+const LEAD_IN_WORD =
+  /\b(provide|submit|upload|send|include|request(?:ed|ing)?|show|present|have (?:the following )?ready|prepare|bring)\b/i;
 /** "- Copies of invoices…", "-- …", "• …", "1. …", "2) …": one item of a list. */
 const LIST_ITEM = /^(?:[-–—*•]+|\(?\d{1,2}[.)])\s+/;
+
+/** A sentence that asks for something, and whether it asks only because its list's lead-in did. */
+interface RequestSentence {
+  text: string;
+  /**
+   * An item under a request lead-in. The past-tense filter does not apply to it: "the original of
+   * the government-issued ID you provided during registration" names the document Amazon now wants
+   * shown; the lead-in is what asks, and it was checked for negation and history already.
+   */
+  listItem: boolean;
+}
 
 /**
  * The sentences that ask for something, as `proposedRequirements` reads them.
@@ -401,8 +460,9 @@ const LIST_ITEM = /^(?:[-–—*•]+|\(?\d{1,2}[.)])\s+/;
  * and ends with a colon. The item is kept as its own sentence, so the quote shown to the seller is
  * the item Amazon wrote. A line that is not a list item ends the list.
  */
-function requestSentences(text: string): string[] {
-  const out: string[] = [];
+function requestSentences(text: string): RequestSentence[] {
+  const out: RequestSentence[] = [];
+  const asked = (s: string): RequestSentence => ({ text: s, listItem: false });
   let inRequestList = false;
   for (const rawLine of text.split("\n")) {
     const line = rawLine.trim();
@@ -415,17 +475,22 @@ function requestSentences(text: string): string[] {
       .map((s) => s.trim())
       .filter(Boolean);
     if (isItem && inRequestList) {
-      out.push(sentences[0]!);
-      out.push(...sentences.slice(1).filter((s) => REQUEST_WORD.test(s)));
+      out.push({ text: sentences[0]!, listItem: true });
+      out.push(
+        ...sentences
+          .slice(1)
+          .filter((s) => REQUEST_WORD.test(s))
+          .map(asked),
+      );
       continue;
     }
-    out.push(...sentences.filter((s) => REQUEST_WORD.test(s)));
+    out.push(...sentences.filter((s) => REQUEST_WORD.test(s)).map(asked));
     // A negated or historical lead-in ("You do not need to send:", "You previously provided:")
     // introduces a list of things that are not being asked for.
     if (!isItem)
       inRequestList =
         /:\s*$/.test(line) &&
-        REQUEST_WORD.test(line) &&
+        LEAD_IN_WORD.test(line) &&
         !REQUIREMENT_NEGATION.test(line) &&
         !describesThePast(line);
   }
@@ -442,16 +507,21 @@ export function proposedRequirements(
   /** Omit on surfaces that must show only what Amazon actually said — see the union note below. */
   violationKind?: ViolationKind,
 ): Requirement[] {
-  const sources = requestSentences(`${w.notice}\n${w.formInstructions}`).filter(
-    (s) =>
-      s.length <= 2000 &&
-      !REQUIREMENT_NEGATION.test(s) &&
-      // "Invoices were requested earlier", "thank you for providing your invoices": the notice
-      // describing what already happened. The same rule `determineResponseType` applies.
-      !describesThePast(s),
-  );
-  const named = REQUIREMENT_CANDIDATES.flatMap(({ pattern, label, evidenceKind }) => {
-    const sourceQuote = sources.find((s) => pattern.test(s));
+  const sources = requestSentences(`${w.notice}\n${w.formInstructions}`)
+    .filter(
+      (s) =>
+        s.text.length <= 2000 &&
+        !REQUIREMENT_NEGATION.test(s.text) &&
+        // "Invoices were requested earlier", "thank you for providing your invoices": the notice
+        // describing what already happened. The same rule `determineResponseType` applies.
+        (s.listItem || !describesThePast(s.text)),
+    )
+    .map((s) => s.text);
+  const allText = `${w.notice}\n${w.formInstructions}`;
+  // In the order Amazon listed them (29 Sep 2026), not the order of the patterns below — the seller
+  // works down the list as the notice gave it.
+  const named = REQUIREMENT_CANDIDATES.flatMap(({ pattern, label, evidenceKind, unless }) => {
+    const sourceQuote = sources.find((s) => pattern.test(s) && !unless?.test(s));
     return sourceQuote
       ? [
           {
@@ -466,7 +536,7 @@ export function proposedRequirements(
           },
         ]
       : [];
-  });
+  }).sort((a, b) => allText.indexOf(a.sourceQuote) - allText.indexOf(b.sourceQuote));
   if (!violationKind) return named;
 
   /*
@@ -484,8 +554,16 @@ export function proposedRequirements(
     Amazon never mentioned is the exact dishonesty this model exists to prevent.
   */
   const covered = new Set(named.map(requirementEvidenceKind));
+  const requestText = `${w.notice}\n${w.formInstructions}`;
   const inferred = requirementsFor(violationKind)
-    .filter((r) => r.required && !covered.has(r.kind))
+    .filter(
+      (r) =>
+        r.required &&
+        !covered.has(r.kind) &&
+        // A record needed only in some cases of this kind (a recall record on a safety case that is
+        // a customer complaint) is raised only when the notice says it is that case.
+        (!r.raisedWhen || r.raisedWhen.test(requestText)),
+    )
     .map((r) => ({
       id: crypto.randomUUID(),
       label: EVIDENCE_KIND_LABELS[r.kind],
@@ -574,11 +652,16 @@ export function requirementsAfterKindChange(
   nextKind: ViolationKind,
   /** Records the seller removed. A kind change does not bring them back. */
   dismissed: Workspace["dismissed"] = [],
+  /** The notice and response-page text, for records raised only in some cases of a kind. */
+  requestText = "",
 ): Requirement[] {
   const covered = new Set<string | undefined>(existing.map(requirementEvidenceKind));
   for (const d of dismissed) covered.add(d.key);
   const added = requirementsFor(nextKind)
-    .filter((r) => r.required && !covered.has(r.kind))
+    .filter(
+      (r) =>
+        r.required && !covered.has(r.kind) && (!r.raisedWhen || r.raisedWhen.test(requestText)),
+    )
     .map((r) => ({
       id: crypto.randomUUID(),
       label: EVIDENCE_KIND_LABELS[r.kind],

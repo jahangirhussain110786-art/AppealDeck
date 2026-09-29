@@ -136,10 +136,21 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
     shown as having no fixed window at all.
   */
   if (stated) {
+    /*
+      Named for what the notice asks (29 Sep 2026): "provide the following by 20 October 2026" is
+      a date to send documents by, and "Appeal by" misdescribed it. "Appeal by" stays when the
+      sentence around the date talks about appealing.
+    */
+    const raw = input.parsed.raw;
+    const before = raw.slice(0, stated.start);
+    const sentenceStart = Math.max(before.lastIndexOf("\n"), before.search(/[.!?]\s[^.!?]*$/)) + 1;
+    const sentence = raw.slice(sentenceStart, stated.end + 60).split(/(?<=[.!?])\s/)[0] ?? "";
+    // Submitting a Plan of Action is an appeal too.
+    const verb = /\bappeal|\bplan of action\b|\bPOA\b/i.test(sentence) ? "Appeal" : "Respond";
     out.push({
       kind: "appeal_window",
       dueAt: dayStart(stated.day),
-      label: `Appeal by ${formatDay(stated.day)}`,
+      label: `${verb} by ${formatDay(stated.day)}`,
       dueOn: stated.day,
     });
   } else if (days !== null) {

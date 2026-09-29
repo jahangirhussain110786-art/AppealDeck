@@ -1353,6 +1353,7 @@ function WorkspaceInner({
                             old.requirements,
                             next,
                             old.dismissed,
+                            `${old.notice}\n${old.formInstructions}`,
                           ),
                           requirementsConfirmed: false,
                         }),

@@ -43,7 +43,11 @@ export const dynamic = "force-dynamic";
  * Handled in the browser, never sent here. Kept as data rather than a comment so the refusal is
  * testable and cannot drift away from the client's routing.
  */
-export const BROWSER_ONLY_EVIDENCE_KINDS = ["identity_doc", "financial_instrument_doc"] as const;
+export const BROWSER_ONLY_EVIDENCE_KINDS = [
+  "identity_doc",
+  "financial_instrument_doc",
+  "address_proof",
+] as const;
 
 /**
  * The catch-all kind, refused here — added 23 Sep 2026, and the reason is worth stating plainly.

@@ -597,7 +597,7 @@ export const FAQ = {
       // drafting flow) and left out the one thing that does reach an AI provider. Now says what
       // the privacy policy says, and legalDisclosures.test.ts holds the two together.
       detail:
-        "The only things sent to an AI provider (Google Gemini) are a business document you ask us to check and a section of your response you ask us to improve the wording of — each used for that one request, not kept. Identity and bank documents are checked on your device and never uploaded.",
+        "The only things sent to an AI provider (Google Gemini) are a business document you ask us to check and a section of your response you ask us to improve the wording of — each used for that one request, not kept. Identity, bank and proof-of-address documents are checked on your device and never uploaded.",
       link: { label: "How processing works", href: "/privacy#how-we-use" },
     },
     {

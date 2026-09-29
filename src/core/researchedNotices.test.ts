@@ -84,9 +84,43 @@ describe("the researched test notices", () => {
   it("reads a product-safety request's list and its last day", () => {
     expect(decode("t07-product-safety").classification.kind).toBe("PRODUCT_SAFETY");
     // Listed under "provide the following by 20 October 2026:", so named by Amazon, not by us.
-    expect(named("t07-product-safety")).toContain("Test report or compliance certificate");
+    // In Amazon's order: the test report is item 1, the photos item 3.
+    expect(named("t07-product-safety")).toEqual([
+      "Test report or compliance certificate",
+      "Product and label photos",
+    ]);
     const due = decode("t07-product-safety").deadlines.find((d) => d.kind === "appeal_window");
     expect(due?.dueOn).toBe("2026-10-20");
+    // A date to send documents by, not an appeal date.
+    expect(due?.label).toBe("Respond by 20 Oct 2026");
+  });
+
+  it("raises a recall record only when the safety notice is about a recall", () => {
+    const labels = (notice: string) =>
+      proposedRequirements({ ...newWorkspace(), notice }, "PRODUCT_SAFETY").map((r) => r.label);
+    // A customer complaint: nothing was recalled, so "usually refused without it" would be untrue.
+    expect(labels(text("t07-product-safety"))).not.toContain("Disposal or recall record");
+    expect(
+      labels(
+        "We removed your listing because the product is subject to a product recall. Create a removal order for the affected inventory.",
+      ),
+    ).toContain("Disposal or recall record");
+  });
+
+  it("raises both documents a verification call asks to see", () => {
+    // "During the call you will be asked to show:" — then the ID and a proof of address, each
+    // described as something "you provided" at registration, which is not history here.
+    expect(named("t05-verification-video")).toEqual(
+      expect.arrayContaining(["Requested identity record", "Proof of address"]),
+    );
+    // One record for "proof of address, such as a bank statement or utility bill", not two.
+    expect(named("t05-verification-video")).not.toContain("Bank or financial record");
+  });
+
+  it("raises the related-account documents the notice names", () => {
+    expect(named("t04-related-account")).toEqual(
+      expect.arrayContaining(["Proof of address", "Linked-account resolution record"]),
+    );
   });
 
   it("accepts a short falsified-documents notice and routes it to professional help", () => {

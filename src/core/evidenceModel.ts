@@ -16,6 +16,14 @@ export type EvidenceKind =
   /** Proof a linked account's issue is resolved or the account closed, or of non-relation. */
   | "account_resolution_proof"
   /**
+   * A utility bill, bank statement, business licence or registration that shows the address on
+   * the account. Added 29 Sep 2026: a researched verification notice asked for ID *and* proof of
+   * address, and only the ID could be raised. Examined in the browser, like identity documents.
+   */
+  | "address_proof"
+  /** Photos of the product, its packaging and its label (PRODUCT_SAFETY), added 29 Sep 2026. */
+  | "product_images"
+  /**
    * A record the seller named themselves and we cannot identify. Never read by the document
    * checker, which will not read a document it cannot name.
    */
@@ -29,6 +37,12 @@ export interface EvidenceRequirement {
   quantityRule?: string;
   disqualifiers: string[];
   whyAmazonWantsIt: string;
+  /**
+   * When set, a `required` record is raised unprompted only if the notice matches. Added 29 Sep
+   * 2026: a recall record was raised on every product-safety case, including a customer complaint
+   * with no recall at all, where "cases like yours are usually refused without it" was not true.
+   */
+  raisedWhen?: RegExp;
 }
 
 /** The invoice field compared with the seller account. Shared so both invoice entries say it alike. */
@@ -231,12 +245,20 @@ const VERIFICATION: EvidenceRequirement[] = [
       "Verification checks that the person operating the account is who the account says they are. Amazon compares the document against the registered details, so a mismatch fails even when the document itself is genuine.",
   },
   {
-    kind: "sourcing_doc",
+    // Was `sourcing_doc`, labelled "Sourcing record", which is not what a utility bill is.
+    kind: "address_proof",
     required: false,
-    fields: ["business registration or utility bill showing the same registered address"],
-    disqualifiers: ["a document issued to a different entity or address"],
+    fields: [
+      "a utility bill, bank or card statement, or business registration",
+      "your name and address, matching your seller account",
+      "issued recently, and complete rather than cropped",
+    ],
+    disqualifiers: [
+      "a document issued to a different person, business or address",
+      "a screenshot or a document with details covered or edited",
+    ],
     whyAmazonWantsIt:
-      "A second document from an independent source corroborates the business details when the primary identity document alone is not conclusive.",
+      "A second document from an independent source corroborates the name and address when the identity document alone is not conclusive.",
   },
 ];
 
@@ -282,6 +304,8 @@ const PRODUCT_SAFETY: EvidenceRequirement[] = [
     disqualifiers: ["a statement of intent without a date or a quantity"],
     whyAmazonWantsIt:
       "A safety notice is about the product still in circulation, not only about the listing. Amazon wants to see that the affected units are accounted for.",
+    raisedWhen:
+      /\brecall|removal order|dispos(?:e|al|ed)|destroy|destruction|stop(?:ped)? selling/i,
   },
   {
     // Was "other" until 24 Sep 2026; see account_resolution_proof above.
@@ -298,6 +322,21 @@ const PRODUCT_SAFETY: EvidenceRequirement[] = [
     ],
     whyAmazonWantsIt:
       "Compliance documentation is what distinguishes a product that meets the standard from one that is merely claimed to.",
+  },
+  {
+    kind: "product_images",
+    required: false,
+    fields: [
+      "the product itself, and its packaging",
+      "the label, with the manufacturer's name and the model number readable",
+      "the same model and variant as the listing",
+    ],
+    disqualifiers: [
+      "stock or catalogue images instead of photos of the product you sell",
+      "a label too small or blurred to read",
+    ],
+    whyAmazonWantsIt:
+      "Photos let Amazon match the product in your hands to the test report and the listing, and see the markings a safety standard requires.",
   },
   {
     kind: "sop_document",

@@ -50,6 +50,7 @@ export const WORKSPACE = {
     requestNote: "Add the recipient and send it yourself. AppealDeck does not send messages.",
     copyRequest: "Copy request draft",
     standards: "What a good {label} shows",
+    standardsPlural: "What good {label} show",
     howToCheck: "How to check this file",
     originalUnchanged: "Your original file is never changed.",
     correct: "It doesn't apply, or Amazon asked for it differently",
@@ -196,7 +197,7 @@ export const WORKSPACE = {
   sourceHelp:
     "Paste Amazon's exact sentence. If Amazon didn't ask but you know the case needs it, leave this empty: we record it as yours, not Amazon's.",
   manualReview:
-    "Open the original and note what it shows. This is your own check, not a test of whether the document is genuine. With an Appeal Pass we can also check a business document against what Amazon asked for. Identity and bank documents are checked on this device only.",
+    "Open the original and note what it shows. This is your own check, not a test of whether the document is genuine. With an Appeal Pass we can also check a business document against what Amazon asked for. Identity, bank and proof-of-address documents are checked on this device only.",
   check: {
     unnamed:
       "This record is not one of the document types we know how to check, so we have not read it. Review it yourself and note what it shows. Your file is unchanged and stayed on this device.",

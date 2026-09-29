@@ -369,7 +369,13 @@ export function EvidenceReview({
           </DetailDisclosure>
           <DetailDisclosure
             title={
-              guidance ? D.standards.replace("{label}", item.label.toLowerCase()) : D.howToCheck
+              guidance
+                ? // "What good product and label photos show", not "What a good … photos shows".
+                  (/s$/i.test(item.label) && !/ss$/i.test(item.label)
+                    ? D.standardsPlural
+                    : D.standards
+                  ).replace("{label}", item.label.toLowerCase())
+                : D.howToCheck
             }
           >
             <div className="space-y-3">

@@ -18,7 +18,7 @@ export type LegalDoc = "privacy" | "terms" | "refund";
 
 export const LEGAL = {
   lastUpdated: {
-    privacy: "2026-09-24",
+    privacy: "2026-09-29",
     terms: "2026-09-22",
     refund: "2026-09-11",
   },
@@ -32,7 +32,7 @@ export const LEGAL = {
           "When you decode a notice, its text is sent to AppealDeck for analysis. Preparing a response sends your case text and document references to AppealDeck. Uploading a file does not, by itself, send it anywhere.",
           "If you ask us to check a business document — an invoice, an authorization letter, a sales report, a listing screenshot or a certificate — that document is sent to AppealDeck and on to Google Gemini, so its contents can be read against what Amazon asked you for. It is used for that one request and we do not keep a copy. This happens only when you ask for a check on that specific file. With it we send the ASINs and case IDs from your notice, and any business details you entered in your case (your registered business name and address, and your suppliers), so our server can compare them with what the document shows; those are not sent to Google Gemini.",
           'If you press "Improve the wording" on a section of your response, the text of that one section (and, for a questionnaire answer, Amazon\'s question) is sent to AppealDeck and on to Google Gemini, which suggests clearer wording. It is used for that one request and we do not keep a copy. The suggestion is shown beside your own text and nothing changes unless you choose it. Automated checks reject changes to recognized numbers, dates, identifiers, contact details, names and explicit negation or planning language. These checks cannot detect every invented claim or change in meaning. Review each suggestion against your records before using it.',
-          "Identity and financial documents are treated differently. Passports, national identity cards, driving licences and bank statements are never uploaded for checking. Those are examined on your own device, in your browser, and we look only at whether the picture is large enough, sharp enough, well lit and fully in frame — we do not read what the document says.",
+          "Identity and financial documents are treated differently. Passports, national identity cards, driving licences, bank statements, and utility bills or other proof of address are never uploaded for checking. Those are examined on your own device, in your browser, and we look only at whether the picture is large enough, sharp enough, well lit and fully in frame — we do not read what the document says.",
           "When you create an account or buy the Appeal Pass, Paddle collects the payment and billing information. We receive a licence record (email, plan, status) via a Paddle webhook.",
           "Evidence contents are encrypted in your browser. If you choose cloud backup, encrypted contents and unencrypted metadata (including file names, tags, types, case references and content hashes) are uploaded to Supabase Storage. A backup passphrase protects the content key; we do not receive that passphrase.",
           "If you turn on email reminders for a case, we store the reminder date you chose, the case type, and an identifier for that case, so we can email you when the date arrives. Nothing else about the case is sent: not your notice, your evidence, your draft, or any note you have written. Turning reminders off for a case deletes that record.",

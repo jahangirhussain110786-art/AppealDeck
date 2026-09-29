@@ -96,6 +96,8 @@ export const APP = {
     sop_document: "Written procedure",
     compliance_report: "Test report or compliance certificate",
     account_resolution_proof: "Linked-account resolution record",
+    address_proof: "Proof of address",
+    product_images: "Product and label photos",
     other: "Other",
   },
   evidenceSlots: {
@@ -136,7 +138,7 @@ export const APP = {
       beforeServer:
         "Checking sends this file to AppealDeck and on to Google Gemini to be read against what Amazon asked for. No copy is kept, and nothing is sent to Amazon.",
       beforeDevice:
-        "Identity and bank documents are checked on this device only. The file is never uploaded.",
+        "Identity, bank and proof-of-address documents are checked on this device only. The file is never uploaded.",
     },
     requestDialog: {
       description:

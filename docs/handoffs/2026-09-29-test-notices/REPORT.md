@@ -84,21 +84,46 @@ All of these are in `src/core` unless noted. Each fix has a test in `src/core/re
 
 ## Still open
 
-Not fixed in this pass, most important first.
-
 1. **Your decision: sellers outside Amazon US hit a dead end.** If the store is set to anything but Amazon US, the case stops with "This workspace currently supports English-language Amazon US requests" (`routeWorkspace`). The Pass is priced flat and sold worldwide, but a UK seller who answers honestly cannot go on. I did not make the tool detect amazon.co.uk automatically, because that would push UK sellers into the same dead end. The choices are:
    - open the workspace to other English-language stores;
    - say "US only" before purchase;
    - or leave it as it is.
-2. **Verification asks for two documents and we raise one.** The video-call notice asks for a government ID _and_ proof of address (a bank statement or utility bill). Only the ID is raised.
-3. **Related account.** The notice names "a business license or utility bill" and "evidence that any related account issues have been resolved". Neither is raised as named; we add an identity record instead.
-4. **Product safety adds a "Disposal or recall record"** on a case that is a customer complaint with no recall. The evidence list marks it as required for every product-safety case. This is a content judgement for you or an appeal writer.
-5. **Product and label images** (t07, item 3) are not raised, because there is no document type for product photos yet.
-6. **Wording:** t07's date shows as "Appeal by 20 Oct 2026", although the notice asks for documents by then. "Respond by" would fit better.
+
+## The smaller gaps, fixed the same day (founder: "go ahead and fix all the smaller gaps")
+
+Each is pinned by a test in `src/core/researchedNotices.test.ts`, and each was checked again by running the notices through the app.
+
+1. **Verification now raises both documents.** The video-call notice asks the seller to "show" a government ID and a proof of address (a bank statement or utility bill).
+   - A list introduced by "show", "present", "have ready", "prepare" or "bring" now counts as a request. This applies only on a line that ends with a colon.
+   - An item under such a list is not treated as history, even though it says "you provided": it names the document Amazon now wants to see.
+   - There is a new document type, **Proof of address**, for a utility bill, a bank or card statement, or a business registration or licence. It replaces the verification entry that was mislabelled "Sourcing record".
+   - It is checked **on the device** like an ID, and never uploaded. The privacy policy and two on-screen lines now say so; the privacy policy is dated 29 Sep 2026.
+   - "Proof of address, such as a bank statement" gives one record, not two.
+   - Passports and driving licences are now recognised as ID.
+2. **Related account now raises what the notice names:** Proof of address, from "a business license or utility bill", and a Linked-account resolution record, from "evidence that any related account issues have been resolved". The identity record we add is still there.
+3. **The recall record is raised only on a recall.**
+   - An evidence entry can now say it is needed only when the notice mentions something (`raisedWhen`).
+   - The disposal or recall record uses this. It is raised when the notice mentions a recall, a removal order, disposal or destruction, or that the seller stopped selling. It is not raised on a customer complaint.
+   - When Amazon asks for proof of disposal in words, it is recognised as named.
+   - A seller changing the issue by hand follows the same rule.
+4. **Product and label photos** are a new document type, with what good photos show and what is not accepted. They are recognised when Amazon asks for images or photos of the product, packaging or label.
+5. **"Respond by" or "Appeal by", as the notice says.** A date to send documents by reads "Respond by 20 Oct 2026". A date to appeal or send a Plan of Action still reads "Appeal by".
+
+Two more, found while checking:
+
+- **Documents are listed in the order Amazon wrote them.** Before, they followed the tool's internal order, so the photos came before the test report.
+- A plural document gets "What good product and label photos show", not "What a good … photos shows".
+
+**After these fixes:**
+
+- t04 lists Proof of address and Linked-account resolution record, both named in the notice, plus the identity record we add.
+- t05 lists the ID and Proof of address, both named.
+- t07 lists the test report and then the photos, both named, with no recall record and "Respond by 20 Oct 2026".
 
 ## Proof
 
-- `src/core/researchedNotices.test.ts`: 13 tests reading [notices.json](notices.json).
+- `src/core/researchedNotices.test.ts`: 16 tests reading [notices.json](notices.json). There were 13 first; 3 were added with the smaller-gaps fixes.
+- After the smaller-gaps fixes: vitest 1187 / 1187, and Playwright chromium CI 125 / 0 / 0.
 - A new e2e test in `e2e/marketing.spec.ts`: the falsified-documents notice is accepted and headed "This case needs professional help".
 - The scam e2e test now also checks the headline.
 - **Gates:**

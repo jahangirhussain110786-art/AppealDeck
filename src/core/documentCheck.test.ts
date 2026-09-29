@@ -290,7 +290,8 @@ describe("which matrix fields carry a comparison", () => {
       "your business name and address as the buyer, matching your seller account": "account_record",
       "full name exactly as registered on the seller account": "account_record",
       "registered address matching the account": "account_record",
-      "business registration or utility bill showing the same registered address": "account_record",
+      // Verification's second document, `address_proof` since 29 Sep 2026 (was `sourcing_doc`).
+      "your name and address, matching your seller account": "account_record",
     });
   });
 });
@@ -405,10 +406,10 @@ describe("comparisons we have no data for are reported as not checked", () => {
   });
 
   it("does not compare a registered address with account details we do not hold", () => {
-    const name = "business registration or utility bill showing the same registered address";
+    const name = "your name and address, matching your seller account";
     const f = buildDocumentCheck(
       "VERIFICATION",
-      "sourcing_doc",
+      "address_proof",
       [finding({ field: name, observed: "12 High Street, Lahore" })],
       CONTEXT,
     ).findings.find((x) => x.field === name)!;

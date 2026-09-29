@@ -28,6 +28,8 @@ import type { DocumentCheckCaseData } from "./context";
 export const BROWSER_ONLY_EVIDENCE_KINDS: readonly EvidenceKind[] = [
   "identity_doc",
   "financial_instrument_doc",
+  // A utility bill or bank statement carries the same personal details, so it stays on the device.
+  "address_proof",
 ];
 
 export function isBrowserOnly(kind: EvidenceKind): boolean {
