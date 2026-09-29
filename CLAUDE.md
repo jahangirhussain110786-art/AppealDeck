@@ -106,6 +106,11 @@ Everything in the build plan §6 donor table is verified originally-authored / M
     - the POLICY evidence entry no longer borrows the performance-metric wording ("specific metric failure"). It now asks for the affected orders and how each complaint was resolved.
 
     Conditions and the records raised are unchanged. Before-and-after table in the evidence log.
+- **FOUND 29 Sep 2026 — the Gemini key is on Google's free tier.**
+  - **Evidence:** Google's 429 names the quota `GenerateRequestsPerDayPerProjectPerModel-FreeTier`: 20 requests a day per model. A few document checks use up the day.
+  - **Consequence:** do not set `GEMINI_PAID_TIER_CONFIRMED=true` or the key on Vercel until billing is on for _this key's_ Google project. The privacy policy promises the paid tier (D9). Use only the test documents locally.
+  - **Also fixed (`b132be6`):** the full Flash models often answer 503 "high demand", so a fallback model (`gemini-3-flash-preview`, `GEMINI_FALLBACK_MODEL`) is asked once. With it, a real signed-in check of the problem test invoice flagged every issue.
+  - **Test documents:** `docs/handoffs/2026-09-29-test-documents/` (`703bf17`).
 - **DONE 29 Sep 2026 (the case's way forward):** the founder found no "next" button leading to the final response. It was a real gap, not a misunderstanding: Documents simply ended, and "Prepare response" was disabled until a separate save. Changes:
   - `StepNav` Back/Next at the foot of Documents and Response;
   - the "Amazon asked for nothing else" tick moved beside Next;
@@ -114,6 +119,7 @@ Everything in the build plan §6 donor table is verified originally-authored / M
   - the prepared response scrolls into view with its heading focused.
 
   Presentation only. Gates: vitest 1187 · Playwright chromium CI 126/0/0. Detail: the calm-pass log's "Follow-up" section.
+
 - **DONE 29 Sep 2026 (researched test notices: does the tool work beyond its own sample?):** I researched real Amazon notice wording (seller forums, consultants, the 19 Sep research) and wrote 13 synthetic notices, one per kind of case, plus Amazon's refusal of an appeal. Each was run through the real app: the decode page, the case, every tab, and the reply. The engine was not written against these, unlike its own 48 fixtures, so this was a fair test. Notices: `docs/handoffs/2026-09-29-test-notices/notices.json`; report: `…/REPORT.md`.
   - **First run: 5 of 12 right.** The most common case (authenticity, supplier invoices) read as UNKNOWN with no documents. Documents listed under "please send us:" were never raised. A product-safety "provide … by 20 October 2026" deadline was missed. A numbered appeal form got one essay box. A genuine trademark notice was flagged as a possible scam because of the rights owner's email. A short falsified-documents notice was refused as "not an Amazon notice", because the server kept a narrower marker list than the page. Amazon's refusal was read as "asking for documents before it decides".
   - **All fixed**, with `src/core/researchedNotices.test.ts` (13 tests) and an e2e test. Also fixed: decode headlines for gated, verification and warning-sign messages; the scam warning's title was unreadable in light mode where the results overlap the dark header (`cn`/tailwind-merge had dropped the `bg-card` override, so the fix is a wrapper); the verification overview now links to its checklist. **Now 12 of 12 and the reply are right.**
