@@ -13,8 +13,8 @@ async function openQuestionnaire(page: Page) {
   await page
     .getByLabel("What the response page asks for")
     .fill(`Answer the following questions.\n1. ${question}\n2. ${otherQuestion}`);
-  await page.getByRole("button", { name: "Confirm this route" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
 }
 
@@ -22,15 +22,15 @@ test("clearing a saved response remains blank after autosave and reload", async 
   await openQuestionnaire(page);
   const field = page.getByLabel("Anything else Amazon should know (optional)");
   await field.fill(answer);
-  await page.getByRole("button", { name: "Save response facts" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Save my answers" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await field.fill("");
-  await expect(page.getByText(/Unsaved changes/)).toBeVisible();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saving…", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.reload();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   await expect(field).toHaveValue("");
-  await expect(page.getByRole("button", { name: "Save response facts" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Save my answers" })).toBeEnabled();
 });
 
 test("reordering a questionnaire keeps drafts attached to their own questions", async ({
@@ -38,14 +38,14 @@ test("reordering a questionnaire keeps drafts attached to their own questions", 
 }) => {
   await openQuestionnaire(page);
   await page.getByLabel(question, { exact: true }).fill(answer);
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
   await page.getByRole("button", { name: "Review the request", exact: true }).click();
   await page
     .getByLabel("What the response page asks for")
     .fill(`Answer the following questions.\n1. ${otherQuestion}\n2. ${question}`);
-  await page.getByRole("button", { name: "Confirm this route" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.reload();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   await expect(page.getByLabel(question, { exact: true })).toHaveValue(answer);
@@ -55,8 +55,8 @@ test("reordering a questionnaire keeps drafts attached to their own questions", 
 test("downloaded case notes contain saved questionnaire answers", async ({ page }) => {
   await openQuestionnaire(page);
   await page.getByLabel(question, { exact: true }).fill(answer);
-  await page.getByRole("button", { name: "Save response facts" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Save my answers" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "History", exact: true }).click();
   const [download] = await Promise.all([
     page.waitForEvent("download"),
@@ -75,15 +75,15 @@ test("confirming covered issues does not discard unfinished response text", asyn
       "We could not verify the authenticity of the invoices you supplied for the affected products. Separately, your detail page policy violation for ASIN B0EXAMPLE1 remains unresolved. Please provide the supplier invoice.",
     );
   await page.getByLabel("What the response page asks for").fill("Upload the invoice.");
-  await page.getByRole("button", { name: "Confirm this route" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
-  await page.getByLabel("Your factual explanation").fill(answer);
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByLabel("Your explanation, in your own words").fill(answer);
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.getByLabel("My response addresses every issue listed above.").click();
   await expect(page.getByLabel("My response addresses every issue listed above.")).toBeChecked();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.reload();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
-  await expect(page.getByLabel("Your factual explanation")).toHaveValue(answer);
+  await expect(page.getByLabel("Your explanation, in your own words")).toHaveValue(answer);
 });

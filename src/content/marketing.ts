@@ -311,6 +311,10 @@ export const DECODE = {
     notAdvice: "Software, not legal advice. Amazon decides.",
     factDue: "Reply due",
     factNoDate: "No date stated",
+    // 29 Sep 2026: a notice saying "within 90 days" showed "No date stated" here, so the one fact a
+    // frightened seller needs first sat three cards further down. Still no invented date.
+    factWindow: "{n} days",
+    factWindowNote: "from when you got the notice",
     factScam: "Scam check",
     factScamClear: "No warning signs",
     factScamFlagged: "Worth checking",

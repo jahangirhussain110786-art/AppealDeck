@@ -16,8 +16,8 @@ async function startCase(page: Page, notice: string, form: string) {
   await page.goto("/case");
   await page.getByLabel("Amazon notice", { exact: true }).fill(notice);
   await page.getByLabel("What the response page asks for").fill(form);
-  await page.getByRole("button", { name: "Confirm this route" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 }
 
 test("a case exports as readable notes and an evidence manifest", async ({ page }) => {
@@ -67,7 +67,7 @@ test("an outcome is recorded, survives a reload, and can be taken back", async (
  */
 test("a case can be deleted, and its attached files go with it", async ({ page }) => {
   await startCase(page, invoiceNotice, "Upload the invoice.");
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
   await page
     .locator('input[type="file"]')
     .first()
@@ -79,7 +79,7 @@ test("a case can be deleted, and its attached files go with it", async ({ page }
   // Scoped to Evidence (26 Sep 2026): the file name is also on the Overview tab's checklist now,
   // which is hidden while Evidence is open.
   await expect(
-    page.getByRole("tabpanel", { name: "Evidence", exact: true }).getByText("invoice.pdf").first(),
+    page.getByRole("tabpanel", { name: "Documents", exact: true }).getByText("invoice.pdf").first(),
   ).toBeVisible();
 
   await page.goto("/dashboard");
@@ -196,7 +196,7 @@ test.describe("accessibility of the app screens, with a case loaded", () => {
     await startCase(page, invoiceNotice, "Upload the invoice.");
   });
 
-  for (const tab of ["Overview", "Evidence", "Response", "History"]) {
+  for (const tab of ["Overview", "Documents", "Response", "History"]) {
     test(`/case — ${tab}`, async ({ page }) => {
       await page.getByRole("tab", { name: tab, exact: true }).click();
       await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
@@ -250,8 +250,8 @@ test("a response date entered from Account Health is kept and counted down to", 
     "Your selling privileges have been deactivated because of late shipments. Please submit a Plan of Action explaining the root cause, the corrective actions and the preventive measures.",
     "Submit your Plan of Action.",
   );
-  await page.getByLabel("The response date Amazon shows you in Account Health").fill("2027-01-15");
-  await page.getByRole("button", { name: "Save this date" }).click();
+  await page.getByLabel("Your reply-by date").fill("2027-01-15");
+  await page.getByRole("button", { name: "Save date" }).click();
   await expect(page.getByText("You entered this date from Account Health.")).toBeVisible();
   await expect(page.getByText(/Respond by 15 Jan 2027/).first()).toBeVisible();
 
@@ -301,8 +301,8 @@ test("after two responses and another refusal, the case offers a change of appro
   await expect(page.getByText(title)).toHaveCount(0);
 
   await page.getByLabel("What the response page asks for").fill("Submit your Plan of Action.");
-  await page.getByRole("button", { name: "Confirm this route" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "History", exact: true }).click();
   await page
     .getByLabel("Add Amazon’s next reply")
@@ -323,11 +323,14 @@ test("a document check is saved with the case and survives a reload", async ({ p
     "Please complete identity verification by providing government-issued identification.",
     "Upload documents",
   );
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
   await page.locator('input[type="file"]').first().setInputFiles("public/brand/icon-512.png");
   // Scoped to Evidence: Overview's hidden checklist names the file too (26 Sep 2026).
   await expect(
-    page.getByRole("tabpanel", { name: "Evidence", exact: true }).getByText("icon-512.png").first(),
+    page
+      .getByRole("tabpanel", { name: "Documents", exact: true })
+      .getByText("icon-512.png")
+      .first(),
   ).toBeVisible();
   await page.getByRole("button", { name: "Check this document" }).first().click();
   await expect(page.getByText("How the picture looks").first()).toBeVisible();
@@ -338,7 +341,7 @@ test("a document check is saved with the case and survives a reload", async ({ p
   await expect(page.getByText(savedLine).first()).toBeVisible();
 
   await page.reload();
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
   await expect(page.getByText("How the picture looks").first()).toBeVisible();
   await expect(page.getByText(savedLine).first()).toBeVisible();
 });

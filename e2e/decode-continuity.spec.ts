@@ -28,7 +28,7 @@ async function decodeSample(page: Page) {
   await expect(page.getByText("Supplier invoice", { exact: true }).first()).toBeVisible();
 }
 
-for (const view of ["Overview", "Evidence", "Response", "History"]) {
+for (const view of ["Overview", "Documents", "Response", "History"]) {
   test(`sample → ${view} retains the notice across navigation and immediate reload`, async ({
     page,
   }) => {
@@ -51,13 +51,17 @@ for (const view of ["Overview", "Evidence", "Response", "History"]) {
       "aria-selected",
       "true",
     );
+    // Said once per view: the banner off the overview, the request card's own line on it.
     await expect(
-      page.getByText("Your decoded notice is saved in this case", { exact: true }),
+      page.getByText(
+        view === "Overview" ? "Saved from Decode" : "Your decoded notice is saved in this case",
+        { exact: view !== "Overview" },
+      ),
     ).toBeVisible();
     await page.reload();
     await page.getByRole("tab", { name: "Overview", exact: true }).click();
     await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(SAMPLE_NOTICE_TEXT);
-    await expect(page.getByText("Review your decoded request", { exact: true })).toBeVisible();
+    await expect(page.getByText("Here is what we read", { exact: true })).toBeVisible();
     if (view === "Overview") {
       await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
       await page.screenshot({
@@ -77,10 +81,10 @@ for (const view of ["Overview", "Evidence", "Response", "History"]) {
     }
     await expect(page.getByRole("complementary", { name: "Case context" })).toContainText("90");
     await expect(page.getByRole("button", { name: "Add workspace to this case" })).toHaveCount(0);
-    await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+    await page.getByRole("tab", { name: "Documents", exact: true }).click();
     await expect(
       page
-        .getByRole("tabpanel", { name: "Evidence", exact: true })
+        .getByRole("tabpanel", { name: "Documents", exact: true })
         .getByText("Supplier invoice", { exact: true }),
     ).toBeVisible();
     await page.getByRole("tab", { name: "Response", exact: true }).click();
@@ -95,18 +99,18 @@ test("saved notice can be edited by keyboard without losing edits between worksp
   await page.getByRole("link", { name: "Open case workspace", exact: true }).click();
   const notice = page.getByLabel("Amazon notice", { exact: true });
   await expect(notice).not.toBeVisible();
-  const disclosure = page.locator("summary").filter({ hasText: "Read or edit your notice" });
+  const disclosure = page.locator("summary").filter({ hasText: "See or change your notice" });
   await disclosure.focus();
   await page.keyboard.press("Enter");
   await expect(notice).toBeVisible();
   const edited = SAMPLE_NOTICE_TEXT + "\nPlease also include the supplier contact details.";
   await notice.fill(edited);
   await expect(page.getByText(/Unsaved notice edits/)).toBeVisible();
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
   await expect(notice).toHaveValue(edited);
   await page.getByRole("button", { name: "Save for later" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.reload();
   await expect(notice).toHaveValue(edited);
 });
@@ -118,16 +122,16 @@ test("re-entering the same decoded sample resumes edited work and creates no dup
   await page.getByRole("link", { name: "Open case workspace", exact: true }).click();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   await page
-    .getByLabel("Root cause")
+    .getByLabel("What went wrong?")
     .fill("My saved explanation must survive opening this decoded notice again.");
-  await page.getByRole("button", { name: "Save response facts" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Save my answers" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await decodeSample(page);
   await page
     .getByRole("navigation", { name: "Case workspace views" })
     .getByRole("link", { name: "Response", exact: true })
     .click();
-  await expect(page.getByLabel("Root cause")).toHaveValue(/My saved explanation/);
+  await expect(page.getByLabel("What went wrong?")).toHaveValue(/My saved explanation/);
   await page.goto("/dashboard");
   await expect(page.getByText("Your case, at a glance", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Current case")).toHaveCount(0);

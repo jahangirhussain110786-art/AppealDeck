@@ -64,6 +64,7 @@ export function ResponseReview({
   onSubmit: (sent: { receipt: string; sentText?: string }) => Promise<boolean>;
 }) {
   const w = file.workspace;
+  const F = C.responseFields;
   const [explanation, setExplanation] = useState(draft?.["response.explanation"] ?? w.explanation);
   const [correctiveActions, setCorrective] = useState(
     draft?.["response.correctiveActions"] ?? w.correctiveActions,
@@ -160,11 +161,9 @@ export function ResponseReview({
             as="h2"
             className="text-balance text-[clamp(1.5rem,1.2rem+1vw,2rem)] font-semibold leading-[1.1] tracking-[-0.03em]"
           >
-            {w.protocol === "operational" ? "What happened. What changed." : "Your response brief"}
+            {w.protocol === "operational" ? F.operationalTitle : F.briefTitle}
           </CardTitle>
-          <p className="text-[0.9375rem] text-muted-foreground">
-            Use confirmed facts. Your wording is preserved in the response.
-          </p>
+          <p className="text-[0.9375rem] text-muted-foreground">{F.lead}</p>
         </CardHeader>
         <CardContent className="response-sheet space-y-7 px-6 pb-10 pt-6 sm:px-12">
           {/*
@@ -181,6 +180,7 @@ export function ResponseReview({
                     id={`workspace-answer-${i}`}
                     rows={3}
                     maxLength={12000}
+                    placeholder={F.answerPlaceholder}
                     value={answerValue(q)}
                     onChange={(e) => changeAnswer(q, e.target.value)}
                   />
@@ -200,17 +200,27 @@ export function ResponseReview({
           <div className="space-y-2">
             <Label htmlFor="workspace-explanation">
               {w.protocol === "operational"
-                ? "Root cause"
+                ? F.rootCause
                 : questions.length > 0
                   ? C.questionnaire.additional
-                  : "Your factual explanation"}
+                  : F.explanation}
             </Label>
+            {w.protocol === "operational" && (
+              <p id="workspace-explanation-hint" className="text-sm text-muted-foreground">
+                {F.rootCauseHint}
+              </p>
+            )}
             <Textarea
               id="workspace-explanation"
               rows={5}
               maxLength={12000}
               value={explanation}
-              placeholder="Explain the issue using facts you can support…"
+              aria-describedby={
+                w.protocol === "operational" ? "workspace-explanation-hint" : undefined
+              }
+              placeholder={
+                w.protocol === "operational" ? F.rootCausePlaceholder : F.explanationPlaceholder
+              }
               onChange={(e) => changeExplanation(e.target.value)}
             />
             <SectionTools
@@ -225,13 +235,16 @@ export function ResponseReview({
           {w.protocol === "operational" && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="workspace-corrective">
-                  Corrective actions and their actual status
-                </Label>
+                <Label htmlFor="workspace-corrective">{F.corrective}</Label>
+                <p id="workspace-corrective-hint" className="text-sm text-muted-foreground">
+                  {F.correctiveHint}
+                </p>
                 <Textarea
                   id="workspace-corrective"
                   rows={4}
                   maxLength={12000}
+                  aria-describedby="workspace-corrective-hint"
+                  placeholder={F.correctivePlaceholder}
                   value={correctiveActions}
                   onChange={(e) => changeCorrective(e.target.value)}
                 />
@@ -274,13 +287,16 @@ export function ResponseReview({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="workspace-prevention">
-                  Prevention: owner, process and adoption status
-                </Label>
+                <Label htmlFor="workspace-prevention">{F.prevention}</Label>
+                <p id="workspace-prevention-hint" className="text-sm text-muted-foreground">
+                  {F.preventionHint}
+                </p>
                 <Textarea
                   id="workspace-prevention"
                   rows={4}
                   maxLength={12000}
+                  aria-describedby="workspace-prevention-hint"
+                  placeholder={F.preventionPlaceholder}
                   value={preventiveMeasures}
                   onChange={(e) => changePreventive(e.target.value)}
                 />
@@ -318,7 +334,7 @@ export function ResponseReview({
               })
             }
           >
-            Save response facts
+            {F.save}
           </Button>
           {/*
             #86: the confirmation sits with the response text, because that is where a seller can
@@ -360,7 +376,7 @@ export function ResponseReview({
               {!signedIn ? (
                 <Button asChild className="h-auto min-h-11 max-w-full whitespace-normal">
                   <Link href={signInHref}>
-                    Sign in to prepare your response
+                    {F.signIn}
                     <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                   </Link>
                 </Button>
@@ -372,17 +388,10 @@ export function ResponseReview({
                     <FileCheck2 className="mr-2 h-4 w-4" aria-hidden />
                     {gaps.length ? "Prepare working draft" : "Prepare response"}
                   </Button>
-                  {dirty && !busy && (
-                    <p className="text-xs text-warning">
-                      Save your response facts above before preparing the response.
-                    </p>
-                  )}
+                  {dirty && !busy && <p className="text-xs text-warning">{F.saveFirst}</p>}
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">
-                Requires an Appeal Pass for this case. Facts and file references go to AppealDeck;
-                original files stay in your vault. Nothing is sent to Amazon.
-              </p>
+              <p className="text-xs text-muted-foreground">{F.sendNote}</p>
             </>
           )}
         </CardContent>

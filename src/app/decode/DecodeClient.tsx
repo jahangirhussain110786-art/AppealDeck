@@ -32,7 +32,13 @@ import { AccentWord } from "@/components/ui/accent-word";
 import { SHARED } from "@/content/shared";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 import { cn } from "@/lib/utils";
-import { ENTITY_LABELS, type ViolationKind, type ResponseType, type ExtractedEntity } from "@/core";
+import {
+  ENTITY_LABELS,
+  parseNotice,
+  type ViolationKind,
+  type ResponseType,
+  type ExtractedEntity,
+} from "@/core";
 import type { DeadlineLike } from "@/components/DeadlineChip";
 
 /** Wire shape of `/api/decode`: `dueAt` arrives as an ISO string, not a `Date`. */
@@ -198,7 +204,7 @@ export default function DecodeClient() {
           </div>
 
           {status === "result" && result && guidance && (
-            <ResultFacts result={result} guidance={guidance} />
+            <ResultFacts result={result} guidance={guidance} text={decodedText} />
           )}
 
           {status !== "result" && (
@@ -302,12 +308,24 @@ export default function DecodeClient() {
 function ResultFacts({
   result,
   guidance,
+  text,
 }: {
   result: DecodeResponse;
   guidance: ReturnType<typeof guidanceFor>;
+  text: string;
 }) {
   const r = DECODE.result;
   const firstDue = result.deadlines.find((d) => d.dueAt && d.dueOn);
+  // A stated length with no start date runs from receipt: show the length, never a made-up day.
+  // The legacy 17-day pattern is never presented as current policy, so it keeps "No date stated".
+  const parsed = firstDue ? null : parseNotice(text);
+  const windowDays =
+    parsed &&
+    parsed.statedWindowDays !== null &&
+    !(parsed.legacySeventeenDay && parsed.statedWindowDays === 17) &&
+    result.deadlines.some((d) => d.kind === "appeal_window" && d.startsOnReceipt)
+      ? parsed.statedWindowDays
+      : null;
   const flagged = (result.authenticity?.length ?? 0) > 0;
   return (
     <div className="mt-10 grid gap-3.5 md:grid-cols-[1.3fr_1fr_1fr]">
@@ -334,8 +352,13 @@ function ResultFacts({
                   day: "numeric",
                   month: "short",
                 })
-              : r.factNoDate}
+              : windowDays !== null
+                ? r.factWindow.replace("{n}", String(windowDays))
+                : r.factNoDate}
           </span>
+          {windowDays !== null && (
+            <span className="block text-xs text-muted-foreground">{r.factWindowNote}</span>
+          )}
         </span>
       </div>
       <div className="flex items-center gap-4 rounded-[18px] bg-white/[0.05] p-5 ring-1 ring-inset ring-white/[0.08]">

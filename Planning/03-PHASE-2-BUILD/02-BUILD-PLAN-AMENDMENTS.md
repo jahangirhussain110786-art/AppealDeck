@@ -520,6 +520,37 @@ Founder approved the v5 prototype (`docs/handoffs/2026-09-26-prototype-v5/`) aft
 - **Kept deliberately:** the 25 Sep SEO wording, AM-25's destinations, the logo, the consent order on `/pricing`, every e2e-asserted label.
 - **Founder's name:** shown as "Cihangir" on `/support` at first; **corrected 28 Sep 2026 to "Jhangir"** at the founder's direction, so the support page, the operator paragraph and the Terms all use one spelling.
 
+### AM-32 — The calm case pass replaces the v6.1 build (founder decision, 29 Sep 2026)
+
+Prototype v6.1 was approved on 28 Sep 2026: the case as a home plus five steps. It was **not built.** A side-by-side review the next day found that the app's layout already worked. The problem was narrower: too much text and too many open controls on three screens. The founder then asked for "light improvements only … where we really need them", done "like an expert designer and content writer".
+
+- **What changed:**
+  - The first case screen became a short summary with one confirm button. Its fields moved under "Something wrong? Change it".
+  - The Documents tab (formerly Evidence) shows one document card open at a time. The ways forward without a file sit under "I don't have it", and the standards under "What a good … shows". Business details are folded.
+  - The Response tab asks plain questions, each with a hint and an example.
+  - Disabled primary buttons are neutral grey.
+  - The top bar says "Saved" / "Saving…", and the round pill appears only from round 2.
+  - All four tabs fit at 390 px.
+  - The decode deadline tile shows a stated window ("90 days, from when you got the notice").
+- **Kept deliberately:**
+  - every control, state and honest line;
+  - the four tabs and their URL ids;
+  - the "Response" tab name, since verification and professional-help cases have no letter;
+  - everything in `src/core`, the vault, the API, the Pass rules and the gap rules.
+- **Not built from v6.1, and not planned:**
+  - the five-step rail and case home;
+  - one question per screen;
+  - the phone button dock;
+  - the step 4/5 re-plumbing.
+
+  The v6.1 prototype, handoff and inventory stay as reference.
+
+- **Result:**
+  - The first screen's main column went from 224 to 122 words.
+  - The Documents tab went from 422 to 168 words, and from 4,854 to 2,628 px tall on a phone.
+  - All gates green: vitest 1170, Playwright chromium CI 124/0/0.
+- **Evidence:** `docs/handoffs/2026-09-29-calm-case-pass.md` (brief: `…-calm-case-pass-prompt.md`).
+
 ---
 
 ## Definition of done

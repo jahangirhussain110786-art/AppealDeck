@@ -242,6 +242,12 @@ function WorkspaceInner({
   }, [tab]);
   const signInHref = `/login?next=${encodeURIComponent(`/case?view=${tab}`)}`;
   const [reviewRequest, setReviewRequest] = useState(false);
+  /*
+    Which document card is open (calm pass, 29 Sep 2026). `undefined` means "the first one that still
+    needs the seller", so finishing one moves the seller straight on to the next; `null` means the
+    seller closed them all. Only one is open at a time, so the tab reads as a short list.
+  */
+  const [openDocument, setOpenDocument] = useState<string | null | undefined>(undefined);
   const [saved, setSaved] = useState(false);
   const [result, setResult] = useState<WorkspaceResponse | null>(null);
   const [purchase, setPurchase] = useState(false);
@@ -1155,15 +1161,22 @@ function WorkspaceInner({
         ]
       : []),
   ];
+  const shownDocument =
+    openDocument === undefined
+      ? (w.requirements.find((r) => r.status === "needed" || r.status === "waiting")?.id ?? null)
+      : openDocument;
   return (
     <div className="space-y-5">
       <AppBarSlot target="title">
         {/* The case's own issue, once we know it: "Your case workspace" told the seller nothing. */}
         <h1 className="truncate text-sm font-semibold text-foreground">{caseTitle}</h1>
-        {/* Each Amazon reply starts a new round; "R1" was shorthand only we used. */}
-        <span className="hidden shrink-0 font-mono text-xs sm:inline">
-          {C.round.replace("{n}", String(w.revision))}
-        </span>
+        {/* Each Amazon reply starts a new round; "R1" was shorthand only we used. Round 1 is every
+            case's start and says nothing, so the pill appears from the first reply on. */}
+        {w.revision > 1 && (
+          <span className="hidden shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground sm:inline">
+            {C.round.replace("{n}", String(w.revision))}
+          </span>
+        )}
       </AppBarSlot>
       <AppBarSlot target="actions">
         <p
@@ -1173,13 +1186,7 @@ function WorkspaceInner({
           {dirtyKeys.size === 0 && !busy && saved && (
             <Check className="size-3.5 text-success" aria-hidden />
           )}
-          {dirtyKeys.size > 0
-            ? "Unsaved changes — saving to this device…"
-            : busy
-              ? "Saving or processing…"
-              : saved
-                ? C.saved
-                : "Save each review to keep changes."}
+          {dirtyKeys.size > 0 ? C.saving : busy ? C.working : saved ? C.saved : C.saveEach}
         </p>
         <Button
           size="sm"
@@ -1199,7 +1206,8 @@ function WorkspaceInner({
           <AlertDescription>{migrationNote}</AlertDescription>
         </Alert>
       )}
-      {w.decodedNoticeHash && !w.confirmed && (
+      {/* Not on the overview, where the request card already says "Saved from Decode". */}
+      {w.decodedNoticeHash && !w.confirmed && tab !== "overview" && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-1 text-sm">
           <Check className="size-4 shrink-0 text-primary" aria-hidden />
           <p>Your decoded notice is saved in this case</p>
@@ -1296,7 +1304,8 @@ function WorkspaceInner({
                     value={id}
                     className="-mb-px flex h-11 shrink-0 items-center gap-2 rounded-none border-b-2 border-transparent px-3 text-sm data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
                   >
-                    <Icon className="size-4 shrink-0" aria-hidden />
+                    {/* Text only on a phone, so all four views fit without scrolling sideways. */}
+                    <Icon className="hidden size-4 shrink-0 sm:block" aria-hidden />
                     {label}
                   </TabsTrigger>
                 );
@@ -1401,7 +1410,7 @@ function WorkspaceInner({
                             : next
                               ? next.status === "waiting"
                                 ? C.waitingHelp
-                                : "Read the original, record what it supports, and resolve anything unclear."
+                                : C.overview.reviewBody
                               : route.reason
                     }
                     actions={
@@ -1414,8 +1423,8 @@ function WorkspaceInner({
                               : !workspaceCanCompose(w)
                                 ? "View case notes"
                                 : next || !w.requirementsConfirmed
-                                  ? "Review evidence plan"
-                                  : "Review response facts"}
+                                  ? C.overview.toDocuments
+                                  : C.overview.toResponse}
                           <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                         </Button>
                         <Button variant="outline" onClick={() => setReviewRequest(true)}>
@@ -1441,16 +1450,14 @@ function WorkspaceInner({
               <Card>
                 <CardHeader>
                   <CardTitle as="h2" className="text-[1.375rem] tracking-[-0.025em]">
-                    Requested records
+                    {C.documents.title}
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Attach originals. Review each record. Note what it supports.
-                  </p>
+                  <p className="text-sm text-muted-foreground">{C.documents.lead}</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <details>
                     <summary className="cursor-pointer text-sm font-medium">
-                      Read the saved request
+                      {C.documents.seeNotice}
                     </summary>
                     <p className="mt-3 whitespace-pre-wrap break-words text-sm text-muted-foreground">
                       {w.notice}
@@ -1460,14 +1467,14 @@ function WorkspaceInner({
                   </details>
                   <details open={w.requirements.length === 0}>
                     <summary className="cursor-pointer text-sm font-medium">
-                      Add a requested record
+                      {C.documents.addOther}
                     </summary>
                     <div className="mt-4 space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="requirement-label">Requested record</Label>
+                        <Label htmlFor="requirement-label">{C.documents.addLabel}</Label>
                         <Input
                           id="requirement-label"
-                          placeholder="For example, supplier invoice"
+                          placeholder={C.documents.addPlaceholder}
                           maxLength={500}
                           value={newLabel}
                           onChange={(e) => setNewLabel(e.target.value)}
@@ -1534,7 +1541,7 @@ function WorkspaceInner({
                         }}
                       >
                         <Plus className="mr-2 h-4 w-4" aria-hidden />
-                        Add requested record
+                        {C.documents.addButton}
                       </Button>
                     </div>
                   </details>
@@ -1553,7 +1560,7 @@ function WorkspaceInner({
                         void commit((old) => ({ ...old, requirementsConfirmed: confirmed }));
                       }}
                     />
-                    {C.allRequirements}
+                    {C.documents.allListed}
                   </label>
                 </CardContent>
               </Card>
@@ -1578,9 +1585,17 @@ function WorkspaceInner({
                   violationKind={file.kind}
                   records={records}
                   busy={busy}
+                  open={shownDocument === r.id}
+                  onToggle={() => setOpenDocument(shownDocument === r.id ? null : r.id)}
                   draftNote={w.draft?.[evidenceNoteKey(r.id)]}
                   onDraftNote={(value) => setDraftField(evidenceNoteKey(r.id), value)}
-                  onChange={changeRequirement}
+                  onChange={async (value) => {
+                    const ok = await changeRequirement(value);
+                    // Done with this one: move on to the next document that needs the seller.
+                    if (ok && (value.status === "reviewed" || value.status === "cannot_obtain"))
+                      setOpenDocument(undefined);
+                    return ok;
+                  }}
                   onRemove={(reason) =>
                     commit(
                       (old) => ({

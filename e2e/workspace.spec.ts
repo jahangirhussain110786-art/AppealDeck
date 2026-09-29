@@ -10,22 +10,26 @@ async function configure(page: Page) {
   await page
     .getByLabel("What the response page asks for")
     .fill("Upload the invoice and explain how the product code matches the affected product.");
-  await page.getByRole("button", { name: "Confirm this route" }).click();
-  await expect(page.getByRole("button", { name: "Review evidence plan" })).toBeVisible();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
+  await expect(page.getByRole("button", { name: "Go to your documents" })).toBeVisible();
 }
 async function reviewEvidence(page: Page) {
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
   await expect(
     page
-      .getByRole("tabpanel", { name: "Evidence", exact: true })
+      .getByRole("tabpanel", { name: "Documents", exact: true })
       .getByText("Supplier invoice", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "I’m waiting for information" }).click();
+  // The ways forward without the file sit behind one "I don't have it" fold (29 Sep 2026).
+  await page.locator("summary").filter({ hasText: "I don't have it" }).click();
+  await page.getByRole("button", { name: "I'm waiting for it" }).click();
   await expect(
     page
-      .getByRole("tabpanel", { name: "Evidence", exact: true })
+      .getByRole("tabpanel", { name: "Documents", exact: true })
       .getByText("Waiting for information", { exact: true }),
   ).toBeVisible();
+  // Saving the waiting state re-renders the card, which closes the fold again.
+  await page.locator("summary").filter({ hasText: "I don't have it" }).click();
   await page.getByRole("button", { name: "Draft a request" }).click();
   await expect(page.getByText("Request to the record issuer", { exact: true })).toBeVisible();
   await page
@@ -38,26 +42,20 @@ async function reviewEvidence(page: Page) {
     });
   await expect(page.getByRole("button", { name: "Read original" })).toBeVisible();
   await page
-    .getByLabel("What does this record support or leave unclear?")
+    .getByLabel("What does this file show? Note anything missing.")
     .fill("Page 1 identifies the supplier, the purchase date and product code J-104.");
-  await page
-    .getByLabel("I checked the original, its page reference and the facts recorded here.")
-    .check();
-  await page.getByRole("button", { name: "Save evidence review" }).click();
+  await page.getByLabel("I checked the file, the page number and my note.").check();
+  await page.getByRole("button", { name: "Save document" }).click();
   await expect(
     page
-      .getByRole("tabpanel", { name: "Evidence", exact: true })
+      .getByRole("tabpanel", { name: "Documents", exact: true })
       .getByText("Reviewed by you", { exact: true }),
   ).toBeVisible();
   await page
-    .getByLabel(
-      "I checked the notice and response page, and this list covers all requested records.",
-    )
+    .getByLabel("I checked the notice and the appeal page. Amazon asked for nothing else.")
     .click();
   await expect(
-    page.getByLabel(
-      "I checked the notice and response page, and this list covers all requested records.",
-    ),
+    page.getByLabel("I checked the notice and the appeal page. Amazon asked for nothing else."),
   ).toBeChecked();
 }
 
@@ -67,13 +65,13 @@ test("workspace persists a sourced evidence plan, waiting state and factual revi
   await configure(page);
   await reviewEvidence(page);
   await page.reload();
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
   await expect(
     page
-      .getByRole("tabpanel", { name: "Evidence", exact: true })
+      .getByRole("tabpanel", { name: "Documents", exact: true })
       .getByText("Reviewed by you", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByLabel("What does this record support or leave unclear?")).toHaveValue(
+  await expect(page.getByLabel("What does this file show? Note anything missing.")).toHaveValue(
     /J-104/,
   );
   await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
@@ -91,7 +89,7 @@ test("workspace persists a sourced evidence plan, waiting state and factual revi
     fullPage: true,
     animations: "disabled",
   });
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
   await page.screenshot({
     path: "test-results/workspace-evidence.png",
     fullPage: true,
@@ -117,14 +115,14 @@ test("switching views retains unfinished text and a separate case preserves save
   await configure(page);
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   await page
-    .getByLabel("Your factual explanation")
+    .getByLabel("Your explanation, in your own words")
     .fill("My unfinished response facts stay here while I consult the saved request.");
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
-  await expect(page.getByLabel("Your factual explanation")).toHaveValue(
+  await expect(page.getByLabel("Your explanation, in your own words")).toHaveValue(
     /unfinished response facts/,
   );
-  await page.getByRole("button", { name: "Save response facts" }).click();
+  await page.getByRole("button", { name: "Save my answers" }).click();
   await page.getByRole("button", { name: "New case", exact: true }).click();
   await page.getByRole("button", { name: "Create separate case" }).click();
   await expect(page.getByLabel("Amazon notice", { exact: true })).toBeEmpty();
@@ -134,7 +132,7 @@ test("switching views retains unfinished text and a separate case preserves save
   await cases.filter({ hasNotText: "Current" }).click();
   await page.getByRole("link", { name: "Continue your case" }).click();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
-  await expect(page.getByLabel("Your factual explanation")).toHaveValue(
+  await expect(page.getByLabel("Your explanation, in your own words")).toHaveValue(
     /unfinished response facts/,
   );
 });
@@ -147,8 +145,8 @@ test("unsaved edits are never reported as saved, and survive the sign-in redirec
   await page.getByRole("button", { name: "Review the request" }).click();
   const draftText = "Also explain the corrective packaging change made on receipt.";
   await page.getByLabel("What the response page asks for").fill(draftText);
-  await expect(page.getByText("Unsaved changes", { exact: false })).toBeVisible();
-  await expect(page.getByText("Changes saved", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Saving…", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toHaveCount(0);
   await page
     .getByRole("complementary", { name: "Case context" })
     .getByRole("link", { name: "Sign in" })
@@ -207,7 +205,7 @@ test("informational updates avoid a purchase flow and replies reopen the request
       "Your response remains under review. No additional information is required at this stage.",
     );
   await page.getByLabel("What the response page asks for").fill("No action requested.");
-  await page.getByRole("button", { name: "Confirm this route" }).click();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
   await expect(page.getByText("No new response is requested", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   await expect(page.getByRole("button", { name: "Prepare response", exact: true })).toHaveCount(0);
@@ -249,17 +247,17 @@ test("authenticated workspace preserves the exact response through submission an
   await expect(page).toHaveURL(/dashboard/);
   await page.goto("/case?view=response");
   await page
-    .getByLabel("Your factual explanation")
+    .getByLabel("Your explanation, in your own words")
     .fill(
       "The supplier invoice identifies the product by code J-104 and records the purchase. The product code corresponds to the affected listing.",
     );
-  await page.getByRole("button", { name: "Save response facts" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Save my answers" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "History", exact: true }).click();
   await page
     .getByLabel("Add Amazon’s next reply")
     .fill("Private scratch reply not confirmed for processing.");
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   await page.route("**/api/compose", async (route) => {
     const { caseData, attemptNumber } = route.request().postDataJSON();
@@ -337,10 +335,10 @@ test("a refused outcome share keeps the offer and says so; a recorded one confir
   await expect(page).toHaveURL(/dashboard/);
   await page.goto("/case?view=response");
   await page
-    .getByLabel("Your factual explanation")
+    .getByLabel("Your explanation, in your own words")
     .fill("The supplier invoice identifies the product by code J-104 and records the purchase.");
-  await page.getByRole("button", { name: "Save response facts" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Save my answers" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.route("**/api/compose", async (route) => {
     const { caseData, attemptNumber } = route.request().postDataJSON();
     const draft = composePoa(caseData, attemptNumber);
@@ -409,7 +407,7 @@ test("a notice raising two issues names both, and blocks a response that has ans
       ].join("\n"),
     );
   await page.getByLabel("What the response page asks for").fill("Upload the requested invoice.");
-  await page.getByRole("button", { name: "Confirm this route" }).click();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
 
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   const panel = page.getByRole("tabpanel", { name: "Response", exact: true });
@@ -487,20 +485,20 @@ test("an Amazon reply keeps the evidence a seller already reviewed, and says so 
 
   await page.getByRole("button", { name: "Start the next round with this reply" }).click();
   // Same race as above: the revision is written to the vault before the tab switch means anything.
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 
   // The regression this feature exists to prevent. Asserted on the two status badges rather than
   // on the labels: the facts ledger legitimately repeats "Supplier invoice" in the same panel, so
   // a label locator is ambiguous while the statuses say exactly what is being claimed — the
   // invoice is still reviewed, and only the newly added record needs work.
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
-  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Documents", exact: true });
   await expect(evidence.getByText("Reviewed by you", { exact: true })).toHaveCount(1);
   await expect(evidence.getByText("Needs review", { exact: true })).toHaveCount(1);
   // The seller's own note survived with it. `.first()` is well defined, not incidental:
   // `computeReplyDelta` returns existing requirements before anything the reply adds.
   await expect(
-    page.getByLabel("What does this record support or leave unclear?").first(),
+    page.getByLabel("What does this file show? Note anything missing.").first(),
   ).toHaveValue(/J-104/);
 });
 
@@ -530,10 +528,10 @@ test("a notice typed into the workspace is classified, and a seller's correction
       "Your account has been deactivated for repeated policy violations. Please provide the supplier invoice for the affected product.",
     );
   await page.getByLabel("What the response page asks for").fill("Upload the requested invoice.");
-  await page.getByRole("button", { name: "Confirm this route" }).click();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
 
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
-  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Documents", exact: true });
   await expect(evidence.getByText("Sales or performance record", { exact: true })).toBeVisible();
   // Raised by us, and said so — never presented as a request Amazon made.
   await expect(evidence.getByText("We added this", { exact: true })).toBeVisible();
@@ -548,10 +546,10 @@ test("a notice typed into the workspace is classified, and a seller's correction
   await page.getByRole("button", { name: "Change the issue" }).click();
   await page.getByLabel("The issue on this notice").selectOption("FUNDS");
   await page.getByRole("button", { name: "Use this issue instead" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "Confirm this route" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.reload();
   // The case is now titled by its issue, so the correction shows in the heading as well.
   await expect(page.getByRole("heading", { level: 1, name: "Funds hold" })).toBeVisible();
@@ -573,7 +571,7 @@ test("a notice typed into the workspace shows its window, counted honestly", asy
       "Your account has been deactivated for repeated policy violations. You may appeal within 30 days. Please provide the supplier invoice.",
     );
   await page.getByLabel("What the response page asks for").fill("Upload the requested invoice.");
-  await page.getByRole("button", { name: "Confirm this route" }).click();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
   const context = page.getByRole("complementary", { name: "Case context" });
   await expect(context).toContainText(
     "Appeal window: 30 days, from the day you received this notice",
@@ -586,8 +584,8 @@ test("a seller can see why a record is wanted, ask for it, and say when they can
 }) => {
   test.setTimeout(90000);
   await configure(page);
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
-  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Documents", exact: true });
 
   /*
     A-05, the matrix content on screen. This asserted "Why Amazon asks for this" was visible, and it
@@ -600,19 +598,27 @@ test("a seller can see why a record is wanted, ask for it, and say when they can
     the honest answer is to describe the record and not attribute a motive. What must be shown and
     what will not be accepted are properties of the record, and those still render.
   */
+  // Calm pass (29 Sep 2026): the standards sit behind "What a good … shows".
+  await evidence
+    .locator("summary")
+    .filter({ hasText: "What a good supplier invoice shows" })
+    .click();
   await expect(
     evidence.getByText("What a record like this has to show", { exact: true }),
   ).toBeVisible();
   await expect(evidence.getByText("Why Amazon asks for this", { exact: false })).toHaveCount(0);
-  // A-06: the letter that asks the supplier for a compliant invoice.
-  await expect(
-    evidence.getByRole("group").filter({ hasText: "Supplier invoice request" }),
-  ).toBeVisible();
   // The disqualifiers — the half sellers most often get wrong, and which nothing used to say.
   await expect(evidence.getByText("What will not be accepted", { exact: true })).toBeVisible();
+  // A-06: the letter that asks the supplier for a compliant invoice, behind "I don't have it".
+  await evidence.locator("summary").filter({ hasText: "I don't have it" }).click();
+  // Matched by its own summary: the letter now sits inside the "I don't have it" fold, which also
+  // contains its text, so a group filtered by text would match both.
+  await expect(
+    evidence.locator("summary").filter({ hasText: "Ask for it — Supplier invoice request" }),
+  ).toBeVisible();
 
   // A-02/A-03: the objection path. Before this there was no way to say "I can't get this".
-  await evidence.getByRole("button", { name: "I cannot obtain this record" }).click();
+  await evidence.getByRole("button", { name: "I can't get it" }).click();
   await expect(evidence.getByText("Change sourcing, and say so", { exact: true })).toBeVisible();
   await expect(evidence.getByText("What this costs you", { exact: false }).first()).toBeVisible();
   await evidence
@@ -626,8 +632,10 @@ test("a seller can see why a record is wanted, ask for it, and say when they can
   // fields in this codebase before. A decline that does not survive a reload is a decline the
   // seller has to make again.
   await page.reload();
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
   await expect(evidence.getByText("You cannot obtain this", { exact: true })).toBeVisible();
+  // A settled card stays closed until opened (29 Sep 2026); the reason is kept inside it.
+  await evidence.getByRole("button", { name: "Supplier invoice: show or hide" }).click();
   await expect(evidence.getByText(/supplier closed in 2025/)).toBeVisible();
 });
 
@@ -648,46 +656,46 @@ test("a Plan of Action asks the seller to stand behind the work they describe", 
       "Your account has been deactivated. Please submit a Plan of Action explaining the root cause of the issue and the corrective actions you have taken.",
     );
   await page.getByLabel("What the response page asks for").fill("Submit a Plan of Action.");
-  await page.getByRole("button", { name: "Confirm this route" }).click();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
 
-  const confirm = page.getByLabel(/I confirm each corrective action described above/);
+  const confirm = page.getByLabel(/I confirm every action I describe as done above/);
   // Nothing to stand behind yet, so there is nothing to tick.
   await expect(confirm).toBeDisabled();
   await page
-    .getByLabel("Corrective actions and their actual status")
+    .getByLabel("What have you fixed already?")
     .fill(
       "We added a daily dispatch review on 16 September 2026, recorded by the warehouse owner.",
     );
   await expect(confirm).toBeEnabled();
   await confirm.check();
-  await page.getByRole("button", { name: "Save response facts" }).click();
+  await page.getByRole("button", { name: "Save my answers" }).click();
   // Wait for the write to land before reloading. Without this the test races the vault and fails
   // only under parallel load, which is indistinguishable from a flake until you read the failure:
   // the checkbox comes back disabled because the corrective-action text never persisted.
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 
   // It has to survive the validator that guards every vault write.
   await page.reload();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
-  await expect(page.getByLabel(/I confirm each corrective action described above/)).toBeChecked();
+  await expect(page.getByLabel(/I confirm every action I describe as done above/)).toBeChecked();
 
   // And an edit must clear it: an attestation that survives a rewrite is an attestation to text
   // the seller never read, which is exactly what the copy under the box promises it is not.
   await page
-    .getByLabel("Corrective actions and their actual status")
+    .getByLabel("What have you fixed already?")
     .fill("We changed something else entirely, and this sentence was never confirmed by anyone.");
   await expect(
-    page.getByLabel(/I confirm each corrective action described above/),
+    page.getByLabel(/I confirm every action I describe as done above/),
   ).not.toBeChecked();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.reload();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
-  await expect(page.getByLabel("Corrective actions and their actual status")).toHaveValue(
+  await expect(page.getByLabel("What have you fixed already?")).toHaveValue(
     "We changed something else entirely, and this sentence was never confirmed by anyone.",
   );
   await expect(
-    page.getByLabel(/I confirm each corrective action described above/),
+    page.getByLabel(/I confirm every action I describe as done above/),
   ).not.toBeChecked();
 });
 
@@ -705,8 +713,8 @@ test("a seller can correct the issue we read, and we raise the records that issu
   await configure(page);
 
   // The notice names an invoice and nothing else, and an unclassified case infers nothing.
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
-  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Documents", exact: true });
   await expect(evidence.getByText("Sales or performance record", { exact: true })).toHaveCount(0);
 
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
@@ -714,13 +722,15 @@ test("a seller can correct the issue we read, and we raise the records that issu
   await page.getByRole("button", { name: "Change the issue" }).click();
   await page.getByLabel("The issue on this notice").selectOption("POLICY");
   await page.getByRole("button", { name: "Use this issue instead" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 
   // The record this issue needs, which the notice never mentions, is now on the list — and it is
   // labelled as ours rather than dressed up as something Amazon said.
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
   await expect(evidence.getByText("Sales or performance record", { exact: true })).toBeVisible();
   await expect(evidence.getByText("We added this", { exact: true })).toBeVisible();
+  // One card open at a time (29 Sep 2026): the invoice is next, so the added record opens on tap.
+  await evidence.getByRole("button", { name: "Sales or performance record: show or hide" }).click();
   await expect(evidence.getByText(/Your notice does not name this record/)).toBeVisible();
   // And the record the notice did name is still there, untouched.
   await expect(evidence.getByText("Supplier invoice", { exact: true }).first()).toBeVisible();
@@ -735,9 +745,10 @@ test("a corrected notice brings in the record it now asks for, and keeps work al
 }) => {
   test.setTimeout(90000);
   await configure(page);
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
-  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
-  await page.getByRole("button", { name: "I’m waiting for information" }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Documents", exact: true });
+  await evidence.locator("summary").filter({ hasText: "I don't have it" }).click();
+  await page.getByRole("button", { name: "I'm waiting for it" }).click();
   await expect(evidence.getByText("Waiting for information", { exact: true })).toBeVisible();
   await expect(evidence.getByText("Authorization letter", { exact: true })).toHaveCount(0);
 
@@ -746,10 +757,10 @@ test("a corrected notice brings in the record it now asks for, and keeps work al
   await page
     .getByLabel("Amazon notice", { exact: true })
     .fill(`${notice} Please also provide a letter of authorization from the brand owner.`);
-  await page.getByRole("button", { name: "Confirm this route" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
   await expect(evidence.getByText("Authorization letter", { exact: true })).toBeVisible();
   // The invoice the seller had already started on is kept, with its status.
   await expect(evidence.getByText("Supplier invoice", { exact: true }).first()).toBeVisible();
@@ -775,8 +786,8 @@ test.describe("the dashboard for a workspace case", () => {
         "Your account has been deactivated for repeated policy violations. Please submit your appeal by 1 October 2026. Please provide the supplier invoice.",
       );
     await page.getByLabel("What the response page asks for").fill("Upload the requested invoice.");
-    await page.getByRole("button", { name: "Confirm this route" }).click();
-    await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Yes, this is right" }).click();
+    await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 
     await page.goto("/dashboard");
     await expect(page.getByText(/^Appeal by 1 Oct 2026 — /)).toBeVisible();
@@ -797,9 +808,11 @@ test("the seller's business details are saved, survive a reload and join the fac
   page,
 }) => {
   await configure(page);
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
-  const evidence = page.getByRole("tabpanel", { name: "Evidence", exact: true });
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
+  const evidence = page.getByRole("tabpanel", { name: "Documents", exact: true });
 
+  // Optional, so it is closed until the seller opens it (29 Sep 2026); saved, it opens by itself.
+  await evidence.getByRole("button", { name: /Your business details/ }).click();
   await evidence
     .getByLabel("Business name, exactly as registered on your seller account")
     .fill("Hawlton Trading");
@@ -807,10 +820,10 @@ test("the seller's business details are saved, survive a reload and join the fac
     .getByLabel("Your suppliers (one per line, as each names itself)")
     .fill("Acme Trading Ltd\nOther Wholesale");
   await evidence.getByRole("button", { name: "Save business details" }).click();
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 
   await page.reload();
-  await page.getByRole("tab", { name: "Evidence", exact: true }).click();
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
   await expect(
     evidence.getByLabel("Business name, exactly as registered on your seller account"),
   ).toHaveValue("Hawlton Trading");

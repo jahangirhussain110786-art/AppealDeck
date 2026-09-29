@@ -8,7 +8,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "btn-action",
+        // Disabled turns neutral: at half opacity the orange read as broken, not as "not yet".
+        default:
+          "btn-action disabled:bg-muted disabled:bg-none disabled:text-muted-foreground disabled:opacity-100 disabled:shadow-none",
         secondary: "bg-surface-2 text-foreground hover:bg-muted",
         outline:
           "border border-border bg-surface-1 font-medium text-foreground shadow-card hover:border-foreground/30 hover:bg-surface-1",

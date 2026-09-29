@@ -1,28 +1,44 @@
 "use client";
 import { useState } from "react";
-import { Check, Download, FileText, ClipboardCheck } from "lucide-react";
+import { Check, ChevronDown, Download, FileText } from "lucide-react";
 import { DetailDisclosure } from "./WorkspaceVisuals";
 import { StatusPill } from "./CaseOverview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileDropZone } from "@/components/FileDropZone";
 import { CopyButton } from "@/components/CopyButton";
 import { DocumentCheckPanel } from "@/components/DocumentCheckPanel";
 import { isBrowserOnly, type CheckOutcome } from "@/lib/documentChecks/runCheck";
 import { requirementEvidenceKind, type Requirement } from "@/core/workspace";
+import { requirementGuidance } from "@/core/requirementGuidance";
 import type { VaultListItem } from "@/core/vault/vault";
-import { RequirementGuidance } from "./RequirementGuidance";
+import {
+  CannotObtainForm,
+  CannotObtainRecorded,
+  GuidanceLetters,
+  GuidanceStandards,
+  GuidanceWhy,
+} from "./RequirementGuidance";
 import type { ViolationKind } from "@/core";
 import { WORKSPACE as C } from "@/content/workspace";
+import { cn } from "@/lib/utils";
 
+/**
+ * One document the case needs. Calm pass, 29 Sep 2026: the card closes to its name and status, and
+ * only the one that needs the seller is open (the parent decides which). Inside, what a seller
+ * needs is in view — Amazon's words or ours, the one-line reason, the file, the note, Save — and
+ * everything else is one tap away under "I don't have it" or "What a good … shows". The body is
+ * hidden rather than unmounted when closed, so a half-typed note or page number is never lost.
+ */
 export function EvidenceReview({
   item,
   violationKind,
   records,
   busy,
+  open,
+  onToggle,
   draftNote,
   onDraftNote,
   onChange,
@@ -41,6 +57,8 @@ export function EvidenceReview({
   violationKind: ViolationKind;
   records: VaultListItem[];
   busy: boolean;
+  open: boolean;
+  onToggle: () => void;
   draftNote?: string;
   onDraftNote: (value: string | undefined) => void;
   onChange: (value: Requirement) => Promise<boolean>;
@@ -50,7 +68,7 @@ export function EvidenceReview({
   /**
    * AA-41 integration fix. Document checking was originally wired only into `EvidenceSlotPanel`,
    * which mounts in the classic-interview path — so the workspace, the primary journey, could not
-   * reach it at all. Optional so the classic path and the dev gallery are unaffected.
+   * reach it at all.
    */
   checkOutcome?: CheckOutcome | null;
   /** When a check shown here was saved with the case, the time it ran. */
@@ -60,19 +78,36 @@ export function EvidenceReview({
   checking?: boolean;
   onCheck?: () => void;
 }) {
+  const D = C.documents;
   const [note, setNote] = useState(draftNote ?? item.note);
   const [page, setPage] = useState(String(item.page ?? 1));
   const [checked, setChecked] = useState(false);
   const [showRequest, setShowRequest] = useState(false);
   const [sourceQuote, setSourceQuote] = useState(item.sourceQuote);
   const [removeReason, setRemoveReason] = useState("");
+  const guidance = requirementGuidance(item, violationKind);
+  const bodyId = `document-${item.id}`;
   const request = `Hello,\n\nI need your help with the following records: ${item.label}.\n\nThe request I received says:\n${item.sourceQuote}\n\nPlease provide the genuine records or clarify any missing information. If a correction is needed, please issue it yourself while preserving the original transaction details. Thank you.`;
+  /*
+    B-05: a record Amazon named is shown as their sentence, quoted. A record we inferred from the
+    evidence matrix is shown as ours, and said so plainly — in the closed header as well as inside,
+    so a seller can tell the two apart without opening anything.
+  */
+  const origin =
+    item.source === "matrix"
+      ? C.inferred.badge
+      : item.source === "seller"
+        ? C.sellerAdded.badge
+        : C.overview.source.notice;
+  const pageValid = Number.isInteger(Number(page)) && Number(page) >= 1 && Number(page) <= 10000;
+
   return (
-    // v5 (26 Sep 2026, prototype record.html): each record reads as its own page — what it is and
-    // Amazon's words, then the file and what a check found, then what the seller will do.
-    <Card className="overflow-hidden rounded-[18px]">
-      <CardHeader className="gap-2.5">
-        <div className="flex flex-wrap items-center gap-2">
+    <section
+      aria-labelledby={`${bodyId}-title`}
+      className="overflow-hidden rounded-[18px] bg-card shadow-card ring-1 ring-inset ring-border"
+    >
+      <div className="flex items-start gap-3 p-5 sm:px-6">
+        <div className="min-w-0 flex-1 space-y-1.5">
           <StatusPill
             tone={
               item.status === "reviewed"
@@ -87,37 +122,46 @@ export function EvidenceReview({
           >
             {C.status[item.status]}
           </StatusPill>
+          <h3
+            id={`${bodyId}-title`}
+            className="text-balance text-[clamp(1.25rem,1.05rem+0.7vw,1.5rem)] font-semibold leading-tight tracking-[-0.025em]"
+          >
+            {item.label}
+          </h3>
+          <p className="text-sm text-muted-foreground">{origin}</p>
         </div>
-        <CardTitle
-          as="h3"
-          className="text-balance text-[clamp(1.4rem,1.1rem+1vw,1.875rem)] font-semibold leading-[1.1] tracking-[-0.03em]"
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-expanded={open}
+          aria-controls={bodyId}
+          aria-label={D.toggle.replace("{label}", item.label)}
+          onClick={onToggle}
+          className="shrink-0 text-link"
         >
-          {item.label}
-        </CardTitle>
-        {/*
-          B-05: a record Amazon named is shown as their sentence, quoted. A record we inferred from
-          the evidence matrix is shown as ours, and said so plainly. A seller in a crisis must
-          always be able to tell the two apart, and a quotation mark around our own words would be
-          the quickest way to blur that.
-        */}
+          {open ? D.close : D.open}
+          <ChevronDown
+            className={cn(
+              "transition-transform motion-reduce:transition-none",
+              open && "rotate-180",
+            )}
+            aria-hidden
+          />
+        </Button>
+      </div>
+      <div id={bodyId} hidden={!open} className="space-y-5 px-5 pb-6 sm:px-6">
         {item.source === "matrix" || item.source === "seller" ? (
-          <div className="rounded-row border border-border/60 bg-surface-2 p-3">
-            <p className="text-sm font-medium text-foreground">
-              {item.source === "seller" ? C.sellerAdded.badge : C.inferred.badge}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {item.source === "seller" ? C.sellerAdded.help : C.inferred.help}
-            </p>
-          </div>
+          <p className="max-w-[60ch] text-sm text-muted-foreground">
+            {item.source === "seller" ? C.sellerAdded.help : C.inferred.help}
+          </p>
         ) : (
           item.sourceQuote && (
-            <blockquote className="max-w-[46em] font-accent text-[1.0625rem] italic leading-snug text-foreground/80">
+            <blockquote className="max-w-[46em] border-l-2 border-primary/40 pl-3 font-accent text-[1.0625rem] italic leading-snug text-foreground/80">
               “{item.sourceQuote}”
             </blockquote>
           )
         )}
-      </CardHeader>
-      <CardContent className="space-y-4">
+        {guidance && <GuidanceWhy guidance={guidance} />}
         <div className="warm-stage space-y-3 rounded-[18px] p-3 sm:p-4">
           {item.recordId ? (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-surface-1 p-4 shadow-card ring-1 ring-inset ring-border">
@@ -132,7 +176,7 @@ export function EvidenceReview({
                 onClick={() => onDownload(item.recordId!)}
               >
                 <Download className="mr-2 h-4 w-4" aria-hidden />
-                Read original
+                {D.readOriginal}
               </Button>
             </div>
           ) : (
@@ -145,11 +189,9 @@ export function EvidenceReview({
             />
           )}
           {records.length > 0 && (
-            <DetailDisclosure
-              title={item.recordId ? "Change linked file" : "Use a file already in this case"}
-            >
+            <DetailDisclosure title={item.recordId ? D.changeLinked : D.linkExisting}>
               <div className="space-y-2">
-                <Label htmlFor={`file-${item.id}`}>Link an existing file from this case</Label>
+                <Label htmlFor={`file-${item.id}`}>{D.linkLabel}</Label>
                 <select
                   id={`file-${item.id}`}
                   className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
@@ -169,7 +211,7 @@ export function EvidenceReview({
                     }
                   }}
                 >
-                  <option value="">Choose a file</option>
+                  <option value="">{D.chooseFile}</option>
                   {records.map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.name}
@@ -191,21 +233,13 @@ export function EvidenceReview({
             />
           )}
         </div>
-        <div className="flex flex-wrap items-baseline justify-between gap-2 pt-2">
-          <h4 className="text-lg font-semibold tracking-[-0.02em]">{C.evidenceReview.heading}</h4>
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <ClipboardCheck className="size-3.5 text-primary" aria-hidden />
-            Manual review · Original files stay unchanged
-          </p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem]">
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_6rem]">
           <div className="space-y-2">
-            <Label htmlFor={`note-${item.id}`}>
-              What does this record support or leave unclear?
-            </Label>
+            <Label htmlFor={`note-${item.id}`}>{D.noteLabel}</Label>
             <Textarea
               id={`note-${item.id}`}
-              placeholder="Record the facts this file supports and any gaps…"
+              rows={3}
+              placeholder={D.notePlaceholder}
               value={note}
               maxLength={4000}
               onChange={(e) => {
@@ -216,11 +250,12 @@ export function EvidenceReview({
               }}
             />
           </div>
-          <div className="max-w-40 space-y-2">
-            <Label htmlFor={`page-${item.id}`}>Source page</Label>
+          <div className="max-w-28 space-y-2">
+            <Label htmlFor={`page-${item.id}`}>{D.pageLabel}</Label>
             <Input
               id={`page-${item.id}`}
               type="number"
+              inputMode="numeric"
               min={1}
               max={10000}
               value={page}
@@ -238,117 +273,114 @@ export function EvidenceReview({
             checked={checked}
             onChange={(e) => setChecked(e.target.checked)}
           />
-          I checked the original, its page reference and the facts recorded here.
+          {D.checked}
         </label>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            disabled={
-              busy ||
-              !item.recordId ||
-              !checked ||
-              !note.trim() ||
-              !Number.isInteger(Number(page)) ||
-              Number(page) < 1 ||
-              Number(page) > 10000
-            }
-            onClick={() =>
-              void onChange({ ...item, note: note.trim(), page: Number(page), status: "reviewed" })
-            }
-          >
-            <Check className="mr-2 h-4 w-4" aria-hidden />
-            Save evidence review
-          </Button>
-          <Button
-            variant="outline"
-            disabled={busy}
-            onClick={() => void onChange({ ...item, note, status: "waiting" })}
-          >
-            I’m waiting for information
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => setShowRequest(!showRequest)}
-            aria-expanded={showRequest}
-          >
-            Draft a request
-          </Button>
-        </div>
+        <Button
+          disabled={busy || !item.recordId || !checked || !note.trim() || !pageValid}
+          onClick={() =>
+            void onChange({ ...item, note: note.trim(), page: Number(page), status: "reviewed" })
+          }
+        >
+          <Check className="mr-2 h-4 w-4" aria-hidden />
+          {D.save}
+        </Button>
         {item.status === "waiting" && (
           <p className="rounded-lg border border-warning/20 bg-warning/5 p-3 text-sm text-muted-foreground">
             {C.waitingHelp}
           </p>
         )}
-        <DetailDisclosure title="How to review this file">{C.manualReview}</DetailDisclosure>
-        {/*
-          A-05 / A-06 / A-02: why Amazon asks, what a compliant record shows, what will not pass,
-          the letter that asks for it, and the honest path when it cannot be obtained. All of it
-          existed in src/core and no seller could reach any of it before 23 Sep 2026.
-        */}
-        <RequirementGuidance
-          item={item}
-          violationKind={violationKind}
-          busy={busy}
-          onChange={onChange}
-        />
+        <CannotObtainRecorded item={item} busy={busy} onChange={onChange} />
         {item.status === "cannot_obtain" && item.declined && (
           <p className="text-xs text-muted-foreground">
-            Recorded {item.declined.at.slice(0, 10)}. Change it any time.
+            {D.recordedOn.replace("{date}", item.declined.at.slice(0, 10))}
           </p>
         )}
-        <details className="border-t border-border pt-3">
-          <summary className="cursor-pointer text-sm font-medium">
-            Correct this task or mark it no longer applicable
-          </summary>
-          <div className="mt-4 space-y-3">
-            <Label htmlFor={`source-${item.id}`}>Exact request in the current notice or form</Label>
-            <Textarea
-              id={`source-${item.id}`}
-              value={sourceQuote}
-              maxLength={2000}
-              onChange={(e) => setSourceQuote(e.target.value)}
-            />
-            <Button
-              variant="outline"
-              disabled={busy || !sourceQuote.trim()}
-              onClick={() =>
-                void onChange({ ...item, sourceQuote: sourceQuote.trim(), status: "needed" })
-              }
-            >
-              Update request and reopen review
-            </Button>
-            <Label htmlFor={`remove-${item.id}`}>Why is this record no longer requested?</Label>
-            <Input
-              id={`remove-${item.id}`}
-              value={removeReason}
-              maxLength={1000}
-              onChange={(e) => setRemoveReason(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Removing a task does not delete its original file or earlier submission references.
-              Confirm the complete request list again afterwards.
-            </p>
-            <Button
-              variant="outline"
-              disabled={busy || removeReason.trim().length < 10}
-              onClick={() => void onRemove(removeReason.trim())}
-            >
-              Remove from current plan
-            </Button>
-          </div>
-        </details>
-        {showRequest && (
-          <div className="space-y-3 rounded-lg border border-border bg-surface-2 p-4">
-            <h3 className="font-medium">Request to the record issuer</h3>
-            <p className="text-xs text-muted-foreground">
-              Review the draft, add the recipient and send it yourself. AppealDeck does not send
-              messages.
-            </p>
-            <pre className="whitespace-pre-wrap font-sans text-sm">{request}</pre>
-            <CopyButton text={request} label="Copy request draft" />
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        <div className="space-y-2">
+          {/* Every way forward when the file is not in hand, behind one honest question. */}
+          <DetailDisclosure title={D.missing}>
+            <div className="space-y-4 pt-1 text-foreground">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => void onChange({ ...item, note, status: "waiting" })}
+                >
+                  {D.waiting}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowRequest(!showRequest)}
+                  aria-expanded={showRequest}
+                >
+                  {D.draftRequest}
+                </Button>
+              </div>
+              {showRequest && (
+                <div className="space-y-3 rounded-lg border border-border bg-surface-2 p-4">
+                  <h4 className="font-medium">{D.requestTitle}</h4>
+                  <p className="text-xs text-muted-foreground">{D.requestNote}</p>
+                  <pre className="whitespace-pre-wrap font-sans text-sm">{request}</pre>
+                  <CopyButton text={request} label={D.copyRequest} />
+                </div>
+              )}
+              {guidance && <GuidanceLetters guidance={guidance} />}
+              {guidance && (
+                <CannotObtainForm item={item} guidance={guidance} busy={busy} onChange={onChange} />
+              )}
+              <details className="border-t border-border pt-3">
+                <summary className="cursor-pointer text-sm font-medium">{D.correct}</summary>
+                <div className="mt-4 space-y-3">
+                  <Label htmlFor={`source-${item.id}`}>{D.correctLabel}</Label>
+                  <Textarea
+                    id={`source-${item.id}`}
+                    value={sourceQuote}
+                    maxLength={2000}
+                    onChange={(e) => setSourceQuote(e.target.value)}
+                  />
+                  <Button
+                    variant="outline"
+                    disabled={busy || !sourceQuote.trim()}
+                    onClick={() =>
+                      void onChange({ ...item, sourceQuote: sourceQuote.trim(), status: "needed" })
+                    }
+                  >
+                    {D.correctButton}
+                  </Button>
+                  <Label htmlFor={`remove-${item.id}`}>{D.removeLabel}</Label>
+                  <Input
+                    id={`remove-${item.id}`}
+                    value={removeReason}
+                    maxLength={1000}
+                    onChange={(e) => setRemoveReason(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">{D.removeNote}</p>
+                  <Button
+                    variant="outline"
+                    disabled={busy || removeReason.trim().length < 10}
+                    onClick={() => void onRemove(removeReason.trim())}
+                  >
+                    {D.removeButton}
+                  </Button>
+                </div>
+              </details>
+            </div>
+          </DetailDisclosure>
+          <DetailDisclosure
+            title={
+              guidance ? D.standards.replace("{label}", item.label.toLowerCase()) : D.howToCheck
+            }
+          >
+            <div className="space-y-3">
+              {guidance && <GuidanceStandards guidance={guidance} />}
+              <p>{C.manualReview}</p>
+              <p>{D.originalUnchanged}</p>
+            </div>
+          </DetailDisclosure>
+        </div>
+      </div>
+    </section>
   );
 }
 

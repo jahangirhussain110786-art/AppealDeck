@@ -315,3 +315,19 @@ Format:
 - Rationale: the founder asked for a site that looks and feels like the best product sites; v5 was calibrated against Linear, Mercury, Stripe and Wise and approved after inspection.
 - Files affected: `src/app/globals.css`, `tailwind.config.ts`, `src/components/{AppHeader,AppShell,AppSidebar,SiteFooter,MarketingShell,PageIntro,PageHero,DataFlow,AuthCard,AnnouncementBar}.tsx`, `src/components/marketing/*`, `src/components/ui/{button,card}.tsx`, the public pages, the dashboard and vault pages, `src/content/*`, `public/illustrations/*`.
 - Decider: Founder (the direction and approval); AI assistant (the implementation).
+
+## 29 Sep 2026 — AM-32: the calm case pass replaces the v6.1 build
+
+- Decision: Make targeted reading and layout improvements to the existing case screens instead of rebuilding the case as a home plus five steps (prototype v6.1, approved 28 Sep 2026, never built).
+- Alternatives considered:
+  1. Build v6.1 as approved. Rejected by the founder after the side-by-side review. The four tabs already do what the five steps set out to do, and the rebuild meant six batches and about 120 inventory items to re-home, for little gain.
+  2. Change nothing. Rejected: the first case screen repeated the decode result in a seven-block form, and the Documents tab was almost six phone screens long for two documents.
+  3. Rename "Response" to "Letter". Rejected: verification and professional-help cases have no letter in that tab.
+- Rationale: the founder asked for "light improvements only, where we really need them", judged as a designer and content writer would. Principle 9 in `docs/DECISION-PRINCIPLES.md` applies: effort already spent on v6.1 is not evidence that it should be built.
+- Files affected:
+  - `src/components/workspace/{RequestReview,EvidenceReview,RequirementGuidance,CaseFactsCard,CaseWorkspace,ResponseReview}.tsx`
+  - `src/components/ui/button.tsx`
+  - `src/app/decode/DecodeClient.tsx`
+  - `src/content/{workspace,marketing}.ts`
+  - `e2e/{decode-continuity,journey,response-continuity,workspace}.spec.ts`
+- Decider: Founder (the direction); AI assistant (the brief, the design and the build).
