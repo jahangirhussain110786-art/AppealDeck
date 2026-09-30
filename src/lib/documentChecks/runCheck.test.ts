@@ -21,12 +21,23 @@ const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
 const noDeviceReading = async () => null;
 
 let fetchSpy: ReturnType<typeof vi.fn>;
+/** What the two endpoints answer; a test overrides one to see how the client copes. */
+let licenseAnswer: () => Promise<unknown>;
+let readAnswer: () => Promise<unknown>;
+
+/** The requests that carried a document. The licence question before them carries none. */
+const documentCalls = () =>
+  fetchSpy.mock.calls.filter(([url]) => String(url).includes("/api/read-document"));
 
 beforeEach(() => {
-  fetchSpy = vi.fn().mockResolvedValue({
+  licenseAnswer = async () => ({ ok: true, status: 200, json: async () => ({ status: "active" }) });
+  readAnswer = async () => ({
     ok: true,
     json: async () => ({ ok: true, check: { findings: [], summary: "" } }),
   });
+  fetchSpy = vi.fn(async (url: string) =>
+    String(url).includes("/api/license/status") ? licenseAnswer() : readAnswer(),
+  );
   vi.stubGlobal("fetch", fetchSpy);
 });
 
@@ -89,10 +100,82 @@ describe("document check routing", () => {
       bytes: PNG,
       mimeType: "image/png",
     });
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(fetchSpy.mock.calls[0]![1].body as string);
+    expect(documentCalls()).toHaveLength(1);
+    const body = JSON.parse(documentCalls()[0]![1].body as string);
     expect(body.evidenceKind).toBe("supplier_invoice");
     expect(outcome.kind).toBe("fields");
+  });
+
+  /**
+   * 30 Sep 2026. The server refuses a file it may not read, but only after the whole file has
+   * crossed the wire. A free account, or a Pass that covers another case, was posting up to 3 MB of
+   * a seller's invoice to be told so. The client now asks first and sends nothing it knows will be
+   * refused.
+   */
+  describe("asks whether the AI reading is available before sending a file", () => {
+    const input = {
+      caseId: "case-1",
+      kind: "INAUTHENTIC" as const,
+      evidenceKind: "supplier_invoice" as const,
+      bytes: new Uint8Array(10),
+      mimeType: "application/pdf",
+    };
+
+    it("sends nothing for a free account, and says the AI reading needs a Pass", async () => {
+      licenseAnswer = async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ status: "none" }),
+      });
+      const outcome = await runDocumentCheck(input, noDeviceReading);
+      expect(documentCalls()).toHaveLength(0);
+      expect(outcome).toMatchObject({ kind: "unavailable" });
+      expect((outcome as { message: string }).message).toMatch(
+        /part of the Appeal Pass for this case/,
+      );
+      // Nothing was sent, so nothing may say it was.
+      expect((outcome as { fileSent?: boolean }).fileSent).toBeUndefined();
+    });
+
+    it("asks about this case, so a Pass for another case does not count", async () => {
+      await runDocumentCheck({ ...input, caseId: "case a/b" }, noDeviceReading);
+      const asked = fetchSpy.mock.calls.find(([url]) =>
+        String(url).includes("/api/license/status"),
+      );
+      expect(String(asked![0])).toContain("caseId=case%20a%2Fb");
+    });
+
+    it("sends nothing when the session has ended, and says to sign in", async () => {
+      licenseAnswer = async () => ({ ok: false, status: 401, json: async () => ({}) });
+      const outcome = await runDocumentCheck(input, noDeviceReading);
+      expect(documentCalls()).toHaveLength(0);
+      expect((outcome as { message: string }).message).toMatch(/needs you to be signed in/);
+    });
+
+    it("still sends when the question itself cannot be answered, since a paid seller must not be blocked", async () => {
+      for (const answer of [
+        async () => {
+          throw new Error("offline");
+        },
+        async () => ({ ok: false, status: 503, json: async () => ({}) }),
+        async () => ({ ok: true, status: 200, json: async () => ({ unexpected: true }) }),
+      ] as const) {
+        fetchSpy.mockClear();
+        licenseAnswer = answer;
+        await runDocumentCheck(input, noDeviceReading);
+        expect(documentCalls()).toHaveLength(1);
+      }
+    });
+
+    it("does not ask at all for a guest, or for a file it would not send", async () => {
+      await runDocumentCheck({ ...input, signedIn: false }, noDeviceReading);
+      await runDocumentCheck({ ...input, mimeType: "application/msword" }, noDeviceReading);
+      await runDocumentCheck(
+        { ...input, bytes: new Uint8Array(MAX_CHECK_BYTES + 1) },
+        noDeviceReading,
+      );
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
   });
 
   /**
@@ -127,8 +210,8 @@ describe("document check routing", () => {
       bytes: new Uint8Array(MAX_CHECK_BYTES),
       mimeType: "application/pdf",
     });
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    const sent = fetchSpy.mock.calls[0]![1].body as string;
+    expect(documentCalls()).toHaveLength(1);
+    const sent = documentCalls()[0]![1].body as string;
     expect(sent.length).toBeLessThan(4_500_000);
   });
 
@@ -141,13 +224,13 @@ describe("document check routing", () => {
       mimeType: "application/pdf",
       caseData: { asins: ["B0ABCDEF12"], referenceIds: [] },
     });
-    const sent = JSON.parse(fetchSpy.mock.calls[0]![1].body as string);
+    const sent = JSON.parse(documentCalls()[0]![1].body as string);
     expect(sent.caseId).toBe("case-1");
     expect(sent.context).toEqual({ asins: ["B0ABCDEF12"], referenceIds: [] });
   });
 
   it("explains a rejection by the host rather than calling it a failed check", async () => {
-    fetchSpy.mockResolvedValueOnce({
+    readAnswer = async () => ({
       ok: false,
       status: 413,
       json: async () => {

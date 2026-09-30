@@ -278,7 +278,11 @@ function WorkspaceInner({
   const [dirtyKeys, setDirtyKeys] = useState<Set<string>>(new Set());
   // AA-41 in the workspace: results keyed by vault record id, in memory only.
   const [docChecks, setDocChecks] = useState<Record<string, CheckOutcome>>({});
-  const [checkingId, setCheckingId] = useState<string | null>(null);
+  // Which records are being read right now. A set, not one id: a reading on the device can take
+  // twenty seconds, long enough to start a second, and the first finishing used to clear the
+  // "checking" state of the second while it was still running (30 Sep 2026).
+  const [checkingIds, setCheckingIds] = useState<ReadonlySet<string>>(new Set());
+  const checkingRef = useRef<Set<string>>(new Set());
   /** Set once when a pre-workspace case is migrated on open, so the change is explained. */
   const [migrationNote, setMigrationNote] = useState<string | null>(null);
   const draftTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -754,7 +758,10 @@ function WorkspaceInner({
   const runCheckFor = async (req: Requirement) => {
     const recordId = req.recordId;
     if (!recordId) return;
-    setCheckingId(recordId);
+    // Synchronous, because state has not updated yet when a double click's second event arrives.
+    if (checkingRef.current.has(recordId)) return;
+    checkingRef.current.add(recordId);
+    setCheckingIds(new Set(checkingRef.current));
     try {
       const { record, bytes } = await vault.get(recordId);
       const evidenceKind =
@@ -832,7 +839,8 @@ function WorkspaceInner({
         },
       }));
     } finally {
-      setCheckingId(null);
+      checkingRef.current.delete(recordId);
+      setCheckingIds(new Set(checkingRef.current));
     }
   };
 
@@ -1665,7 +1673,7 @@ function WorkspaceInner({
                   checkOutcome={checkShownFor(r)?.outcome ?? null}
                   checkedAt={checkShownFor(r)?.at}
                   checkStale={checkShownFor(r)?.stale ?? false}
-                  checking={checkingId === r.recordId}
+                  checking={r.recordId ? checkingIds.has(r.recordId) : false}
                   onCheck={r.recordId ? () => void runCheckFor(r) : undefined}
                   signedIn={signedIn}
                 />

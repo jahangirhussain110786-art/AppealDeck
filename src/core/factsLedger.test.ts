@@ -151,6 +151,26 @@ describe("source adapters", () => {
     expect(entries[0]!.value).toBe("Acme Trading Ltd");
   });
 
+  /**
+   * 30 Sep 2026. A page read from a picture can have a digit wrong, and "Read from scan.pdf" beside
+   * the notice's value read as the seller's own contradiction. The name says how it was read.
+   */
+  it("names a document read from a picture as one, so a misread is not taken for a contradiction", () => {
+    const fields = requirementsFor("INAUTHENTIC_DOCUMENTS").find(
+      (r) => r.kind === "supplier_invoice",
+    )!.fields;
+    const check = buildDocumentCheck("INAUTHENTIC_DOCUMENTS", "supplier_invoice", [
+      { field: fields[0]!, status: "present", observed: "Acme Trading Ltd", note: "On page 1." },
+    ]);
+    const scan = entriesFromDocumentCheck("scan.pdf", { ...check, textSource: "ocr" });
+    expect(describeSource(scan[0]!.source)).toMatch(
+      /scan\.pdf \(a picture: letters and digits may be misread\)/,
+    );
+    // A reading of a PDF's own text is quoted plainly.
+    const text = entriesFromDocumentCheck("invoice.pdf", { ...check, textSource: "pdf_text" });
+    expect(describeSource(text[0]!.source)).toBe("Read from invoice.pdf");
+  });
+
   it("takes the seller's own answers and skips the empty ones", () => {
     const entries = entriesFromSeller({ Supplier: "Acme Ltd", Notes: "   ", Missing: undefined });
     expect(entries).toHaveLength(1);

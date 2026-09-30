@@ -199,6 +199,18 @@ const ENTITY_FACT_LABELS: Record<string, { label: string; multiValued: boolean }
 };
 
 /**
+ * The name a document is listed under in the ledger. A page read from a picture (OCR) can have a
+ * digit or a letter wrong, and a misread ASIN or ID would otherwise be filed as "Read from
+ * scan.pdf" beside the notice's value and reported as the seller's own contradiction. The name says
+ * how it was read, so the sentence that reaches the seller does too (30 Sep 2026).
+ */
+function documentSourceName(filename: string, check: DocumentCheckResult): string {
+  return check.textSource === "ocr"
+    ? `${filename} (a picture: letters and digits may be misread)`
+    : filename;
+}
+
+/**
  * Entries from a document check. Only `present` findings with something quoted become facts: a
  * field we could not read is not a fact, and a missing one certainly is not.
  *
@@ -212,12 +224,13 @@ export function entriesFromDocumentCheck(
   filename: string,
   check: DocumentCheckResult,
 ): FactEntry[] {
+  const shown = documentSourceName(filename, check);
   return check.findings
     .filter((f) => f.status === "present" && f.observed && f.observed.trim().length > 0)
     .map((f) => ({
       label: f.field,
       value: f.observed!.trim(),
-      source: { kind: "document" as const, filename, field: f.field },
+      source: { kind: "document" as const, filename: shown, field: f.field },
       multiValued: true,
     }));
 }
@@ -234,6 +247,7 @@ export function disagreementsFromDocumentCheck(
   filename: string,
   check: DocumentCheckResult,
 ): Fact[] {
+  const shown = documentSourceName(filename, check);
   return check.findings
     .filter((f) => f.status === "conflicting" && f.observed?.trim() && f.comparedValue)
     .map((f) => ({
@@ -243,7 +257,7 @@ export function disagreementsFromDocumentCheck(
         {
           label: f.field,
           value: f.observed!.trim(),
-          source: { kind: "document" as const, filename, field: f.field },
+          source: { kind: "document" as const, filename: shown, field: f.field },
         },
         {
           label: f.field,

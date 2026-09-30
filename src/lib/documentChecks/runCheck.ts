@@ -84,9 +84,19 @@ const MAX_DEVICE_BYTES = 10 * 1024 * 1024;
 
 const DEVICE_TRIED_NOTE =
   "We also tried to read it on this device and could not make out its text.";
+const DEVICE_TIMEOUT_NOTE =
+  "We also tried to read it on this device, but it took too long and was stopped. Try again, or add a clearer or smaller copy.";
+/** A password-protected PDF cannot be opened here, or by the AI reading. */
+const PROTECTED_NOTE =
+  "This PDF is protected with a password, so it cannot be read. Save a copy without the protection and add that instead.";
 
 const AI_NEEDS_SIGN_IN =
   "The AI reading needs you to be signed in. Sign in, then check it again; nothing about your case has changed.";
+const AI_NEEDS_PASS =
+  "The AI reading is part of the Appeal Pass for this case, and this case does not have one yet.";
+
+/** The longest reason kept with a saved reading; the vault's validator refuses a longer one. */
+const MAX_AI_NOTE = 500;
 
 /**
  * 29 Sep 2026: the AI reading first, and the reading on the device when it cannot run — switched
@@ -126,8 +136,14 @@ export async function runDocumentCheck(
   if (ai.kind !== "unavailable") return ai;
   const local = await readOnDevice(input, ai, readText);
   if (local.outcome) return local.outcome;
+  // A protected PDF is the same answer whoever reads it; signing in would not help.
+  if (local.failure === "protected") {
+    return { kind: "unavailable", message: PROTECTED_NOTE, fileSent: ai.fileSent === true };
+  }
   // Said, so a seller whose scan has no legible text is not left thinking that signing in would fix it.
-  return local.tried ? { ...ai, message: `${DEVICE_TRIED_NOTE} ${ai.message}` } : ai;
+  if (!local.tried) return ai;
+  const tried = local.failure === "timeout" ? DEVICE_TIMEOUT_NOTE : DEVICE_TRIED_NOTE;
+  return { ...ai, message: `${tried} ${ai.message}` };
 }
 
 /**
@@ -139,7 +155,12 @@ async function readOnDevice(
   input: RunCheckInput,
   ai: { message: string; fileSent?: boolean },
   readText: ReadTextOnDevice,
-): Promise<{ outcome: CheckOutcome | null; tried: boolean }> {
+): Promise<{
+  outcome: CheckOutcome | null;
+  tried: boolean;
+  /** Why the file could not be read, when the reader knew: a password, or the time limit. */
+  failure?: "protected" | "timeout";
+}> {
   if (!DEVICE_READABLE.includes(input.mimeType) || input.bytes.byteLength > MAX_DEVICE_BYTES)
     return { outcome: null, tried: false };
   const requirement = requirementForCheck(input.kind, input.evidenceKind);
@@ -163,8 +184,9 @@ async function readOnDevice(
         referenceIds: ctx?.referenceIds ?? [],
         ...context,
       },
-      // Every quote is a line copied out of the document by code, not a model's words.
-      { quotesAreVerbatim: true },
+      // Every quote is a line copied out of the document by code, not a model's words. A picture
+      // can be misread, so a mismatch in an ID or a name read from one is not shown as a conflict.
+      { quotesAreVerbatim: true, fromPicture: read.source === "ocr" },
     );
     return {
       outcome: {
@@ -172,15 +194,22 @@ async function readOnDevice(
         result: {
           ...result,
           readOn: "device",
-          aiNote: ai.message,
+          aiNote: ai.message.slice(0, MAX_AI_NOTE),
           fileSent: ai.fileSent === true,
           textSource: read.source,
         },
       },
       tried: true,
     };
-  } catch {
-    return { outcome: null, tried: true };
+  } catch (error) {
+    // The reader names the two failures a seller can act on; anything else is "could not make out".
+    const named = error as { name?: string; reason?: string } | null;
+    const failure =
+      named?.name === "DeviceReadError" &&
+      (named.reason === "protected" || named.reason === "timeout")
+        ? named.reason
+        : undefined;
+    return { outcome: null, tried: true, ...(failure ? { failure } : {}) };
   }
 }
 
@@ -205,6 +234,13 @@ async function readWithAi(input: RunCheckInput): Promise<CheckOutcome> {
   if (input.bytes.byteLength > MAX_CHECK_BYTES) {
     return { kind: "unavailable", message: tooLargeMessage(input.bytes.byteLength) };
   }
+
+  // Ask before sending, not after: the server refuses a file it may not read, but by then the whole
+  // file has already crossed the wire. A free account, or a Pass that covers a different case, has
+  // no AI reading to send it to. (A failed question is not an answer: send, as before.)
+  const pass = await passState(input.caseId);
+  if (pass === "signed_out") return { kind: "unavailable", message: AI_NEEDS_SIGN_IN };
+  if (pass === "no") return { kind: "unavailable", message: AI_NEEDS_PASS };
 
   try {
     const res = await fetch("/api/read-document", {
@@ -261,6 +297,26 @@ async function readWithAi(input: RunCheckInput): Promise<CheckOutcome> {
       message: "We could not reach the checker. Your document and your case are unchanged.",
       fileSent: true,
     };
+  }
+}
+
+/**
+ * Whether an Appeal Pass covers this case, from the same lookup the server makes before it reads a
+ * file (`/api/license/status`): a Pass bound to this case, or one not yet bound to any.
+ * "unknown" when the answer could not be had, which must never block a seller who has paid.
+ */
+async function passState(caseId: string): Promise<"yes" | "no" | "signed_out" | "unknown"> {
+  try {
+    const res = await fetch(`/api/license/status?caseId=${encodeURIComponent(caseId)}`, {
+      cache: "no-store",
+    });
+    if (res.status === 401) return "signed_out";
+    if (!res.ok) return "unknown";
+    const body = (await res.json().catch(() => null)) as { status?: unknown } | null;
+    if (!body || typeof body.status !== "string") return "unknown";
+    return body.status === "active" ? "yes" : "no";
+  } catch {
+    return "unknown";
   }
 }
 

@@ -182,19 +182,21 @@ describe("reading a document on the device, without AI", () => {
  * reassurance (a green "Found" beside a line that does not answer the question); the next is a
  * "Not found" shown beside the very line that holds the answer.
  */
-describe("the reading claims only what the words support", () => {
-  const supplierInvoice = (fromBlock: string[]) =>
-    [
-      "INVOICE",
-      "FROM",
-      ...fromBlock,
-      "BILL TO",
-      "Brightwater Home Goods LLC",
-      "Date: 3 June 2026",
-    ].join("\n");
-  const read = (text: string, pattern: RegExp, source: TextSource = "pdf_text") =>
-    status(check(text, "INAUTHENTIC", "supplier_invoice", {}, source), pattern);
+/** An invoice whose supplier block is `fromBlock`, followed by the buyer and a date. */
+const supplierInvoice = (fromBlock: string[]) =>
+  [
+    "INVOICE",
+    "FROM",
+    ...fromBlock,
+    "BILL TO",
+    "Brightwater Home Goods LLC",
+    "Date: 3 June 2026",
+  ].join("\n");
+/** One field of a supplier invoice read from `text`, found by its name. */
+const read = (text: string, pattern: RegExp, source: TextSource = "pdf_text") =>
+  status(check(text, "INAUTHENTIC", "supplier_invoice", {}, source), pattern);
 
+describe("the reading claims only what the words support", () => {
   it("does not say a non-US supplier address is not found beside the address itself", () => {
     const shenzhen = supplierInvoice([
       "Shenzhen Meihua Trading Co., Ltd",
@@ -238,6 +240,42 @@ describe("the reading claims only what the words support", () => {
     expect(read(odd, /supplier phone/)?.status).not.toBe("missing");
   });
 
+  it("does not take an invoice number or a tax number for the supplier's phone", () => {
+    const block = (extra: string) =>
+      supplierInvoice([
+        "Harbor Goods Wholesale Ltd",
+        "88 Dockside Road",
+        "Newark, NJ 07105",
+        extra,
+      ]);
+    for (const identifier of [
+      "Invoice #: INV-2026-0000123",
+      "Tax ID: 123456789012",
+      "VAT reg 4401234567",
+      "Order 20260603001234",
+    ]) {
+      const f = read(block(identifier), /supplier phone/);
+      expect(f?.status, identifier).not.toBe("present");
+      expect(f?.status, identifier).not.toBe("missing");
+    }
+    // A labelled phone number is a phone number, whatever the label is written like.
+    for (const phone of [
+      "Phone No: +1 (614) 555-0193",
+      "Tel. No. 020 7946 0958",
+      "Mob 07700 900123",
+      "Tel: 555-0142",
+    ]) {
+      expect(read(block(phone), /supplier phone/)?.status, phone).toBe("present");
+    }
+    // ...but a name that begins with the word is a name.
+    expect(
+      read(supplierInvoice(["Contact 24 Hour Supply Ltd"]), /^supplier business name$/),
+    ).toMatchObject({
+      status: "present",
+      observed: "Contact 24 Hour Supply Ltd",
+    });
+  });
+
   it("does not quote an address's 'Unit 12' as the quantity, and prefers the table row", () => {
     const text = [
       "FROM",
@@ -264,6 +302,7 @@ describe("the reading claims only what the words support", () => {
     const orders = [
       "Order log Jan-Mar 2026",
       "Order 111-1234567-1234567 Disposable gloves 3 units",
+      "Order 112-7654321-7654321 Disposable gloves 5 units",
       "Return address: 12 Main St",
     ].join("\n");
     const complaint = status(
@@ -279,7 +318,7 @@ describe("the reading claims only what the words support", () => {
     );
     expect(inventory?.status).toBe("not_assessed");
 
-    // A real Amazon order number is a pattern, not a word: that is still "Found".
+    // Several real Amazon order numbers are a pattern, not a word: that is still "Found".
     const report = status(
       check(orders, "POLICY", "metric_export", {}),
       /order or sales report|export of the individual orders/,
@@ -590,7 +629,12 @@ describe("the reading claims only what the words support", () => {
 
   it("finds an order log by its title, and a rights owner by 'owner of ... trademark'", async () => {
     const log = status(
-      check("Order and complaint log\n112-4830291-\n5520134", "POLICY", "metric_export", {}),
+      check(
+        "Order and complaint log\n112-4830291-\n5520134\n113-0092184-\n6631207",
+        "POLICY",
+        "metric_export",
+        {},
+      ),
       /order or sales report|export of the individual orders/,
     );
     expect(log?.status).toBe("present");
@@ -621,6 +665,58 @@ describe("the reading claims only what the words support", () => {
     expect(q?.observed).toContain("$36.00");
   });
 
+  describe("a page read from a picture is never called a conflict over one character", () => {
+    const misread = (source: "pdf_text" | "ocr", picture: boolean) => {
+      // The notice names B07KJ3M8QA; the picture was read as B07KJ3M80A (an O for a Q, near enough).
+      const text =
+        "INVOICE\nFROM\nCrestline Trade Supply Co.\nDate: 3 June 2026\nB07KJ3M80A Bamboo board 12 $7.40 $88.80";
+      const context = {
+        today: TODAY,
+        asins: ["B07KJ3M8QA"],
+        referenceIds: [] as string[],
+        suppliers: ["Harbor Goods Wholesale Ltd"],
+      };
+      const fields = requirementForCheck("INAUTHENTIC", "supplier_invoice")!.fields;
+      return buildDocumentCheck(
+        "INAUTHENTIC",
+        "supplier_invoice",
+        readFieldsFromText(text, fields, { suppliers: context.suppliers }, source),
+        context,
+        { quotesAreVerbatim: true, fromPicture: picture },
+      );
+    };
+
+    it("shows an ASIN or supplier mismatch from a scan as 'could not read', with the reason", () => {
+      const r = misread("ocr", true);
+      for (const re of [/ASIN/, /^supplier business name$/]) {
+        const f = status(r, re);
+        expect(f?.status, String(re)).toBe("unclear");
+        expect(f?.note, String(re)).toMatch(/read from a picture/);
+      }
+      // ...so it can neither trigger a disqualifier nor become a contradiction in the ledger.
+      expect(r.findings.some((f) => f.status === "conflicting")).toBe(false);
+    });
+
+    it("keeps the same mismatch from a PDF's own text as a conflict", () => {
+      const r = misread("pdf_text", false);
+      expect(status(r, /ASIN/)?.status).toBe("conflicting");
+      expect(status(r, /^supplier business name$/)?.status).toBe("conflicting");
+    });
+
+    it("still reports a date from a scan that is outside the window", () => {
+      const text = "INVOICE\nFROM\nCrestline Trade Supply Co.\nInvoice date: 11 March 2024";
+      const fields = requirementForCheck("INAUTHENTIC", "supplier_invoice")!.fields;
+      const r = buildDocumentCheck(
+        "INAUTHENTIC",
+        "supplier_invoice",
+        readFieldsFromText(text, fields, {}, "ocr"),
+        { today: TODAY, asins: [], referenceIds: [] },
+        { quotesAreVerbatim: true, fromPicture: true },
+      );
+      expect(status(r, /issue date/)?.status).toBe("conflicting");
+    });
+  });
+
   it("does not freeze on a very long line", () => {
     for (const filler of ["a.", "1 ", "1.", "-", "a "]) {
       const started = performance.now();
@@ -628,6 +724,519 @@ describe("the reading claims only what the words support", () => {
       expect(performance.now() - started, `filler ${JSON.stringify(filler)}`).toBeLessThan(3000);
       expect(r.findings.length).toBeGreaterThan(0);
     }
+  });
+});
+
+/**
+ * The second review of the same day (30 Sep 2026): three reviewers, each with skeptics, found these
+ * on the code that fixed the first. Every input below is theirs, or a near variant, and every one
+ * was a green "Found" beside a line that does not answer the field, or a "Not found" / "Conflicts"
+ * beside one that does.
+ */
+describe("the second review's findings", () => {
+  const complianceField = (text: string, field: RegExp) =>
+    status(check(text, "PRODUCT_SAFETY", "compliance_report", {}), field);
+  const testReport = /test report or compliance certificate/;
+  const laboratory = /issuing laboratory/;
+  const standard = /standard or regulation/;
+
+  describe("standards, records and parties", () => {
+    it("does not take the laboratory's own accreditation for the standard a product was tested to", () => {
+      for (const text of [
+        "TEST REPORT\nThe laboratory operates under ISO/IEC 17025.\nTested for: toy safety",
+        "Standards: FCC 47 CFR Part 15 Subpart B\nLaboratory quality system: ISO/IEC 17025",
+      ]) {
+        const f = complianceField(text, standard);
+        expect(f?.observed ?? "", text).not.toContain("17025");
+      }
+      const real = complianceField(
+        "Test method: EN 71-1:2014+A1:2018\nAccredited to ISO/IEC 17025:2017",
+        standard,
+      );
+      expect(real).toMatchObject({ status: "present" });
+      expect(real?.observed).toContain("EN 71-1");
+    });
+
+    it("does not read a blank, a draft or an offer as a test report", () => {
+      for (const line of [
+        "Test report: missing",
+        "Test report unavailable",
+        "Test report: TBD",
+        "Test report coming soon",
+        "Certificate of conformity to follow",
+        "SAMPLE TEST REPORT",
+        "Test report template",
+        "Test report for model Z-100 (draft)",
+        "Certificate of Compliance - REVOKED",
+        "Certificate of compliance withdrawn 3 March 2026",
+        "The supplier's test report is being prepared",
+        "We can send the test report",
+        "Test report available for download at www.greentoys.example",
+        "Please provide a test report or certificate of compliance for your product.",
+        "A test report is required for all electrical items.",
+        "Submit the test report within 10 days.",
+        "Every batch is supplied with a test report.",
+        "Test report: No",
+      ]) {
+        expect(complianceField(line, testReport)?.status, line).not.toBe("present");
+      }
+    });
+
+    it("still finds the record when it is plainly the record, and its number is not a denial", () => {
+      for (const line of [
+        "TEST REPORT",
+        "Certificate of Compliance",
+        "Test Report No.: 1042",
+        "Test Report No. TR-2026-0142",
+        "Certificate No. CE-2026-01 - Certificate of Conformity",
+      ]) {
+        expect(complianceField(line, testReport)?.status, line).toBe("present");
+      }
+    });
+
+    it("does not call a blank, a placeholder or a bare label a laboratory or a rights owner", () => {
+      for (const line of [
+        "Laboratory",
+        "Issuing laboratory:",
+        "Testing laboratory: ______",
+        "Laboratory: [name of laboratory]",
+        "Laboratory: TBD",
+        "Laboratory: n.a.",
+        "Laboratory: unknown",
+        "Laboratory: -",
+      ]) {
+        expect(complianceField(line, laboratory)?.status, line).not.toBe("present");
+      }
+      for (const line of [
+        "Intertek Testing Laboratory",
+        "Laboratory: UL",
+        "Laboratory: TÜV SÜD",
+        "Notified Body No. 0197",
+      ]) {
+        expect(complianceField(line, laboratory)?.status, line).toBe("present");
+      }
+      const owner = (line: string) =>
+        status(
+          check(line, "INTELLECTUAL_PROPERTY", "brand_authorization", {}),
+          /rights-owner name/,
+        );
+      for (const line of [
+        "Rights owner:",
+        "Brand owner",
+        "Rights owners are responsible for reporting",
+      ]) {
+        expect(owner(line)?.status, line).not.toBe("present");
+      }
+    });
+
+    it("finds a retraction only where the act is aimed at the complaint, and not a demand or a promise", () => {
+      const retraction = (line: string) =>
+        status(
+          check(line, "INTELLECTUAL_PROPERTY", "rights_owner_retraction", {}),
+          /retraction letter/,
+        );
+      for (const line of [
+        "Retractable dog leash 5m, black",
+        "Right of withdrawal",
+        "Withdrawals 1,200.00",
+        "Please withdraw your listing. Our infringement notice stands.",
+        "We will retract the complaint once you sign",
+        "We reserve the right to withdraw this letter at any time",
+        "We refuse to retract",
+      ]) {
+        expect(retraction(line)?.status, line).not.toBe("present");
+      }
+      for (const line of [
+        "We hereby withdraw our complaint",
+        "We retract our complaint.",
+        "Complaint 11223344556 has been withdrawn.",
+        "Retraction of complaint",
+      ]) {
+        expect(retraction(line)?.status, line).toBe("present");
+      }
+    });
+
+    it("does not take marketing wording for an authorization or a shipping record", () => {
+      const distributor = status(
+        check(
+          "Become an authorized distributor today!",
+          "INTELLECTUAL_PROPERTY",
+          "supplier_invoice",
+          {},
+        ),
+        /authorized distributor/,
+      );
+      expect(distributor?.status).not.toBe("present");
+      const shipping = status(
+        check("Fast shipment worldwide!", "INAUTHENTIC", "sourcing_doc", {}),
+        /purchase orders or shipping records/,
+      );
+      expect(shipping?.status).not.toBe("present");
+    });
+
+    it("needs both halves of 'the affected ASIN(s) and quantity', and more than one order for a report", () => {
+      const recall = (text: string) =>
+        status(
+          check(text, "PRODUCT_SAFETY", "disposal_or_recall_proof", { asins: ["B0CX9L4TQ2"] }),
+          /the affected ASIN\(s\) and quantity/,
+        );
+      const noQuantity = recall(
+        "Certificate of destruction\nASIN B0CX9L4TQ2 destroyed on 14 May 2026",
+      );
+      expect(noQuantity?.status).toBe("unclear");
+      expect(noQuantity?.note).toMatch(/could not find a quantity/);
+      expect(
+        recall("Certificate of destruction\nASIN B0CX9L4TQ2 destroyed\nQuantity: 120 units")
+          ?.status,
+      ).toBe("present");
+
+      const oneOrder = status(
+        check("Order confirmation\n111-1234567-1234567 shipped", "POLICY", "metric_export", {}),
+        /order or sales report/,
+      );
+      expect(oneOrder?.status).not.toBe("present");
+    });
+
+    it("answers a date field only with a date whose own label says so", () => {
+      const change = (text: string) =>
+        status(
+          check(text, "PERFORMANCE_METRIC", "sop_document", {}),
+          /when the change took effect/,
+        );
+      for (const text of [
+        "Printed from SharePoint on 4 September 2026",
+        "Downloaded from the intranet 2 Sep 2026",
+        "From: quality@brightwater.example Sent: 3 March 2026",
+        "SOP QC-7 as of 12 August 2026",
+        "SOP QC-7\nPrinted from SharePoint on 4 September 2026\nEffective: 1 April 2026",
+      ]) {
+        const f = change(text);
+        expect(f?.observed ?? "", text).not.toMatch(/4 September|2 Sep|3 March|12 August/);
+      }
+      expect(
+        change("Prepared by J. Smith, dated 3 March 2026 - effective 1 April 2026"),
+      ).toMatchObject({
+        status: "present",
+        observed: "1 April 2026",
+      });
+      const stopped = (text: string) =>
+        status(
+          check(text, "PRODUCT_SAFETY", "disposal_or_recall_proof", {}),
+          /date the product stopped/,
+        );
+      expect(stopped("Removable wall decal, ordered 12 August 2026")?.status).not.toBe("present");
+      expect(stopped("Sales stopped on 12 August 2026")?.status).toBe("present");
+    });
+
+    it("does not read a company, tax or reference number as the complaint ID", () => {
+      const complaint = (text: string) => {
+        const fields = requirementForCheck(
+          "INTELLECTUAL_PROPERTY",
+          "rights_owner_retraction",
+        )!.fields;
+        return buildDocumentCheck(
+          "INTELLECTUAL_PROPERTY",
+          "rights_owner_retraction",
+          readFieldsFromText(text, fields, {}, "pdf_text"),
+          { today: TODAY, asins: [], referenceIds: ["11223344556"] },
+          { quotesAreVerbatim: true },
+        );
+      };
+      for (const text of [
+        "Nordic Kitchenware AB\nCompany ID: 556677-8899\nUSt-ID: DE123456789\nWe retract our complaint against your listing.",
+        "Acme AB\nVAT ID: SE556677889901\nOur ref: RL-2026-000481\nWe retract our complaint.",
+        "Acme AB\nOur ref: 9021012345\nWe retract our complaint.",
+        "In case of questions call +49 30 1234567\nWe retract our complaint.",
+      ]) {
+        const r = complaint(text);
+        expect(status(r, /complaint ID/i)?.status, text).not.toBe("conflicting");
+        expect(r.triggeredDisqualifiers, text).toEqual([]);
+      }
+      expect(
+        status(
+          complaint("Re: Amazon notice 11223344556 concerning ASIN B0CX9L4TQ2"),
+          /complaint ID/i,
+        ),
+      ).toMatchObject({
+        status: "present",
+      });
+    });
+  });
+
+  describe("dates", () => {
+    const issueDate = (text: string) => read(text, /issue date/);
+
+    it("does not take the due date for the invoice date when the labels are a row above the values", () => {
+      for (const text of [
+        "DATE INVOICE # TERMS DUE DATE\nSep 1, 2025 1042 Net 30 Oct 1, 2025",
+        "Invoice Date Due Date\n1 September 2025 1 October 2025",
+        "Date Invoice No. Due\n1 September 2025 1042 1 October 2025",
+        "Ship Date Due Date\n1 September 2025 1 October 2025",
+        "Invoice date\nDue date\n20 September 2025\n20 October 2025",
+      ]) {
+        const f = issueDate(text);
+        expect(f?.status, text).toBe("unclear");
+      }
+      // A recent invoice must not read as "after today" from its own due date.
+      const recent = issueDate("Invoice Date Due Date\n15 September 2026 15 October 2026");
+      expect(recent?.status).toBe("unclear");
+      expect(recent?.note ?? "").not.toMatch(/after today/);
+    });
+
+    it("keeps the ordinary layouts working", () => {
+      expect(issueDate("INVOICE\n3 June 2026\nDue 3 July 2026")).toMatchObject({
+        status: "present",
+        observed: "3 June 2026",
+      });
+      expect(issueDate("Invoice Date\n3 June 2026")).toMatchObject({
+        status: "present",
+        observed: "3 June 2026",
+      });
+    });
+
+    it("does not read a phone number or a sort code as a date", () => {
+      const withLine = (line: string) =>
+        issueDate(`INVOICE\nFROM\nCrestline Trade Supply Co.\n${line}`);
+      expect(withLine("Supplier Tel: 01.23.45.67.89")?.status).toBe("not_assessed");
+      expect(withLine("Sort code: 23-05-05 Account 12345678")?.status).toBe("not_assessed");
+      // ...nor a piece of an invoice number.
+      expect(withLine("INV-03-06-2026-001")?.status).toBe("not_assessed");
+    });
+  });
+
+  describe("the supplier's block", () => {
+    const block = (extra: string[]) => supplierInvoice(["Crestline Trade Supply Co.", ...extra]);
+    const address = (text: string) => read(text, /supplier physical address/);
+    const phone = (text: string) => read(text, /supplier phone/);
+
+    it("does not read a ZIP+4 as a phone number, or call the address beside it missing", () => {
+      const oneLine = block(["1450 Industrial Parkway, Columbus, OH 43219-1234"]);
+      expect(address(oneLine)?.status).toBe("present");
+      expect(phone(oneLine)?.status).toBe("missing");
+      const twoLines = block(["1450 Industrial Parkway", "Columbus, OH 43219-1234"]);
+      expect(address(twoLines)?.status).toBe("present");
+      expect(phone(twoLines)?.status).toBe("missing");
+    });
+
+    it("finds an address when its phone or email is on the same line", () => {
+      for (const line of [
+        "1450 Industrial Parkway, Columbus, OH 43219 | Tel: (614) 555-0193",
+        "1450 Industrial Parkway, Columbus, OH 43219 sales@crestline.example",
+        "Suite 200, 88 Dockside Road, Newark NJ Tel 973 555 0100",
+      ]) {
+        expect(address(block([line]))?.status, line).toBe("present");
+        expect(phone(block([line]))?.status, line).toBe("present");
+      }
+      // A phone line is not an address, and an extension is not a ZIP code.
+      expect(address(block(["Tel: 01632 960001 | Fax: 01632 960002"]))?.status).toBe("missing");
+      expect(address(block(["Tel: (614) 555-0193 ext 12345"]))?.status).toBe("unclear");
+      expect(address(block(["Warehouse annex, gate C Tel: 555-0142"]))?.status).toBe("unclear");
+    });
+
+    it("does not call a city and postcode, or a post-office box, the physical address", () => {
+      for (const lines of [
+        ["Columbus, OH 43219"],
+        ["London SW1A 2AA"],
+        ["PO Box 4412", "Chicago, IL 60680"],
+        ["Shenzhen 518000, China"],
+      ]) {
+        expect(address(block(lines))?.status, lines.join(" / ")).not.toBe("present");
+      }
+      expect(address(block(["1450 Industrial Parkway", "Columbus, OH 43219"]))?.status).toBe(
+        "present",
+      );
+    });
+
+    it("does not take a registration, tax or bank number for the phone", () => {
+      for (const line of [
+        "P.IVA 12345678901",
+        "IEC: 0388012345",
+        "SIRET 123 456 789 00012",
+        "EORI GB123456789000",
+        "Company Reg: 12345678901",
+        "Routing 021000021 Acct 123456789",
+        "IBAN GB29 NWBK 6016 1331 9268 19",
+        "D-U-N-S: 12-345-6789",
+      ]) {
+        const f = phone(block(["88 Dockside Road", "Newark, NJ 07105", line]));
+        expect(f?.status, line).not.toBe("present");
+        expect(f?.status, line).not.toBe("missing");
+      }
+      // A number that is plainly a phone still is one.
+      for (const line of ["+44 20 7946 0958", "(614) 555-0193", "Sales: 614-555-0193"]) {
+        expect(phone(block(["88 Dockside Road", line]))?.status, line).toBe("present");
+      }
+    });
+
+    it("does not report a fax number as the phone", () => {
+      const faxOnly = phone(block(["88 Dockside Road", "Fax: 614-555-0194"]));
+      expect(faxOnly?.status).toBe("unclear");
+      expect(
+        phone(block(["88 Dockside Road", "Fax: 614-555-0194 Tel: 614-555-0193"])),
+      ).toMatchObject({
+        status: "present",
+        observed: "614-555-0193",
+      });
+      expect(phone(block(["88 Dockside Road", "Tel/Fax: 614-555-0193"]))?.status).toBe("present");
+    });
+
+    it("does not call the phone missing when the contact line is one it could not read", () => {
+      for (const line of [
+        "Email: sales@harbor",
+        "TEL：０３－１２３４－５６７８",
+        "Tel: ٠٣٠٠١٢٣٤٥٦٧",
+      ]) {
+        expect(phone(block(["88 Dockside Road", line]))?.status, line).toBe("unclear");
+      }
+      // An answer of "none" is an answer.
+      expect(phone(block(["88 Dockside Road", "Tel: n/a"]))?.status).toBe("missing");
+      // A zero-width space inside an address or a number does not hide it.
+      expect(phone(block(["88 Dockside Road", "Email: sales@har​bor.example"]))?.status).toBe(
+        "present",
+      );
+      expect(phone(block(["88 Dockside Road", "Email: kontakt@müller-werkzeuge.de"]))?.status).toBe(
+        "present",
+      );
+    });
+
+    it("ends the supplier's block at every buyer label an invoice writes", () => {
+      for (const label of [
+        "Billing Address",
+        "BILL-TO",
+        "Invoice Address",
+        "Consignee",
+        "Customer Details",
+        "Bill To Party",
+        "Purchaser",
+        "Ordered By",
+        "Delivery Address",
+      ]) {
+        const text = [
+          "FROM",
+          "Crestline Trade Supply Co.",
+          "1450 Industrial Parkway, Columbus, OH 43219",
+          label,
+          "Brightwater Home Goods LLC",
+          "214 Juniper Lane, Suite 5, Austin, TX 78701",
+          "Tel: 512-555-0100",
+          "Description Qty Price Total",
+        ].join("\n");
+        expect(phone(text)?.observed ?? "", label).not.toContain("512-555-0100");
+        expect(address(text)?.observed ?? "", label).not.toContain("Juniper");
+      }
+    });
+
+    it("uses the block under 'From', not the address a payment is sent to", () => {
+      const text = [
+        "Remit to:",
+        "PO Box 4412",
+        "Chicago, IL 60680",
+        "Bill from:",
+        "Crestline Trade Supply Co.",
+        "1450 Industrial Parkway",
+        "Columbus, OH 43219",
+        "Tel: 614-555-0193",
+        "Bill to:",
+        "Brightwater Home Goods LLC",
+      ].join("\n");
+      expect(read(text, /^supplier business name$/)?.observed).toBe("Crestline Trade Supply Co.");
+      expect(address(text)?.observed).toContain("1450 Industrial Parkway");
+      expect(phone(text)).toMatchObject({ status: "present", observed: "614-555-0193" });
+    });
+
+    it("stops the supplier's block at the table even when its header is short", () => {
+      const text = [
+        "Bill To:",
+        "Brightwater Home Goods LLC",
+        "Sold By:",
+        "Crestline Trade Supply Co.",
+        "Description Price Total",
+        "Floor Mat 60x90 cm 5.00 100.00",
+        "Garden Way Lantern 3-pack 12.00 60.00",
+      ].join("\n");
+      const f = address(text);
+      expect(f?.status).toBe("missing");
+      expect(f?.observed ?? "").not.toContain("Floor Mat");
+    });
+
+    it("does not take 'To' for a supplier's name", () => {
+      const text = [
+        "From",
+        "To",
+        "Crestline Trade Supply Co. Brightwater Home Goods LLC",
+        "1450 Industrial Parkway 214 Juniper Lane, Suite 5",
+        "Columbus, OH 43219 Austin, TX 78701",
+        "Item Description Qty",
+      ].join("\n");
+      expect(read(text, /^supplier business name$/)?.observed ?? "").not.toBe("To");
+      expect(read(text, /^supplier business name$/)?.status).toBe("not_assessed");
+    });
+
+    it("does not take a supplier's own code for an ASIN", () => {
+      const f = status(
+        check("SKU: B0805KN01A Widget 12 $1.00 $12.00", "INAUTHENTIC", "supplier_invoice", {
+          asins: ["B07KJ3M8QA"],
+        }),
+        /ASIN/,
+      );
+      expect(f?.status).toBe("not_assessed");
+    });
+  });
+
+  describe("what kind of document it is", () => {
+    const kindOf = (heading: string) => {
+      const r = check(
+        `${heading}\nFROM\nCrestline Trade Supply Co.\n1450 Industrial Parkway, Columbus, OH 43219\nTel: 614-555-0193\nInvoice date: 3 June 2026`,
+        "INAUTHENTIC",
+        "supplier_invoice",
+        { asins: [] },
+      );
+      return { r, f: status(r, /what kind of document/) };
+    };
+
+    it("points at a heading that is not an invoice, without judging it", () => {
+      for (const heading of [
+        "PRO FORMA INVOICE",
+        "QUOTATION",
+        "CREDIT NOTE",
+        "PURCHASE ORDER",
+        "Proforma",
+      ]) {
+        const { r, f } = kindOf(heading);
+        expect(f?.status, heading).toBe("unclear");
+        expect(f?.observed, heading).toBe(heading);
+        expect(containsBannedConclusion(f?.note ?? ""), heading).toBe(false);
+        // ...and the summary no longer says every item matched.
+        expect(summarizeCheck({ ...r, readOn: "device" }), heading).not.toMatch(/matching line/);
+      }
+    });
+
+    it("says nothing about an ordinary invoice", () => {
+      for (const heading of ["INVOICE", "TAX INVOICE", "Commercial Invoice"]) {
+        expect(kindOf(heading).f, heading).toBeUndefined();
+      }
+    });
+  });
+
+  describe("scans", () => {
+    it("does not stop a scan's date being read firmly, but says a digit may be misread", () => {
+      const fields = requirementForCheck("INAUTHENTIC", "supplier_invoice")!.fields;
+      for (const [text, expected] of [
+        ["Invoice date: 3 June 2025", "conflicting"],
+        ["Invoice date: 3 October 2025", "present"],
+      ] as const) {
+        const r = buildDocumentCheck(
+          "INAUTHENTIC",
+          "supplier_invoice",
+          readFieldsFromText(`INVOICE\nFROM\nCrestline\n${text}`, fields, {}, "ocr"),
+          { today: TODAY, asins: [], referenceIds: [] },
+          { quotesAreVerbatim: true, fromPicture: true },
+        );
+        const f = status(r, /issue date/);
+        expect(f?.status, text).toBe(expected);
+        expect(f?.note, text).toMatch(/Read from a picture, where a digit is easily misread/);
+      }
+    });
   });
 });
 
@@ -697,7 +1306,10 @@ describe("the AI reading first, the device when it cannot run", () => {
       [401, {}],
       [429, { error: "Too many requests." }],
     ] as const) {
-      globalThis.fetch = (async (_url: string, init?: RequestInit) => {
+      globalThis.fetch = (async (url: string, init?: RequestInit) => {
+        // The licence question is answered "active"; it is the reading endpoint that refuses.
+        if (String(url).includes("/api/license/status"))
+          return { ok: true, status: 200, json: async () => ({ status: "active" }) };
         bodies.push(String(init?.body ?? ""));
         return { ok: false, status, json: async () => body };
       }) as unknown as typeof fetch;
@@ -756,6 +1368,28 @@ describe("the AI reading first, the device when it cannot run", () => {
       expect(outcome.message).toMatch(/tried to read it on this device and could not make out/);
       expect(outcome.message).toMatch(/needs you to be signed in/);
     }
+  });
+
+  it("says a password-protected PDF is protected, not that its text could not be made out", async () => {
+    const protectedPdf = async () => {
+      throw Object.assign(new Error("protected"), { name: "DeviceReadError", reason: "protected" });
+    };
+    const outcome = await runDocumentCheck({ ...input, signedIn: false }, protectedPdf);
+    expect(outcome).toMatchObject({ kind: "unavailable" });
+    const message = (outcome as { message: string }).message;
+    expect(message).toMatch(/protected with a password/);
+    // Signing in would not open it, so the sign-in advice is not offered.
+    expect(message).not.toMatch(/signed in/);
+  });
+
+  it("says when the reading on the device took too long, and keeps the AI's reason", async () => {
+    const stalled = async () => {
+      throw Object.assign(new Error("timeout"), { name: "DeviceReadError", reason: "timeout" });
+    };
+    const outcome = await runDocumentCheck({ ...input, signedIn: false }, stalled);
+    const message = (outcome as { message: string }).message;
+    expect(message).toMatch(/took too long and was stopped/);
+    expect(message).toMatch(/needs you to be signed in/);
   });
 
   it("does not claim the device was tried when it never was", async () => {

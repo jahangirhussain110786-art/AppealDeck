@@ -401,6 +401,16 @@ for (const id of [
     await tab.pdf({ path: path.join(OUT, file), format: "A4", printBackground: true });
     console.log("made", file);
 
+    // The same scan with a footer that IS text, the way scanner apps stamp every page. It makes a
+    // few real words in the text layer, enough to look "readable" while the page is a picture.
+    const footerFile = "20-supplier-invoice-SCANNED-with-page-footer.pdf";
+    await tab.setContent(
+      `<body style="margin:0"><img style="width:90%;margin:0 5%;display:block" src="data:image/png;base64,${png.toString("base64")}"><p style="font:9px Arial;margin:4px 5%">Scanned with CamScanner · Page 1 of 1 · Document scan</p></body>`,
+      { waitUntil: "load" },
+    );
+    await tab.pdf({ path: path.join(OUT, footerFile), format: "A4", printBackground: true });
+    console.log("made", footerFile);
+
     // The same scan stored as JPEG 2000, the way Acrobat's ClearScan and many scanners' compact PDFs
     // do. pdf.js needs its wasm decoders to draw it (Python with Pillow does the encoding).
     const pagePng = path.join(require("node:os").tmpdir(), "appealdeck-scan-page.png");
@@ -415,6 +425,20 @@ for (const id of [
       made.status === 0
         ? `made ${jpxFile}`
         : `SKIPPED ${jpxFile} (needs python with Pillow and JPEG 2000): ${made.stderr || made.error}`,
+    );
+
+    // A PDF that needs a password ("secret") to open, for the "this PDF is protected" message.
+    // Standard library only.
+    const protectedFile = "19-supplier-invoice-PASSWORD-PROTECTED.pdf";
+    const locked = require("node:child_process").spawnSync(
+      "python",
+      [path.join(__dirname, "make-protected-pdf.py"), path.join(OUT, protectedFile)],
+      { encoding: "utf8" },
+    );
+    console.log(
+      locked.status === 0
+        ? `made ${protectedFile}`
+        : `SKIPPED ${protectedFile} (needs python): ${locked.stderr || locked.error}`,
     );
   }
 

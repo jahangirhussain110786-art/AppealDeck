@@ -268,6 +268,16 @@ export function buildDocumentCheck(
      * turned a legible line into "could not read" (30 Sep 2026 review).
      */
     quotesAreVerbatim?: boolean;
+    /**
+     * True when the words were read from a picture (OCR). One misread letter or digit then makes an
+     * ASIN, an ID, a supplier or a business name "differ" from the case, and a red "Conflicts" plus
+     * a contradiction in the facts ledger would be a false alarm to a seller who can do nothing
+     * about it but re-read the page. For those comparisons a mismatch is shown as "could not read",
+     * with the reason. A date keeps its status, because a scan that really is over a year old is
+     * worth saying - but one wrong digit moves a date across the window, so its note says to check
+     * the day and the year.
+     */
+    fromPicture?: boolean;
   },
 ): DocumentCheckResult {
   const requirement = requirementForCheck(kind, evidenceKind);
@@ -298,7 +308,10 @@ export function buildDocumentCheck(
     const reading = byField.get(field.toLowerCase());
     if (!reading) return { field, status: "not_assessed" as const, note: NO_READING_NOTE };
     const comparison = comparisonFor(field);
-    return comparison ? compare(reading, comparison, context) : reading;
+    const compared = comparison ? compare(reading, comparison, context) : reading;
+    return options?.fromPicture && comparison
+      ? softenPictureMismatch(compared, comparison)
+      : compared;
   });
 
   // Anything the reading found that is not on Amazon's list is kept, after the expected fields, so
@@ -314,6 +327,26 @@ export function buildDocumentCheck(
     triggeredDisqualifiers: triggeredDisqualifiers(requirement, findings),
     allRequiredFieldsPresent:
       expected.length > 0 && expected.every((f) => f.status === "present" && Boolean(f.observed)),
+  };
+}
+
+/** A mismatch between a scanned page and the case, shown as unreadable rather than as a conflict. */
+function softenPictureMismatch(f: FieldFinding, comparison: FieldComparison): FieldFinding {
+  // A date keeps its status - that a scanned invoice really is over a year old is the most useful
+  // thing a scan can say - but one wrong digit moves it across the window, so it says so.
+  if (comparison.kind === "date_window") {
+    return f.status === "present" || f.status === "conflicting"
+      ? {
+          ...f,
+          note: `${f.note} Read from a picture, where a digit is easily misread: check the day and the year on the original.`,
+        }
+      : f;
+  }
+  if (f.status !== "conflicting") return f;
+  return {
+    ...f,
+    status: "unclear",
+    note: `${f.note} This was read from a picture, where a letter or a digit is easily misread, so check the original before treating it as a mismatch.`,
   };
 }
 
