@@ -182,6 +182,8 @@ git push origin master
 
 Vercel will build and deploy automatically. The build takes ~60-90s.
 
+**The on-device document reader (30 Sep 2026).** `npm run build` first runs `scripts/copy-reader-assets.mjs` (the `prebuild` hook; `npm run dev` does the same through `predev`). It copies about 16 MB of pdf.js and Tesseract.js files from `node_modules` into `public/reader/`, which is not committed, so the site serves the reader itself and a reading contacts no other service. Nothing to configure. If a build ever skips that hook, `/reader/pdf.worker.min.mjs` answers 404 and every device reading falls back to "we could not make out its text"; §9 step 16 checks for it.
+
 - Preview deployments: every PR gets its own `appealdeck-git-<branch>-<user>.vercel.app` URL.
 - Production: pushes to `master` deploy to your production domain.
 
@@ -219,7 +221,9 @@ After first deployment:
 14. **Saved document check** (24 Sep 2026): after step 6, reload the case. The check should still show, with the day it ran.
 15. **Uptime monitor** (24 Sep 2026): add one free HTTP monitor (Better Stack, UptimeRobot or similar) on `https://appealdeck.com/` that emails you when it stops answering. It sees only whether the page loads, never a seller's data. Error tracking (Sentry and the like) is deliberately not added: it would capture notice text unless scrubbed, which is a new place seller data would go and would need a privacy-policy line first.
 
-If all 15 pass, and §6a's restore drill and §6b's billing check are done, you're live.
+16. **Device reading** (30 Sep 2026): signed out (a private window), start a case, attach a PDF invoice and press **Check this document**. The result should say "Read on this device, without AI", and DevTools → Network should show **no** request to /api/read-document and none to any other host. Also open `https://appealdeck.com/reader/pdf.worker.min.mjs`: it should download, not 404. Repeat with an image or a scanned PDF: the first one loads about 7 MB of language data from `/reader/` and takes a few seconds.
+
+If all 16 pass, and §6a's restore drill and §6b's billing check are done, you're live.
 
 ## 10. Which Vercel plan
 

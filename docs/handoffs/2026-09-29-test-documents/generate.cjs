@@ -381,6 +381,43 @@ for (const id of [
     console.log("made", file);
   }
 
+  // A scan: invoice 03 drawn as a picture inside a PDF, so the file has no text layer at all and the
+  // on-device reader has to use OCR (29 Sep 2026).
+  {
+    const scanTab = await browser.newPage({
+      viewport: { width: 794, height: 1123 },
+      deviceScaleFactor: 2,
+    });
+    await scanTab.setContent(PDFS["03-supplier-invoice-t01-authenticity.pdf"], {
+      waitUntil: "load",
+    });
+    const png = await scanTab.screenshot({ type: "png" });
+    await scanTab.close();
+    const file = "17-supplier-invoice-SCANNED-no-text-layer.pdf";
+    await tab.setContent(
+      `<body style="margin:0"><img style="width:100%;display:block" src="data:image/png;base64,${png.toString("base64")}"></body>`,
+      { waitUntil: "load" },
+    );
+    await tab.pdf({ path: path.join(OUT, file), format: "A4", printBackground: true });
+    console.log("made", file);
+
+    // The same scan stored as JPEG 2000, the way Acrobat's ClearScan and many scanners' compact PDFs
+    // do. pdf.js needs its wasm decoders to draw it (Python with Pillow does the encoding).
+    const pagePng = path.join(require("node:os").tmpdir(), "appealdeck-scan-page.png");
+    fs.writeFileSync(pagePng, png);
+    const jpxFile = "18-supplier-invoice-SCANNED-jpeg2000.pdf";
+    const made = require("node:child_process").spawnSync(
+      "python",
+      [path.join(__dirname, "make-jpx-scan.py"), pagePng, path.join(OUT, jpxFile)],
+      { encoding: "utf8" },
+    );
+    console.log(
+      made.status === 0
+        ? `made ${jpxFile}`
+        : `SKIPPED ${jpxFile} (needs python with Pillow and JPEG 2000): ${made.stderr || made.error}`,
+    );
+  }
+
   for (const [file, [width, height, html]] of Object.entries(IMAGES)) {
     await tab.setViewportSize({ width, height });
     await tab.setContent(html, { waitUntil: "load" });

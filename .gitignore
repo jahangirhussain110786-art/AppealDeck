@@ -4,6 +4,8 @@ node_modules/
 .pnp.js
 
 # Build outputs
+# The on-device document reader's files, copied from node_modules before dev and build.
+/public/reader/
 dist/
 .next/
 out/

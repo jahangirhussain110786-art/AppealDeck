@@ -777,16 +777,28 @@ function WorkspaceInner({
         bytes,
         mimeType: record.mimeType || "application/octet-stream",
         caseData,
+        signedIn,
       });
       setDocChecks((prev) => ({ ...prev, [recordId]: outcome }));
+      const contextKey = checkContextKey(caseData ?? {});
+      // 30 Sep 2026: "Check again" while the AI is busy now answers with the reading on the device.
+      // That must not overwrite a current AI reading the seller already has: it is shown for now,
+      // and the saved AI reading is what comes back on reload.
+      const saved = ws ? savedCheckFor(ws.documentChecks, recordId, req.contentHash) : undefined;
+      const keepsAiReading =
+        outcome.kind === "fields" &&
+        outcome.result.readOn === "device" &&
+        saved?.outcome.kind === "fields" &&
+        saved.outcome.result.readOn !== "device" &&
+        saved.contextKey === contextKey;
       // Kept with the case (24 Sep 2026), so a paid reading survives a reload. A check that could
       // not run is not saved — there is nothing to keep, and the seller simply tries again.
-      if (outcome.kind !== "unavailable") {
+      if (outcome.kind !== "unavailable" && !keepsAiReading) {
         const entry: SavedDocumentCheck = {
           recordId,
           ...(req.contentHash ? { contentHash: req.contentHash } : {}),
           at: new Date().toISOString(),
-          contextKey: checkContextKey(caseData ?? {}),
+          contextKey,
           outcome,
         };
         const kept = await commit(
@@ -1655,6 +1667,7 @@ function WorkspaceInner({
                   checkStale={checkShownFor(r)?.stale ?? false}
                   checking={checkingId === r.recordId}
                   onCheck={r.recordId ? () => void runCheckFor(r) : undefined}
+                  signedIn={signedIn}
                 />
               ))}
               {/* The ledger sits after the evidence, because it is the comparison across it. */}

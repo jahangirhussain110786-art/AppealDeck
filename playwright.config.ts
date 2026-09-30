@@ -30,7 +30,9 @@ export default defineConfig({
   webServer: {
     command: process.env.CI
       ? `node node_modules/next/dist/bin/next start --port ${PORT}`
-      : `node node_modules/next/dist/bin/next dev --port ${PORT}`,
+      : // Starting `next dev` directly skips the `predev` hook, and public/reader (the on-device
+        // document reader's files) is not committed, so a clean checkout would 404 on it.
+        `node scripts/copy-reader-assets.mjs && node node_modules/next/dist/bin/next dev --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

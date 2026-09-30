@@ -115,6 +115,24 @@ describe("the rendered Privacy page", () => {
     expect(privacy).not.toMatch(/Gemini drafting/i);
   });
 
+  /**
+   * 30 Sep 2026: a business document is now also read on the seller's own device, without AI, and
+   * a signed-in check posts the file before it can fall back. The policy said only that a checked
+   * document "is sent to AppealDeck and on to Google Gemini", which is false for a guest and
+   * incomplete for the fallback. It must say where each check happens, that the device reading
+   * does not upload, and that a refused signed-in check has already sent the file.
+   */
+  it("says where a business document is read: the AI, or the device without upload", () => {
+    expect(privacy).toMatch(/one of two places/i);
+    expect(privacy).toMatch(/read on your own device, without AI/i);
+    expect(privacy).toMatch(/it is not uploaded/i);
+    expect(privacy).toMatch(/file has already reached AppealDeck/i);
+    // The old flat statement, true only of the AI reading.
+    expect(privacy).not.toMatch(
+      /that document is sent to AppealDeck and on to Google Gemini, so its contents/i,
+    );
+  });
+
   it("names the two things a seller can choose to send to an AI provider", () => {
     expect(privacy).toMatch(
       /only things we send to an AI provider are a business document you ask us to check and a section you ask us to improve the wording of/i,

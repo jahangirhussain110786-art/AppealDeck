@@ -19,10 +19,16 @@
  */
 
 import type { EvidenceKind, ViolationKind } from "@/core";
-import type { DocumentCheckResult } from "@/core/documentCheck";
+import {
+  buildDocumentCheck,
+  requirementForCheck,
+  type DocumentCheckResult,
+} from "@/core/documentCheck";
+import { readFieldsFromText } from "@/core/localReading";
 import { analyzeIdentityImage, type IdentityImageReport } from "./identity";
 import { MAX_CHECK_BYTES } from "./limits";
 import type { DocumentCheckCaseData } from "./context";
+import type { DeviceText } from "./localReader";
 
 /** Evidence kinds examined in the browser. Mirrors the server's own refusal list. */
 export const BROWSER_ONLY_EVIDENCE_KINDS: readonly EvidenceKind[] = [
@@ -41,8 +47,11 @@ export type CheckOutcome =
   | { kind: "fields"; result: DocumentCheckResult }
   /** An identity document was examined locally; contents were never read. */
   | { kind: "image"; report: IdentityImageReport }
-  /** Nothing could be checked. Always says so rather than showing an empty result. */
-  | { kind: "unavailable"; message: string };
+  /**
+   * Nothing could be checked. Always says so rather than showing an empty result. `fileSent` is
+   * true once the file was posted to the AI reading endpoint, whatever came back.
+   */
+  | { kind: "unavailable"; message: string; fileSent?: boolean };
 
 /** Mime types the server is willing to read. Anything else is reported, not silently dropped. */
 const SERVER_READABLE = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
@@ -56,9 +65,38 @@ export interface RunCheckInput {
   mimeType: string;
   /** Identifiers from the case's own notices, so the reading can be compared with them. */
   caseData?: DocumentCheckCaseData;
+  /**
+   * False for a guest. The AI reading needs an account, so a guest's file goes straight to the
+   * reading on the device and is never uploaded only to be refused.
+   */
+  signedIn?: boolean;
 }
 
-export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutcome> {
+/** The on-device reader; tests pass their own, so they need neither pdf.js nor OCR. */
+export type ReadTextOnDevice = (bytes: Uint8Array, mimeType: string) => Promise<DeviceText | null>;
+
+const readTextOnDevice: ReadTextOnDevice = async (bytes, mimeType) =>
+  (await import("./localReader")).readTextOnDevice(bytes, mimeType);
+
+/** The files the device reader opens, and the largest: the most the case stores. */
+const DEVICE_READABLE = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
+const MAX_DEVICE_BYTES = 10 * 1024 * 1024;
+
+const DEVICE_TRIED_NOTE =
+  "We also tried to read it on this device and could not make out its text.";
+
+const AI_NEEDS_SIGN_IN =
+  "The AI reading needs you to be signed in. Sign in, then check it again; nothing about your case has changed.";
+
+/**
+ * 29 Sep 2026: the AI reading first, and the reading on the device when it cannot run — switched
+ * off, busy, over its quota, the seller not signed in, or the file too large to send. A business
+ * document is only ever read, never judged, either way; the device reading says which it was.
+ */
+export async function runDocumentCheck(
+  input: RunCheckInput,
+  readText: ReadTextOnDevice = readTextOnDevice,
+): Promise<CheckOutcome> {
   if (isBrowserOnly(input.evidenceKind)) {
     const blob = new Blob([toArrayBuffer(input.bytes)], { type: input.mimeType });
     const report = await analyzeIdentityImage(blob);
@@ -81,6 +119,80 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
     };
   }
 
+  const ai =
+    input.signedIn === false
+      ? { kind: "unavailable" as const, message: AI_NEEDS_SIGN_IN }
+      : await readWithAi(input);
+  if (ai.kind !== "unavailable") return ai;
+  const local = await readOnDevice(input, ai, readText);
+  if (local.outcome) return local.outcome;
+  // Said, so a seller whose scan has no legible text is not left thinking that signing in would fix it.
+  return local.tried ? { ...ai, message: `${DEVICE_TRIED_NOTE} ${ai.message}` } : ai;
+}
+
+/**
+ * The reading on the device, or null when it cannot open the file or finds no legible text. The
+ * same `buildDocumentCheck` makes every comparison, so a date window or a buyer mismatch is judged
+ * alike whichever way the words were read.
+ */
+async function readOnDevice(
+  input: RunCheckInput,
+  ai: { message: string; fileSent?: boolean },
+  readText: ReadTextOnDevice,
+): Promise<{ outcome: CheckOutcome | null; tried: boolean }> {
+  if (!DEVICE_READABLE.includes(input.mimeType) || input.bytes.byteLength > MAX_DEVICE_BYTES)
+    return { outcome: null, tried: false };
+  const requirement = requirementForCheck(input.kind, input.evidenceKind);
+  if (!requirement) return { outcome: null, tried: false };
+  try {
+    const read = await readText(input.bytes, input.mimeType);
+    if (!read) return { outcome: null, tried: true };
+    const ctx = input.caseData;
+    const context = {
+      ...(ctx?.business ? { business: ctx.business } : {}),
+      ...(ctx?.suppliers ? { suppliers: ctx.suppliers } : {}),
+    };
+    const findings = readFieldsFromText(read.text, requirement.fields, context, read.source);
+    const result = buildDocumentCheck(
+      input.kind,
+      input.evidenceKind,
+      findings,
+      {
+        today: localToday(),
+        asins: ctx?.asins ?? [],
+        referenceIds: ctx?.referenceIds ?? [],
+        ...context,
+      },
+      // Every quote is a line copied out of the document by code, not a model's words.
+      { quotesAreVerbatim: true },
+    );
+    return {
+      outcome: {
+        kind: "fields",
+        result: {
+          ...result,
+          readOn: "device",
+          aiNote: ai.message,
+          fileSent: ai.fileSent === true,
+          textSource: read.source,
+        },
+      },
+      tried: true,
+    };
+  } catch {
+    return { outcome: null, tried: true };
+  }
+}
+
+/** Today on the seller's own calendar, YYYY-MM-DD, as every other date on the case is counted. */
+function localToday(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** The AI reading on the server. */
+async function readWithAi(input: RunCheckInput): Promise<CheckOutcome> {
   if (!SERVER_READABLE.includes(input.mimeType)) {
     return {
       kind: "unavailable",
@@ -108,18 +220,20 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
       }),
     });
     // Should be unreachable after the check above; kept so a lowered host limit still gets a reason.
+    // From here the file has left the browser (a failed request may have left too), so every
+    // unavailable answer says so: the reading on the device must not claim "never uploaded".
     if (res.status === 413) {
-      return { kind: "unavailable", message: tooLargeMessage(input.bytes.byteLength) };
+      return {
+        kind: "unavailable",
+        message: tooLargeMessage(input.bytes.byteLength),
+        fileSent: true,
+      };
     }
     // 25 Sep 2026: an expired session reached the seller as the bare word "Unauthorized".
     // 29 Sep 2026: a guest who never signed in was told their sign-in had expired, so the message
     // now holds for both.
     if (res.status === 401) {
-      return {
-        kind: "unavailable",
-        message:
-          "Checking a document needs you to be signed in. Sign in, then check it again; nothing about your case has changed.",
-      };
+      return { kind: "unavailable", message: AI_NEEDS_SIGN_IN, fileSent: true };
     }
     const body = await res.json().catch(() => null);
     if (!res.ok) {
@@ -128,6 +242,7 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
         message:
           (body && typeof body.error === "string" && body.error) ||
           "We could not check that document. Nothing about your case has changed.",
+        fileSent: true,
       };
     }
     if (!body?.ok) {
@@ -136,6 +251,7 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
         message:
           (body && typeof body.message === "string" && body.message) ||
           "We could not read that document.",
+        fileSent: true,
       };
     }
     return { kind: "fields", result: body.check as DocumentCheckResult };
@@ -143,6 +259,7 @@ export async function runDocumentCheck(input: RunCheckInput): Promise<CheckOutco
     return {
       kind: "unavailable",
       message: "We could not reach the checker. Your document and your case are unchanged.",
+      fileSent: true,
     };
   }
 }
@@ -156,7 +273,7 @@ function megabytes(bytes: number): string {
 }
 
 function tooLargeMessage(bytes: number): string {
-  return `This file is ${megabytes(bytes)}, and we can read files up to ${megabytes(MAX_CHECK_BYTES)}. It is saved in your case either way. To have it checked, save the scan at a lower resolution, or keep only the pages Amazon asks about.`;
+  return `This file is ${megabytes(bytes)}, and the AI reading takes files up to ${megabytes(MAX_CHECK_BYTES)}. It is saved in your case either way. For the AI reading, save the scan at a lower resolution, or keep only the pages Amazon asks about.`;
 }
 
 /** Chunked so a multi-megabyte scan does not blow the argument limit of `String.fromCharCode`. */

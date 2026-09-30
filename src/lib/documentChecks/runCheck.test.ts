@@ -17,6 +17,8 @@ import { MAX_CHECK_BYTES } from "./limits";
  * the only honest way to answer it is to watch the wire.
  */
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+/** These tests are about the AI path; the reading on the device is tested in localReading.test.ts. */
+const noDeviceReading = async () => null;
 
 let fetchSpy: ReturnType<typeof vi.fn>;
 
@@ -99,18 +101,21 @@ describe("document check routing", () => {
    * document". The workspace accepts 10 MB, so this was an ordinary scanned invoice.
    */
   it("does not send a file too large for the host, and says why", async () => {
-    const outcome = await runDocumentCheck({
-      caseId: "case-1",
-      kind: "INAUTHENTIC",
-      evidenceKind: "supplier_invoice",
-      bytes: new Uint8Array(MAX_CHECK_BYTES + 1),
-      mimeType: "application/pdf",
-    });
+    const outcome = await runDocumentCheck(
+      {
+        caseId: "case-1",
+        kind: "INAUTHENTIC",
+        evidenceKind: "supplier_invoice",
+        bytes: new Uint8Array(MAX_CHECK_BYTES + 1),
+        mimeType: "application/pdf",
+      },
+      noDeviceReading,
+    );
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(outcome).toMatchObject({ kind: "unavailable" });
     const message = (outcome as { message: string }).message;
     // The size, the limit, that nothing was lost, and what to do — in the same unit.
-    expect(message).toContain("This file is 3.1 MB, and we can read files up to 3 MB.");
+    expect(message).toContain("This file is 3.1 MB, and the AI reading takes files up to 3 MB.");
     expect(message).toContain("saved in your case");
   });
 
@@ -149,14 +154,17 @@ describe("document check routing", () => {
         throw new SyntaxError("Unexpected token 'R'");
       },
     });
-    const outcome = await runDocumentCheck({
-      caseId: "case-1",
-      kind: "INAUTHENTIC",
-      evidenceKind: "supplier_invoice",
-      bytes: PNG,
-      mimeType: "image/png",
-    });
-    expect((outcome as { message: string }).message).toMatch(/we can read files up to 3 MB/);
+    const outcome = await runDocumentCheck(
+      {
+        caseId: "case-1",
+        kind: "INAUTHENTIC",
+        evidenceKind: "supplier_invoice",
+        bytes: PNG,
+        mimeType: "image/png",
+      },
+      noDeviceReading,
+    );
+    expect((outcome as { message: string }).message).toMatch(/AI reading takes files up to 3 MB/);
   });
 
   it("agrees with the server about which kinds are browser-only", async () => {

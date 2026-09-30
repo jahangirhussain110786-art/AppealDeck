@@ -234,6 +234,52 @@ describe("saved document checks in the export", () => {
     expect(text).not.toContain("since changed");
   });
 
+  it("says a reading made on the device is not the AI reading, and whether the file was sent", () => {
+    const deviceCheck = (fileSent: boolean | undefined, textSource?: "pdf_text" | "ocr") => {
+      const c = check(current);
+      return {
+        ...c,
+        outcome: {
+          ...c.outcome,
+          result: {
+            ...c.outcome.result,
+            readOn: "device" as const,
+            aiNote: "The AI reading needs you to be signed in.",
+            ...(fileSent === undefined ? {} : { fileSent }),
+            ...(textSource ? { textSource } : {}),
+          },
+        },
+      };
+    };
+    const exportOf = (c: ReturnType<typeof deviceCheck>) => {
+      const w = { ...base, documentChecks: [c] };
+      return buildCaseExport({ ...createCaseFile("POLICY"), workspace: w }, w);
+    };
+
+    const notSent = exportOf(deviceCheck(false));
+    expect(notSent).toContain("Read on this device, without AI.");
+    expect(notSent).toContain("The file was never uploaded.");
+
+    // A signed-in fallback: the request went first, so the export must not say "never uploaded".
+    const sent = exportOf(deviceCheck(true));
+    expect(sent).toContain("Read on this device, without AI.");
+    expect(sent).toContain("The file was sent to AppealDeck for the AI reading, which did not run");
+    expect(sent).not.toContain("never uploaded");
+
+    // A check saved before this was recorded claims nothing about where the file went.
+    const unknown = exportOf(deviceCheck(undefined));
+    expect(unknown).toContain("Read on this device, without AI.");
+    expect(unknown).not.toContain("never uploaded");
+    expect(unknown).not.toContain("was sent to AppealDeck");
+
+    expect(exportOf(deviceCheck(false, "ocr"))).toContain("Read from a picture.");
+    expect(exportOf(deviceCheck(false, "pdf_text"))).not.toContain("Read from a picture.");
+
+    // An AI reading carries none of it.
+    const ai = exportOf(check(current) as ReturnType<typeof deviceCheck>);
+    expect(ai).not.toContain("Read on this device");
+  });
+
   it("marks a check compared with case details that have since changed", () => {
     const w = { ...base, documentChecks: [check("an older key")] };
     const text = buildCaseExport({ ...createCaseFile("POLICY"), workspace: w }, w);

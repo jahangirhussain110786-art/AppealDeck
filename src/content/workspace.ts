@@ -157,7 +157,7 @@ export const WORKSPACE = {
   // document check sends that one file to be read. Every sentence here now matches what leaves the
   // browser, and `legalDisclosures.test.ts` pins it alongside the privacy policy.
   privacy:
-    "Your work is saved in this browser’s encrypted vault, and your files stay on this device. Two things leave it only when you ask: a business document you ask us to check, and a section you ask us to improve the wording of. Each is sent to be read, and no copy is kept. Preparing a response sends the notice, confirmed facts and document references to AppealDeck — never the original files — and nothing is ever sent to Amazon.",
+    "Your work is saved in this browser’s encrypted vault, and your files stay on this device. Two things leave it only when you ask: a business document you ask us to check, and a section you ask us to improve the wording of. Each is sent to be read, and no copy is kept; the one exception is a business document checked while you are not signed in, or one too large to send, which is read on this device and is not uploaded. Preparing a response sends the notice, confirmed facts and document references to AppealDeck — never the original files — and nothing is ever sent to Amazon.",
   local: "Saved on this device",
   loading: "Opening your case…",
   // "Documents", not "Evidence" (29 Sep 2026): the word sellers use. The ids stay, so old links work.
@@ -210,7 +210,7 @@ export const WORKSPACE = {
   sourceHelp:
     "Paste Amazon's exact sentence. If Amazon didn't ask but you know the case needs it, leave this empty: we record it as yours, not Amazon's.",
   manualReview:
-    "Open the original and note what it shows. This is your own check, not a test of whether the document is genuine. With an Appeal Pass we can also check a business document against what Amazon asked for. Identity, bank and proof-of-address documents are checked on this device only.",
+    "Open the original and note what it shows. This is your own check, not a test of whether the document is genuine. With an Appeal Pass we can also check a business document against what Amazon asked for, using AI. Without one, the check reads it on this device, without AI. Identity, bank and proof-of-address documents are checked on this device only.",
   check: {
     unnamed:
       "This record is not one of the document types we know how to check, so we have not read it. Review it yourself and note what it shows. Your file is unchanged and stayed on this device.",

@@ -71,6 +71,12 @@ const savedCheck = z.object({
         findings: z.array(finding).max(40),
         triggeredDisqualifiers: z.array(z.string().max(1000)).max(20),
         allRequiredFieldsPresent: z.boolean(),
+        // Without these a saved device reading would come back after a reload claiming the file
+        // had been sent to be read.
+        readOn: z.literal("device").optional(),
+        aiNote: z.string().max(2000).optional(),
+        fileSent: z.boolean().optional(),
+        textSource: z.enum(["pdf_text", "ocr"]).optional(),
       }),
     }),
     z.object({

@@ -142,6 +142,25 @@ export interface DocumentCheckResult {
   triggeredDisqualifiers: string[];
   /** True when every required field is `present`. Never means "this will be accepted". */
   allRequiredFieldsPresent: boolean;
+  /**
+   * Set when the words were read on the seller's device, without AI (`localReading.ts`), instead of
+   * by the AI reading. The panel must say which, because "this file was sent to be read" is false
+   * for a device reading — and saved with the case, so a reload still says it.
+   */
+  readOn?: "device";
+  /** Why the AI reading was not used, when `readOn` is "device". */
+  aiNote?: string;
+  /**
+   * True when the file was sent to AppealDeck for the AI reading before the device reading was made
+   * (a signed-in seller: the request goes first, and can be refused, busy or switched off). Absent
+   * on results saved before this was recorded, which therefore claim nothing either way.
+   */
+  fileSent?: boolean;
+  /**
+   * Where a device reading's words came from: the PDF's own text, or OCR of a picture. OCR can
+   * misread a letter or a digit, and the panel and the export say so.
+   */
+  textSource?: "pdf_text" | "ocr";
 }
 
 export const FINDING_LABELS: Record<FindingStatus, string> = {
@@ -241,6 +260,15 @@ export function buildDocumentCheck(
   evidenceKind: EvidenceKind,
   rawFindings: readonly FieldFinding[],
   context?: CheckContext,
+  options?: {
+    /**
+     * True when every `observed` is a line copied from the document by code (the reading on the
+     * device). The filter below is for a model's own words; a certificate that says "valid until
+     * 2028" is the document speaking, not the product passing a verdict, and dropping that quote
+     * turned a legible line into "could not read" (30 Sep 2026 review).
+     */
+    quotesAreVerbatim?: boolean;
+  },
 ): DocumentCheckResult {
   const requirement = requirementForCheck(kind, evidenceKind);
   const expectedFields = requirement?.fields ?? [];
@@ -252,7 +280,9 @@ export function buildDocumentCheck(
     // An `observed` value that carries a verdict is dropped rather than shown; the status and the
     // note already say everything the product is entitled to say.
     const observed =
-      f.observed && f.observed.trim() && !containsBannedConclusion(f.observed)
+      f.observed &&
+      f.observed.trim() &&
+      (options?.quotesAreVerbatim || !containsBannedConclusion(f.observed))
         ? f.observed.trim()
         : undefined;
     const base: FieldFinding = {
@@ -579,6 +609,11 @@ export function summarizeCheck(result: DocumentCheckResult): string {
   const notAssessed = result.findings.filter((f) => f.status === "not_assessed").length;
 
   if (missing === 0 && unclear === 0 && conflicting === 0 && notAssessed === 0) {
+    // The reading on the device matches labels and patterns, so a "Found" there means a matching
+    // line exists, not that the line answers what Amazon asked (30 Sep 2026 review).
+    if (result.readOn === "device") {
+      return "Each item Amazon named has a matching line in the text we read. That does not check that the line says what Amazon asked for. Whether Amazon accepts it is their decision, not something we can tell you.";
+    }
     // Note what this does NOT say. Everything Amazon named is legible; whether Amazon accepts it
     // is not ours to state.
     return "Everything Amazon named is readable in this document. Whether Amazon accepts it is their decision, not something we can tell you.";

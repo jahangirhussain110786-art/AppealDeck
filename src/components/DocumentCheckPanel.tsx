@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FINDING_LABELS, summarizeCheck, type FindingStatus } from "@/core/documentCheck";
 import type { CheckOutcome } from "@/lib/documentChecks/runCheck";
+import { deviceReadingNotes } from "@/lib/documentChecks/deviceNotes";
 import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/format";
@@ -38,9 +39,13 @@ export function DocumentCheckPanel({
   stale?: boolean;
   busy: boolean;
   onCheck: () => void;
-  /** Where the file will be read, stated before the seller presses the button. */
-  processing?: "server" | "device";
+  /**
+   * Where the file will be read, stated before the seller presses the button: sent for the AI
+   * reading, examined as a picture on the device, or read on the device without AI.
+   */
+  processing?: "server" | "device" | "device_text";
 }) {
+  const device = outcome?.kind === "fields" ? deviceReadingNotes(outcome.result) : null;
   return (
     // v5 (26 Sep 2026, prototype record.html): a white report card on the warm panel — the header
     // says what was checked and when, each finding is a numbered row with its own status.
@@ -74,7 +79,9 @@ export function DocumentCheckPanel({
           <p className="text-xs text-muted-foreground">
             {processing === "server"
               ? APP.evidenceSlots.check.beforeServer
-              : APP.evidenceSlots.check.beforeDevice}
+              : processing === "device_text"
+                ? APP.evidenceSlots.check.beforeDeviceText
+                : APP.evidenceSlots.check.beforeDevice}
           </p>
         )}
 
@@ -87,6 +94,17 @@ export function DocumentCheckPanel({
 
         {outcome?.kind === "fields" && (
           <div className="space-y-3">
+            {device && (
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">{device.title}</p>
+                {device.whyNotAi && (
+                  <p className="text-xs text-muted-foreground">{device.whyNotAi}</p>
+                )}
+                {device.picture && (
+                  <p className="text-xs text-muted-foreground">{device.picture}</p>
+                )}
+              </div>
+            )}
             <p className="text-sm text-muted-foreground">{summarizeCheck(outcome.result)}</p>
             <ol className="-mx-4 border-t border-border sm:-mx-5">
               {outcome.result.findings.map((f, i) => (
@@ -123,7 +141,8 @@ export function DocumentCheckPanel({
               </ul>
             )}
             <p className="border-t border-border pt-3 text-xs text-muted-foreground">
-              {APP.evidenceSlots.check.serverNote} {APP.evidenceSlots.check.noVerdict}
+              {device ? device.where : APP.evidenceSlots.check.serverNote}{" "}
+              {APP.evidenceSlots.check.noVerdict}
             </p>
           </div>
         )}

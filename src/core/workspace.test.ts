@@ -1125,4 +1125,46 @@ describe("saved document checks survive the vault validator", () => {
     const parsed = WorkspaceSchema.parse(w);
     expect(parsed.documentChecks).toEqual(w.documentChecks);
   });
+
+  /**
+   * 30 Sep 2026: a reading made on the device carries where it came from and whether the file was
+   * sent first. If the validator strips them, a saved reading comes back after a reload saying
+   * nothing about either — or worse, is shown as an AI reading.
+   */
+  it("keeps a reading made on the device, with where its words came from", () => {
+    const base = documentWorkspace();
+    const w = {
+      ...base,
+      documentChecks: [
+        {
+          recordId: "file-1",
+          contentHash: "hash-1",
+          at: "2026-09-30T10:00:00.000Z",
+          contextKey: "[]",
+          outcome: {
+            kind: "fields" as const,
+            result: {
+              evidenceKind: "supplier_invoice" as const,
+              findings: [
+                {
+                  field: "supplier business name",
+                  status: "present" as const,
+                  observed: "Crestline Trade Supply Co.",
+                  note: "Read from the supplier section of the document.",
+                },
+              ],
+              triggeredDisqualifiers: [],
+              allRequiredFieldsPresent: false,
+              readOn: "device" as const,
+              aiNote: "The AI reading needs you to be signed in.",
+              fileSent: true,
+              textSource: "ocr" as const,
+            },
+          },
+        },
+      ],
+    };
+    const parsed = WorkspaceSchema.parse(w);
+    expect(parsed.documentChecks).toEqual(w.documentChecks);
+  });
 });

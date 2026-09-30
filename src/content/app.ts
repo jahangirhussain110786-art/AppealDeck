@@ -136,7 +136,26 @@ export const APP = {
       // Shown before the button is pressed, so a seller knows where the file goes before it goes
       // there rather than learning it from the result (ChatGPT audit §8, 24 Sep 2026).
       beforeServer:
-        "Checking sends this file to AppealDeck and on to Google Gemini to be read against what Amazon asked for. No copy is kept, and nothing is sent to Amazon.",
+        "Checking sends this file to AppealDeck and on to Google Gemini to be read against what Amazon asked for. No copy is kept, and nothing is sent to Amazon. If the AI reading is not available, the file is read on this device instead.",
+      // The reading on the device, without AI (29 Sep 2026): the backup when the AI reading cannot
+      // run, and what a guest gets. It must never be shown as the AI reading.
+      beforeDeviceText:
+        "Read on this device, without AI: the file is never uploaded. Sign in for the AI reading, which comes with the Appeal Pass.",
+      deviceTitle: "Read on this device, without AI",
+      aiNotUsed: "Why not the AI reading:",
+      // What a device reading says about the file, chosen by whether the AI request went first
+      // (`fileSent`). A signed-in seller's file is posted before the fallback runs, so "never
+      // uploaded" is only ever said when no request was made; a result saved before this was
+      // recorded claims nothing either way (30 Sep 2026 review).
+      deviceNoteNotSent:
+        "The file was never uploaded. This reading finds labels and patterns in the text, such as dates, ASINs and names; it does not understand the document the way the AI reading does. Check each line against the original.",
+      deviceNoteSent:
+        "The file was sent to AppealDeck for the AI reading, which did not run, and was then read on this device. This reading finds labels and patterns in the text, such as dates, ASINs and names; it does not understand the document the way the AI reading does. Check each line against the original.",
+      deviceNoteUnknown:
+        "This reading was made on this device. It finds labels and patterns in the text, such as dates, ASINs and names; it does not understand the document the way the AI reading does. Check each line against the original.",
+      // A scan or a photo is read by OCR, which can misread a letter or a digit.
+      pictureNote:
+        "Read from a picture. Letters and digits can be misread, and a zero can look like the letter O, so check every date, name, ID and ASIN against the original.",
       beforeDevice:
         "Identity, bank and proof-of-address documents are checked on this device only. The file is never uploaded.",
     },

@@ -50,6 +50,7 @@ export function EvidenceReview({
   checkStale,
   checking,
   onCheck,
+  signedIn = true,
 }: {
   item: Requirement;
   /** Narrows the evidence-matrix guidance to this case: the same record is asked for different
@@ -77,6 +78,8 @@ export function EvidenceReview({
   checkStale?: boolean;
   checking?: boolean;
   onCheck?: () => void;
+  /** A guest's business document is read on the device, so the note before the button says so. */
+  signedIn?: boolean;
 }) {
   const D = C.documents;
   const [note, setNote] = useState(draftNote ?? item.note);
@@ -229,7 +232,7 @@ export function EvidenceReview({
               stale={checkStale}
               busy={Boolean(checking)}
               onCheck={onCheck}
-              processing={checkProcessing(item)}
+              processing={checkProcessing(item, signedIn)}
             />
           )}
         </div>
@@ -395,8 +398,12 @@ export function EvidenceReview({
  * in which case the check itself says so, and a line about uploading would describe something that
  * will not happen.
  */
-function checkProcessing(item: Requirement): "server" | "device" | undefined {
+function checkProcessing(
+  item: Requirement,
+  signedIn: boolean,
+): "server" | "device" | "device_text" | undefined {
   const kind = requirementEvidenceKind(item);
   if (!kind || kind === "other") return undefined;
-  return isBrowserOnly(kind) ? "device" : "server";
+  if (isBrowserOnly(kind)) return "device";
+  return signedIn ? "server" : "device_text";
 }

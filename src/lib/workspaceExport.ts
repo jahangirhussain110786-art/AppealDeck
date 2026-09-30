@@ -20,6 +20,7 @@ import {
   summarizeCheck,
 } from "@/core/documentCheck";
 import { checkCaseDataForWorkspace } from "./documentChecks/context";
+import { deviceReadingNotes } from "./documentChecks/deviceNotes";
 import { migrateAnswerDrafts } from "./workspaceDraft";
 
 const STATUS_LABELS: Record<Requirement["status"], string> = {
@@ -82,6 +83,14 @@ function documentCheckLines(w: Workspace): string[] {
       saved.contextKey !== keyNow ? " — compared with case details that have since changed" : "";
     lines.push(`- ${r.filename ?? r.label} · checked ${formatDate(saved.at)}${stale}`);
     if (saved.outcome.kind === "fields") {
+      // A reading made by label and pattern matching on the device is not the AI reading, and a
+      // specialist reading this cannot tell them apart by the findings alone (30 Sep 2026 review).
+      const device = deviceReadingNotes(saved.outcome.result);
+      if (device) {
+        lines.push(`  ${device.title}.`);
+        if (device.picture) lines.push(`  ${device.picture}`);
+        lines.push(`  ${device.where}`);
+      }
       lines.push(`  ${summarizeCheck(saved.outcome.result)}`);
       for (const f of saved.outcome.result.findings) {
         const read = f.observed ? ` “${f.observed}”` : "";
