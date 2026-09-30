@@ -52,6 +52,12 @@ test("a guest's invoice is read on the device, never uploaded, and the reading s
     documents(page).getByText("Read on this device, without AI", { exact: true }),
   ).toBeVisible();
   await expect(documents(page).getByText(/Why not the AI reading:/)).toBeVisible();
+  // A screen reader is told the reading has finished (a polite live region, always in the page).
+  await expect(
+    documents(page)
+      .getByRole("status")
+      .filter({ hasText: /Reading finished: \d+ of \d+ items found/ }),
+  ).toHaveCount(1);
   // The problem invoice is a quotation from 2024 with no supplier address or phone: something
   // must be reported as not found or conflicting, not passed.
   await expect(
@@ -118,9 +124,7 @@ test("a signed-in seller with a Pass whose AI reading is off gets the device rea
     .setInputFiles(`${DOCS}/03-supplier-invoice-t01-authenticity.pdf`);
   // Signed in, the note before the button is the AI's, and says the device reading is the fallback.
   await expect(
-    documents(page).getByText(
-      /If the AI reading is not available, the file is read on this device instead/,
-    ),
+    documents(page).getByText(/Without one, the file is read on this device and is not sent/),
   ).toBeVisible();
   await page.getByRole("button", { name: "Check this document" }).first().click();
   await expect(

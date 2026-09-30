@@ -136,12 +136,17 @@ export const APP = {
       // Shown before the button is pressed, so a seller knows where the file goes before it goes
       // there rather than learning it from the result (ChatGPT audit §8, 24 Sep 2026).
       beforeServer:
-        "Checking sends this file to AppealDeck and on to Google Gemini to be read against what Amazon asked for. No copy is kept, and nothing is sent to Amazon. If the AI reading is not available, the file is read on this device instead.",
+        "With an Appeal Pass for this case, checking sends this file to AppealDeck and on to Google Gemini to be read against what Amazon asked for. No copy is kept, and nothing is sent to Amazon. Without one, the file is read on this device and is not sent. If the AI reading cannot run, it is read on this device as well.",
       // The reading on the device, without AI (29 Sep 2026): the backup when the AI reading cannot
       // run, and what a guest gets. It must never be shown as the AI reading.
       beforeDeviceText:
         "Read on this device, without AI: the file is never uploaded. Sign in for the AI reading, which comes with the Appeal Pass.",
       deviceTitle: "Read on this device, without AI",
+      // Read out by a screen reader when a reading starts and when it finishes; short, and not the
+      // words shown on the page, so nothing is heard twice.
+      announceBusy: "Reading your document. This can take a few seconds.",
+      announceDone: "Reading finished: {found} of {total} items found. The results are below.",
+      announceImage: "Picture checks finished. The results are below.",
       aiNotUsed: "Why not the AI reading:",
       // What a device reading says about the file, chosen by whether the AI request went first
       // (`fileSent`). A signed-in seller's file is posted before the fallback runs, so "never

@@ -71,6 +71,25 @@ export function DocumentCheckPanel({
         </Button>
       </div>
       <div className="space-y-3 px-4 py-3.5 sm:px-5">
+        {/*
+          Always in the page, so a screen reader announces a change to it: the result appears below
+          the button that was pressed, and nothing else told a listener that a reading, which can
+          take twenty seconds, had finished (or had failed).
+        */}
+        <p className="sr-only" role="status" aria-live="polite">
+          {busy
+            ? APP.evidenceSlots.check.announceBusy
+            : outcome?.kind === "fields"
+              ? APP.evidenceSlots.check.announceDone
+                  .replace(
+                    "{found}",
+                    String(outcome.result.findings.filter((f) => f.status === "present").length),
+                  )
+                  .replace("{total}", String(outcome.result.findings.length))
+              : outcome?.kind === "image"
+                ? APP.evidenceSlots.check.announceImage
+                : ""}
+        </p>
         {outcome && stale && (
           <p className="text-sm text-warning">{APP.evidenceSlots.check.stale}</p>
         )}
@@ -86,7 +105,8 @@ export function DocumentCheckPanel({
         )}
 
         {outcome?.kind === "unavailable" && (
-          <p className="text-sm text-muted-foreground">
+          // An alert: it is inserted when a check fails, and the seller should hear why.
+          <p role="alert" className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">{APP.evidenceSlots.check.failed}. </span>
             {outcome.message}
           </p>

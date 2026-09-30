@@ -197,8 +197,9 @@ export async function analyzeIdentityImage(file: Blob): Promise<IdentityImageRep
   if (typeof createImageBitmap !== "function" || typeof OffscreenCanvas === "undefined") {
     return null;
   }
+  let bitmap: ImageBitmap | undefined;
   try {
-    const bitmap = await createImageBitmap(file);
+    bitmap = await createImageBitmap(file);
     // Captured before `close()` below — an ImageBitmap's width and height are not guaranteed to
     // survive it, and the resolution check is judged on these originals, not the downscaled copy.
     const sourceWidth = bitmap.width;
@@ -213,7 +214,6 @@ export async function analyzeIdentityImage(file: Blob): Promise<IdentityImageRep
     if (!ctx) return null;
     ctx.drawImage(bitmap, 0, 0, width, height);
     const { data } = ctx.getImageData(0, 0, width, height);
-    bitmap.close();
     const report = analyzeIdentityPixels(data, width, height);
     // The resolution verdict must come from the original dimensions, and `looksReadable` has to be
     // recomputed afterwards — deriving it from the downscaled copy would let the summary contradict
@@ -224,5 +224,9 @@ export async function analyzeIdentityImage(file: Blob): Promise<IdentityImageRep
     return { checks, looksReadable: checks.every((c) => c.status !== "warn") };
   } catch {
     return null;
+  } finally {
+    // Released on every path: it used to be closed only when every step succeeded, so a canvas
+    // that could not be made kept a decoded photo (tens of megabytes) alive.
+    bitmap?.close();
   }
 }

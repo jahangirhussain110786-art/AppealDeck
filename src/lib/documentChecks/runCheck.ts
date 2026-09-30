@@ -115,7 +115,7 @@ export async function runDocumentCheck(
       : {
           kind: "unavailable",
           message:
-            "We check identity documents on your own device, and we can only do that for a photo or a scan saved as an image. A PDF is fine to submit to Amazon — we simply cannot check it here.",
+            "We check identity documents on your own device, and we can only do that for a photo or a scan saved as a JPEG, PNG or WebP. A PDF, or an iPhone (HEIC) photo, is fine to submit to Amazon — we simply cannot check it here.",
         };
   }
 
