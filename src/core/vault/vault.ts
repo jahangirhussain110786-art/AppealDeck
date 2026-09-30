@@ -480,27 +480,66 @@ export class Vault {
     return { record, text: new TextDecoder().decode(bytes) };
   }
 
-  async list(filter?: { caseId?: string; evidenceKind?: string }): Promise<VaultListItem[]> {
-    let q = this.db.records.orderBy("createdAt").reverse();
-    const all = await q.toArray();
+  /**
+   * Newest first. Reads as little as the filter allows (30 Sep 2026).
+   *
+   * A record's encrypted file lives in the same IndexedDB row as its name and dates, so every row a
+   * listing touches has its whole file read and copied, even though a listing returns only the
+   * metadata. This used to read every row in the vault, then filter in memory: each case save did
+   * it four times (find the case file, find the active pointer, read the index, write the index),
+   * and a dashboard load three times plus once per case. Measured in Chromium, a full read takes
+   * about 50 ms per 15 MB of attached files on a fast desktop — several times that on a phone — and
+   * held all of it in memory at once.
+   *
+   * Now the narrowest existing index is used (`kind`, else `caseId`), so a lookup of the small
+   * bookkeeping records (`kind: "case"`) never touches an evidence file, and rows are visited one
+   * at a time so memory stays flat when a full listing is genuinely needed (the Vault page).
+   * No schema change: both indexes were already declared.
+   */
+  async list(filter?: {
+    caseId?: string;
+    evidenceKind?: string;
+    kind?: VaultRecordInput["kind"];
+  }): Promise<VaultListItem[]> {
+    const records = this.db.records;
+    const rows = filter?.kind
+      ? records.where("kind").equals(filter.kind)
+      : filter?.caseId
+        ? records.where("caseId").equals(filter.caseId)
+        : records.toCollection();
     const items: VaultListItem[] = [];
-    for (const r of all) {
-      if (filter?.caseId && r.caseId !== filter.caseId) continue;
-      if (filter?.evidenceKind && r.evidenceKind !== filter.evidenceKind) continue;
+    await rows.each((r) => {
+      if (filter?.kind && r.kind !== filter.kind) return;
+      if (filter?.caseId && r.caseId !== filter.caseId) return;
+      if (filter?.evidenceKind && r.evidenceKind !== filter.evidenceKind) return;
       items.push(toListItem(r));
-    }
-    return items;
+    });
+    // The order the createdAt index gave when read in reverse: newest first, and records with the
+    // same date by id, descending (an index lists equal keys by primary key; reversed, that flips).
+    return items.sort((a, b) =>
+      a.createdAt === b.createdAt
+        ? a.id < b.id
+          ? 1
+          : a.id > b.id
+            ? -1
+            : 0
+        : a.createdAt < b.createdAt
+          ? 1
+          : -1,
+    );
   }
 
   async findByPlaintext(data: Uint8Array | string): Promise<VaultListItem | null> {
     const bytes = typeof data === "string" ? new TextEncoder().encode(data) : data;
     const hash = await sha256Base64(this.provider, bytes);
     const target = `${PLAINTEXT_HASH_VERSION}.${hash}`;
-    const all = await this.db.records.orderBy("createdAt").toArray();
-    for (const r of all) {
-      if (r.plaintextHash === target) return toListItem(r);
-    }
-    return null;
+    // Oldest first, stopping at the first match, one row at a time: the whole vault used to be read
+    // into memory on every upload just to look for a duplicate.
+    const match = await this.db.records
+      .orderBy("createdAt")
+      .filter((r) => r.plaintextHash === target)
+      .first();
+    return match ? toListItem(match) : null;
   }
 
   async delete(id: string): Promise<void> {

@@ -151,22 +151,3 @@ export function buildNoticeAnnotations(
   }
   return nonOverlapping.slice(0, 3);
 }
-
-export interface NoticeSegment {
-  text: string;
-  tag: AnnotationTag | null;
-}
-
-/** Splits `raw` into plain and highlighted segments for inline rendering. */
-export function segmentNoticeText(raw: string, annotations: NoticeAnnotation[]): NoticeSegment[] {
-  const spans = [...annotations].sort((a, b) => a.start - b.start);
-  const segments: NoticeSegment[] = [];
-  let cursor = 0;
-  for (const s of spans) {
-    if (s.start > cursor) segments.push({ text: raw.slice(cursor, s.start), tag: null });
-    segments.push({ text: raw.slice(s.start, s.end), tag: s.tag });
-    cursor = s.end;
-  }
-  if (cursor < raw.length) segments.push({ text: raw.slice(cursor), tag: null });
-  return segments;
-}

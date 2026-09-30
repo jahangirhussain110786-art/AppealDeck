@@ -56,7 +56,12 @@ const MONTH =
  * — "we sent you a notice on 1 Sep 2026" in the body is prose, not a header.
  */
 const HEADER =
-  /^[\s>]*(?:date|sent|sent on|received|date sent|date received|notification date)\s*:\s*(.+)$/gim;
+  /^(?:[^\S\r\n]|>)*(?:date|sent|sent on|received|date sent|date received|notification date)\s*:\s*(.+)$/gim;
+// The leading run excludes line breaks on purpose (30 Sep 2026). It was `[\s>]*`, and `\s` includes
+// "\n": under the `m` flag every line start is an anchor, so a pasted notice with a long run of
+// blank lines made each of them swallow every blank line after it and then backtrack. 49,000 blank
+// lines cost `/api/decode`, which anyone can call, five seconds of CPU. A header after blank lines
+// is still found, because it is matched from its own line start.
 
 /** "1st", "2nd", "23rd", "30th" — written in prose, rarely in a header, harmless to accept in both. */
 const ORDINAL = "(?:st|nd|rd|th)?";

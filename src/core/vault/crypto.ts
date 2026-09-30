@@ -64,18 +64,6 @@ export function randomBytes(provider: WebCryptoLike, length: number): Uint8Array
   return out;
 }
 
-export function assertProvider(provider: unknown): WebCryptoLike {
-  if (
-    !provider ||
-    typeof provider !== "object" ||
-    typeof (provider as { getRandomValues?: unknown }).getRandomValues !== "function" ||
-    !(provider as { subtle?: unknown }).subtle
-  ) {
-    throw new VaultCryptoError("KEY_DERIVATION_FAILED", "WebCrypto provider is not available");
-  }
-  return provider as WebCryptoLike;
-}
-
 export async function importPassphraseKey(
   provider: WebCryptoLike,
   passphrase: string,
@@ -139,76 +127,6 @@ export function importRawDek(provider: WebCryptoLike, raw: Uint8Array): Promise<
     "encrypt",
     "decrypt",
   ]);
-}
-
-export async function encryptString(
-  provider: WebCryptoLike,
-  key: CryptoKey,
-  plaintext: string,
-  associatedData?: Uint8Array,
-): Promise<EncryptionEnvelope> {
-  if (typeof plaintext !== "string") {
-    throw new VaultCryptoError("INVALID_INPUT", "Plaintext must be a string");
-  }
-  const enc = new TextEncoder();
-  const iv = randomBytes(provider, AES_IV_LENGTH_BYTES);
-  let ctBuf: ArrayBuffer;
-  try {
-    ctBuf = await provider.subtle.encrypt(
-      { name: "AES-GCM", iv: iv as BufferSource, additionalData: associatedData as BufferSource },
-      key,
-      enc.encode(plaintext) as BufferSource,
-    );
-  } catch (cause) {
-    throw new VaultCryptoError(
-      "ENCRYPT_FAILED",
-      cause instanceof Error ? cause.message : "Encryption failed",
-    );
-  }
-  const result: EncryptionEnvelope = {
-    v: VAULT_ENVELOPE_VERSION,
-    alg: "AES-GCM",
-    iv: toBase64(iv),
-    ct: toBase64(new Uint8Array(ctBuf)),
-  };
-  if (associatedData) {
-    result.ad = toBase64(associatedData);
-  }
-  return result;
-}
-
-export async function decryptString(
-  provider: WebCryptoLike,
-  key: CryptoKey,
-  envelope: EncryptionEnvelope,
-  associatedData?: Uint8Array,
-): Promise<string> {
-  if (envelope.v !== VAULT_ENVELOPE_VERSION) {
-    throw new VaultCryptoError(
-      "ENVELOPE_TOO_NEW",
-      `Envelope version ${envelope.v} is newer than the running app (${VAULT_ENVELOPE_VERSION})`,
-    );
-  }
-  if (envelope.alg !== "AES-GCM") {
-    throw new VaultCryptoError("ENVELOPE_CORRUPT", `Unsupported algorithm: ${envelope.alg}`);
-  }
-  const iv = fromBase64(envelope.iv);
-  const ct = fromBase64(envelope.ct);
-  const ad = associatedData ?? (envelope.ad ? fromBase64(envelope.ad) : undefined);
-  let plainBuf: ArrayBuffer;
-  try {
-    plainBuf = await provider.subtle.decrypt(
-      { name: "AES-GCM", iv: iv as BufferSource, additionalData: ad as BufferSource },
-      key,
-      ct as BufferSource,
-    );
-  } catch {
-    throw new VaultCryptoError(
-      "WRONG_PASSPHRASE",
-      "Decryption failed (wrong key or tampered data)",
-    );
-  }
-  return new TextDecoder().decode(plainBuf);
 }
 
 export async function encryptBytes(

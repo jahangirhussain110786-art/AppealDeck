@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildNoticeAnnotations, segmentNoticeText } from "./decodeAnnotations";
+import { buildNoticeAnnotations } from "./decodeAnnotations";
 import type { AnnotationCopy } from "./decodeAnnotations";
 
 const copy: AnnotationCopy = {
@@ -93,32 +93,5 @@ describe("buildNoticeAnnotations", () => {
     for (const a of annotations) {
       expect(raw.slice(a.start, a.end)).toBe(a.matchedText);
     }
-  });
-});
-
-describe("segmentNoticeText", () => {
-  it("returns the whole text as one untagged segment when there are no annotations", () => {
-    expect(segmentNoticeText("Plain notice text.", [])).toEqual([
-      { text: "Plain notice text.", tag: null },
-    ]);
-  });
-
-  it("splits around a single annotation, preserving plain text before and after", () => {
-    const raw = "Before ROOT CAUSE after.";
-    const annotations = buildNoticeAnnotations(raw, "POLICY", copy).filter(
-      (a) => a.id === "clear-structure",
-    );
-    const segments = segmentNoticeText(raw, annotations);
-    expect(segments.map((s) => s.text).join("")).toBe(raw);
-    expect(segments.some((s) => s.tag === "clear")).toBe(true);
-    expect(segments.filter((s) => s.tag === null).every((s) => s.text.length > 0)).toBe(true);
-  });
-
-  it("reassembles to the exact original text for a multi-annotation notice", () => {
-    const raw =
-      "We could not verify the authenticity of your products. State your root cause and corrective actions.";
-    const annotations = buildNoticeAnnotations(raw, "INAUTHENTIC", copy);
-    const segments = segmentNoticeText(raw, annotations);
-    expect(segments.map((s) => s.text).join("")).toBe(raw);
   });
 });

@@ -1,9 +1,6 @@
 // The "Try a sample notice" button on /decode. A fictional, generic notice
 // that mentions Amazon, Seller Central, ASIN, notice and policy so it passes
 // both the client-side likeness check and the server-side decode gate.
-// SAMPLE_NOTICE_ID stays for reference to the underlying fixture; the fixture
-// itself (src/core/fixtures.ts) is untouched and still used by tests.
-export const SAMPLE_NOTICE_ID = "policy-1";
 
 export const SAMPLE_NOTICE_TEXT = `Subject: Notice of account deactivation — action required
 

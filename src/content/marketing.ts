@@ -25,14 +25,11 @@ export const HOME = {
    */
   demo: {
     noticeEyebrow: "The notice",
-    pasteYourOwn: "Paste your own notice instead",
-    resultEyebrow: "What it means",
     readFromText: "Read from the text, not guessed",
     askingFor: "Amazon is asking for",
     whenDue: "When it is due",
     recordsTitle: "Records this case starts with",
     primaryCta: "Decode my notice — free",
-    secondaryCta: "See the full decode",
   },
   /** The paste tool in the hero (v5, 26 Sep 2026). It hands the text to /decode, never via the URL. */
   tool: {
@@ -181,54 +178,6 @@ export const HOME = {
       },
     ],
   },
-  insights: {
-    eyebrow: "What the notice does not tell you",
-    title: "Four things that shape an appeal before you write a word",
-    items: [
-      {
-        title: "The section number says very little",
-        body: "Section 3 is cited for failed verification, related accounts, policy breaches and complaints alike. The sentence that asks you for something is what decides your answer.",
-        link: { label: "Section 3, explained", href: "/guides/section-3" },
-      },
-      {
-        title: "Not every notice wants a Plan of Action",
-        body: "A verification request wants a document that matches your account, letter for letter. An apology letter answers a question Amazon did not ask.",
-        link: { label: "Identity verification", href: "/guides/identity-verification" },
-      },
-      {
-        title: "The same text twice shows nothing changed",
-        body: "After a refusal, Amazon looks for what is new. A copied template, or last time's wording, gives it nothing to go on.",
-        link: { label: "Writing a Plan of Action", href: "/guides/plan-of-action" },
-      },
-      {
-        title: "Fake notices target suspended sellers",
-        body: "A message asking for a fee, a password or a WhatsApp chat is worth checking in Seller Central before you act on it.",
-        link: { label: "Check a notice free", href: "/decode" },
-      },
-    ],
-  },
-  howItWorks: {
-    eyebrow: "How it works",
-    title: "From notice to response",
-    steps: [
-      {
-        title: "Decode the notice",
-        tag: "Free",
-        desc: "What Amazon is asking for, the deadline it states, the IDs it names, and anything in the message worth checking.",
-      },
-      {
-        title: "Build the case",
-        tag: "Free",
-        desc: "The records your case needs, including ones the notice does not name. Your files kept encrypted with the case, and the deadline tracked.",
-      },
-      {
-        title: "Prepare, send, follow up",
-        tag: "Appeal Pass",
-        desc: "A response built from the facts you confirm and checked for gaps. Every submission and Amazon reply kept together.",
-        link: { label: "What the Appeal Pass covers", href: "/pricing" },
-      },
-    ],
-  },
   trust: {
     eyebrow: "Before you paste anything",
     title: "What this is, and what it is not.",
@@ -283,12 +232,10 @@ export const DECODE = {
   clearButton: "Clear",
   sampleBadge: "Sample notice — not yours",
   submitButton: "Decode",
-  decodeAnotherButton: "Decode another notice",
   noticeLikenessTitle: "Before you decode",
   likenessHint:
     "This doesn't look like an Amazon notice yet. Paste the full email, including the subject line.",
   result: {
-    factReply: "Amazon is asking for",
     // v5 (26 Sep 2026): the result's headline is the answer. The accent is the part a seller acts on.
     headline: {
       PLAN_OF_ACTION: { lead: "Amazon wants a", accent: "Plan of Action." },
@@ -326,7 +273,6 @@ export const DECODE = {
     factScam: "Scam check",
     factScamClear: "No warning signs",
     factScamFlagged: "Worth checking",
-    briefEyebrow: "What this notice is about",
     deadlinesTitle: "When it is due",
     noDeadline:
       "We could not read a deadline in this text. Check the date on your Account Health page in Seller Central.",
@@ -336,10 +282,6 @@ export const DECODE = {
       "This notice names no specific records. Check the response page in Seller Central before gathering anything.",
     gatedTitle: "This case needs professional help",
     gatedFallback: "This case needs professional help. A self-serve draft is not available.",
-    nextEyebrow: "Your next step",
-    nextTitle: "Turn this into your case",
-    nextDesc:
-      "Your notice, deadline and records list come with you. Free, and no sign-up needed to start.",
     jumpTo: "Or go straight to",
     wordingTitle: "What the wording in your notice means",
     markedTitle: "Your notice, marked up",
@@ -362,7 +304,6 @@ export const DECODE = {
     // what a case like this needs that it does not name, each labelled with who raised it.
     recordsNote:
       "“We added this” marks a record cases like yours usually need, even though your notice does not name it. Confirm the list against the response page in Seller Central.",
-    recordsSource: "Source in your notice",
     entitiesTitle: "Details we found in your notice",
     entitiesNote:
       "Taken word for word from the text you pasted. Check each one before you rely on it.",
@@ -447,7 +388,6 @@ export const PRICING = {
     paidThrough: "Paid through Paddle · refund within 7 days, no reason needed",
   },
   createAccount: "Create an account",
-  readFirst: "Read before you buy",
   checkoutNote:
     "Paid through Paddle, our merchant of record. A case that already has its Pass is not charged again.",
   subline: "Decoding is free. Pay once, only when you want the full response.",
@@ -491,14 +431,11 @@ export const PRICING = {
   samplePoa: {
     trigger: "View a sample Plan of Action",
     watermark: "ILLUSTRATIVE — not a real appeal",
-    copyDisabled: "Sample only",
     title: "Sample Plan of Action",
   },
   cta: "Get the Appeal Pass",
   faqTitle: "About paying",
   faqIds: ["pass", "outcome", "refund", "files"],
-  purchaseTitle: "Ready to prepare your response?",
-  expectationsTitle: "What to expect",
 } as const;
 
 export const FOUNDER_NOTE: { name: string; location: string; text: string } | null = null;

@@ -24,7 +24,10 @@ export async function createSupabaseServerClient(): Promise<SupabaseClient | nul
             cookieStore.set(name, value, options);
           }
         } catch {
-          // Called from a Server Component — safe to ignore, session is refreshed in a Route Handler/Action.
+          // Called from a Server Component, which cannot write cookies. Safe to ignore only because
+          // the proxy (`refreshSession`) has already refreshed an expired session, saved the new
+          // cookies and forwarded them to this render. Before 30 Sep 2026 nothing did, and a
+          // refresh made here was spent and lost.
         }
       },
     },

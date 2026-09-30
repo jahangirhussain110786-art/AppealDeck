@@ -34,7 +34,6 @@ import {
 } from "./deadlinesModel";
 import type { Deadline } from "./deadlinesModel";
 import { formatDay } from "./noticeDate";
-import { FIXTURES, FIXTURE_KINDS } from "./fixtures";
 import {
   KIND_GUIDANCE,
   guidanceFor,
@@ -135,7 +134,10 @@ export type {
 } from "./clock";
 export { computeDeadlines, isIndefiniteHold, serializeDeadlines, repairStoredDeadlines, formatDay };
 export type { Deadline, DeadlineKind, DeadlineInput, SerializedDeadline } from "./deadlinesModel";
-export { FIXTURES, FIXTURE_KINDS };
+// The notice corpus itself is not re-exported (30 Sep 2026). Twenty client files import this barrel,
+// and the corpus builds its entries with a function call at load, which a bundler cannot prove
+// harmless — so the whole 43 KB of test notices was shipped in the browser bundle of /decode,
+// /vault and /case. Tests import it from "./fixtures" directly; only the types travel here.
 export type { Fixture, FixtureExpected } from "./fixtures";
 export { KIND_GUIDANCE, guidanceFor, allGuidanceStrings, GLOBAL_EXPECTATIONS, POLICY_CHECKED_ON };
 export type { KindGuidance, TriagedActions, GlobalExpectations };

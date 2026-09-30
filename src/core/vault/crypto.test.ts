@@ -2,9 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { webcrypto } from "node:crypto";
 import {
   decryptBytes,
-  decryptString,
   encryptBytes,
-  encryptString,
   exportRawKey,
   generateDek,
   importRawDek,
@@ -29,25 +27,26 @@ describe("vault crypto", () => {
     }
   });
 
-  it("roundtrips a string under passphrase-derived key", async () => {
+  // These four ran through `encryptString`/`decryptString` until 30 Sep 2026. Nothing but this file
+  // called those, and the vault encrypts with the byte functions, so the wrong-key, tamper and
+  // future-version behaviours were being tested on code no seller's data ever passed through. The
+  // string pair is removed and the tests now cover the path that is used.
+  const secret = () => new TextEncoder().encode("secret POA text");
+
+  it("roundtrips text under a passphrase-derived key", async () => {
     const params = newKdfParams(provider);
     const key = await deriveDek(provider, "correct horse battery staple", params);
-    const env = await encryptString(
-      provider,
-      key,
-      "secret POA text",
-      new TextEncoder().encode("context"),
-    );
-    const out = await decryptString(provider, key, env, new TextEncoder().encode("context"));
-    expect(out).toBe("secret POA text");
+    const env = await encryptBytes(provider, key, secret());
+    const out = await decryptBytes(provider, key, env);
+    expect(new TextDecoder().decode(out)).toBe("secret POA text");
   });
 
   it("fails clearly on wrong passphrase", async () => {
     const params = newKdfParams(provider);
     const key = await deriveDek(provider, "right", params);
-    const env = await encryptString(provider, key, "secret");
+    const env = await encryptBytes(provider, key, secret());
     const wrong = await deriveDek(provider, "wrong", params);
-    await expect(decryptString(provider, wrong, env)).rejects.toMatchObject({
+    await expect(decryptBytes(provider, wrong, env)).rejects.toMatchObject({
       name: "VaultCryptoError",
       code: "WRONG_PASSPHRASE",
     });
@@ -56,20 +55,30 @@ describe("vault crypto", () => {
   it("rejects tampered ciphertext (AES-GCM auth tag)", async () => {
     const params = newKdfParams(provider);
     const key = await deriveDek(provider, "x", params);
-    const env = await encryptString(provider, key, "secret");
+    const env = await encryptBytes(provider, key, secret());
     const ctBytes = fromBase64(env.ct);
     ctBytes[0] = ctBytes[0]! ^ 0xff;
     env.ct = toBase64(ctBytes);
-    await expect(decryptString(provider, key, env)).rejects.toBeInstanceOf(VaultCryptoError);
+    await expect(decryptBytes(provider, key, env)).rejects.toBeInstanceOf(VaultCryptoError);
   });
 
   it("rejects future envelope versions", async () => {
     const params = newKdfParams(provider);
     const key = await deriveDek(provider, "x", params);
-    const env = await encryptString(provider, key, "secret");
+    const env = await encryptBytes(provider, key, secret());
     env.v = (VAULT_ENVELOPE_VERSION + 1) as typeof VAULT_ENVELOPE_VERSION;
-    await expect(decryptString(provider, key, env)).rejects.toMatchObject({
+    await expect(decryptBytes(provider, key, env)).rejects.toMatchObject({
       code: "ENVELOPE_TOO_NEW",
+    });
+  });
+
+  it("rejects an envelope with an unsupported algorithm", async () => {
+    const params = newKdfParams(provider);
+    const key = await deriveDek(provider, "x", params);
+    const env = await encryptBytes(provider, key, secret());
+    (env as { alg: string }).alg = "AES-CBC";
+    await expect(decryptBytes(provider, key, env)).rejects.toMatchObject({
+      code: "ENVELOPE_CORRUPT",
     });
   });
 

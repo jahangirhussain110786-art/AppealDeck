@@ -168,7 +168,10 @@ export function assessNoticeAuthenticity(raw: string): AuthenticityAssessment {
     Amazon does. Only an address labelled as the rights owner's or complainant's contact is exempt; a
     "From:" line or an unlabelled address elsewhere is still checked.
   */
-  const emails = [...text.matchAll(/\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b/gi)]
+  // Bounded to what an address can be (64 before the @, 255 after), 30 Sep 2026: unbounded, the
+  // pattern restarted at every word boundary of a long dotted string with no "@" and scanned to its
+  // end, so a 49,000-character hostname-shaped paste took over three seconds on the public decoder.
+  const emails = [...text.matchAll(/\b[\w.+-]{1,64}@[\w.-]{1,255}\.[a-z]{2,}\b/gi)]
     .filter((m) => !RIGHTS_OWNER_CONTACT.test(text.slice(Math.max(0, m.index - 60), m.index)))
     .map((m) => m[0]);
   const foreignEmails = [...new Set(emails.filter((e) => !AMAZON_EMAIL.test(e)))];

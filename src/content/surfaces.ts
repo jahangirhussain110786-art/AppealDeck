@@ -43,7 +43,6 @@ export const SURFACES = {
   legal: {
     eyebrow: "Policies & support",
     navigation: "Policy navigation",
-    sectionLabel: "In this policy",
     related: "Related policies",
     privacy: "See how your case text, files and account information are handled.",
     terms: "Understand the service, your responsibilities and the limits of our support.",

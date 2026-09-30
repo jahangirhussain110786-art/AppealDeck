@@ -18,7 +18,6 @@ export const SUPPORT = {
     title: "Write to the person who built it.",
     accent: "built it.",
     lede: "Jhangir reads and answers every message.",
-    emailCta: "Email support",
     illustration: "A person at a desk, reading a reply on a laptop",
   },
   title: "Who runs this, and how to reach them",

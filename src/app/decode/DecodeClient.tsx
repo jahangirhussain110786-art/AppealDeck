@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowRight, Ban, Check, FileSearch, FileText, RefreshCw, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -463,7 +463,7 @@ function ResultView({
    * must do: the professional-help warning.
    */
   return (
-    <motion.div
+    <m.div
       className="space-y-4"
       initial="hidden"
       animate="show"
@@ -739,6 +739,6 @@ function ResultView({
           </div>
         </DetailDisclosure>
       )}
-    </motion.div>
+    </m.div>
   );
 }

@@ -15,6 +15,7 @@ let _analyzeReply: Ratelimit | null = null;
 let _documentRead: Ratelimit | null = null;
 let _outcome: Ratelimit | null = null;
 let _wording: Ratelimit | null = null;
+let _reminders: Ratelimit | null = null;
 
 function hasUpstashEnv(): boolean {
   return redisCredentials() !== null;
@@ -92,6 +93,24 @@ function getWordingLimiter(): Ratelimit | null {
     });
   }
   return _wording;
+}
+
+function getRemindersLimiter(): Ratelimit | null {
+  if (!hasUpstashEnv()) return null;
+  if (!_reminders) {
+    const redis = new Redis(redisCredentials()!);
+    // Its own limiter and key (30 Sep 2026). Reminders were counted against the outcome-sharing cap
+    // of ten a day, so a seller moving a follow-up date a few times could use up the day's outcome
+    // shares, and the eleventh date change was refused as "reminders are unavailable". Changing a
+    // date is ordinary, repeated use; the cap is only an abuse guard.
+    _reminders = new Ratelimit({
+      redis,
+      limiter: Ratelimit.fixedWindow(60, "1 d"),
+      analytics: true,
+      prefix: "ratelimit:reminders",
+    });
+  }
+  return _reminders;
 }
 
 export function isRateLimitEnabled(): boolean {
@@ -193,10 +212,50 @@ export async function rateLimitWording(user: AppUser): Promise<RateLimitResult> 
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
 
+export async function rateLimitReminders(user: AppUser): Promise<RateLimitResult> {
+  const limiter = getRemindersLimiter();
+  if (!limiter) {
+    return {
+      success: process.env.NODE_ENV !== "production",
+      limit: 60,
+      remaining: 60,
+      reset: Date.now() + 86_400_000,
+    };
+  }
+  let r;
+  try {
+    r = await limiter.limit(user.id);
+  } catch {
+    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+  }
+  return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
+}
+
+/**
+ * "About 40 minutes", "about 5 hours" — for a limit that will not clear in the next minute.
+ * Exported for the test.
+ */
+export function waitPhrase(seconds: number): string {
+  if (seconds < 90 * 60) return `about ${Math.max(2, Math.round(seconds / 60))} minutes`;
+  const hours = Math.round(seconds / 3600);
+  return hours <= 1 ? "about an hour" : `about ${hours} hours`;
+}
+
+/**
+ * The refusal. Its wording follows the window (30 Sep 2026): a per-minute limit does clear in a
+ * minute, but document reading, wording help and outcome sharing are capped per day, and telling a
+ * seller who has used their twentieth check "try again in a minute" sent them back to be refused
+ * for up to a day, each time believing it was a passing hiccup.
+ */
 export function tooManyRequestsResponse(result: RateLimitResult) {
+  const seconds = Math.max(1, Math.ceil((result.reset - Date.now()) / 1000));
+  const error =
+    seconds <= 120
+      ? "Too many requests. Please slow down and try again in a minute."
+      : `You have used up the limit for this for now. It resets in ${waitPhrase(seconds)}.`;
   return new Response(
     JSON.stringify({
-      error: "Too many requests. Please slow down and try again in a minute.",
+      error,
     }),
     {
       status: 429,

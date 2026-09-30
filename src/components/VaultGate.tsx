@@ -12,8 +12,6 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { VaultCryptoError } from "@/core/vault/envelope";
 import type { Vault, VaultStatus } from "@/core/vault/vault";
-import { EmptyState } from "@/components/EmptyState";
-import { FileText } from "lucide-react";
 import { APP } from "@/content/app";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ensureStoragePersistence } from "@/lib/vault/persistence";
@@ -527,16 +525,5 @@ function VaultDeviceRelockForm({ vault, onDone }: VaultDeviceRelockProps) {
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-export function VaultEmptyState() {
-  return (
-    <EmptyState
-      icon={FileText}
-      title={APP.vault.teachingEmpty.title}
-      description={APP.vault.teachingEmpty.description}
-      action={<></>}
-    />
   );
 }

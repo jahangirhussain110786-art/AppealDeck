@@ -1,10 +1,4 @@
-import {
-  withBreaker,
-  reserveSpend,
-  type BreakerOptions,
-  type BreakerContext,
-  type DegradedResponse,
-} from "@/lib/breaker";
+import { withBreaker, reserveSpend, type BreakerOptions, type BreakerContext } from "@/lib/breaker";
 import type { NextRequest } from "next/server";
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
@@ -432,13 +426,6 @@ export type GeminiRouteHandler = (req: NextRequest, ctx: BreakerContext) => Prom
 
 export function withGeminiBreaker(handler: GeminiRouteHandler): GeminiRouteHandler {
   return withBreaker(breakerOptions, handler);
-}
-
-export function degradedGeminiResponse(d: DegradedResponse): Response {
-  return new Response(JSON.stringify(d), {
-    status: d.reason === "circuit_open" ? 503 : 429,
-    headers: { "Content-Type": "application/json" },
-  });
 }
 
 export const __test = { parseGeminiResponse, breakerOptions, TASK_MODELS, envForTask };

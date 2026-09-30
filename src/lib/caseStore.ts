@@ -142,8 +142,12 @@ export interface CaseLog {
   resolution?: { status: "reinstated" | "rejected" | "withdrawn"; at: string };
 }
 
+// Both lookups ask for `kind: "case"` records only (30 Sep 2026). A case file, a case log, the
+// active-case pointer and the case index are all written with that kind — since the first version
+// of this store — and are a few kilobytes of JSON. They used to be found by listing the whole
+// vault, which reads every attached file's bytes too; see `Vault.list`.
 async function findRecordId(vault: Vault, name: string, caseId: string): Promise<string | null> {
-  const list = await vault.list({ caseId });
+  const list = await vault.list({ caseId, kind: "case" });
   const found = list.find((r) => r.name === name);
   return found?.id ?? null;
 }
@@ -152,8 +156,8 @@ async function findRecordId(vault: Vault, name: string, caseId: string): Promise
  * the case index both live outside any one case's `caseId` scope, since they describe the whole
  * vault. */
 async function findMetaRecordId(vault: Vault, name: string): Promise<string | null> {
-  const list = await vault.list();
-  const found = list.find((r) => r.name === name && r.kind === "case" && !r.caseId);
+  const list = await vault.list({ kind: "case" });
+  const found = list.find((r) => r.name === name && !r.caseId);
   return found?.id ?? null;
 }
 

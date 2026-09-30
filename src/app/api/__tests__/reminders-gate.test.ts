@@ -13,7 +13,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/lib/ratelimit", () => ({
-  rateLimitOutcome: (...args: unknown[]) => rateLimitMock(...args),
+  rateLimitReminders: (...args: unknown[]) => rateLimitMock(...args),
   tooManyRequestsResponse: () =>
     new Response(JSON.stringify({ error: "Slow down" }), { status: 429 }),
 }));

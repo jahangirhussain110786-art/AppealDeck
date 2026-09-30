@@ -5,12 +5,24 @@ import { Vault } from "@/core/vault/vault";
 import { VAULT_DB_NAME, VAULT_DB_VERSION } from "@/core/vault/schema";
 import { VAULT_ENVELOPE_VERSION } from "@/core/vault/envelope";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { toBase64 } from "@/core/vault/crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ScopedBrowserVault } from "./scoped";
 import { VaultDB } from "@/core/vault/db";
 
 const VAULT_BUCKET = "appealdeck-vault" as const;
+
+/**
+ * The bucket refuses any single file above this (`file_size_limit` in migration 0005). Checked
+ * before uploading, so a vault that is too big for it is said to be too big — it used to reach the
+ * seller as "Cloud backup could not be saved", a message that suggests trying again.
+ */
+export const BACKUP_MAX_BYTES = 10 * 1024 * 1024;
+/**
+ * Snapshots kept per seller. Every backup is a new timestamped file, and nothing ever removed the
+ * old ones, so a seller who backed up after each change filled their folder with copies of
+ * themselves. Three is enough that one bad or interrupted push never leaves nothing to restore.
+ */
+export const BACKUPS_KEPT = 3;
 
 export function browserWebCrypto(): Crypto {
   if (typeof globalThis.crypto === "undefined" || !globalThis.crypto.subtle) {
@@ -22,13 +34,6 @@ export function browserWebCrypto(): Crypto {
 export function getBrowserVault(name?: string): Vault {
   const cryptoObj = browserWebCrypto() as unknown as ConstructorParameters<typeof Vault>[0];
   return name ? new Vault(cryptoObj, new VaultDB(name)) : new ScopedBrowserVault(cryptoObj);
-}
-
-export interface SyncResult {
-  uploaded: number;
-  skipped: number;
-  errors: number;
-  syncedAt: string;
 }
 
 export interface SyncSummary {
@@ -58,6 +63,14 @@ export async function pushVaultToCloud(
   });
   const path = `${userId}/vault-${VAULT_ENVELOPE_VERSION}-${Date.now()}.json`;
   const blob = new Blob([payload], { type: "application/json" });
+  if (blob.size > BACKUP_MAX_BYTES) {
+    // Files travel inside the backup as text, which is about a third larger than they are on disk.
+    const packed = Math.ceil(blob.size / (1024 * 1024));
+    const limit = Math.round(BACKUP_MAX_BYTES / (1024 * 1024));
+    throw new Error(
+      `Your vault is about ${packed} MB once packed for a backup, and a cloud backup holds up to ${limit} MB. Nothing was uploaded and your files here are unchanged. Download the largest files to your own drive, remove them from the vault, and try again.`,
+    );
+  }
   const { error } = await supabase.storage.from(VAULT_BUCKET).upload(path, blob, {
     upsert: true,
     contentType: "application/json",
@@ -66,7 +79,28 @@ export async function pushVaultToCloud(
   if (error) {
     throw new Error("Cloud backup could not be saved. Your local files are unchanged.");
   }
+  await pruneOldBackups(supabase, userId);
   return { uploaded: 1, skipped: 0, errors: 0, syncedAt: new Date().toISOString() };
+}
+
+/**
+ * Removes all but the newest few snapshots of this seller's current format. Housekeeping only: the
+ * backup has already been saved, so a failure here is swallowed rather than reported as one.
+ */
+async function pruneOldBackups(supabase: SupabaseClient, userId: string): Promise<void> {
+  try {
+    const { data: files } = await supabase.storage
+      .from(VAULT_BUCKET)
+      .list(userId, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+    const prefix = `vault-${VAULT_ENVELOPE_VERSION}-`;
+    const stale = (files ?? [])
+      .filter((f: { name: string }) => f.name.startsWith(prefix))
+      .slice(BACKUPS_KEPT)
+      .map((f: { name: string }) => `${userId}/${f.name}`);
+    if (stale.length > 0) await supabase.storage.from(VAULT_BUCKET).remove(stale);
+  } catch {
+    // Old copies are only wasted space.
+  }
 }
 
 export async function pullVaultFromCloud(
@@ -122,10 +156,6 @@ export async function pullVaultFromCloud(
     },
   );
   return { imported, file: candidate.name };
-}
-
-export function asBase64(bytes: Uint8Array): string {
-  return toBase64(bytes);
 }
 
 export const __test = { VAULT_BUCKET, VAULT_DB_NAME, VAULT_DB_VERSION, Dexie };

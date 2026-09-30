@@ -105,10 +105,14 @@ const ALLOWED_CAPITALISED = new Set(
 );
 
 const MONTH_OR_DAY = new RegExp(`\\b(?:${MONTHS_AND_DAYS.join("|")})\\b`, "gi");
-const WITH_DIGIT = /[A-Za-z0-9][A-Za-z0-9./:\-#]*\d[A-Za-z0-9./:\-#]*|\d/g;
-const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
+// The three patterns below are bounded on purpose (30 Sep 2026). Unbounded, each restarted at every
+// character of a long run of word characters and scanned to its end before failing, which is
+// quadratic: a few thousand letters with no digit, "@" or dot took hundreds of milliseconds. No real
+// identifier, address or label is longer than the limits.
+const WITH_DIGIT = /[A-Za-z0-9][A-Za-z0-9./:\-#]{0,100}\d[A-Za-z0-9./:\-#]{0,100}|\d/g;
+const EMAIL = /[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,10}/g;
 // A bare domain counts too: "docs.example.com" is an address whether or not it starts with www.
-const URL = /\bhttps?:\/\/\S+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b(?:\/\S*)?/gi;
+const URL = /\bhttps?:\/\/\S+|\b(?:[a-z0-9-]{1,63}\.){1,10}[a-z]{2,63}\b(?:\/\S*)?/gi;
 const NEGATION = /\b(?:not|never|no|without|cannot)\b|n['’]t\b/gi;
 const PLANNED =
   /\b(?:will|intend(?:ed|s)?|planning|planned|plan to|plans to|aim to|hope to|expect to)\b/gi;

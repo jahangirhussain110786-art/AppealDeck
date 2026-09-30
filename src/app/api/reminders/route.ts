@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { VIOLATION_KINDS } from "@/core/violationKinds";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
-import { rateLimitOutcome, tooManyRequestsResponse } from "@/lib/ratelimit";
+import { rateLimitReminders, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { upsertCaseReminder, deleteCaseReminder, getCaseReminder } from "@/lib/caseReminders";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   const user = await getApiUser();
   if (!user) return unauthorizedJsonResponse();
 
-  const rate = await rateLimitOutcome(user);
+  const rate = await rateLimitReminders(user);
   if (!rate.success) return tooManyRequestsResponse(rate);
 
   let raw: unknown;

@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  formatDate,
-  formatLongDate,
-  formatRelativeDays,
-  formatDateWithRelative,
-  formatBytes,
-} from "@/lib/format";
+import { formatDate, formatLongDate, formatRelativeDays, formatBytes } from "@/lib/format";
 
 describe("formatDate", () => {
   it("formats a Date as 14 Sep 2026", () => {
@@ -50,14 +44,6 @@ describe("formatRelativeDays", () => {
   });
   it("shows verify message for null", () => {
     expect(formatRelativeDays(null, now)).toBe("verify in your Account Health dashboard");
-  });
-});
-
-describe("formatDateWithRelative", () => {
-  it("combines date and relative with middle dot", () => {
-    expect(
-      formatDateWithRelative(new Date(2026, 8, 14, 12, 0, 0), new Date(2026, 8, 4, 12, 0, 0)),
-    ).toBe("14 Sep 2026 · in 10 days");
   });
 });
 

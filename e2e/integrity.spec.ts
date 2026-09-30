@@ -69,6 +69,15 @@ test("guest case survives sign-in and remains private after sign-out", async ({ 
   });
   expect(severe.status()).toBe(403);
 
+  // Supabase's sign-out ends every session of the account unless asked otherwise ("global" is its
+  // default). This suite runs beside other tests signed in as the same dev account, and a global
+  // sign-out here logged them out mid-test (30 Sep 2026: two workspace tests reloaded to "Guest
+  // session" and timed out, then passed alone). This test's subject is the sign-out flow, not its
+  // reach, so it asks for this browser's session only; the button, the menu and the redirect are
+  // the ones under test, unchanged.
+  await page.route("**/auth/v1/logout**", (route) =>
+    route.continue({ url: route.request().url().replace("scope=global", "scope=local") }),
+  );
   await page.getByRole("button", { name: /account|profile/i }).click();
   await page.getByRole("menuitem", { name: /sign out/i }).click();
   await expect(page).toHaveURL(/login/);

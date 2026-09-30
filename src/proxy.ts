@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { refreshSession } from "@/lib/supabase/refreshSession";
 
 const MARKETING_HOST = process.env.NEXT_PUBLIC_MARKETING_HOST ?? "appealdeck.com";
 // Single host by default (decided 4 Sep 2026): marketing + auth + app share one origin, path-routed.
@@ -37,15 +38,19 @@ function hostOf(req: NextRequest): string {
   return (req.headers.get("host") ?? "").split(":")[0]?.toLowerCase() ?? "";
 }
 
-export function proxy(req: NextRequest) {
-  if (SINGLE_HOST) return NextResponse.next();
+/**
+ * A redirect to the other host, or null to let the request through. Split-host mode only: on a
+ * single host nothing is redirected.
+ */
+function redirectToOtherHost(req: NextRequest): NextResponse | null {
+  if (SINGLE_HOST) return null;
 
   const host = hostOf(req);
   const { pathname } = req.nextUrl;
   const url = req.nextUrl.clone();
 
-  if (pathname.startsWith("/api/")) return NextResponse.next();
-  if (pathname.startsWith("/_next") || pathname === "/icon.svg") return NextResponse.next();
+  if (pathname.startsWith("/api/")) return null;
+  if (pathname.startsWith("/_next") || pathname === "/icon.svg") return null;
 
   // Local dev: treat localhost/127.0.0.1 as the app host so app routes serve without redirect
   const isLocalDev = host === "localhost" || host === "127.0.0.1";
@@ -58,7 +63,7 @@ export function proxy(req: NextRequest) {
       url.port = "";
       return NextResponse.redirect(url);
     }
-    return NextResponse.next();
+    return null;
   }
 
   if (APP_PREFIXES.some((p) => pathname.startsWith(p)) && !isLocalDev) {
@@ -66,9 +71,18 @@ export function proxy(req: NextRequest) {
     url.port = "";
     return NextResponse.redirect(url);
   }
-  return NextResponse.next();
+  return null;
+}
+
+export async function proxy(req: NextRequest) {
+  const redirect = redirectToOtherHost(req);
+  if (redirect) return redirect;
+  // Not redirected: keep a signed-in seller's session fresh before the page renders.
+  return refreshSession(req);
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
+  // `reader/` is the on-device document reader's files (about 16 MB of scripts and models); they
+  // never involve a session, so they skip the proxy entirely.
+  matcher: ["/((?!_next/static|_next/image|reader/|favicon.ico|robots.txt|sitemap.xml).*)"],
 };

@@ -52,11 +52,6 @@ function describeDayCount(days: number): string {
   return `${Math.abs(days)} days ago`;
 }
 
-export function formatDateWithRelative(target: Date | string | null, now: Date): string {
-  if (!target) return "";
-  return `${formatDate(target)} · ${formatRelativeDays(target, now)}`;
-}
-
 /** Long-form, locale-fixed date ("September 19, 2026") for formal external documents (email
  * receipts) where a compact/local-timezone-flavoured formatDate() would read oddly. */
 export function formatLongDate(d: string | Date): string {

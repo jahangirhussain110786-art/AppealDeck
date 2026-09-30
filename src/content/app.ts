@@ -12,7 +12,6 @@ export const APP = {
   checkout: {
     opening: "Opening checkout…",
     unavailableTitle: "Checkout unavailable",
-    unavailableDesc: "Payment is temporarily offline. Please try again in a moment.",
     loadFailedTitle: "Checkout failed to load",
     loadFailedDesc: "Check your network and disable ad blockers, then try again.",
   },
@@ -49,7 +48,6 @@ export const APP = {
       actionsTitle: "What happens next",
       required: "Required",
       optional: "Optional",
-      startCta: "Start your case — free",
       // Was "Sign in when the interview reaches your documents" — there has been no interview since
       // 22 Sep 2026, and a guest can attach documents without signing in.
       startNote:
@@ -105,12 +103,7 @@ export const APP = {
     refresh: "Refresh",
     attach: "Attach",
     attached: "Attached",
-    noneRequired: "No required evidence for this violation kind.",
-    availableKinds: "Available kinds: {kinds}",
-    encryptedNote: "Files are encrypted on this device before being saved to the vault.",
     openVault: "Open the vault",
-    priorityBadge: "Amazon asked for this in their reply",
-    requestTemplate: "Get a request template",
     /**
      * AA-41. Every string here describes the document and stops. None of them may say a file is
      * authentic, valid or acceptable — that is Amazon's call and nobody else's, and the check
@@ -163,12 +156,6 @@ export const APP = {
         "Read from a picture. Letters and digits can be misread, and a zero can look like the letter O, so check every date, name, ID and ASIN against the original.",
       beforeDevice:
         "Identity, bank and proof-of-address documents are checked on this device only. The file is never uploaded.",
-    },
-    requestDialog: {
-      description:
-        "AppealDeck never sends anything on your behalf. Copy this, fill in the brackets, and send it yourself.",
-      copy: "Copy",
-      close: "Close",
     },
   },
   dashboard: {
@@ -244,8 +231,6 @@ export const APP = {
     active: {
       heading: "Appeal Pass active",
       planLabel: "Plan",
-      grantedLabel: "Granted",
-      licenseLabel: "License",
     },
     inactive: {
       heading: "No active Appeal Pass",
@@ -376,8 +361,6 @@ export const APP = {
       placeholder: "Paste the full reply here…",
       submit: "Analyze reply",
       analyzing: "Analyzing…",
-      resultsTitle: "Category: {category}",
-      noReplyYet: "No reply received yet",
       markedAs: "Amazon marked this as:",
       updateButton: "Update case",
       cancelButton: "Cancel",
@@ -444,7 +427,6 @@ export const APP = {
     title: "Billing",
     eyebrow: "Account tools",
     subtitle: "Check your pass, manage devices and find payment support.",
-    statusLabel: "Access",
     planName: "Appeal Pass",
     dateUnavailable: "Not recorded",
     continue: "Open your dashboard",
@@ -531,20 +513,16 @@ export const APP = {
     },
     cryptoDetails:
       "File contents use AES-GCM 256-bit encryption (envelope v{version}). Automatic unlock uses a key held by this browser. Passphrase mode uses PBKDF2-SHA-256 with 310,000 iterations. Cloud backups include an encrypted copy of the content key plus visible file metadata; the backup passphrase is not uploaded.",
-    envelopeCaption: "Envelope v{version} · AES-GCM 256-bit file encryption",
     teachingEmpty: {
       title: "No evidence yet",
       description:
         "Add the original records requested in your notice. Then link and review them in your case.",
       action: "Choose a file",
     },
-    recordCount: "{count} record(s)",
-    totalSize: "Total: {size}",
     encryptedBadge: "Encrypted",
     evidenceKindLabel: "Document type",
     filterLabel: "Filter by document type",
     allTypes: "All document types",
-    evidenceKindPlaceholder: "Select evidence kind",
     caseRecordsHidden:
       "Case notes and history are in your dashboard. This library shows original files.",
     actions: {
@@ -645,9 +623,6 @@ export const APP = {
     choose: "Choose a file",
     maxMb: "Max 10 MB per file. Encrypted on this device before storage.",
     tooLarge: "File too large",
-    alreadyHave: "Already have this in your vault?",
-    pickFromVault: "Pick from vault",
-    noMatching: "No matching records in your vault.",
     attach: "Attach",
     attached: "Attached",
     wrongType: "That file type is not accepted",
@@ -660,9 +635,5 @@ export const APP = {
     addFailed: "Add failed",
     takePhoto: "Take a photo",
     uploadedLabel: "Uploaded",
-  },
-  breadcrumb: {
-    home: "Home",
-    dashboard: "Dashboard",
   },
 } as const;
