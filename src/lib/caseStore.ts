@@ -449,3 +449,41 @@ export async function deleteCase(vault: Vault, caseId: string): Promise<{ docume
     return { documents: records.filter((r) => r.kind === "document").length };
   });
 }
+
+/**
+ * The state a case file should hold once `log` is saved, or `null` when it already holds it.
+ *
+ * Recording an outcome writes the new state into the log, but the clock, the "waiting on Amazon"
+ * card and the case summary all read the case file's own state, so a settled case kept saying it
+ * was waiting until something else rewrote the file (6 Oct 2026). Only the two outcome-driven
+ * moves are made here: a recorded outcome settles the file, and clearing it moves a settled file
+ * back to waiting (if anything was sent) or intake. Any other state is left to the workspace.
+ */
+export function fileStateAfterLog(
+  file: Pick<CaseFile, "state"> & { workspace?: { submissions: readonly { source?: string }[] } },
+  log: Pick<CaseLog, "resolution" | "attemptCount" | "submittedAt">,
+): CaseState | null {
+  if (log.resolution) {
+    const next: CaseState = log.resolution.status === "reinstated" ? "APPROVED" : "CLOSED";
+    return next === file.state ? null : next;
+  }
+  if (file.state !== "APPROVED" && file.state !== "CLOSED") return null;
+  const hadSubmission =
+    log.attemptCount > 0 ||
+    log.submittedAt !== undefined ||
+    Boolean(file.workspace?.submissions.some((s) => s.source !== "prior"));
+  return hadSubmission ? "SUBMITTED" : "INTAKE";
+}
+
+/**
+ * Saves the log, then keeps the case file's state in step with the outcome it records. Written as
+ * two saves rather than one transaction because `saveCaseFile` opens its own; the file is re-read
+ * after the log is saved so a state change never overwrites newer workspace content.
+ */
+export async function saveCaseLogAndState(vault: Vault, log: CaseLog): Promise<void> {
+  await saveCaseLog(vault, log);
+  const file = await loadCaseFile(vault);
+  if (!file) return;
+  const next = fileStateAfterLog(file, log);
+  if (next && next !== file.state) await saveCaseFile(vault, { ...file, state: next });
+}

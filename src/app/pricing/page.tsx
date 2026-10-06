@@ -150,7 +150,10 @@ export default function PricingPage() {
               );
             })}
           </div>
-          <p className="mt-5 text-center text-sm text-muted-foreground">{PRICING.checkoutNote}</p>
+          <p className="mx-auto mt-6 max-w-prose text-center text-base font-medium text-foreground">
+            {PRICING.freeVersusPass}
+          </p>
+          <p className="mt-3 text-center text-sm text-muted-foreground">{PRICING.checkoutNote}</p>
         </section>
 
         <section className="py-16">

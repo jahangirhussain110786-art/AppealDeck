@@ -119,7 +119,7 @@ function caveatFor(deadline: DeadlineLike): string | null {
     return "The date your notice gives. If Account Health shows a different one, go by Account Health.";
   }
   if (kind === "funds_review") {
-    return "Typical, not automatic. The 90-day checkpoint is a review, not an automatic release.";
+    return "Do not assume funds are released on a fixed date. They come back with reinstatement, or after Amazon's separate funds review.";
   }
   if (kind === "funds_appeal_eligible") {
     return "Funds appeal becomes available at this point. Submit when you can include evidence.";

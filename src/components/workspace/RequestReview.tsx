@@ -18,6 +18,7 @@ import {
 import { WORKSPACE as C } from "@/content/workspace";
 import { DECODE } from "@/content/marketing";
 import { APP } from "@/content/app";
+import { STORES } from "@/content/stores";
 import { assessNoticeAuthenticity } from "@/core/noticeAuthenticity";
 import { stripInvisibleChars } from "@/lib/idNormalize";
 import { detectOtherAmazonStore } from "@/lib/amazonStore";
@@ -40,6 +41,7 @@ export function RequestReview({
   onSave,
   onCommitWorkspace,
   onKindChange,
+  onMarkSentWaiting,
   draft,
   onDraftChange,
 }: {
@@ -53,6 +55,8 @@ export function RequestReview({
   onCommitWorkspace: (w: Workspace) => Promise<boolean>;
   /** B-06: corrects the violation kind and adds any records the new kind requires. */
   onKindChange: (next: ViolationKind) => Promise<boolean>;
+  /** A5: the seller already sent their appeal and is waiting. Absent once the case is waiting. */
+  onMarkSentWaiting?: () => Promise<boolean>;
   draft?: Record<string, string>;
   onDraftChange: (key: string, value: string | undefined) => void;
 }) {
@@ -196,7 +200,7 @@ export function RequestReview({
         {otherStore && value.marketplace === "US" && (
           <Alert>
             <AlertDescription>
-              {`Your notice mentions ${otherStore} — check the store is right. Only Amazon US requests are supported here; if this one is from another store, choose "${R.stores.other}" under "${R.change}".`}
+              {`Your notice mentions ${otherStore}. ${STORES.nonUsNotice} If this one is from another store, choose "${R.stores.other}" under "${R.change}".`}
             </AlertDescription>
           </Alert>
         )}
@@ -273,7 +277,12 @@ export function RequestReview({
           different response, not a differently-formatted one — and that changes the plan rather
           than decorating it. Saved through the same `onSave` as everything else here.
         */}
-        <PriorAttempts workspace={workspace} busy={busy} onSave={onCommitWorkspace} />
+        <PriorAttempts
+          workspace={workspace}
+          busy={busy}
+          onSave={onCommitWorkspace}
+          onMarkSentWaiting={onMarkSentWaiting}
+        />
         <div className="space-y-2">
           <div className="flex flex-wrap gap-3">
             <Button

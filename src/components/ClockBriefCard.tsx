@@ -4,6 +4,7 @@ import { AlertTriangle, CalendarClock, CheckCircle2, Clock } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { describeClockItem, type ClockBrief, type ClockItem } from "@/core";
+import { pastDeadlineNextStep } from "@/core/clock";
 import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
 import { DeadlineChipList, type DeadlineLike } from "@/components/DeadlineChip";
@@ -100,6 +101,7 @@ export function ClockBriefCard({
 }
 
 function ClockRow({ item }: { item: ClockItem }) {
+  const nextStep = pastDeadlineNextStep(item);
   return (
     <li className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
       <span
@@ -119,6 +121,7 @@ function ClockRow({ item }: { item: ClockItem }) {
           {APP.dashboard.clock.newBadgeShort}
         </Badge>
       )}
+      {nextStep && <span className="basis-full text-xs text-muted-foreground">{nextStep}</span>}
     </li>
   );
 }

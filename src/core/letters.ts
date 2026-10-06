@@ -12,10 +12,10 @@ function invoiceFieldsBulleted(kind: ViolationKind): string {
   const base = [
     "Supplier's full business name",
     "Supplier's physical address",
-    "Supplier's phone number or contact email",
-    "Invoice date (within the last 365 days)",
+    "Supplier's phone number, contact email and website",
+    "Invoice date within the 365 days before Amazon's notice dated [DATE]",
     "Line items that map to the ASIN(s) in your appeal",
-    "Invoiced quantity consistent with the units sold in the complaint window",
+    "Invoiced quantity that covers what I sold of each cited ASIN in the 365 days before that notice",
   ];
   if (kind === "INTELLECTUAL_PROPERTY") {
     base.push("Proof the supplier is an authorized distributor or the brand itself");
@@ -38,10 +38,11 @@ ${invoiceFieldsBulleted("INAUTHENTIC_DOCUMENTS")}
 
 Important notes:
 - The invoice must reflect a completed transaction (pro-forma invoices and quotes do not pass).
-- Amazon independently verifies suppliers, including by phone — the contact details must be real and reachable.
-- Order-confirmation screenshots, self-created spreadsheets, and retail receipts are not accepted at wholesale scale.
+- Amazon may contact you to check the invoice, so the contact details must be real and reachable.
+- The invoice must be issued by your business, not by me, and the supplier must not appear to be the same entity as the buyer.
+- Order-confirmation screenshots, self-created spreadsheets, and retail receipts are usually refused.
 
-Please send the invoice as a PDF. Thank you.
+Please send the invoice as a PDF, JPG, PNG or GIF. Thank you.
 `,
 };
 

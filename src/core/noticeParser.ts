@@ -1,6 +1,6 @@
 import type { ViolationKind } from "./index";
 import { DOCUMENT_FABRICATION } from "./violationKinds";
-import { receiptDateOf, statedDeadlineOf } from "./noticeDate";
+import { receiptDateOf, receiptDateReadings, statedDeadlineOf } from "./noticeDate";
 import type { StatedDeadline } from "./noticeDate";
 
 export interface ParsedNotice {
@@ -23,6 +23,18 @@ export interface ParsedNotice {
    * see `statedDeadlineOf`. Preferred over `statedWindowDays`, because it needs no start date.
    */
   statedDeadline: StatedDeadline | null;
+  /**
+   * A window the notice gives in business days ("respond within 3 business days"). Kept apart from
+   * `statedWindowDays` on purpose: it is never counted into a calendar date, because business days
+   * depend on a holiday calendar the product does not have. Null when the notice gives none.
+   */
+  statedBusinessDays: number | null;
+  /**
+   * Both readings (YYYY-MM-DD, day-first then month-first) of an all-numeric header date that could
+   * be either — 12/09/2026 is 12 September or 9 December. Null when the date was settled or absent.
+   * Deadlines are still not counted from it.
+   */
+  ambiguousReceipt: [string, string] | null;
 }
 
 /**
@@ -92,6 +104,89 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   ],
 ];
 
+const NUMBER_WORDS: Readonly<Record<string, number>> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  twelve: 12,
+  fourteen: 14,
+  fifteen: 15,
+  twenty: 20,
+  thirty: 30,
+  sixty: 60,
+  ninety: 90,
+};
+
+/** "7", "seven (7)", "seven". Group 1 is digits (with or without a word before them), group 2 a bare word. */
+const NUM = `(?:(?:[a-z]+(?:-[a-z]+)?\\s*\\(\\s*)?(\\d{1,3})\\s*\\)?|(${Object.keys(NUMBER_WORDS).join("|")}))`;
+const UNIT = "(?:\\s+(calendar|business|working))?\\s+(days?|weeks?)\\b";
+/** What a seller is asked to do inside a window. Not "ship": a handling-time rule is not a notice deadline. */
+const SELLER_VERBS =
+  "respond|reply|verify|upload|provide|submit|resubmit|send|appeal|complete|confirm|return|correct|update|contact";
+
+const WITHIN = new RegExp(
+  `\\b(?:within|in|inside|by\\s+the\\s+end\\s+of)\\s+(?:the\\s+next\\s+)?${NUM}${UNIT}`,
+  "gi",
+);
+const YOU_HAVE = new RegExp(
+  `\\byou\\s+(?:will\\s+)?(?:have|are\\s+given|get)\\s+(?:exactly\\s+|up\\s+to\\s+)?${NUM}${UNIT}(?:\\s+(?:from|after)\\b[^.!?\\n]{0,60}?)?\\s+to\\s+(?:${SELLER_VERBS})\\b`,
+  "gi",
+);
+const HAS_SELLER_VERB = new RegExp(`\\b(?:${SELLER_VERBS})\\b`, "i");
+/** Amazon is the actor: its own timetable ("we will review within 5 days"), not the seller's deadline. */
+const AMAZON_SUBJECT =
+  /\b(?:we|amazon|our\s+team)\b|\b(?:funds?|payments?|disbursements?)\s+(?:will|may|can|should|is|are)\b/i;
+const SELLER_AGENCY =
+  /\byou\s+(?:must|need|should|have\s+to|are\s+required|do\s+not|don't|fail|can|may|will\s+need|to)\b|\bif\s+you\b|\bunless\s+you\b|\bonce\s+you\b|\bwhen\s+you\b|\bneed\s+you\b|\bask(?:ing)?\s+you\b/i;
+
+export interface GenericWindows {
+  /** Distinct calendar-day windows found. */
+  calendar: number[];
+  /** Distinct business-day windows found. Never turned into a calendar date. */
+  business: number[];
+}
+
+/**
+ * Windows worded around a duty rather than around "appeal": "verify your identity within seven (7)
+ * days", "respond within 3 business days", "you have 14 days to upload a document". Added 6 Oct 2026
+ * — none of these were read, so a verification notice with a seven-day clock showed "no stated
+ * window". Amazon's own timetable is skipped, and a business-day window is reported as such because
+ * counting business days from a date needs a holiday calendar we do not have.
+ */
+export function genericWindowsOf(raw: string): GenericWindows {
+  const calendar = new Set<number>();
+  const business = new Set<number>();
+  const record = (m: RegExpMatchArray): void => {
+    const word = m[2];
+    const n = m[1] !== undefined ? Number(m[1]) : NUMBER_WORDS[word!.toLowerCase()];
+    if (!n || n <= 0) return;
+    const kind = (m[3] ?? "").toLowerCase();
+    const weeks = (m[4] ?? "").toLowerCase().startsWith("week");
+    const days = weeks ? n * 7 : n;
+    if (days > 365) return;
+    if (kind === "business" || kind === "working") business.add(days);
+    else calendar.add(days);
+  };
+  for (const sentence of raw.split(/\n+|(?<=[.!?])\s+/)) {
+    if (sentence.length > 1000) continue;
+    for (const m of sentence.matchAll(WITHIN)) {
+      const before = sentence.slice(0, m.index);
+      if (!HAS_SELLER_VERB.test(sentence)) continue;
+      if (AMAZON_SUBJECT.test(before) && !SELLER_AGENCY.test(before)) continue;
+      record(m);
+    }
+    for (const m of sentence.matchAll(YOU_HAVE)) record(m);
+  }
+  return { calendar: [...calendar], business: [...business] };
+}
+
 export function parseNotice(raw: string): ParsedNotice {
   const kindHints: ViolationKind[] = [];
   for (const [kind, re] of KIND_PATTERNS) {
@@ -116,7 +211,17 @@ export function parseNotice(raw: string): ParsedNotice {
       if (days > 0 && days <= 365) windows.add(days);
     }
   }
-  const statedWindowDays = windows.size === 1 ? [...windows][0]! : null;
+  let statedWindowDays = windows.size === 1 ? [...windows][0]! : null;
+  // Only when no appeal-worded window exists at all: an appeal clock is never overruled by a
+  // generic one, and two different generic clocks are left ambiguous rather than chosen between.
+  let statedBusinessDays: number | null = null;
+  if (windows.size === 0) {
+    const generic = genericWindowsOf(raw);
+    if (generic.calendar.length + generic.business.length === 1) {
+      if (generic.calendar.length === 1) statedWindowDays = generic.calendar[0]!;
+      else statedBusinessDays = generic.business[0]!;
+    }
+  }
   const mentionsFunds = /disbursement|funds? (?:is|are|under) (?:on hold|under review)/i.test(raw);
   const mentionsFundsAppeal = /funds? appeal|disbursement-appeals/i.test(raw);
   const mentionsSellerChallenge = /seller challenge|account health assurance/i.test(raw);
@@ -135,5 +240,7 @@ export function parseNotice(raw: string): ParsedNotice {
     windowAmbiguous,
     receivedOn,
     statedDeadline,
+    statedBusinessDays,
+    ambiguousReceipt: receiptDateReadings(raw),
   };
 }

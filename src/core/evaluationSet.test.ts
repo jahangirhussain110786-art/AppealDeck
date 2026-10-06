@@ -182,7 +182,7 @@ describe("the evaluation set", () => {
     ]);
   });
 
-  it("6. a record the seller cannot obtain: said in their words, and the draft stays a working draft", () => {
+  it("6. a record the seller cannot obtain: said in their words, under its own heading", () => {
     const w = confirmed(INVOICE_REQUEST);
     const invoice = w.requirements.find((r) => requirementEvidenceKind(r) === "supplier_invoice")!;
     const declined: Workspace = {
@@ -204,7 +204,7 @@ describe("the evaluation set", () => {
       ),
     };
     const draft = composeWorkspace({ kind: "INAUTHENTIC", workspace: declined }, 1);
-    expect(draft.mode.mode).toBe("gap-draft");
+    expect(draft.mode.mode).toBe("full-draft");
     expect(JSON.stringify(draft.sections)).toContain(
       "The supplier closed in 2025 and issues no invoices.",
     );

@@ -72,7 +72,7 @@ describe("deadlinesModel (AM-03)", () => {
     expect(ds.find((d) => d.kind === "appeal_window")?.dueAt).toBeNull();
   });
 
-  it("computes the 60/90-day funds model from deactivation", () => {
+  it("computes the 60-day funds-appeal date from deactivation and keeps no dated 90-day checkpoint", () => {
     const p = parseNotice(FIXTURES.find((f) => f.id === "funds-1")!.raw);
     const ds = computeDeadlines({
       noticeReceivedAt: new Date("2026-09-01"),
@@ -86,12 +86,14 @@ describe("deadlinesModel (AM-03)", () => {
         ?.dueAt?.toISOString()
         .slice(0, 10),
     ).toBe("2026-10-31");
-    expect(
-      ds
-        .find((d) => d.kind === "funds_review")
-        ?.dueAt?.toISOString()
-        .slice(0, 10),
-    ).toBe("2026-11-30");
+    // Corrected 6 Oct 2026: the "~90-day checkpoint" had no current source; it is undated guidance now.
+    expect(ds.find((d) => d.kind === "funds_review")?.dueAt).toBeNull();
+    const noDate = computeDeadlines({
+      noticeReceivedAt: new Date("2026-09-01"),
+      parsed: p,
+      kind: "FUNDS",
+    });
+    expect(noDate.find((d) => d.kind === "funds_appeal_eligible")?.dueAt).toBeNull();
   });
 
   it("treats the severity-gated inauthentic class as an indefinite hold (no countdown)", () => {

@@ -101,16 +101,69 @@ export function dayIn(value: string): string | null {
 }
 
 /**
+ * An all-numeric date: 25/09/2026, 09/25/2026, 12.09.2026, 9/12/26. Added 6 Oct 2026 — these were
+ * refused outright, including the ones that cannot be misread (a part above 12 is a day).
+ *
+ * - A dot is the European day.month.year form, which is how a dotted date is written.
+ * - With a slash or hyphen, one part above 12 settles it; both parts equal settles it too.
+ * - Otherwise it is genuinely March-or-December, and both readings are returned so the caller can
+ *   say "we read this as 12 Sep or 9 Dec — check" instead of silently dropping the date.
+ */
+export interface NumericDate {
+  /** The reading, when only one exists. */
+  day: string | null;
+  /** Both readings (day-first, then month-first) when the text cannot decide between them. */
+  readings: [string, string] | null;
+}
+
+const NUMERIC_DATE = /(?<![\d/.-])(\d{1,2})([/.-])(\d{1,2})\2(\d{4}|\d{2})(?!\d)/;
+
+export function numericDateIn(value: string): NumericDate | null {
+  const m = NUMERIC_DATE.exec(value);
+  if (!m) return null;
+  const a = Number(m[1]);
+  const b = Number(m[3]);
+  const sep = m[2]!;
+  // A two-digit year is only believed with a slash; "4.2.10" is a section number, not a date.
+  if (m[4]!.length === 2 && sep !== "/") return null;
+  const year = m[4]!.length === 2 ? 2000 + Number(m[4]) : Number(m[4]);
+  const dayFirst = isoDay(year, b, a);
+  const monthFirst = isoDay(year, a, b);
+  if (sep === ".") return { day: dayFirst, readings: null };
+  if (a > 12) return { day: dayFirst, readings: null };
+  if (b > 12) return { day: monthFirst, readings: null };
+  if (a === b) return { day: dayFirst, readings: null };
+  if (dayFirst && monthFirst) return { day: null, readings: [dayFirst, monthFirst] };
+  return { day: dayFirst ?? monthFirst, readings: null };
+}
+
+/**
  * The day the notice was sent, as YYYY-MM-DD, when the pasted text states exactly one. Null when it
  * states none, only an ambiguous one, or more than one different day.
  */
 export function receiptDateOf(raw: string): string | null {
   const days = new Set<string>();
   for (const match of raw.matchAll(HEADER)) {
-    const day = dayIn(match[1]!);
+    const day = dayIn(match[1]!) ?? numericDateIn(match[1]!)?.day ?? null;
     if (day) days.add(day);
   }
   return days.size === 1 ? [...days][0]! : null;
+}
+
+/**
+ * The two possible days when the notice's header date is all-numeric and could be read either way
+ * (12/09/2026 is 12 September or 9 December), and no other header settles it. The caller shows both
+ * and asks the seller to check; deadlines are still never counted from a date we had to guess.
+ */
+export function receiptDateReadings(raw: string): [string, string] | null {
+  if (receiptDateOf(raw)) return null;
+  const pairs = new Map<string, [string, string]>();
+  for (const match of raw.matchAll(HEADER)) {
+    if (dayIn(match[1]!)) continue;
+    const numeric = numericDateIn(match[1]!);
+    if (numeric?.readings) pairs.set(numeric.readings.join("|"), numeric.readings);
+  }
+  return pairs.size === 1 ? [...pairs.values()][0]! : null;
 }
 
 /**

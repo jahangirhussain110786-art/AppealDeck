@@ -87,6 +87,13 @@ export interface FieldFinding {
 export interface CheckContext {
   /** Today, YYYY-MM-DD. */
   today: string;
+  /**
+   * The date of Amazon's notice, YYYY-MM-DD, when the case holds one. Amazon counts a record's age
+   * back from its own notice ("within 365 days before the date of this notice"), not from the day
+   * the seller checks, so a 14-month-old invoice can be inside the window of a notice sent a few
+   * weeks after it was issued. Without it the window is counted from `today`, and the finding says so.
+   */
+  noticeDate?: string;
   /** ASINs named in the notice or earlier requests on this case. */
   asins: readonly string[];
   /** Case and complaint IDs named in the notice or earlier requests. */
@@ -372,6 +379,25 @@ export function buildDocumentCheck(
   };
 }
 
+/**
+ * True when a reading of something filed as a supplier invoice found none of the three things every
+ * invoice carries: a supplier name, an address and an issue date (B3, 6 Oct 2026). Almost always a
+ * wrong file: a photo of the product, a screenshot, a different document. Said calmly above the rows
+ * so the seller checks the file, instead of reading eight "Not found" badges as eight separate faults.
+ *
+ * Only a finding the reading actually made as "missing" counts. A field not read at all, or one that
+ * could not be read, says nothing about whether the document is an invoice.
+ */
+export function looksLikeWrongDocument(
+  result: Pick<DocumentCheckResult, "evidenceKind" | "findings">,
+): boolean {
+  if (result.evidenceKind !== "supplier_invoice") return false;
+  const named = [/^supplier business name$/i, /^supplier physical address$/i, /^issue date\b/i];
+  return named.every((pattern) =>
+    result.findings.some((f) => pattern.test(f.field.trim()) && f.status === "missing"),
+  );
+}
+
 /** A mismatch between a scanned page and the case, shown as unreadable rather than as a conflict. */
 function softenPictureMismatch(f: FieldFinding, comparison: FieldComparison): FieldFinding {
   // A date keeps its status - that a scanned invoice really is over a year old is the most useful
@@ -412,7 +438,7 @@ function compare(
   if (f.status !== "present" || !f.observed) return f;
   switch (comparison.kind) {
     case "date_window":
-      return context ? compareDateWindow(f, comparison.days, context.today) : notAssessedDate(f);
+      return context ? compareDateWindow(f, comparison.days, context) : notAssessedDate(f);
     case "asin":
       return compareAsins(f, context?.asins ?? []);
     case "reference_id":
@@ -512,9 +538,20 @@ function notAssessedDate(f: FieldFinding): FieldFinding {
   };
 }
 
-function compareDateWindow(f: FieldFinding, days: number, today: string): FieldFinding {
+function compareDateWindow(
+  f: FieldFinding,
+  days: number,
+  context: Pick<CheckContext, "today" | "noticeDate">,
+): FieldFinding {
   const readings = documentDateReadings(f.observed!);
-  const comparedWith = `Today's date, ${formatDay(today)}`;
+  // The window is counted back from the notice's own date when the case holds one, and from today
+  // otherwise. Every sentence below says which, so a seller can see what the date was compared with.
+  const byNotice = Boolean(context.noticeDate);
+  const today = context.noticeDate ?? context.today;
+  const comparedWith = byNotice
+    ? `The date of your notice, ${formatDay(today)}`
+    : `Today's date, ${formatDay(today)}`;
+  const before = byNotice ? `the notice dated ${formatDay(today)}` : "today";
   if (readings.length === 0) {
     return {
       ...f,
@@ -543,26 +580,69 @@ function compareDateWindow(f: FieldFinding, days: number, today: string): FieldF
   const shown = readings.map(formatDay).join(" or ");
   switch ([...outcomes][0]) {
     case "future":
-      return {
-        ...f,
-        status: "conflicting",
-        comparedWith,
-        note: `Dated ${shown}, which is after today. Check the date on the original.`,
-      };
+      // After today is a date that cannot be right. After the notice is a record issued once the
+      // notice was sent (a supplier reissuing an invoice, say), which is not a conflict but is not
+      // "within 365 days before the notice" either, so it is left for the seller to judge.
+      return byNotice
+        ? {
+            ...f,
+            status: "unclear",
+            comparedWith,
+            note: `Dated ${shown}, which is after ${before}. Amazon counts the ${days} days back from its notice, so check the date on the original and that it covers what you sold before then.`,
+          }
+        : {
+            ...f,
+            status: "conflicting",
+            comparedWith,
+            note: `Dated ${shown}, which is after today. Check the date on the original.`,
+          };
     case "outside":
       return {
         ...f,
         status: "conflicting",
         comparedWith,
-        note: `Dated ${shown}. ${either} is more than ${days} days before today, outside the window this record must fall in.`,
+        note: `Dated ${shown}. ${either} is more than ${days} days before ${before}, outside the window this record must fall in.`,
       };
     default:
       return {
         ...f,
         comparedWith,
-        note: `Dated ${shown}. ${either} is within the ${days} days this record must fall in.`,
+        note: byNotice
+          ? `Dated ${shown}. ${either} is within ${days} days before ${before}, the window this record must fall in.`
+          : `Dated ${shown}. ${either} is within the ${days} days this record must fall in.`,
       };
   }
+}
+
+/**
+ * Counts every date-window finding in a check from the notice's date instead of today.
+ *
+ * The AI reading runs on the server, which knows only today's date, so its date findings were
+ * judged against the day the check ran. The quoted date is still on each finding, so the comparison
+ * is simply made again here with the case's own anchor. A finding the reading did not compare (a
+ * missing or unreadable date) has no `comparedWith` and is left exactly as it was.
+ */
+export function reanchorDateWindows(
+  result: DocumentCheckResult,
+  kind: ViolationKind,
+  context: Pick<CheckContext, "today" | "noticeDate">,
+): DocumentCheckResult {
+  if (!context.noticeDate) return result;
+  const findings = result.findings.map((f) => {
+    const comparison = comparisonFor(f.field);
+    if (comparison?.kind !== "date_window" || !f.observed || !f.comparedWith) return f;
+    if (!f.comparedWith.startsWith("Today's date")) return f;
+    return compareDateWindow({ ...f, status: "present", note: "" }, comparison.days, context);
+  });
+  const requirement = requirementForCheck(kind, result.evidenceKind);
+  const expected = findings.slice(0, requirement?.fields.length ?? 0);
+  return {
+    ...result,
+    findings,
+    triggeredDisqualifiers: triggeredDisqualifiers(requirement, findings),
+    allRequiredFieldsPresent:
+      expected.length > 0 && expected.every((f) => f.status === "present" && Boolean(f.observed)),
+  };
 }
 
 const ASIN_IN_TEXT = /\bB0[A-Z0-9]{8}\b/g;
@@ -758,6 +838,8 @@ export function checkContextKey(ctx: {
   referenceIds?: readonly string[];
   business?: { name?: string; address?: string };
   suppliers?: readonly string[];
+  /** Part of the key only when the case has one, so a case without a dated notice keeps its key. */
+  noticeDate?: string;
 }): string {
   const norm = (xs: readonly string[] | undefined) =>
     [...new Set((xs ?? []).map((x) => x.trim().toLowerCase()).filter(Boolean))].sort();
@@ -767,6 +849,7 @@ export function checkContextKey(ctx: {
     (ctx.business?.name ?? "").trim().toLowerCase(),
     (ctx.business?.address ?? "").trim().toLowerCase().replace(/\s+/g, " "),
     norm(ctx.suppliers),
+    ...(ctx.noticeDate ? [ctx.noticeDate] : []),
   ]);
 }
 

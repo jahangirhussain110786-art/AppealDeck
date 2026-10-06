@@ -21,6 +21,7 @@
 import type { EvidenceKind, ViolationKind } from "@/core";
 import {
   buildDocumentCheck,
+  reanchorDateWindows,
   requirementForCheck,
   type DocumentCheckResult,
 } from "@/core/documentCheck";
@@ -190,6 +191,7 @@ async function readOnDevice(
         today: localToday(),
         asins: ctx?.asins ?? [],
         referenceIds: ctx?.referenceIds ?? [],
+        ...(ctx?.noticeDate ? { noticeDate: ctx.noticeDate } : {}),
         ...context,
       },
       // Every quote is a line copied out of the document by code, not a model's words. A picture
@@ -228,6 +230,11 @@ function localToday(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+function withoutNoticeDate(data: DocumentCheckCaseData): Omit<DocumentCheckCaseData, "noticeDate"> {
+  const { noticeDate: _anchor, ...rest } = data;
+  return rest;
+}
+
 /** The AI reading on the server. */
 async function readWithAi(input: RunCheckInput): Promise<CheckOutcome> {
   if (!SERVER_READABLE.includes(input.mimeType)) {
@@ -260,7 +267,9 @@ async function readWithAi(input: RunCheckInput): Promise<CheckOutcome> {
         evidenceKind: input.evidenceKind,
         mimeType: input.mimeType,
         data: toBase64(input.bytes),
-        ...(input.caseData ? { context: input.caseData } : {}),
+        // The notice date stays here: the server judges dates against its own clock, and the
+        // reading is re-anchored below once it comes back.
+        ...(input.caseData ? { context: withoutNoticeDate(input.caseData) } : {}),
       }),
     });
     // Should be unreachable after the check above; kept so a lowered host limit still gets a reason.
@@ -298,7 +307,16 @@ async function readWithAi(input: RunCheckInput): Promise<CheckOutcome> {
         fileSent: true,
       };
     }
-    return { kind: "fields", result: body.check as DocumentCheckResult };
+    const check = body.check as DocumentCheckResult;
+    return {
+      kind: "fields",
+      result: input.caseData?.noticeDate
+        ? reanchorDateWindows(check, input.kind, {
+            today: localToday(),
+            noticeDate: input.caseData.noticeDate,
+          })
+        : check,
+    };
   } catch {
     return {
       kind: "unavailable",

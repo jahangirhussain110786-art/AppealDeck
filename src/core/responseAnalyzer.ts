@@ -1,10 +1,26 @@
 import type { EvidenceKind } from "./evidenceModel";
 import type { ReplyCategory } from "./caseState";
+import { lastAmazonTurn } from "./noticeText";
+
+/** Something Amazon still wants even though it reinstated the account, with the sentence that asks. */
+export interface OpenAsk {
+  kind: "plan_of_action" | "documents";
+  quote: string;
+}
 
 export interface AnalysisResult {
   category: ReplyCategory;
   extractedAsks: EvidenceKind[];
   confidence: "rule" | "ambiguous";
+  /**
+   * Set (to true) only on a reinstatement that is not the whole story: "Your selling privileges have
+   * been reinstated. However ASIN B0… remains removed — submit a plan of action." Telling that
+   * seller they are simply back would be the one error this analyser must not make, so the reply is
+   * reported as reinstated WITH what is still open. Absent on every other result.
+   */
+  partial?: true;
+  /** What is still being asked for when `partial` is set. May be empty when only a removal remains. */
+  openAsks?: OpenAsk[];
 }
 
 interface PatternRule {
@@ -21,6 +37,14 @@ const RULES: ReadonlyArray<PatternRule> = [
       /selling privileges (?:have been|are) (?:restored|reinstated)/i,
       /your account is now active/i,
       /reinstated your account/i,
+      // Added 6 Oct 2026: the other ways Amazon says it. All still pass through the sentence guard
+      // in `claimsReinstatement`, so "if your appeal is approved" and "has not been reinstated"
+      // stay out.
+      /your appeal (?:has been|was) (?:approved|accepted|granted)/i,
+      /(?:account|selling (?:account|privileges)) (?:has|have) been reactivated/i,
+      /(?:we(?:'ve|’ve| have)|amazon has) (?:reinstated|reactivated|restored)/i,
+      /lifted (?:the|your) (?:account )?(?:suspension|restriction|block)/i,
+      /(?:your )?listings? (?:has|have|are|is|were|was) (?:been )?(?:restored|reinstated|reactivated)/i,
     ],
   },
   {
@@ -32,6 +56,15 @@ const RULES: ReadonlyArray<PatternRule> = [
       /permanently deactivated/i,
       // Amazon's other ways of saying the account is gone for good.
       /permanently (?:suspended|removed|closed|revoked|terminated)/i,
+      // Amazon closing the door on further appeals (6 Oct 2026). These beat the non-final "will not
+      // reinstate" wording below: "we will not reinstate your selling account. Please do not submit
+      // further appeals" is final, and reading it as "needs more information" tells a seller to
+      // keep writing to a queue that has closed.
+      /(?:do not|don't|please do not|should not) (?:submit|send|file) (?:any )?(?:further|more|additional) appeals?/i,
+      /no further appeals?/i,
+      /(?:may|can|could) not appeal (?:this|the|your)?\s*(?:decision )?further/i,
+      /(?:cannot|can't|can not|will not|won't|unable to) (?:accept|review|consider|respond to) (?:any )?(?:further|additional|more) appeals?/i,
+      /no longer (?:able|permitted|eligible) to sell/i,
       // "We are unable to reinstate" is deliberately not here (25 Sep 2026). It opens Amazon's
       // ordinary refusal — "...at this time. Please also provide invoices..." — which invites the
       // next attempt. Filing it as final told a seller the case was over, and recorded the case as
@@ -78,6 +111,11 @@ const RULES: ReadonlyArray<PatternRule> = [
       // Amazon's usual reasons for refusing an appeal, added 29 Sep 2026 from researched wording.
       /does not address our concerns/i,
       /does not identify the root cause/i,
+      // 6 Oct 2026: a refusal worded as a denial or as a standard not met. Not "final": it does not
+      // say so, and the case goes on.
+      /(?:your appeal|(?:this|the|your) (?:request|plan of action|submission)|it) (?:has|have) been (?:denied|declined|rejected)/i,
+      /(?:we(?:'re| are)|amazon is) unable to (?:approve|accept)/i,
+      /(?:does|do) not meet our (?:requirements|standards|policies)/i,
     ],
   },
   {
@@ -86,6 +124,7 @@ const RULES: ReadonlyArray<PatternRule> = [
       /funds? (?:will be|have been|is) (?:released|disbursed|returned)/i,
       /disbursement (?:approved|processed|completed)/i,
       /funds? (?:remain|are still) on hold/i,
+      /funds? (?:will )?(?:remain|stay|continue to be) (?:on hold|held)/i,
       /funds? (?:will not|won't|cannot|can't) be (?:released|disbursed|returned)/i,
     ],
   },
@@ -101,8 +140,23 @@ const CONTRADICTS_REINSTATEMENT: ReadonlySet<ReplyCategory> = new Set([
   "needs_more_information",
 ]);
 
+/**
+ * In a pasted Seller Support thread the last thing Amazon wrote is the state of the case; an earlier
+ * refusal or request is history ("…unable to reinstate… Seller (you): Attached… Amazon: Your account
+ * is now active."). The whole paste is only read when that last message says nothing recognisable.
+ */
 export function analyzeReply(raw: string): AnalysisResult {
-  const text = sampleText(raw);
+  const turn = lastAmazonTurn(raw);
+  if (turn) {
+    const last = analyzeText(raw.slice(turn.start, turn.end));
+    if (last.category !== "unrecognized") return last;
+  }
+  return analyzeText(raw);
+}
+
+function analyzeText(raw: string): AnalysisResult {
+  // A reply copied from a browser carries curly apostrophes; every pattern below writes a straight one.
+  const text = sampleText(raw).replace(/[‘’]/g, "'");
   const matches = RULES.filter((rule) =>
     rule.category === "reinstated"
       ? claimsReinstatement(rule.patterns, text)
@@ -157,11 +211,47 @@ export function analyzeReply(raw: string): AnalysisResult {
   ];
   // Reported honestly: the message carried two readings, and this is the safe one, not a certain
   // one. `/api/analyze-reply` passes this through, so a caller can say so rather than assert.
-  return {
+  const result: AnalysisResult = {
     category: chosen.category,
     extractedAsks,
     confidence: overridden ? "ambiguous" : "rule",
   };
+  if (chosen.category === "reinstated" && !overridden) {
+    const open = openAsksAfterReinstatement(text, chosen.patterns);
+    if (open) {
+      result.partial = true;
+      result.openAsks = open;
+    }
+  }
+  return result;
+}
+
+const PLAN_ASK =
+  /\b(?:submit|provide|send|file|resubmit|include)\b[^.!?\n]{0,60}\bplan of action\b|\bplan of action\b[^.!?\n]{0,40}\b(?:is|are)\s+(?:required|needed)\b/i;
+const DOCUMENT_ASK =
+  /\b(?:submit|provide|send|upload)\b[^.!?\n]{0,60}\b(?:invoices?|documents?|documentation|certificates?|proof|records?)\b/i;
+/** Something is still removed, blocked or restricted even though the account is back. */
+const STILL_RESTRICTED =
+  /\b(?:remains?|still|continues?\s+to\s+be)\b[^.!?\n]{0,60}\b(?:removed|suppressed|blocked|deactivated|inactive|restricted|unavailable)\b/i;
+const ASK_NEGATED = /\b(?:no|not|don't|do not)\b/i;
+
+/**
+ * What is still open in a reply that says the account is reinstated. Null when the reply is only a
+ * reinstatement. An empty list with a non-null result means something remains removed but no
+ * request was found in the text; the caller still must not say the seller is simply back.
+ */
+function openAsksAfterReinstatement(text: string, reinstatement: RegExp[]): OpenAsk[] | null {
+  const asks: OpenAsk[] = [];
+  let restricted = false;
+  for (const sentence of text.split(/(?<=[.!?])\s+|\n+/)) {
+    if (reinstatement.some((re) => re.test(sentence))) continue;
+    if (STILL_RESTRICTED.test(sentence)) restricted = true;
+    if (ASK_NEGATED.test(sentence)) continue;
+    const trimmed = sentence.trim();
+    if (PLAN_ASK.test(sentence)) asks.push({ kind: "plan_of_action", quote: trimmed });
+    else if (DOCUMENT_ASK.test(sentence)) asks.push({ kind: "documents", quote: trimmed });
+  }
+  return asks.length > 0 || restricted ? asks : null;
 }
 
 /**

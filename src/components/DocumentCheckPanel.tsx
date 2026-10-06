@@ -10,7 +10,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FINDING_LABELS, summarizeCheck, type FindingStatus } from "@/core/documentCheck";
+import {
+  FINDING_LABELS,
+  looksLikeWrongDocument,
+  summarizeCheck,
+  type FindingStatus,
+} from "@/core/documentCheck";
+import { plainFieldLabel } from "@/lib/documentChecks/plainLabels";
 import type { CheckOutcome } from "@/lib/documentChecks/runCheck";
 import { deviceReadingNotes } from "@/lib/documentChecks/deviceNotes";
 import { APP } from "@/content/app";
@@ -50,6 +56,12 @@ export function DocumentCheckPanel({
     // v5 (26 Sep 2026, prototype record.html): a white report card on the warm panel — the header
     // says what was checked and when, each finding is a numbered row with its own status.
     <div className="overflow-hidden rounded-[14px] bg-surface-1 shadow-card ring-1 ring-inset ring-border">
+      {/* Before the button, so the seller knows the check is a help and can be skipped. */}
+      {!outcome && (
+        <p className="border-b border-border px-4 py-3 text-sm text-foreground sm:px-5">
+          {APP.evidenceSlots.check.optional}
+        </p>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3.5 sm:px-5">
         <div className="min-w-0">
           <p className="text-[0.9375rem] font-semibold text-foreground">
@@ -94,14 +106,24 @@ export function DocumentCheckPanel({
           <p className="text-sm text-warning">{APP.evidenceSlots.check.stale}</p>
         )}
 
-        {!outcome && processing && (
-          <p className="text-xs text-muted-foreground">
-            {processing === "server"
-              ? APP.evidenceSlots.check.beforeServer
-              : processing === "device_text"
-                ? APP.evidenceSlots.check.beforeDeviceText
-                : APP.evidenceSlots.check.beforeDevice}
-          </p>
+        {!outcome && processing === "device" && (
+          <p className="text-xs text-muted-foreground">{APP.evidenceSlots.check.beforeDevice}</p>
+        )}
+        {/* The short line first; every word of the full statement is still one tap away. */}
+        {!outcome && (processing === "server" || processing === "device_text") && (
+          <div className="space-y-1.5">
+            <p className="text-sm text-muted-foreground">{APP.evidenceSlots.check.beforeShort}</p>
+            <details className="text-xs text-muted-foreground">
+              <summary className="cursor-pointer text-link">
+                {APP.evidenceSlots.check.moreAbout}
+              </summary>
+              <p className="mt-1.5">
+                {processing === "server"
+                  ? APP.evidenceSlots.check.beforeServer
+                  : APP.evidenceSlots.check.beforeDeviceText}
+              </p>
+            </details>
+          </div>
         )}
 
         {outcome?.kind === "unavailable" && (
@@ -125,6 +147,11 @@ export function DocumentCheckPanel({
                 )}
               </div>
             )}
+            {looksLikeWrongDocument(outcome.result) && (
+              <p className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2.5 text-sm text-foreground">
+                {APP.evidenceSlots.check.wrongDocument}
+              </p>
+            )}
             <p className="text-sm text-muted-foreground">{summarizeCheck(outcome.result)}</p>
             <ol className="-mx-4 border-t border-border sm:-mx-5">
               {outcome.result.findings.map((f, i) => (
@@ -134,7 +161,9 @@ export function DocumentCheckPanel({
                 >
                   <NumberDisc n={i + 1} status={f.status} />
                   <span className="min-w-0">
-                    <span className="block font-semibold text-foreground">{f.field}</span>
+                    <span className="block font-semibold text-foreground">
+                      {plainFieldLabel(f.field)}
+                    </span>
                     <span className="block text-[0.8125rem] text-muted-foreground">{f.note}</span>
                     {f.observed && (
                       <span className="block font-mono text-xs text-muted-foreground">

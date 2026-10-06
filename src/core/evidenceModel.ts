@@ -57,25 +57,31 @@ const INAUTHENTIC: EvidenceRequirement[] = [
       "supplier business name",
       "supplier physical address",
       "supplier phone/contact",
+      "supplier website",
+      // The wording "within 365 days" and "units sold" is read by `comparisonFor` in documentCheck.ts,
+      // so it stays; the 365 days are counted back from the date of Amazon's notice (Amazon staff post,
+      // checked 6 Oct 2026) and the quantity must cover sales of each cited ASIN over that period.
       "issue date (within 365 days)",
       "line items mappable to the ASIN(s)",
-      "invoiced quantity consistent with units sold in the complaint window",
-      // Added 24 Sep 2026. Amazon compares an invoice's buyer details with the seller account
-      // (Riverbend Consulting, ecommerceChris and Amazon's own seller forums all state it, checked
-      // 24 Sep 2026), and "ABC Co." against "ABC Company LLC" is a named cause of rejection.
+      "invoiced quantity consistent with units sold of each cited ASIN in the 365 days before the notice",
+      // Practitioner detail (Riverbend Consulting, ecommerceChris; Amazon's own staff post does not
+      // say it), so it is hedged where it is shown: the invoice's buyer details are compared with the
+      // seller account, and "ABC Co." against "ABC Company LLC" is a named cause of rejection.
       BUYER_FIELD,
     ],
     freshnessDays: 365,
-    quantityRule: "invoiced units >= units sold in the complaint window",
+    quantityRule:
+      "invoiced units >= your sales of each cited ASIN over the 365 days before the notice",
     disqualifiers: [
       "pro-forma invoices and quotes",
+      "invoices you issued yourself, or a supplier that appears to be the same entity as the buyer",
       "order-confirmation screenshots",
       "self-created spreadsheets",
-      "retail receipts where wholesale-scale quantity is claimed",
+      "consultants report that retail receipts, screenshots and spreadsheets are usually refused",
       "edited or annotated PDFs",
     ],
     whyAmazonWantsIt:
-      "Amazon independently verifies suppliers, including by phone. A genuine invoice is the primary proof that your inventory is authentic and your supply chain is real.",
+      "Amazon may contact your supplier to check the invoice, so the supplier's contact details must be real and reachable. A genuine invoice for a completed purchase is the main proof that your inventory is authentic and your supply chain is real. Practitioners advise that your business name and address on the invoice should match your seller account.",
   },
   {
     kind: "brand_authorization",
@@ -137,12 +143,12 @@ const RELATED_ACCOUNT: EvidenceRequirement[] = [
     kind: "account_resolution_proof",
     required: false,
     fields: [
-      "proof the linked account's issue is resolved or the account is closed",
+      "proof of transfer, separate ownership or the linked account's resolution",
       "or evidence of non-relation (shared service provider, prior owner, etc.)",
     ],
     disqualifiers: ["claims without supporting records"],
     whyAmazonWantsIt:
-      "Showing the linked account is resolved or that no real relationship exists addresses the policy concern directly.",
+      "Showing that you no longer own the linked account, that the link is a service provider's or a former owner's, or that the account is resolved addresses the policy concern directly. Consultants describe these as the usual routes; read your notice for its exact wording.",
   },
 ];
 
@@ -321,7 +327,7 @@ const PRODUCT_SAFETY: EvidenceRequirement[] = [
       "a certificate for a different model or variant",
     ],
     whyAmazonWantsIt:
-      "Compliance documentation is what distinguishes a product that meets the standard from one that is merely claimed to.",
+      "Compliance documentation is what distinguishes a product that meets the standard from one that is merely claimed to. For a children's product this is a Children's Product Certificate (CPC), which comes from testing at a CPSC-accepted lab; Amazon may ask for it at any time.",
   },
   {
     kind: "product_images",

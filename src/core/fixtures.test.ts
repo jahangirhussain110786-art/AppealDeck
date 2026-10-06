@@ -26,12 +26,12 @@ describe("fixture corpus", () => {
     }
   });
 
-  it("funds fixtures carry the corrected 60/90-day model, others do not", () => {
+  it("funds fixtures carry the 60-day funds-appeal model (no dated 90-day checkpoint), others do not", () => {
     for (const f of FIXTURES) {
       const e: FixtureExpected = f.expected;
       if (f.kind === "FUNDS") {
         expect(e.fundsAppealEligibleDays).toBe(60);
-        expect(e.fundsReviewDays).toBe(90);
+        expect(e.fundsReviewDays).toBeNull();
       } else {
         expect(e.fundsAppealEligibleDays).toBeNull();
         expect(e.fundsReviewDays).toBeNull();

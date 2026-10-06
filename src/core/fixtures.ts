@@ -271,19 +271,19 @@ Several of your listings were removed for detail-page policy violations. If this
     id: "funds-1",
     kind: "FUNDS",
     source:
-      "Synthetic — paraphrased from Amazon's published disbursement-hold notice language; deadline figures (60d eligible / 90d checkpoint) verified against the 2 Sep 2026 policy fact-check (Planning/03-PHASE-2-BUILD/reference/2026-09-02-POLICY-FACTCHECK.md), not invented. No real seller's notice used.",
+      "Synthetic — paraphrased from Amazon's published disbursement-hold notice language; the 60-day funds-appeal figure follows Amazon's Funds Disbursement Eligibility policy (checked 6 Oct 2026), not invented. No real seller's notice used.",
     raw: `Disbursement Hold — Funds Under Review
 
-Your account is deactivated and disbursements are on hold. You may submit a funds appeal to disbursement-appeals@amazon.com; review is a checkpoint, not an automatic release.`,
+Your account is deactivated and disbursements are on hold. You may submit a funds appeal to disbursement-appeals@amazon.com; Amazon reviews the request before any funds are released.`,
     expected: {
       ...base("FUNDS", false),
       appealWindowDays: null,
       fundsAppealEligibleDays: 60,
-      fundsReviewDays: 90,
+      fundsReviewDays: null,
       legacySeventeenDayPattern: false,
       missingInvoiceTrap: false,
       notes:
-        "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
+        "Funds appeal opens about 60 days after deactivation (Funds Disbursement Eligibility policy); reinstatement releases funds on the normal schedule. Checked 6 Oct 2026.",
     },
   },
   {
@@ -527,57 +527,57 @@ Your product detail page violates detail-page policy on prohibited claims. The l
     id: "funds-2",
     kind: "FUNDS",
     source:
-      "Synthetic variant of funds-1 (wording variant); deadline figures verified against the 2 Sep 2026 policy fact-check, not invented. No real seller's notice used.",
+      "Synthetic variant of funds-1 (wording variant); the 60-day figure checked 6 Oct 2026, not invented. No real seller's notice used.",
     raw: `Funds Under Review — Disbursement Paused
 
-Your disbursements are on hold following account deactivation. You may file a funds appeal to disbursement-appeals@amazon.com; the 90-day checkpoint is not an automatic release.`,
+Your disbursements are on hold following account deactivation. You may file a funds appeal to disbursement-appeals@amazon.com; Amazon reviews the request before any funds are released.`,
     expected: {
       ...base("FUNDS", false),
       appealWindowDays: null,
       fundsAppealEligibleDays: 60,
-      fundsReviewDays: 90,
+      fundsReviewDays: null,
       legacySeventeenDayPattern: false,
       missingInvoiceTrap: false,
       notes:
-        "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
+        "Funds appeal opens about 60 days after deactivation (Funds Disbursement Eligibility policy); reinstatement releases funds on the normal schedule. Checked 6 Oct 2026.",
     },
   },
   {
     id: "funds-3",
     kind: "FUNDS",
     source:
-      "Synthetic variant of funds-1 (wording variant); deadline figures verified against the 2 Sep 2026 policy fact-check, not invented. No real seller's notice used.",
+      "Synthetic variant of funds-1 (wording variant); the 60-day figure checked 6 Oct 2026, not invented. No real seller's notice used.",
     raw: `Disbursement Hold Notice
 
-We placed your funds under review after a policy deactivation. A funds appeal becomes available around day 60; the day-90 review is a checkpoint only.`,
+We placed your funds under review after a policy deactivation. A funds appeal becomes available around day 60; Amazon reviews that request separately.`,
     expected: {
       ...base("FUNDS", false),
       appealWindowDays: null,
       fundsAppealEligibleDays: 60,
-      fundsReviewDays: 90,
+      fundsReviewDays: null,
       legacySeventeenDayPattern: false,
       missingInvoiceTrap: false,
       notes:
-        "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
+        "Funds appeal opens about 60 days after deactivation (Funds Disbursement Eligibility policy); reinstatement releases funds on the normal schedule. Checked 6 Oct 2026.",
     },
   },
   {
     id: "funds-4",
     kind: "FUNDS",
     source:
-      "Synthetic variant of funds-1 (wording variant); deadline figures verified against the 2 Sep 2026 policy fact-check, not invented. No real seller's notice used.",
+      "Synthetic variant of funds-1 (wording variant); the 60-day figure checked 6 Oct 2026, not invented. No real seller's notice used.",
     raw: `Account Deactivated — Funds on Hold
 
-Your selling account is deactivated and funds are under review. Submit a funds appeal to disbursement-appeals; release is evaluated at the checkpoint, never automatic.`,
+Your selling account is deactivated and funds are under review. Submit a funds appeal to disbursement-appeals; Amazon decides on release after its own review.`,
     expected: {
       ...base("FUNDS", false),
       appealWindowDays: null,
       fundsAppealEligibleDays: 60,
-      fundsReviewDays: 90,
+      fundsReviewDays: null,
       legacySeventeenDayPattern: false,
       missingInvoiceTrap: false,
       notes:
-        "Funds appeal eligible ~60d from deactivation; review checkpoint ~90d, never automatic.",
+        "Funds appeal opens about 60 days after deactivation (Funds Disbursement Eligibility policy); reinstatement releases funds on the normal schedule. Checked 6 Oct 2026.",
     },
   },
   {

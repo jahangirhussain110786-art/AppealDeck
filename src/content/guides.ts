@@ -41,7 +41,7 @@ export const GUIDES_COMMON = {
   appealDeckDoesNot: "What it does not do",
   related: "Other guides",
   disclaimer:
-    "This guide is general information, not legal advice, and AppealDeck is not affiliated with Amazon. Amazon decides every appeal, and nothing here predicts how yours will go. Amazon changes its policies; check the date above.",
+    "This guide is general information, not legal advice, and AppealDeck is not affiliated with Amazon. Amazon decides every appeal, and nothing here predicts how yours will go. Amazon changes its policies; check the date above. These steps describe the US store. Use your own marketplace's Seller Central and addresses.",
 } as const;
 
 export const GUIDES: Guide[] = [
@@ -52,7 +52,7 @@ export const GUIDES: Guide[] = [
     metaTitle: "Amazon Section 3 deactivation: what to do",
     description:
       "What a Section 3 deactivation notice actually says, why the response depends on its wording, and the mistakes that cost sellers an appeal.",
-    lastVerified: "2026-09-25",
+    lastVerified: "2026-10-06",
     intro:
       "Section 3 is the part of the Amazon Services Business Solutions Agreement that covers term and termination. Amazon cites it for many different problems, so the section number alone tells you very little. The rest of the notice tells you what Amazon actually wants.",
     sections: [
@@ -63,6 +63,7 @@ export const GUIDES: Guide[] = [
           "Amazon does not charge a fee to reinstate an account.",
           "Amazon does not ask for your password or a one-time code by email.",
           "Amazon does not move your case to WhatsApp, Telegram or a personal phone number.",
+          "Consultants document stop-spoofing@amazon.com as the address for reporting phishing. Check it on Amazon's own security pages first.",
         ],
       },
       {
@@ -72,8 +73,13 @@ export const GUIDES: Guide[] = [
           "A verification request needs the specific document or step it names, not an apology letter.",
           "A policy or performance problem usually needs a Plan of Action: root cause, what you fixed, and how you will prevent it.",
           "Some notices ask you to answer specific questions, and the answer is those answers.",
+          "A related-account notice usually offers a few paths, and a 3PL, virtual assistant or other service provider with access to your account can be one of the links. Answer with the path that is true. Consultants describe these as the options, so read your notice for its exact wording.",
           "A notice that alleges forged documents or fraud needs qualified professional help before you reply.",
         ],
+      },
+      {
+        heading: "If your funds are on hold",
+        body: "Amazon may withhold funds after a deactivation, and funds may be used to offset amounts you owe. If the account is reinstated, funds are released on your normal schedule. If not, Amazon's Funds Disbursement Eligibility policy lets you ask for them separately about 60 days after deactivation. Amazon then reviews your identity, financial-instrument and sourcing documents and can withhold some or all funds. A separate funds review can run even after a lost appeal. Confirm the dates in your own account.",
       },
       {
         heading: "What to do now",
@@ -83,13 +89,15 @@ export const GUIDES: Guide[] = [
           "Write down what actually went wrong in your business before you write anything to Amazon.",
           "Collect only records you really hold, such as invoices from your supplier, receipts and order records.",
           "Answer through the Appeal option on your Account Health page.",
+          "Expect a reply in days, not hours. If weeks pass with no reply, follow up through the appeal page.",
+          "If you are in Account Health Assurance, Amazon may call within three days of your request. Do not ignore the call.",
         ],
       },
       {
         heading: "What not to do",
         points: [
-          "Do not open a new seller account. It is usually treated as a related account and makes the case harder.",
-          "Do not send a quick one-line appeal to see what happens. A weak attempt still counts.",
+          "Do not open a new seller account. Amazon's related-account rules may link it to this one.",
+          "Do not send a quick one-line appeal to see what happens. Amazon says nothing about a limit on appeals, but practitioners advise against sending a hurried one.",
           "Do not resubmit the same text after a refusal. Change what you sent, or explain what is new.",
           "Do not argue that the decision is unfair. Amazon looks for evidence that the risk is fixed.",
           "Do not give anyone your Seller Central login.",
@@ -118,7 +126,7 @@ export const GUIDES: Guide[] = [
     metaTitle: "Amazon Plan of Action: how to write one",
     description:
       "The three parts of an Amazon Plan of Action, what belongs in each, and why a copied template is a common reason a POA is refused.",
-    lastVerified: "2026-09-25",
+    lastVerified: "2026-10-06",
     intro:
       "A Plan of Action (POA) is the written answer Amazon asks for when it believes something in your business went wrong. It has a well-known shape, which is why templates are everywhere. The shape is the easy part. Amazon reads for whether the content matches your notice and your records.",
     sections: [
@@ -138,15 +146,17 @@ export const GUIDES: Guide[] = [
           'It promises future actions ("we will") where Amazon wants actions already taken.',
           'It says "recently" and "soon" instead of dates.',
           "It mentions evidence you never attached, or none at all.",
-          "It repeats what you sent last time, which is one of the most common reasons an appeal is refused.",
+          "It repeats what you sent last time. A resubmission that has not changed gives Amazon nothing new to decide on.",
         ],
       },
       {
         heading: "Evidence that holds up",
         points: [
-          "Supplier invoices for a completed purchase, dated within the last year, that match your seller name and address. Pro-forma invoices and quotes are usually refused.",
+          "Supplier invoices for a completed purchase, dated within the 365 days before Amazon's notice, covering what you sold in that period. Pro-forma invoices and quotes are refused. Checked 6 Oct 2026 against Amazon's own invoice guidance.",
+          "Invoices you issued yourself, or from a supplier that appears to be the same business as you, are refused. Include the supplier's name, phone, address and website. Amazon accepts PDF, JPG, PNG and GIF.",
+          "Practitioners advise that the business name and address on the invoice should match your seller account.",
           "Records that match the notice: the ASINs, order IDs or dates it names.",
-          "Only documents you really hold, unedited. Amazon can check invoices with the supplier.",
+          "Only documents you really hold, unedited. Amazon may reach out to the supplier, so their contact details must be real and reachable.",
         ],
       },
       {
@@ -180,7 +190,7 @@ export const GUIDES: Guide[] = [
     metaTitle: "Amazon identity verification failed: what now",
     description:
       "Why Amazon seller identity verification fails, why a Plan of Action is the wrong answer, and what to check before you resubmit documents.",
-    lastVerified: "2026-09-25",
+    lastVerified: "2026-10-06",
     intro:
       "A verification request is not a policy appeal. Amazon wants to confirm who you are or that your business details are genuine. The answer is the specific document or step it names, and a Plan of Action here can slow things down.",
     sections: [
@@ -199,9 +209,11 @@ export const GUIDES: Guide[] = [
         points: [
           "Compare every field in Seller Central with your documents character by character. Fix the account or pick a document that matches.",
           "Use a full-page colour scan or PDF of the original document.",
-          "If a utility bill was refused, a bank statement or government letter in the same name and address is often clearer.",
+          "A bank statement or government letter in the same name and address is another option; Amazon's accepted list is on its verification page.",
+          "Practitioners say utility bills, bank or card statements and government letters are accepted if issued within about 180 days (90 in some regions), with name and address matching your account. Check your own requirements page.",
+          "For an INFORM Consumers Act notice, the dates in the notice win. Use Review Your Account Information in Account Health.",
           "Upload through the verification page in Seller Central. Do not send documents in reply to an email you did not expect.",
-          "If Amazon asks for a video call, prepare the original documents it names.",
+          "If Amazon asks for a video call, prepare the original documents it names. Practitioners describe it as showing the originals to an Amazon associate.",
         ],
       },
       {
@@ -234,15 +246,15 @@ export const GUIDES: Guide[] = [
     metaTitle: "Amazon IP complaint: your options and evidence",
     description:
       "What an Amazon intellectual property complaint means, the ways it can be resolved, and what to gather before you respond.",
-    lastVerified: "2026-09-25",
+    lastVerified: "2026-10-06",
     intro:
       "An intellectual property (IP) complaint means a rights owner told Amazon one of your listings infringes their trademark, copyright or patent. Amazon usually removes the listing when the complaint arrives, before hearing from you, so the complaint alone does not mean the owner is right.",
     sections: [
       {
         heading: "The ways it usually ends",
         points: [
-          "You show you are authorised to sell the item, for example with invoices from the brand or an authorised distributor.",
-          "The rights owner withdraws the complaint, often after a polite, factual message.",
+          "You show you are authorised to sell the item, for example with invoices from the brand or an authorised distributor. If you are the brand owner, send proof of your trademark registration instead of an authorization letter.",
+          "The rights owner withdraws the complaint, often after a polite, factual message. Practitioners say retraction requests go from the rights owner to Amazon, quoting the complaint ID. Brand Registry's Report a Violation is the rights owner's tool, so check your notice for their contact.",
           "You agree the listing was a problem, remove it and explain what you changed.",
           "You dispute the claim formally. That is a legal statement with legal consequences, so get qualified advice first.",
         ],
@@ -261,7 +273,7 @@ export const GUIDES: Guide[] = [
         points: [
           "Do not relist the same item under a new listing.",
           "Do not send an angry or threatening message to the rights owner.",
-          "Do not ignore the complaint. Several IP complaints can put the whole account at risk.",
+          "Do not ignore the complaint. Amazon can act on an account with repeated IP complaints.",
         ],
       },
     ],

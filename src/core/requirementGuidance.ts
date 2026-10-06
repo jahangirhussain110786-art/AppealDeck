@@ -64,6 +64,44 @@ export function alternativesFor(kind: EvidenceKind): RequirementAlternative[] {
     });
   }
 
+  /*
+    6 Oct 2026: a retail or online-arbitrage seller and a drop-shipper often have no distributor
+    invoice to produce, and "change sourcing" is not what they would do. Each path states what is
+    true of the business and what Amazon is likely to want that it does not show, without calling any
+    of it acceptable: whether Amazon accepts it is Amazon's decision.
+  */
+  if (kind === "supplier_invoice") {
+    alternatives.push(
+      {
+        id: "retail_arbitrage",
+        label: "I bought at retail (retail or online arbitrage)",
+        honestyNote:
+          "This path says plainly that you bought from retail stores or other online sellers, with the store, the date and the receipt or order number for each purchase. It does not present a retail receipt as a distributor invoice.",
+        consequence:
+          "A retail receipt is not an invoice from a distributor or manufacturer, and Amazon may still ask for one. The response names that difference.",
+      },
+      {
+        id: "drop_shipping",
+        label: "A supplier ships to my buyers (drop shipping)",
+        honestyNote:
+          "This path names the supplier who ships to your buyers, with the order references that connect each sale to its supplier order. It does not present an invoice you do not hold.",
+        consequence:
+          "Amazon commonly wants an invoice that shows your business as the buyer of the stock. A drop shipper's paperwork may not show that, and the response says so.",
+      },
+    );
+  }
+
+  if (kind === "account_resolution_proof") {
+    alternatives.push({
+      id: "explain_in_words",
+      label: "Explain the relationship in words",
+      honestyNote:
+        "This path states the facts of how the accounts are or are not related (who runs each, what is shared, what is not) without a file. It is a statement from you, not a document, and the response says so.",
+      consequence:
+        "Amazon may ask for supporting records. A statement is not a record, so the response keeps it separate from the files you attach.",
+    });
+  }
+
   if (kind === "rights_owner_retraction" || kind === "brand_authorization") {
     alternatives.push({
       id: "await_rights_owner",

@@ -21,12 +21,15 @@ export function SellerDeadlineField({
   busy,
   onSave,
   onRemove,
+  fromNotice = false,
 }: {
   /** The date the seller already entered, if any. */
   entered: SerializedDeadline | undefined;
   busy: boolean;
   onSave: (dueOn: string) => Promise<boolean>;
   onRemove: () => Promise<boolean>;
+  /** The case already carries a date the notice itself stated. */
+  fromNotice?: boolean;
 }) {
   const [value, setValue] = useState(entered?.dueOn ?? "");
   // Compared as calendar days in the seller's own time zone, which is how they read the date.
@@ -47,7 +50,7 @@ export function SellerDeadlineField({
   return (
     <div className="mt-3 space-y-2">
       <Label htmlFor="seller-deadline" className="text-xs font-medium text-foreground">
-        {C.sellerDeadline.label}
+        {fromNotice ? C.sellerDeadline.labelFromNotice : C.sellerDeadline.label}
       </Label>
       <p className="text-xs text-muted-foreground">{C.sellerDeadline.help}</p>
       <div className="flex flex-wrap items-center gap-2">

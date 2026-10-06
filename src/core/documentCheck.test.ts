@@ -248,7 +248,8 @@ describe("summarizeCheck", () => {
 const CONTEXT: CheckContext = { today: "2026-09-24", asins: ["B0ABCDEF12"], referenceIds: [] };
 const DATE_FIELD = "issue date (within 365 days)";
 const ASIN_FIELD = "line items mappable to the ASIN(s)";
-const QUANTITY_FIELD = "invoiced quantity consistent with units sold in the complaint window";
+const QUANTITY_FIELD =
+  "invoiced quantity consistent with units sold of each cited ASIN in the 365 days before the notice";
 
 function field(name: string, reading: Partial<FieldFinding>, context: CheckContext = CONTEXT) {
   return buildDocumentCheck(
@@ -280,7 +281,8 @@ describe("which matrix fields carry a comparison", () => {
     expect(classified).toEqual({
       "issue date (within 365 days)": "date_window",
       "line items mappable to the ASIN(s)": "asin",
-      "invoiced quantity consistent with units sold in the complaint window": "units_sold",
+      "invoiced quantity consistent with units sold of each cited ASIN in the 365 days before the notice":
+        "units_sold",
       "matching ASIN(s)": "asin",
       "complaint ID": "reference_id",
       "affected ASIN(s)": "asin",

@@ -1,5 +1,6 @@
 import type { ViolationKind } from "./index";
 import { composeWorkspace, workspaceGaps } from "./workspace";
+import { savedCheckFor } from "./documentCheck";
 import type { DocumentType } from "./readiness";
 import {
   composerModeFor,
@@ -231,6 +232,7 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
     // — which, since the classic interview was retired, is every case. The legacy `actionItems`
     // half of it is a no-op here, because nothing on a workspace case marks one done.
     checkUnattestedClaims(draft, data, findings);
+    checkSavedDocumentChecks(data, findings);
     return { findings, passed: !findings.some((f) => f.severity === "error") };
   }
 
@@ -255,6 +257,43 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
   const passed = !findings.some((f) => f.severity === "error");
 
   return { findings, passed };
+}
+
+/**
+ * What the seller's saved document checks found, shown under "Before you send" (6 Oct 2026).
+ *
+ * A check kept with the case could find a pro-forma invoice, a date outside the window or a field
+ * that disagrees with the notice, and none of it reached the list a seller reads before sending:
+ * `checkDocumentFreshness` reads a date nothing on a workspace case ever sets, and the gaps ignore
+ * saved checks. So a failed invoice could be sent without a word.
+ *
+ * Warnings only, never errors. A check is a reading of a file, not a verdict, and it can be wrong
+ * (a scan misread, a stale case detail). Each line says what was read and where. A reading is used
+ * only while it is still about the file linked to the record (`savedCheckFor` compares hashes).
+ */
+function checkSavedDocumentChecks(data: CaseFileData, findings: CriticFinding[]): void {
+  const w = data.workspace;
+  if (!w?.documentChecks?.length) return;
+  for (const r of w.requirements) {
+    const saved = savedCheckFor(w.documentChecks, r.recordId, r.contentHash);
+    if (!saved || saved.outcome.kind !== "fields") continue;
+    const { result } = saved.outcome;
+    for (const f of result.findings) {
+      if (f.status !== "conflicting") continue;
+      findings.push({
+        severity: "warning",
+        code: "DOCUMENT_CHECK_CONFLICT",
+        message: `Your document check for ${r.label}: ${f.field}. ${f.note}`,
+      });
+    }
+    for (const d of result.triggeredDisqualifiers) {
+      findings.push({
+        severity: "warning",
+        code: "DOCUMENT_CHECK_DISQUALIFIER",
+        message: `Your document check for ${r.label} found something Amazon commonly does not accept: ${d}. Check the file before you send it.`,
+      });
+    }
+  }
 }
 
 /**

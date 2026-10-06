@@ -18,6 +18,7 @@
 
 import type { ViolationKind } from "./violationKinds";
 import type { CaseState } from "./caseState";
+import { STORES } from "../content/stores";
 
 export type ClockUrgency = "overdue" | "today" | "soon" | "scheduled";
 
@@ -223,4 +224,29 @@ export function describeClockItem(item: ClockItem): string {
 /** The single most urgent thing, or null when nothing is outstanding. */
 export function mostUrgent(brief: ClockBrief): ClockItem | null {
   return brief.items[0] ?? null;
+}
+
+/**
+ * The notice's own header date as a `Date` (midnight UTC of that calendar day), or `undefined` when
+ * the notice carries none or it is not a real date.
+ *
+ * A funds-held seller's "funds appeal opens 60 days after deactivation" needs the deactivation date,
+ * and no caller passed one, so the dated line was always the undated note. The notice's receipt
+ * date is the best date the case holds; the line says to confirm it in the account.
+ */
+export function dateOfNotice(day: string | null | undefined): Date | undefined {
+  if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return undefined;
+  const d = new Date(`${day}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+/**
+ * What to tell a seller whose notice date has passed (6 Oct 2026). The bare "Past the date in your
+ * notice" gave a frightened seller a fact and no way forward. This names the two places that can
+ * still be tried and says plainly that Amazon decides; it promises nothing.
+ */
+export function pastDeadlineNextStep(item: Pick<ClockItem, "source" | "urgency">): string | null {
+  return item.source === "deadline" && item.urgency === "overdue"
+    ? STORES.pastDeadlineNextStep
+    : null;
 }

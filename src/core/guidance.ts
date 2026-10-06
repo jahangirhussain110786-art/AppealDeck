@@ -37,9 +37,9 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
         "Stop listing the affected inventory until you have documented evidence of authenticity.",
       ],
       doNot: [
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
-        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not fabricate, backdate, or assume an invoice document you do not have.",
       ],
@@ -65,7 +65,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not resend the challenged document unchanged.",
         "Do not edit, retouch or re-type any document to make it look tidier.",
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
         "Do not pay for reinstatement services that promise an outcome.",
       ],
@@ -74,22 +74,23 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
   RELATED_ACCOUNT: {
     title: "Related-account policy action",
     summary:
-      "Another account linked to you violated Amazon policy, and your account was deactivated under the Related Account Policy.",
+      "Amazon linked your account to another account that cannot sell. The notice usually lets you do one of three things: get the other account reactivated, show with documents that you owned it before and no longer do, or state truthfully that you have never owned it. Answer with the one that is true. Consultants describe these as the options; read your notice for the exact wording. Linkage factors practitioners name include shared addresses, devices or networks, a service provider with access to the account, and prior ownership.",
     whatToDo: [
-      "Explain the relationship between the accounts truthfully.",
-      "Describe how the linked account breached policy and what you have changed to comply.",
-      "Show the controls you have put in place to prevent recurrence across all your accounts.",
+      "Check which of the options your notice actually names.",
+      "If you do not recognise the other account, say so plainly and show identity and business documents.",
+      "If you ran it before, attach the transfer or closure paperwork.",
+      "If a service provider (a 3PL, a virtual assistant, an agency) had access to either account, attach the contract and say what access it had.",
     ],
     triage: {
       doNow: [
-        "Disclose the relationship between the accounts clearly and truthfully in your POA.",
-        "List the concrete controls you now enforce (separate credentials, no shared IP, distinct payment methods).",
-        "Confirm you will not open or operate linked accounts going forward.",
+        "Check which options the notice names, and answer with the one that is true.",
+        "If you ran the other account before, attach transfer or closure paperwork.",
+        "If a service provider had access, attach the contract and describe what access it had.",
       ],
       doNot: [
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
-        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not hide or downplay the account relationship you had.",
       ],
@@ -109,6 +110,8 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       "Check that the name and address on your documents match your Seller Central account exactly — a mismatch is the most common reason verification fails.",
       "Make sure any photograph or scan is fully in frame, in focus, and unexpired before you submit it.",
       "If a video call is required, book the earliest slot you can genuinely attend, and have the original documents physically with you.",
+      "Practitioners say utility bills, bank or card statements and government letters are accepted if issued within about 180 days (90 in some regions), with name and address matching your account; video verification means showing originals to an Amazon associate. Check your own requirements page.",
+      "For an INFORM Consumers Act notice, the notice's own dates win. Use Review Your Account Information in Account Health.",
     ],
     triage: {
       doNow: [
@@ -117,9 +120,9 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
         "Submit the original, unedited document — never a cropped, annotated, or re-typed version.",
       ],
       doNot: [
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
-        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not edit, retouch, or re-type a document to make it look tidier — an altered identity document is treated as a forged one.",
       ],
@@ -142,9 +145,9 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
         "Fix the operational cause first; the metric cannot recover while it is still producing defects.",
       ],
       doNot: [
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
-        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not promise a target figure by a specific date — metrics move on a reporting window you do not control.",
       ],
@@ -157,7 +160,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
     whatToDo: [
       "Stop selling and stop shipping the affected item before you do anything else.",
       "Establish whether a formal recall, a safety complaint, or a documentation request is involved — they are different processes.",
-      "Gather the compliance paperwork for the product: test reports, certificates, and the supplier's own safety documentation.",
+      "Gather the compliance paperwork for the product: test reports, certificates, and the supplier's own safety documentation. For a children's product, a Children's Product Certificate (CPC) comes from testing at a CPSC-accepted lab, and Amazon may ask for it at any time.",
       "Describe what happens to the affected inventory, and to customers who already received it.",
     ],
     severityNote:
@@ -169,9 +172,9 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
         "Decide and state what happens to the remaining inventory.",
       ],
       doNot: [
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
-        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not keep the listing active while you appeal — continuing to sell a flagged product undermines everything the response says.",
       ],
@@ -194,9 +197,9 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
         "Audit your remaining catalogue for other items under the same restriction.",
       ],
       doNot: [
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
-        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not relist the item under a different title or category — that reads as evasion, not a correction.",
       ],
@@ -218,9 +221,9 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
         "State the systemic change you have made so the violation cannot recur.",
       ],
       doNot: [
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
-        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not list a policy you did not actually fix without new evidence.",
       ],
@@ -229,24 +232,27 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
   INTELLECTUAL_PROPERTY: {
     title: "Intellectual-property complaint",
     summary:
-      "A rights owner reported your listing for infringement (trademark, copyright, or a counter-notification).",
+      "A rights owner reported your listing for infringement (trademark, copyright, or a counter-notification). The complaint carries the rights owner's contact details. What helps depends on your position, so use the group that is true for you.",
     whatToDo: [
       "Review the complaint and the specific ASINs affected.",
-      "If you are authorized, submit proof of your right to sell the brand or item.",
-      "If the claim is wrong, file a counter-notification with evidence — do not ignore it.",
+      "You are an authorised or licensed reseller: submit an authorization letter or an invoice from an authorised source.",
+      "You are infringing: stop selling the item and ask the rights owner for a retraction. Do not relist.",
+      "The claim is wrong: say so factually. If you believe the claim is wrong, a formal dispute is a legal statement made under penalty of perjury; get qualified advice before sending it.",
+      "You are the brand owner: send proof of your trademark registration, not an authorization letter.",
+      "Practitioners say retraction requests go from the rights owner to Amazon, quoting the complaint ID. Check your notice for the rights owner's contact.",
     ],
     triage: {
       doNow: [
         "Identify the exact ASINs and the trademark or right at issue.",
-        "Gather only documentation you actually hold (listing agreements, purchase records, authorization letters).",
-        "File the counter-notification with those documents attached.",
+        "Gather the documents you hold (listing agreements, purchase records, authorization letters). Decide with advice whether to dispute formally.",
+        "Check your notice for the rights owner's contact, and keep the complaint ID.",
       ],
       doNot: [
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
-        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
         "Do not pay for reinstatement services that promise an outcome.",
-        "Do not ignore a valid counter-notification request.",
+        "Do not ignore the complaint, and do not relist an item you were told to stop selling.",
       ],
     },
   },
@@ -256,7 +262,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
     whatToDo: [
       "Fix the specific listing issues (images, titles, claims, variant misuse).",
       "Submit corrections and a POA for the affected ASINs.",
-      "If this is listing-level and you are in Account Health Assurance, a Seller Challenge may be available.",
+      "If this is listing-level and you are in Account Health Assurance, a Seller Challenge may be available. Amazon may call within three days of such a request, so do not ignore the call.",
     ],
     triage: {
       doNow: [
@@ -265,9 +271,9 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
         "If eligible, open a Seller Challenge within Account Health Assurance.",
       ],
       doNot: [
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
-        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not revert a listing fix and relist the same violating content.",
       ],
@@ -276,24 +282,24 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
   FUNDS: {
     title: "Funds on hold / disbursement review",
     summary:
-      "Your disbursements are under review after deactivation. A funds appeal becomes available around day 60; the day-90 checkpoint is never an automatic release.",
+      "Amazon may withhold funds after a deactivation. If the account is reinstated, funds are released on your normal schedule. If not, Amazon's policy lets you ask for the funds separately about 60 days after deactivation; Amazon then reviews your identity, bank details and sourcing before deciding and can withhold some or all funds. Funds may also be used to offset amounts you owe. A separate funds review can run even after a lost appeal. Checked 6 Oct 2026.",
     whatToDo: [
-      "Provide your deactivation date so the funds-appeal and review checkpoints can be estimated.",
-      "Submit a funds appeal to disbursement-appeals@amazon.com with evidence once eligible.",
-      "Treat the 90-day checkpoint as a review, not an automatic release.",
+      "Provide your deactivation date so we can show when the funds appeal opens.",
+      "When it opens, send the funds appeal to your marketplace's disbursement-appeals address (the notice gives it; .com in the US, .co.uk in the UK and EU), with the identity, financial-instrument and sourcing documents Amazon asks for.",
+      "Do not assume funds are released on a fixed date: they come back with reinstatement or after Amazon's separate funds review.",
     ],
     triage: {
       doNow: [
-        "Provide your deactivation date so the funds-appeal and review checkpoints can be estimated.",
-        "Submit a funds appeal to disbursement-appeals@amazon.com with evidence once eligible (~day 60).",
-        "Prepare the documentation Amazon requests before the 90-day checkpoint.",
+        "Provide your deactivation date so we can show when the funds appeal opens.",
+        "When it opens, send the funds appeal to your marketplace's disbursement-appeals address (the notice gives it; .com in the US, .co.uk in the UK and EU).",
+        "Prepare the identity, financial-instrument and sourcing documents Amazon may ask for.",
       ],
       doNot: [
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
-        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
         "Do not pay for reinstatement services that promise an outcome.",
-        "Do not assume the 90-day checkpoint releases funds automatically.",
+        "Do not assume funds are released on a fixed date.",
       ],
     },
   },
@@ -313,9 +319,9 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
         "If a deadline is not stated, plan on the Account Health dashboard being authoritative.",
       ],
       doNot: [
-        "Do not open a new seller account to dodge this action.",
+        "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not hand over your Seller Central credentials to anyone.",
-        "Do not send an instant one-line appeal that burns an attempt.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not invent a violation type, deadline, or document you cannot back up.",
       ],

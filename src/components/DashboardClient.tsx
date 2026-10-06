@@ -17,6 +17,7 @@ import { getBrowserVault } from "@/lib/vault/browser";
 import type { Vault, VaultListItem } from "@/core/vault/vault";
 import {
   saveCaseLog,
+  saveCaseLogAndState,
   loadCaseLog,
   loadCaseFile,
   listCases,
@@ -440,7 +441,9 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
   // them — it said "Could not save reply" for an outcome, a reminder or a waiting note.
   const saveWorkspaceLog = async (log: CaseLog) => {
     try {
-      await saveCaseLog(vault, log);
+      // Keeps the case file's state in step with a recorded outcome, so a settled case never
+      // goes on saying it is waiting on Amazon.
+      await saveCaseLogAndState(vault, log);
       await loadFromVault();
       return true;
     } catch (e) {
@@ -657,7 +660,11 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
                 <EmptyState
                   icon={FileText}
                   title={APP.dashboard.caseSummary.noCase.title}
-                  description={APP.dashboard.caseSummary.noCase.description}
+                  description={
+                    signedIn
+                      ? APP.dashboard.caseSummary.noCase.descriptionSignedIn
+                      : APP.dashboard.caseSummary.noCase.description
+                  }
                   action={
                     <Button asChild>
                       <Link href="/case">{APP.dashboard.caseSummary.noCase.cta}</Link>

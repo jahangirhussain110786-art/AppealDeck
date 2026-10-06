@@ -271,6 +271,31 @@ export function computeFundsTrack(ctx: CaseStateContext, currentState: CaseState
   return { held: true, eligible: true, state: "FUNDS_READY" };
 }
 
+/**
+ * The case state a seller's recorded outcome puts the case in (6 Oct 2026).
+ *
+ * Recording what happened used to write only `resolution` and leave `state` as it was, so a
+ * reinstated case went on showing "Past the date in your notice" and old follow-ups, and the
+ * dashboard went on saying "waiting on Amazon". Reinstated is `APPROVED`; rejected and withdrawn end
+ * the case (`CLOSED`). Both are terminal, which is what stops the clock and the reminders.
+ *
+ * Taking the outcome back (`"pending"`) must undo exactly that, or a mis-click from a dropdown ends
+ * a live case for good: a terminal state is left for `SUBMITTED` when something was sent, otherwise
+ * for `INTAKE`. Any other state is untouched.
+ */
+export type RecordedOutcome = "reinstated" | "rejected" | "withdrawn";
+
+export function stateForOutcome(
+  choice: RecordedOutcome | "pending",
+  current: CaseState,
+  hadSubmission: boolean,
+): CaseState {
+  if (choice === "reinstated") return "APPROVED";
+  if (choice === "rejected" || choice === "withdrawn") return "CLOSED";
+  if (current === "APPROVED" || current === "CLOSED") return hadSubmission ? "SUBMITTED" : "INTAKE";
+  return current;
+}
+
 export const NOVELTY_REQUIRED_FROM_ATTEMPT = 2;
 
 export function noveltyRequired(attemptCount: number): boolean {

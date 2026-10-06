@@ -12,6 +12,7 @@
  */
 
 import { extractEntities, entitiesOfKind } from "@/core/entities";
+import { parseNotice } from "@/core/noticeParser";
 import type { CaseFacts, Workspace } from "@/core/workspace";
 
 /** "Complaint ID: 1234567890" — the identifier rights-owner notices cite. */
@@ -23,6 +24,27 @@ export interface DocumentCheckCaseData {
   /** The seller's own statement of their registered business details (`Workspace.caseFacts`). */
   business?: { name?: string; address?: string };
   suppliers?: string[];
+  /**
+   * The date of Amazon's notice (YYYY-MM-DD), read from its own header. A record's age is counted
+   * back from this date, not from the day the seller checks it. Absent when the notice carries no
+   * date, in which case the window is counted from today and the finding says so. Never sent to the
+   * server: the check is re-anchored here, in the browser, after the reading comes back.
+   */
+  noticeDate?: string;
+}
+
+/**
+ * The date of the notice a check should count from: the current request's own header date, else the
+ * most recent earlier request that has one. Read by the same parser the deadlines use, so the two
+ * can never disagree about which day the notice was received.
+ */
+export function noticeDateFrom(texts: readonly string[]): string | undefined {
+  for (const text of texts) {
+    if (!text?.trim()) continue;
+    const day = parseNotice(text).receivedOn;
+    if (day) return day;
+  }
+  return undefined;
 }
 
 export function checkCaseDataFrom(texts: readonly string[]): DocumentCheckCaseData {
@@ -68,6 +90,10 @@ export function caseFactsForCheck(
  * the test for whether a saved check is still current can never read the case differently.
  */
 export function checkCaseDataForWorkspace(ws: Workspace): DocumentCheckCaseData {
+  const noticeDate = noticeDateFrom([
+    ws.notice,
+    ...[...ws.previousRequests].reverse().map((p) => p.notice),
+  ]);
   return {
     ...checkCaseDataFrom([
       ws.notice,
@@ -75,5 +101,6 @@ export function checkCaseDataForWorkspace(ws: Workspace): DocumentCheckCaseData 
       ...ws.previousRequests.flatMap((p) => [p.notice, p.formInstructions]),
     ]),
     ...caseFactsForCheck(ws.caseFacts),
+    ...(noticeDate ? { noticeDate } : {}),
   };
 }

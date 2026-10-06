@@ -42,7 +42,12 @@ test("a guest's invoice is read on the device, never uploaded, and the reading s
     documents(page).getByText("04-supplier-invoice-WITH-PROBLEMS.pdf").first(),
   ).toBeVisible();
 
-  // Said before the button is pressed, so the seller knows where the file goes.
+  // Said before the button is pressed, so the seller knows where the file goes: a short line, with
+  // the full statement one tap away.
+  await expect(
+    documents(page).getByText(/read on this device and is not sent anywhere/i),
+  ).toBeVisible();
+  await documents(page).getByText("Exactly where your file goes").click();
   await expect(
     documents(page).getByText(/^Read on this device, without AI: the file is never uploaded/),
   ).toBeVisible();

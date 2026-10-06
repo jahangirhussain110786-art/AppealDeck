@@ -241,7 +241,7 @@ export function ChecklistPanel() {
       <div className="text-[14.5px]">
         <Row
           state="ok"
-          title="Supplier invoices, under 365 days"
+          title="Supplier invoices, 365 days before the notice"
           meta={<span className="font-mono text-xs text-muted-foreground">inv_0412.pdf</span>}
         />
         <Row

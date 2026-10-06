@@ -20,10 +20,11 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-11 px-5",
-        sm: "h-9 px-3.5",
+        // Touch: a phone-width screen or a coarse pointer gets a 44px floor; a mouse keeps 36px.
+        sm: "h-9 px-3.5 max-sm:min-h-11 [@media(pointer:coarse)]:min-h-11",
         lg: "h-[3.25rem] px-7 text-base",
-        icon: "h-10 w-10",
-        "icon-sm": "h-9 w-9",
+        icon: "h-10 w-10 max-sm:size-11 [@media(pointer:coarse)]:size-11",
+        "icon-sm": "h-9 w-9 max-sm:size-11 [@media(pointer:coarse)]:size-11",
       },
     },
     defaultVariants: {

@@ -20,20 +20,27 @@ import { guidanceFor } from "@/core/guidance";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { stripInvisibleChars } from "@/lib/idNormalize";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
-import { buildNoticeAnnotations } from "@/lib/decodeAnnotations";
+import { buildNoticeAnnotations, buildDecodeSpans } from "@/lib/decodeAnnotations";
 import { stashPendingNotice } from "@/lib/pendingNotice";
-import { peekDecodeDraft, clearDecodeDraft } from "@/lib/decodeDraft";
+import {
+  peekDecodeDraft,
+  clearDecodeDraft,
+  saveSessionPaste,
+  markSessionPasteLeaving,
+  loadSessionPaste,
+  clearSessionPaste,
+} from "@/lib/decodeDraft";
 import { CountdownRing } from "@/components/marketing/ProductPanels";
 import { WORKSPACE } from "@/content/workspace";
 import { proposedRequirements } from "@/core/workspace";
 import { DECODE } from "@/content/marketing";
 import { APP } from "@/content/app";
 import { AccentWord } from "@/components/ui/accent-word";
-import { SHARED } from "@/content/shared";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 import { cn } from "@/lib/utils";
 import {
   ENTITY_LABELS,
+  formatDay,
   parseNotice,
   type ViolationKind,
   type ResponseType,
@@ -58,9 +65,35 @@ type DecodeResponse = {
   entities?: ExtractedEntity[];
   /** #87. Optional on the wire so a response cached before this shipped still renders. */
   authenticity?: Array<{ id: string; label: string; detail: string; match: string }>;
+  /**
+   * 6 Oct 2026. The text that was decoded: the paste with tabs, entities, quote markers and hard
+   * line breaks cleaned up. EVERY offset in this response (entities, matches, deadline spans)
+   * refers to this string, so it is the text the page shows, marks and hands to the case, never
+   * the string the seller typed. Optional so a response cached before this shipped still renders.
+   */
+  normalizedText?: string;
+  receivedOn?: string | null;
+  /** One calm sentence per shape check, in the order they were found. */
+  notes?: Array<{ id: string; message: string }>;
+  multipleNotices?: boolean;
+  notEnforcement?: boolean;
+  notEnforcementKind?: "warning" | "listing_removal";
+  looksLikeReply?: { category: string; message: string; partial?: boolean; openAsks?: string[] };
+};
+
+/** What a refused paste (422) says about itself. */
+type DecodeError = {
+  message: string;
+  /** The paste was the seller's own appeal, not Amazon's message. */
+  sellerText: boolean;
+  /** A shape the product could name (language, damaged text): the message already says what to do. */
+  named: boolean;
 };
 
 type Status = "empty" | "loading" | "error" | "result";
+
+/** Notes the result shows in a card of their own, so they are not repeated in the notes list. */
+const NOTE_SHOWN_ELSEWHERE = new Set(["looks_like_reply", "not_enforcement"]);
 
 const STAGGER = 0.04;
 
@@ -73,7 +106,7 @@ export default function DecodeClient() {
   const [status, setStatus] = useState<Status>(() => (peekDecodeDraft() ? "loading" : "empty"));
   const [result, setResult] = useState<DecodeResponse | null>(null);
   const [decodedText, setDecodedText] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<DecodeError | null>(null);
   const [usingSample, setUsingSample] = useState(() => peekDecodeDraft()?.sample ?? false);
 
   const likeness = useMemo(() => assessNoticeLikeness(text), [text]);
@@ -99,17 +132,24 @@ export default function DecodeClient() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.error ?? DECODE.result.errorHint);
+        setError({
+          // One calm message, written by the API for this exact paste. Nothing is appended to it.
+          message: body.message ?? body.error ?? DECODE.result.errorHint,
+          sellerText: body.looksLikeSellerText === true,
+          named: body.supported === false || body.garbled === true,
+        });
         setStatus("error");
         return;
       }
       const data: DecodeResponse = await res.json();
       setResult(data);
-      setDecodedText(submitted);
+      // The decoded string, not the typed one: every offset in `data` points into it.
+      setDecodedText(data.normalizedText ?? submitted);
       setStatus("result");
+      saveSessionPaste(value, true);
       trackFunnelEvent(FUNNEL_EVENTS.decodeCompleted, { kind: data.kind });
     } catch {
-      setError(DECODE.result.errorNetwork);
+      setError({ message: DECODE.result.errorNetwork, sellerText: false, named: true });
       setStatus("error");
     }
   }
@@ -120,11 +160,28 @@ export default function DecodeClient() {
     startedDraft.current = true;
     const draft = peekDecodeDraft();
     clearDecodeDraft();
-    if (draft) void submitText(draft.text);
+    if (draft) {
+      void submitText(draft.text);
+      return;
+    }
+    // Back from "Open case workspace": the module variable above is gone, the tab's copy is not.
+    // Read after mount, never in a state initialiser, so the server and first client render agree.
+    restoreKeptPaste();
   });
+
+  function restoreKeptPaste() {
+    const kept = loadSessionPaste();
+    if (!kept) return;
+    setText(kept.text);
+    if (kept.decoded) {
+      setStatus("loading");
+      void submitText(kept.text);
+    }
+  }
 
   function handleSample() {
     setText(SAMPLE_NOTICE_TEXT);
+    saveSessionPaste(SAMPLE_NOTICE_TEXT);
     setUsingSample(true);
     setStatus("empty");
     setResult(null);
@@ -132,6 +189,7 @@ export default function DecodeClient() {
 
   function handleClear() {
     setText("");
+    clearSessionPaste();
     setUsingSample(false);
     setStatus("empty");
     setResult(null);
@@ -139,11 +197,26 @@ export default function DecodeClient() {
 
   function handleReset() {
     setText("");
+    clearSessionPaste();
     setUsingSample(false);
     setStatus("empty");
     setResult(null);
     setDecodedText("");
     setError(null);
+  }
+
+  /** Back to the box with the paste still in it, and the cursor there. */
+  function editPasted() {
+    setStatus("empty");
+    requestAnimationFrame(() => document.getElementById("notice")?.focus());
+  }
+
+  /** For the seller's own letter: an empty box, ready for Amazon's message. */
+  function pasteAmazonInstead() {
+    setText("");
+    clearSessionPaste();
+    setUsingSample(false);
+    editPasted();
   }
 
   const canSubmit = text.trim().length > 0;
@@ -159,8 +232,13 @@ export default function DecodeClient() {
   } else if (status === "error") {
     main = (
       <ErrorView
-        message={error ?? DECODE.result.errorFallback}
-        onRetry={() => setStatus("empty")}
+        message={error?.message ?? DECODE.result.errorFallback}
+        // A paste with no recognisable parts gets one extra line; a language or damaged-text
+        // refusal and the seller's own letter already say exactly what to do.
+        hint={error && !error.named && !error.sellerText ? DECODE.result.errorNotNotice : undefined}
+        sellerText={error?.sellerText ?? false}
+        onEdit={editPasted}
+        onPasteInstead={pasteAmazonInstead}
       />
     );
   }
@@ -189,6 +267,18 @@ export default function DecodeClient() {
                     {DECODE.result.headline[headlineKey(result)].accent}
                   </AccentWord>
                 </h1>
+                {/* Plain words for the two terms a first-time seller meets here. */}
+                {result.responseType?.type === "PLAN_OF_ACTION" &&
+                  headlineKey(result) === "PLAN_OF_ACTION" && (
+                    <p className="mt-4 max-w-prose text-base leading-relaxed text-muted-foreground">
+                      {DECODE.result.planOfActionGloss}
+                    </p>
+                  )}
+                {(/account health/i.test(decodedText) || result.deadlines.length === 0) && (
+                  <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
+                    {DECODE.result.accountHealthGloss}
+                  </p>
+                )}
               </div>
             ) : (
               <div className="max-w-3xl">
@@ -204,7 +294,28 @@ export default function DecodeClient() {
           </div>
 
           {status === "result" && result && guidance && (
-            <ResultFacts result={result} guidance={guidance} text={decodedText} />
+            <>
+              <ResultFacts result={result} guidance={guidance} text={decodedText} />
+              {/* Directly under the three answers, so it is on screen without scrolling at 390 px.
+                  A reply or a warning has no case to open as a plan, so it offers its own actions
+                  in the result below instead. */}
+              {!result.looksLikeReply && !result.notEnforcement && (
+                <div className="mt-6">
+                  <Button asChild size="lg">
+                    <Link
+                      href={`/case?kind=${result.kind}&view=overview`}
+                      onClick={() => {
+                        markSessionPasteLeaving();
+                        stashPendingNotice(decodedText, result.deadlines);
+                      }}
+                    >
+                      {DECODE.result.startPoaCta}
+                      <ArrowRight className="size-4" aria-hidden />
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </>
           )}
 
           {status !== "result" && (
@@ -229,6 +340,7 @@ export default function DecodeClient() {
                     onChange={(e) => {
                       const value = stripInvisibleChars(e.target.value);
                       setText(value);
+                      saveSessionPaste(value);
                       // Emptied by typing: back to the empty state, as the clear button does.
                       if (value.length < 1) setStatus("empty");
                     }}
@@ -311,6 +423,11 @@ export default function DecodeClient() {
 function headlineKey(result: DecodeResponse): keyof typeof DECODE.result.headline {
   if (result.severityGated) return "GATED";
   if ((result.authenticity?.length ?? 0) > 0) return "SUSPECT";
+  // Not a request for a response: say what it is before anything else (6 Oct 2026).
+  if (result.looksLikeReply) return "REPLY";
+  if (result.notEnforcement) {
+    return result.notEnforcementKind === "listing_removal" ? "LISTING" : "WARNING";
+  }
   if (result.kind === "VERIFICATION") return "VERIFICATION";
   return result.responseType?.type ?? "UNDETERMINED";
 }
@@ -395,16 +512,33 @@ function ResultFacts({
   );
 }
 
-function ErrorView({ message, onRetry }: { message: string; onRetry: () => void }) {
+function ErrorView({
+  message,
+  hint,
+  sellerText,
+  onEdit,
+  onPasteInstead,
+}: {
+  message: string;
+  hint?: string;
+  sellerText: boolean;
+  onEdit: () => void;
+  onPasteInstead: () => void;
+}) {
   return (
     <Alert variant="destructive">
       <AlertTitle>{DECODE.result.errorTitle}</AlertTitle>
-      <AlertDescription>
-        {message} {DECODE.result.errorHint}
-      </AlertDescription>
-      <div className="mt-3">
-        <Button variant="outline" size="sm" onClick={onRetry}>
-          {SHARED.retryButton}
+      {/* Said once: the API's message is written for this paste and already says what to do. */}
+      <AlertDescription>{message}</AlertDescription>
+      {hint && <AlertDescription className="mt-2">{hint}</AlertDescription>}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {sellerText ? (
+          <Button size="sm" onClick={onPasteInstead}>
+            {DECODE.result.errorSellerAction}
+          </Button>
+        ) : null}
+        <Button variant="outline" size="sm" onClick={onEdit}>
+          {DECODE.result.errorEdit}
         </Button>
       </div>
     </Alert>
@@ -433,7 +567,10 @@ function ResultView({
     () => proposedRequirements({ notice: text, formInstructions: "", revision: 1 }, result.kind),
     [text, result.kind],
   );
-  const carryNotice = () => stashPendingNotice(text, result.deadlines);
+  const carryNotice = () => {
+    markSessionPasteLeaving();
+    stashPendingNotice(text, result.deadlines);
+  };
   const r = DECODE.result;
   // Requested records already appear under "What to gather"; listing them again here was noise.
   const details = (result.entities ?? []).filter((e) => e.kind !== "requested_record");
@@ -441,19 +578,15 @@ function ResultView({
   // decided the response and the records it names marked in place. Every span is an offset the
   // engine reported into this same text, so nothing is marked that the notice does not say.
   const spans = useMemo<NoticeSpan[]>(
-    () => [
-      ...(result.responseType?.matches ?? []).map((m) => ({
-        start: m.start,
-        end: m.end,
-        tone: "risk" as const,
-        title: result.responseType?.label,
-      })),
-      ...(result.entities ?? [])
-        .filter((e) => e.kind === "requested_record")
-        .map((e) => ({ start: e.start, end: e.end, tone: "clear" as const, title: e.value })),
-    ],
+    () => buildDecodeSpans(result.responseType, result.entities),
     [result],
   );
+  // The two answers that are not a plan: Amazon's reply to an appeal, and a warning or a single
+  // listing. Neither gets a response plan, a records list or "open the case" as if one existed.
+  const notAPlan = Boolean(result.looksLikeReply || result.notEnforcement);
+  const notes = (result.notes ?? []).filter((n) => !NOTE_SHOWN_ELSEWHERE.has(n.id));
+  const shapeMessage = result.notes?.find((n) => n.id === "not_enforcement")?.message;
+  const decodedOn = result.receivedOn ? formatDay(result.receivedOn) : null;
 
   /**
    * 25 Sep 2026: the result is one numbered answer in the order a seller acts on it — what to
@@ -508,6 +641,31 @@ function ResultView({
           </Alert>
         </div>
       )}
+      {/*
+        Shape notes (6 Oct 2026): one calm line for each thing the decoder noticed about the paste
+        itself, in the order it found them. They are shown as the API wrote them, with no special
+        case per id, on a solid card for the same reason as the warning above.
+      */}
+      {notes.length > 0 && (
+        <div className="rounded-lg bg-card shadow-card">
+          <Alert variant="info">
+            <ul className="space-y-2">
+              {notes.map((n, i) => (
+                <li key={`${n.id}-${i}`}>
+                  <AlertDescription>{n.message}</AlertDescription>
+                  {n.id === "multiple_notices" && (
+                    <AlertDescription className="mt-1 font-medium">
+                      {decodedOn
+                        ? r.multipleDecoded.replace("{date}", decodedOn)
+                        : r.multipleDecodedNoDate}
+                    </AlertDescription>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Alert>
+        </div>
+      )}
       {result.severityGated && (
         <div className="rounded-lg bg-card shadow-card">
           <Alert variant="warning">
@@ -545,184 +703,235 @@ function ResultView({
         {/* v5 (26 Sep 2026, prototype decode.html): what to gather, the way into a case, what to
             do and avoid now, and only then how we read the notice. */}
         <div className="space-y-4">
-          <Card className="overflow-hidden">
-            <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
-              <h2 className="text-[0.9375rem] font-semibold">{r.recordsTitle}</h2>
-              {records.length > 0 && (
-                <StatusPill tone="mute">
-                  {records.length === 1
-                    ? r.recordsCountOne
-                    : r.recordsCount.replace("{n}", String(records.length))}
-                </StatusPill>
-              )}
-            </div>
-            {records.length ? (
-              <>
-                <ul>
-                  {records.map((record) => (
-                    <li
-                      key={record.label}
-                      className="grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3.5 border-b border-border px-5 py-3.5 last:border-b-0"
-                    >
-                      <span className="inline-flex size-10 items-center justify-center rounded-[10px] bg-surface-2 ring-1 ring-inset ring-border">
-                        <FileText aria-hidden className="size-5 text-foreground" />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block font-semibold text-foreground">{record.label}</span>
-                        <span className="block text-sm text-muted-foreground">
-                          {record.source === "matrix" ? r.recordInferred : r.recordNamed}
-                        </span>
-                      </span>
-                      {/* Ours, and said so — never passed off as something Amazon wrote. */}
-                      <Badge variant={record.source === "matrix" ? "info" : "secondary"} size="sm">
-                        {record.source === "matrix" ? WORKSPACE.inferred.badge : r.recordsAsked}
-                      </Badge>
-                    </li>
-                  ))}
-                </ul>
-                <p className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
-                  {r.recordsNote}
-                </p>
-              </>
-            ) : (
-              <p className="px-5 py-4 text-sm text-muted-foreground">{r.noRecords}</p>
-            )}
-          </Card>
-
-          <Card className="overflow-hidden bg-[linear-gradient(180deg,hsl(var(--surface-1)),hsl(var(--primary)/0.06))]">
-            <div className="grid items-center gap-x-4 gap-y-2 p-6 sm:grid-cols-[minmax(0,1fr)_8rem]">
-              <div className="flex flex-col items-start gap-3.5">
-                <h2 className="text-[1.1875rem] font-semibold tracking-[-0.02em]">{r.saveTitle}</h2>
+          {result.looksLikeReply && (
+            <Card className="space-y-3 p-5 sm:p-6">
+              <h2 className="text-[1.1875rem] font-semibold tracking-[-0.02em]">{r.replyTitle}</h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">{r.replyBody}</p>
+              {result.looksLikeReply.partial &&
+                (result.looksLikeReply.openAsks?.length ?? 0) > 0 && (
+                  <ul className="list-disc space-y-1 pl-4 text-sm text-foreground/85">
+                    {result.looksLikeReply.openAsks!.map((ask) => (
+                      <li key={ask}>{ask}</li>
+                    ))}
+                  </ul>
+                )}
+              <div className="flex flex-wrap items-center gap-2">
                 <Button asChild size="lg">
-                  <Link href={`/case?kind=${result.kind}&view=overview`} onClick={carryNotice}>
-                    {r.startPoaCta}
+                  <Link href="/case?view=history" onClick={markSessionPasteLeaving}>
+                    {r.replyOpen}
                     <ArrowRight className="size-4" aria-hidden />
                   </Link>
                 </Button>
-                <p className="text-[0.84375rem] text-muted-foreground">{r.saveNote}</p>
+                <CopyButton text={text} label={r.replyCopy} />
               </div>
-              <Image
-                src="/illustrations/step-checklist.svg"
-                alt=""
-                width={128}
-                height={110}
-                className="-my-2 hidden h-auto w-32 sm:block"
-                unoptimized
-              />
-            </div>
-            <div className="space-y-3 border-t border-border px-6 py-4">
-              <p className="text-xs text-muted-foreground">{r.jumpTo}</p>
-              <nav aria-label="Case workspace views" className="mt-1 grid grid-cols-4 gap-1">
-                {Object.entries(WORKSPACE.tabs).map(([view, label]) => {
-                  const Icon = VIEW_ICONS[view] ?? FileSearch;
-                  return (
-                    <Link
-                      key={view}
-                      href={`/case?kind=${result.kind}&view=${view}`}
-                      onClick={carryNotice}
-                      className="flex min-w-0 flex-col items-center gap-2 rounded-lg py-3 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <Icon className="size-5 text-primary" aria-hidden />
-                      {label}
-                    </Link>
-                  );
-                })}
-              </nav>
-              <CopyButton text={guidance.summary} label={r.copySummary} />
-            </div>
-          </Card>
-
-          {/* Shown open, not folded: the e2e and a panicking seller both need to see it at once. */}
-          <Card className="p-5 sm:p-6">
-            <h2 className="text-[0.9375rem] font-semibold">{r.triageTitle}</h2>
-            <div className="mt-4 grid gap-5 sm:grid-cols-2">
-              {[
-                { label: r.doNow, items: guidance.triage.doNow, icon: Check, bad: false },
-                { label: r.doNot, items: guidance.triage.doNot, icon: Ban, bad: true },
-              ].map(({ label, items, icon: Icon, bad }) => (
-                <div key={label}>
-                  <h3
-                    className={cn(
-                      "mb-2 flex items-center gap-2 text-sm font-semibold",
-                      bad ? "text-destructive" : "text-success",
-                    )}
-                  >
-                    <Icon aria-hidden className="size-4" />
-                    {label}
-                  </h3>
-                  {/* All shown: each is one line, and "2 more actions" hid most of the advice. */}
-                  <ul className="list-disc space-y-1.5 pl-4 text-sm leading-relaxed text-foreground/85">
-                    {items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
+            </Card>
+          )}
+          {!result.looksLikeReply && result.notEnforcement && (
+            <Card className="space-y-3 p-5 sm:p-6">
+              <h2 className="text-[1.1875rem] font-semibold tracking-[-0.02em]">
+                {r.notEnforcementTitle}
+              </h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {shapeMessage ?? r.notEnforcementTitle}
+              </p>
+              <Button asChild variant="outline">
+                <Link href={`/case?kind=${result.kind}&view=overview`} onClick={carryNotice}>
+                  {r.saveAnyway}
+                </Link>
+              </Button>
+            </Card>
+          )}
+          {!notAPlan && (
+            <>
+              <Card className="overflow-hidden">
+                <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
+                  <h2 className="text-[0.9375rem] font-semibold">{r.recordsTitle}</h2>
+                  {records.length > 0 && (
+                    <StatusPill tone="mute">
+                      {records.length === 1
+                        ? r.recordsCountOne
+                        : r.recordsCount.replace("{n}", String(records.length))}
+                    </StatusPill>
+                  )}
                 </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="p-5 sm:p-6">
-            <h2 className="text-[0.9375rem] font-semibold">{r.howRead}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{guidance.summary}</p>
-            {result.responseType && (
-              <div className="mt-4 border-t border-border pt-4">
-                <h3 className="text-xs font-semibold text-muted-foreground">
-                  {r.responseTypeTitle}
-                </h3>
-                <p className="mt-1 font-semibold text-foreground">{result.responseType.label}</p>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  {result.responseType.reason}
-                </p>
-                {result.responseType.competing.length > 0 && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {r.responseTypeAlsoSeen}: {result.responseType.competing.join(", ")}
-                  </p>
-                )}
-                {result.responseType.matches.length > 0 && (
-                  <DetailDisclosure title={r.responseTypeSourceTitle} className="mt-3">
-                    <div className="space-y-2">
-                      {result.responseType.matches.map((m) => (
-                        <blockquote
-                          key={`${m.start}-${m.end}`}
-                          className="border-l-2 border-primary/40 pl-3 text-xs italic"
+                {records.length ? (
+                  <>
+                    <ul>
+                      {records.map((record) => (
+                        <li
+                          key={record.label}
+                          className="grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3.5 border-b border-border px-5 py-3.5 last:border-b-0"
                         >
-                          {m.quote}
-                        </blockquote>
+                          <span className="inline-flex size-10 items-center justify-center rounded-[10px] bg-surface-2 ring-1 ring-inset ring-border">
+                            <FileText aria-hidden className="size-5 text-foreground" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block font-semibold text-foreground">
+                              {record.label}
+                            </span>
+                            <span className="block text-sm text-muted-foreground">
+                              {record.source === "matrix" ? r.recordInferred : r.recordNamed}
+                            </span>
+                          </span>
+                          {/* Ours, and said so — never passed off as something Amazon wrote. */}
+                          <Badge
+                            variant={record.source === "matrix" ? "info" : "secondary"}
+                            size="sm"
+                          >
+                            {record.source === "matrix" ? WORKSPACE.inferred.badge : r.recordsAsked}
+                          </Badge>
+                        </li>
                       ))}
-                    </div>
-                  </DetailDisclosure>
+                    </ul>
+                    <p className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
+                      {r.recordsNote}
+                    </p>
+                  </>
+                ) : (
+                  <p className="px-5 py-4 text-sm text-muted-foreground">{r.noRecords}</p>
                 )}
-              </div>
-            )}
-            <div className="mt-4 border-t border-border pt-4">
-              <h3 className="mb-2 text-xs font-semibold text-muted-foreground">
-                {r.deadlinesTitle}
-              </h3>
-              {result.deadlines.length > 0 ? (
-                <DeadlineChipList deadlines={result.deadlines} />
-              ) : (
-                <p className="text-sm text-muted-foreground">{r.noDeadline}</p>
-              )}
-            </div>
-            {details.length > 0 && (
-              <div className="mt-4 space-y-2 border-t border-border pt-4">
-                <h3 className="text-xs font-semibold text-muted-foreground">{r.entitiesTitle}</h3>
-                <ul className="flex flex-wrap gap-2">
-                  {details.map((e) => (
-                    <li
-                      key={`${e.kind}-${e.start}`}
-                      className="inline-flex items-baseline gap-1.5 rounded-md border border-border bg-surface-2/60 px-2 py-1 text-xs"
-                    >
-                      <span className="text-muted-foreground">{ENTITY_LABELS[e.kind]}</span>
-                      <span className="font-mono tabular-nums text-foreground">{e.value}</span>
-                      {e.ambiguous && <span className="text-warning">{r.entitiesAmbiguous}</span>}
-                    </li>
+              </Card>
+
+              <Card className="overflow-hidden bg-[linear-gradient(180deg,hsl(var(--surface-1)),hsl(var(--primary)/0.06))]">
+                <div className="grid items-center gap-x-4 gap-y-2 p-6 sm:grid-cols-[minmax(0,1fr)_8rem]">
+                  <div className="flex flex-col items-start gap-3.5">
+                    <h2 className="text-[1.1875rem] font-semibold tracking-[-0.02em]">
+                      {r.saveTitle}
+                    </h2>
+                    <p className="text-[0.84375rem] text-muted-foreground">{r.saveNote}</p>
+                  </div>
+                  <Image
+                    src="/illustrations/step-checklist.svg"
+                    alt=""
+                    width={128}
+                    height={110}
+                    className="-my-2 hidden h-auto w-32 sm:block"
+                    unoptimized
+                  />
+                </div>
+                <div className="space-y-3 border-t border-border px-6 py-4">
+                  <p className="text-xs text-muted-foreground">{r.jumpTo}</p>
+                  <nav aria-label="Case workspace views" className="mt-1 grid grid-cols-4 gap-1">
+                    {Object.entries(WORKSPACE.tabs).map(([view, label]) => {
+                      const Icon = VIEW_ICONS[view] ?? FileSearch;
+                      return (
+                        <Link
+                          key={view}
+                          href={`/case?kind=${result.kind}&view=${view}`}
+                          onClick={carryNotice}
+                          className="flex min-w-0 flex-col items-center gap-2 rounded-lg py-3 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <Icon className="size-5 text-primary" aria-hidden />
+                          {label}
+                        </Link>
+                      );
+                    })}
+                  </nav>
+                  <CopyButton text={guidance.summary} label={r.copySummary} />
+                </div>
+              </Card>
+
+              {/* Shown open, not folded: the e2e and a panicking seller both need to see it at once. */}
+              <Card className="p-5 sm:p-6">
+                <h2 className="text-[0.9375rem] font-semibold">{r.triageTitle}</h2>
+                <div className="mt-4 grid gap-5 sm:grid-cols-2">
+                  {[
+                    { label: r.doNow, items: guidance.triage.doNow, icon: Check, bad: false },
+                    { label: r.doNot, items: guidance.triage.doNot, icon: Ban, bad: true },
+                  ].map(({ label, items, icon: Icon, bad }) => (
+                    <div key={label}>
+                      <h3
+                        className={cn(
+                          "mb-2 flex items-center gap-2 text-sm font-semibold",
+                          bad ? "text-destructive" : "text-success",
+                        )}
+                      >
+                        <Icon aria-hidden className="size-4" />
+                        {label}
+                      </h3>
+                      {/* All shown: each is one line, and "2 more actions" hid most of the advice. */}
+                      <ul className="list-disc space-y-1.5 pl-4 text-sm leading-relaxed text-foreground/85">
+                        {items.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
                   ))}
-                </ul>
-                <p className="text-xs text-muted-foreground">{r.entitiesNote}</p>
-              </div>
-            )}
-          </Card>
+                </div>
+              </Card>
+
+              <Card className="p-5 sm:p-6">
+                <h2 className="text-[0.9375rem] font-semibold">{r.howRead}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {guidance.summary}
+                </p>
+                {result.responseType && (
+                  <div className="mt-4 border-t border-border pt-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground">
+                      {r.responseTypeTitle}
+                    </h3>
+                    <p className="mt-1 font-semibold text-foreground">
+                      {result.responseType.label}
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      {result.responseType.reason}
+                    </p>
+                    {result.responseType.competing.length > 0 && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {r.responseTypeAlsoSeen}: {result.responseType.competing.join(", ")}
+                      </p>
+                    )}
+                    {result.responseType.matches.length > 0 && (
+                      <DetailDisclosure title={r.responseTypeSourceTitle} className="mt-3">
+                        <div className="space-y-2">
+                          {result.responseType.matches.map((m) => (
+                            <blockquote
+                              key={`${m.start}-${m.end}`}
+                              className="border-l-2 border-primary/40 pl-3 text-xs italic"
+                            >
+                              {m.quote}
+                            </blockquote>
+                          ))}
+                        </div>
+                      </DetailDisclosure>
+                    )}
+                  </div>
+                )}
+                <div className="mt-4 border-t border-border pt-4">
+                  <h3 className="mb-2 text-xs font-semibold text-muted-foreground">
+                    {r.deadlinesTitle}
+                  </h3>
+                  {result.deadlines.length > 0 ? (
+                    <DeadlineChipList deadlines={result.deadlines} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{r.noDeadline}</p>
+                  )}
+                </div>
+                {details.length > 0 && (
+                  <div className="mt-4 space-y-2 border-t border-border pt-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground">
+                      {r.entitiesTitle}
+                    </h3>
+                    <ul className="flex flex-wrap gap-2">
+                      {details.map((e) => (
+                        <li
+                          key={`${e.kind}-${e.start}`}
+                          className="inline-flex items-baseline gap-1.5 rounded-md border border-border bg-surface-2/60 px-2 py-1 text-xs"
+                        >
+                          <span className="text-muted-foreground">{ENTITY_LABELS[e.kind]}</span>
+                          <span className="font-mono tabular-nums text-foreground">{e.value}</span>
+                          {e.ambiguous && (
+                            <span className="text-warning">{r.entitiesAmbiguous}</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-xs text-muted-foreground">{r.entitiesNote}</p>
+                  </div>
+                )}
+              </Card>
+            </>
+          )}
           <p className="px-1 text-[0.84375rem] text-muted-foreground">{r.notAdvice}</p>
         </div>
       </div>

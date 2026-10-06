@@ -74,12 +74,12 @@ export function DevUiGallery() {
     {
       kind: "funds_appeal_eligible" as const,
       dueAt: new Date(Date.now() + 60 * 86_400_000),
-      label: "Funds appeal becomes available (~60 days from deactivation)",
+      label: "Funds appeal opens about 60 days after deactivation",
     },
     {
       kind: "funds_review" as const,
-      dueAt: new Date(Date.now() + 90 * 86_400_000),
-      label: "Funds review checkpoint (~90 days) - release is NEVER automatic",
+      dueAt: null,
+      label: "Do not assume funds are released on a fixed date",
     },
     {
       kind: "indefinite_hold" as const,
@@ -216,9 +216,7 @@ export function DevUiGallery() {
             <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             <div>
               <AlertTitle>Warning</AlertTitle>
-              <AlertDescription>
-                Funds review is a checkpoint, not an automatic release.
-              </AlertDescription>
+              <AlertDescription>Do not assume funds are released on a fixed date.</AlertDescription>
             </div>
           </Alert>
           <Alert variant="destructive">

@@ -28,7 +28,7 @@ function NavPill({ href, label, lock, mobile }: NavItem & { mobile?: boolean }) 
   const className = cn(
     mobile
       ? "flex h-11 items-center rounded-md px-3 text-base font-medium hover:bg-muted"
-      : "relative px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-[var(--dur-fast)] hover:text-foreground after:absolute after:inset-x-2.5 after:-bottom-[1.2rem] after:h-0.5 after:rounded-full after:bg-transparent",
+      : "relative px-2.5 py-1.5 text-sm font-medium before:absolute before:inset-x-0 before:-inset-y-1.5 before:content-[''] text-muted-foreground transition-colors duration-[var(--dur-fast)] hover:text-foreground after:absolute after:inset-x-2.5 after:-bottom-[1.2rem] after:h-0.5 after:rounded-full after:bg-transparent",
     !mobile && active && "text-foreground after:bg-primary",
     mobile && active && "bg-muted",
   );
@@ -124,14 +124,14 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
                 asChild
                 variant="ghost"
                 size="sm"
-                className="hidden sm:inline-flex"
+                className="hidden h-11 sm:inline-flex"
                 aria-label={SHARED.nav.signIn}
               >
                 <Link href={signInHref}>{SHARED.nav.signIn}</Link>
               </Button>
             )}
             {mode === "marketing" && isSignedOut && !pathname.startsWith("/decode") && (
-              <Button asChild size="sm" className="hidden md:inline-flex">
+              <Button asChild size="sm" className="hidden h-11 md:inline-flex">
                 <Link href="/decode">{SHARED.nav.decodeCta}</Link>
               </Button>
             )}

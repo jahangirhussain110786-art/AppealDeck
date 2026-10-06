@@ -11,6 +11,9 @@ import type { NoticeIssue } from "./noticeIssues";
 import { detectIssues, hasMultipleIssues } from "./noticeIssues";
 import type { SavedDocumentCheck } from "./documentCheck";
 import { questionsIn } from "./questionnaire";
+import { STORES } from "../content/stores";
+import { assessNotEnforcement } from "./noticeText";
+import { analyzeReply } from "./responseAnalyzer";
 
 /**
  * AA-39 (AM-26) added `verification`, `questionnaire` and `acknowledgement`. Before that, a notice
@@ -527,6 +530,13 @@ export function proposedRequirements(
     )
     .map((s) => s.text);
   const allText = `${w.notice}\n${w.formInstructions}`;
+  /*
+    A warning is not a suspension (6 Oct 2026). An Account Health "at risk" banner, a metric
+    snapshot or a one-line listing removal asks for nothing, so nothing is raised: before this the
+    evidence matrix put a sales-or-performance record and an invoice on a case that has no appeal to
+    answer. The decoder reports the same reading as `notEnforcement`.
+  */
+  if (assessNotEnforcement(allText).notEnforcement) return [];
   // In the order Amazon listed them (29 Sep 2026), not the order of the patterns below — the seller
   // works down the list as the notice gave it.
   const named = REQUIREMENT_CANDIDATES.flatMap(({ pattern, label, evidenceKind, unless }) => {
@@ -564,15 +574,35 @@ export function proposedRequirements(
   */
   const covered = new Set(named.map(requirementEvidenceKind));
   const requestText = `${w.notice}\n${w.formInstructions}`;
-  const inferred = requirementsFor(violationKind)
-    .filter(
-      (r) =>
-        r.required &&
-        !covered.has(r.kind) &&
+  /*
+    Every issue the notice raises, not only the one the case routes on (6 Oct 2026). A notice that
+    names an authenticity concern and a listing breach is refused for whichever the response missed,
+    and the second issue raised no records at all because only the primary kind was consulted. The
+    matrix entries are unioned across the case's kind and each detected issue's kind, once per
+    record.
+  */
+  const kinds = [
+    ...new Set<ViolationKind>([
+      violationKind,
+      ...detectIssues(w.notice, w.formInstructions).map((i) => i.kind),
+    ]),
+  ];
+  const seen = new Set<EvidenceKind>();
+  const inferred = kinds
+    .flatMap((k) => requirementsFor(k))
+    .filter((r) => {
+      if (
+        !r.required ||
+        covered.has(r.kind) ||
+        seen.has(r.kind) ||
         // A record needed only in some cases of this kind (a recall record on a safety case that is
         // a customer complaint) is raised only when the notice says it is that case.
-        (!r.raisedWhen || r.raisedWhen.test(requestText)),
-    )
+        (r.raisedWhen && !r.raisedWhen.test(requestText))
+      )
+        return false;
+      seen.add(r.kind);
+      return true;
+    })
     .map((r) => ({
       id: crypto.randomUUID(),
       label: EVIDENCE_KIND_LABELS[r.kind],
@@ -771,36 +801,57 @@ export function proposedIssues(w: Pick<Workspace, "notice" | "formInstructions">
 /** A bounded routing aid, never a claim about hidden platform decisions. */
 const VERIFICATION_PATTERN = KIND_PATTERNS.find(([kind]) => kind === "VERIFICATION")![1];
 
+/**
+ * Whether D6 still gates this case, recomputed from the text the case holds (6 Oct 2026).
+ *
+ * `professionalReviewRequired` used to be a latch set the first time a notice routed to
+ * `specialist` and honoured forever, so a case wrongly gated by a broad word match, or by boilerplate
+ * in a later Amazon reply, could never be released, even after the seller corrected the notice.
+ *
+ * The flag is now a memory of an allegation, not a verdict: it holds only while an allegation shape
+ * still appears in the current request or in an earlier request the seller confirmed. That keeps what
+ * the latch was for (a later reply that does not repeat a confirmed fabrication or fraud allegation
+ * does not release the case) and lets a corrected notice, or a flag set by the older broad rule,
+ * clear.
+ */
+export function professionalReviewApplies(
+  w: Pick<Workspace, "notice" | "formInstructions"> &
+    Partial<Pick<Workspace, "professionalReviewRequired" | "previousRequests">>,
+): boolean {
+  if (D6_GATED_ALLEGATION.test(`${w.notice}\n${w.formInstructions}`)) return true;
+  if (!w.professionalReviewRequired) return false;
+  return (w.previousRequests ?? []).some((p) =>
+    D6_GATED_ALLEGATION.test(`${p.notice}\n${p.formInstructions}`),
+  );
+}
+
 export function routeWorkspace(
   w: Pick<Workspace, "notice" | "formInstructions" | "position" | "marketplace"> &
-    Partial<Pick<Workspace, "professionalReviewRequired">>,
+    Partial<Pick<Workspace, "professionalReviewRequired" | "previousRequests">>,
 ): { protocol: Protocol; reason: string } {
-  if (w.professionalReviewRequired)
-    return {
-      protocol: "specialist",
-      reason:
-        "An earlier confirmed request in this case requires professional review. A later reply does not remove that requirement.",
-    };
+  const route = routeCore(w);
+  // Another store goes down the same routes as the US one; it only carries a plain notice that the
+  // guidance was written for Amazon US. Added to the reason, which is shown wherever the route is.
+  if (w.marketplace !== "US" && route.protocol !== "specialist")
+    return { ...route, reason: `${route.reason} ${STORES.nonUsNotice}` };
+  return route;
+}
+
+function routeCore(
+  w: Pick<Workspace, "notice" | "formInstructions" | "position" | "marketplace"> &
+    Partial<Pick<Workspace, "professionalReviewRequired" | "previousRequests">>,
+): { protocol: Protocol; reason: string } {
   const text = `${w.notice}\n${w.formInstructions}`;
   /**
-   * D6 severity gating, and nothing beyond it. The 21 Sep 2026 commercial review established that
-   * this test had silently grown to cover product safety, related accounts and every intellectual-
-   * property notice — categories D6 never named — which made the product refuse to help the sellers
-   * it was built for. D6 gates exactly three things: fabricated documents, fraud, and child safety.
-   * Widening this again requires a founder decision and an amendment, not a regex edit.
+   * D6 severity gating, and nothing beyond it. D6 gates exactly three things: fabricated documents,
+   * fraud, and child safety, as *allegations* (see `D6_GATED_ALLEGATION`, narrowed 6 Oct 2026 from
+   * bare words). Widening this again requires a founder decision and an amendment, not a regex edit.
    */
-  // The same rule the classifier gates on — see `D6_GATED_ALLEGATION`. It lived here as a literal
-  // and in `noticeParser` as a wider one, and the two disagreed about the most common case there is.
-  if (D6_GATED_ALLEGATION.test(text))
+  if (professionalReviewApplies(w))
     return {
       protocol: "specialist",
       reason:
         "The notice alleges fabricated documents, fraud, or a child-safety matter. We do not prepare responses to these, because getting one wrong carries consequences a draft cannot undo — this needs qualified help.",
-    };
-  if (w.marketplace !== "US")
-    return {
-      protocol: "clarification",
-      reason: "This workspace currently supports English-language Amazon US requests.",
     };
   /**
    * Verification now has a home of its own. It used to land in `clarification` with an instruction
@@ -815,12 +866,6 @@ export function routeWorkspace(
       protocol: "verification",
       reason:
         "This is a verification request, not a policy appeal. Amazon wants to confirm who you are or that your business details are genuine, so the answer is the specific document or step it names — a Plan of Action is the wrong response here and can delay things.",
-    };
-  if (w.position === "dispute")
-    return {
-      protocol: "dispute",
-      reason:
-        "Your disagreement is preserved. Organize your facts for qualified review before choosing dispute grounds.",
     };
   if (w.notice.trim().length < 30)
     return {
@@ -840,10 +885,38 @@ export function routeWorkspace(
    * change it. A notice that really is unclear still lands in clarification through the decision.
    */
   const decision = determineResponseType(w.notice, w.formInstructions);
-  const reason = w.formInstructions.trim()
+  let reason = w.formInstructions.trim()
     ? decision.reason
-    : `${decision.reason} This is read from your notice alone. If the response page in Seller Central asks for something different, add what it says and the route updates.`;
-  return { protocol: PROTOCOL_FOR_RESPONSE_TYPE[decision.type], reason };
+    : `${decision.reason} This is read from your notice alone. If the response page in Seller Central asks for something different, add what it says and this updates.`;
+  let protocol = PROTOCOL_FOR_RESPONSE_TYPE[decision.type];
+  /*
+    6 Oct 2026: a refusal that faults the plan ("does not identify the root cause") and also asks for
+    an invoice read as a document request, so after the reply was applied the Root Cause, Corrective
+    Actions and Preventive Measures sections vanished and the plan Amazon had just criticised could
+    not be revised. A case that was a Plan of Action stays one while the reply still faults the plan.
+  */
+  if (
+    protocol === "documents" &&
+    (w.previousRequests ?? []).some((p) => p.protocol === "operational") &&
+    PLAN_FAULT.test(w.notice)
+  ) {
+    protocol = "operational";
+    reason = `${reason} Amazon also says your plan is missing something, so the plan stays part of your response.`;
+  }
+  /*
+    6 Oct 2026: "I disagree" used to replace the route with `dispute`, which cannot be composed, so
+    the seller who was wrongly suspended got no appeal at all. Disagreeing is a position, not a
+    different document: when the notice asks for something this product can write, it is still
+    written, and `composeWorkspace` opens it by saying it contests the finding. Only when nothing
+    composable was asked for does the case stay in `dispute`.
+  */
+  if (w.position === "dispute" && !COMPOSABLE_PROTOCOLS.includes(protocol))
+    return {
+      protocol: "dispute",
+      reason:
+        "Your disagreement is preserved. Organize your facts for qualified review before choosing dispute grounds.",
+    };
+  return { protocol, reason };
 }
 
 /** Heading used for the seller's written answer, per protocol. `operational` is handled separately
@@ -952,6 +1025,48 @@ export function answerFor(w: Pick<Workspace, "answers">, question: string): stri
   return w.answers?.find((a) => a.question === question)?.answer ?? "";
 }
 
+/**
+ * A case that does not rest on the seller having done something wrong: they disagree with the
+ * finding, or the case is about a linked account (which the seller usually did not "cause").
+ * Read from the case itself, because `workspaceGaps` is called without the violation kind.
+ */
+function disputesFinding(w: Pick<Workspace, "position" | "requirements">): boolean {
+  return (
+    w.position === "dispute" ||
+    w.requirements.some((r) => requirementEvidenceKind(r) === "account_resolution_proof")
+  );
+}
+
+/**
+ * Records a seller can answer with a truthful statement alone (6 Oct 2026): how two accounts are or
+ * are not related, and, when the seller disputes the finding, that a rights owner's claim is wrong.
+ * Never any other record, so the bar for an operational Plan of Action is unchanged.
+ */
+export function answerableInWords(
+  w: Pick<Workspace, "position">,
+  r: Pick<Requirement, "label"> & Partial<Pick<Requirement, "evidenceKind">>,
+): boolean {
+  const kind = requirementEvidenceKind(r);
+  if (kind === "account_resolution_proof") return true;
+  return w.position === "dispute" && kind === "rights_owner_retraction";
+}
+
+/**
+ * Amazon says the plan itself is missing or not enough ("does not identify the root cause", "plan of
+ * action is insufficient"). Both word orders, as Amazon writes both.
+ */
+const PLAN_FAULT = new RegExp(
+  "\\b(?:root cause|plan of action|plan|corrective actions?|preventive (?:actions?|measures?))\\b[^.!?\\n]{0,60}?\\b(?:insufficient|not sufficient|incomplete|inadequate|not adequate|unclear|missing|lacks?|not enough|does not|did not|doesn't|didn't|is not|isn't)\\b" +
+    "|\\b(?:does not|did not|doesn't|didn't|fails? to|failed to|not)\\s+(?:\\w+\\s+){0,3}?(?:identif\\w+|explain\\w*|address\\w*|describ\\w+|includ\\w+|detail\\w*|provid\\w+)\\s+(?:\\w+\\s+){0,4}?(?:root cause|corrective|preventive)",
+  "i",
+);
+
+/** The latest reply, and the current request when it is itself a reply, fault the plan. */
+export function planFaulted(w: Pick<Workspace, "notice" | "revision" | "replies">): boolean {
+  const texts = [w.revision > 1 ? w.notice : "", w.replies.at(-1)?.text ?? ""];
+  return texts.some((t) => t && PLAN_FAULT.test(t));
+}
+
 /*
   The seller reads every line below as a to-do: in "Before you send", as the dashboard's next step,
   in the export and in a submission's "still open" note. Reworded 29 Sep 2026 (AM-32) from engine
@@ -963,7 +1078,17 @@ export function workspaceGaps(w: Workspace): string[] {
   const route = routeWorkspace(w);
   if (!w.confirmed || route.protocol !== w.protocol) gaps.push("Confirm how we read your notice.");
   if (!COMPOSABLE_PROTOCOLS.includes(route.protocol)) gaps.push(route.reason);
-  if (!w.requirementsConfirmed)
+  // Either the stored protocol or the freshly read route can be written; only when neither can are
+  // the written-part to-dos dropped (an unconfirmed case keeps them until it is confirmed).
+  const composable =
+    COMPOSABLE_PROTOCOLS.includes(w.protocol) || COMPOSABLE_PROTOCOLS.includes(route.protocol);
+  /*
+    6 Oct 2026: a case that cannot be answered here (information, clarification, dispute, specialist,
+    verification) was given the same to-dos as a response that can be sent. "Tick that your document
+    list is complete" and "Say what your documents show" had nothing behind them and could never be
+    cleared, so the case read as unfinished forever. Those lines now belong to composable protocols.
+  */
+  if (composable && !w.requirementsConfirmed)
     gaps.push(
       "Tick that your document list is complete, once you have checked the notice and the appeal page.",
     );
@@ -978,15 +1103,22 @@ export function workspaceGaps(w: Workspace): string[] {
     );
   if (w.protocol === "documents" && !w.requirements.length)
     gaps.push("Add the document Amazon asked for.");
-  for (const r of w.requirements) {
+  // The records are real work for a response and for verification; not for the others.
+  const trackRecords = composable || route.protocol === "verification";
+  for (const r of trackRecords ? w.requirements : []) {
     if (r.status === "cannot_obtain" && r.declined?.reason.trim()) {
       /*
-        A-02: a record the seller has told us they cannot obtain is still a gap — the evidence is
-        genuinely absent and the draft must stay a working draft. But it is an *acknowledged* gap,
-        and saying "review and link evidence" to someone who has already explained they cannot get
-        it is the dead end this feature exists to remove. The response names it in their words.
+        A-02, then corrected 6 Oct 2026. A record the seller has told us, with a reason, that they
+        cannot obtain is an *acknowledged* gap: the response states it under its own heading, in
+        their words, and says it was not supplied. It used to stay in the gap list as well, which
+        kept the draft a watermarked working draft ("NOT READY TO SUBMIT") for ever, though the
+        seller had done everything the product asks. Nothing is hidden by this: the record is
+        still named in "Records I could not obtain", and is never presented as supplied.
       */
-      gaps.push(`You can't get this, and your response says so: ${r.label}`);
+    } else if (answerableInWords(w, r) && r.status === "reviewed" && r.note.trim()) {
+      // 6 Oct 2026: for a related-account or disputed-claim case the facts are the answer, and
+      // there may be no file to attach. A truthful statement satisfies the record; it is listed
+      // in the response as a statement, never as a document.
     } else if (
       r.status !== "reviewed" ||
       !r.recordId ||
@@ -1008,7 +1140,10 @@ export function workspaceGaps(w: Workspace): string[] {
     acknowledgement a "working draft" forever while accepting any 40 characters of anything.
   */
   const questions = questionnaireQuestions(w);
-  if (questions.length) {
+  const noWrongdoing = disputesFinding(w);
+  if (!composable) {
+    // Nothing is written here for these protocols, so no written-part to-dos.
+  } else if (questions.length) {
     for (const q of questions) {
       if (!answerFor(w, q).trim()) gaps.push(`Answer Amazon's question: ${q}`);
     }
@@ -1022,12 +1157,26 @@ export function workspaceGaps(w: Workspace): string[] {
     );
   }
   if (w.protocol === "operational") {
+    /*
+      6 Oct 2026: a seller who did nothing wrong (a wrongly linked account, a claim that is simply
+      wrong) was forced to invent corrective actions to clear these two lines. The bar is the same
+      (a few real sentences) but the question now says that "nothing needed correcting, because…"
+      is an answer. Kept for every other operational case exactly as before.
+    */
     if (w.correctiveActions.trim().length < 40)
       gaps.push(
-        "Answer “What have you fixed already?”, saying what is finished and what is still in progress.",
+        noWrongdoing
+          ? `Answer “What have you fixed already?”. ${STORES.nothingToCorrectHint}`
+          : "Answer “What have you fixed already?”, saying what is finished and what is still in progress.",
       );
     if (w.preventiveMeasures.trim().length < 40)
-      gaps.push("Answer “How will you stop it happening again?”: who does what, and how often.");
+      gaps.push(
+        noWrongdoing
+          ? `Answer “How will you stop it happening again?”. ${STORES.nothingToCorrectHint}`
+          : "Answer “How will you stop it happening again?”: who does what, and how often.",
+      );
+    // A refusal that says the plan itself is missing its root cause is the first thing to fix.
+    if (planFaulted(w)) gaps.push(STORES.rootCauseFaulted);
   }
   // First, not last: a reply changes what every other item means, and the dashboard shows only
   // the first gap — so a case with an unread reply used to open on "Review Supplier invoice".
@@ -1053,7 +1202,7 @@ export function composeWorkspace(
   // AA-39: each composable protocol gets its own heading. A questionnaire answered under a heading
   // that says "response to the document request" reads as though the seller misunderstood the ask.
   const questions = questionnaireQuestions(w);
-  const sections =
+  const sections: PoaDraft["sections"] =
     w.protocol === "operational"
       ? [
           { heading: "Root Cause", body: w.explanation },
@@ -1072,12 +1221,24 @@ export function composeWorkspace(
               : []),
           ]
         : [{ heading: RESPONSE_HEADING[w.protocol] ?? "Your response", body: w.explanation }];
+  // A seller who disagrees with the finding gets a response that says so up front, written the same
+  // way as any other (6 Oct 2026). It states a position; it claims nothing about the outcome.
+  if (w.position === "dispute")
+    sections.unshift({ heading: "Position", body: STORES.disputeFraming });
   sections.push({
     heading: "Supporting records",
     body:
       w.requirements
-        .filter((r) => r.status === "reviewed" && r.filename)
-        .map((r) => `${r.filename}, page ${r.page}: ${r.note}`)
+        .filter(
+          (r) =>
+            r.status === "reviewed" && (r.filename || (answerableInWords(w, r) && r.note.trim())),
+        )
+        // A statement is listed as a statement: no file name, no page, never read as a document.
+        .map((r) =>
+          r.filename
+            ? `${r.filename}, page ${r.page}: ${r.note}`
+            : `${r.label} (statement, no file): ${r.note}`,
+        )
         .join("\n") || "No reviewed records linked.",
   });
   /*
@@ -1176,11 +1337,19 @@ export function computeReplyDelta(w: Workspace, replyId: string): ReplyDelta | n
     `previousRequests` under `w.revision`, so both halves of the pair stay findable.
   */
   const nextRevision = w.revision + 1;
-  const asked = proposedRequirements({
-    notice: reply.text,
-    formInstructions: "",
-    revision: nextRevision,
-  });
+  /*
+    A reply that says the decision is final asks for nothing more: reading its sentences for
+    records ("we will not accept further invoices") would put a list of documents in front of a
+    seller whose case Amazon has closed. The outcome is recorded instead.
+  */
+  const asked =
+    analyzeReply(reply.text).category === "final_decision_negative"
+      ? []
+      : proposedRequirements({
+          notice: reply.text,
+          formInstructions: "",
+          revision: nextRevision,
+        });
   /*
     Matched on the typed evidence kind where both sides have one, falling back to the label.
     B-03 matched on the label alone because `proposedRequirements` issues a fresh id per call while
@@ -1285,4 +1454,25 @@ export function applyWorkspaceReply(w: Workspace, replyId: string): Workspace {
       ? `Started a new revision from the reply. Asked for again: ${counts.reopened}. New in this reply: ${counts.added}. Still on your list: ${counts.outstanding}. Kept as reviewed: ${counts.carried}. Check the response page in Seller Central.`
       : "Started a new revision from the reply. Check the response page in Seller Central and your records list.",
   );
+}
+
+/**
+ * A seller who already sent their response to Amazon outside this product, and only wants it
+ * tracked from here (6 Oct 2026). `recordPriorAttempt` leaves the case state alone, so the
+ * follow-up date, the "waiting on Amazon" card and the reply flow, which all need `SUBMITTED`, were
+ * out of reach for exactly the seller who arrived after appealing.
+ *
+ * Sets `SUBMITTED` and writes one history line. It composes nothing, records no submission text and
+ * needs no Appeal Pass: it is the seller's statement that they sent something, not a draft. The
+ * caller also stores `state: "SUBMITTED"` on the case log, which the clock reads first.
+ */
+export function markSentWaiting<F extends Pick<CaseFile, "state"> & { workspace?: Workspace }>(
+  file: F,
+): F {
+  if (!file.workspace) return { ...file, state: "SUBMITTED" };
+  return {
+    ...file,
+    state: "SUBMITTED",
+    workspace: addWorkspaceEvent(file.workspace, STORES.markedSentWaiting),
+  };
 }

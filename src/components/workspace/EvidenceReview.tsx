@@ -11,7 +11,13 @@ import { FileDropZone } from "@/components/FileDropZone";
 import { CopyButton } from "@/components/CopyButton";
 import { DocumentCheckPanel } from "@/components/DocumentCheckPanel";
 import { isBrowserOnly, type CheckOutcome } from "@/lib/documentChecks/runCheck";
-import { requirementEvidenceKind, type Requirement } from "@/core/workspace";
+import {
+  answerableInWords,
+  requirementEvidenceKind,
+  type Requirement,
+  type Workspace,
+} from "@/core/workspace";
+import { STORES } from "@/content/stores";
 import { requirementGuidance } from "@/core/requirementGuidance";
 import type { VaultListItem } from "@/core/vault/vault";
 import {
@@ -51,6 +57,7 @@ export function EvidenceReview({
   checking,
   onCheck,
   signedIn = true,
+  position = "unsure",
 }: {
   item: Requirement;
   /** Narrows the evidence-matrix guidance to this case: the same record is asked for different
@@ -80,6 +87,11 @@ export function EvidenceReview({
   onCheck?: () => void;
   /** A guest's business document is read on the device, so the note before the button says so. */
   signedIn?: boolean;
+  /**
+   * Whether the seller disputes the finding. A rights-owner retraction can be answered in words
+   * only for a disputed claim, so the "State it in words" option needs to know.
+   */
+  position?: Workspace["position"];
 }) {
   const D = C.documents;
   const [note, setNote] = useState(draftNote ?? item.note);
@@ -89,6 +101,23 @@ export function EvidenceReview({
   const [sourceQuote, setSourceQuote] = useState(item.sourceQuote);
   const [removeReason, setRemoveReason] = useState("");
   const guidance = requirementGuidance(item, violationKind);
+  const pageValid = Number.isInteger(Number(page)) && Number(page) >= 1 && Number(page) <= 10000;
+  const saveDisabled = busy || !item.recordId || !checked || !note.trim() || !pageValid;
+  // Only the records `workspaceGaps` already accepts as a statement: never a weaker bar for a file.
+  const inWords = answerableInWords({ position }, item);
+  // A statement already saved without a file is complete; "add the file" would contradict it.
+  const saveWhy =
+    !saveDisabled || (inWords && item.status === "reviewed")
+      ? null
+      : busy
+        ? null
+        : !item.recordId
+          ? D.saveWhyFile
+          : !note.trim()
+            ? D.saveWhyNote
+            : !pageValid
+              ? D.saveWhyPage
+              : D.saveWhyTick;
   const bodyId = `document-${item.id}`;
   const request = `Hello,\n\nI need your help with the following records: ${item.label}.\n\nThe request I received says:\n${item.sourceQuote}\n\nPlease provide the genuine records or clarify any missing information. If a correction is needed, please issue it yourself while preserving the original transaction details. Thank you.`;
   /*
@@ -102,7 +131,6 @@ export function EvidenceReview({
       : item.source === "seller"
         ? C.sellerAdded.badge
         : C.overview.source.notice;
-  const pageValid = Number.isInteger(Number(page)) && Number(page) >= 1 && Number(page) <= 10000;
 
   return (
     <section
@@ -172,15 +200,36 @@ export function EvidenceReview({
                 <FileText className="h-4 w-4 shrink-0 text-primary" aria-hidden />
                 <span className="break-all text-sm">{item.filename}</span>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={busy}
-                onClick={() => onDownload(item.recordId!)}
-              >
-                <Download className="mr-2 h-4 w-4" aria-hidden />
-                {D.readOriginal}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => onDownload(item.recordId!)}
+                >
+                  <Download className="mr-2 h-4 w-4" aria-hidden />
+                  {D.readOriginal}
+                </Button>
+                {/* The wrong file picked: unlink it so the drop zone comes back. The file itself
+                    stays in the vault. */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() =>
+                    void onChange({
+                      ...item,
+                      recordId: undefined,
+                      filename: undefined,
+                      contentHash: undefined,
+                      page: undefined,
+                      status: "needed",
+                    })
+                  }
+                >
+                  {D.replaceFile}
+                </Button>
+              </div>
             </div>
           ) : (
             <FileDropZone
@@ -269,9 +318,9 @@ export function EvidenceReview({
             />
           </div>
         </div>
-        <label className="flex items-start gap-3 text-sm">
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
           <input
-            className="mt-1 h-4 w-4 accent-primary"
+            className="size-5 shrink-0 accent-primary"
             type="checkbox"
             checked={checked}
             onChange={(e) => setChecked(e.target.checked)}
@@ -279,7 +328,8 @@ export function EvidenceReview({
           {D.checked}
         </label>
         <Button
-          disabled={busy || !item.recordId || !checked || !note.trim() || !pageValid}
+          disabled={saveDisabled}
+          aria-describedby={saveWhy ? `${bodyId}-save-why` : undefined}
           onClick={() =>
             void onChange({ ...item, note: note.trim(), page: Number(page), status: "reviewed" })
           }
@@ -287,6 +337,27 @@ export function EvidenceReview({
           <Check className="mr-2 h-4 w-4" aria-hidden />
           {D.save}
         </Button>
+        {/* A disabled button says why, rather than looking broken. */}
+        {saveWhy && (
+          <p id={`${bodyId}-save-why`} className="text-xs text-muted-foreground">
+            {saveWhy}
+          </p>
+        )}
+        {inWords && !item.recordId && (
+          <div className="space-y-2 rounded-lg border border-border bg-surface-2 p-4">
+            <p className="text-sm text-muted-foreground">{STORES.relationshipHint}</p>
+            <Button
+              variant="outline"
+              disabled={busy || !note.trim()}
+              onClick={() =>
+                void onChange({ ...item, note: note.trim(), page: item.page, status: "reviewed" })
+              }
+            >
+              <Check className="mr-2 h-4 w-4" aria-hidden />
+              {D.stateInWords}
+            </Button>
+          </div>
+        )}
         {item.status === "waiting" && (
           <p className="rounded-lg border border-warning/20 bg-warning/5 p-3 text-sm text-muted-foreground">
             {C.waitingHelp}

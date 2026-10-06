@@ -151,3 +151,33 @@ export function buildNoticeAnnotations(
   }
   return nonOverlapping.slice(0, 3);
 }
+
+/** One mark on the notice: the phrase that decided the response, or a record the seller must supply. */
+export interface DecodeSpan {
+  start: number;
+  end: number;
+  tone: "risk" | "clear";
+  title?: string;
+}
+
+/**
+ * The marks `MarkedNotice` draws. Every offset the decode response carries refers to its
+ * `normalizedText`, not to what the seller typed, so the text shown and marked must be that same
+ * string; this builder only turns the response's own spans into marks.
+ */
+export function buildDecodeSpans(
+  responseType: { label?: string; matches: Array<{ start: number; end: number }> } | undefined,
+  entities: ReadonlyArray<{ kind: string; start: number; end: number; value: string }> | undefined,
+): DecodeSpan[] {
+  return [
+    ...(responseType?.matches ?? []).map((m) => ({
+      start: m.start,
+      end: m.end,
+      tone: "risk" as const,
+      title: responseType?.label,
+    })),
+    ...(entities ?? [])
+      .filter((e) => e.kind === "requested_record")
+      .map((e) => ({ start: e.start, end: e.end, tone: "clear" as const, title: e.value })),
+  ];
+}

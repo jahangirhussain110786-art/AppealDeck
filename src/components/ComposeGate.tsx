@@ -116,7 +116,7 @@ export function ComposeGate({
             className="h-auto min-h-11 whitespace-normal py-3"
             disabled
           >
-            {SHARED.consentPrompt}
+            {APP.access.composeGate.continueToCheckout}
           </Button>
         )}
       </CardContent>

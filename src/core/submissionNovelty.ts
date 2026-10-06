@@ -29,8 +29,14 @@ export type NoveltyVerdict =
   | "near-identical"
   /** Recognisably a revision of a previous submission — expected and usually fine. */
   | "revised"
-  /** Substantially different, or nothing to compare against. */
-  | "new";
+  /** Substantially different from what was recorded. */
+  | "new"
+  /**
+   * An earlier response is recorded but its text was not kept (a prior attempt entered with no
+   * wording), so nothing can be compared. Reported as such instead of as "new": calling an
+   * uncheckable resend "substantially different" told a seller it was safe when we did not know.
+   */
+  | "cannot-compare";
 
 export interface PriorSubmission {
   at: string;
@@ -68,8 +74,25 @@ function normalize(text: string): string {
     .trim();
 }
 
+/**
+ * The response itself, without the product's own scaffolding: the "work in progress" banner and the
+ * "Unresolved items" working notes. Both change whenever the open gaps change, so an unchanged
+ * resend that happened to have one fewer gap used to score as a "revision" on text the seller did
+ * not write.
+ */
+function withoutWorkingNotes(text: string): string {
+  const out: string[] = [];
+  let skipping = false;
+  for (const line of text.split("\n")) {
+    if (/^\s*\*{3}.*\*{3}\s*$/.test(line)) continue;
+    if (/^##\s/.test(line)) skipping = /^##\s*Unresolved items\b/i.test(line);
+    if (!skipping) out.push(line);
+  }
+  return out.join("\n");
+}
+
 function sentences(text: string): string[] {
-  return text
+  return withoutWorkingNotes(text)
     .split(/\n|(?<=[.!?])\s+/)
     .map((s) => normalize(s))
     .filter((s) => s.length > 0);
@@ -117,6 +140,8 @@ const MESSAGES: Record<NoveltyVerdict, string> = {
   revised:
     "This builds on what you sent before, which is what a revision should do. Check that the new parts answer what Amazon asked for in their reply.",
   new: "This is substantially different from anything you have sent on this case.",
+  "cannot-compare":
+    "An earlier response is recorded on this case without its wording, so we cannot compare this one with it. Check it yourself: change something Amazon has not already seen, such as a document you now hold or an action you have since completed.",
 };
 
 /**
@@ -129,6 +154,10 @@ const MESSAGES: Record<NoveltyVerdict, string> = {
 export function assessNovelty(draft: string, priors: readonly PriorSubmission[]): NoveltyResult {
   const draftSentences = sentences(draft);
 
+  // A prior with no words cannot be compared with anything. Dropped, not scored: an empty text has
+  // no sentences, so it would always read as "nothing recycled" and wave the resend through.
+  const comparable = priors.filter((p) => sentences(p.text).length > 0);
+
   if (priors.length === 0 || draftSentences.length === 0) {
     return {
       verdict: "new",
@@ -138,9 +167,18 @@ export function assessNovelty(draft: string, priors: readonly PriorSubmission[])
       message: MESSAGES.new,
     };
   }
+  if (comparable.length === 0) {
+    return {
+      verdict: "cannot-compare",
+      similarity: 0,
+      addedSentences: draftSentences.length,
+      removedSentences: 0,
+      message: MESSAGES["cannot-compare"],
+    };
+  }
 
   let best: { prior: PriorSubmission; sentences: string[]; similarity: number } | null = null;
-  for (const prior of priors) {
+  for (const prior of comparable) {
     const priorSentences = sentences(prior.text);
     const similarity = recycledFraction(draftSentences, priorSentences);
     if (!best || similarity > best.similarity) {
@@ -153,7 +191,7 @@ export function assessNovelty(draft: string, priors: readonly PriorSubmission[])
   const draftSet = new Set(draftSentences);
 
   const verdict: NoveltyVerdict =
-    normalize(draft) === normalize(prior.text)
+    normalize(withoutWorkingNotes(draft)) === normalize(withoutWorkingNotes(prior.text))
       ? "identical"
       : similarity >= NEAR_IDENTICAL
         ? "near-identical"
@@ -173,5 +211,9 @@ export function assessNovelty(draft: string, priors: readonly PriorSubmission[])
 
 /** True when the seller should see a warning before sending. Never used to disable the control. */
 export function shouldWarnBeforeSubmit(result: NoveltyResult): boolean {
-  return result.verdict === "identical" || result.verdict === "near-identical";
+  return (
+    result.verdict === "identical" ||
+    result.verdict === "near-identical" ||
+    result.verdict === "cannot-compare"
+  );
 }

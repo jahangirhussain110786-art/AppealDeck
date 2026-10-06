@@ -56,12 +56,15 @@ export function NextStepCard({
   body,
   actions,
   aside,
+  note,
 }: {
   due?: string;
   title: string;
   body: string;
   actions?: ReactNode;
   aside?: ReactNode;
+  /** One small line under the body, such as what is free and what is not. */
+  note?: string;
 }) {
   return (
     <section
@@ -83,12 +86,14 @@ export function NextStepCard({
         </div>
         <h2
           id="case-next-step"
-          className="text-balance text-[1.875rem] font-semibold leading-[1.1] tracking-[-0.035em]"
+          tabIndex={-1}
+          className="scroll-mt-24 text-balance outline-none text-[1.875rem] font-semibold leading-[1.1] tracking-[-0.035em]"
         >
           {title}
         </h2>
         <p className="max-w-[34em] text-[0.95rem] leading-relaxed text-muted-foreground">{body}</p>
         {actions && <div className="flex flex-wrap gap-2.5">{actions}</div>}
+        {note && <p className="max-w-[34em] text-[0.8125rem] text-muted-foreground">{note}</p>}
       </div>
       {aside}
     </section>

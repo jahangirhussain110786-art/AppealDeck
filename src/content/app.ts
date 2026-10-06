@@ -58,6 +58,9 @@ export const APP = {
       title: "Unlock the drafted plan",
       body: "Prepare a response from your saved facts, check for missing information, and back up your vault. You review and submit the final response.",
       price: "$249, once, for this case",
+      // Before the delivery consent is ticked. Says what the button leads to: the price is the
+      // surprise a first-time seller must not meet at the last step.
+      continueToCheckout: "Continue to $249 checkout",
       activating: "Activating your Appeal Pass. Your case is saved.",
       activatingHint: "This usually takes a few seconds after checkout.",
       stillWaiting:
@@ -112,6 +115,15 @@ export const APP = {
      */
     check: {
       action: "Check this document",
+      // B7: the check is a help, not a step. Said before the button so nobody thinks it is required.
+      optional: "Optional: we read your file and tell you what is missing. You can skip this.",
+      // B7: the one-line version of where the file goes; the full statement stays one tap away.
+      beforeShort:
+        "Your file is read on this device and is not sent anywhere. With the Pass, an AI reads it more closely and the file is sent for that.",
+      moreAbout: "Exactly where your file goes",
+      // B3: shown above the rows when nothing an invoice always carries was found.
+      wrongDocument:
+        "This does not look like a supplier invoice. We could not find a supplier name, an address or an invoice date. Check that you picked the right file. You can replace it below.",
       checking: "Reading your document…",
       resultTitle: "What we could read",
       serverNote:
@@ -249,6 +261,9 @@ export const APP = {
         title: "No active case",
         description:
           "Decode your notice on the free decoder, or start a case and paste it in. Everything is saved in this browser as you go; signed out, only until you close the tab.",
+        // Signed in, nothing here: the likely reason is a case started on another device (B1).
+        descriptionSignedIn:
+          "Your cases are stored on the device where you started them, not on our servers. Open AppealDeck on that device to continue, or start the case again here.",
         cta: "Start your case",
       },
     },

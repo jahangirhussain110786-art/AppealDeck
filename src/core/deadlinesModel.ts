@@ -185,31 +185,37 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
   }
 
   if (input.kind === "FUNDS") {
+    // Corrected 6 Oct 2026 against Amazon's Funds Disbursement Eligibility policy: the funds appeal
+    // opens 60 days after deactivation. The old "~90-day checkpoint" has no current source, so it is
+    // now an undated note (the kind is kept because stored cases and the chip still use it).
     if (input.deactivatedAt) {
       out.push({
         kind: "funds_appeal_eligible",
         dueAt: addDays(input.deactivatedAt, 60),
-        label: "Funds appeal becomes available (~60 days from deactivation)",
-      });
-      out.push({
-        kind: "funds_review",
-        dueAt: addDays(input.deactivatedAt, 90),
-        label: "Funds review checkpoint (~90 days) — release is NEVER automatic",
+        label:
+          "Funds appeal opens about 60 days after deactivation (Amazon's Funds Disbursement Eligibility policy; confirm the date in your account)",
       });
     } else {
       out.push({
-        kind: "funds_review",
+        kind: "funds_appeal_eligible",
         dueAt: null,
-        label: "Funds review checkpoint — provide deactivation date to compute",
+        label: "Funds appeal: add your deactivation date to see when it opens.",
       });
     }
+    out.push({
+      kind: "funds_review",
+      dueAt: null,
+      label:
+        "Do not assume funds are released on a fixed date: they come back with reinstatement or after Amazon's separate funds review",
+    });
   }
 
   if (input.kind === "LISTING" && input.aha) {
     out.push({
       kind: "seller_challenge",
       dueAt: null,
-      label: "Seller Challenge available (AHA): 3 uses / 180 days, ~48h decision",
+      label:
+        "Seller Challenge available: 3 reviews per 180 days, after standard appeal options are used; Amazon aims to decide within 48 hours",
     });
   }
 

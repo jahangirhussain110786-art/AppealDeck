@@ -21,6 +21,8 @@
  * `docs/handoffs/2026-09-19-second-opinion-salvage/salvage-research_amazon-mechanics.md`.
  */
 
+import { lastAmazonTurn } from "./noticeText";
+
 export type ResponseType =
   | "PLAN_OF_ACTION"
   | "SUPPORTING_DOCUMENTS"
@@ -179,8 +181,23 @@ const GERUND_SUBJECT =
   /^\s*(?:providing|submitting|sending|uploading|supplying|furnishing)\b[^.!?\n]{0,120}?\b(?:is|are|was|were|can be|may be|will be)\b/i;
 
 /** In prose, the plan-of-action terms only count when something actually asks for them. */
+/*
+  6 Oct 2026: the commonest ways Amazon actually words this were all UNDETERMINED, because the verb
+  list had no "respond" and nothing recognised a request that names the plan as its subject or
+  object: "You must respond no later than Friday 11 September 2026 with a Plan of Action", "Please
+  respond with a Plan of Action", "We need a Plan of Action from you", "A Plan of Action is
+  required". The respond/reply form needs "with <a plan>", so Amazon describing its OWN reply
+  ("we will respond to your plan of action") never reads as a request; the clause-level lookahead
+  rules out a "we/Amazon will…" clause for the same reason.
+*/
+const POA_NOUN = "(?:plan\\s+of\\s+action|POA)";
 const POA_REQUESTED = new RegExp(
-  `\\b(?:${REQUEST_VERB_SOURCE}|explain(?:s|ing)?|describ(?:e|es|ing)|writ(?:e|ing)|prepar(?:e|es|ing)|complet(?:e|es|ing))\\b[^\\n]{0,120}?(?:\\bplan of action\\b|\\bPOA\\b|\\broot cause\\b|\\bcorrective action)`,
+  [
+    `\\b(?:${REQUEST_VERB_SOURCE}|explain(?:s|ing)?|describ(?:e|es|ing)|writ(?:e|ing)|prepar(?:e|es|ing)|complet(?:e|es|ing))\\b[^\\n]{0,120}?(?:\\bplan of action\\b|\\bPOA\\b|\\broot cause\\b|\\bcorrective action)`,
+    `^(?!.*\\b(?:we|amazon)\\s+(?:will|may|can|shall|would|might)\\b)[^\\n]*?\\b(?:respond|reply)\\b[^\\n]{0,120}?\\bwith\\s+(?:(?:an?|your|the|updated|new|written)\\s+)*${POA_NOUN}\\b`,
+    `\\b(?:need|require|request|expect|want)s?\\s+(?:(?:an?|your|the|updated|new|written)\\s+)+${POA_NOUN}\\b`,
+    `\\b${POA_NOUN}\\b[^.\\n]{0,40}\\b(?:is|are)\\s+(?:required|needed|requested|due|necessary)\\b`,
+  ].join("|"),
   "i",
 );
 
@@ -212,13 +229,13 @@ const PATTERNS: ReadonlyArray<readonly [Exclude<ResponseType, "UNDETERMINED">, R
     // notice: "If you have a letter of authorization … or an invoice …, you can submit an appeal".
     // The document comes first and the verb after, so the first form never saw it.
     new RegExp(
-      `\\b${REQUEST_VERB_SOURCE}\\b[^\\n]{0,120}?\\b${DOCUMENT_NOUN}s?\\b|\\bif you have\\b[^\\n]{0,40}?\\b${DOCUMENT_NOUN}s?\\b[^\\n]{0,160}?,\\s*you (?:can|may) (?:submit|send|upload|provide)\\b`,
+      `\\b${REQUEST_VERB_SOURCE}\\b[^\\n]{0,120}?\\b${DOCUMENT_NOUN}s?\\b|\\b(?:need|require)s?\\s+(?!to\\b)(?:(?:an?|the|your|all|any|copies\\s+of|supplier|valid|updated|complete)\\s+)*(?:[a-z-]+\\s+){0,2}?${DOCUMENT_NOUN}s?\\b|\\bif you have\\b[^\\n]{0,40}?\\b${DOCUMENT_NOUN}s?\\b[^\\n]{0,160}?,\\s*you (?:can|may) (?:submit|send|upload|provide)\\b`,
       "i",
     ),
   ],
   [
     "NO_ACTION_REQUESTED",
-    /no (?:further |additional )?(?:action|information|documents?|documentation|response|submission)[^\n]{0,30}(?:is |are |)(?:required|requested|needed)|(?:currently|still|remains?) under review|we will (?:contact|update|notify) you|\b(?:has|have) been reinstated\b|\b(?:appeal|plan of action) (?:has been|was) (?:accepted|approved)\b/i,
+    /no (?:further |additional )?(?:action|information|documents?|documentation|response|submission)[^\n]{0,30}(?:is |are |)(?:required|requested|needed)|(?:currently|still|remains?) under review|we will (?:contact|update|notify) you|\b(?:has|have) been reinstated\b|\b(?:appeal|plan of action) (?:has been|was) (?:accepted|approved)\b|\byour (?:selling )?account (?:is|has been) (?:now )?(?:active|reactivated|reinstated)\b/i,
   ],
 ];
 
@@ -271,7 +288,7 @@ export function determineResponseType(raw: string, formInstructions = ""): Respo
   // form text should call this function again with the form text as `raw`.
   if (formInstructions.trim()) sources.push({ text: formInstructions, offset: -1, terse: true });
 
-  const matches: ResponseTypeMatch[] = [];
+  let matches: ResponseTypeMatch[] = [];
   for (const source of sources) {
     for (const clause of splitClauses(source.text)) {
       // "Providing falsified documents is a serious violation" states a rule; it asks for nothing.
@@ -302,6 +319,21 @@ export function determineResponseType(raw: string, formInstructions = ""): Respo
         });
       }
     }
+  }
+
+  /*
+    A pasted Seller Support thread is read by what Amazon said LAST. Before 6 Oct 2026 the first
+    message decided: "Please provide the supplier invoice… Seller (you): Attached… Amazon: …we have
+    reviewed your invoices and no further action is required. Your account is now active." was
+    routed to "send documents", and the seller was told to do something Amazon had already closed.
+    Only when the paste really is a thread (see `lastAmazonTurn`); a single notice is untouched.
+  */
+  const lastTurn = lastAmazonTurn(raw);
+  if (lastTurn) {
+    const inLastTurn = matches.filter(
+      (m) => m.start === -1 || (m.start >= lastTurn.start && m.start < lastTurn.end),
+    );
+    if (inLastTurn.length > 0) matches = inLastTurn;
   }
 
   if (matches.length === 0) {

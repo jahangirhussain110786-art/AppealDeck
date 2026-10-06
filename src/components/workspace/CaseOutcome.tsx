@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { CaseLog } from "@/lib/caseStore";
 import type { CaseFile } from "@/core/caseFile";
+import { stateForOutcome } from "@/core/caseState";
 import { formatDate } from "@/lib/format";
 
 const RESOLUTION_LABEL: Record<NonNullable<CaseLog["resolution"]>["status"], string> = {
@@ -42,13 +43,21 @@ export function logWithOutcome(
   choice: ResolutionStatus | "pending",
   at: string,
 ): CaseLog | null {
+  const hadSubmission = current.attemptCount > 0 || current.submittedAt !== undefined;
   if (choice === "pending") {
     if (!current.resolution) return null;
     const { resolution: _cleared, ...rest } = current;
-    return rest;
+    // The outcome moved the case to a terminal state; taking it back must move it out again.
+    return { ...rest, state: stateForOutcome("pending", rest.state, hadSubmission) };
   }
   if (current.resolution?.status === choice) return null;
-  return { ...current, resolution: { status: choice, at } };
+  return {
+    ...current,
+    // The state follows the outcome, so the clock, reminders and the dashboard stop treating a
+    // settled case as one still waiting on Amazon.
+    state: stateForOutcome(choice, current.state, hadSubmission),
+    resolution: { status: choice, at },
+  };
 }
 
 /**

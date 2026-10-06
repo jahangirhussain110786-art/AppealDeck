@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { analyzeReply } from "@/core";
+import { normalizeNoticeText } from "@/core/noticeText";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
 import { serviceUnavailableResponse } from "@/lib/licenseGuard";
@@ -51,11 +52,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: first }, { status: tooLong ? 413 : 400 });
   }
 
-  const result = analyzeReply(parsed.data.reply);
+  // The same normaliser the decoder uses, so a reply pasted from a mail client or a browser (entities,
+  // quote markers, hard-wrapped lines, curly punctuation) is read as the text it looks like.
+  const result = analyzeReply(normalizeNoticeText(parsed.data.reply));
 
   return NextResponse.json({
     category: result.category,
     extractedAsks: result.extractedAsks,
     confidence: result.confidence,
+    // Present only on a reinstatement that is not the whole story: Amazon restored the account but
+    // still asks for something. Never shown as a plain "you are back".
+    ...(result.partial ? { partial: true, openAsks: result.openAsks ?? [] } : {}),
   });
 }

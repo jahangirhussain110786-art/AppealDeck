@@ -326,7 +326,7 @@ describe("the unnamed-document refusal", () => {
 
   it.each([
     ["PRODUCT_SAFETY", "compliance_report", "the issuing laboratory or body"],
-    ["RELATED_ACCOUNT", "account_resolution_proof", "the account is closed"],
+    ["RELATED_ACCOUNT", "account_resolution_proof", "proof of transfer"],
   ])("now reads the %s record it could never check before", async (kind, evidenceKind, field) => {
     callGeminiMock.mockResolvedValue({ ok: true, text: JSON.stringify({ findings: [] }) });
     const res = await handleReadDocument(makeReq({ ...valid, kind, evidenceKind }));

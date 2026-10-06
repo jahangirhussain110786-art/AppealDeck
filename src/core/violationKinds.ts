@@ -102,7 +102,36 @@ export const DOCUMENT_FABRICATION = new RegExp(
   "i",
 );
 
+/**
+ * Fraud and child safety as *allegations*, not as words (narrowed 6 Oct 2026).
+ *
+ * The first version matched the bare words `fraud` and `child safety` anywhere in the text. Amazon
+ * writes "as part of our fraud prevention checks, please verify your identity" and "complies with
+ * child safety standards (CPSIA)" in ordinary verification, funds-hold and product-safety notices,
+ * and every one of them was sent to professional review with the draft refused. D6 gates what a
+ * notice *accuses the seller of*; it never said a notice that mentions the topic is gated.
+ *
+ * The allegation shapes below are the implementation of that sentence. Boilerplate that merely
+ * names the topic ("fraud prevention", "fraud detection", "anti-fraud", "to protect against
+ * fraud", "child safety standards / regulations / requirements") does not match, on purpose.
+ * `DOCUMENT_FABRICATION` is unchanged.
+ */
+const NOT_PREVENTION =
+  "(?<!\\b(?:prevent(?:ing|ion of)?|detect(?:ing|ion of)?|combat(?:ing)?|anti-?|protect(?:ing)?\\s+(?:against|from))\\s+)";
+
+const FRAUD_ALLEGATION =
+  // "alleged / suspected / evidence of / engaged in / involved in / committed fraud"
+  "\\b(?:alleged|alleging|suspected|suspicion of|evidence of|engaged in|engaging in|involved in|participat(?:ed|ing) in|committed|committing)\\s+(?:\\w+\\s+){0,2}?fraud\\b(?!\\s+(?:prevention|detection|protection|checks?|team|department|screening|controls?)\\b)" +
+  // "fraudulent activity / transactions / accounts / documents / orders / claims"
+  `|${NOT_PREVENTION}\\bfraudulent\\s+(?:activity|activities|transactions?|accounts?|documents?|orders?|claims?|behaviou?r|conduct)\\b` +
+  "|\\bfraud investigations?\\b" +
+  "|\\b(?:we|amazon)\\s+(?:has|have)?\\s*(?:detected|identified|found)\\s+fraud\\b";
+
+const CHILD_SAFETY_ALLEGATION =
+  "\\bchild sexual abuse material\\b|\\bCSAM\\b|\\bchild exploitation\\b|\\bendangering (?:a )?child(?:ren)?\\b" +
+  "|\\bchild safety (?:violations?|incidents?|investigations?)\\b";
+
 export const D6_GATED_ALLEGATION = new RegExp(
-  `${DOCUMENT_FABRICATION.source}|\\b(?:fraud|child safety)\\b`,
+  `${DOCUMENT_FABRICATION.source}|${FRAUD_ALLEGATION}|${CHILD_SAFETY_ALLEGATION}`,
   "i",
 );

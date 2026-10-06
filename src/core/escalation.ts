@@ -16,6 +16,21 @@ import { analyzeReply } from "./responseAnalyzer";
  */
 export const ESCALATION_AFTER_ATTEMPTS = 2;
 
+/**
+ * Whether an Amazon reply, read by `analyzeReply`, ends the case rather than asking for another
+ * round: `"reinstated"` or `"final"` (Amazon says the decision stands), otherwise `null`.
+ *
+ * Starting "the next round with this reply" makes sense only when the reply asks for something. For
+ * these two the next step is recording the outcome. The reading is ours and can be wrong, so the page
+ * keeps a quiet way to start a round anyway rather than dead-ending the case.
+ */
+export function replyEndsCase(text: string): "reinstated" | "final" | null {
+  const { category } = analyzeReply(text);
+  if (category === "reinstated") return "reinstated";
+  if (category === "final_decision_negative") return "final";
+  return null;
+}
+
 export function shouldOfferChangeOfApproach(
   w: Pick<Workspace, "submissions" | "replies">,
 ): boolean {

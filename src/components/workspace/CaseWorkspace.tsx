@@ -31,9 +31,11 @@ import { EvidenceReview } from "./EvidenceReview";
 import { ResponseReview, type WorkspaceResponse } from "./ResponseReview";
 import { ReplyDeltaReview } from "./ReplyDeltaReview";
 import { SellerDeadlineField } from "./SellerDeadlineField";
+import { daysLeftLabel } from "./deadlineText";
 import { ChangeOfApproach } from "./ChangeOfApproach";
 import { StepNav } from "./StepNav";
-import { shouldOfferChangeOfApproach } from "@/core/escalation";
+import { shouldOfferChangeOfApproach, replyEndsCase } from "@/core/escalation";
+import { dateOfNotice } from "@/core/clock";
 import { deadlinesForDisplay, sellerDeadline, withSellerDeadlines } from "@/core/deadlinesModel";
 import { DetailDisclosure, VIEW_ICONS } from "./WorkspaceVisuals";
 import { createCaseFile, type CaseFile } from "@/core/caseFile";
@@ -58,6 +60,7 @@ import {
 } from "@/core/factsLedger";
 import { runDocumentCheck, type CheckOutcome } from "@/lib/documentChecks/runCheck";
 import { analyzeReply } from "@/core/responseAnalyzer";
+import { STORES } from "@/content/stores";
 import { replyCriticisms } from "@/core/replyFeedback";
 import { checkCaseDataForWorkspace } from "@/lib/documentChecks/context";
 import {
@@ -69,6 +72,7 @@ import {
 import { migrateLegacyCase, needsMigration, migrationSummary } from "@/core/legacyMigration";
 import {
   addWorkspaceEvent,
+  markSentWaiting,
   applyWorkspaceReply,
   newWorkspace,
   proposedRequirements,
@@ -81,6 +85,7 @@ import {
   PROTOCOL_LABELS,
   questionnaireQuestions,
   routeWorkspace,
+  professionalReviewApplies,
   workspaceCanCompose,
   type Requirement,
   type Workspace,
@@ -266,6 +271,19 @@ function WorkspaceInner({
       ?.focus({ preventScroll: true });
   }, [tab]);
   const [reviewRequest, setReviewRequest] = useState(false);
+  /*
+    After "Yes, this is right" the first screen is replaced by the overview, and a seller on a phone
+    was left part-way down a different page. Bring the new Next step card to the top and put the
+    keyboard on its heading. Done in an effect, after the overview has rendered.
+  */
+  const [focusNextStep, setFocusNextStep] = useState(0);
+  useEffect(() => {
+    if (!focusNextStep) return;
+    const heading = document.getElementById("case-next-step");
+    if (!heading) return;
+    heading.scrollIntoView({ block: "start" });
+    heading.focus({ preventScroll: true });
+  }, [focusNextStep]);
   /*
     Which document card is open (calm pass, 29 Sep 2026). `undefined` means "the first one that still
     needs the seller", so finishing one moves the seller straight on to the next; `null` means the
@@ -468,8 +486,10 @@ function WorkspaceInner({
       const updated = {
         ...current,
         workspace: next,
-        state:
-          state ?? (current.state === "SUBMITTED" && !opts?.keepState ? "REVISION" : current.state),
+        // 6 Oct 2026: a later save no longer turns "waiting on Amazon" into "revision". Typing,
+        // ticking a record, changing case facts or the kind are bookkeeping; the case leaves
+        // SUBMITTED only when a caller names the new state (applying a reply, a new round).
+        state: state ?? current.state,
         ...(opts?.deadlines !== undefined ? { deadlines: opts.deadlines } : {}),
         ...(opts?.kind !== undefined ? { kind: opts.kind } : {}),
         ...(opts?.kindSetBy !== undefined ? { kindSetBy: opts.kindSetBy } : {}),
@@ -1094,7 +1114,9 @@ function WorkspaceInner({
     const kindChanged = kind !== previousKind;
     // A date the seller entered from Account Health survives a re-read of the notice.
     const deadlines = withSellerDeadlines(
-      serializeDeadlines(computeDeadlines({ parsed, kind })),
+      serializeDeadlines(
+        computeDeadlines({ parsed, kind, deactivatedAt: dateOfNotice(parsed.receivedOn) }),
+      ),
       current?.deadlines,
     );
     const ok = await commit(
@@ -1106,9 +1128,14 @@ function WorkspaceInner({
         formInstructions: updated.formInstructions,
         protocol: updated.protocol,
         confirmed: updated.confirmed,
-        professionalReviewRequired:
-          old.professionalReviewRequired ||
-          (updated.confirmed && updated.protocol === "specialist"),
+        // Recomputed, not latched: it holds only while an allegation shape is still in the case's
+        // own text (see `professionalReviewApplies`), so a corrected notice can release it.
+        professionalReviewRequired: professionalReviewApplies({
+          notice: updated.notice,
+          formInstructions: updated.formInstructions,
+          professionalReviewRequired: true,
+          previousRequests: old.previousRequests,
+        }),
         requirementsConfirmed: false,
         // B-05: the kind unions the evidence matrix in, so a record this violation family nearly
         // always needs is raised even when the notice never spells it out. Rebuilt from the
@@ -1131,12 +1158,15 @@ function WorkspaceInner({
       }),
       // Said in the case history, so a reading we made is visible as ours and can be corrected.
       kindChanged
-        ? `Saved the notice and reviewed response route. We read it as: ${APP.violationKinds[kind]}.`
-        : "Saved the notice and reviewed response route.",
+        ? `Saved the notice and checked what Amazon asks for. We read it as: ${APP.violationKinds[kind]}.`
+        : "Saved the notice and checked what Amazon asks for.",
       "INTAKE",
       kindChanged ? { kind, deadlines } : { deadlines },
     );
-    if (ok) setReviewRequest(false);
+    if (ok) {
+      setReviewRequest(false);
+      setFocusNextStep((n) => n + 1);
+    }
     return ok;
   };
   /*
@@ -1151,10 +1181,13 @@ function WorkspaceInner({
           ? `${d.label} — no countdown to track`
           : d.dueOn
             ? // The day as the notice gives it; a stated date is already in its own label
-              // ("Appeal by 1 Oct 2026").
-              d.startsOn
-              ? `${d.label}, closes ${formatDay(d.dueOn)}`
-              : d.label
+              // ("Appeal by 1 Oct 2026"). Under a week away it also says how many days are left.
+              [
+                d.startsOn ? `${d.label}, closes ${formatDay(d.dueOn)}` : d.label,
+                daysLeftLabel(d.dueOn),
+              ]
+                .filter(Boolean)
+                .join(" · ")
             : d.dueAt
               ? `${d.label}: ${formatDate(d.dueAt)}`
               : d.startsOnReceipt
@@ -1422,6 +1455,7 @@ function WorkspaceInner({
                       due={deadlineLines.find((d) => d.hot)?.text}
                       title={C.overview.confirmTitle}
                       body={C.overview.confirmBody}
+                      note={C.overview.priceNote}
                     />
                   )}
                   <RequestReview
@@ -1463,6 +1497,21 @@ function WorkspaceInner({
                     // No message here: `recordPriorAttempt` already adds the history event, and a
                     // second one made every recorded attempt appear twice.
                     onCommitWorkspace={(updated) => commit(() => updated)}
+                    // A5: free, sends nothing; only while the case has not already moved on.
+                    onMarkSentWaiting={
+                      file.state === "SUBMITTED" ||
+                      file.state === "APPROVED" ||
+                      file.state === "CLOSED"
+                        ? undefined
+                        : () =>
+                            commit(
+                              (old) =>
+                                markSentWaiting({ state: "SUBMITTED" as const, workspace: old })
+                                  .workspace!,
+                              undefined,
+                              "SUBMITTED",
+                            )
+                    }
                     draft={w.draft}
                     onDraftChange={setDraftField}
                   />
@@ -1471,6 +1520,12 @@ function WorkspaceInner({
                 <>
                   <NextStepCard
                     due={deadlineLines.find((d) => d.hot)?.text}
+                    // Said where a response will be prepared, never on a case that cannot get one.
+                    note={
+                      !gated && !replyPending && !awaiting && !verifying && workspaceCanCompose(w)
+                        ? C.overview.priceNote
+                        : undefined
+                    }
                     aside={
                       next && !gated && !replyPending && !awaiting ? (
                         <NextRecordPaper requirement={next} />
@@ -1710,6 +1765,7 @@ function WorkspaceInner({
                   checking={r.recordId ? checkingIds.has(r.recordId) : false}
                   onCheck={r.recordId ? () => void runCheckFor(r) : undefined}
                   signedIn={signedIn}
+                  position={w.position}
                 />
               ))}
               {/* The ledger sits after the evidence, because it is the comparison across it. */}
@@ -1921,7 +1977,9 @@ function WorkspaceInner({
                             ],
                           }),
                           "Saved a new reply for review.",
-                          "REVISION",
+                          // The state stays as it was until the reply is applied: an unread reply
+                          // is shown as "Amazon replied" everywhere, and moving to REVISION here
+                          // brought the original appeal deadline back for a refused case.
                         )
                       )
                         setReplyText("");
@@ -1949,13 +2007,22 @@ function WorkspaceInner({
                             preview can never be the thing that gets written.
                           */}
                           <ReplyDeltaReview workspace={w} replyId={r.id} />
-                          <p className="text-xs text-muted-foreground">
-                            The reply becomes the request for the next round. What you already sent
-                            stays unchanged.
-                          </p>
+                          {replyEndsCase(r.text) ? (
+                            <p className="text-sm text-foreground">
+                              {replyEndsCase(r.text) === "reinstated"
+                                ? STORES.replyReinstated
+                                : STORES.replyFinal}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">
+                              The reply becomes the request for the next round. What you already
+                              sent stays unchanged.
+                            </p>
+                          )}
                           <Button
                             disabled={busy}
                             size="sm"
+                            variant={replyEndsCase(r.text) ? "ghost" : "default"}
                             onClick={async () => {
                               // The reply carries whatever new time window Amazon stated, if any
                               // — the case's deadlines were frozen at the original notice and
@@ -1966,11 +2033,13 @@ function WorkspaceInner({
                               // Amazon sent it. The reply's own header date is used if it has one.
                               // A date the seller entered is theirs, not the reply's, so it is
                               // kept; Amazon's new window, if the reply states one, sits beside it.
+                              const replyParsed = parseNotice(r.text);
                               const recomputed = withSellerDeadlines(
                                 serializeDeadlines(
                                   computeDeadlines({
-                                    parsed: parseNotice(r.text),
+                                    parsed: replyParsed,
                                     kind: file.kind,
+                                    deactivatedAt: dateOfNotice(replyParsed.receivedOn),
                                   }),
                                 ),
                                 file.deadlines,
@@ -1988,7 +2057,9 @@ function WorkspaceInner({
                               }
                             }}
                           >
-                            Start the next round with this reply
+                            {replyEndsCase(r.text)
+                              ? STORES.replyStartAnyway
+                              : "Start the next round with this reply"}
                           </Button>
                         </>
                       )}
@@ -2117,6 +2188,7 @@ function WorkspaceInner({
             <SellerDeadlineField
               key={file.deadlines?.find((d) => d.setBy === "seller")?.dueOn ?? "none"}
               entered={file.deadlines?.find((d) => d.setBy === "seller")}
+              fromNotice={Boolean(file.deadlines?.some((d) => d.dueOn && d.setBy !== "seller"))}
               busy={busy}
               onSave={(dueOn) =>
                 commit(
@@ -2176,16 +2248,16 @@ function WorkspaceInner({
               {C.privacy}
             </DetailDisclosure>
             {!signedIn && (
-              <p className="mt-3 text-xs text-muted-foreground">
-                Guest session ·{" "}
-                <Link
-                  href={signInHref}
-                  className="font-medium text-foreground underline underline-offset-4"
-                >
-                  Sign in
-                </Link>{" "}
-                to move work to your account vault.
-              </p>
+              // B1: the one place a guest is told, in view and not folded, that closing the tab ends it.
+              <div
+                role="note"
+                className="mt-3 space-y-2.5 rounded-lg border border-warning/40 bg-warning/5 p-3"
+              >
+                <p className="text-sm font-medium text-foreground">{C.guestWarning.text}</p>
+                <Button asChild size="sm">
+                  <Link href={signInHref}>{C.guestWarning.signIn}</Link>
+                </Button>
+              </div>
             )}
             <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
               <Button asChild size="sm" variant="outline">

@@ -139,7 +139,7 @@ export const HOME = {
         note: "Per case, one time",
         price: "$249",
         features: [
-          "A basic on-device reading of documents is free; the Pass adds an AI reading of business documents against the notice",
+          "Basic document reading on your device is free. The Pass adds an AI reading of business documents against the notice",
           "The response prepared from your confirmed facts, every revision",
           "Wording help, checked so dates, numbers and names stay as you wrote them",
           "7-day refund, no questions asked",
@@ -191,7 +191,28 @@ export const DECODE = {
       // No verdict: it has signs worth checking, which the warning below lists.
       SUSPECT: { lead: "This message has", accent: "warning signs." },
       VERIFICATION: { lead: "Amazon wants to", accent: "verify your identity." },
+      // 6 Oct 2026: a pasted reply or a warning is not headed as a request for a response.
+      REPLY: { lead: "This looks like", accent: "Amazon's reply." },
+      WARNING: { lead: "This is a warning,", accent: "not a suspension." },
+      LISTING: { lead: "This is about a", accent: "single listing." },
     },
+    planOfActionGloss:
+      "A Plan of Action is a short letter to Amazon: what went wrong, what you fixed, and how you will stop it happening again.",
+    accountHealthGloss:
+      "Account Health is the page in Seller Central that shows your account status.",
+    multipleDecoded: "We decoded the most recent message, dated {date}.",
+    multipleDecodedNoDate: "We decoded the most recent message.",
+    replyTitle: "This looks like Amazon's reply to your appeal",
+    replyBody:
+      "Copy it, open your case, and paste it into the box called Add Amazon's next reply on the History tab. There it is read against what you submitted.",
+    replyOpen: "Open my case",
+    replyCopy: "Copy this reply",
+    notEnforcementTitle: "Nothing to appeal yet",
+    saveAnyway: "Save as a case anyway",
+    errorEdit: "Edit what I pasted",
+    errorSellerAction: "Paste Amazon's message instead",
+    errorNotNotice:
+      "If this is a letter you wrote to Amazon, it is not a notice. Paste the message Amazon sent you.",
     factProblem: "The problem",
     decodeAnother: "Decode another",
     recordsCount: "{n} records",
@@ -328,8 +349,11 @@ export const PRICING = {
   },
   createAccount: "Create an account",
   checkoutNote:
-    "Paid through Paddle, our merchant of record. A case that already has its Pass is not charged again.",
+    "Payment is handled by Paddle, which also sends the tax receipt. A case that already has its Pass is not charged again.",
   subline: "Decoding is free. Pay once, only when you want the full response.",
+  // 6 Oct 2026: the one plain sentence about what costs money, beside the plans and the checkout.
+  freeVersusPass:
+    "Free: understand the notice, gather documents, write your answers. $249 once, only if you want us to prepare the response.",
   price: "$249",
   priceNote: "One-time. One case.",
   included: "Included",

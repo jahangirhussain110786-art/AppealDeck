@@ -31,6 +31,16 @@ const AMAZON_MARKERS: RegExp[] = [
   /notice:?:?\s/i,
   /suppressed/i,
   /prohibited/i,
+  // 6 Oct 2026: a short genuine notice ("To verify your identity, enter the verification code… Upload
+  // a government-issued ID within 7 days.") carried one marker at most and was refused. These are
+  // phrases only an Amazon-style message about a seller's account uses together.
+  /verify your identity/i,
+  /government[\s-]issued/i,
+  /\bappeal/i,
+  /reinstat/i,
+  /root cause/i,
+  /seller account/i,
+  /your listings?\b/i,
 ];
 
 /**

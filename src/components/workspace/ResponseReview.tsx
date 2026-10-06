@@ -33,6 +33,26 @@ import { WORKSPACE as C } from "@/content/workspace";
 import { ImproveWording } from "./ImproveWording";
 import type { WordingSection } from "@/lib/llm/improveWording";
 
+/**
+ * The hint and the worked example under an answer box. Visible text rather than a placeholder, so
+ * it stays on screen while the seller types; the example is stripped of its own "For example:"
+ * lead so the label is said once.
+ */
+function AnswerHelp({ id, hint, example }: { id: string; hint?: string; example?: string }) {
+  const bare = example?.replace(/^For example:\s*/i, "");
+  return (
+    <div id={id} className="space-y-0.5 text-sm text-muted-foreground">
+      {hint && <p>{hint}</p>}
+      {bare && (
+        <p>
+          <span className="font-medium text-foreground/80">{C.responseFields.exampleLabel}</span>{" "}
+          {bare}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export type WorkspaceResponse = { rendered: string; draft: PoaDraft; critique: CriticResult };
 export function ResponseReview({
   file,
@@ -222,8 +242,14 @@ export function ResponseReview({
                     rows={3}
                     maxLength={12000}
                     placeholder={F.answerPlaceholder}
+                    aria-describedby={`workspace-answer-${i}-help`}
                     value={answerValue(q)}
                     onChange={(e) => changeAnswer(q, e.target.value)}
+                  />
+                  <AnswerHelp
+                    id={`workspace-answer-${i}-help`}
+                    hint={F.answerHint}
+                    example={F.explanationPlaceholder}
                   />
                   <SectionTools
                     file={file}
@@ -257,17 +283,26 @@ export function ResponseReview({
               maxLength={12000}
               value={explanation}
               aria-describedby={
-                w.protocol === "operational" ? "workspace-explanation-hint" : undefined
-              }
-              placeholder={
                 w.protocol === "operational"
-                  ? F.rootCausePlaceholder
+                  ? "workspace-explanation-example"
                   : questions.length > 0
-                    ? F.additionalPlaceholder
-                    : F.explanationPlaceholder
+                    ? undefined
+                    : "workspace-explanation-example"
               }
+              placeholder={questions.length > 0 ? F.additionalPlaceholder : undefined}
               onChange={(e) => changeExplanation(e.target.value)}
             />
+            {w.protocol === "operational" ? (
+              <AnswerHelp id="workspace-explanation-example" example={F.rootCausePlaceholder} />
+            ) : (
+              questions.length === 0 && (
+                <AnswerHelp
+                  id="workspace-explanation-example"
+                  hint={F.answerHint}
+                  example={F.explanationPlaceholder}
+                />
+              )
+            )}
             <SectionTools
               file={file}
               signedIn={signedIn}
@@ -288,11 +323,11 @@ export function ResponseReview({
                   id="workspace-corrective"
                   rows={4}
                   maxLength={12000}
-                  aria-describedby="workspace-corrective-hint"
-                  placeholder={F.correctivePlaceholder}
+                  aria-describedby="workspace-corrective-hint workspace-corrective-example"
                   value={correctiveActions}
                   onChange={(e) => changeCorrective(e.target.value)}
                 />
+                <AnswerHelp id="workspace-corrective-example" example={F.correctivePlaceholder} />
                 <SectionTools
                   file={file}
                   signedIn={signedIn}
@@ -340,11 +375,11 @@ export function ResponseReview({
                   id="workspace-prevention"
                   rows={4}
                   maxLength={12000}
-                  aria-describedby="workspace-prevention-hint"
-                  placeholder={F.preventionPlaceholder}
+                  aria-describedby="workspace-prevention-hint workspace-prevention-example"
                   value={preventiveMeasures}
                   onChange={(e) => changePreventive(e.target.value)}
                 />
+                <AnswerHelp id="workspace-prevention-example" example={F.preventionPlaceholder} />
                 <SectionTools
                   file={file}
                   signedIn={signedIn}
@@ -370,10 +405,17 @@ export function ResponseReview({
           */}
           <IssuesRaised workspace={w} busy={busy} onConfirm={onConfirmIssues} />
           {!supported ? (
-            <Alert variant="info">
-              <AlertTitle>Organize your notes first</AlertTitle>
-              <AlertDescription>{C.unsupported}</AlertDescription>
-            </Alert>
+            !w.confirmed && !w.notice.trim() ? (
+              <Alert variant="info">
+                <AlertTitle>{C.noNoticeYet.title}</AlertTitle>
+                <AlertDescription>{C.noNoticeYet.body}</AlertDescription>
+              </Alert>
+            ) : (
+              <Alert variant="info">
+                <AlertTitle>Organize your notes first</AlertTitle>
+                <AlertDescription>{C.unsupported}</AlertDescription>
+              </Alert>
+            )
           ) : (
             <>
               {gaps.length > 0 && (
@@ -512,9 +554,15 @@ export function ResponseReview({
             */}
             {novelty && shouldWarnBeforeSubmit(novelty) && (
               <Alert variant="warning">
-                <AlertTitle>This looks like what you already sent</AlertTitle>
+                <AlertTitle>
+                  {novelty.verdict === "cannot-compare"
+                    ? C.novelty.cannotCompareTitle
+                    : "This looks like what you already sent"}
+                </AlertTitle>
                 <AlertDescription>
-                  {novelty.message}
+                  {novelty.verdict === "cannot-compare"
+                    ? C.novelty.cannotCompareBody
+                    : novelty.message}
                   {novelty.comparedTo && (
                     <span className="mt-2 block text-xs">
                       Compared against the response you recorded on{" "}

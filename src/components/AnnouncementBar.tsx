@@ -102,7 +102,7 @@ function IconButton({
       aria-label={label}
       onClick={onClick}
       className={cn(
-        "grid size-7 shrink-0 place-items-center rounded-md text-announce-foreground/80 transition-colors hover:bg-announce-foreground/10 hover:text-announce-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-announce-accent",
+        "relative grid size-7 shrink-0 place-items-center rounded-md before:absolute before:-inset-2 before:content-[''] text-announce-foreground/80 transition-colors hover:bg-announce-foreground/10 hover:text-announce-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-announce-accent",
         className,
       )}
     >

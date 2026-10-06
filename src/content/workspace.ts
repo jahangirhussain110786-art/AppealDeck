@@ -43,6 +43,11 @@ export const WORKSPACE = {
     pageLabel: "Page",
     checked: "I checked the file, the page number and my note.",
     save: "Save document",
+    saveWhyFile: "Add the file to save.",
+    saveWhyNote: "Say what the file shows to save.",
+    saveWhyPage: "Enter the page number to save.",
+    saveWhyTick: "Tick the box above to save.",
+    stateInWords: "State it in words (no file)",
     missing: "I don't have it",
     waiting: "I'm waiting for it",
     draftRequest: "Draft a request",
@@ -65,6 +70,7 @@ export const WORKSPACE = {
     linkLabel: "Link an existing file from this case",
     chooseFile: "Choose a file",
     readOriginal: "Read original",
+    replaceFile: "Replace this file",
     recordedOn: "Recorded {date}. Change it any time.",
   },
   responseSheet: { eyebrow: "Your response", beforeSend: "Before you send" },
@@ -102,6 +108,10 @@ export const WORKSPACE = {
     explanation: "Your explanation, in your own words",
     explanationPlaceholder:
       "For example: The invoice is from our supplier Harbor Goods and covers the 40 units of B0EXAMPLE1 we sold.",
+    // B9: a one-line hint and a visible example under the boxes. A placeholder vanishes the moment
+    // a seller types, which is exactly when a thin answer needs the example most.
+    answerHint: "Name the supplier, what the document shows, and the dates.",
+    exampleLabel: "For example:",
     answerPlaceholder: "Answer in your own words, with dates and numbers where you have them.",
     additionalPlaceholder:
       "Only if something important is not covered by the questions above. Leave it empty otherwise.",
@@ -113,6 +123,10 @@ export const WORKSPACE = {
   // The v5 overview (26 Sep 2026): next step, checklist, timeline.
   overview: {
     nextStep: "Next step",
+    // B2: the price is said at the start, not met at the last step. Free is everything but the
+    // prepared response.
+    priceNote:
+      "Free: understand the notice, gather documents, write your answers. $249 once, only if you want us to prepare the response.",
     checklist: "Checklist",
     done: "{done} of {total} done",
     noFile: "No file linked yet",
@@ -159,6 +173,11 @@ export const WORKSPACE = {
   privacy:
     "Your work is saved in this browser’s encrypted vault, and your files stay on this device. If you are not signed in, it is kept only until you close this tab; sign in to keep it. Two things leave it only when you ask: a business document you ask us to check, and a section you ask us to improve the wording of. Each is sent to be read, and no copy is kept; the one exception is a business document checked while you are not signed in, or one too large to send, which is read on this device and is not uploaded. Preparing a response sends the notice, confirmed facts and document references to AppealDeck — never the original files — and nothing is ever sent to Amazon.",
   local: "Saved in this browser",
+  // B1: the first-time seller does not know a guest case lives in one tab. Said where it is saved.
+  guestWarning: {
+    text: "Your work is saved only in this tab. If you close it, it is gone. Sign in to keep it.",
+    signIn: "Sign in",
+  },
   loading: "Opening your case…",
   // "Documents", not "Evidence" (29 Sep 2026): the word sellers use. The ids stay, so old links work.
   tabs: { overview: "Overview", evidence: "Documents", response: "Response", history: "History" },
@@ -246,6 +265,12 @@ export const WORKSPACE = {
       "Parts of this draft need work. The notes below are about the writing, not your records.",
     weak: "This draft is thin. Work through the notes below before you copy it.",
   },
+  // A3: an earlier response is recorded with no wording. "Looks like what you already sent" would
+  // say something we cannot know, so the alert says what we cannot do and what to do about it.
+  novelty: {
+    cannotCompareTitle: "We cannot compare this with what you sent before.",
+    cannotCompareBody: "The earlier text was not recorded. Change something before you send.",
+  },
   waitingHelp: "Ask for it, then carry on with the other steps while you wait.",
   // B-04, reduced (24 Sep 2026). Shown after two responses have been sent and Amazon has replied
   // again without reinstating. Amazon publishes no escalation order: the routes below are the ones
@@ -254,7 +279,7 @@ export const WORKSPACE = {
   changeOfApproach: {
     title: "Two responses have not resolved this. Change the approach, not only the words.",
     intro:
-      "Sending a third version of the same response is the most common reason appeals keep being refused. Before you send again, work through these in order.",
+      "A resubmission that has not changed gives Amazon nothing new to decide on. Before you send again, work through these in order.",
     steps: [
       {
         title: "Find the one thing Amazon's latest reply objects to",
@@ -262,11 +287,11 @@ export const WORKSPACE = {
       },
       {
         title: "Ask Account Health Support what was missing",
-        body: "From the Account Health page in Seller Central, use Contact Us to request a call back. Ask what specifically was insufficient. Write down the date, the name you were given and what was said, and add it to this case's notes.",
+        body: "From the Account Health page in Seller Central, use Contact Us. Some sellers report that a call-back request through Contact Us gets an answer on what was missing; others report it does not. Try it if it is offered, and ask what specifically was insufficient. Write down the date, the name you were given and what was said, and add it to this case's notes.",
       },
       {
         title: "Escalate in writing, and only with your strongest response",
-        body: "Appeal consultants describe writing to seller-performance@amazon.com with your case ID and your revised response, and, as a last internal step, to jeff@amazon.com, which reaches Amazon's executive seller relations team. Decisions from that team are usually treated as final, so send it only when your response is complete and says something new.",
+        body: "Appeal consultants describe writing to seller-performance@amazon.com with your case ID and your revised response, and, as a last step, to jeff@amazon.com. Consultants say these addresses are read, but Amazon publishes no escalation address and says nothing about whether they are answered. Send it only when your response is complete and says something new.",
       },
       {
         title: "Know when to bring in someone else",
@@ -319,8 +344,18 @@ export const WORKSPACE = {
   },
   // 24 Sep 2026. When a notice states no date we send the seller to Account Health, and until now
   // they found the date there and had nowhere to put it. The copy says the date is theirs.
+  // B4, 6 Oct 2026: the count beside a stated date, only once it is under a week away.
+  deadlineCount: {
+    days: "{n} days left",
+    tomorrow: "tomorrow",
+    today: "today",
+    passed: "the date has passed",
+  },
   sellerDeadline: {
     label: "Your reply-by date",
+    // When the date already came from the notice: the seller is being asked to check it, not to
+    // supply a missing one.
+    labelFromNotice: "Does Amazon's page show a different date? Enter it here.",
     help: "Find it in Account Health. We count down to it everywhere, including reminders.",
     save: "Save date",
     saved: "Saved the response date you entered: {date}.",
@@ -419,8 +454,14 @@ export const WORKSPACE = {
       help: "This reply does not mention it. Your review, note and linked file are unchanged.",
     },
   },
+  // B10: the Response tab before any notice is saved. Names the one thing to do, in the order a
+  // first-time seller will do it.
+  noNoticeYet: {
+    title: "Start with your notice",
+    body: "Paste your notice on the Overview tab first. Then this page will ask you the right questions.",
+  },
   unsupported:
-    "You can organize and export your case notes. Self-serve response preparation is unavailable for this route; no purchase is needed for these notes.",
+    "You can organize and export your case notes. We cannot prepare a response for this kind of notice here. No purchase is needed for these notes.",
   /**
    * #91. Neutral wording throughout: a seller who already appealed and was refused is often
    * embarrassed about it, and nothing here should read as a reprimand. It also never claims what
@@ -441,6 +482,19 @@ export const WORKSPACE = {
   priorAttemptTextHelp:
     "If you no longer have the wording, leave this empty. The attempt still counts; there is then nothing for us to compare against.",
   priorAttemptSave: "Record this response",
+  // B8, 6 Oct 2026: a count first, because "how many" is what the duplicate guard depends on and
+  // is the part a seller can always answer. One attempt without wording is recorded per count.
+  priorAttemptCount: {
+    label: "Roughly how many times have you already replied?",
+    options: ["1", "2", "3", "4 or more"],
+    why: "We use this to warn you before you send Amazon the same thing again.",
+  },
+  // A5: a seller who has already sent their appeal and is only waiting has nothing to prepare.
+  // Tracking the wait is free and needs no Appeal Pass; it sends nothing.
+  alreadySent: {
+    button: "I already sent my appeal and I am waiting",
+    note: "This keeps track of your wait and your follow-up date. It does not send anything.",
+  },
   priorAttemptAddFirst: "Yes, I already responded",
   priorAttemptAddAnother: "Add another response",
   priorAttemptNoDate: "Date not recorded",

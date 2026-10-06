@@ -106,16 +106,17 @@ describe("request routing", () => {
       );
     },
   );
-  it("preserves disagreement and abstains outside the supported marketplace", () => {
+  it("keeps a disagreement drafting, and carries another store through the same route", () => {
+    // 6 Oct 2026: the flag alone no longer latches; it holds only while an allegation is in the text.
     expect(
       routeWorkspace({ ...documentWorkspace(), professionalReviewRequired: true }).protocol,
-    ).toBe("specialist");
+    ).toBe("documents");
     expect(routeWorkspace({ ...documentWorkspace(), position: "dispute" }).protocol).toBe(
-      "dispute",
+      "documents",
     );
-    expect(routeWorkspace({ ...documentWorkspace(), marketplace: "other" }).protocol).toBe(
-      "clarification",
-    );
+    const other = routeWorkspace({ ...documentWorkspace(), marketplace: "other" });
+    expect(other.protocol).toBe("documents");
+    expect(other.reason).toContain("Amazon US is the store this guidance is written for");
     expect(workspaceCanCompose({ ...documentWorkspace(), protocol: "operational" })).toBe(false);
   });
   it("only proposes requested documents, with verbatim source and no duplicates", () => {
@@ -270,7 +271,15 @@ describe("response and provenance", () => {
     expect(next.confirmed).toBe(false);
     expect(next.revision).toBe(2);
     expect(applyWorkspaceReply(next, "reply-1")).toBe(next);
-    const held = applyWorkspaceReply({ ...w, professionalReviewRequired: true }, "reply-1");
+    // A confirmed allegation is remembered through a later reply that does not repeat it.
+    const held = applyWorkspaceReply(
+      {
+        ...w,
+        notice: `${w.notice} Amazon alleges your invoices were forged.`,
+        professionalReviewRequired: true,
+      },
+      "reply-1",
+    );
     expect(routeWorkspace(held).protocol).toBe("specialist");
   });
   it("retains workspace data at the API boundary and rejects malformed evidence", () => {
@@ -344,7 +353,10 @@ describe("attempts made before this case existed", () => {
     // compare, which is honest rather than invented.
     expect(totalAttempts(w)).toBe(1);
     expect(priorAttempts(w)[0]!.text).toBe("");
-    expect(assessNovelty("A completely new response.", w.submissions).verdict).toBe("new");
+    // 6 Oct 2026: an empty prior cannot be compared, so it is reported as such, never as "new".
+    expect(assessNovelty("A completely new response.", w.submissions).verdict).toBe(
+      "cannot-compare",
+    );
   });
 
   it("marks a prior attempt so it can never be mistaken for one drafted here", () => {
@@ -521,15 +533,19 @@ describe("a record the seller cannot obtain", () => {
     return w;
   }
 
-  it("is a named gap, not an instruction to do the impossible", () => {
+  it("is an acknowledged gap: not an instruction to do the impossible, and not an open item", () => {
     const gaps = workspaceGaps(declined("The supplier closed in 2025 and issues no invoices."));
-    expect(gaps).toContain("You can't get this, and your response says so: Supplier invoice");
+    expect(gaps).not.toContain("You can't get this, and your response says so: Supplier invoice");
     expect(gaps).not.toContain("Add the file, say what it shows, and save it: Supplier invoice");
   });
 
-  it("still keeps the draft a working draft, because the evidence really is missing", () => {
+  it("does not watermark a draft whose only gap is a reasoned decline, and still states it", () => {
     const w = declined("The supplier closed in 2025 and issues no invoices.");
-    expect(composeWorkspace({ kind: "UNKNOWN", workspace: w }, 1).mode.mode).toBe("gap-draft");
+    const draft = composeWorkspace({ kind: "UNKNOWN", workspace: w }, 1);
+    expect(draft.mode.mode).toBe("full-draft");
+    expect(draft.watermark).toBeUndefined();
+    expect(draft.sections.some((s) => s.heading.startsWith("Unresolved items"))).toBe(false);
+    expect(draft.sections.some((s) => s.heading === "Records I could not obtain")).toBe(true);
   });
 
   it("states the gap in the seller's own words, in a section of its own", () => {

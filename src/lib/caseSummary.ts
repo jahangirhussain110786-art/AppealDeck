@@ -2,7 +2,15 @@ import type { CaseFile } from "@/core/caseFile";
 import { deadlinesForDisplay } from "@/core/deadlinesModel";
 import { formatDay } from "@/core";
 import { workspaceCanCompose } from "@/core/workspace";
-import { listCases, loadCaseFile, type CaseIndexEntry } from "@/lib/caseStore";
+import { analyzeReply } from "@/core/responseAnalyzer";
+import { STORES } from "@/content/stores";
+import {
+  listCases,
+  loadCaseFile,
+  loadCaseLog,
+  type CaseIndexEntry,
+  type CaseLog,
+} from "@/lib/caseStore";
 import type { Vault } from "@/core/vault/vault";
 import { daysUntilDay } from "@/lib/format";
 import { APP } from "@/content/app";
@@ -44,6 +52,8 @@ export function summarizeCase(
   file: CaseFile | null,
   now: Date,
   activeId: string | null,
+  /** The case's own log, when the caller has it: the seller's recorded outcome lives there. */
+  log?: CaseLog | null,
 ): CaseSummary {
   const base = {
     id: entry.id,
@@ -65,10 +75,32 @@ export function summarizeCase(
       : undefined;
 
   if (entry.archived) return { ...base, status: "closed", next: S.closed, done, total, due };
+  /*
+    A recorded outcome ends the story. Until 6 Oct 2026 the summary ignored `resolution`, so a case
+    the seller had marked reinstated kept saying "waiting on Amazon" and counting down to a date in
+    the notice. The date is dropped too: nothing is due on a settled case.
+  */
+  if (log?.resolution)
+    return {
+      ...base,
+      status: "closed",
+      next: STORES.outcomeLine[log.resolution.status],
+      done,
+      total,
+    };
   if (!w) return { ...base, status: "act", next: S.openToContinue, done, total, due };
 
-  if (w.replies.some((r) => !r.applied))
-    return { ...base, status: "act", next: S.replied, done, total, due };
+  if (w.replies.some((r) => !r.applied)) {
+    const unread = w.replies.filter((r) => !r.applied).at(-1)!;
+    return {
+      ...base,
+      status: "act",
+      next: analyzeReply(unread.text).category === "reinstated" ? STORES.recordOutcome : S.replied,
+      done,
+      total,
+      due,
+    };
+  }
   if (file.state === "SUBMITTED") {
     const last = [...w.submissions].reverse().find((s) => s.source !== "prior");
     return {
@@ -82,6 +114,20 @@ export function summarizeCase(
     };
   }
   if (!w.confirmed) return { ...base, status: "act", next: S.confirm, done, total, due };
+  /*
+    A case that cannot be answered here has nothing to review or send, so "a final review before you
+    send" and "review Supplier invoice" were instructions for a step that does not exist. Verification
+    keeps its record list (the records are real work) but never reaches "a final review".
+  */
+  if (w.protocol === "specialist" || w.protocol === "dispute" || w.protocol === "information")
+    return {
+      ...base,
+      status: "act",
+      next: STORES.nextStep[w.protocol],
+      done,
+      total,
+      due,
+    };
   const pending = w.requirements.find((r) => r.status !== "reviewed");
   if (pending?.status === "waiting")
     return {
@@ -104,7 +150,13 @@ export function summarizeCase(
   return {
     ...base,
     status: "act",
-    next: workspaceCanCompose(w) ? S.write : S.finalReview,
+    next: workspaceCanCompose(w)
+      ? S.write
+      : w.protocol === "verification"
+        ? STORES.nextStep.verification
+        : w.protocol === "clarification"
+          ? STORES.nextStep.clarification
+          : S.finalReview,
     done,
     total,
     due,
@@ -120,7 +172,14 @@ export async function loadCaseSummaries(
   const index = await listCases(vault);
   return Promise.all(
     index.map(async (entry) =>
-      summarizeCase(entry, await loadCaseFile(vault, entry.id).catch(() => null), now, activeId),
+      summarizeCase(
+        entry,
+        await loadCaseFile(vault, entry.id).catch(() => null),
+        now,
+        activeId,
+        // The recorded outcome is in the log. A log that cannot be read leaves the row as it was.
+        await loadCaseLog(vault, entry.id).catch(() => null),
+      ),
     ),
   );
 }

@@ -33,27 +33,35 @@ export function PriorAttempts({
   workspace,
   busy,
   onSave,
+  onMarkSentWaiting,
 }: {
   workspace: Workspace;
   busy: boolean;
   onSave: (w: Workspace) => Promise<boolean>;
+  /**
+   * A5: tracks a response the seller already sent outside this product. Absent when the case is
+   * already waiting or settled, so the button never offers a move the case has made.
+   */
+  onMarkSentWaiting?: () => Promise<boolean>;
 }) {
   const [adding, setAdding] = useState(false);
+  const [count, setCount] = useState(1);
   const [at, setAt] = useState("");
   const [text, setText] = useState("");
   const recorded = priorAttempts(workspace);
 
   async function add() {
-    const ok = await onSave(
-      recordPriorAttempt(workspace, {
-        at: at ? new Date(at).toISOString() : "",
-        text,
-      }),
-    );
+    // The wording and date the seller gives belong to the latest attempt; each earlier one is
+    // recorded without wording, which is all the count can honestly say about it.
+    let next = workspace;
+    for (let i = 1; i < count; i += 1) next = recordPriorAttempt(next, { at: "", text: "" });
+    next = recordPriorAttempt(next, { at: at ? new Date(at).toISOString() : "", text });
+    const ok = await onSave(next);
     if (ok) {
       setAdding(false);
       setAt("");
       setText("");
+      setCount(1);
     }
   }
 
@@ -111,6 +119,31 @@ export function PriorAttempts({
       {adding ? (
         <div className="space-y-3">
           <div className="space-y-2">
+            <p id="prior-attempt-count-label" className="text-sm font-medium text-foreground">
+              {C.priorAttemptCount.label}
+            </p>
+            <div
+              role="group"
+              aria-labelledby="prior-attempt-count-label"
+              className="flex flex-wrap gap-2"
+            >
+              {C.priorAttemptCount.options.map((option, i) => (
+                <Button
+                  key={option}
+                  type="button"
+                  size="sm"
+                  variant={count === i + 1 ? "default" : "outline"}
+                  className="min-h-11 min-w-11"
+                  aria-pressed={count === i + 1}
+                  onClick={() => setCount(i + 1)}
+                >
+                  {option}
+                </Button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">{C.priorAttemptCount.why}</p>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="prior-attempt-date">{C.priorAttemptDateLabel}</Label>
             <Input
               id="prior-attempt-date"
@@ -133,6 +166,7 @@ export function PriorAttempts({
             <p className="text-xs text-muted-foreground">{C.priorAttemptTextHelp}</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {/* The primary action of the panel once it is open. */}
             <Button disabled={busy} onClick={() => void add()}>
               {C.priorAttemptSave}
             </Button>
@@ -151,6 +185,19 @@ export function PriorAttempts({
               <p>{C.priorAttemptsWhyBody}</p>
             </DetailDisclosure>
           )}
+        </div>
+      )}
+      {onMarkSentWaiting && !adding && (
+        <div className="space-y-1.5 border-t border-border/60 pt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => void onMarkSentWaiting()}
+          >
+            {C.alreadySent.button}
+          </Button>
+          <p className="text-xs text-muted-foreground">{C.alreadySent.note}</p>
         </div>
       )}
     </div>

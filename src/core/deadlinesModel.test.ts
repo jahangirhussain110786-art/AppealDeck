@@ -276,7 +276,7 @@ describe("repairStoredDeadlines", () => {
       {
         kind: "funds_review" as const,
         dueAt: "2026-12-01T00:00:00.000Z",
-        label: "Funds review checkpoint (~90 days) — release is NEVER automatic",
+        label: "Funds appeal opens about 60 days after deactivation",
       },
       {
         kind: "appeal_window" as const,

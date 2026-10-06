@@ -1,15 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { runDecode, isSeverityGated, RESPONSE_TYPE_LABELS, assessNoticeAuthenticity } from "@/core";
+import {
+  runDecode,
+  isSeverityGated,
+  RESPONSE_TYPE_LABELS,
+  assessNoticeAuthenticity,
+  analyzeReply,
+} from "@/core";
+import { findUnreadableIds } from "@/core/entities";
+import { receiptDateOf } from "@/core/noticeDate";
+import {
+  GARBLED_MESSAGE,
+  GARBLED_REPAIRED_MESSAGE,
+  LOOKS_LIKE_REPLY_MESSAGE,
+  MULTIPLE_NOTICES_MESSAGE,
+  NOT_A_NOTICE_MISSING,
+  NOT_A_NOTICE_SHORT,
+  NOT_ENFORCEMENT_LISTING_MESSAGE,
+  NOT_ENFORCEMENT_WARNING_MESSAGE,
+  SELLER_TEXT_MESSAGE,
+  ambiguousReceiptMessage,
+  businessDaysMessage,
+  nonEnglishMessage,
+  unreadableIdMessage,
+} from "@/core/noticeMessages";
+import {
+  assessGarbled,
+  assessNotEnforcement,
+  detectMultipleNotices,
+  looksLikeSellerText,
+  normalizeNoticeText,
+  repairOcrText,
+  splitNotices,
+} from "@/core/noticeText";
+import { detectLanguage } from "@/lib/language";
 import { noticeMarkerHits } from "@/lib/noticeLikeness";
 
 export const dynamic = "force-dynamic";
-
-// The decode page's own marker list, not a second copy: see `noticeMarkerHits`.
-function looksLikeNotice(text: string): boolean {
-  if (text.length < 50) return false;
-  return noticeMarkerHits(text) >= 2;
-}
 
 const DecodeBody = z.object({
   text: z
@@ -18,6 +45,29 @@ const DecodeBody = z.object({
     .min(1, "Field 'text' is required.")
     .max(50_000, "Notice text exceeds 50,000 character limit."),
 });
+
+/** Why a paste was refused, in the seller's terms. The page already shows `error` for any 422. */
+function refuse(message: string, extra: Record<string, unknown> = {}) {
+  return NextResponse.json({ error: message, message, ...extra }, { status: 422 });
+}
+
+/** Phrases only a reply to the seller's own submission uses. */
+const REPLY_MARKERS =
+  /\byour (?:appeal|plan of action|POA|submission|reply|response)\b|\bwe(?:'ve| have) (?:reviewed|received your)\b|\bthank you for (?:your|submitting|contacting|providing)\b|\bregarding your (?:appeal|case)\b/i;
+const REQUESTING_REPLY_MARKERS =
+  /\bthank you for\b|\bwe(?:'ve| have) (?:reviewed|received your)\b/i;
+/** Categories that, with a reply marker, mean "this is Amazon answering something you sent". */
+const REPLY_CATEGORIES = new Set([
+  "reinstated",
+  "needs_more_information",
+  "final_decision_negative",
+]);
+const REFUSAL_CATEGORIES = new Set(["needs_more_information", "final_decision_negative"]);
+
+interface Note {
+  id: string;
+  message: string;
+}
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -34,27 +84,151 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: first }, { status: tooLong ? 413 : 400 });
   }
 
-  const { text } = parsed.data;
+  /*
+    One normaliser before anything reads the text (6 Oct 2026): tabs, non-breaking spaces, HTML
+    entities, markdown bold, quote markers, soft hyphens and hard-wrapped lines each silently cost a
+    paste its window, its receipt date or its whole classification. The text that was normalised is
+    the text that is decoded, so every offset returned below refers to `normalizedText` — the caller
+    shows and highlights that string, not the one that was typed.
+  */
+  let working = normalizeNoticeText(parsed.data.text).trim();
 
-  if (!looksLikeNotice(text)) {
-    return NextResponse.json(
-      {
-        error:
-          "This doesn't look like an Amazon notice. Paste the full enforcement notice from Seller Central.",
-      },
-      { status: 422 },
-    );
+  const language = detectLanguage(working);
+  if (!language.supported) {
+    return refuse(nonEnglishMessage(language.name), {
+      language: language.code,
+      languageName: language.name,
+      supported: false,
+    });
+  }
+
+  if (looksLikeSellerText(working)) {
+    return refuse(SELLER_TEXT_MESSAGE, { looksLikeSellerText: true });
+  }
+
+  // Text damaged by OCR: try a cheap repair, and keep it only when it makes the notice readable.
+  const damage = assessGarbled(working);
+  let garbledRepaired = false;
+  if (damage.garbled) {
+    const repaired = repairOcrText(working);
+    const better =
+      noticeMarkerHits(repaired) > noticeMarkerHits(working) ||
+      (receiptDateOf(repaired) !== null && receiptDateOf(working) === null);
+    if (better) {
+      working = repaired;
+      garbledRepaired = true;
+    }
+  }
+
+  if (working.length < 50) {
+    return refuse(damage.garbled ? GARBLED_MESSAGE : NOT_A_NOTICE_SHORT, {
+      ...(damage.garbled ? { garbled: true } : {}),
+    });
+  }
+  if (noticeMarkerHits(working) < 2) {
+    return refuse(damage.garbled ? GARBLED_MESSAGE : NOT_A_NOTICE_MISSING, {
+      ...(damage.garbled ? { garbled: true } : {}),
+    });
+  }
+
+  const notes: Note[] = [];
+
+  // Two or more messages in one paste: decode the most recent and say so, rather than presenting
+  // one kind as the whole story.
+  let decodeText = working;
+  let offset = 0;
+  const multipleNotices = detectMultipleNotices(working);
+  if (multipleNotices) {
+    const segments = splitNotices(working).filter((s) => s.text.trim().length >= 40);
+    if (segments.length > 1) {
+      const dated = segments
+        .map((s) => ({ s, day: receiptDateOf(s.text) }))
+        .filter((x): x is { s: (typeof segments)[number]; day: string } => x.day !== null)
+        .sort((a, b) => b.day.localeCompare(a.day));
+      const chosen = dated[0]?.s ?? segments[0]!;
+      decodeText = chosen.text;
+      offset = chosen.start;
+    }
+    notes.push({ id: "multiple_notices", message: MULTIPLE_NOTICES_MESSAGE });
+  }
+  if (damage.garbled) {
+    notes.push({
+      id: "garbled",
+      message: garbledRepaired ? GARBLED_REPAIRED_MESSAGE : GARBLED_MESSAGE,
+    });
   }
 
   // No receipt date passed. This was `new Date()`, which counted every stated window from the
   // moment of decoding; the `dueAt: null` guard below kept that from ever reaching the seller, at
   // the cost of also discarding a real date. The notice's own header date is now used when it has
   // one; otherwise the window is described as running from the day it was received.
-  const result = runDecode(text, {});
+  const result = runDecode(decodeText, {});
+
+  const enforcement = assessNotEnforcement(decodeText);
+  if (enforcement.notEnforcement) {
+    notes.push({
+      id: "not_enforcement",
+      message:
+        enforcement.kind === "listing_removal"
+          ? NOT_ENFORCEMENT_LISTING_MESSAGE
+          : NOT_ENFORCEMENT_WARNING_MESSAGE,
+    });
+  }
+
+  // An Amazon reply pasted here: tell the page, so it can offer the reply flow.
+  const reply = analyzeReply(decodeText);
+  const looksLikeReply =
+    reply.category !== "unrecognized" &&
+    ((REPLY_CATEGORIES.has(reply.category) && REPLY_MARKERS.test(decodeText)) ||
+      ((reply.category === "document_request" || reply.category === "identity_verification") &&
+        REQUESTING_REPLY_MARKERS.test(decodeText)))
+      ? {
+          category: reply.category,
+          message: LOOKS_LIKE_REPLY_MESSAGE,
+          ...(reply.partial ? { partial: true as const, openAsks: reply.openAsks ?? [] } : {}),
+        }
+      : null;
+  if (looksLikeReply) notes.push({ id: "looks_like_reply", message: LOOKS_LIKE_REPLY_MESSAGE });
+
+  const businessDays = result.parsed.statedBusinessDays;
+  if (businessDays !== null) {
+    notes.push({ id: "business_days", message: businessDaysMessage(businessDays) });
+  }
+  const ambiguousReceipt = result.parsed.ambiguousReceipt;
+  if (ambiguousReceipt) {
+    notes.push({ id: "ambiguous_receipt", message: ambiguousReceiptMessage(ambiguousReceipt) });
+  }
+
+  const idHints = findUnreadableIds(decodeText).map((hint) => ({
+    ...hint,
+    start: hint.start + offset,
+    end: hint.end + offset,
+    message: unreadableIdMessage(hint.value),
+  }));
+  for (const hint of idHints) notes.push({ id: "unreadable_id", message: hint.message });
+
+  // A warning or a refusal asks the seller for no performance records, so none are raised for it.
+  const dropPerformance =
+    enforcement.notEnforcement ||
+    (looksLikeReply !== null && REFUSAL_CATEGORIES.has(looksLikeReply.category));
+  const entities = result.entities
+    .filter(
+      (e) =>
+        !(
+          dropPerformance &&
+          e.kind === "requested_record" &&
+          e.value === "Sales or performance report"
+        ),
+    )
+    .map((e) => (offset === 0 ? e : { ...e, start: e.start + offset, end: e.end + offset }));
 
   return NextResponse.json({
     kind: result.classification.kind,
     confidence: result.classification.confidence,
+    language: language.code,
+    supported: true,
+    /** The text that was decoded. Every `start`/`end` below is an offset into this string. */
+    normalizedText: working,
     /*
       A date is only sent when it was counted from a date the notice itself carries.
 
@@ -72,6 +246,7 @@ export async function POST(req: NextRequest) {
       ...deadline,
       dueAt: deadline.dueOn ? deadline.dueAt : null,
     })),
+    receivedOn: result.parsed.receivedOn,
     severityGated: isSeverityGated(result.classification.kind),
     // AA-39: the decision itself. Without this the free decoder can still only describe a notice,
     // which is the part Amazon's own Seller Assistant now does for nothing.
@@ -82,12 +257,29 @@ export async function POST(req: NextRequest) {
       competing: result.responseType.competing.map((t) => RESPONSE_TYPE_LABELS[t]),
       // Only the notice's own spans are meaningful to the caller; form-instruction matches carry
       // -1 offsets because the form text is not what the page is highlighting.
-      matches: result.responseType.matches.filter((m) => m.start >= 0).slice(0, 5),
+      matches: result.responseType.matches
+        .filter((m) => m.start >= 0)
+        .slice(0, 5)
+        .map((m) => ({ ...m, start: m.start + offset, end: m.end + offset })),
     },
     // Capped so a pathological notice cannot return an unbounded payload.
-    entities: result.entities.slice(0, 60),
+    entities: entities.slice(0, 60),
     // #87: things worth checking before the seller acts on this message. Never a verdict — see
     // src/core/noticeAuthenticity.ts. Empty for the overwhelming majority of real notices.
-    authenticity: assessNoticeAuthenticity(text).signals,
+    // Read over the whole paste, not only the message that was decoded: a lure in the other half of
+    // a two-message paste is still in front of the seller.
+    authenticity: assessNoticeAuthenticity(working).signals,
+    // Shape checks (6 Oct 2026). Each is present only when it applies; `notes` carries the sentence
+    // to show for every one of them, in the order they were found.
+    ...(multipleNotices ? { multipleNotices: true } : {}),
+    ...(damage.garbled ? { garbled: true, garbledRepaired } : {}),
+    ...(enforcement.notEnforcement
+      ? { notEnforcement: true, notEnforcementKind: enforcement.kind }
+      : {}),
+    ...(looksLikeReply ? { looksLikeReply } : {}),
+    ...(businessDays !== null ? { statedBusinessDays: businessDays } : {}),
+    ...(ambiguousReceipt ? { ambiguousReceipt } : {}),
+    ...(idHints.length > 0 ? { idHints } : {}),
+    notes,
   });
 }
