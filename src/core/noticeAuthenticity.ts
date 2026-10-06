@@ -19,14 +19,18 @@
  */
 
 /** Hosts Amazon actually uses. A link outside these is worth a look, not a conviction. */
-const AMAZON_HOST = /(^|\.)(amazon\.[a-z.]{2,6}|sellercentral\.amazon\.[a-z.]{2,6}|amazon\.com)$/i;
+// Amazon's real marketplace domains, not "amazon." plus any ending: amazon.top, amazon.xyz and
+// amazon.help are not Amazon, and look-alike domains are exactly what this check exists to catch.
+const AMAZON_TLD =
+  "(?:com|co\\.uk|de|fr|it|es|nl|se|pl|ie|be|com\\.be|com\\.tr|ae|sa|eg|in|co\\.jp|jp|com\\.au|ca|com\\.mx|com\\.br|sg|cn)";
+const AMAZON_HOST = new RegExp(`(?:^|\\.)amazon\\.${AMAZON_TLD}$`, "i");
 
 /**
  * Addresses the research corpus recorded on genuine notices
  * (`docs/handoffs/2026-09-19-second-opinion-salvage/salvage-research_amazon-mechanics.md`).
  * Listed so a real notice that names one of them is not flagged for naming it.
  */
-const AMAZON_EMAIL = /@(amazon\.[a-z.]{2,6})$/i;
+const AMAZON_EMAIL = new RegExp(`@(?:[a-z0-9-]+\\.)*amazon\\.${AMAZON_TLD}$`, "i");
 /** "Rights owner email:", "Complainant contact:" — on the same line, just before the address. */
 const RIGHTS_OWNER_CONTACT =
   /(?:rights?[\s-](?:owner|holder)|complainant|brand owner)(?:'s)?[^\n]{0,25}?(?:e-?mail|contact)(?: address)?\s*:?\s*$/i;
@@ -67,7 +71,7 @@ interface Rule {
  * available from text alone.
  */
 const PAYMENT =
-  /\b(gift\s?cards?|bitcoin|crypto(?:currency)?|usdt|wire\s+transfer|western\s+union|moneygram|payoneer\s+transfer|pay(?:ment)?\s+(?:of\s+)?(?:\$|usd|eur|£)\s?\d|reinstatement\s+fee|processing\s+fee|appeal\s+fee|unlock(?:ing)?\s+fee)\b/i;
+  /\b(gift\s?cards?|bitcoin|crypto(?:currency)?|usdt|wire\s+transfer|western\s+union|moneygram|payoneer\s+transfer|(?:pay|send|transfer|remit)\s+(?:us\s+|amazon\s+)?(?:a\s+)?(?:(?:fee|payment)\s+of\s+)?(?:\$|usd|eur|£)\s?\d[\d,.]*|reinstatement\s+fee|processing\s+fee|appeal\s+fee|unlock(?:ing)?\s+fee)\b/i;
 
 /** Amazon never asks a seller to send a password, a one-time code or a 2FA code to anyone. */
 const CREDENTIALS =

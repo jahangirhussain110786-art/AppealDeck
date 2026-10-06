@@ -3,7 +3,8 @@ import { cn } from "@/lib/utils";
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="w-full overflow-auto">
+    // Focusable and named so a keyboard user can scroll a table wider than a phone (WCAG 2.1.1).
+    <div className="w-full overflow-auto" role="region" aria-label="Table" tabIndex={0}>
       <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
     </div>
   ),

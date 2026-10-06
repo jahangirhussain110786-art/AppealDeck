@@ -6,6 +6,7 @@ import {
   saveCaseFile,
   saveCaseLog,
   listCases,
+  getActiveCaseId,
   setActiveCaseId,
 } from "@/lib/caseStore";
 import { VaultDB } from "@/core/vault/db";
@@ -137,26 +138,42 @@ export class ScopedBrowserVault extends Vault {
       const meta = await source.rawMeta();
       if (meta?.mode.kind === "device") await source.unlockWithDeviceKey();
       else await source.unlock(this.pendingGuestSecret ?? guestSecret());
-      const file = await loadCaseFile(source);
-      const log = await loadCaseLog(source);
-
-      const documents: Array<Awaited<ReturnType<Vault["get"]>>> = [];
-      if (file) {
+      const guestCases = await listCases(source);
+      const bundles: Array<{
+        file: NonNullable<Awaited<ReturnType<typeof loadCaseFile>>>;
+        log: Awaited<ReturnType<typeof loadCaseLog>>;
+        documents: Array<Awaited<ReturnType<Vault["get"]>>>;
+      }> = [];
+      // Every guest case comes across, not only the active one: a seller can open several before
+      // signing in, and the guest database is deleted once the merge is verified.
+      for (const entry of guestCases) {
+        const file = await loadCaseFile(source, entry.id);
+        if (!file) continue;
+        const log = await loadCaseLog(source, entry.id);
+        const documents: Array<Awaited<ReturnType<Vault["get"]>>> = [];
         for (const item of await source.list({ caseId: file.id })) {
           if (item.kind === "document") documents.push(await source.get(item.id));
         }
+        bundles.push({ file, log, documents });
       }
+      const activeId = await getActiveCaseId(source);
+      const documents = bundles.flatMap((b) => b.documents);
 
-      if (file) {
+      if (bundles.length > 0) {
         await this.atomic(async () => {
           const existing = await listCases(this);
-          if (!existing.some((entry) => entry.id === file.id)) {
-            await saveCaseFile(this, file);
-            if (log) await saveCaseLog(this, log);
-          } else await setActiveCaseId(this, file.id);
-          // Adopted whether or not the case was already here: a merge interrupted after an older
-          // version of this code copied the case would otherwise never bring its documents across.
-          for (const { record, bytes } of documents) await this.adoptRecord(record, bytes);
+          for (const { file, log, documents: docs } of bundles) {
+            if (!existing.some((entry) => entry.id === file.id)) {
+              await saveCaseFile(this, file);
+              if (log) await saveCaseLog(this, log);
+            }
+            // Adopted whether or not the case was already here: a merge interrupted after an older
+            // version of this code copied the case would otherwise never bring its documents across.
+            for (const { record, bytes } of docs) await this.adoptRecord(record, bytes);
+          }
+          // The case the seller was last working on stays the one they land on.
+          const landOn = bundles.find((b) => b.file.id === activeId) ?? bundles[0]!;
+          await setActiveCaseId(this, landOn.file.id);
         });
       }
 
@@ -192,8 +209,14 @@ export class ScopedBrowserVault extends Vault {
   private async openScoped() {
     const client = createSupabaseBrowserClient();
     const result = client ? await client.auth.getUser() : null;
-    const user = result?.data.user;
-    if (result?.error && result.error.name !== "AuthSessionMissingError") throw result.error;
+    let user = result?.data.user;
+    if (result?.error && result.error.name !== "AuthSessionMissingError") {
+      // getUser() asks the network. A local-first vault must still open offline or during an outage,
+      // so fall back to the locally cached session; only if that is also unavailable is it an error.
+      const cached = client?.auth.getSession ? await client.auth.getSession() : null;
+      user = cached?.data?.session?.user;
+      if (!user) throw result.error;
+    }
     const guestName = guestVaultName();
     this.guest = !user;
     this.db = new VaultDB(user ? `appealdeck-vault-user-${user.id}` : guestName);

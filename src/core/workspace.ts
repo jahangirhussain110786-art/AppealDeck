@@ -6,6 +6,7 @@ import type { EvidenceKind } from "./evidenceModel";
 import { requirementsFor } from "./evidenceModel";
 import type { ViolationKind } from "./violationKinds";
 import { D6_GATED_ALLEGATION } from "./violationKinds";
+import { KIND_PATTERNS } from "./noticeParser";
 import type { NoticeIssue } from "./noticeIssues";
 import { detectIssues, hasMultipleIssues } from "./noticeIssues";
 import type { SavedDocumentCheck } from "./documentCheck";
@@ -751,6 +752,8 @@ export function proposedIssues(w: Pick<Workspace, "notice" | "formInstructions">
 }
 
 /** A bounded routing aid, never a claim about hidden platform decisions. */
+const VERIFICATION_PATTERN = KIND_PATTERNS.find(([kind]) => kind === "VERIFICATION")![1];
+
 export function routeWorkspace(
   w: Pick<Workspace, "notice" | "formInstructions" | "position" | "marketplace"> &
     Partial<Pick<Workspace, "professionalReviewRequired">>,
@@ -787,9 +790,9 @@ export function routeWorkspace(
    * to go and read Seller Central, which is the dead end AM-26 point 2 exists to remove.
    */
   if (
-    /\b(identity verification|verify your identity|video (?:call|interview)|government.issued (?:ID|identification)|INFORM Consumers Act|re-?certif(?:y|ication))\b/i.test(
-      text,
-    )
+    // The classifier's own verification pattern, so the two can never disagree about what counts.
+    VERIFICATION_PATTERN.test(text) ||
+    /\bgovernment.issued (?:ID|identification)\b/i.test(text)
   )
     return {
       protocol: "verification",

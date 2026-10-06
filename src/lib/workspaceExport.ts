@@ -130,7 +130,7 @@ export function buildCaseExport(
   lines.push("AppealDeck case export — not a submission, not sent to Amazon");
   lines.push(`Exported ${formatDate(new Date().toISOString())}`);
   lines.push(
-    `Case ${file.id} · ${file.kind.replaceAll("_", " ")}${file.kindSetBy === "seller" ? " (chosen by the seller)" : ""} · ${PROTOCOL_LABELS[w.protocol]}`,
+    `Case ${file.id} · ${file.kind === "UNKNOWN" ? "type not identified" : file.kind.replaceAll("_", " ")}${file.kindSetBy === "seller" ? " (chosen by the seller)" : ""} · ${PROTOCOL_LABELS[w.protocol]}`,
   );
   lines.push(`Marketplace: ${w.marketplace === "US" ? "Amazon US" : "Not confirmed"}`);
   lines.push(`Current request: revision ${w.revision}`);

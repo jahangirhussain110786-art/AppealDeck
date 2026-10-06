@@ -5,6 +5,8 @@ import { PageState } from "@/components/PageState";
 import { SURFACES } from "@/content/surfaces";
 import { Button } from "@/components/ui/button";
 
+export const metadata = { title: "Page not found" };
+
 export default function NotFound() {
   return (
     <MarketingShell width="tool">

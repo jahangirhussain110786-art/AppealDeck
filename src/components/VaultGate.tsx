@@ -84,25 +84,42 @@ export function VaultGate({
     lockTimer.current = warnTimer.current = null;
   }, []);
 
+  // A device-key vault has no passphrase to type, and its key sits in the same browser storage, so
+  // locking it protects nothing and would strand the seller on a form they cannot use. Asked when a
+  // timer fires, not once, because the seller can switch to a passphrase while the page is open.
+  const holdsNoSecret = React.useCallback(async () => {
+    if (!(autoUnlock && deviceMode)) return false;
+    try {
+      return (await vault?.rawMeta())?.mode.kind === "device";
+    } catch {
+      return false;
+    }
+  }, [vault, autoUnlock, deviceMode]);
+
   const resetIdleTimer = React.useCallback(() => {
     if (phaseRef.current.kind !== "unlocked") return;
     clearTimers();
     setWarning(false);
     warnTimer.current = setTimeout(() => {
-      if (phaseRef.current.kind === "unlocked") setWarning(true);
+      void holdsNoSecret().then((noSecret) => {
+        if (!noSecret && phaseRef.current.kind === "unlocked") setWarning(true);
+      });
     }, idleMs - warnMs);
     lockTimer.current = setTimeout(() => {
       if (phaseRef.current.kind !== "unlocked") return;
-      clearTimers();
-      setWarning(false);
-      void vault?.lock();
-      setPhase({ kind: "locked" });
-      onLockedRef.current?.();
-      toast.info(APP.vault.idleLock.locked, {
-        description: APP.vault.idleLock.lockedDesc,
+      void holdsNoSecret().then((noSecret) => {
+        if (noSecret || phaseRef.current.kind !== "unlocked") return;
+        clearTimers();
+        setWarning(false);
+        void vault?.lock();
+        setPhase({ kind: "locked" });
+        onLockedRef.current?.();
+        toast.info(APP.vault.idleLock.locked, {
+          description: APP.vault.idleLock.lockedDesc,
+        });
       });
     }, idleMs);
-  }, [vault, idleMs, warnMs, clearTimers]);
+  }, [vault, idleMs, warnMs, clearTimers, holdsNoSecret]);
 
   React.useEffect(() => {
     // No vault yet: rendering already shows the loading state for that (`!vault` below).

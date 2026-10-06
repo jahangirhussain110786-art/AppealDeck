@@ -179,6 +179,10 @@ const PAST_TENSE = /\b(?:was|were|has been|had been|have been)\b/i;
 const DESCRIBES_A_RECORD =
   /\b(?:dated|issued|placed|purchased|shipped|delivered|received|made|created|sent|generated)\s*$/i;
 
+/** "must be received by", "needs to be sent before": the verb describes what is owed, not a document. */
+const AN_OBLIGATION =
+  /\b(?:must|should|needs?\s+to|has\s+to|have\s+to|is\s+to|are\s+to)\s+be\s+(?:received|sent|made|submitted)\s*$/i;
+
 /** The sentence a cue sits in, from its last boundary up to the cue. A period only ends one before a space. */
 function sentenceBefore(raw: string, at: number): string {
   const before = raw.slice(Math.max(0, at - 200), at);
@@ -256,7 +260,8 @@ export function statedDeadlineOf(raw: string, sentOn: string | null): StatedDead
     const aboutResponding = RESPONDING.test(sentence) || RESPONDING_AFTER.test(after);
     if (!aboutResponding) continue;
     if (SOMEONE_ELSES_CLOCK.test(clause) || PAST_TENSE.test(clause)) continue;
-    if (DESCRIBES_A_RECORD.test(raw.slice(Math.max(0, cue.index! - 40), cue.index!))) continue;
+    const lead = raw.slice(Math.max(0, cue.index! - 40), cue.index!);
+    if (DESCRIBES_A_RECORD.test(lead) && !AN_OBLIGATION.test(lead)) continue;
     found.push({ day: date.day, start: at, end: date.end });
   }
 

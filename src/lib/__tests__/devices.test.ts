@@ -177,7 +177,6 @@ const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
 async function fingerprintFor(idx: number): Promise<string> {
   return fingerprintFromRequest({
     userAgent: `${UA} idx=${idx}`,
-    ip: "10.0.0.1",
     acceptLanguage: "en-US,en;q=0.9",
     userId: "user-uuid",
   });
@@ -197,13 +196,11 @@ describe("devices", () => {
   it("fingerprintFromRequest is stable for identical inputs", async () => {
     const a = await fingerprintFromRequest({
       userAgent: UA,
-      ip: "1.1.1.1",
       acceptLanguage: "en",
       userId: "u",
     });
     const b = await fingerprintFromRequest({
       userAgent: UA,
-      ip: "1.1.1.1",
       acceptLanguage: "en",
       userId: "u",
     });
@@ -214,13 +211,11 @@ describe("devices", () => {
   it("fingerprintFromRequest differs when any input changes", async () => {
     const base = await fingerprintFromRequest({
       userAgent: UA,
-      ip: "1.1.1.1",
       acceptLanguage: "en",
       userId: "u",
     });
     const diff = await fingerprintFromRequest({
-      userAgent: UA,
-      ip: "2.2.2.2",
+      userAgent: `${UA} other`,
       acceptLanguage: "en",
       userId: "u",
     });
@@ -230,7 +225,6 @@ describe("devices", () => {
   it("fingerprintFromRequest does not require an email field", async () => {
     const fp = await fingerprintFromRequest({
       userAgent: UA,
-      ip: "1.1.1.1",
       acceptLanguage: "en",
       userId: "u",
     });

@@ -30,6 +30,8 @@ const RULES: ReadonlyArray<PatternRule> = [
       /no further consideration/i,
       /we will not be able to respond to further appeals/i,
       /permanently deactivated/i,
+      // Amazon's other ways of saying the account is gone for good.
+      /permanently (?:suspended|removed|closed|revoked|terminated)/i,
       // "We are unable to reinstate" is deliberately not here (25 Sep 2026). It opens Amazon's
       // ordinary refusal — "...at this time. Please also provide invoices..." — which invites the
       // next attempt. Filing it as final told a seller the case was over, and recorded the case as
@@ -71,7 +73,8 @@ const RULES: ReadonlyArray<PatternRule> = [
       /your plan of action (?:is|was) (?:insufficient|incomplete|unclear)/i,
       /we need more details about/i,
       // A refusal that does not say it is final: the case goes on (see final_decision_negative).
-      /we are unable to reinstate/i,
+      /we(?:'re| are) (?:unable|not able) to reinstate/i,
+      /we (?:can(?:'t|not)|will not|won't|are not going to) reinstate/i,
       // Amazon's usual reasons for refusing an appeal, added 29 Sep 2026 from researched wording.
       /does not address our concerns/i,
       /does not identify the root cause/i,
@@ -83,6 +86,7 @@ const RULES: ReadonlyArray<PatternRule> = [
       /funds? (?:will be|have been|is) (?:released|disbursed|returned)/i,
       /disbursement (?:approved|processed|completed)/i,
       /funds? (?:remain|are still) on hold/i,
+      /funds? (?:will not|won't|cannot|can't) be (?:released|disbursed|returned)/i,
     ],
   },
 ];
@@ -99,7 +103,11 @@ const CONTRADICTS_REINSTATEMENT: ReadonlySet<ReplyCategory> = new Set([
 
 export function analyzeReply(raw: string): AnalysisResult {
   const text = sampleText(raw);
-  const matches = RULES.filter((rule) => rule.patterns.some((re) => re.test(text)));
+  const matches = RULES.filter((rule) =>
+    rule.category === "reinstated"
+      ? claimsReinstatement(rule.patterns, text)
+      : rule.patterns.some((re) => re.test(text)),
+  );
   if (matches.length === 0) {
     return { category: "unrecognized", extractedAsks: [], confidence: "rule" };
   }
@@ -154,6 +162,22 @@ export function analyzeReply(raw: string): AnalysisResult {
     extractedAsks,
     confidence: overridden ? "ambiguous" : "rule",
   };
+}
+
+/**
+ * Reinstatement language only counts in a sentence that states it. "We have not reinstated your
+ * account" and "If your plan of action is accepted, your account is now active" contain the words
+ * and mean the opposite of what a panicking seller hopes to read, and telling someone they are back
+ * when they are not is the one error this analyser must not make.
+ */
+const NOT_A_STATEMENT =
+  /\b(?:not|never|no longer|unable|if|once|when|until|unless|after|would|will be)\b|n't\b|n’t\b/i;
+function claimsReinstatement(patterns: RegExp[], text: string): boolean {
+  return text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .some(
+      (sentence) => patterns.some((re) => re.test(sentence)) && !NOT_A_STATEMENT.test(sentence),
+    );
 }
 
 function sampleText(raw: string): string {

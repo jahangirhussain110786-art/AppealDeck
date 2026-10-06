@@ -2,9 +2,9 @@ import "fake-indexeddb/auto";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { VaultDB } from "@/core/vault/db";
 import { Vault } from "@/core/vault/vault";
-const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
+const { getUser, getSession } = vi.hoisted(() => ({ getUser: vi.fn(), getSession: vi.fn() }));
 vi.mock("@/lib/supabase/client", () => ({
-  createSupabaseBrowserClient: () => ({ auth: { getUser } }),
+  createSupabaseBrowserClient: () => ({ auth: { getUser, getSession } }),
 }));
 import { ScopedBrowserVault, guestVaultName, forgetGuestVault } from "./scoped";
 import { createCaseFile } from "@/core/caseFile";
@@ -32,6 +32,59 @@ afterEach(async () => {
   databases.clear();
 });
 describe("vault ownership", () => {
+  it("carries every guest case across, not only the active one", async () => {
+    const id = crypto.randomUUID();
+    databases.add(`appealdeck-vault-user-${id}`);
+    databases.add(guestVaultName());
+    getUser.mockResolvedValue({ data: { user: { id } }, error: null });
+    const account = new ScopedBrowserVault(crypto);
+    await account.open();
+    await account.initWithDeviceKey();
+    const first = createCaseFile("POLICY");
+    await saveCaseFile(account, first);
+    await account.close();
+    getUser.mockResolvedValue({ data: { user: null }, error: null });
+    databases.add(guestVaultName());
+    const guest = new ScopedBrowserVault(crypto);
+    await guest.open();
+    await guest.initWithDeviceKey();
+    const one = createCaseFile("POLICY");
+    const two = createCaseFile("POLICY");
+    await saveCaseFile(guest, one);
+    await saveCaseFile(guest, two);
+    await guest.close();
+    getUser.mockResolvedValue({ data: { user: { id } }, error: null });
+    const returning = new ScopedBrowserVault(crypto);
+    await returning.open();
+    await returning.unlockWithDeviceKey();
+    expect((await listCases(returning)).map((c) => c.id)).toEqual(
+      expect.arrayContaining([first.id, one.id, two.id]),
+    );
+    await returning.close();
+  });
+  it("still opens a signed-in vault when the network session lookup fails", async () => {
+    const id = crypto.randomUUID();
+    databases.add(`appealdeck-vault-user-${id}`);
+    databases.add(guestVaultName());
+    getUser.mockResolvedValue({ data: { user: { id } }, error: null });
+    const online = new ScopedBrowserVault(crypto);
+    await online.open();
+    await online.initWithDeviceKey();
+    const kept = createCaseFile("POLICY");
+    await saveCaseFile(online, kept);
+    await online.close();
+    // Offline: getUser() fails with a retryable fetch error, but the cached session is still there.
+    getUser.mockResolvedValue({
+      data: { user: null },
+      error: { name: "AuthRetryableFetchError", message: "Failed to fetch" },
+    });
+    getSession.mockResolvedValue({ data: { session: { user: { id } } }, error: null });
+    const offline = new ScopedBrowserVault(crypto);
+    await offline.open();
+    await offline.unlockWithDeviceKey();
+    expect((await listCases(offline)).map((c) => c.id)).toContain(kept.id);
+    await offline.close();
+  });
   it("merges a guest draft into an existing account without replacing older cases", async () => {
     const id = crypto.randomUUID();
     databases.add(`appealdeck-vault-user-${id}`);

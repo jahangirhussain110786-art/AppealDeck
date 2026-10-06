@@ -36,15 +36,15 @@ async function hashFingerprint(raw: string): Promise<string> {
 
 export interface BuildFingerprintInput {
   userAgent: string;
-  ip: string;
   acceptLanguage: string;
   userId: string;
 }
 
 export async function fingerprintFromRequest(input: BuildFingerprintInput): Promise<string> {
+  // The IP address is deliberately NOT part of the fingerprint: a phone or home connection changes
+  // address constantly, and each change would count as a new device until a paying seller hit the cap.
   const raw = [
     input.userAgent.trim().toLowerCase(),
-    input.ip.trim().toLowerCase(),
     input.acceptLanguage.trim().toLowerCase(),
     input.userId,
   ].join("|");
@@ -62,10 +62,6 @@ export async function deriveFingerprintFromRequest(
 ): Promise<string> {
   return fingerprintFromRequest({
     userAgent: req.headers.get("user-agent") ?? "",
-    ip:
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      req.headers.get("x-real-ip") ??
-      "0.0.0.0",
     acceptLanguage: req.headers.get("accept-language") ?? "",
     userId,
   });

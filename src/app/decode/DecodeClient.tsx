@@ -244,7 +244,7 @@ export default function DecodeClient() {
                       {DECODE.textarea.hint}
                     </p>
                     <div id="notice-hint" className="sr-only" aria-live="polite">
-                      {likeness.hint ?? ""}
+                      {showHint ? likeness.hint : ""}
                     </div>
                     {usingSample && (
                       <div className="flex items-center gap-2">

@@ -284,9 +284,9 @@ export const LEGAL = {
     deliveryNote: "You will receive a receipt and a copy of this consent by email.",
   },
   meta: {
-    titlePrivacy: "Privacy — AppealDeck",
-    titleTerms: "Terms — AppealDeck",
-    titleRefund: "Refunds & withdrawal — AppealDeck",
+    titlePrivacy: "Privacy",
+    titleTerms: "Terms",
+    titleRefund: "Refunds & withdrawal",
     descriptionPrivacy:
       "How notice processing, optional AI, payments and encrypted case storage work in AppealDeck.",
     descriptionTerms:
