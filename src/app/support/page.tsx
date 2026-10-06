@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/content/pageMetadata";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Mail as MailIcon, X } from "lucide-react";
@@ -10,15 +11,11 @@ import { splitAccent } from "@/lib/splitAccent";
 import { SUPPORT, SUPPORT_EMAIL, BILLING_EMAIL } from "@/content/support";
 import { SHARED } from "@/content/shared";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/support" },
+export const metadata: Metadata = pageMetadata({
   title: SHARED.metadata.titleSupport,
   description: SHARED.metadata.descriptionSupport,
-  openGraph: {
-    title: SHARED.metadata.titleSupport,
-    description: SHARED.metadata.descriptionSupport,
-  },
-};
+  canonical: "/support",
+});
 
 const HERO = splitAccent(SUPPORT.hero.title, SUPPORT.hero.accent);
 

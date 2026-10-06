@@ -165,6 +165,19 @@ describe("what a specialist needs from the export", () => {
   };
   const text = buildCaseExport(file, w, log);
 
+  it("uses the names the screen uses for the case type and the issues, never raw enum values", () => {
+    expect(text).toContain("Listing violation");
+    expect(text).toContain("- Listing violation: The listing violated detail page rules.");
+    expect(text).not.toMatch(/\bLISTING\b/);
+    const inauthentic = buildCaseExport(
+      { ...createCaseFile("INAUTHENTIC"), workspace: w },
+      { ...w, issues: [{ kind: "INAUTHENTIC" as const, sourceQuote: "Authenticity complaint." }] },
+      log,
+    );
+    expect(inauthentic).toContain("Inauthentic item complaint");
+    expect(inauthentic).not.toMatch(/\bINAUTHENTIC\b/);
+  });
+
   it("states the deadline as the screen does", () => {
     expect(text).toContain("- Appeal by 1 Oct 2026");
   });

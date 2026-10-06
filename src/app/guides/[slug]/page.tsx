@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/content/pageMetadata";
 import { notFound } from "next/navigation";
 import { GUIDES, guideBySlug } from "@/content/guides";
 import { GuideView } from "../GuideView";
@@ -16,12 +17,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const guide = guideBySlug((await params).slug);
   if (!guide) return {};
-  return {
-    alternates: { canonical: `/guides/${guide.slug}` },
+  return pageMetadata({
     title: guide.metaTitle,
     description: guide.description,
-    openGraph: { title: guide.metaTitle, description: guide.description, type: "article" },
-  };
+    canonical: `/guides/${guide.slug}`,
+    type: "article",
+  });
 }
 
 export default async function GuidePage({ params }: { params: Promise<{ slug: string }> }) {

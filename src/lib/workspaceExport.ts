@@ -13,6 +13,7 @@ import type { SerializedDeadline } from "@/core/deadlinesModel";
 import type { CaseLog } from "./caseStore";
 import { REQUIREMENT_GROUPS } from "./evidencePack";
 import { formatDate } from "./format";
+import { APP } from "@/content/app";
 import {
   checkContextKey,
   FINDING_LABELS,
@@ -130,7 +131,7 @@ export function buildCaseExport(
   lines.push("AppealDeck case export — not a submission, not sent to Amazon");
   lines.push(`Exported ${formatDate(new Date().toISOString())}`);
   lines.push(
-    `Case ${file.id} · ${file.kind === "UNKNOWN" ? "type not identified" : file.kind.replaceAll("_", " ")}${file.kindSetBy === "seller" ? " (chosen by the seller)" : ""} · ${PROTOCOL_LABELS[w.protocol]}`,
+    `Case ${file.id} · ${file.kind === "UNKNOWN" ? "type not identified" : APP.violationKinds[file.kind]}${file.kindSetBy === "seller" ? " (chosen by the seller)" : ""} · ${PROTOCOL_LABELS[w.protocol]}`,
   );
   lines.push(`Marketplace: ${w.marketplace === "US" ? "Amazon US" : "Not confirmed"}`);
   lines.push(`Current request: revision ${w.revision}`);
@@ -153,7 +154,7 @@ export function buildCaseExport(
       `== Issues the notice raises (${w.issues.length}) · ${w.issuesConfirmed ? "seller confirmed the response covers each" : "not yet confirmed as covered"} ==`,
     );
     for (const issue of w.issues) {
-      lines.push(`- ${issue.kind.replaceAll("_", " ")}: ${issue.sourceQuote}`);
+      lines.push(`- ${APP.violationKinds[issue.kind] ?? issue.kind}: ${issue.sourceQuote}`);
     }
     lines.push("");
   }

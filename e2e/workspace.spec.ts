@@ -282,6 +282,11 @@ test("authenticated workspace preserves the exact response through submission an
     .fill("Private scratch reply not confirmed for processing.");
   await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
+  // These tests stand in for a paid case by answering compose themselves, so the case-scoped
+  // licence question must answer the same way (the dev account's real Pass belongs to another case).
+  await page.route("**/api/license/status*", (route) =>
+    route.fulfill({ json: { status: "active", plan: "appeal_pass" } }),
+  );
   await page.route("**/api/compose", async (route) => {
     const { caseData, attemptNumber } = route.request().postDataJSON();
     expect(caseData.workspace.draft).toBeUndefined();
@@ -361,6 +366,11 @@ test("a refused outcome share keeps the offer and says so; a recorded one confir
     .getByLabel("Your explanation, in your own words")
     .fill("The supplier invoice identifies the product by code J-104 and records the purchase.");
   // Not saved first: "Prepare response" saves the answers itself (29 Sep 2026).
+  // These tests stand in for a paid case by answering compose themselves, so the case-scoped
+  // licence question must answer the same way (the dev account's real Pass belongs to another case).
+  await page.route("**/api/license/status*", (route) =>
+    route.fulfill({ json: { status: "active", plan: "appeal_pass" } }),
+  );
   await page.route("**/api/compose", async (route) => {
     const { caseData, attemptNumber } = route.request().postDataJSON();
     expect(caseData.workspace.explanation).toContain("J-104");

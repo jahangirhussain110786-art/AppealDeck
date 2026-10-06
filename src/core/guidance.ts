@@ -374,7 +374,7 @@ export const GLOBAL_EXPECTATIONS: GlobalExpectations = {
       kind: "privacy",
       title: "Know what is shared",
       description:
-        "Decoding sends your notice to AppealDeck. Original files stay in your vault unless you choose a backup.",
+        "Decoding sends your notice to AppealDeck. Original files stay in your vault unless you choose a backup or ask for a business document to be checked.",
     },
   ],
   typicalNote: "Amazon decides the outcome. Review times vary.",

@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { ArrowRight, Check, FileSearch, FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -144,6 +144,8 @@ function Loading() {
   );
 }
 
+const SAVE_FAILED = "Not saved: this case changed in another window. Reload to see the latest.";
+
 export function CaseWorkspace({
   signedIn,
   initialKind,
@@ -204,7 +206,6 @@ function WorkspaceInner({
   initialKind?: ViolationKind;
   initialView?: string;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const [file, setFile] = useState<CaseFile | null>(null);
   const fileRef = useRef<CaseFile | null>(null);
@@ -236,7 +237,9 @@ function WorkspaceInner({
     if (tab === "overview") params.delete("view");
     else params.set("view", tab);
     const qs = params.toString();
-    router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    // Purely local: router.replace fetches an RSC payload, which fails offline and sends the
+    // browser to its error page. The URL is only a bookmark of the active tab.
+    window.history.replaceState(window.history.state, "", `${pathname}${qs ? `?${qs}` : ""}`);
     // Keep the URL in sync with the active tab so it survives reload, back/forward
     // and the sign-in redirect; router/pathname are stable across this component's life.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -270,6 +273,8 @@ function WorkspaceInner({
   */
   const [openDocument, setOpenDocument] = useState<string | null | undefined>(undefined);
   const [saved, setSaved] = useState(false);
+  // Set when a commit fails, so the header never says "Saved" for text that is not on disk.
+  const [saveFailed, setSaveFailed] = useState<string | null>(null);
   const [result, setResult] = useState<WorkspaceResponse | null>(null);
   const [purchase, setPurchase] = useState(false);
   const [newLabel, setNewLabel] = useState("");
@@ -492,11 +497,19 @@ function WorkspaceInner({
       persisted.current = JSON.stringify(next);
       setCurrent(updated);
       setSaved(true);
+      setSaveFailed(null);
       setResult(null);
       setPurchase(false);
       return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : C.error);
+      // Never leave "Saved" showing after a failed save. What the seller typed stays in the form.
+      setSaved(false);
+      setSaveFailed(
+        e instanceof Error && e.message.startsWith("This case changed")
+          ? SAVE_FAILED
+          : "Not saved. Try again; what you typed is still here.",
+      );
       return false;
     } finally {
       saving.current = heldBefore;
@@ -879,6 +892,22 @@ function WorkspaceInner({
         );
       }
       const w = fresh.workspace!;
+      // Ask before posting: a case without a Pass would get a 403 (and a console error) for the
+      // whole case file. A failed or unclear answer is not an answer: go on and let compose decide.
+      try {
+        const licence = await fetch(`/api/license/status?caseId=${encodeURIComponent(fresh.id)}`, {
+          cache: "no-store",
+        });
+        if (licence.ok) {
+          const body = (await licence.json().catch(() => null)) as { status?: unknown } | null;
+          if (body && typeof body.status === "string" && body.status !== "active") {
+            setPurchase(true);
+            return;
+          }
+        }
+      } catch {
+        // Offline or blocked: compose answers for itself.
+      }
       const response = await fetch("/api/compose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1243,10 +1272,18 @@ function WorkspaceInner({
           role="status"
           className="flex max-w-[40vw] items-center gap-1.5 text-[0.8125rem] leading-tight text-muted-foreground sm:max-w-none"
         >
-          {dirtyKeys.size === 0 && !busy && saved && (
+          {dirtyKeys.size === 0 && !busy && saved && !saveFailed && (
             <Check className="size-3.5 text-success" aria-hidden />
           )}
-          {dirtyKeys.size > 0 ? C.saving : busy ? C.working : saved ? C.saved : C.saveEach}
+          {saveFailed && !busy
+            ? saveFailed
+            : dirtyKeys.size > 0
+              ? C.saving
+              : busy
+                ? C.working
+                : saved
+                  ? C.saved
+                  : C.saveEach}
         </p>
         <Button
           size="sm"
@@ -1423,12 +1460,9 @@ function WorkspaceInner({
                     rest — including `submissions` — so putting a recorded prior attempt through it
                     would drop it on the way to the vault.
                   */
-                    onCommitWorkspace={(updated) =>
-                      commit(
-                        () => updated,
-                        "Recorded a response sent before this case was created.",
-                      )
-                    }
+                    // No message here: `recordPriorAttempt` already adds the history event, and a
+                    // second one made every recorded attempt appear twice.
+                    onCommitWorkspace={(updated) => commit(() => updated)}
                     draft={w.draft}
                     onDraftChange={setDraftField}
                   />

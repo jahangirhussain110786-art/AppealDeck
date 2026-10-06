@@ -58,7 +58,7 @@ test.describe("Access ladder — signed-out workspace, gate, case preview", () =
 
   test("signed out: dashboard shows the empty state with no draft", async ({ page }) => {
     await page.goto("/dashboard");
-    await expect(page.getByText("No case on this device yet", { exact: true })).toBeVisible();
+    await expect(page.getByText("No case in this browser tab yet", { exact: true })).toBeVisible();
   });
 
   test("signed out: dashboard shows the draft summary once a case exists", async ({ page }) => {

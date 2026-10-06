@@ -47,7 +47,7 @@ export const SHARED = {
       legal: "Legal",
     },
     notLegalAdvice: "Software, not legal advice.",
-    copyright: "© {year} Hawlton",
+    copyright: "© {year} Jhangir Hussain, trading as Hawlton",
   },
   expectations: {
     title: "Clear support. You stay in control.",

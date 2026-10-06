@@ -12,7 +12,7 @@ function FooterGroup({
 }) {
   return (
     <div>
-      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      <p className="text-sm font-semibold text-foreground">{title}</p>
       <ul className="mt-4 space-y-2.5">
         {links.map((link) => (
           <li key={link.href}>

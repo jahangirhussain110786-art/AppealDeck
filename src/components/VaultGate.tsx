@@ -300,6 +300,10 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
   const [confirm, setConfirm] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // A failed attempt disables the button that had focus; put focus back on the field to retry.
+  React.useEffect(() => {
+    if (error) document.getElementById("vault-create-passphrase")?.focus();
+  }, [error]);
 
   const canSubmit = passphrase.length >= 8 && passphrase === confirm && !busy;
 
@@ -347,7 +351,7 @@ function VaultInitForm({ vault, onDone }: VaultInitFormProps) {
               showToggle
             />
             {error && (
-              <p id="vault-create-error" className="mt-1 text-xs text-destructive">
+              <p id="vault-create-error" role="alert" className="mt-1 text-xs text-destructive">
                 {error}
               </p>
             )}
@@ -392,6 +396,10 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
   const [passphrase, setPassphrase] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // A failed attempt disables the button that had focus; put focus back on the field to retry.
+  React.useEffect(() => {
+    if (error) document.getElementById("vault-unlock-passphrase")?.focus();
+  }, [error]);
 
   const handleUnlock = async () => {
     if (passphrase.length < 8 || busy) return;
@@ -437,7 +445,7 @@ function VaultUnlockForm({ vault, onUnlocked }: VaultUnlockFormProps) {
               showToggle
             />
             {error && (
-              <p id="vault-unlock-error" className="mt-1 text-xs text-destructive">
+              <p id="vault-unlock-error" role="alert" className="mt-1 text-xs text-destructive">
                 {error}
               </p>
             )}
@@ -471,6 +479,10 @@ function VaultDeviceRelockForm({ vault, onDone }: VaultDeviceRelockProps) {
   const [confirm, setConfirm] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // A failed attempt disables the button that had focus; put focus back on the field to retry.
+  React.useEffect(() => {
+    if (error) document.getElementById("vault-device-relock-passphrase")?.focus();
+  }, [error]);
 
   const canSubmit = passphrase.length >= 8 && passphrase === confirm && !busy;
 
@@ -527,7 +539,7 @@ function VaultDeviceRelockForm({ vault, onDone }: VaultDeviceRelockProps) {
             />
           </div>
           {error && (
-            <p id="vault-device-relock-error" className="text-xs text-destructive">
+            <p id="vault-device-relock-error" role="alert" className="text-xs text-destructive">
               {error}
             </p>
           )}

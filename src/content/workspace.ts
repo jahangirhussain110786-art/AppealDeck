@@ -157,8 +157,8 @@ export const WORKSPACE = {
   // document check sends that one file to be read. Every sentence here now matches what leaves the
   // browser, and `legalDisclosures.test.ts` pins it alongside the privacy policy.
   privacy:
-    "Your work is saved in this browser’s encrypted vault, and your files stay on this device. Two things leave it only when you ask: a business document you ask us to check, and a section you ask us to improve the wording of. Each is sent to be read, and no copy is kept; the one exception is a business document checked while you are not signed in, or one too large to send, which is read on this device and is not uploaded. Preparing a response sends the notice, confirmed facts and document references to AppealDeck — never the original files — and nothing is ever sent to Amazon.",
-  local: "Saved on this device",
+    "Your work is saved in this browser’s encrypted vault, and your files stay on this device. If you are not signed in, it is kept only until you close this tab; sign in to keep it. Two things leave it only when you ask: a business document you ask us to check, and a section you ask us to improve the wording of. Each is sent to be read, and no copy is kept; the one exception is a business document checked while you are not signed in, or one too large to send, which is read on this device and is not uploaded. Preparing a response sends the notice, confirmed facts and document references to AppealDeck — never the original files — and nothing is ever sent to Amazon.",
+  local: "Saved in this browser",
   loading: "Opening your case…",
   // "Documents", not "Evidence" (29 Sep 2026): the word sellers use. The ids stay, so old links work.
   tabs: { overview: "Overview", evidence: "Documents", response: "Response", history: "History" },

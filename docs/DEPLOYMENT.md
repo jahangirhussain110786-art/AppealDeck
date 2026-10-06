@@ -74,7 +74,7 @@ See `.env.example` "NOT USED BY THE APP" section. The old plan added ~10 unused 
 
 **First deploy needs no custom domain.** Ship on the Vercel-provided `https://<project>.vercel.app` URL with `NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_MARKETING_HOST` set to it and `NEXT_PUBLIC_APP_HOST` / `NEXT_PUBLIC_APP_URL` **unset** — marketing, auth, and the app all serve from that one origin (single-host mode in `src/proxy.ts`).
 
-When you own `appealdeck.com`, follow `AGENTS.md` → "Domain topology" (Vercel apex + `www` → env vars → Supabase redirect URL → Paddle webhook → smoke test). Do **not** add `app.appealdeck.com` unless a concrete need appears; the split is an env-var switch documented there.
+When you are ready to move to `appealdeck.com` (buy the domain first if you have not), follow `AGENTS.md` → "Domain topology" (Vercel apex + `www` → env vars → Supabase redirect URL → Paddle webhook → smoke test). Do **not** add `app.appealdeck.com` unless a concrete need appears; the split is an env-var switch documented there.
 
 ## 4. Supabase production setup (founder action)
 
@@ -144,6 +144,12 @@ against the target database.
 business days. Create that mailbox (or alias it to one you read) before the page is public, and
 change the window in `src/content/support.ts` if two business days is not what you can actually
 hold to. A stated window you miss is worse than a longer one you keep.
+
+**Privacy and billing addresses.** `src/content/legal.ts` publishes `privacy@appealdeck.com` (data
+requests, with a 30-day response promise) and `billing@appealdeck.com` (refunds, account deletion;
+also the sender address of the purchase confirmation email). Create both mailboxes, or alias them to
+one you read, alongside `support@appealdeck.com` and before the legal pages are public. A promised
+30-day response to an address that bounces is a breach of the policy itself.
 
 **Restore drill — once, before the first sale.** Added 24 Sep 2026: a backup that decrypts has not
 yet been shown to restore. Create a scratch Supabase project, replay one real dump into it with the

@@ -32,7 +32,7 @@ export const SUPPORT = {
   contact: {
     title: "Getting help",
     // The support address is the hero's button (v5); said once, so it is one link on the page.
-    body: "Write to the address above for anything about your case, the software or your account. For a receipt, a licence key or a refund, email {billing} — it reaches the same person, and it keeps payment questions together.",
+    body: "Write to the address above for anything about your case, the software or your account. For a receipt, a question about your Appeal Pass or a refund, email {billing} — it reaches the same person, and it keeps payment questions together.",
     windowTitle: "How long a reply takes",
     window:
       "You will normally have a reply within two business days. One person answers every message, so a reply may take longer at a weekend or over a public holiday. If you have not heard back in three business days, send the message again — it is far more likely to have gone astray than to have been ignored.",

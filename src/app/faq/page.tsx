@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/content/pageMetadata";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
@@ -10,15 +11,11 @@ import { FaqAccordion, faqJsonLd } from "@/components/pricing/FaqAccordion";
 import { JsonLd } from "@/components/JsonLd";
 import { SHARED } from "@/content/shared";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/faq" },
+export const metadata: Metadata = pageMetadata({
   title: SHARED.metadata.titleFaq,
   description: SHARED.metadata.descriptionFaq,
-  openGraph: {
-    title: SHARED.metadata.titleFaq,
-    description: SHARED.metadata.descriptionFaq,
-  },
-};
+  canonical: "/faq",
+});
 
 export default function FaqPage() {
   return (

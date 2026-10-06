@@ -18,15 +18,16 @@ export const APP = {
   access: {
     setPassphrase: {
       title: "Set a passphrase to keep your case",
-      body: "Your case has been saved on this device so far. Choose the passphrase that protects it from now on. Documents you add are encrypted with it.",
+      body: "Your case has been saved in this browser so far. Choose the passphrase that protects it from now on. Documents you add are encrypted with it.",
     },
     keepCaseLink: "Sign in to keep your case",
     dashboardSignedOut: {
       title: "Your case, at a glance",
-      draftNote: "This draft is saved on this device only. Sign in to keep it and continue.",
-      emptyTitle: "No case on this device yet",
+      draftNote:
+        "This draft is kept in this browser tab until you close it. Sign in to keep it and continue.",
+      emptyTitle: "No case in this browser tab yet",
       emptyDesc:
-        "Decode a notice, then start your case. Everything you enter is saved on this device as you go.",
+        "Decode a notice, then start your case. Everything you enter is kept in this browser tab until you close it. Sign in to keep it.",
       decode: "Decode a notice",
       start: "Start your case",
     },
@@ -51,7 +52,7 @@ export const APP = {
       // Was "Sign in when the interview reaches your documents" — there has been no interview since
       // 22 Sep 2026, and a guest can attach documents without signing in.
       startNote:
-        "Saved in this browser as you go, with no account needed. Sign in any time to keep it with your account.",
+        "Kept in this browser tab as you go, with no account needed, until you close it. Sign in to keep it with your account.",
     },
     composeGate: {
       title: "Unlock the drafted plan",
@@ -234,7 +235,7 @@ export const APP = {
     },
     inactive: {
       heading: "No active Appeal Pass",
-      description: "Purchase an Appeal Pass to draft and submit your Plan of Action.",
+      description: "Purchase an Appeal Pass to prepare your response. You submit it yourself.",
       cta: "View pricing",
     },
     activity: {
@@ -247,7 +248,7 @@ export const APP = {
       noCase: {
         title: "No active case",
         description:
-          "Decode your notice on the free decoder, or start a case and paste it in. Everything is saved in this browser as you go.",
+          "Decode your notice on the free decoder, or start a case and paste it in. Everything is saved in this browser as you go; signed out, only until you close the tab.",
         cta: "Start your case",
       },
     },
@@ -276,7 +277,7 @@ export const APP = {
     novelty: {
       title: "Resubmission requires novelty",
       description:
-        "Resubmissions must include new information or changed framing. The seller must provide evidence the prior submission was addressed.",
+        "Resubmissions must include new information or changed framing. Show what you changed since your last submission.",
     },
     stateLabels: {
       DECODED: "Notice decoded",
@@ -463,7 +464,7 @@ export const APP = {
     revoke: {
       title: "Revoke {label}?",
       description:
-        "This removes the device from your license. The device will be asked to re-authenticate on next use.",
+        "This removes the device from your licence. The device will be asked to re-authenticate on next use.",
       confirm: "Revoke device",
       cancel: "Cancel",
     },

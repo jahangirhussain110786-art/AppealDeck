@@ -1,4 +1,5 @@
 <!-- DRAFT — AI-authored, founder must review + publish. Implements D8. -->
+<!-- NOTE added 6 Oct 2026: the rendered page (src/content/legal.ts) has moved on from this draft: it now reflects the shipped product (response preparation, device-key vaults, document checks, provider list, outcome and device records, no licence key). Do not copy this draft back over it. -->
 <!-- NOTE added 11 Sep 2026: this file is NOT what's rendered on /refund. The live source is
      src/content/legal.ts, which now uses this draft's more honest "5 business days to process,
      then it depends on your bank" timeline instead of a flat claim — see docs/DECISIONS.md.
@@ -9,13 +10,17 @@
 **Last updated:** 31 Aug 2026 (draft)
 
 ## 1. Voluntary 7-day refund
+
 We offer a **no-questions-asked voluntary refund within 7 days** of your Appeal Pass purchase, even after a POA has been generated. We would rather you be satisfied than dispute.
 
 ## 2. How to request
+
 Email hello@appealdeck.app (or reply to your license email) with your order/Paddle email. We process the refund through Paddle; it typically returns to your original method within 5–10 business days depending on your bank.
 
 ## 3. EU/UK consumers
+
 Because AppealDeck is digital content delivered on a MoR (Paddle) platform, our checkout asks for your **explicit prior consent to delivery before the withdrawal period ends**, plus a permanent-form confirmation email. This satisfies the digital-content withdrawal rules; you may still use the 7-day voluntary refund above.
 
 ## 4. Why fast refunds
+
 Chargebacks threaten our Merchant-of-Record relationship (existential). A quick, friendly refund is always cheaper than a dispute — request it and we will act.

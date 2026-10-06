@@ -33,7 +33,7 @@ test("separate guest tabs cannot purge each other's in-progress case", async ({
 
   const other = await context.newPage();
   await other.goto("/dashboard");
-  await expect(other.getByText("No case on this device yet", { exact: true })).toBeVisible();
+  await expect(other.getByText("No case in this browser tab yet", { exact: true })).toBeVisible();
 
   await page.reload();
   await expect(page.getByLabel("Amazon notice")).toHaveValue(notice);
@@ -82,7 +82,7 @@ test("guest case survives sign-in and remains private after sign-out", async ({ 
   await page.getByRole("menuitem", { name: /sign out/i }).click();
   await expect(page).toHaveURL(/login/);
   await page.goto("/dashboard");
-  await expect(page.getByText("No case on this device yet", { exact: true })).toBeVisible();
+  await expect(page.getByText("No case in this browser tab yet", { exact: true })).toBeVisible();
 
   // A new guest draft, started while the account already holds an older case.
   await page.goto("/case?kind=POLICY");

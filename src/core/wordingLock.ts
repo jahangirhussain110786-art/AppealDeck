@@ -105,6 +105,14 @@ const ALLOWED_CAPITALISED = new Set(
 );
 
 const MONTH_OR_DAY = new RegExp(`\\b(?:${MONTHS_AND_DAYS.join("|")})\\b`, "gi");
+/**
+ * A lowercase "may" is the verb ("may have been created"), not the month; "might" is a fair
+ * rewrite. It still counts as the month when a day number sits beside it ("5 may", "may 5").
+ */
+const LOWERCASE_MAY_AS_VERB = /(?<!\d\s{0,3})\bmay\b(?!\s{0,3}\d)/g;
+function monthTokens(text: string): Set<string> {
+  return tokens(text.replace(LOWERCASE_MAY_AS_VERB, " "), MONTH_OR_DAY);
+}
 // The three patterns below are bounded on purpose (30 Sep 2026). Unbounded, each restarted at every
 // character of a long run of word characters and scanned to its end before failing, which is
 // quadratic: a few thousand letters with no digit, "@" or dot took hundreds of milliseconds. No real
@@ -118,11 +126,65 @@ const PLANNED =
   /\b(?:will|would|shall|intend(?:ed|s)?(?:\s+to)?|planning|planned|plan to|plans to|aim to|hope to|expect to|going to|about to|in the process of|scheduled to|yet to)\b/gi;
 // Spelled-out quantities are facts exactly as digits are ("ten" must not become "twelve"). "one" is
 // left out: it is mostly a pronoun or article ("no one", "one of our").
-const NUMBER_WORD =
-  /\b(?:two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|dozen)\b/gi;
-/** "1,000" and "1000" are one number. */
-function withoutThousandsCommas(text: string): string {
-  return text.replace(/(?<=\d),(?=\d{3}(?!\d))/g, "");
+// The small numbers are turned into digits first (see `NUMBER_WORD_DIGITS`), so "12 units" and
+// "twelve units" are the same fact; what is left here is what has no digit form. "twice" and "thrice"
+// are counts too: a rewrite that adds "twice" has added a fact.
+const NUMBER_WORD = /\b(?:million|billion|twice|thrice)\b/gi;
+const NUMBER_WORD_DIGITS: Record<string, string> = {
+  two: "2",
+  three: "3",
+  four: "4",
+  five: "5",
+  six: "6",
+  seven: "7",
+  eight: "8",
+  nine: "9",
+  ten: "10",
+  eleven: "11",
+  twelve: "12",
+  thirteen: "13",
+  fourteen: "14",
+  fifteen: "15",
+  sixteen: "16",
+  seventeen: "17",
+  eighteen: "18",
+  nineteen: "19",
+  twenty: "20",
+  thirty: "30",
+  forty: "40",
+  fifty: "50",
+  sixty: "60",
+  seventy: "70",
+  eighty: "80",
+  ninety: "90",
+  hundred: "100",
+  thousand: "1000",
+  dozen: "12",
+};
+const NUMBER_WORD_TO_DIGITS = new RegExp(
+  `\\b(?:${Object.keys(NUMBER_WORD_DIGITS).join("|")})\\b`,
+  "gi",
+);
+/**
+ * What may be written two ways without changing a fact: "1,000" and "1000", "twelve" and "12", and
+ * "Order No. 112-..." and "Order #112-..." (whose "No" is an abbreviation for "number", not a
+ * negation).
+ */
+function normaliseFacts(text: string): string {
+  return text
+    .replace(/(?<=\d),(?=\d{3}(?!\d))/g, "")
+    .replace(/\bno\.[^\S\n]*(?=[#\d])/gi, "#")
+    .replace(/\bno[^\S\n]+(?=#)/gi, "#")
+    .replace(/#[^\S\n]+(?=\d)/g, "#")
+    .replace(NUMBER_WORD_TO_DIGITS, (w) => NUMBER_WORD_DIGITS[w.toLowerCase()]!);
+}
+
+/** The word a digit token was written as in `text` ("12" -> "twelve"), or the token itself. */
+function spelledAs(text: string, token: string): string {
+  for (const m of text.matchAll(NUMBER_WORD_TO_DIGITS)) {
+    if (NUMBER_WORD_DIGITS[m[0].toLowerCase()] === token) return m[0].toLowerCase();
+  }
+  return token;
 }
 
 function norm(token: string): string {
@@ -137,9 +199,49 @@ function tokens(text: string, pattern: RegExp): Set<string> {
 /** Capitalised words that are not the first word of a sentence, a line or a list item. */
 function midSentenceNames(text: string): Set<string> {
   const out = new Set<string>();
-  for (const m of text.matchAll(/(?<![.!?:\n•\-*]\s*)(?<=\S\s+)([A-Z][a-zA-Z'&-]+)/g)) {
+  // A name after an opening bracket or quote ("supplier (Acme)") is as much a name as one after a
+  // space, and used to slip past because the character before it was not whitespace.
+  for (const m of text.matchAll(
+    /(?<![.!?:\n•\-*]\s*)(?:(?<=\S\s+)|(?<=[(["“]))([A-Z][a-zA-Z'&-]+)/g,
+  )) {
     const word = m[1]!.toLowerCase().replace(/'s$/, "");
     if (!ALLOWED_CAPITALISED.has(word) && !MONTHS_AND_DAYS.includes(word)) out.add(word);
+  }
+  for (const word of sentenceInitialNames(text)) out.add(word);
+  return out;
+}
+
+/** Ordinary words that begin a sentence in front of a capitalised word without being a name. */
+const COMMON_STARTERS = new Set(
+  "the our this that these those we i it they he she a an after before in on at as to for from with by and but so if when while then also however therefore additionally please thank dear sincerely regards".split(
+    " ",
+  ),
+);
+
+/**
+ * The first word of a sentence is capitalised whatever it is, so it cannot be told from a name by
+ * its capital alone, and "DHL delivered late." used to add a carrier unseen. What can be told: an
+ * all-capitals word ("DHL", "UPS"), a word with a capital inside it ("FedEx"), and a capitalised word
+ * that opens a run of capitalised words that are not ours ("Prep Pros delivered", "Royal Mail").
+ */
+function sentenceInitialNames(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const m of text.matchAll(
+    /(?:^|[.!?:\n•*-][^\S\n]*)([A-Z][A-Za-z'&-]*)((?:[^\S\n]+[A-Z][A-Za-z'&-]*){0,5})/g,
+  )) {
+    const first = m[1]!;
+    const word = first.toLowerCase().replace(/'s$/, "");
+    if (ALLOWED_CAPITALISED.has(word) || MONTHS_AND_DAYS.includes(word)) continue;
+    const allCaps = first.length >= 2 && first === first.toUpperCase();
+    const innerCapital = /^[A-Z][a-z]+[A-Z]/.test(first);
+    const startsRun =
+      m[2]!.trim().length > 0 &&
+      !COMMON_STARTERS.has(word) &&
+      m[2]!
+        .trim()
+        .split(/\s+/)
+        .some((w) => !ALLOWED_CAPITALISED.has(w.toLowerCase().replace(/'s$/, "")));
+    if (allCaps || innerCapital || startsRun) out.add(word);
   }
   return out;
 }
@@ -156,8 +258,8 @@ export interface WordingLockResult {
  * Checks recognized tokens and explicit polarity markers, not the truth or meaning of the prose.
  */
 export function checkWordingLock(originalText: string, rewriteText: string): WordingLockResult {
-  const original = withoutThousandsCommas(originalText);
-  const rewrite = withoutThousandsCommas(rewriteText);
+  const original = normaliseFacts(originalText);
+  const rewrite = normaliseFacts(rewriteText);
   const added: string[] = [];
   const dropped: string[] = [];
   const allWordsInOriginal = new Set(
@@ -169,10 +271,11 @@ export function checkWordingLock(originalText: string, rewriteText: string): Wor
   );
 
   for (const pattern of [WITH_DIGIT, MONTH_OR_DAY, NUMBER_WORD, EMAIL, URL]) {
-    const before = tokens(original, pattern);
-    const after = tokens(rewrite, pattern);
-    for (const t of after) if (!before.has(t)) added.push(t);
-    for (const t of before) if (!after.has(t)) dropped.push(t);
+    const before = pattern === MONTH_OR_DAY ? monthTokens(original) : tokens(original, pattern);
+    const after = pattern === MONTH_OR_DAY ? monthTokens(rewrite) : tokens(rewrite, pattern);
+    // A number the seller wrote as a word is reported as that word, not as its digits.
+    for (const t of after) if (!before.has(t)) added.push(spelledAs(rewriteText, t));
+    for (const t of before) if (!after.has(t)) dropped.push(spelledAs(originalText, t));
   }
   for (const name of midSentenceNames(rewrite)) {
     if (!allWordsInOriginal.has(name)) added.push(name);

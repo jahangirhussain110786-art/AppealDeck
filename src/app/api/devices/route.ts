@@ -16,7 +16,10 @@ export async function GET(req: NextRequest) {
   }
   const email = (user.email ?? "").trim().toLowerCase();
   if (!supabaseAdmin || !email) {
-    return NextResponse.json({ devices: [], cap: 5, currentDeviceId: null });
+    return NextResponse.json(
+      { devices: [], cap: 5, currentDeviceId: null },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   }
   let devices;
   try {
@@ -36,7 +39,10 @@ export async function GET(req: NextRequest) {
     last_seen_at: d.last_seen_at,
     revoked_at: d.revoked_at,
   }));
-  return NextResponse.json({ devices: safeDevices, cap: 5, currentDeviceId });
+  return NextResponse.json(
+    { devices: safeDevices, cap: 5, currentDeviceId },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }
 
 export async function DELETE(req: NextRequest) {

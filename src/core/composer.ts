@@ -6,6 +6,8 @@ import {
   isNarrativeSufficient,
   isNarrativeTextSufficient,
   isRequiredComplete,
+  isLowLexicalDiversity,
+  echoRatio,
 } from "./readiness";
 import type { CaseFileData, ComposerMode } from "./readiness";
 import { requirementsFor } from "./evidenceModel";
@@ -223,6 +225,8 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
     checkFutureTenseLanguage(draft, findings);
     checkBlameShifting(draft, findings);
     checkVagueTimePhrases(draft, findings);
+    checkAbsolutePromises(draft, findings);
+    checkNarrativeQuality(draft, data, findings);
     // A-01: this branch returns early, so EF-2's attestation check never ran on a workspace case
     // — which, since the classic interview was retired, is every case. The legacy `actionItems`
     // half of it is a no-op here, because nothing on a workspace case marks one done.
@@ -244,6 +248,8 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
   checkFutureTenseLanguage(draft, findings);
   checkBlameShifting(draft, findings);
   checkVagueTimePhrases(draft, findings);
+  checkAbsolutePromises(draft, findings);
+  checkNarrativeQuality(draft, data, findings);
   checkDocumentFreshness(data, findings);
 
   const passed = !findings.some((f) => f.severity === "error");
@@ -343,7 +349,8 @@ const TIME_PROMISE = new RegExp(
 
 const BANNED_PATTERNS: ReadonlyArray<{ pattern: RegExp; code: string; message: string }> = [
   {
-    pattern: /\bguarantee\b/i,
+    // Every inflected form, not just the bare word (the first version missed the past tense).
+    pattern: /\bguarante(?:e[ds]?|eing)\b/i,
     code: "BANNED_GUARANTEE",
     message: "Remove promise-of-success language — outcome claims are prohibited.",
   },
@@ -389,11 +396,24 @@ function checkSeverityGate(_draft: PoaDraft, data: CaseFileData, findings: Criti
 // --- AA-31 deterministic critic rules (11 Sep 2026) -------------------------------------------
 
 const FUTURE_TENSE_PATTERNS: ReadonlyArray<RegExp> = [
-  /\bwe\s+will\s+\w+/i,
-  /\bwe('| a)?re\s+going\s+to\s+\w+/i,
-  /\bwe\s+plan\s+to\s+\w+/i,
-  /\bwe\s+intend\s+to\s+\w+/i,
-  /\bfrom\s+now\s+on,?\s+we\s+will\b/i,
+  // "we", first-person singular and "my/our team" — a one-person seller writes "I will…".
+  /\b(?:we|I|my\s+team|our\s+team)\s+(?:will|shall|(?:'|’)ll)\s+\w+/i,
+  /\b(?:we|I)(?:'|’)ll\s+\w+/i,
+  /\b(?:we|I|my\s+team|our\s+team)(?:\s+(?:are|am|is)|(?:'|’)(?:re|m|s))\s+going\s+to\s+\w+/i,
+  /\b(?:we|I|my\s+team|our\s+team)\s+(?:plan|intend|aim|propose|hope|expect)s?\s+to\s+\w+/i,
+  /\b(?:we|I|my\s+team|our\s+team)\s+(?:am|are|is)\s+(?:planning|intending)\s+to\s+\w+/i,
+  /\bfrom\s+now\s+on,?\s+(?:we|I)\s+will\b/i,
+];
+
+/**
+ * Absolute promises about the future ("this will never happen again"). The critic's wording on
+ * these is about credibility, not outcome — it never says anything about Amazon's decision.
+ */
+const ABSOLUTE_PROMISE_PATTERNS: ReadonlyArray<RegExp> = [
+  /\bnever\s+(?:happen|occur|repeat|do\s+(?:this|that|it))\w*\s*(?:again)?/i,
+  /\b(?:will|shall)\s+never\b/i,
+  /\bwon(?:'|’)t\s+happen\s+again\b/i,
+  /\b100\s*%\s+(?:sure|certain|confident)\b/i,
 ];
 
 const FUTURE_TENSE_HEADINGS = ["Root Cause", "Corrective Actions", "Preventive Measures"] as const;
@@ -430,11 +450,15 @@ function checkFutureTenseLanguage(draft: PoaDraft, findings: CriticFinding[]): v
 }
 
 const BLAME_SHIFTING_PATTERNS: ReadonlyArray<RegExp> = [
-  /\b(the|our)\s+supplier\s+(caused|was\s+responsible|did\s+this|misled)/i,
-  /\b(a\s+former|our\s+(former\s+)?)\s*employee\s+(caused|was\s+responsible|did\s+this)/i,
-  /\bthis\s+was\s+(out\s+of\s+our\s+control|not\s+our\s+fault|beyond\s+our\s+control)/i,
+  /\b(the|our|my)\s+supplier\s+(caused|was\s+responsible|did\s+this|misled)/i,
+  /\b(a\s+former|our\s+(former\s+)?|my\s+(former\s+)?|the\s+)\s*(?:employee|worker|staff\s+member|assistant|contractor)\s+(caused|was\s+responsible|did\s+this)/i,
+  /\b(?:this|it|that)\s+was\s+(?:completely\s+|totally\s+|entirely\s+)?(out\s+of\s+(?:our|my)\s+control|not\s+(?:our|my)\s+fault|beyond\s+(?:our|my)\s+control)/i,
+  /\b(?:out\s+of|beyond)\s+(?:our|my)\s+control\b/i,
+  /\bnot\s+(?:our|my)\s+fault\b/i,
   /\b(the\s+)?system\s+(glitch|error)\s+caused\b/i,
-  /\bwe\s+(were\s+)?not\s+aware\s+(this\s+was|of\s+this)\b/i,
+  /\b(?:we|I)\s+(?:were\s+|was\s+)?not\s+aware\b/i,
+  /\b(?:we|I)\s+(?:did\s+not|didn(?:'|’)t)\s+know\b/i,
+  /\b(?:we|I)\s+(?:had\s+no\s+(?:idea|knowledge)|were\s+unaware|was\s+unaware)\b/i,
 ];
 
 /**
@@ -480,6 +504,115 @@ function checkVagueTimePhrases(draft: PoaDraft, findings: CriticFinding[]): void
       code: "VAGUE_TIME_PHRASE",
       message:
         "The draft uses a vague time phrase (e.g. 'recently', 'soon') instead of a specific date. Replace it with the actual date the action was taken — a checkable date reads as more credible than a vague one.",
+    });
+  }
+}
+
+function checkAbsolutePromises(draft: PoaDraft, findings: CriticFinding[]): void {
+  const fullText = draft.sections.map((s) => s.body).join("\n");
+  if (ABSOLUTE_PROMISE_PATTERNS.some((p) => p.test(fullText))) {
+    findings.push({
+      severity: "warning",
+      code: "ABSOLUTE_PROMISE",
+      message:
+        "The draft says something will never happen again. No one can promise that; describe the specific check you now run and how often, which Amazon can verify.",
+    });
+  }
+}
+
+const NARRATIVE_HEADINGS = ["Root Cause", "Corrective Actions", "Preventive Measures"] as const;
+
+const MONTHS =
+  "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
+
+/**
+ * A concrete anchor in a corrective-action description: a number or date, a named record or
+ * document, or a specific past-tense action. "I made some changes to how I do things" has none of
+ * these; "I removed the listing and retrained two packers" has several.
+ */
+const CONCRETE_ANCHORS: ReadonlyArray<RegExp> = [
+  /\d/,
+  new RegExp(`\\b(?:${MONTHS})\\b`, "i"),
+  /\b(?:invoice|checklist|spreadsheet|report|certificate|policy|procedure|sop|log|audit|training|template|listing|asin|sku|supplier|carrier|label|sheet|record|document|photo|software|tool)s?\b/i,
+  /\b(?:removed|deleted|delisted|retrained|trained|audited|replaced|implemented|added|updated|corrected|relabell?ed|rewrote|hired|blocked|cancell?ed|contacted|suspended|created|introduced|installed|switched|terminated|refunded|recalled|quarantined|inspected|verified|checked|fixed|stopped|began|started)\b/i,
+];
+
+function isMachineLabelOnly(body: string): boolean {
+  const lines = body
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return (
+    lines.length > 0 && lines.every((l) => /^-\s*\[[^\]]*\]/.test(l) || /^\[[^\]]*\]$/.test(l))
+  );
+}
+
+const normalise = (text: string): string =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
+ * Cheap deterministic quality checks on the three narrative sections, for drafts that clear the
+ * length bar yet say nothing: the same text in several sections, padding or gibberish, the notice
+ * pasted back as the answer, and corrective actions with nothing concrete in them. All warnings —
+ * they make the draft read as "needs work", never block it.
+ */
+function checkNarrativeQuality(
+  draft: PoaDraft,
+  data: CaseFileData,
+  findings: CriticFinding[],
+): void {
+  const sections = NARRATIVE_HEADINGS.map((h) =>
+    draft.sections.find((s) => s.heading === h),
+  ).filter((s): s is PoaSection => !!s && !isMachineLabelOnly(s.body) && s.body.trim().length > 0);
+
+  const seen = new Map<string, string>();
+  for (const s of sections) {
+    const key = normalise(s.body);
+    if (key.length < 20) continue;
+    const prior = seen.get(key);
+    if (prior) {
+      findings.push({
+        severity: "warning",
+        code: "DUPLICATE_SECTIONS",
+        message: `${prior} and ${s.heading} say exactly the same thing. Each section should answer its own question.`,
+      });
+    } else seen.set(key, s.heading);
+  }
+
+  for (const s of sections) {
+    if (isLowLexicalDiversity(s.body)) {
+      findings.push({
+        severity: "warning",
+        code: "REPETITIVE_TEXT",
+        message: `${s.heading} repeats the same few words. Replace it with a specific description of what happened.`,
+      });
+    }
+  }
+
+  const notice = data.workspace?.notice;
+  if (notice && notice.trim()) {
+    for (const s of sections) {
+      if (echoRatio(s.body, notice) >= 0.6) {
+        findings.push({
+          severity: "warning",
+          code: "NOTICE_ECHO",
+          message: `${s.heading} mostly repeats Amazon's own notice. Answer it in your own words: what happened in your business.`,
+        });
+      }
+    }
+  }
+
+  const corrective = sections.find((s) => s.heading === "Corrective Actions");
+  if (corrective && !CONCRETE_ANCHORS.some((p) => p.test(corrective.body))) {
+    findings.push({
+      severity: "warning",
+      code: "NO_CONCRETE_ACTION",
+      message:
+        "Corrective Actions names no date, number, document or specific action taken. Say what you did, to what, and when.",
     });
   }
 }

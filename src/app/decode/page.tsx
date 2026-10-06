@@ -1,19 +1,16 @@
 import { Metadata } from "next";
+import { pageMetadata } from "@/content/pageMetadata";
 import Link from "next/link";
 import DecodeClient from "./DecodeClient";
 import { MarketingShell } from "@/components/MarketingShell";
 import { DECODE } from "@/content/marketing";
 import { GUIDES } from "@/content/guides";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/decode" },
+export const metadata: Metadata = pageMetadata({
   title: DECODE.metaTitle,
   description: DECODE.metaDescription,
-  openGraph: {
-    title: DECODE.metaTitle,
-    description: DECODE.metaDescription,
-  },
-};
+  canonical: "/decode",
+});
 
 export default function DecodePage() {
   return (

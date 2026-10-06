@@ -1,4 +1,5 @@
 <!-- DRAFT — AI-authored, founder must review + publish. -->
+<!-- NOTE added 6 Oct 2026: the rendered page (src/content/legal.ts) has moved on from this draft: it now reflects the shipped product (response preparation, device-key vaults, document checks, provider list, outcome and device records, no licence key). Do not copy this draft back over it. -->
 <!-- NOTE added 11 Sep 2026: this file is NOT what's rendered on /terms. The live source is
      src/content/legal.ts, which was brought to substantive parity with this draft (severity
      gating, liability cap, a changes clause) in the 11 Sep 2026 full-repo audit — see

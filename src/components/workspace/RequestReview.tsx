@@ -20,6 +20,7 @@ import { DECODE } from "@/content/marketing";
 import { APP } from "@/content/app";
 import { assessNoticeAuthenticity } from "@/core/noticeAuthenticity";
 import { stripInvisibleChars } from "@/lib/idNormalize";
+import { detectOtherAmazonStore } from "@/lib/amazonStore";
 import { KindOverride } from "./KindOverride";
 import type { ViolationKind } from "@/core";
 
@@ -67,6 +68,8 @@ export function RequestReview({
     forgery pasted here has to be caught before they start building a response to it.
   */
   const authenticity = useMemo(() => assessNoticeAuthenticity(value.notice), [value.notice]);
+  // A hint only: the store choice decides the route, so it is never changed for the seller.
+  const otherStore = useMemo(() => detectOtherAmazonStore(value.notice), [value.notice]);
   const decoded = Boolean(workspace.decodedNoticeHash);
   const R = C.request;
   const tooShort = value.notice.trim().length < 30;
@@ -190,6 +193,13 @@ export function RequestReview({
         )}
         {/* #86: named here so a seller learns on the first screen that two things must be answered. */}
         <IssuesRaised workspace={workspace} />
+        {otherStore && value.marketplace === "US" && (
+          <Alert>
+            <AlertDescription>
+              {`Your notice mentions ${otherStore} — check the store is right. Only Amazon US requests are supported here; if this one is from another store, choose "${R.stores.other}" under "${R.change}".`}
+            </AlertDescription>
+          </Alert>
+        )}
         {/*
           Every control that changes the summary, in one place. Open from the start when the notice
           was typed here rather than decoded, because then there is nothing to summarise yet.

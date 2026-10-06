@@ -29,6 +29,7 @@ import { PROVIDER_FAILURE_HEADER } from "@/lib/breaker";
 import { CaseIdSchema } from "@/lib/caseSchema";
 import { rateLimitDocumentRead, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { callGemini, withGeminiBreaker } from "@/lib/llm/gemini";
+import { extractJsonObject } from "@/lib/llm/extractJson";
 import { VIOLATION_KINDS } from "@/core/violationKinds";
 import {
   buildDocumentCheck,
@@ -80,11 +81,33 @@ const MAX_BASE64_BYTES = MAX_CHECK_BASE64_CHARS;
 
 const ACCEPTED_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
 
+/** First bytes of each accepted type, checked against the base64 payload before any model call. */
+function matchesDeclaredType(mimeType: (typeof ACCEPTED_MIME)[number], base64: string): boolean {
+  const head = Buffer.from(base64.slice(0, 32), "base64");
+  switch (mimeType) {
+    case "application/pdf":
+      // The PDF spec allows a little leading junk, so look near the start rather than at byte 0.
+      return head.toString("latin1").includes("%PDF-");
+    case "image/jpeg":
+      return head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+    case "image/png":
+      return head
+        .subarray(0, 8)
+        .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    case "image/webp":
+      return (
+        head.subarray(0, 4).toString("latin1") === "RIFF" &&
+        head.subarray(8, 12).toString("latin1") === "WEBP"
+      );
+  }
+}
+
 const Body = z.object({
   /** The case the document belongs to. A check is Appeal Pass work for that case, not the account. */
   caseId: CaseIdSchema,
   kind: z.enum(VIOLATION_KINDS),
   evidenceKind: z.string().min(1).max(64),
+  // Checked below, before a Pass is bound: a garbage kind is a 400, not a claimed case.
   mimeType: z.enum(ACCEPTED_MIME),
   /** Base64 without the data: prefix. */
   data: z.string().min(1).max(MAX_BASE64_BYTES),
@@ -115,34 +138,77 @@ const Body = z.object({
     .optional(),
 });
 
+/**
+ * What matters is strict (the field and the status); what is only decoration is not. Before
+ * 6 Oct 2026 one null `observed`, or a note a few characters over the limit, failed the whole
+ * reading, and that failure counted against the provider breaker.
+ */
 const FindingSchema = z.object({
   field: z.string().min(1).max(200),
   status: z.enum(["present", "missing", "unclear", "conflicting"]),
-  observed: z.string().max(500).optional(),
-  note: z.string().max(500),
+  observed: z.string().optional(),
+  note: z.string().default(""),
 });
 
-const ModelResponse = z.object({ findings: z.array(FindingSchema).max(40) });
+const ModelResponse = z.object({ findings: z.array(z.unknown()).max(40) });
 
-const RESPONSE_JSON_SCHEMA = {
-  type: "object",
-  properties: {
-    findings: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          field: { type: "string" },
-          status: { type: "string", enum: ["present", "missing", "unclear", "conflicting"] },
-          observed: { type: "string" },
-          note: { type: "string" },
+const MAX_FREE_TEXT = 500;
+
+/** Drops null and empty keys and clips the two free-text fields, before anything is validated. */
+function cleanFinding(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (value === null || value === undefined) continue;
+    if (typeof value === "string") {
+      if (key !== "field" && !value.trim()) continue;
+      out[key] = key === "observed" || key === "note" ? value.slice(0, MAX_FREE_TEXT) : value;
+    } else out[key] = value;
+  }
+  return out;
+}
+
+/** The kinds of record a request may name, so a made-up one is refused before a Pass is bound. */
+const KNOWN_EVIDENCE_KINDS: Record<EvidenceKind, true> = {
+  supplier_invoice: true,
+  brand_authorization: true,
+  rights_owner_retraction: true,
+  identity_doc: true,
+  financial_instrument_doc: true,
+  sourcing_doc: true,
+  listing_fix_proof: true,
+  disposal_or_recall_proof: true,
+  metric_export: true,
+  sop_document: true,
+  compliance_report: true,
+  account_resolution_proof: true,
+  address_proof: true,
+  product_images: true,
+  other: true,
+};
+
+/** The per-request schema: `field` can only be one of the fields this record is asked about. */
+function responseJsonSchema(fields: readonly string[]) {
+  return {
+    type: "object",
+    properties: {
+      findings: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            field: { type: "string", enum: [...fields] },
+            status: { type: "string", enum: ["present", "missing", "unclear", "conflicting"] },
+            observed: { type: "string" },
+            note: { type: "string" },
+          },
+          required: ["field", "status", "note"],
         },
-        required: ["field", "status", "note"],
       },
     },
-  },
-  required: ["findings"],
-} as const;
+    required: ["findings"],
+  } as const;
+}
 
 const SYSTEM_PROMPT = [
   "You read a business document an Amazon seller has uploaded and report, field by field, what is legible in it.",
@@ -201,6 +267,19 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   }
 
   const { caseId, kind, evidenceKind, mimeType, data, context } = parsed.data;
+
+  if (!Object.prototype.hasOwnProperty.call(KNOWN_EVIDENCE_KINDS, evidenceKind)) {
+    return NextResponse.json({ error: "Unknown record type." }, { status: 400 });
+  }
+
+  // The declared type must match the file's own signature. The model is never asked to read bytes
+  // that are not what they claim to be, which would only waste a paid call.
+  if (!matchesDeclaredType(mimeType, data)) {
+    return NextResponse.json(
+      { error: "That file is not the type it says it is. Choose a PDF, JPG, PNG or WebP." },
+      { status: 422 },
+    );
+  }
 
   if ((BROWSER_ONLY_EVIDENCE_KINDS as readonly string[]).includes(evidenceKind)) {
     return NextResponse.json(
@@ -288,7 +367,7 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
     ],
     temperature: 0,
     maxOutputTokens: 2048,
-    responseJsonSchema: RESPONSE_JSON_SCHEMA,
+    responseJsonSchema: responseJsonSchema(requirement.fields),
   });
 
   if (!result.ok) {
@@ -319,19 +398,17 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
     );
   }
 
-  let json: unknown;
-  try {
-    const text = result.text.trim();
-    json = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
-  } catch {
-    return NextResponse.json(
-      { ok: false, reason: "unavailable", message: "We could not read that document." },
-      { status: 200, headers: { [PROVIDER_FAILURE_HEADER]: "1" } },
-    );
-  }
-
+  const json = extractJsonObject(result.text);
   const validated = ModelResponse.safeParse(json);
-  if (!validated.success) {
+  // A finding that cannot be used is left out (its field is then "not checked"), not allowed to
+  // fail the whole reading; only a reading with nothing usable in it is a failure.
+  const findings = validated.success
+    ? validated.data.findings.flatMap((raw) => {
+        const one = FindingSchema.safeParse(cleanFinding(raw));
+        return one.success ? [one.data] : [];
+      })
+    : [];
+  if (!validated.success || (validated.data.findings.length > 0 && findings.length === 0)) {
     return NextResponse.json(
       { ok: false, reason: "unavailable", message: "We could not read that document." },
       { status: 200, headers: { [PROVIDER_FAILURE_HEADER]: "1" } },
@@ -342,18 +419,13 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   // conclusion, and re-adds requirements the model omitted as `missing`.
   // Today is the server's UTC date. A window of months is not moved by a timezone, and a date the
   // client supplied would be a date the client chose.
-  const check = buildDocumentCheck(
-    kind,
-    evidenceKind as EvidenceKind,
-    validated.data.findings as FieldFinding[],
-    {
-      today: new Date().toISOString().slice(0, 10),
-      asins: context?.asins ?? [],
-      referenceIds: context?.referenceIds ?? [],
-      ...(context?.business ? { business: context.business } : {}),
-      ...(context?.suppliers ? { suppliers: context.suppliers } : {}),
-    },
-  );
+  const check = buildDocumentCheck(kind, evidenceKind as EvidenceKind, findings as FieldFinding[], {
+    today: new Date().toISOString().slice(0, 10),
+    asins: context?.asins ?? [],
+    referenceIds: context?.referenceIds ?? [],
+    ...(context?.business ? { business: context.business } : {}),
+    ...(context?.suppliers ? { suppliers: context.suppliers } : {}),
+  });
 
   return NextResponse.json({ ok: true, check });
 }

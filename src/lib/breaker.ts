@@ -240,13 +240,13 @@ function degradedMessage(reason: DegradeReason): string {
 }
 
 export function fingerprintForRequest(req: NextRequest, userId?: string | null): string {
-  const ua = req.headers.get("user-agent") ?? "";
+  // Keyed on the address only (plus the account when there is one). The user-agent and language
+  // headers are chosen by the caller, so including them let a script mint a new bucket per request.
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     req.headers.get("x-real-ip") ??
     "0.0.0.0";
-  const lang = req.headers.get("accept-language") ?? "";
-  return fnv1aHash([userId ?? "", ua, ip, lang].join("|"));
+  return fnv1aHash([userId ?? "", ip].join("|"));
 }
 
 function fnv1aHash(input: string): string {

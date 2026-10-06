@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deliverPurchaseEmails } from "@/lib/purchaseOutbox";
+import { isCronAuthorized } from "@/lib/cronAuth";
 export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
-  if (
-    !process.env.CRON_SECRET ||
-    request.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

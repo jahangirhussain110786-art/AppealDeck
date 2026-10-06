@@ -335,9 +335,17 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
   // The rest added 29 Sep 2026 from the researched test notices, each a record Amazon named that
   // the notice's own list could not raise.
   {
-    pattern:
-      /\b(proof of (?:address|residence)|utility bills?|business licen[cs]es?|business registration(?: documents?| certificates?)?)\b/i,
+    pattern: /\b(proof of (?:address|residence)|utility bills?)\b/i,
     evidenceKind: "address_proof",
+  },
+  // A business licence or registration is not a proof of address. There is no record kind of its
+  // own (a bigger change), so it is raised as "Other requested record" with Amazon's sentence quoted,
+  // rather than mislabelled "Proof of address". Never fires where an address is also named.
+  {
+    pattern:
+      /\b(business licen[cs]es?|business registration(?: documents?| certificates?)?|trade licen[cs]es?)\b/i,
+    evidenceKind: "other",
+    unless: /\bproof of (?:address|residence)\b|\butility bills?\b/i,
   },
   {
     pattern:

@@ -105,7 +105,44 @@ export function isNarrativeSufficient(data: Pick<CaseFileData, "rootCause">): bo
 export function isNarrativeTextSufficient(text: string | undefined): boolean {
   const value = (text ?? "").trim();
   if (value.length < MIN_NARRATIVE_CHARS) return false;
-  return !LOW_EFFORT_NARRATIVES.has(value.toLowerCase());
+  if (LOW_EFFORT_NARRATIVES.has(value.toLowerCase())) return false;
+  // Forty characters of one repeated word is not an explanation.
+  return !isLowLexicalDiversity(value);
+}
+
+const wordsOf = (text: string): string[] => text.toLowerCase().match(/[a-z0-9']+/g) ?? [];
+
+/** Fewer than this many words is too short for a unique-word ratio to mean anything. */
+const DIVERSITY_MIN_WORDS = 8;
+const DIVERSITY_MIN_RATIO = 0.4;
+
+/**
+ * Cheap gibberish/padding check: a long text whose words are mostly repeats ("word word word…").
+ * Ordinary prose of the same length keeps well above 0.6 distinct words; the floor is 0.4.
+ */
+export function isLowLexicalDiversity(text: string): boolean {
+  const words = wordsOf(text);
+  if (words.length < DIVERSITY_MIN_WORDS) return false;
+  return new Set(words).size / words.length < DIVERSITY_MIN_RATIO;
+}
+
+/**
+ * Share of `text`'s four-word runs that also appear in `source`, for catching a section that is
+ * the notice pasted back. 0 when the text is too short to judge.
+ */
+export function echoRatio(text: string, source: string): number {
+  const t = wordsOf(text);
+  if (t.length < 8) return 0;
+  const s = wordsOf(source);
+  const known = new Set<string>();
+  for (let i = 0; i + 4 <= s.length; i++) known.add(s.slice(i, i + 4).join(" "));
+  let total = 0;
+  let hit = 0;
+  for (let i = 0; i + 4 <= t.length; i++) {
+    total++;
+    if (known.has(t.slice(i, i + 4).join(" "))) hit++;
+  }
+  return total === 0 ? 0 : hit / total;
 }
 
 export function generateActionItems(kind: ViolationKind): ActionItem[] {

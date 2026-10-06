@@ -2,13 +2,14 @@
 //
 // D8 (CLAUDE.md §2): EU-withdrawal-compliant checkout consent requires "explicit prior consent +
 // permanent-form confirmation email." The checkout already collects consent (ConsentRow) and the
-// pricing page already promises "You will receive a receipt and a copy of this consent by email"
+// pricing page already promises "a purchase confirmation and a copy of this consent by email"
 // (LEGAL.consent.deliveryNote) — this module is what actually sends it. Before this file existed,
 // that promise was never fulfilled (found during the 11 Sep 2026 full-repo audit, Section F3).
+// The tax receipt itself is Paddle's, and the email says so.
 //
-// Uses Resend's plain REST API via fetch — no new npm dependency. No-ops with a console warning
-// when RESEND_API_KEY is unset, matching the Gemini/Upstash pattern elsewhere in this codebase:
-// wired in code, inert until the founder adds a real key.
+// Uses Resend's plain REST API via fetch — no new npm dependency. With RESEND_API_KEY unset the
+// send functions THROW (they do not no-op), so the caller can record the failure and retry rather
+// than mark a confirmation as sent that never went out.
 
 import { PRICING } from "@/content/marketing";
 import { LEGAL } from "@/content/legal";
@@ -36,7 +37,7 @@ export interface BuiltEmail {
  */
 export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput): BuiltEmail {
   const dateLabel = formatLongDate(input.purchasedAt);
-  const subject = `Your ${PRICING.pass} receipt and consent copy`;
+  const subject = `Your ${PRICING.pass} purchase confirmation and consent copy`;
   const consentLine = input.consentText ?? LEGAL.consent.withdrawalCheckbox.label;
   const refundLine =
     "You can request a full refund within 7 days of purchase, no questions asked, by replying to this email or writing to billing@appealdeck.com.";
@@ -51,6 +52,7 @@ export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput)
     refundLine,
     "",
     "This email is your permanent record of this purchase and the consent above — keep it for your records.",
+    "Paddle, our payment provider, sends the tax receipt separately.",
     "",
     "AppealDeck by Hawlton",
   ];
@@ -72,8 +74,8 @@ function escapeHtml(s: string): string {
 }
 
 /**
- * Sends the purchase confirmation via Resend's REST API. No-ops (logs a warning, does not throw)
- * when RESEND_API_KEY is unset — callers should not let a missing key break the webhook response.
+ * Sends the purchase confirmation via Resend's REST API. Throws when RESEND_API_KEY is unset or
+ * delivery fails, so the caller can record the failure and retry.
  */
 export async function sendPurchaseConfirmationEmail(
   input: PurchaseConfirmationInput,

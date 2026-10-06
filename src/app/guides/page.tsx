@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/content/pageMetadata";
 import Link from "next/link";
 import { MarketingShell } from "@/components/MarketingShell";
 import { PageHero } from "@/components/PageHero";
 import { ArrowRight } from "lucide-react";
 import { GUIDES, GUIDES_COMMON } from "@/content/guides";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/guides" },
+export const metadata: Metadata = pageMetadata({
   title: GUIDES_COMMON.indexMetaTitle,
   description: GUIDES_COMMON.indexDescription,
-  openGraph: { title: GUIDES_COMMON.indexMetaTitle, description: GUIDES_COMMON.indexDescription },
-};
+  canonical: "/guides",
+});
 
 export default function GuidesIndexPage() {
   return (

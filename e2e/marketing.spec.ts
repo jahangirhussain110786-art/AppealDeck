@@ -160,7 +160,9 @@ test.describe("Marketing site (public)", () => {
     await page.getByRole("contentinfo").getByRole("link", { name: "Support" }).click();
     await expect(page).toHaveURL(/\/support$/);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByText("Jhangir Hussain", { exact: false })).toBeVisible();
+    await expect(
+      page.locator("main").getByText("Jhangir Hussain", { exact: false }).first(),
+    ).toBeVisible();
     await expect(page.getByText("two business days", { exact: false })).toBeVisible();
     await expect(page.getByRole("link", { name: "support@appealdeck.com" })).toBeVisible();
     // The limits are the point, not the disclaimer: a seller must not wait on a reply here while

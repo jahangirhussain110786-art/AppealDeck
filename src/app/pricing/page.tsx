@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/content/pageMetadata";
 import Link from "next/link";
 import { ArrowRight, Check, Info } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
@@ -23,15 +24,11 @@ import { SHARED } from "@/content/shared";
 import { splitAccent } from "@/lib/splitAccent";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/pricing" },
+export const metadata: Metadata = pageMetadata({
   title: SHARED.metadata.titlePricing,
   description: SHARED.metadata.descriptionPricing,
-  openGraph: {
-    title: SHARED.metadata.titlePricing,
-    description: SHARED.metadata.descriptionPricing,
-  },
-};
+  canonical: "/pricing",
+});
 
 const HEADLINE = splitAccent(PRICING.headline, PRICING.accent);
 const READ_FIRST = splitAccent(PRICING.readFirstTitle, PRICING.readFirstAccent);

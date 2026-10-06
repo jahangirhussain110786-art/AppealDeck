@@ -18,9 +18,9 @@ export type LegalDoc = "privacy" | "terms" | "refund";
 
 export const LEGAL = {
   lastUpdated: {
-    privacy: "2026-09-30",
-    terms: "2026-09-22",
-    refund: "2026-09-11",
+    privacy: "2026-10-06",
+    terms: "2026-10-06",
+    refund: "2026-10-06",
   },
   privacy: {
     title: "Privacy",
@@ -30,13 +30,15 @@ export const LEGAL = {
         title: "What we collect",
         body: [
           "When you decode a notice, its text is sent to AppealDeck for analysis. Preparing a response sends your case text and document references to AppealDeck. Uploading a file does not, by itself, send it anywhere.",
-          "If you ask us to check a business document — an invoice, an authorization letter, a sales report, a listing screenshot or a certificate — that check is made in one of two places, and only when you ask for it on that specific file. When you are signed in and the AI reading is available, the document is sent to AppealDeck and on to Google Gemini, so its contents can be read against what Amazon asked you for. It is used for that one request and we do not keep a copy. With it we send the ASINs and case IDs from your notice, and any business details you entered in your case (your registered business name and address, and your suppliers), so our server can compare them with what the document shows; those are not sent to Google Gemini. When you are not signed in, or the file is too large to send, the document is instead read on your own device, without AI, by software that runs in your browser and is served from this site; it is not uploaded. If a signed-in check cannot be read by the AI (it is switched off, busy or over its limit, or the case has no Appeal Pass), the file has already reached AppealDeck, together with those case details, and in some of those cases the file has also gone on to Google Gemini; it is then read on your device as well, and the result says so.",
+          "If you ask us to check a business document — an invoice, an authorization letter, a sales report, a listing screenshot or a certificate — that check is made in one of two places, and only when you ask for it on that specific file. When you are signed in and the AI reading is available, the document is sent to AppealDeck and on to Google Gemini, so its contents can be read against what Amazon asked you for. It is used for that one request and we do not keep a copy. With it we send the ASINs and case IDs from your notice, and any business details you entered in your case (your registered business name and address, and your suppliers), so our server can compare them with what the document shows; those are not sent to Google Gemini. When you are not signed in, or the file is too large to send, the document is instead read on your own device, without AI, by software that runs in your browser and is served from this site; it is not uploaded. If a signed-in check cannot be read by the AI (it is switched off, busy or over its limit), the file has already reached AppealDeck, together with those case details, and in some of those cases the file has also gone on to Google Gemini; it is then read on your device as well, and the result says so. Before it sends anything, the app asks whether the case has an Appeal Pass; without one, the file is read on your device and is not sent.",
           'If you press "Improve the wording" on a section of your response, the text of that one section (and, for a questionnaire answer, Amazon\'s question) is sent to AppealDeck and on to Google Gemini, which suggests clearer wording. It is used for that one request and we do not keep a copy. The suggestion is shown beside your own text and nothing changes unless you choose it. Automated checks reject changes to recognized numbers, dates, identifiers, contact details, names and explicit negation or planning language. These checks cannot detect every invented claim or change in meaning. Review each suggestion against your records before using it.',
-          "Identity and financial documents are treated differently. Passports, national identity cards, driving licences, bank statements, and utility bills or other proof of address are never uploaded for checking. Those are examined on your own device, in your browser, and we look only at whether the picture is large enough, sharp enough, well lit and fully in frame — we do not read what the document says.",
+          "Identity and financial documents are treated differently. Passports, national identity cards, driving licences, bank statements, and utility bills or other proof of address are never uploaded for checking when you file them under the matching document type. Do not file them under any other type: a file filed under another type is treated as that type. Documents filed under the matching type are examined on your own device, in your browser, and we look only at whether the picture is large enough, sharp enough, well lit and fully in frame — we do not read what the document says.",
           "When you create an account or buy the Appeal Pass, Paddle collects the payment and billing information. We receive a licence record (email, plan, status) via a Paddle webhook.",
           "Evidence contents are encrypted in your browser. If you choose cloud backup, encrypted contents and unencrypted metadata (including file names, tags, types, case references and content hashes) are uploaded to Supabase Storage. A backup passphrase protects the content key; we do not receive that passphrase.",
-          "If you turn on email reminders for a case, we store the reminder date you chose, the case type, and an identifier for that case, so we can email you when the date arrives. Nothing else about the case is sent: not your notice, your evidence, your draft, or any note you have written. Turning reminders off for a case deletes that record.",
-          "Before sign-in, your case is encrypted with a secret held for that tab session. Closing the session or clearing browser data can make it unrecoverable. Signing in on that tab transfers the case into your account vault after it is unlocked, preserving existing cases. Account vaults unlock automatically by default; you can add passphrase protection.",
+          "If you choose to share an outcome, we store the case type, the document type, the number of attempts, how complete the case file was, the result and the number of days it took. The record carries no name, email address, account or case identifier, and none of your text. It is sent only when you choose to share.",
+          "If you hold an Appeal Pass, we keep a record of the browsers you use it on: a hashed browser fingerprint (made from your browser's name and language settings and your account, not your IP address), the browser name and a label, and when it was first and last used. An Appeal Pass works on up to 5 devices, and you can remove one in Billing.",
+          "If you turn on email reminders for a case, we store the reminder date you chose, the case type, and an identifier for that case, so we can email you when the date arrives. Nothing else about the case is sent: not your notice, your evidence, your draft, or any note you have written. Turning reminders off for a case, or deleting the case on the dashboard, deletes that record.",
+          "Before sign-in, your case is encrypted with a secret held for that tab session. Closing the session or clearing browser data can make it unrecoverable. Signing in on that tab transfers the case into your account vault after it is unlocked, preserving existing cases. Account vaults unlock automatically by default; with an Appeal Pass you can add passphrase protection from the Vault page.",
         ],
       },
       {
@@ -44,7 +46,7 @@ export const LEGAL = {
         title: "How we use it",
         body: [
           "To recognize you across sessions, keep your licence active, and sync your encrypted vault.",
-          "To send you a receipt and account-related email (billing lifecycle). We do not send marketing email by default.",
+          "To send you a purchase confirmation and account-related email. Paddle sends the tax receipt. We do not send marketing email by default.",
           /*
             22 Sep 2026. This paragraph described two things that no longer exist: optional AI
             field suggestions and the guided-interview drafting flow, both removed the same day
@@ -66,14 +68,15 @@ export const LEGAL = {
             first sentence stands; the last now names the second thing a seller can choose to send.
           */
           "Preparing a response is done on AppealDeck's server, from the wording you wrote and your document references. It is not sent to Google Gemini or any other AI provider, and it never includes your files. The only things we send to an AI provider are a business document you ask us to check and a section you ask us to improve the wording of, each as described above.",
-          "To count usage against Paddle and Upstash free tiers for abuse protection.",
-          "To measure how many visitors reach each step of the free decoder and the Appeal Pass, using a cookieless analytics tool (Plausible or Umami) that counts page visits without collecting personal data or setting cross-site identifiers.",
+          "To limit abuse, we keep a short hash of your IP address (and of your account, when you are signed in) in Upstash, for counting requests only.",
+          "To measure how many visitors reach each step of the free decoder and the Appeal Pass, using a cookieless analytics tool (Plausible) that counts page visits without collecting personal data or setting cross-site identifiers.",
         ],
       },
       {
         id: "international-transfers",
         title: "Where your data is processed",
         body: [
+          "The service providers we use are Vercel (hosting), Supabase (sign-in and storage), Upstash (request counting), Resend (email), Paddle (payments), Google Gemini (reading a business document or suggesting wording when you ask), Plausible (visit counts) and Google, if you choose to sign in with Google.",
           "Some processing happens outside Pakistan — Google (Gemini, which reads a business document when you ask us to check one, and suggests wording for a section when you ask it to) and Paddle (payments) both operate internationally, including the US and EU. Each is bound by its own data-processing agreement. We do not sell your data to anyone.",
         ],
       },
@@ -81,7 +84,7 @@ export const LEGAL = {
         id: "cookies",
         title: "Cookies and local storage",
         body: [
-          "We use one essential cookie for your session and one to remember your colour-theme choice. You can delete both at any time.",
+          "While you are signed in, your session is held in a cookie set by our sign-in provider, Supabase; it can be split across several cookies. It is essential, and it is removed when you sign out. Your browser's local storage also holds your colour-theme choice and whether you dismissed the announcement bar. You can delete these at any time. We set no advertising or cross-site cookies.",
           "The case file is stored encrypted in your browser's IndexedDB vault. Account vaults use a browser-held key by default, with optional passphrase protection. Decoding and response preparation send relevant text to our server. Only a document check or a wording suggestion you ask for sends anything to the AI provider, as described above.",
         ],
       },
@@ -143,7 +146,7 @@ export const LEGAL = {
         id: "basis",
         title: "Basis of the service",
         body: [
-          "AppealDeck decodes Amazon suspension notices and drafts a Plan of Action for you to review and submit yourself. We do not log in to Seller Central. We do not submit on your behalf. We do not promise reinstatement.",
+          "AppealDeck decodes Amazon suspension notices and prepares a response from the facts you confirm, for you to review and submit yourself. We do not log in to Seller Central. We do not submit on your behalf. We do not promise reinstatement.",
           /*
             22 Sep 2026. This sentence was written in `legal/terms.md` and in
             `legal/withdrawal-consent.md`, but `/terms` renders from this file, where it had never
@@ -160,7 +163,7 @@ export const LEGAL = {
         id: "independence",
         title: "Independence from Amazon",
         body: [
-          "AppealDeck is an independent service operated by Jhangir Hussain, trading as Hawlton, in Pakistan. It is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon, Seller Central and related names are trademarks of Amazon.com, Inc. or its affiliates, used here only to describe the notices this software reads and the appeals it helps you draft.",
+          "AppealDeck is an independent service operated by Jhangir Hussain, trading as Hawlton, in Pakistan. It is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon, Seller Central and related names are trademarks of Amazon.com, Inc. or its affiliates, used here only to describe the notices this software reads and the responses it helps you prepare.",
           "We never log in to Seller Central, never submit anything to Amazon for you, and have no access to your Amazon account.",
         ],
       },
@@ -168,8 +171,8 @@ export const LEGAL = {
         id: "licence",
         title: "Licence to use",
         body: [
-          "Subject to your compliance, we grant you a limited, non-exclusive, non-transferable right to use the Free decoder and, with an active Appeal Pass, the drafting features.",
-          "The Free decoder is available to everyone. Appeal Pass features require a valid licence key and an eligible Amazon notice type.",
+          "Subject to your compliance, we grant you a limited, non-exclusive, non-transferable right to use the Free decoder and, with an active Appeal Pass, the response preparation features.",
+          "The Free decoder is available to everyone. Appeal Pass features require an active Appeal Pass on your account and an eligible Amazon notice type.",
           "One Appeal Pass licence is tied to one case. It covers every revision you prepare for that case, including a response to a later reply from Amazon, with no additional charge and no expiry date. A separate notice or a different case requires its own Appeal Pass.",
         ],
       },
@@ -261,9 +264,9 @@ export const LEGAL = {
         id: "how",
         title: "How to request",
         body: [
-          "Email billing@appealdeck.com with your receipt or licence key.",
+          "Email billing@appealdeck.com with your receipt or the email address on your account.",
           "We process the request within 5 business days; how long it then takes to reach your account depends on your bank.",
-          "Once refunded, access to Appeal Pass features is removed.",
+          "Once a full refund is made, access to Appeal Pass features is removed.",
         ],
       },
       {
@@ -281,7 +284,8 @@ export const LEGAL = {
       label:
         "I ask AppealDeck to deliver the Appeal Pass immediately and understand that I lose my statutory 14-day right of withdrawal once delivery starts. AppealDeck's voluntary 7-day refund still applies.",
     },
-    deliveryNote: "You will receive a receipt and a copy of this consent by email.",
+    deliveryNote:
+      "You will receive a purchase confirmation and a copy of this consent by email. Paddle sends the tax receipt.",
   },
   meta: {
     titlePrivacy: "Privacy",
@@ -290,7 +294,7 @@ export const LEGAL = {
     descriptionPrivacy:
       "How notice processing, optional AI, payments and encrypted case storage work in AppealDeck.",
     descriptionTerms:
-      "AppealDeck decodes notices and drafts POAs for you to submit yourself. No automation, no outcome promises.",
+      "AppealDeck decodes notices and prepares responses for you to submit yourself. No automation, no outcome promises.",
     descriptionRefund:
       "7-day voluntary refund on the Appeal Pass. EU/UK statutory withdrawal with explicit checkout consent.",
   },

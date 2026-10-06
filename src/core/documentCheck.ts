@@ -188,6 +188,11 @@ const BANNED_CONCLUSIONS = new RegExp(
       "approved",
       "accepted",
       "will (?:be )?(?:pass|work|succeed)",
+      // Acceptance by Amazon is the one verdict nobody here can give (6 Oct 2026).
+      "(?:will|would|should) (?:accept|approve|pass|clear|satisfy|be fine|be enough|be sufficient)\\w*",
+      "meets?(?: all| every)?(?: of)?(?: the)?(?: amazon['’]?s?)? requirements?",
+      "(?:is|looks|appears|seems)(?: to be)? (?:a |an )?real(?: invoice| document| receipt| certificate| report)?",
+      "real (?:invoice|document|receipt|certificate|report)",
       // Assembled rather than written out: `index.test.ts` enforces D6 by scanning every
       // non-test file in `src/core` for the literal word, and that guard is deliberately blunt.
       // Writing the term here to BAN it would trip the guard that exists to ban it. Splitting it
@@ -241,6 +246,35 @@ export function requirementForCheck(
   );
 }
 
+/** Fields whose quote is a printed name, address or identifier rather than free text. */
+function isIdentityField(field: string): boolean {
+  const kind = comparisonFor(field)?.kind;
+  return (
+    kind === "supplier" ||
+    kind === "account_record" ||
+    kind === "asin" ||
+    kind === "reference_id" ||
+    /\b(?:name|address)\b/i.test(field)
+  );
+}
+
+/**
+ * A printed name keeps its capitals ("Genuine Parts & Co. Ltd"), while a verdict slipped in beside
+ * it is lowercase prose ("Acme Ltd — verified supplier"), so a quote in a name, address or ID field
+ * is checked with its capitalised words set aside.
+ */
+function withoutCapitalisedWords(text: string): string {
+  return text.replace(/\b[A-Z][A-Za-z]*\b/g, " ");
+}
+
+/** Lowercase, without punctuation or extra spaces, so "Issue date" and "issue  date:" match. */
+function fieldKey(field: string): string {
+  return field
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
 const NO_READING_NOTE =
   "The reading did not report on this, so we have not checked it. Look for it on the original.";
 
@@ -289,10 +323,16 @@ export function buildDocumentCheck(
     if (!field) continue;
     // An `observed` value that carries a verdict is dropped rather than shown; the status and the
     // note already say everything the product is entitled to say.
+    // A name, an address or an ID is quoted from the document as it is printed ("Genuine Parts &
+    // Co. Ltd", "Valid Ventures LLC"), and is compared with the case by code, so the word filter
+    // does not apply to it; it only dropped legitimate supplier quotes (6 Oct 2026).
     const observed =
       f.observed &&
       f.observed.trim() &&
-      (options?.quotesAreVerbatim || !containsBannedConclusion(f.observed))
+      (options?.quotesAreVerbatim ||
+        (isIdentityField(field)
+          ? !containsBannedConclusion(withoutCapitalisedWords(f.observed))
+          : !containsBannedConclusion(f.observed)))
         ? f.observed.trim()
         : undefined;
     const base: FieldFinding = {
@@ -301,12 +341,14 @@ export function buildDocumentCheck(
       note: sanitizeNote(f.note),
       ...(observed ? { observed } : {}),
     };
-    byField.set(field.toLowerCase(), requireQuote(base));
+    byField.set(fieldKey(field), requireQuote(base));
   }
 
   const findings: FieldFinding[] = expectedFields.map((field) => {
-    const reading = byField.get(field.toLowerCase());
-    if (!reading) return { field, status: "not_assessed" as const, note: NO_READING_NOTE };
+    const found = byField.get(fieldKey(field));
+    if (!found) return { field, status: "not_assessed" as const, note: NO_READING_NOTE };
+    // Report it under the matrix's own wording, whatever case or punctuation the reading used.
+    const reading = { ...found, field };
     const comparison = comparisonFor(field);
     const compared = comparison ? compare(reading, comparison, context) : reading;
     return options?.fromPicture && comparison
@@ -317,7 +359,7 @@ export function buildDocumentCheck(
   // Anything the reading found that is not on Amazon's list is kept, after the expected fields, so
   // a genuinely useful observation is not thrown away by a stale matrix.
   for (const [key, finding] of byField) {
-    if (!expectedFields.some((f) => f.toLowerCase() === key)) findings.push(finding);
+    if (!expectedFields.some((f) => fieldKey(f) === key)) findings.push(finding);
   }
 
   const expected = findings.slice(0, expectedFields.length);

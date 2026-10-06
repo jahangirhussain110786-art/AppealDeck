@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { callGemini, type GeminiCallInput } from "./gemini";
+import { extractJsonObject } from "./extractJson";
 import { checkWordingLock, MIN_WORDING_CHARS } from "@/core/wordingLock";
 
 /**
@@ -118,13 +119,8 @@ export async function improveWording(
   });
   if (!result.ok) return { ok: false, reason: result.reason === "busy" ? "busy" : "unavailable" };
 
-  let parsed: unknown;
-  try {
-    const raw = result.text.trim();
-    parsed = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
-  } catch {
-    return { ok: false, reason: "unavailable" };
-  }
+  const parsed = extractJsonObject(result.text);
+  if (parsed === undefined) return { ok: false, reason: "unavailable" };
   const validated = Response.safeParse(parsed);
   if (!validated.success) return { ok: false, reason: "unavailable" };
 

@@ -35,7 +35,7 @@ export const SURFACES = {
       },
       {
         q: "Can I add a passphrase?",
-        a: "Yes, from the Vault. If you forget it, nobody can recover the files, including us.",
+        a: "Yes, from the Vault page, which comes with an Appeal Pass. If you forget it, nobody can recover the files, including us.",
       },
     ],
     policyTitle: "The full privacy policy",

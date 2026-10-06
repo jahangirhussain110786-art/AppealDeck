@@ -48,7 +48,7 @@ export interface DeviceText {
 }
 
 /** Why a file could not be read on the device, when there is something specific to tell the seller. */
-export type DeviceReadFailure = "protected" | "timeout";
+export type DeviceReadFailure = "protected" | "timeout" | "load";
 
 export class DeviceReadError extends Error {
   readonly reason: DeviceReadFailure;
@@ -70,6 +70,33 @@ function within<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 /** Null when there is nothing legible to read, or the file is not a type this can open. */
 export async function readTextOnDevice(
+  bytes: Uint8Array,
+  mimeType: string,
+): Promise<DeviceText | null> {
+  try {
+    return await readTextOnDeviceUnchecked(bytes, mimeType);
+  } catch (error) {
+    // The reader's own files could not be fetched (offline): that is not "could not make out its
+    // text". Only asked after a failure, so a normal reading adds no request.
+    if (error instanceof DeviceReadError) throw error;
+    if (!(await readerAssetsReachable())) throw new DeviceReadError("load");
+    throw error;
+  }
+}
+
+async function readerAssetsReachable(): Promise<boolean> {
+  try {
+    const res = await fetch(`${ASSETS}/pdf.worker.compat.mjs`, {
+      method: "HEAD",
+      cache: "no-cache",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function readTextOnDeviceUnchecked(
   bytes: Uint8Array,
   mimeType: string,
 ): Promise<DeviceText | null> {

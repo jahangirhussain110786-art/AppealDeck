@@ -154,6 +154,65 @@ describe("the rendered Privacy page", () => {
   });
 });
 
+/**
+ * 6 Oct 2026 corrections, each made true to the code it describes.
+ */
+describe("privacy and terms corrections of 6 Oct 2026", () => {
+  const privacy = text("privacy");
+  const all = `${privacy}\n${text("terms")}\n${text("refund")}\n${JSON.stringify(LEGAL.consent)}`;
+
+  it("does not say a no-Pass case's file is sent before the AI reading is refused", () => {
+    // runCheck.ts asks /api/license/status first, so a case without a Pass is read on the device.
+    expect(privacy).not.toMatch(/or the case has no Appeal Pass/i);
+    expect(privacy).toMatch(/without one, the file is read on your device and is not sent/i);
+  });
+
+  it("limits the never-uploaded claim to documents filed under the matching type", () => {
+    expect(privacy).toMatch(/never uploaded for checking when you file them under the matching/i);
+    expect(privacy).toMatch(/Do not file them under any other type/);
+  });
+
+  it("refers to no licence key, which a buyer is never given", () => {
+    expect(all).not.toMatch(/licen[cs]e key/i);
+  });
+
+  it("discloses outcome records, device records, rate-limit hashes and the providers", () => {
+    expect(privacy).toMatch(/share an outcome/i);
+    expect(privacy).toMatch(/hashed browser fingerprint[^.]*not your IP address/i);
+    expect(privacy).toMatch(/short hash of your IP address/i);
+    for (const name of [
+      "Vercel",
+      "Supabase",
+      "Upstash",
+      "Resend",
+      "Paddle",
+      "Google Gemini",
+      "Plausible",
+    ]) {
+      expect(privacy, name).toContain(name);
+    }
+  });
+
+  it("says a refund removes access only once it is a full refund", () => {
+    expect(text("refund")).toMatch(/Once a full refund is made/);
+  });
+
+  it("says Paddle sends the tax receipt, not AppealDeck", () => {
+    expect(LEGAL.consent.deliveryNote).toMatch(/Paddle sends the tax receipt/);
+  });
+
+  it("says the service prepares a response rather than drafting an appeal", () => {
+    expect(LEGAL.meta.descriptionTerms).not.toMatch(/drafts/i);
+    expect(text("terms")).not.toMatch(/drafts a Plan of Action/i);
+  });
+
+  it("dates the changed documents 2026-10-06", () => {
+    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-06");
+    expect(LEGAL.lastUpdated.terms).toBe("2026-10-06");
+    expect(LEGAL.lastUpdated.refund).toBe("2026-10-06");
+  });
+});
+
 /** The same claim, in the sentence a seller reads on the case screen itself. */
 describe("the workspace's own privacy line", () => {
   it("does not say files never leave the device, and names the exception", () => {

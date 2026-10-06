@@ -76,7 +76,7 @@ export const HOME = {
       },
     ],
   },
-  /** The navy promise band. Its items are `numbers` below. */
+  /** The navy promise band. Its items are `bandFacts` below. */
   band: {
     title: "Your account stays yours.",
     accent: "yours.",
@@ -105,36 +105,6 @@ export const HOME = {
     // Not "independence": its answer repeats the footer's not-affiliated line word for word.
     ids: ["outcome", "replies", "start-free", "submit"],
   },
-  /** Shown as numbers before any claim. Each is a fact the product already states elsewhere. */
-  numbers: {
-    items: [
-      {
-        value: "$249",
-        label: "One Appeal Pass covers one case, every revision, no expiry. Nothing else to buy.",
-      },
-      {
-        value: "0",
-        label:
-          "Logins to Seller Central. AppealDeck never touches your Amazon account. You send every reply yourself.",
-      },
-      {
-        value: "60",
-        unit: "days",
-        label:
-          "The window to request held funds. Tracked apart from the appeal, because Amazon treats it apart.",
-      },
-      {
-        value: "7",
-        unit: "days",
-        label:
-          "Refund window, no questions asked. And no promise of an outcome, because nobody can honestly make one.",
-      },
-    ],
-  },
-  workspace: {
-    title: "One place that knows what your case still needs.",
-    desc: "A still of the case workspace, with sample data. Every record carries where it came from: the notice, or us.",
-  },
   plans: {
     eyebrow: "Pricing",
     title: "Free until you need the response.",
@@ -159,7 +129,7 @@ export const HOME = {
         price: "$0",
         features: [
           "Everything in Free, saved to your case",
-          "Encrypted vault on your device",
+          "Case saved encrypted on your device",
           "Deadlines, and who you are waiting on",
           "Amazon's replies applied: reopened, added, carried",
         ],
@@ -169,45 +139,14 @@ export const HOME = {
         note: "Per case, one time",
         price: "$249",
         features: [
-          "Documents checked field by field against the notice",
+          "A basic on-device reading of documents is free; the Pass adds an AI reading of business documents against the notice",
           "The response prepared from your confirmed facts, every revision",
-          "Wording help that cannot change a fact",
+          "Wording help, checked so dates, numbers and names stay as you wrote them",
           "7-day refund, no questions asked",
         ],
         cta: "Get the Appeal Pass",
       },
     ],
-  },
-  trust: {
-    eyebrow: "Before you paste anything",
-    title: "What this is, and what it is not.",
-    accent: "not.",
-    items: [
-      {
-        label: "No access to your Amazon account",
-        desc: "AppealDeck never logs in, never submits and never contacts Amazon. You send the response yourself.",
-      },
-      {
-        label: "Your files stay encrypted on your device",
-        desc: "Your notice is sent to AppealDeck to decode it. A file leaves your device only when you ask for it to be checked.",
-      },
-      {
-        label: "Amazon makes the decision",
-        desc: "We help you answer clearly and completely. Nobody outside Amazon can promise reinstatement, and we do not.",
-      },
-      {
-        label: "Software, not a law firm",
-        desc: "Nothing here is legal advice and nothing you tell it is privileged. Forged documents, fraud and child-safety matters are routed to professional help, never sold a Pass.",
-      },
-    ],
-  },
-  guides: {
-    eyebrow: "Guides",
-    title: "Start from your situation",
-  },
-  closing: {
-    title: "Your notice is the place to start",
-    desc: "Paste it and see what it asks for before you decide anything else.",
   },
 } as const;
 
@@ -260,7 +199,7 @@ export const DECODE = {
     recordNamed: "Named in the notice you pasted",
     recordInferred: "Usually needed in cases like this",
     saveTitle: "Turn this into a checklist you can finish.",
-    saveNote: "Free. Kept on this device. No account needed yet.",
+    saveNote: "Free. Kept in this browser tab until you close it. Sign in to keep it.",
     triageTitle: "Do now, and what to avoid",
     howRead: "How we read it",
     notAdvice: "Software, not legal advice. Amazon decides.",
@@ -478,7 +417,7 @@ export const FAQ = {
     {
       id: "independence",
       q: "Is AppealDeck part of Amazon?",
-      a: "No. AppealDeck is an independent service operated by Hawlton in Pakistan.",
+      a: "No. AppealDeck is an independent service operated by Jhangir Hussain, trading as Hawlton, in Pakistan.",
       detail:
         "We are not affiliated with or endorsed by Amazon. We do not access your Seller Central account or submit appeals for you.",
       link: { label: "About the service", href: "/terms#independence" },
@@ -549,7 +488,7 @@ export const FAQ = {
       q: "What is your refund policy?",
       a: "You can request a refund within 7 days of purchase.",
       detail:
-        "Send the receipt to the address on the Refund page. Read the full policy and digital-delivery consent before buying.",
+        "Write to the address on the Refund page with your receipt or the email address on your account. Read the full policy and digital-delivery consent before buying.",
       link: { label: "Read the refund policy", href: "/refund" },
     },
   ] as const satisfies readonly FaqItem[],

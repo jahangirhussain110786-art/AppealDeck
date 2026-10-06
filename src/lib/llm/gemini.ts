@@ -239,7 +239,7 @@ async function callGeminiOnce(input: GeminiCallInput): Promise<GeminiCallResult>
     25 Sep 2026, found walking the paid path: Google answered a real document check with 503 "This
     model is currently experiencing high demand", and the seller got a flat failure on the first
     try. A 429/5xx is Google saying "not now", so wait and try again a couple of times inside a
-    fixed budget. The spend was reserved once above; a retry is the same request, not a new one.
+    fixed budget. The first request's spend is reserved above; each further request reserves its own.
   */
   const timeoutMs = TASK_TIMEOUT_MS[input.task ?? ""] ?? REQUEST_TIMEOUT_MS;
   const deadline = Date.now() + (TASK_BUDGET_MS[input.task ?? ""] ?? timeoutMs);
@@ -248,7 +248,13 @@ async function callGeminiOnce(input: GeminiCallInput): Promise<GeminiCallResult>
     reason: "upstream_error",
     message: "Gemini was not called.",
   };
+  // Each request that actually leaves for Google counts against the day's cap (6 Oct 2026). The
+  // first was reserved above; a retry, the fallback model and the plain-JSON retry each reserve their
+  // own, so a stalled call that sends five requests is counted as five. When the cap (or Redis)
+  // refuses, no further request is sent: it fails closed.
+  const mayRequestAgain = async (): Promise<boolean> => (await reserveSpend(breakerOptions)).ok;
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    if (attempt > 0 && !(await mayRequestAgain())) break;
     const outcome = await attemptOnce(url, body, model, Math.min(timeoutMs, deadline - Date.now()));
     last = outcome.result;
     const delay = RETRY_DELAYS_MS[attempt];
@@ -273,7 +279,8 @@ async function callGeminiOnce(input: GeminiCallInput): Promise<GeminiCallResult>
     fallbackModel &&
     fallbackModel !== model &&
     (busy || overQuota || last.reason === "timeout") &&
-    deadline - Date.now() > 5_000
+    deadline - Date.now() > 5_000 &&
+    (await mayRequestAgain())
   ) {
     console.warn(
       `[gemini] ${input.task ?? "default"}: ${model} ${overQuota ? "is over its quota" : busy ? "is busy" : "stalled"}, asking ${fallbackModel}`,
@@ -298,7 +305,13 @@ async function callGeminiOnce(input: GeminiCallInput): Promise<GeminiCallResult>
     written into the instructions, and let the caller's validation decide as it always has.
   */
   const schema = input.responseJsonSchema;
-  if (!last.ok && schema && (last.reason === "timeout" || busy) && deadline - Date.now() > 5_000) {
+  if (
+    !last.ok &&
+    schema &&
+    (last.reason === "timeout" || busy) &&
+    deadline - Date.now() > 5_000 &&
+    (await mayRequestAgain())
+  ) {
     console.warn(
       `[gemini] ${input.task ?? "default"}: schema mode stalled, retrying as plain JSON`,
     );

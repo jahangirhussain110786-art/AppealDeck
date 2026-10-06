@@ -95,7 +95,7 @@ const MONTH =
 const NAMED_DATE_PATTERNS = [
   new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH}\\.?,?\\s+\\d{4}\\b`, "gi"),
   new RegExp(`\\b${MONTH}\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+\\d{4}\\b`, "gi"),
-  new RegExp(`\\b\\d{1,2}[-./]${MONTH}\\.?[-./,\\s]+\\d{4}\\b`, "gi"),
+  new RegExp(`\\b\\d{1,2}[-./]${MONTH}\\.?[-./,\\s]+(?:\\d{4}|\\d{2})\\b`, "gi"),
 ];
 /**
  * A numeric date that is not a piece of a longer chain of numbers. "01.23.45.67.89" (a French
@@ -183,7 +183,7 @@ const ISSUE_LABEL =
  * an old invoice looked recent because the day it was printed came first (30 Sep 2026 review).
  */
 const NOT_ISSUE_LABEL =
-  /\b(?:due|paid|payment|deliver\w*|ship\w*|expir\w*|valid|until|birth|received|tested|print\w*|generated|created|order(?:ed)?|po|purchase order|statement|period|tel|telephone|phone|fax|sort code|iban|routing|account (?:no|number))\b/i;
+  /\b(?:due|paid|payment|deliver\w*|lieferdatum|ship\w*|expir\w*|valid|until|birth|received|tested|print\w*|generated|created|order(?:ed)?|po|purchase order|statement|period|tel|telephone|phone|fax|sort code|iban|routing|account (?:no|number))\b/i;
 
 /**
  * The date the document was issued, as candidates. One candidate is an answer. More than one, or
@@ -457,9 +457,14 @@ const ORDERED_BY_LABEL = labelled("ordered by");
  * ("Harbor Goods Wholesale Ltd Brightwater Home Goods LLC"). Neither can be told apart reliably.
  */
 const SIDE_BY_SIDE = new RegExp(
-  `^(?:${SUPPLIER_WORDS})\\b.{0,60}\\b(?:${BUYER_WORDS}|${SHIP_WORDS})\\b|^(?:${BUYER_WORDS}|${SHIP_WORDS})\\b.{0,60}\\b(?:${SUPPLIER_WORDS})\\b`,
+  `^(?:${SUPPLIER_WORDS})\\b.{0,60}\\b(?:${BUYER_WORDS}|${SHIP_WORDS})\\b|^(?:${BUYER_WORDS}|${SHIP_WORDS})\\b.{0,60}\\b(?:${SUPPLIER_WORDS})\\b|^(?:${BUYER_WORDS})\\b.{0,60}\\b(?:${SHIP_WORDS})\\b|^(?:${SHIP_WORDS})\\b.{0,60}\\b(?:${BUYER_WORDS})\\b`,
   "i",
 );
+/** A label with nothing after it: "Bill To:". Two of these in a row are two columns, not two stacked blocks. */
+const isBareLabel = (re: RegExp, l: string): boolean => {
+  const m = re.exec(l);
+  return m !== null && !(m[1] ?? "").trim();
+};
 const SIDE_BY_SIDE_NOTE =
   "The supplier and the buyer sit next to each other in this document, and we cannot tell reliably where one ends and the other begins, so we have not tried to separate them. Check both on the original.";
 /**
@@ -491,7 +496,13 @@ function sectionAfter(
 ): { lines: string[]; complete: boolean } | null {
   const at = lines.findIndex((l) => l.length <= 60 && label.test(l));
   if (at < 0) return null;
-  const inline = label.exec(lines[at]!)?.[1]?.trim();
+  const rawInline = label.exec(lines[at]!)?.[1]?.trim();
+  // "Bill To:   Ship To:": the value is the next column's label, not a value.
+  const inline =
+    rawInline &&
+    !(SUPPLIER_LABEL.test(rawInline) || BUYER_LABEL.test(rawInline) || SHIP_LABEL.test(rawInline))
+      ? rawInline
+      : undefined;
   const out = inline ? [inline] : [];
   let complete = true;
   for (const line of lines.slice(at + 1)) {
@@ -855,7 +866,10 @@ function readField(
       (l, i) =>
         i + 1 < lines.length &&
         ((isSupplierLabel(l) && isBuyerLabel(lines[i + 1]!)) ||
-          (isBuyerLabel(l) && isSupplierLabel(lines[i + 1]!))),
+          (isBuyerLabel(l) && isSupplierLabel(lines[i + 1]!)) ||
+          // "Bill To:" then "Ship To:" with nothing after either: the two columns' headers.
+          (isBareLabel(BUYER_LABEL, l) && isBareLabel(SHIP_LABEL, lines[i + 1]!)) ||
+          (isBareLabel(SHIP_LABEL, l) && isBareLabel(BUYER_LABEL, lines[i + 1]!))),
     );
   const fromSupplierOrBuyer =
     comparison?.kind === "account_record" ||

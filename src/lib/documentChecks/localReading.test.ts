@@ -1392,6 +1392,16 @@ describe("the AI reading first, the device when it cannot run", () => {
     expect(message).toMatch(/needs you to be signed in/);
   });
 
+  it("says the reader could not load, not that the text could not be made out", async () => {
+    const offline = async () => {
+      throw Object.assign(new Error("load"), { name: "DeviceReadError", reason: "load" });
+    };
+    const outcome = await runDocumentCheck({ ...input, signedIn: false }, offline);
+    const message = (outcome as { message: string }).message;
+    expect(message).toMatch(/on-device reader could not load/);
+    expect(message).not.toMatch(/could not make out/);
+  });
+
   it("does not claim the device was tried when it never was", async () => {
     let read = false;
     const outcome = await runDocumentCheck(

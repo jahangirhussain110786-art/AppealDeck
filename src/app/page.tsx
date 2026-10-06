@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/content/pageMetadata";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
@@ -21,15 +22,11 @@ import { AccentWord } from "@/components/ui/accent-word";
 import { splitAccent } from "@/lib/splitAccent";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/" },
+export const metadata: Metadata = pageMetadata({
   title: SHARED.metadata.titleDefault,
   description: SHARED.metadata.description,
-  openGraph: {
-    title: SHARED.metadata.titleDefault,
-    description: SHARED.metadata.description,
-  },
-};
+  canonical: "/",
+});
 
 const STRUCTURED_DATA = [
   {

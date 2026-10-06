@@ -241,6 +241,34 @@ export default function VaultView({ userId }: { userId: string }) {
     }
   };
 
+  /*
+    Where focus goes when the preview or delete dialog closes. The preview and delete dialogs are
+    opened from a row's button, not a Radix trigger, so without this focus fell to <body> (and a
+    deleted row's button is gone anyway). A deleted row falls back to the first remaining View
+    button, or the page itself.
+  */
+  const returnFocusRef = React.useRef<HTMLElement | null>(null);
+  const previewCloseRef = React.useRef<HTMLButtonElement | null>(null);
+  const restoreFocus = (e: Event) => {
+    e.preventDefault();
+    const target = returnFocusRef.current;
+    returnFocusRef.current = null;
+    const go = () => {
+      const el =
+        target && target.isConnected
+          ? target
+          : (document.querySelector<HTMLElement>("[data-vault-view]") ??
+            document.getElementById("main"));
+      if (!el) return;
+      if (!el.hasAttribute("tabindex") && !(el instanceof HTMLButtonElement))
+        el.setAttribute("tabindex", "-1");
+      el.focus();
+    };
+    // A removed row leaves after a short exit animation; wait for it before choosing.
+    if (target) go();
+    else window.setTimeout(go, 250);
+  };
+
   const openPreview = async (item: VaultListItem) => {
     try {
       const { bytes, record } = await vault.get(item.id);
@@ -328,6 +356,8 @@ export default function VaultView({ userId }: { userId: string }) {
     if (!deleteTarget) return;
     try {
       await vault.delete(deleteTarget.id);
+      // The row (and its button) is going away; focus falls back to the next logical control.
+      returnFocusRef.current = null;
       await refresh();
       toast.success(APP.dashboard.toasts.recordDeleted);
     } catch (e) {
@@ -656,7 +686,11 @@ export default function VaultView({ userId }: { userId: string }) {
                                         <Button
                                           size="icon-sm"
                                           variant="ghost"
-                                          onClick={() => void openPreview(it)}
+                                          data-vault-view
+                                          onClick={(e) => {
+                                            returnFocusRef.current = e.currentTarget;
+                                            void openPreview(it);
+                                          }}
                                           aria-label={`${APP.vault.actions.view} ${it.name}`}
                                         >
                                           <Eye className="size-4" />
@@ -687,7 +721,10 @@ export default function VaultView({ userId }: { userId: string }) {
                                           size="icon-sm"
                                           variant="ghost"
                                           className="text-muted-foreground hover:text-destructive"
-                                          onClick={() => setDeleteTarget(it)}
+                                          onClick={(e) => {
+                                            returnFocusRef.current = e.currentTarget;
+                                            setDeleteTarget(it);
+                                          }}
                                           aria-label={`${APP.vault.actions.delete} ${it.name}`}
                                         >
                                           <Trash2 className="size-4" />
@@ -890,7 +927,7 @@ export default function VaultView({ userId }: { userId: string }) {
           </Tabs>
 
           <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-            <DialogContent>
+            <DialogContent onCloseAutoFocus={restoreFocus}>
               {deleteTarget && (
                 <>
                   <DialogTitle>
@@ -1014,7 +1051,15 @@ export default function VaultView({ userId }: { userId: string }) {
             }}
           >
             {previewTarget && (
-              <DialogContent className="max-w-3xl max-h-[80vh]">
+              <DialogContent
+                className="max-w-3xl max-h-[80vh]"
+                onOpenAutoFocus={(e) => {
+                  // Not the PDF frame: once it has focus, Escape no longer reaches this dialog.
+                  e.preventDefault();
+                  previewCloseRef.current?.focus();
+                }}
+                onCloseAutoFocus={restoreFocus}
+              >
                 <DialogTitle>
                   {APP.vault.preview.title.replace("{name}", previewTarget.name)}
                 </DialogTitle>
@@ -1026,11 +1071,17 @@ export default function VaultView({ userId }: { userId: string }) {
                       className="max-w-full rounded-md"
                     />
                   ) : previewUrl && previewTarget.mimeType === "application/pdf" ? (
-                    <iframe
-                      src={previewUrl}
-                      title={previewTarget.name}
-                      className="h-[70vh] w-full rounded-md"
-                    />
+                    <>
+                      <iframe
+                        src={previewUrl}
+                        title={previewTarget.name}
+                        className="h-[70vh] w-full rounded-md"
+                      />
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        If the Escape key stops working while you are inside the PDF, use the Close
+                        button.
+                      </p>
+                    </>
                   ) : previewText !== null ? (
                     <pre className="whitespace-pre-wrap text-xs">
                       {previewText}
@@ -1058,6 +1109,7 @@ export default function VaultView({ userId }: { userId: string }) {
                     </Button>
                   )}
                   <Button
+                    ref={previewCloseRef}
                     variant="outline"
                     onClick={() => {
                       if (previewUrl) URL.revokeObjectURL(previewUrl);

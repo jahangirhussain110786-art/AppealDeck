@@ -139,6 +139,29 @@ describe("request routing", () => {
   });
 });
 
+describe("business licence wording in a reply", () => {
+  it("is never raised as Proof of address", () => {
+    const reqs = proposedRequirements({
+      notice: "Also provide a copy of your business license.",
+      formInstructions: "",
+      revision: 2,
+    });
+    expect(reqs.map((r) => r.label)).not.toContain("Proof of address");
+    expect(reqs).toHaveLength(1);
+    expect(reqs[0]!.evidenceKind).toBe("other");
+    expect(reqs[0]!.sourceQuote).toMatch(/business license/);
+  });
+
+  it("still raises a proof of address when that is what is asked for", () => {
+    const reqs = proposedRequirements({
+      notice: "Please send a utility bill showing your address.",
+      formInstructions: "",
+      revision: 1,
+    });
+    expect(reqs.map((r) => r.label)).toEqual(["Proof of address"]);
+  });
+});
+
 describe("response and provenance", () => {
   it("produces a document response without confession or prevention sections", () => {
     const workspace = documentWorkspace();
@@ -277,6 +300,14 @@ describe("attempts made before this case existed", () => {
     });
     expect(totalAttempts(w)).toBe(1);
     expect(priorAttempts(w)).toHaveLength(1);
+  });
+
+  it("records exactly one history event per prior attempt", () => {
+    const before = withNotice();
+    const w = recordPriorAttempt(before, { at: "2026-09-01T00:00:00.000Z", text: "First appeal." });
+    const events = w.history.filter((e) => /sent before this case was created/.test(e.message));
+    expect(events).toHaveLength(1);
+    expect(w.history.length).toBe(before.history.length + 1);
   });
 
   it("makes the next response subject to the novelty requirement", () => {

@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AuthShell,
   GoogleButton,
@@ -29,6 +29,7 @@ export default function LoginPage() {
 }
 
 function LoginPageInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = searchParams.get("next");
   const next = safeNext(nextParam, APP_URL);
@@ -63,6 +64,15 @@ function LoginPageInner() {
   const handlePasswordBlur = () => {
     setPasswordError(validatePasswordLength(password));
   };
+
+  // Already signed in: go where the sign-in was headed, as /signup does.
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) router.replace(next);
+    });
+  }, [router, next]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
