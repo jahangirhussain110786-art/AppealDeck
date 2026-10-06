@@ -84,7 +84,11 @@ export function FileDropZone({
       }
       if (!isAccepted(f)) {
         toast.error(APP.upload.wrongType, {
-          description: APP.upload.wrongTypeDesc,
+          // The message must match what this box accepts: a case document box does not take HEIC,
+          // so telling an iPhone user to "use HEIC" there sends them round in a circle.
+          description: /heic|\*/i.test(accept ?? DEFAULT_ACCEPT)
+            ? APP.upload.wrongTypeDesc
+            : APP.upload.wrongTypeDescNoHeic,
         });
         continue;
       }

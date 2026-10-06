@@ -393,7 +393,7 @@ export default function VaultView({ userId }: { userId: string }) {
         const source = getBrowserVault("appealdeck-vault");
         await source.open();
         try {
-          await vault.copyIntoEmpty(source);
+          await vault.copyIntoEmpty(source, undefined, { replaceEmptyKey: true });
         } finally {
           await source.close();
         }

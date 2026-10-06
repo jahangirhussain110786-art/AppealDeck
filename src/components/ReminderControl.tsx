@@ -106,10 +106,17 @@ export function ReminderControl({
         <input
           className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           type="date"
-          disabled={busy}
+          // Not disabled while saving: a disabled control drops keyboard focus mid-typing. Changes
+          // made meanwhile are ignored, and `aria-busy` says why.
+          aria-busy={busy}
+          readOnly={busy}
           value={log.reminderAt?.slice(0, 10) ?? ""}
           onChange={(e) => {
             const value = e.target.value;
+            if (busy) return;
+            // Typing a year digit by digit passes through 0002, 0020, 0202 before 2026; those
+            // partial dates are valid to the browser and must not be saved.
+            if (value && Number(value.slice(0, 4)) < 1900) return;
             void changeDate(value ? `${value}T00:00:00Z` : undefined);
           }}
         />

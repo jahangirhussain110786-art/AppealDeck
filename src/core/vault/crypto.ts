@@ -88,6 +88,10 @@ export function newKdfParams(provider: WebCryptoLike, iters = PBKDF2_ITERATIONS)
   };
 }
 
+/** Bounds on a stored key-derivation cost: below is not a derivation, above can freeze the tab. */
+const MIN_PBKDF2_ITERATIONS = 1_000;
+const MAX_PBKDF2_ITERATIONS = 2_000_000;
+
 export async function deriveDek(
   provider: WebCryptoLike,
   passphrase: string,
@@ -95,6 +99,19 @@ export async function deriveDek(
 ): Promise<CryptoKey> {
   if (params.kdf !== "PBKDF2-SHA-256") {
     throw new VaultCryptoError("KEY_DERIVATION_FAILED", `Unsupported KDF: ${params.kdf}`);
+  }
+  // Parameters come from a stored vault or an imported backup, so they are checked before they are
+  // used: an absurd iteration count in a hostile file would freeze the tab for minutes, and a
+  // missing or short salt is not a key derivation at all. Real vaults use 100k to 600k.
+  if (
+    !Number.isInteger(params.iters) ||
+    params.iters < MIN_PBKDF2_ITERATIONS ||
+    params.iters > MAX_PBKDF2_ITERATIONS
+  ) {
+    throw new VaultCryptoError("KEY_DERIVATION_FAILED", "This vault's key settings are not valid.");
+  }
+  if (typeof params.salt !== "string" || fromBase64(params.salt).length < 16) {
+    throw new VaultCryptoError("KEY_DERIVATION_FAILED", "This vault's key settings are not valid.");
   }
   const baseKey = await importPassphraseKey(provider, passphrase);
   return provider.subtle.deriveKey(

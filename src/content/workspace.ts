@@ -171,7 +171,7 @@ export const WORKSPACE = {
   // document check sends that one file to be read. Every sentence here now matches what leaves the
   // browser, and `legalDisclosures.test.ts` pins it alongside the privacy policy.
   privacy:
-    "Your work is saved in this browser’s encrypted vault, and your files stay on this device. If you are not signed in, it is kept only until you close this tab; sign in to keep it. Two things leave it only when you ask: a business document you ask us to check, and a section you ask us to improve the wording of. Each is sent to be read, and no copy is kept; the one exception is a business document checked while you are not signed in, or one too large to send, which is read on this device and is not uploaded. Preparing a response sends the notice, confirmed facts and document references to AppealDeck — never the original files — and nothing is ever sent to Amazon.",
+    "Your work is saved in this browser’s encrypted vault, and your files stay on this device. If you are not signed in, it is kept only until you close this tab; sign in to keep it. Some things leave it only when you ask: a business document you ask us to check, a section you ask us to improve the wording of, an email reminder, an encrypted cloud backup, or an anonymous outcome. Each is sent to be read, and no copy is kept; the one exception is a business document checked while you are not signed in, or one too large to send, which is read on this device and is not uploaded. Preparing a response sends the notice, confirmed facts and document references to AppealDeck — never the original files — and nothing is ever sent to Amazon.",
   local: "Saved in this browser",
   // B1: the first-time seller does not know a guest case lives in one tab. Said where it is saved.
   guestWarning: {
@@ -379,7 +379,7 @@ export const WORKSPACE = {
     save: "Save business details",
     saved: "Updated your business details.",
     privacy:
-      "Saved in your encrypted vault. Sent with a document check only, to compare with that document — never to Google Gemini.",
+      "Saved in your encrypted vault. Sent to AppealDeck's server with a document check, and with the response and checkout steps, to compare and to prepare the response. Never sent to Google Gemini and not kept.",
   },
   // A-05/A-06/A-02, wired 23 Sep 2026. All three existed in `src/core` and were reachable by no
   // seller. Each string below describes the record or the seller's own choice, and none of them

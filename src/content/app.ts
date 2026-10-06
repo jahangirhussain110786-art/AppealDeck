@@ -127,7 +127,7 @@ export const APP = {
       checking: "Reading your document…",
       resultTitle: "What we could read",
       serverNote:
-        "This file was sent to be read against what Amazon asked for, and no copy of it was kept. What we read is saved with your case, in your browser.",
+        "This file was sent to be read against what Amazon asked for (it may be sent more than once if the first attempt fails), and no copy of it was kept. What we read is saved with your case, in your browser.",
       // A check is saved with the case since 24 Sep 2026, so it can outlive the page it ran on.
       savedOn: "Checked {date}.",
       stale:
@@ -229,7 +229,7 @@ export const APP = {
     deleteCase: {
       action: "Delete this case",
       title: "Delete this case from this browser?",
-      body: "This removes the notice, your answers, your business details and every file attached to this case from this browser. It cannot be undone.",
+      body: "This removes the notice, your answers, your business details and every file attached to this case from this browser. It cannot be undone. An Appeal Pass is tied to this case and does not move to a new one.",
       keepCopy:
         "If you might need it later, download your case notes from the case's History tab first.",
       backupNote:
@@ -246,7 +246,7 @@ export const APP = {
       heading: "Appeal Pass active",
       // A Pass covers ONE case, so say so wherever its status is shown.
       coversOne: "Your Appeal Pass covers one case.",
-      coversOneNoCase: "Your Appeal Pass covers one case. Start a case to use it.",
+      coversOneNoCase: "Your Appeal Pass covers the one case it was bought for.",
       planLabel: "Plan",
     },
     inactive: {
@@ -282,11 +282,12 @@ export const APP = {
     },
     outcomeShare: {
       title: "Share this outcome anonymously?",
-      body: "This sends only the case type, document type, attempt count, readiness score, the result, and how many days it took — never your notice text, evidence, or any identifying detail. It helps us report honest results instead of invented ones.",
+      body: "This sends only the case type, marketplace, document type, attempt count, readiness score, the result, and how many days it took — never your notice text, evidence, or any identifying detail. It helps us report honest results instead of invented ones.",
       accept: "Share it",
       decline: "Not this time",
       shared: "Outcome shared anonymously. Thank you.",
-      failed: "We could not record that, and nothing was sent. Try again, or choose not this time.",
+      failed:
+        "We could not record that, and nothing was sent. Sharing an outcome is part of the Appeal Pass. Try again, or choose not this time.",
     },
     actions: {
       nextBestActions: "Next best actions",
@@ -350,7 +351,7 @@ export const APP = {
       waitingSaveFailed: "Could not save that. Your case is unchanged.",
       emailTitle: "Email me when a date arrives",
       emailBody:
-        "We can email you when a follow-up date you set arrives. Only the date and the case type leave your device — never your notice, your evidence, or your draft.",
+        "We can email you when a follow-up date you set arrives. Only the date, the case type and an opaque case ID leave your device, tied to your account — never your notice, your evidence, or your draft.",
       emailOn: "Email reminders are on for this case",
       emailOff: "Email reminders are off",
       emailEnable: "Email me for this case",
@@ -363,7 +364,8 @@ export const APP = {
       // What the server has actually done with the reminder, read back from it (24 Sep 2026). "On"
       // said only that the seller had asked; these say whether the email went.
       delivery: {
-        scheduled: "We will email you on {date}.",
+        scheduled:
+          "We will email you on or soon after {date}, once a day at about 08:00 UTC, if your email address is confirmed.",
         sent: "Email sent on {date}.",
         retrying:
           "We could not deliver the email yet. We will try again at the next daily run — check your spam folder too.",
@@ -407,8 +409,8 @@ export const APP = {
       deleteFailed: "Delete failed",
       // Was "Delete failed" for an archive that failed, which described the wrong action.
       archiveFailed: "Could not archive this case",
-      vaultSynced: "Vault synced",
-      syncFailed: "Sync failed",
+      vaultSynced: "Backup saved",
+      syncFailed: "Backup failed",
     },
   },
   // Only the pre-submit checklist remains. The rest of this block served the compose page and a
@@ -512,7 +514,7 @@ export const APP = {
     backup: {
       title: "Keep a recovery copy",
       description:
-        "Create an encrypted cloud backup for this account. It includes all cases and files in this vault.",
+        "Create an encrypted cloud backup for this account. It includes all cases and files in this vault, up to about 7 MB of files in total. A larger vault cannot be backed up; download the largest files separately.",
       disclosure:
         "File contents are encrypted. Filenames, tags, file types and case references are included as visible metadata.",
       passphraseLabel: "Backup passphrase",
@@ -532,7 +534,7 @@ export const APP = {
       legacyAction: "Recover my older local files",
     },
     cryptoDetails:
-      "File contents use AES-GCM 256-bit encryption (envelope v{version}). Automatic unlock uses a key held by this browser. Passphrase mode uses PBKDF2-SHA-256 with 310,000 iterations. Cloud backups include an encrypted copy of the content key plus visible file metadata; the backup passphrase is not uploaded.",
+      "File contents use AES-GCM 256-bit encryption (envelope v{version}). Automatic unlock uses a key held by this browser. Passphrase mode uses PBKDF2-SHA-256 with 600,000 iterations. Cloud backups include an encrypted copy of the content key plus visible file metadata; the backup passphrase is not uploaded.",
     teachingEmpty: {
       title: "No evidence yet",
       description:
@@ -547,7 +549,7 @@ export const APP = {
       "Case notes and history are in your dashboard. This library shows original files.",
     actions: {
       refresh: "Refresh",
-      sync: "Sync to cloud",
+      sync: "Back up to cloud",
       lock: "Lock vault",
       view: "View",
       download: "Download",
@@ -567,7 +569,7 @@ export const APP = {
     searchPlaceholder: "Search files…",
     create: {
       title: "Set a vault passphrase",
-      body: "Your case file and evidence are encrypted on this device with a key derived from this passphrase (PBKDF2-SHA-256, 310,000 iterations) plus AES-GCM. We never see the passphrase.",
+      body: "Your case file and evidence are encrypted on this device with a key derived from this passphrase (PBKDF2-SHA-256, 600,000 iterations) plus AES-GCM. We never see the passphrase.",
       lossWarning:
         "If you forget this passphrase, nobody can recover your case data, including us. Cloud sync stores only encrypted copies. Write the passphrase down and keep it somewhere safe.",
       confirmLabel: "Confirm passphrase",
@@ -647,6 +649,7 @@ export const APP = {
     attached: "Attached",
     wrongType: "That file type is not accepted",
     wrongTypeDesc: "Use a PDF or an image (JPG, PNG, HEIC).",
+    wrongTypeDescNoHeic: "Use a PDF, PNG or JPEG. Convert iPhone (HEIC) photos to JPEG first.",
     duplicate: "Already in your vault",
     duplicateDesc: '"{name}" matches "{existing}" byte for byte. Nothing was added.',
     added: '"{name}" added',

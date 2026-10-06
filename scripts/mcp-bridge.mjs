@@ -38,7 +38,8 @@ const cmdArgs =
     ? ["/c", "npx", "-y", PACKAGE, ...EXTRA_ARGS]
     : ["-y", PACKAGE, ...EXTRA_ARGS];
 
-console.error(`[bridge:${NAME}] spawning: ${cmd} ${cmdArgs.join(" ")}`);
+// Arguments are not logged: some servers take a token as an argument, and this log is a file on disk.
+console.error(`[bridge:${NAME}] spawning: ${cmd} (${cmdArgs.length} arguments)`);
 
 const child = spawn(cmd, cmdArgs, {
   env,

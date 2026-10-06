@@ -57,6 +57,27 @@ describe("first sign-in race between two tabs", () => {
     expect((await fresh.getString(mine.id)).text).toBe("from B");
   });
 
+  it("copyIntoEmpty can recover older files into an automatically unlocked empty vault when asked to", async () => {
+    const legacy = vaultOn().vault;
+    await legacy.open();
+    await legacy.initWithDeviceKey();
+    const kept = await legacy.addString({
+      name: "old",
+      mimeType: "text/plain",
+      data: "older file",
+    });
+
+    const { vault: dest, name } = vaultOn();
+    await dest.open();
+    await dest.initWithDeviceKey(); // the page unlocked itself and wrote an empty vault's key
+    await dest.copyIntoEmpty(legacy, undefined, { replaceEmptyKey: true });
+
+    const fresh = vaultOn(name).vault;
+    await fresh.open();
+    await fresh.unlockWithDeviceKey();
+    expect((await fresh.getString(kept.id)).text).toBe("older file");
+  });
+
   it("importAll refuses when the key store changes while the backup is being verified", async () => {
     const source = vaultOn().vault;
     await source.open();
@@ -145,6 +166,22 @@ describe("key derivation strength", () => {
     const wrapped = await wrapDek(p, dek, "old vault passphrase", kdf);
     expect(wrapped.kdf.iters).toBe(310_000);
     await expect(unwrapDek(p, "old vault passphrase", wrapped)).resolves.toBeTruthy();
+  });
+
+  it("refuses stored key settings that are absurd, before spending any time on them", async () => {
+    const p = provider();
+    const dek = await generateDek(p);
+    const wrapped = await wrapDek(p, dek, "pass", newKdfParams(p, 10_000));
+    for (const iters of [2_000_000_000, 0, -5, 1.5, 999]) {
+      const started = Date.now();
+      await expect(
+        unwrapDek(p, "pass", { ...wrapped, kdf: { ...wrapped.kdf, iters } }),
+      ).rejects.toMatchObject({ code: "KEY_DERIVATION_FAILED" });
+      expect(Date.now() - started).toBeLessThan(500);
+    }
+    await expect(
+      unwrapDek(p, "pass", { ...wrapped, kdf: { ...wrapped.kdf, salt: "AAAA" } }),
+    ).rejects.toMatchObject({ code: "KEY_DERIVATION_FAILED" });
   });
 });
 

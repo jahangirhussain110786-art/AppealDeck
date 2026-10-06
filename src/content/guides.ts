@@ -230,7 +230,7 @@ export const GUIDES: Guide[] = [
       does: [
         "Recognises a verification notice and sends it down the verification route, not the Plan of Action route.",
         "Gives you a checklist of the documents and details the notice names.",
-        "Can compare the details in your documents with the business details you entered, and lists where they disagree.",
+        "Checks on this device that an ID or proof-of-address photo is large enough, sharp and fully in frame. It does not read the document or compare it with your details, so compare every field with Seller Central yourself.",
       ],
       doesNot: [
         "Verify your documents or say whether Amazon will accept them.",

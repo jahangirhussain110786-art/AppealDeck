@@ -108,6 +108,15 @@ export default function DecodeClient() {
   const [status, setStatus] = useState<Status>(() => (peekDecodeDraft() ? "loading" : "empty"));
   const [result, setResult] = useState<DecodeResponse | null>(null);
   const [decodedText, setDecodedText] = useState("");
+  // The result replaces the form, so the button that was just pressed leaves the page and focus would
+  // fall back to the top of the document, silent for a screen reader. Move it to the new heading.
+  useEffect(() => {
+    if (status !== "result" && status !== "error") return;
+    const heading = document.querySelector<HTMLElement>("main h1");
+    if (!heading) return;
+    heading.tabIndex = -1;
+    heading.focus({ preventScroll: false });
+  }, [status]);
   const [error, setError] = useState<DecodeError | null>(null);
   const [usingSample, setUsingSample] = useState(() => peekDecodeDraft()?.sample ?? false);
 
@@ -334,7 +343,7 @@ export default function DecodeClient() {
                 onSubmit={handleSubmit}
                 className="light max-w-tool rounded-[22px] bg-card p-2 text-foreground shadow-stage"
               >
-                <div className="overflow-hidden rounded-2xl border border-border">
+                <div className="overflow-hidden rounded-2xl border border-border focus-within:ring-2 focus-within:ring-ring">
                   <div className="flex items-center justify-between gap-2 border-b border-border/70 bg-surface-2 px-4 py-2.5">
                     <label htmlFor="notice" className="text-sm font-medium text-foreground">
                       {DECODE.textarea.label}

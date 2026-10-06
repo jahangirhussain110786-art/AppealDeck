@@ -150,6 +150,7 @@ export async function deliverCaseReminders(now = new Date()): Promise<{
   >();
 
   for (const row of data ?? []) {
+    let emailSent = false;
     try {
       // Flood guard: a seller with many due cases gets a few emails per run, the rest next run.
       if ((perUser.get(row.user_id) ?? 0) >= MAX_PER_USER_PER_RUN) {
@@ -208,13 +209,26 @@ export async function deliverCaseReminders(now = new Date()): Promise<{
         idempotencyKey: `reminder/${row.id}/${row.due_at}`,
       });
 
-      const { error: updateError } = await supabaseAdmin
-        .from("case_reminders")
-        .update({ sent_at: new Date().toISOString(), last_error: null, claimed_at: null })
-        .eq("id", row.id);
-      if (updateError) throw updateError;
+      emailSent = true;
+      // The email is out. Recording that is retried, and a failure to record it is never treated as
+      // a failed delivery: that would clear the claim and mail the seller the same reminder again
+      // at the next run, which falls outside the provider's duplicate window.
+      let updateError: unknown = null;
+      for (let tryNo = 0; tryNo < 3; tryNo++) {
+        const res = await supabaseAdmin
+          .from("case_reminders")
+          .update({ sent_at: new Date().toISOString(), last_error: null, claimed_at: null })
+          .eq("id", row.id);
+        updateError = res.error;
+        if (!updateError) break;
+      }
+      if (updateError) console.error("case reminder sent but not recorded", row.id);
       sent++;
     } catch {
+      if (emailSent) {
+        sent++;
+        continue;
+      }
       failed++;
       await markFailed(row.id, row.attempts, "Delivery failed; retry pending");
     }

@@ -179,7 +179,8 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
   it("discloses outcome records, device records, rate-limit hashes and the providers", () => {
     expect(privacy).toMatch(/share an outcome/i);
     expect(privacy).toMatch(/hashed browser fingerprint[^.]*not your IP address/i);
-    expect(privacy).toMatch(/short hash of your IP address/i);
+    // The decoder's counter is keyed on the plain address, so the policy must say so (7 Oct 2026).
+    expect(privacy).toMatch(/keep your IP address[^.]*in Upstash[^.]*only to count requests/i);
     for (const name of [
       "Vercel",
       "Supabase",

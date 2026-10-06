@@ -15,12 +15,15 @@ export async function GET(req: NextRequest) {
     return unauthorizedJsonResponse();
   }
   const email = (user.email ?? "").trim().toLowerCase();
-  if (!supabaseAdmin || !email) {
+  // No address on the account means no devices to list. A missing database connection is a
+  // configuration fault, not "no devices": say so rather than showing an empty, trustworthy list.
+  if (!email) {
     return NextResponse.json(
       { devices: [], cap: 5, currentDeviceId: null },
       { headers: { "Cache-Control": "no-store" } },
     );
   }
+  if (!supabaseAdmin) return serviceUnavailableResponse();
   let devices;
   try {
     devices = await listDevices(supabaseAdmin, user.id);

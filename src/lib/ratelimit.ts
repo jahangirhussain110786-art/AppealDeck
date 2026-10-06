@@ -113,6 +113,40 @@ function getRemindersLimiter(): Ratelimit | null {
   return _reminders;
 }
 
+let _decode: Ratelimit | null = null;
+function getDecodeLimiter(): Ratelimit | null {
+  if (!hasUpstashEnv()) return null;
+  if (!_decode) {
+    const redis = new Redis(redisCredentials()!);
+    // The free decoder is public and every first-time visitor uses it, so the cap is generous (a
+    // seller pasting several notices in a row is normal) and is only there to stop a script.
+    _decode = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(40, "1 m"),
+      analytics: true,
+      prefix: "ratelimit:decode",
+    });
+  }
+  return _decode;
+}
+
+/**
+ * Per-address limit for the free decoder. Unlike every other limiter here it FAILS OPEN: the route
+ * is free, calls no paid service and is bounded in CPU (see `inputCost.test.ts`), so an unreachable
+ * Redis must not stop a frightened seller from reading their notice.
+ */
+export async function rateLimitDecode(ip: string): Promise<RateLimitResult> {
+  const open = { success: true, limit: 40, remaining: 40, reset: Date.now() + 60_000 };
+  const limiter = getDecodeLimiter();
+  if (!limiter) return open;
+  try {
+    const r = await limiter.limit(ip);
+    return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
+  } catch {
+    return open;
+  }
+}
+
 export function isRateLimitEnabled(): boolean {
   return hasUpstashEnv();
 }

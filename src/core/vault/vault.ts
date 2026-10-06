@@ -94,7 +94,18 @@ export class Vault {
   }
 
   /** Copies an existing local vault only into an empty destination, preserving the source. */
-  async copyIntoEmpty(source: Vault, sourceSessionSecret?: string): Promise<void> {
+  async copyIntoEmpty(
+    source: Vault,
+    sourceSessionSecret?: string,
+    options: { replaceEmptyKey?: boolean } = {},
+  ): Promise<void> {
+    // What this vault's key store looked like when the copy began. With `replaceEmptyKey` (recovering
+    // older files into a vault that unlocked itself automatically and so already holds a key and no
+    // records) only a key store that CHANGED while the copy was being read means another tab
+    // initialised it. Without it any existing key is refused, as the first sign-in needs.
+    const metaBefore = keyStoreFingerprint(
+      (await this.db.meta.get("appealdeck-vault" as never))?.value,
+    );
     const snapshot = await source.exportAll();
     if (sourceSessionSecret && snapshot.meta.wrappedDek) {
       const dek = await unwrapDek(this.provider, sourceSessionSecret, snapshot.meta.wrappedDek);
@@ -116,10 +127,12 @@ export class Vault {
       }
       // The caller checked `isInitialized()` outside this transaction; another tab may have written
       // its own key since. Overwriting it would strand that tab's records under a lost key.
-      if (await this.db.meta.get("appealdeck-vault" as never)) {
+      const metaNow = keyStoreFingerprint(
+        (await this.db.meta.get("appealdeck-vault" as never))?.value,
+      );
+      if (metaNow !== metaBefore || (!options.replaceEmptyKey && metaNow !== "none"))
         throw new VaultAlreadyInitializedError();
-      }
-      await this.db.meta.add({ key: "appealdeck-vault", value: snapshot.meta });
+      await this.db.meta.put({ key: "appealdeck-vault", value: snapshot.meta });
       await this.db.records.bulkPut(snapshot.records);
     });
   }
@@ -636,13 +649,23 @@ export class Vault {
       (await this.db.meta.get("appealdeck-vault" as never))?.value,
     );
     // Verify every record before touching the destination. Never mix keys in one vault.
+    if (payload.records.length > MAX_IMPORT_RECORDS) {
+      throw new Error("This backup holds more records than a vault can restore.");
+    }
     const ids = new Set<string>();
+    // Rebuilt from what the backup proves rather than copied from what it claims: the size and the
+    // content hash are recomputed from the decrypted bytes, and every other field is checked, so a
+    // tampered or damaged backup cannot poison duplicate detection, show a wrong size, or leave a
+    // record with no tag list for the vault page to trip over.
+    const cleaned: VaultRecordInput[] = [];
     for (const record of payload.records) {
-      if (!record.id || ids.has(record.id))
+      if (!record || typeof record !== "object" || typeof record.id !== "string" || !record.id)
         throw new Error("Backup contains duplicate or missing record IDs");
+      if (ids.has(record.id)) throw new Error("Backup contains duplicate or missing record IDs");
       ids.add(record.id);
       assertEnvelopeBelongsTo(record);
-      await decryptBytes(this.provider, dek, record.ciphertext);
+      const bytes = await decryptBytes(this.provider, dek, record.ciphertext);
+      cleaned.push(await this.cleanImportedRecord(record, bytes));
     }
     const newKdf = newKdfParams(this.provider);
     const newWrapped = await wrapDek(this.provider, dek, options.destinationPassphrase, newKdf);
@@ -665,7 +688,7 @@ export class Vault {
       );
       if (metaNow !== metaBefore) throw new VaultAlreadyInitializedError();
       await this.db.meta.put({ key: "appealdeck-vault" as never, value: nextMeta });
-      for (const r of payload.records) {
+      for (const r of cleaned) {
         const env: EncryptionEnvelope = r.ciphertext;
         if (env.v !== VAULT_ENVELOPE_VERSION) {
           throw new VaultCryptoError(
@@ -679,6 +702,36 @@ export class Vault {
     });
     this.dek = dek;
     return n;
+  }
+
+  private async cleanImportedRecord(
+    r: VaultRecordInput,
+    bytes: Uint8Array,
+  ): Promise<VaultRecordInput> {
+    if (!IMPORT_KINDS.has(r.kind)) throw new Error(`Backup record ${r.id} has an unknown kind.`);
+    const text = (value: unknown, max: number, fallback = ""): string =>
+      typeof value === "string" ? value.slice(0, max) : fallback;
+    const when = (value: unknown): string =>
+      typeof value === "string" && !Number.isNaN(Date.parse(value))
+        ? value
+        : new Date().toISOString();
+    return {
+      id: r.id,
+      kind: r.kind,
+      name: text(r.name, 300, "Untitled"),
+      mimeType: text(r.mimeType, 200, "application/octet-stream"),
+      sizeBytes: bytes.length,
+      createdAt: when(r.createdAt),
+      updatedAt: when(r.updatedAt),
+      tags: Array.isArray(r.tags)
+        ? r.tags.filter((t): t is string => typeof t === "string").slice(0, 50)
+        : [],
+      ...(typeof r.evidenceKind === "string" ? { evidenceKind: r.evidenceKind.slice(0, 80) } : {}),
+      ...(typeof r.caseId === "string" ? { caseId: r.caseId.slice(0, 200) } : {}),
+      ciphertext: r.ciphertext,
+      plaintextHash: `${PLAINTEXT_HASH_VERSION}.${await sha256Base64(this.provider, bytes)}`,
+      schemaVersion: VAULT_ENVELOPE_VERSION,
+    };
   }
 
   async rawMeta(): Promise<VaultKeyStore | null> {
@@ -700,6 +753,9 @@ export class Vault {
     return sha256Base64(this.provider, data);
   }
 }
+
+const MAX_IMPORT_RECORDS = 20_000;
+const IMPORT_KINDS: ReadonlySet<string> = new Set(["document", "case", "note", "letter", "other"]);
 
 /** A stable summary of a key store, enough to tell whether it was replaced. Null when absent. */
 function keyStoreFingerprint(meta: VaultKeyStore | undefined): string {

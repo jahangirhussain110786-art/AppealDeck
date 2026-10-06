@@ -42,7 +42,7 @@ jobs:
           [ -z "$PASSPHRASE" ] && missing="$missing BACKUP_PASSPHRASE"
           if [ -n "$missing" ]; then
             echo "::error::No backup was taken. Missing repository secret(s):$missing"
-            echo "See docs/DEPLOYMENT.md section 7 for how to set them."
+            echo "See docs/DEPLOYMENT.md section 6a for how to set them."
             exit 1
           fi
 
@@ -66,7 +66,7 @@ jobs:
             exit 1
           fi
           # The tables whose loss cannot be recovered from anywhere else.
-          for table in licenses case_entitlements; do
+          for table in licenses checkout_intents outcome_events case_reminders; do
             grep -q "$table" backup.sql || echo "::warning::'$table' does not appear in the dump."
           done
 

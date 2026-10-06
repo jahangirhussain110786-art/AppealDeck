@@ -272,7 +272,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
       setCases(await listCases(vault));
       // Each card reads its own case, so a case that is not current still says what it needs.
       setSummaries(await loadCaseSummaries(vault, file?.id ?? null));
-      const log = file ? await loadCaseLog(vault) : null;
+      const log = file ? await loadCaseLog(vault, file.id) : null;
       // Real evidence documents only — case-file/case-log bookkeeping records share the same
       // vault under kind "case" and aren't something a seller thinks of as "a file I uploaded".
       const records = (await vault.list({ caseId: file?.id ?? "no-active-case" }))
@@ -320,7 +320,9 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
           // Deliberately not awaited and not followed by a reload: stamping the visit must never
           // block the page or re-enter this function. A failure here costs one "new since you were
           // here" badge, which is not worth surfacing an error to a seller in a crisis.
-          void saveCaseLog(vault, { ...log, lastSeenAt: new Date().toISOString() }).catch(() => {});
+          void saveCaseLog(vault, { ...log, lastSeenAt: new Date().toISOString() }, file.id).catch(
+            () => {},
+          );
         }
       }
     } catch (e) {
@@ -397,7 +399,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     const ctx = buildContext(caseFile, logEntry);
     logEntry.state = nextState(ctx, caseFile.state);
     try {
-      await saveCaseLog(vault, logEntry);
+      await saveCaseLog(vault, logEntry, caseFile.id);
       setReplyResult(null);
       setReplyText("");
       await loadFromVault();
@@ -413,7 +415,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     if (!caseFile || !caseLog) return;
     const logEntry: CaseLog = { ...caseLog, outcomePromptResolved: true };
     try {
-      await saveCaseLog(vault, logEntry);
+      await saveCaseLog(vault, logEntry, caseFile.id);
       await loadFromVault();
     } catch {
       // Non-critical — the case still works either way; a save hiccup here means the prompt may
@@ -439,7 +441,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     logEntry.state = nextState(ctx, caseFile.state);
     setSubmitting(true);
     try {
-      await saveCaseLog(vault, logEntry);
+      await saveCaseLog(vault, logEntry, caseFile.id);
       toast.success(APP.dashboard.submitCard.confirmed);
       await loadFromVault();
     } catch (e) {
@@ -457,7 +459,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     try {
       // Keeps the case file's state in step with a recorded outcome, so a settled case never
       // goes on saying it is waiting on Amazon.
-      await saveCaseLogAndState(vault, log);
+      await saveCaseLogAndState(vault, log, caseFile?.id);
       await loadFromVault();
       return true;
     } catch (e) {
@@ -864,6 +866,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
                           spellCheck={false}
+                          aria-label={APP.dashboard.replyCard.title}
                           placeholder={APP.dashboard.replyCard.placeholder}
                           rows={4}
                         />

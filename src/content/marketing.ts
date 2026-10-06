@@ -139,9 +139,9 @@ export const HOME = {
         note: "Per case, one time",
         price: "$249",
         features: [
-          "Basic document reading on your device is free. The Pass adds an AI reading of business documents against the notice",
+          "Basic document reading on your device is free. The Pass adds an AI reading of business documents against the notice, when the AI service is available (otherwise they are read on your device)",
           "The response prepared from your confirmed facts, every revision",
-          "Wording help, checked so dates, numbers and names stay as you wrote them",
+          "Wording help, when available, checked so dates, numbers and names stay as you wrote them",
           "7-day refund, no questions asked",
         ],
         cta: "Get the Appeal Pass",
@@ -314,7 +314,8 @@ export const PRICING = {
   headline: "One price per case. Every round included.",
   accent: "included.",
   currency: "USD",
-  currencyNote: "Same price in every country",
+  currencyNote:
+    "Same price in every country. Guidance, deadlines and records are written for Amazon US, and the decoder reads English notices",
   compareTitle: "What each one includes",
   readFirstTitle: "Read this before you pay.",
   readFirstAccent: "pay.",

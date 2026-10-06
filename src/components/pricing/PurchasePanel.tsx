@@ -121,8 +121,8 @@ export function PurchasePanel() {
 
   if (phase === "activating") {
     return (
-      <div className="flex items-center gap-3">
-        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+      <div className="flex items-center gap-3" role="status" aria-live="polite">
+        <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden />
         <div>
           <p className="text-sm font-medium text-foreground">{APP.access.composeGate.activating}</p>
           <p className="text-xs text-muted-foreground">{APP.access.composeGate.activatingHint}</p>
@@ -133,7 +133,7 @@ export function PurchasePanel() {
 
   if (phase === "timeout") {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3" role="status" aria-live="polite">
         <p className="text-sm text-muted-foreground">{APP.access.composeGate.stillWaiting}</p>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={handleCompleted}>
@@ -182,7 +182,7 @@ export function PurchasePanel() {
       {sessionState === "signed-in" && activeCase.status === "none" && (
         <p className="text-xs text-muted-foreground">
           {hasPass
-            ? "Your Appeal Pass covers one case, and it is still available. Start your case to use it."
+            ? "Your Appeal Pass is tied to the case it was bought for. If you deleted that case or cleared your browser without a backup, a new case needs its own Pass."
             : "Start your case before buying a Pass — each Pass covers one case."}{" "}
           <Link href="/case" className="text-link underline underline-offset-4">
             Start your case
@@ -239,8 +239,11 @@ export function PurchasePanel() {
           <Button
             variant="outline"
             size="lg"
-            className="h-auto min-h-11 flex-1 whitespace-normal py-2"
-            disabled
+            className="h-auto min-h-11 flex-1 cursor-not-allowed whitespace-normal py-2 opacity-60"
+            // aria-disabled rather than disabled: the button stays reachable by keyboard, so its
+            // label (which says what is missing) is read instead of being skipped.
+            aria-disabled="true"
+            onClick={(e) => e.preventDefault()}
           >
             {activeCase.status === "covered"
               ? "Appeal Pass active — covers one case"

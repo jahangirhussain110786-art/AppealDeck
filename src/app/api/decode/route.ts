@@ -8,6 +8,7 @@ import {
   analyzeReply,
 } from "@/core";
 import { findUnreadableIds } from "@/core/entities";
+import { rateLimitDecode, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { receiptDateOf } from "@/core/noticeDate";
 import {
   GARBLED_MESSAGE,
@@ -78,6 +79,13 @@ interface Note {
 }
 
 export async function POST(req: NextRequest) {
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.headers.get("x-real-ip") ??
+    "0.0.0.0";
+  const rate = await rateLimitDecode(ip);
+  if (!rate.success) return tooManyRequestsResponse(rate);
+
   let body: unknown;
   try {
     body = await req.json();

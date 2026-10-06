@@ -118,44 +118,50 @@ export async function pullVaultFromCloud(
   if (error) {
     throw new Error(`Could not list vault snapshots: ${error.message}`);
   }
-  const candidate = files?.find((f: { name: string }) =>
+  const candidates = (files ?? []).filter((f: { name: string }) =>
     f.name.startsWith(`vault-${VAULT_ENVELOPE_VERSION}-`),
   );
-  if (!candidate) {
+  if (candidates.length === 0) {
     throw new Error("No matching vault snapshot found for this account");
   }
-  const { data: blob, error: dlErr } = await supabase.storage
-    .from(VAULT_BUCKET)
-    .download(`${userId}/${candidate.name}`);
-  if (dlErr || !blob) {
-    throw new Error(`Could not download vault snapshot: ${dlErr?.message ?? "empty body"}`);
+  // Newest first, falling back to the next kept snapshot when one cannot be downloaded or is not a
+  // backup (a partial upload, a damaged file). A wrong passphrase is the seller's to fix, not a
+  // reason to try an older copy, so that is raised at once.
+  let lastError: unknown;
+  for (const candidate of candidates.slice(0, 3)) {
+    try {
+      const { data: blob, error: dlErr } = await supabase.storage
+        .from(VAULT_BUCKET)
+        .download(`${userId}/${candidate.name}`);
+      if (dlErr || !blob) {
+        throw new Error(`Could not download vault snapshot: ${dlErr?.message ?? "empty body"}`);
+      }
+      const payload = JSON.parse(await blob.text()) as {
+        version: number;
+        meta: unknown;
+        records: unknown;
+      } | null;
+      if (!payload || typeof payload !== "object" || !Array.isArray(payload.records)) {
+        throw new Error("That backup file is damaged.");
+      }
+      const imported = await vault.importAll(
+        {
+          version: payload.version,
+          meta: payload.meta as never,
+          records: payload.records as never,
+        },
+        {
+          sourcePassphrase: options.sourcePassphrase,
+          destinationPassphrase: options.destinationPassphrase,
+        },
+      );
+      return { imported, file: candidate.name };
+    } catch (error) {
+      if ((error as { code?: string }).code === "WRONG_PASSPHRASE") throw error;
+      lastError = error;
+    }
   }
-  const text = await blob.text();
-  const payload = JSON.parse(text) as {
-    version: number;
-    meta: Parameters<Vault["importAll"]>[0] extends infer T
-      ? T extends { meta: infer M }
-        ? M
-        : never
-      : never;
-    records: Parameters<Vault["importAll"]>[0] extends infer T
-      ? T extends { records: infer R }
-        ? R
-        : never
-      : never;
-  };
-  const imported = await vault.importAll(
-    {
-      version: payload.version,
-      meta: payload.meta as never,
-      records: payload.records as never,
-    },
-    {
-      sourcePassphrase: options.sourcePassphrase,
-      destinationPassphrase: options.destinationPassphrase,
-    },
-  );
-  return { imported, file: candidate.name };
+  throw lastError instanceof Error ? lastError : new Error("Could not restore from any backup.");
 }
 
 export const __test = { VAULT_BUCKET, VAULT_DB_NAME, VAULT_DB_VERSION, Dexie };

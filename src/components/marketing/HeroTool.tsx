@@ -32,7 +32,7 @@ export function HeroTool() {
       className="light rounded-[22px] bg-card p-2 text-foreground shadow-stage"
       aria-label={t.label}
     >
-      <div className="overflow-hidden rounded-2xl border border-border">
+      <div className="overflow-hidden rounded-2xl border border-border focus-within:ring-2 focus-within:ring-ring">
         <div className="flex items-center justify-between gap-3 border-b border-border/70 bg-surface-2 px-4 py-2">
           <label
             htmlFor="hero-notice"

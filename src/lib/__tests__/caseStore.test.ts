@@ -313,6 +313,45 @@ describe("caseStore", () => {
       expect(await getActiveCaseId(v)).toBe(a.id);
     });
 
+    it("rebuilds the case list from the case files when the index cannot be read", async () => {
+      const a = createCaseFile("POLICY");
+      const b = createCaseFile("LISTING");
+      await saveCaseFile(v, a);
+      await saveCaseFile(v, b);
+      // Corrupt the index record in place.
+      const index = (await v.list({ kind: "case" })).find((r) => r.name === "case_index")!;
+      await v.delete(index.id);
+      await v.addString({
+        name: "case_index",
+        mimeType: "application/json",
+        data: "{not json",
+        kind: "case",
+      });
+      expect((await listCases(v)).map((c) => c.id).sort()).toEqual([a.id, b.id].sort());
+    });
+
+    it("moves the active pointer off a case that no longer exists while others do", async () => {
+      const a = createCaseFile("POLICY");
+      const b = createCaseFile("LISTING");
+      await saveCaseFile(v, a);
+      await saveCaseFile(v, b);
+      await setActiveCaseId(v, a.id);
+      // Another tab deletes the active case's records without touching the pointer.
+      for (const r of await v.list({ caseId: a.id })) await v.delete(r.id);
+      expect(await getActiveCaseId(v)).toBe(b.id);
+    });
+
+    it("saveCaseLog with a case id writes that case's log even after another case became active", async () => {
+      const x = createCaseFile("POLICY");
+      const y = createCaseFile("LISTING");
+      await saveCaseFile(v, x);
+      await saveCaseFile(v, y);
+      await setActiveCaseId(v, y.id);
+      await saveCaseLog(v, { state: "SUBMITTED", attemptCount: 3 }, x.id);
+      expect(await loadCaseLog(v, x.id)).toEqual({ state: "SUBMITTED", attemptCount: 3 });
+      expect(await loadCaseLog(v, y.id)).toBeNull();
+    });
+
     it("setCaseArchived marks a case archived without touching its file or log", async () => {
       const file = createCaseFile("POLICY");
       await saveCaseFile(v, file);

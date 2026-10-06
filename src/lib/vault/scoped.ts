@@ -41,6 +41,45 @@ export function forgetGuestVault(): void {
   transientSecret = undefined;
 }
 
+const GUEST_REGISTRY = "appealdeck-guest-vault-registry";
+const GUEST_PREFIX = "appealdeck-vault-guest-";
+const GUEST_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Every browser session creates a guest database whose secret lives only in that tab's session
+ * storage, so one that is never signed in from is unreadable and never removed. Each open records
+ * when its database was last used (in local storage, visible to every tab); one untouched for a
+ * week belongs to a session that is gone and is deleted. A database made before this record existed
+ * is entered into it now, so it too expires a week from today and never sooner.
+ */
+async function pruneAbandonedGuestVaults(current: string): Promise<void> {
+  try {
+    const now = Date.now();
+    let registry: Record<string, number> = {};
+    try {
+      const parsed: unknown = JSON.parse(localStorage.getItem(GUEST_REGISTRY) ?? "{}");
+      if (parsed && typeof parsed === "object") registry = parsed as Record<string, number>;
+    } catch {
+      registry = {};
+    }
+    registry[current] = now;
+    const existing = (await indexedDB.databases?.())?.map((d) => d.name ?? "") ?? [];
+    for (const name of existing) {
+      if (name.startsWith(GUEST_PREFIX) && registry[name] === undefined) registry[name] = now;
+    }
+    for (const [name, seen] of Object.entries(registry)) {
+      if (name === current) continue;
+      if (typeof seen !== "number" || now - seen > GUEST_MAX_AGE_MS) {
+        indexedDB.deleteDatabase(name);
+        delete registry[name];
+      }
+    }
+    localStorage.setItem(GUEST_REGISTRY, JSON.stringify(registry));
+  } catch {
+    // Housekeeping only; storage that cannot be read just means nothing is pruned this time.
+  }
+}
+
 function guestSecret(): string {
   try {
     let secret = sessionStorage.getItem(SECRET);
@@ -62,6 +101,7 @@ export class ScopedBrowserVault extends Vault {
   private pendingGuest?: string;
   private pendingGuestSecret?: string;
   private merging?: Promise<void>;
+  private guestTouch?: ReturnType<typeof setInterval>;
   override async status() {
     const status = await super.status();
     return this.guest && status.state === "locked"
@@ -146,7 +186,6 @@ export class ScopedBrowserVault extends Vault {
       const bundles: Array<{
         file: NonNullable<Awaited<ReturnType<typeof loadCaseFile>>>;
         log: Awaited<ReturnType<typeof loadCaseLog>>;
-        documents: Array<Awaited<ReturnType<Vault["get"]>>>;
       }> = [];
       // Every guest case comes across, not only the active one: a seller can open several before
       // signing in, and the guest database is deleted once the merge is verified.
@@ -154,30 +193,33 @@ export class ScopedBrowserVault extends Vault {
         const file = await loadCaseFile(source, entry.id);
         if (!file) continue;
         const log = await loadCaseLog(source, entry.id);
-        const documents: Array<Awaited<ReturnType<Vault["get"]>>> = [];
-        for (const item of await source.list({ caseId: file.id })) {
-          if (item.kind === "document") documents.push(await source.get(item.id));
-        }
-        bundles.push({ file, log, documents });
+        bundles.push({ file, log });
       }
       const activeId = await getActiveCaseId(source);
-      const documents = bundles.flatMap((b) => b.documents);
+      // Every file the guest kept, not only those attached to a case: a file added on the Vault page
+      // before any case existed has no case id, and was deleted with the guest database when the
+      // seller signed in to an account that already had a vault (7 Oct 2026). Case and log records
+      // are carried by the bundles above.
+      const documents: Array<Awaited<ReturnType<Vault["get"]>>> = [];
+      for (const item of await source.list()) {
+        if (item.kind !== "case") documents.push(await source.get(item.id));
+      }
 
-      if (bundles.length > 0) {
+      if (bundles.length > 0 || documents.length > 0) {
         await this.atomic(async () => {
           const existing = await listCases(this);
-          for (const { file, log, documents: docs } of bundles) {
+          for (const { file, log } of bundles) {
             if (!existing.some((entry) => entry.id === file.id)) {
               await saveCaseFile(this, file);
-              if (log) await saveCaseLog(this, log);
+              if (log) await saveCaseLog(this, log, file.id);
             }
-            // Adopted whether or not the case was already here: a merge interrupted after an older
-            // version of this code copied the case would otherwise never bring its documents across.
-            for (const { record, bytes } of docs) await this.adoptRecord(record, bytes);
           }
+          // Adopted whether or not the case was already here: a merge interrupted after an older
+          // version of this code copied the case would otherwise never bring its documents across.
+          for (const { record, bytes } of documents) await this.adoptRecord(record, bytes);
           // The case the seller was last working on stays the one they land on.
-          const landOn = bundles.find((b) => b.file.id === activeId) ?? bundles[0]!;
-          await setActiveCaseId(this, landOn.file.id);
+          const landOn = bundles.find((b) => b.file.id === activeId) ?? bundles[0];
+          if (landOn) await setActiveCaseId(this, landOn.file.id);
         });
       }
 
@@ -211,6 +253,8 @@ export class ScopedBrowserVault extends Vault {
     return this.opening;
   }
   override async close() {
+    if (this.guestTouch) clearInterval(this.guestTouch);
+    this.guestTouch = undefined;
     this.unsubscribe?.();
     await super.close();
     this.opening = undefined;
@@ -230,6 +274,11 @@ export class ScopedBrowserVault extends Vault {
     this.guest = !user;
     this.db = new VaultDB(user ? `appealdeck-vault-user-${user.id}` : guestName);
     await super.open();
+    if (!user) {
+      void pruneAbandonedGuestVaults(guestName);
+      // A tab left open for days keeps its own database from looking abandoned to another tab.
+      this.guestTouch = setInterval(() => void pruneAbandonedGuestVaults(guestName), 3_600_000);
+    }
     if (client?.auth.onAuthStateChange) {
       const { data } = client.auth.onAuthStateChange((_event, session) => {
         if ((session?.user.id ?? null) !== (user?.id ?? null)) {

@@ -573,20 +573,24 @@ function WorkspaceInner({
         await saveCaseFile(vault, updated);
         if (nextState) {
           const sentHere = next.submissions.some((s) => s.source !== "prior");
-          await saveCaseLog(vault, {
-            ...oldLog,
-            state: nextState,
-            attemptCount: Math.max(oldLog?.attemptCount ?? 0, next.submissions.length),
-            ...(nextState === "SUBMITTED"
-              ? {
-                  submittedAt: next.submissions.at(-1)?.at,
-                  // "Marked as sent" records no submission; this is what says something was sent.
-                  ...(sentHere
-                    ? {}
-                    : { markedSentAt: oldLog?.markedSentAt ?? new Date().toISOString() }),
-                }
-              : {}),
-          });
+          await saveCaseLog(
+            vault,
+            {
+              ...oldLog,
+              state: nextState,
+              attemptCount: Math.max(oldLog?.attemptCount ?? 0, next.submissions.length),
+              ...(nextState === "SUBMITTED"
+                ? {
+                    submittedAt: next.submissions.at(-1)?.at,
+                    // "Marked as sent" records no submission; this is what says something was sent.
+                    ...(sentHere
+                      ? {}
+                      : { markedSentAt: oldLog?.markedSentAt ?? new Date().toISOString() }),
+                  }
+                : {}),
+            },
+            current.id,
+          );
         }
       });
       persisted.current = JSON.stringify(next);
@@ -1319,7 +1323,7 @@ function WorkspaceInner({
     setBusy(true);
     setError("");
     try {
-      await saveCaseLogAndState(vault, back);
+      await saveCaseLogAndState(vault, back, file.id);
       setLog(back);
       const fresh = await loadCaseFile(vault, file.id);
       if (fresh) setCurrent(fresh);

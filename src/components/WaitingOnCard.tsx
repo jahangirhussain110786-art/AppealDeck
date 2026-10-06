@@ -78,6 +78,8 @@ export function WaitingOnCard({
                 // clock item reading "Chase undefined".
                 if (!party) return;
                 const value = event.target.value;
+                // Partial years while typing (0002, 0020, 0202) are not dates to save.
+                if (value && Number(value.slice(0, 4)) < 1900) return;
                 void save({
                   party,
                   since: log.waitingOn?.since ?? new Date().toISOString(),

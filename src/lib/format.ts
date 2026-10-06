@@ -3,11 +3,13 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 export function formatDate(d: Date | string | null): string {
   if (!d) return "";
   const date = typeof d === "string" ? new Date(d) : d;
+  if (Number.isNaN(date.getTime())) return "";
   return `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
 }
 
 export function formatTime(d: Date | string, { tz = true }: { tz?: boolean } = {}): string {
   const date = typeof d === "string" ? new Date(d) : d;
+  if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat(undefined, {
     hour: "2-digit",
     minute: "2-digit",
@@ -18,7 +20,8 @@ export function formatTime(d: Date | string, { tz = true }: { tz?: boolean } = {
 
 export function formatDateTime(d: Date | string | null): string {
   if (!d) return "";
-  return `${formatDate(d)}, ${formatTime(d)}`;
+  const day = formatDate(d);
+  return day ? `${day}, ${formatTime(d)}` : "";
 }
 
 export function formatRelativeDays(target: Date | string | null, now: Date): string {

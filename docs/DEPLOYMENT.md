@@ -83,7 +83,7 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
 1. Supabase dashboard → Authentication → URL Configuration
    - Site URL: `https://appealdeck.com`
    - Redirect URLs: `<origin>/auth/callback` for the current single host (the `vercel.app` URL now, the apex later) + `http://localhost:3000/auth/callback` (dev only). No `app.` entry unless the split is switched on.
-2. Supabase dashboard → SQL Editor: migrations `0001` through `0011` are **all applied** as of 22 Sep 2026. The founder applied `0008_outcome_events.sql` and `0011_case_reminders.sql` by hand that day, the last two outstanding; every migration is manual copy-paste, because no AI session has direct SQL access to this project — only the REST API, which cannot execute DDL.
+2. Supabase dashboard → SQL Editor: migrations `0001` through `0015` are **all applied** (`0012` on 6 Oct 2026; `0013`, `0014` and `0015` on 7 Oct 2026, from this machine through the session pooler, each followed by a rolled-back smoke test; `0014` makes a second payment for a case that already has a Pass park in `payment_events_unmatched` so you can refund it, and `0015` hardens the follow-ups). Through `0011` they were applied by hand as of 22 Sep 2026. The founder applied `0008_outcome_events.sql` and `0011_case_reminders.sql` by hand that day, the last two outstanding; every migration is manual copy-paste, because no AI session has direct SQL access to this project — only the REST API, which cannot execute DDL.
 
    Verified the same day against the live project by REST probe, not by assumption: every column present with no drift, RLS on with anon reads empty and anon inserts refused (401), the `CHECK` constraints rejecting an out-of-range `readiness_at_submit` and an unknown `outcome`, the `(user_id, case_ref)` unique index collapsing a re-set reminder into one row instead of duplicating it, and the cron's own due-row query returning what it should. Every row written by that check was deleted again; both tables hold 0 rows.
 
@@ -135,6 +135,8 @@ backup nobody has ever opened is not a backup.
 the rows only the server holds. The vault is local-first and has no server copy by design, so no
 seller document is in scope. Losing the licence table means every paying customer loses access to
 the case they bought, with no record on this side of what they are owed.
+
+**What the dump does not contain.** `--data-only` leaves out the `auth` schema, but `licenses`, `checkout_intents` and `purchase_email_outbox` point at `auth.users`. The dump is the data for the app's tables; the accounts themselves come from Supabase's own project backup (Dashboard → Database → Backups), which you also need. Use a long random `BACKUP_PASSPHRASE` (at least 32 characters): the encrypted file is kept for 90 days as a workflow artifact that anyone with read access to the repository can download, so the passphrase is what protects it.
 
 **To restore:** download the artifact, then
 `gpg --decrypt --passphrase '<passphrase>' -o backup.sql backup.sql.gpg` and replay it with `psql`

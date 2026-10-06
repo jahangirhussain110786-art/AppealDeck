@@ -337,6 +337,18 @@ export function buildCaseExport(
     // A picked day, stored as midnight UTC: `formatDate` would print the day before west of UTC.
     lines.push(`Follow-up date set by the seller: ${formatDay(log.reminderAt.slice(0, 10))}`);
   }
+  // What a specialist needs to see first: whether anything was sent, and how Amazon last answered.
+  if (log?.markedSentAt) {
+    lines.push(
+      `Response marked as sent by the seller on ${formatDate(log.markedSentAt)} (sent outside this tool, not verified)`,
+    );
+  }
+  if (log && log.attemptCount > 0) lines.push(`Attempts recorded: ${log.attemptCount}`);
+  if (log?.lastReply) {
+    lines.push(
+      `Amazon's last reply, as classified here: ${log.lastReply.category.replaceAll("_", " ")} (${formatDate(log.lastReply.at)})`,
+    );
+  }
   if (log?.waitingOn) {
     lines.push(
       `Waiting on: ${log.waitingOn.party}, since ${formatDate(log.waitingOn.since)}${log.waitingOn.followUpAt ? `, chase on ${formatDay(log.waitingOn.followUpAt.slice(0, 10))}` : ""}`,

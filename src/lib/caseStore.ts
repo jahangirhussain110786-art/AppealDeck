@@ -207,10 +207,39 @@ async function readCaseIndex(vault: Vault): Promise<CaseIndexEntry[]> {
   try {
     const { text } = await vault.getString(id);
     const parsed: unknown = JSON.parse(text);
-    return Array.isArray(parsed) ? (parsed as CaseIndexEntry[]) : [];
+    if (Array.isArray(parsed)) return parsed as CaseIndexEntry[];
+  } catch {
+    // Fall through to the rebuild below.
+  }
+  // The index exists but cannot be read. Returning [] here let the next save write an index with one
+  // entry, so every other case dropped off the dashboard list while its records stayed in the vault.
+  // The case files themselves are the source of truth: list them instead.
+  return rebuildCaseIndex(vault);
+}
+
+async function rebuildCaseIndex(vault: Vault): Promise<CaseIndexEntry[]> {
+  const rebuilt: CaseIndexEntry[] = [];
+  try {
+    for (const item of await vault.list({ kind: "case" })) {
+      if (item.name !== CASE_FILE_NAME || !item.caseId) continue;
+      try {
+        const { text } = await vault.getString(item.id);
+        const parsed = JSON.parse(text) as { kind?: ViolationKind; createdAt?: string };
+        if (parsed.kind) {
+          rebuilt.push({
+            id: item.caseId,
+            kind: parsed.kind,
+            createdAt: parsed.createdAt ?? item.createdAt,
+          });
+        }
+      } catch {
+        // One unreadable case file must not hide the others.
+      }
+    }
   } catch {
     return [];
   }
+  return rebuilt;
 }
 
 async function writeCaseIndex(vault: Vault, index: CaseIndexEntry[]): Promise<void> {
@@ -283,7 +312,18 @@ async function resolveActiveCaseId(vault: Vault): Promise<string | null> {
   }
 
   const pointed = await readActivePointer(vault);
-  if (pointed) return pointed;
+  if (pointed) {
+    // A pointer to a case that was deleted in another tab would show "no case" while others exist.
+    // Only when the named case has neither a file nor a log, and the index still lists others.
+    const hasFile = await findRecordId(vault, CASE_FILE_NAME, pointed);
+    const hasLog = hasFile ? null : await findRecordId(vault, CASE_LOG_NAME, pointed);
+    if (hasFile || hasLog) return pointed;
+    const others = (await readCaseIndex(vault)).filter((e) => e.id !== pointed);
+    if (others.length === 0) return pointed;
+    const newest = [...others].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]!;
+    await writeActivePointer(vault, newest.id);
+    return newest.id;
+  }
 
   const legacyList = await vault.list({ caseId: LEGACY_CASE_ID });
   const legacyFile = legacyList.find((r) => r.name === CASE_FILE_NAME);
@@ -399,9 +439,14 @@ export async function loadCaseFile(
   };
 }
 
-export async function saveCaseLog(vault: Vault, log: CaseLog): Promise<void> {
+/**
+ * Saves a case's log. Pass `forCaseId` whenever the log was loaded for a known case: without it the
+ * log is written to whichever case is active NOW, so a seller who switched case (in the sidebar or
+ * another tab) after the screen loaded would have this case's log written over the other one's.
+ */
+export async function saveCaseLog(vault: Vault, log: CaseLog, forCaseId?: string): Promise<void> {
   return vault.atomic(async () => {
-    const caseId = await resolveOrCreateActiveCaseId(vault);
+    const caseId = forCaseId ?? (await resolveOrCreateActiveCaseId(vault));
     const existing = await findRecordId(vault, CASE_LOG_NAME, caseId);
     if (existing) {
       await vault.delete(existing);
@@ -569,9 +614,13 @@ export function outcomeBlocksStateChange(
  * two saves rather than one transaction because `saveCaseFile` opens its own; the file is re-read
  * after the log is saved so a state change never overwrites newer workspace content.
  */
-export async function saveCaseLogAndState(vault: Vault, log: CaseLog): Promise<void> {
-  await saveCaseLog(vault, log);
-  const file = await loadCaseFile(vault);
+export async function saveCaseLogAndState(
+  vault: Vault,
+  log: CaseLog,
+  forCaseId?: string,
+): Promise<void> {
+  await saveCaseLog(vault, log, forCaseId);
+  const file = await loadCaseFile(vault, forCaseId);
   if (!file) return;
   const next = fileStateAfterLog(file, log);
   if (next && next !== file.state) await saveCaseFile(vault, { ...file, state: next });

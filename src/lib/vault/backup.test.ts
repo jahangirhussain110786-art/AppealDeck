@@ -167,6 +167,49 @@ describe("cloud backup: restore", () => {
     expect(seen).toEqual([{ n: 3_000_003 }]);
   });
 
+  it("falls back to the next snapshot when the newest is damaged", async () => {
+    const good = new Blob([
+      JSON.stringify({ version: VAULT_ENVELOPE_VERSION, meta: {}, records: [{ n: 1 }] }),
+    ]);
+    const s = fakeSupabase([
+      {
+        name: `vault-${VAULT_ENVELOPE_VERSION}-2000.json`,
+        created_at: "2",
+        body: new Blob(["{half a file"]),
+      },
+      { name: `vault-${VAULT_ENVELOPE_VERSION}-1000.json`, created_at: "1", body: good },
+    ]);
+    const target = {
+      importAll: async (payload: { records: unknown[] }) => payload.records.length,
+    } as unknown as Vault;
+    const r = await pullVaultFromCloud(target, "u1", {
+      sourcePassphrase: "a-passphrase",
+      destinationPassphrase: "a-passphrase",
+      supabase: s.client,
+    });
+    expect(r.file).toBe(`vault-${VAULT_ENVELOPE_VERSION}-1000.json`);
+  });
+
+  it("does not try older snapshots when the passphrase is wrong", async () => {
+    const body = () =>
+      new Blob([JSON.stringify({ version: VAULT_ENVELOPE_VERSION, meta: {}, records: [] })]);
+    const s = fakeSupabase([
+      { name: `vault-${VAULT_ENVELOPE_VERSION}-2000.json`, created_at: "2", body: body() },
+      { name: `vault-${VAULT_ENVELOPE_VERSION}-1000.json`, created_at: "1", body: body() },
+    ]);
+    const importAll = vi
+      .fn()
+      .mockRejectedValue(Object.assign(new Error("wrong"), { code: "WRONG_PASSPHRASE" }));
+    await expect(
+      pullVaultFromCloud({ importAll } as unknown as Vault, "u1", {
+        sourcePassphrase: "x",
+        destinationPassphrase: "x",
+        supabase: s.client,
+      }),
+    ).rejects.toThrow(/wrong/);
+    expect(importAll).toHaveBeenCalledTimes(1);
+  });
+
   it("says so plainly when there is nothing to restore", async () => {
     const target = { importAll: async () => 0 } as unknown as Vault;
     await expect(

@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -110,7 +111,7 @@ export function AppSidebar({
                 href={item.href}
                 aria-current={on ? "page" : undefined}
                 className={cn(
-                  "inline-flex h-9 shrink-0 items-center rounded-lg px-1.5 text-[0.8125rem] font-medium sm:px-2.5 sm:text-sm",
+                  "inline-flex h-9 shrink-0 items-center rounded-lg max-sm:min-h-11 px-1.5 text-[0.8125rem] font-medium sm:px-2.5 sm:text-sm",
                   on ? "bg-white/[0.1] text-foreground" : "text-muted-foreground",
                 )}
               >
@@ -194,6 +195,7 @@ function SidebarCases() {
                       setOpening(null);
                     } catch {
                       setOpening(null);
+                      toast.error("Could not open that case. Nothing was changed. Try again.");
                     }
                   }}
                 >

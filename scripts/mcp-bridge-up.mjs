@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync, appendFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, appendFileSync, unlinkSync } from "node:fs";
 import { resolve, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import http from "node:http";
@@ -73,7 +73,7 @@ const r = spawnSync("cmd.exe", ["/c", helperCmd], {
 r?.child?.unref?.();
 setTimeout(() => {
   try {
-    existsSync(helperCmd) && require("node:fs").unlinkSync(helperCmd);
+    existsSync(helperCmd) && unlinkSync(helperCmd);
   } catch {}
 }, 2000);
 

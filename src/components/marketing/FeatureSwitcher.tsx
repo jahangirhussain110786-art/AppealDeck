@@ -28,6 +28,7 @@ export function FeatureSwitcher({
               key={item.title}
               type="button"
               aria-pressed={on}
+              aria-controls="feature-panel"
               onClick={() => setActive(i)}
               className={cn(
                 "grid grid-cols-[36px_1fr] gap-3.5 border-t border-border py-5 text-left last:border-b focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -56,7 +57,7 @@ export function FeatureSwitcher({
       </div>
 
       <div className="warm-stage relative flex min-h-[420px] flex-col justify-center overflow-hidden rounded-[28px] p-5 sm:p-10 lg:min-h-[500px]">
-        <div key={active} className="panel-rise w-full">
+        <div key={active} id="feature-panel" aria-live="polite" className="panel-rise w-full">
           {panels[active]}
         </div>
       </div>

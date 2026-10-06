@@ -181,6 +181,38 @@ describe("vault ownership", () => {
    * proven, because after that nothing else holds the seller's files. So a copy that fails must
    * leave the guest data and its secret exactly where they were, and the merge must try again.
    */
+  it("keeps a guest file that was never attached to a case when signing into an existing account", async () => {
+    const id = crypto.randomUUID();
+    databases.add(`appealdeck-vault-user-${id}`);
+    getUser.mockResolvedValue({ data: { user: { id } }, error: null });
+    const account = new ScopedBrowserVault(crypto);
+    await account.open();
+    await account.initWithDeviceKey();
+    await saveCaseFile(account, createCaseFile("POLICY"));
+    await account.close();
+
+    getUser.mockResolvedValue({ data: { user: null }, error: null });
+    databases.add(guestVaultName());
+    const guest = new ScopedBrowserVault(crypto);
+    await guest.open();
+    await guest.initWithDeviceKey();
+    // Added on the Vault page before any case existed: no case id.
+    const loose = await guest.add({
+      name: "loose.pdf",
+      mimeType: "application/pdf",
+      data: new TextEncoder().encode("%PDF-1.4 loose file"),
+    });
+    await guest.close();
+
+    getUser.mockResolvedValue({ data: { user: { id } }, error: null });
+    const signedIn = new ScopedBrowserVault(crypto);
+    await signedIn.open();
+    await signedIn.unlockWithDeviceKey();
+    const { bytes } = await signedIn.get(loose.id);
+    expect(new TextDecoder().decode(bytes)).toBe("%PDF-1.4 loose file");
+    await signedIn.close();
+  });
+
   it("keeps the guest copy intact when documents fail to come across, and retries", async () => {
     const id = crypto.randomUUID();
     databases.add(`appealdeck-vault-user-${id}`);
