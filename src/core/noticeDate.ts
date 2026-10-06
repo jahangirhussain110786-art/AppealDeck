@@ -324,9 +324,16 @@ export function statedDeadlineOf(raw: string, sentOn: string | null): StatedDead
     const after = raw.slice(date.end, date.end + 80);
     const aboutResponding = RESPONDING.test(sentence) || RESPONDING_AFTER.test(after);
     if (!aboutResponding) continue;
-    if (SOMEONE_ELSES_CLOCK.test(clause) || PAST_TENSE.test(clause)) continue;
+    // "Amazon will close your account if no appeal is received by 10 October": Amazon is the actor
+    // of the first half, but the date belongs to the condition, which is what the seller must meet.
+    const dateIsTheCondition =
+      /\bif\s+(?:no\b|(?:you|we|amazon)\s+(?:do(?:es)?\s+not|(?:have|has)\s+not|don't)\b)/i.test(
+        clause,
+      );
+    if ((SOMEONE_ELSES_CLOCK.test(clause) && !dateIsTheCondition) || PAST_TENSE.test(clause))
+      continue;
     const lead = raw.slice(Math.max(0, cue.index! - 40), cue.index!);
-    if (DESCRIBES_A_RECORD.test(lead) && !AN_OBLIGATION.test(lead)) continue;
+    if (DESCRIBES_A_RECORD.test(lead) && !AN_OBLIGATION.test(lead) && !dateIsTheCondition) continue;
     if (RECORDS_PERIOD.test(lead)) continue;
     found.push({ day: date.day, start: at, end: date.end });
   }

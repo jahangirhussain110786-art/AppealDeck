@@ -44,6 +44,9 @@ const countedTransactions = new Set<string>();
  * the one place both paths pass through. Revenue itself is reported from the Paddle webhook; this
  * event is only the funnel step.
  */
+let paddleInitialised = false;
+let paddleCompleted: (() => void) | undefined;
+
 function countPurchaseOnce(transactionId: string | undefined): void {
   const key = transactionId ?? "unidentified";
   if (countedTransactions.has(key)) return;
@@ -76,6 +79,14 @@ export function CheckoutButton({
   useEffect(() => {
     completedRef.current = onCompleted;
   }, [onCompleted]);
+  // Paddle is initialised once, so its callback reaches whichever button is mounted now.
+  useEffect(() => {
+    const mine = () => completedRef.current?.();
+    paddleCompleted = mine;
+    return () => {
+      if (paddleCompleted === mine) paddleCompleted = undefined;
+    };
+  }, []);
   const [opening, setOpening] = useState(false);
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -90,13 +101,20 @@ export function CheckoutButton({
 
     function init(tk: string) {
       if (!window.Paddle) return;
+      // Initialised once per page load: a remount (navigating back to /pricing) must not register a
+      // second event callback, which would count a purchase twice.
+      if (paddleInitialised) {
+        setReady(true);
+        return;
+      }
+      paddleInitialised = true;
       window.Paddle.Environment.set(env);
       window.Paddle.Initialize({
         token: tk,
         eventCallback: (event) => {
           if (event.name === "checkout.completed") {
             countPurchaseOnce(event.data?.transaction_id);
-            completedRef.current?.();
+            paddleCompleted?.();
           }
         },
       });
@@ -108,9 +126,16 @@ export function CheckoutButton({
       return;
     }
 
-    const existing = document.getElementById("paddle-js") as HTMLScriptElement | null;
+    let existing = document.getElementById("paddle-js") as HTMLScriptElement | null;
+    // A script element whose load failed will never fire "load" again, so a remount would wait on
+    // it forever with the button disabled. Replace it with a fresh one.
+    if (existing?.dataset.failed === "1") {
+      existing.remove();
+      existing = null;
+    }
     if (existing) {
       existing.addEventListener("load", () => init(token));
+      existing.addEventListener("error", () => setLoadError(APP.checkout.loadFailedTitle));
       return;
     }
 
@@ -120,6 +145,7 @@ export function CheckoutButton({
     script.async = true;
     script.onload = () => init(token);
     script.onerror = () => {
+      script.dataset.failed = "1";
       setLoadError(APP.checkout.loadFailedTitle);
       toast.error(APP.checkout.loadFailedTitle, {
         description: APP.checkout.loadFailedDesc,

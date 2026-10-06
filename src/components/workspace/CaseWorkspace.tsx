@@ -807,7 +807,16 @@ function WorkspaceInner({
     );
   };
   const upload = async (id: string, uploadFile: File) => {
-    if (!fileRef.current || saving.current || uploading.current) return false;
+    if (!fileRef.current || uploading.current) return false;
+    // A save in flight (an autosave of what was just typed, say) finishes in a moment: wait for the
+    // queued ones instead of silently dropping the file. A long job that holds the case (preparing
+    // the response) is not waited for; the seller is told, because a dropped file shows nothing.
+    if (saving.current) await commitQueue.current;
+    if (saving.current) {
+      toast.info("A save is still running. Try adding the file again in a moment.");
+      return false;
+    }
+    if (uploading.current) return false;
     uploading.current = true;
     setBusy(true);
     const caseId = fileRef.current.id;
@@ -1510,6 +1519,10 @@ function WorkspaceInner({
               disabled={busy}
               onClick={async () => {
                 if (saving.current || uploading.current) return;
+                // The prompt tells the seller to save unfinished edits; do it for them, so words
+                // typed in the last moments are written to this case before it is left behind.
+                await flushPendingRef.current();
+                if (saving.current || uploading.current) return;
                 saving.current = true;
                 setBusy(true);
                 try {
@@ -1518,6 +1531,8 @@ function WorkspaceInner({
                   draftPending.current.clear();
                   draftCaseId.current.clear();
                   setDirtyKeys(new Set());
+                  setMigrationNote(null);
+                  setDocChecks({});
                   const fresh = { ...createCaseFile("UNKNOWN"), workspace: newWorkspace() };
                   await vault.atomic(async () => {
                     const disk = await loadCaseFile(vault);

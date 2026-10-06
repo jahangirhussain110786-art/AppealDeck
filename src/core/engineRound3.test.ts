@@ -58,6 +58,21 @@ describe("a stated deadline worded with 'is' or a time of day", () => {
   });
 });
 
+describe("a deadline written as a condition on Amazon's action", () => {
+  it("reads the date of 'if no appeal is received by'", () => {
+    expect(
+      statedDeadlineOf(
+        "Amazon will close your account if no appeal is received by 10 October 2026.",
+        null,
+      )?.day,
+    ).toBe("2026-10-10");
+  });
+
+  it("still ignores Amazon's own timetable", () => {
+    expect(statedDeadlineOf("We will review your appeal by 10 October 2026.", null)).toBeNull();
+  });
+});
+
 describe("authenticity wording", () => {
   it("classifies 'do not appear to be authentic'", () => {
     expect(

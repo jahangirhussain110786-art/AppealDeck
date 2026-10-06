@@ -37,11 +37,14 @@ export function useSessionState(): SessionState {
     let cancelled = false;
     let unsubscribe = () => {};
 
+    let subscribed = false;
     const resolve = async () => {
+      if (subscribed) return;
       if (!mayHaveSession()) {
         setState("signed-out");
         return;
       }
+      subscribed = true;
       const { createSupabaseBrowserClient } = await import("@/lib/supabase/client");
       if (cancelled) return;
       const supabase = createSupabaseBrowserClient();
@@ -65,9 +68,20 @@ export function useSessionState(): SessionState {
 
     void resolve();
 
+    // A tab that found no auth cookie never subscribes to auth changes, so a sign-in completed in
+    // another tab (a magic link, an email confirmation) would leave it showing "signed out" until a
+    // reload. Looking again when the tab comes back to the front costs one cookie read.
+    const recheck = () => {
+      if (document.visibilityState === "visible") void resolve();
+    };
+    document.addEventListener("visibilitychange", recheck);
+    window.addEventListener("focus", recheck);
+
     return () => {
       cancelled = true;
       unsubscribe();
+      document.removeEventListener("visibilitychange", recheck);
+      window.removeEventListener("focus", recheck);
     };
   }, []);
 

@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 const getApiUserMock = vi.fn();
 const rateLimitComposeMock = vi.fn();
 const insertMock = vi.fn();
+const recentIntentMock = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   getApiUser: () => getApiUserMock(),
@@ -19,6 +20,13 @@ vi.mock("@/lib/ratelimit", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   supabaseAdmin: {
     from: () => ({
+      // The "reuse a recent unpaid intent" lookup: .select().eq()...maybeSingle()
+      select: () => {
+        const chain: Record<string, unknown> = {};
+        for (const m of ["eq", "is", "gt", "order", "limit"]) chain[m] = () => chain;
+        chain.maybeSingle = () => recentIntentMock();
+        return chain;
+      },
       insert: () => ({
         select: () => ({
           single: () => insertMock(),
@@ -56,6 +64,8 @@ beforeEach(() => {
     reset: Date.now() + 60_000,
   });
   insertMock.mockReset();
+  recentIntentMock.mockReset();
+  recentIntentMock.mockResolvedValue({ data: null, error: null });
   insertMock.mockResolvedValue({ data: { id: "intent-1" }, error: null });
   getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
   fetchLicenseMock.mockReset();
@@ -83,6 +93,14 @@ describe("/api/checkout/intent double-purchase guard", () => {
     });
     const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true }));
     expect(res.status).toBe(200);
+  });
+
+  it("hands back a recent unpaid intent instead of opening a second one", async () => {
+    recentIntentMock.mockResolvedValue({ data: { id: "intent-earlier" }, error: null });
+    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).intentId).toBe("intent-earlier");
+    expect(insertMock).not.toHaveBeenCalled();
   });
 
   it("does not open a checkout when the licence lookup fails", async () => {

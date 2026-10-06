@@ -57,6 +57,21 @@ export async function POST(req: NextRequest) {
       { error: "This case already has an Appeal Pass. It covers every revision — open your case." },
       { status: 409 },
     );
+  // A second click or a second tab within half an hour gets the same intent back. Two payments made
+  // through one intent cannot both become a Pass: the second is parked by the webhook as "already
+  // bound to a different transaction" and refunded by hand, instead of becoming a second licence.
+  const recent = await supabaseAdmin
+    .from("checkout_intents")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("case_id", parsed.data.caseId)
+    .eq("price_id", priceId)
+    .is("transaction_id", null)
+    .gt("created_at", new Date(Date.now() - 30 * 60_000).toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (recent.data?.id) return NextResponse.json({ intentId: recent.data.id, priceId });
   const { data, error } = await supabaseAdmin
     .from("checkout_intents")
     .insert({

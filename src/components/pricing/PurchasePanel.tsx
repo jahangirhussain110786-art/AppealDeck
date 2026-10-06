@@ -29,6 +29,7 @@ type CompletionPhase = "idle" | "activating" | "timeout";
 type CaseCheck =
   | { status: "checking" }
   | { status: "none" }
+  | { status: "locked" }
   | { status: "ineligible"; label: string }
   | { status: "covered"; label: string }
   | { status: "ok"; label: string };
@@ -69,7 +70,9 @@ export function PurchasePanel() {
       const vault = getBrowserVault();
       try {
         if (!(await openVaultForVisitor(vault))) {
-          if (alive) setCaseCheck({ status: "none" });
+          // A vault the seller protected with a passphrase cannot be read from here. That is not
+          // "no case": saying so would tell someone with a case to start one.
+          if (alive) setCaseCheck({ status: "locked" });
           return;
         }
         const file = await loadCaseFile(vault);
@@ -148,6 +151,7 @@ export function PurchasePanel() {
     sessionState === "signed-in" &&
     (activeCase.status === "checking" ||
       activeCase.status === "none" ||
+      activeCase.status === "locked" ||
       activeCase.status === "ineligible" ||
       activeCase.status === "covered");
 
@@ -182,6 +186,16 @@ export function PurchasePanel() {
             : "Start your case before buying a Pass — each Pass covers one case."}{" "}
           <Link href="/case" className="text-link underline underline-offset-4">
             Start your case
+          </Link>
+        </p>
+      )}
+
+      {sessionState === "signed-in" && activeCase.status === "locked" && (
+        <p className="text-xs text-muted-foreground">
+          Your case is protected by your vault passphrase, so this page cannot see it. Unlock it,
+          then come back to buy the Pass.{" "}
+          <Link href="/case" className="text-link underline underline-offset-4">
+            Open your case
           </Link>
         </p>
       )}
