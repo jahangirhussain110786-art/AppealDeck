@@ -127,7 +127,18 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
   const start = windowStart(input);
   const days = input.parsed.statedWindowDays;
   const legacy = input.parsed.legacySeventeenDay && days === 17;
-  const stated = input.parsed.statedDeadline;
+  /*
+    When a notice gives both a counted window and a date, the sooner one governs: showing the later
+    of the two would let the seller believe they have days they do not. A stated date that is
+    earlier than or equal to the counted one is kept as before.
+  */
+  const countedDue = start && days !== null ? isoDayOf(addDays(dayStart(start), days)) : null;
+  const statedLater = !!(
+    input.parsed.statedDeadline &&
+    countedDue &&
+    input.parsed.statedDeadline.day > countedDue
+  );
+  const stated = statedLater ? null : input.parsed.statedDeadline;
 
   /*
     A notice that names its last day outright ("submit your appeal by 1 October 2026") is taken at

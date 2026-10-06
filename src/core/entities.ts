@@ -39,7 +39,7 @@ export interface ExtractedEntity {
 }
 
 /** ASINs are ten characters; modern ones are B0 plus eight uppercase alphanumerics. */
-const ASIN = /\bB0[A-Z0-9]{8}\b/g;
+const ASIN = /\bB0[A-Z0-9]{8}\b/gi;
 
 /** Amazon order IDs are the documented 3-7-7 grouping. */
 const ORDER_ID = /\b\d{3}-\d{7}-\d{7}\b/g;
@@ -55,11 +55,12 @@ const MONTH =
 
 const DATE_PATTERNS: ReadonlyArray<readonly [RegExp, boolean]> = [
   // ISO — unambiguous.
-  [/\b\d{4}-\d{2}-\d{2}\b/g, false],
+  // (?!\d) rather than \b so a timestamp such as 2026-03-04T23:30:00 still yields its day.
+  [/\b\d{4}-\d{2}-\d{2}(?!\d)/g, false],
   // "12 September 2026" / "12 Sep 2026" — unambiguous.
-  [new RegExp(`\\b\\d{1,2}\\s+${MONTH}\\.?,?\\s+\\d{4}\\b`, "gi"), false],
-  // "September 12, 2026" — unambiguous.
-  [new RegExp(`\\b${MONTH}\\.?\\s+\\d{1,2},?\\s+\\d{4}\\b`, "gi"), false],
+  [new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH}\\.?,?\\s+\\d{4}\\b`, "gi"), false],
+  // "September 12, 2026" / "March 4th, 2026" — unambiguous.
+  [new RegExp(`\\b${MONTH}\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+\\d{4}\\b`, "gi"), false],
   // All-numeric — ambiguous unless the first component is clearly a day > 12, which we do not
   // special-case, because a rule that is right most of the time is worse here than one that asks.
   [/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g, true],

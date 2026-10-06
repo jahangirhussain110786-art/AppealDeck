@@ -1,6 +1,11 @@
 export const VAULT_ENVELOPE_VERSION = 1 as const;
 
-export const PBKDF2_ITERATIONS = 310_000;
+/**
+ * Iterations for NEW key derivations (OWASP 2023: 600k for PBKDF2-SHA-256). The count is stored in
+ * every wrapped key's `kdf.iters`, and unwrapping always reads it from there, so vaults and backups
+ * made at the earlier 310,000 keep unlocking.
+ */
+export const PBKDF2_ITERATIONS = 600_000;
 export const PBKDF2_HASH = "SHA-256" as const;
 export const AES_KEY_LENGTH_BITS = 256;
 export const AES_IV_LENGTH_BYTES = 12;

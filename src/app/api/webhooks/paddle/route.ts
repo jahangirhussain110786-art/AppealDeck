@@ -84,11 +84,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Malformed event" }, { status: 400 });
   }
   try {
-    const { error } = await supabaseAdmin.rpc("apply_paddle_event", {
+    const { data, error } = await supabaseAdmin.rpc("apply_paddle_event", {
       p_event: event,
       p_price_id: process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS ?? null,
     });
     if (error) throw error;
+    // Migration 0012: a completed payment that cannot be matched to a checkout is parked in
+    // payment_events_unmatched (not marked processed) and acknowledged, so Paddle does not retry
+    // for days. It must never be silent: a real purchase is waiting for a human.
+    if (typeof data === "string" && data.startsWith("unmatched:")) {
+      console.error("PADDLE PAYMENT PARKED, NOT PROVISIONED: needs manual review", {
+        eventId: event.event_id,
+        type: event.event_type,
+        reason: data.slice("unmatched:".length),
+      });
+    }
   } catch {
     console.error("Paddle event processing failed", {
       eventId: event.event_id,

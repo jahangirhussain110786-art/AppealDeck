@@ -296,6 +296,13 @@ function endOfDay(now: number): number {
   return d.getTime();
 }
 
+/**
+ * Routes that answer HTTP 200 with `{ ok: false }` when the paid provider is down, busy, over
+ * quota or timed out (so the JSON clients see is unchanged) set this header so the breaker still
+ * counts the call as a failure. Without it the circuit could never open for those routes.
+ */
+export const PROVIDER_FAILURE_HEADER = "x-provider-failure";
+
 export type WithBreakerHandler = (req: NextRequest, ctx: BreakerContext) => Promise<Response>;
 
 export type WithBreakerDeps = {
@@ -317,7 +324,10 @@ export function withBreaker(
       return degradedResponse(outcome, opts);
     }
     const response = await handler(req, outcome.context);
-    const ok = response.status >= 200 && response.status < 500;
+    const ok =
+      response.status >= 200 &&
+      response.status < 500 &&
+      response.headers.get(PROVIDER_FAILURE_HEADER) !== "1";
     try {
       await record(opts, { ok, context: outcome.context });
     } catch {

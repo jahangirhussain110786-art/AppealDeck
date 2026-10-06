@@ -58,6 +58,18 @@ export interface AddDocumentInput {
 
 const MAX_RECORD_BYTES = 10 * 1024 * 1024;
 
+/**
+ * Another tab or call initialised this vault (wrote its key) between the caller's check and its
+ * write. Thrown instead of overwriting the key, which would leave the other holder's later records
+ * undecryptable. The caller re-checks `isInitialized()` and takes the already-initialised path.
+ */
+export class VaultAlreadyInitializedError extends Error {
+  constructor(message = "Vault was initialized by another tab while this one was starting.") {
+    super(message);
+    this.name = "VaultAlreadyInitializedError";
+  }
+}
+
 export class Vault {
   protected db: VaultDB;
   private readonly provider: WebCryptoLike;
@@ -102,7 +114,12 @@ export class Vault {
           "Destination already contains a vault. Export it before recovering another vault.",
         );
       }
-      await this.db.meta.put({ key: "appealdeck-vault", value: snapshot.meta });
+      // The caller checked `isInitialized()` outside this transaction; another tab may have written
+      // its own key since. Overwriting it would strand that tab's records under a lost key.
+      if (await this.db.meta.get("appealdeck-vault" as never)) {
+        throw new VaultAlreadyInitializedError();
+      }
+      await this.db.meta.add({ key: "appealdeck-vault", value: snapshot.meta });
       await this.db.records.bulkPut(snapshot.records);
     });
   }
@@ -354,8 +371,17 @@ export class Vault {
       throw new VaultCryptoError("INVALID_INPUT", "New passphrase must be at least 8 characters");
     }
     const row = await this.db.meta.get("appealdeck-vault" as never);
-    if (!row || !row.value.wrappedDek) {
+    if (!row) {
       throw new VaultCryptoError("INVALID_INPUT", "Vault is not initialized");
+    }
+    if (row.value.mode.kind === "device") {
+      throw new VaultCryptoError(
+        "INVALID_INPUT",
+        "This vault unlocks automatically on this device and has no passphrase to change. Set a passphrase first.",
+      );
+    }
+    if (!row.value.wrappedDek) {
+      throw new VaultCryptoError("ENVELOPE_CORRUPT", "Vault metadata is missing a wrapped DEK");
     }
     const dek = await unwrapDek(this.provider, oldPassphrase, row.value.wrappedDek);
     const kdf = newKdfParams(this.provider);
@@ -386,7 +412,10 @@ export class Vault {
         `Record exceeds max size of ${MAX_RECORD_BYTES} bytes`,
       );
     }
-    const envelope = await Dexie.waitFor(encryptBytes(this.provider, dek, data));
+    const id = cryptoRandomId(this.provider);
+    // The record id is bound into the ciphertext as associated data, so a sealed file cannot be
+    // moved under another record's id without failing to decrypt.
+    const envelope = await Dexie.waitFor(encryptBytes(this.provider, dek, data, id));
     const hash = await Dexie.waitFor(sha256Base64(this.provider, data));
     // Strictly increasing within this vault. Records are ordered by `createdAt` (newest-first
     // listing; `findByPlaintext` promises the oldest match), and two adds in one millisecond used
@@ -396,7 +425,7 @@ export class Vault {
     this.lastCreatedMs = nowMs;
     const now = new Date(nowMs).toISOString();
     const record: VaultRecordInput = {
-      id: cryptoRandomId(this.provider),
+      id,
       kind: input.kind ?? "document",
       name: input.name,
       mimeType: input.mimeType,
@@ -444,7 +473,7 @@ export class Vault {
         `Record exceeds max size of ${MAX_RECORD_BYTES} bytes`,
       );
     }
-    const envelope = await Dexie.waitFor(encryptBytes(this.provider, dek, bytes));
+    const envelope = await Dexie.waitFor(encryptBytes(this.provider, dek, bytes, source.id));
     const hash = await Dexie.waitFor(sha256Base64(this.provider, bytes));
     const record: VaultRecordInput = {
       ...source,
@@ -471,6 +500,7 @@ export class Vault {
     if (!record) {
       throw new VaultCryptoError("INVALID_INPUT", `No record with id ${id}`);
     }
+    assertEnvelopeBelongsTo(record);
     const bytes = await Dexie.waitFor(decryptBytes(this.provider, dek, record.ciphertext));
     return { record, bytes };
   }
@@ -589,12 +619,20 @@ export class Vault {
       throw new VaultCryptoError("ENVELOPE_CORRUPT", "Import payload is missing a wrapped DEK");
     }
     const dek = await unwrapDek(this.provider, options.sourcePassphrase, payload.meta.wrappedDek);
+    // What this vault's key store looked like when the restore began. Restoring over an empty
+    // vault that already holds a key is legitimate (it replaces that key), but if the key store
+    // changes while the backup is being verified, another tab initialised the vault and its key
+    // would be overwritten and its records stranded. Compared again inside the transaction.
+    const metaBefore = keyStoreFingerprint(
+      (await this.db.meta.get("appealdeck-vault" as never))?.value,
+    );
     // Verify every record before touching the destination. Never mix keys in one vault.
     const ids = new Set<string>();
     for (const record of payload.records) {
       if (!record.id || ids.has(record.id))
         throw new Error("Backup contains duplicate or missing record IDs");
       ids.add(record.id);
+      assertEnvelopeBelongsTo(record);
       await decryptBytes(this.provider, dek, record.ciphertext);
     }
     const newKdf = newKdfParams(this.provider);
@@ -613,6 +651,10 @@ export class Vault {
           "Restore requires an empty vault. Your existing files have been preserved.",
         );
       }
+      const metaNow = keyStoreFingerprint(
+        (await this.db.meta.get("appealdeck-vault" as never))?.value,
+      );
+      if (metaNow !== metaBefore) throw new VaultAlreadyInitializedError();
       await this.db.meta.put({ key: "appealdeck-vault" as never, value: nextMeta });
       for (const r of payload.records) {
         const env: EncryptionEnvelope = r.ciphertext;
@@ -647,6 +689,28 @@ export class Vault {
 
   async sha256Base64Self(data: Uint8Array): Promise<string> {
     return sha256Base64(this.provider, data);
+  }
+}
+
+/** A stable summary of a key store, enough to tell whether it was replaced. Null when absent. */
+function keyStoreFingerprint(meta: VaultKeyStore | undefined): string {
+  if (!meta) return "none";
+  return [
+    meta.mode.kind,
+    meta.createdAt,
+    meta.wrappedDek?.ct ?? "",
+    meta.deviceWrappedDek?.ct ?? "",
+  ].join("|");
+}
+
+/** Records sealed with their id as associated data must still be under that id. Older ones have none. */
+function assertEnvelopeBelongsTo(record: VaultRecordInput): void {
+  const ad = record.ciphertext.ad;
+  if (ad !== undefined && ad !== record.id) {
+    throw new VaultCryptoError(
+      "ENVELOPE_CORRUPT",
+      `Record ${record.id} holds data sealed for a different record`,
+    );
   }
 }
 

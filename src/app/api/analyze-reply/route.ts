@@ -3,6 +3,7 @@ import { z } from "zod";
 import { analyzeReply } from "@/core";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive } from "@/lib/license";
+import { serviceUnavailableResponse } from "@/lib/licenseGuard";
 import { rateLimitAnalyzeReply, tooManyRequestsResponse } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +22,13 @@ export async function POST(req: NextRequest) {
     return unauthorizedJsonResponse();
   }
 
-  if (!(await isLicenseActive(user.id))) {
+  let active: boolean;
+  try {
+    active = await isLicenseActive(user.id);
+  } catch {
+    return serviceUnavailableResponse();
+  }
+  if (!active) {
     return NextResponse.json({ error: "Appeal Pass required." }, { status: 403 });
   }
 

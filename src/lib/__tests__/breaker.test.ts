@@ -200,6 +200,33 @@ describe("withBreaker wrapper (deps injected)", () => {
     expect(calls.at(-1)?.ok).toBe(true);
   });
 
+  it("counts a 200 carrying x-provider-failure as a failure, and leaves the body alone", async () => {
+    const calls: Array<{ ok: boolean }> = [];
+    const deps = {
+      check: async (): Promise<CheckResult> => ({
+        allowed: true,
+        context: { fingerprint: "x", now: 1 },
+      }),
+      record: async (_o: BreakerOptions, input: { ok: boolean; context: BreakerContext }) => {
+        calls.push(input);
+        return { circuitOpened: false, newOpenUntil: 0 };
+      },
+    };
+    const wrapped = withBreaker(
+      baseOpts,
+      async () =>
+        new Response(JSON.stringify({ ok: false }), {
+          status: 200,
+          headers: { "x-provider-failure": "1" },
+        }),
+      deps,
+    );
+    const r = await wrapped(makeReq(), { fingerprint: "x", now: 1 });
+    expect(r.status).toBe(200);
+    expect(await r.json()).toEqual({ ok: false });
+    expect(calls.at(-1)?.ok).toBe(false);
+  });
+
   it("does not call the handler when check denies", async () => {
     let called = false;
     const handler: WithBreakerHandler = async () => {

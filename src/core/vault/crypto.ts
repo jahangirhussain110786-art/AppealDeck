@@ -133,6 +133,7 @@ export async function encryptBytes(
   provider: WebCryptoLike,
   key: CryptoKey,
   data: Uint8Array,
+  aad?: string,
 ): Promise<EncryptionEnvelope> {
   if (!(data instanceof Uint8Array)) {
     throw new VaultCryptoError("INVALID_INPUT", "Ciphertext input must be a Uint8Array");
@@ -141,7 +142,13 @@ export async function encryptBytes(
   let ctBuf: ArrayBuffer;
   try {
     ctBuf = await provider.subtle.encrypt(
-      { name: "AES-GCM", iv: iv as BufferSource },
+      {
+        name: "AES-GCM",
+        iv: iv as BufferSource,
+        ...(aad !== undefined
+          ? { additionalData: new TextEncoder().encode(aad) as BufferSource }
+          : {}),
+      },
       key,
       data as BufferSource,
     );
@@ -156,6 +163,7 @@ export async function encryptBytes(
     alg: "AES-GCM",
     iv: toBase64(iv),
     ct: toBase64(new Uint8Array(ctBuf)),
+    ...(aad !== undefined ? { ad: aad } : {}),
   };
 }
 
@@ -177,8 +185,16 @@ export async function decryptBytes(
   const ct = fromBase64(envelope.ct);
   let plainBuf: ArrayBuffer;
   try {
+    // Envelopes written before 6 Oct 2026 carry no `ad` and were sealed without associated data;
+    // newer record envelopes carry the record id there, and the tag only verifies against it.
     plainBuf = await provider.subtle.decrypt(
-      { name: "AES-GCM", iv: iv as BufferSource },
+      {
+        name: "AES-GCM",
+        iv: iv as BufferSource,
+        ...(envelope.ad !== undefined
+          ? { additionalData: new TextEncoder().encode(envelope.ad) as BufferSource }
+          : {}),
+      },
       key,
       ct as BufferSource,
     );
@@ -198,7 +214,7 @@ export async function wrapDek(
   kdf: KdfParams,
 ): Promise<WrappedDek> {
   const raw = await exportRawKey(provider, dek);
-  const kek = await deriveDek(provider, passphrase, kdf);
+  const kek = await deriveDek(provider, normalizePassphrase(passphrase), kdf);
   return encryptBytes(provider, kek, raw).then((env) => ({
     v: VAULT_ENVELOPE_VERSION,
     alg: "AES-GCM",
@@ -219,22 +235,33 @@ export async function unwrapDek(
       `Wrapped-DEK version ${wrapped.v} is newer than the running app`,
     );
   }
-  const kek = await deriveDek(provider, passphrase, wrapped.kdf);
-  let raw: Uint8Array;
-  try {
-    raw = await decryptBytes(provider, kek, {
-      v: wrapped.v,
-      alg: wrapped.alg,
-      iv: wrapped.iv,
-      ct: wrapped.ct,
-    });
-  } catch (cause) {
-    if (cause instanceof VaultCryptoError && cause.code === "WRONG_PASSPHRASE") {
-      throw new VaultCryptoError("WRONG_PASSPHRASE", "Passphrase did not unlock the DEK");
+  const envelope: EncryptionEnvelope = {
+    v: wrapped.v,
+    alg: wrapped.alg,
+    iv: wrapped.iv,
+    ct: wrapped.ct,
+  };
+  // New passphrases are wrapped NFC-normalised, so "é" typed composed or decomposed unlocks the
+  // same vault. Vaults made before that were keyed on the raw text, so if the normalised form
+  // fails and differs from what was typed, the raw form is tried too.
+  const normalized = normalizePassphrase(passphrase);
+  const candidates = normalized === passphrase ? [passphrase] : [normalized, passphrase];
+  for (const candidate of candidates) {
+    const kek = await deriveDek(provider, candidate, wrapped.kdf);
+    try {
+      const raw = await decryptBytes(provider, kek, envelope);
+      return importRawDek(provider, raw);
+    } catch (cause) {
+      if (cause instanceof VaultCryptoError && cause.code === "WRONG_PASSPHRASE") continue;
+      throw cause;
     }
-    throw cause;
   }
-  return importRawDek(provider, raw);
+  throw new VaultCryptoError("WRONG_PASSPHRASE", "Passphrase did not unlock the DEK");
+}
+
+/** Composed and decomposed spellings of the same characters must derive the same key. */
+export function normalizePassphrase(passphrase: string): string {
+  return passphrase.normalize("NFC");
 }
 
 export async function generateDeviceKey(provider: WebCryptoLike): Promise<CryptoKey> {

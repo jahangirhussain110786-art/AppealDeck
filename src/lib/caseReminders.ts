@@ -15,6 +15,21 @@ import type { ViolationKind } from "@/core/violationKinds";
 
 /** Stop retrying a row after this many failures, so one dead address is not chased forever. */
 const MAX_ATTEMPTS = 3;
+/** Most reminder emails one seller can receive in one cron run, however many cases are due. */
+export const MAX_PER_USER_PER_RUN = 5;
+/** Most unsent reminders one account may hold, so the table cannot be filled from one login. */
+export const MAX_OPEN_REMINDERS_PER_USER = 50;
+/** A claim older than this is treated as a crashed run and may be taken again. */
+const CLAIM_LEASE_MS = 10 * 60 * 1000;
+
+/** Thrown by `upsertCaseReminder` when the account already holds the maximum of open reminders. */
+export class ReminderLimitError extends Error {
+  readonly code = "reminder_limit";
+  constructor() {
+    super("Too many open reminders");
+    this.name = "ReminderLimitError";
+  }
+}
 
 export interface UpsertReminderInput {
   userId: string;
@@ -30,6 +45,15 @@ export interface UpsertReminderInput {
  */
 export async function upsertCaseReminder(input: UpsertReminderInput): Promise<void> {
   if (!supabaseAdmin) throw new Error("Database unavailable");
+  // Re-setting this case's own date never counts against the cap; only a new case can hit it.
+  const { count, error: countError } = await supabaseAdmin
+    .from("case_reminders")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", input.userId)
+    .is("sent_at", null)
+    .neq("case_ref", input.caseRef);
+  if (countError) throw new Error("Could not save reminder");
+  if ((count ?? 0) >= MAX_OPEN_REMINDERS_PER_USER) throw new ReminderLimitError();
   const { error } = await supabaseAdmin.from("case_reminders").upsert(
     {
       user_id: input.userId,
@@ -39,6 +63,7 @@ export async function upsertCaseReminder(input: UpsertReminderInput): Promise<vo
       sent_at: null,
       attempts: 0,
       last_error: null,
+      claimed_at: null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id,case_ref" },
@@ -103,35 +128,78 @@ export async function deliverCaseReminders(now = new Date()): Promise<{
 }> {
   if (!supabaseAdmin) throw new Error("Database unavailable");
 
+  const staleBefore = new Date(now.getTime() - CLAIM_LEASE_MS).toISOString();
   const { data, error } = await supabaseAdmin
     .from("case_reminders")
     .select("id, user_id, case_ref, kind, due_at, attempts")
     .is("sent_at", null)
     .lte("due_at", now.toISOString())
     .lt("attempts", MAX_ATTEMPTS)
+    .or(`claimed_at.is.null,claimed_at.lt.${staleBefore}`)
+    .order("due_at", { ascending: true })
     .limit(200);
   if (error) throw new Error("Reminder queue unavailable");
 
   let sent = 0;
   let failed = 0;
   let skipped = 0;
+  const perUser = new Map<string, number>();
+  const addresses = new Map<
+    string,
+    { to: string | null; confirmed: boolean; lookupFailed: boolean }
+  >();
 
   for (const row of data ?? []) {
     try {
+      // Flood guard: a seller with many due cases gets a few emails per run, the rest next run.
+      if ((perUser.get(row.user_id) ?? 0) >= MAX_PER_USER_PER_RUN) {
+        skipped++;
+        continue;
+      }
+
       // The address is read from auth at send time, never stored alongside the reminder — one
       // fewer copy of a seller's email, and it stays correct if they change it.
-      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(
-        row.user_id,
-      );
-      const to = userData?.user?.email;
-      if (userError || !to) {
+      let who = addresses.get(row.user_id);
+      if (!who) {
+        const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(
+          row.user_id,
+        );
+        who = {
+          to: userData?.user?.email ?? null,
+          confirmed: Boolean(userData?.user?.email_confirmed_at),
+          lookupFailed: Boolean(userError),
+        };
+        addresses.set(row.user_id, who);
+      }
+      if (who.lookupFailed || !who.to) {
         skipped++;
         await markFailed(row.id, row.attempts, "No address on file");
         continue;
       }
+      // An address nobody has confirmed may belong to someone else; never mail it. Left untouched
+      // (not counted as a failed attempt) so the reminder still goes once the seller confirms.
+      if (!who.confirmed) {
+        skipped++;
+        continue;
+      }
+
+      // Claim before sending: a conditional update only one of two overlapping runs can win.
+      const { data: claimed, error: claimError } = await supabaseAdmin
+        .from("case_reminders")
+        .update({ claimed_at: now.toISOString() })
+        .eq("id", row.id)
+        .is("sent_at", null)
+        .or(`claimed_at.is.null,claimed_at.lt.${staleBefore}`)
+        .select("id");
+      if (claimError) throw claimError;
+      if (!claimed || claimed.length === 0) {
+        skipped++;
+        continue;
+      }
+      perUser.set(row.user_id, (perUser.get(row.user_id) ?? 0) + 1);
 
       await sendCaseReminderEmail({
-        to,
+        to: who.to,
         kindLabel: labelForKind(row.kind),
         dueAt: row.due_at,
         dashboardUrl: `${SITE_URL}/dashboard`,
@@ -142,7 +210,7 @@ export async function deliverCaseReminders(now = new Date()): Promise<{
 
       const { error: updateError } = await supabaseAdmin
         .from("case_reminders")
-        .update({ sent_at: new Date().toISOString(), last_error: null })
+        .update({ sent_at: new Date().toISOString(), last_error: null, claimed_at: null })
         .eq("id", row.id);
       if (updateError) throw updateError;
       sent++;
@@ -159,7 +227,7 @@ async function markFailed(id: string, attempts: number, message: string): Promis
   if (!supabaseAdmin) return;
   await supabaseAdmin
     .from("case_reminders")
-    .update({ attempts: attempts + 1, last_error: message })
+    .update({ attempts: attempts + 1, last_error: message, claimed_at: null })
     .eq("id", id);
 }
 

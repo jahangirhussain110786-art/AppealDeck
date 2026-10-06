@@ -82,20 +82,28 @@ function shortLabelFromUserAgent(ua: string | null | undefined): string {
   return ua.slice(0, 60);
 }
 
+/**
+ * The licence that device activations attach to: the newest active one that has not expired.
+ * `error: true` means the lookup itself failed (a database blip), which callers must treat as
+ * "unknown", never as "no licence" — treating it as none skipped the device cap entirely.
+ */
 async function findActiveLicenseForUser(
   client: SupabaseClient,
   userId: string,
-): Promise<{ id: string } | null> {
-  const { data } = await client
+): Promise<{ license: { id: string } | null; error: boolean }> {
+  const { data, error } = await client
     .from("licenses")
-    .select("id, status")
+    .select("id, status, expires_at")
     .eq("user_id", userId)
     .eq("status", "active")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (!data) return null;
-  return { id: (data as { id: string }).id };
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) return { license: null, error: true };
+  const now = Date.now();
+  const row = ((data as Array<{ id: string; expires_at?: string | null }> | null) ?? []).find(
+    (r) => !r.expires_at || Date.parse(r.expires_at) > now,
+  );
+  return { license: row ? { id: row.id } : null, error: false };
 }
 
 async function countActiveDevices(client: SupabaseClient, licenseId: string): Promise<number> {
@@ -116,7 +124,18 @@ export async function recordActivation(
     userAgent: string | null;
   },
 ): Promise<DeviceActivationResult> {
-  const license = await findActiveLicenseForUser(client, params.userId);
+  const found = await findActiveLicenseForUser(client, params.userId);
+  if (found.error) {
+    // Fail closed: a database blip must not let a seller past the device cap.
+    return {
+      status: "unavailable",
+      device: null,
+      activeCount: 0,
+      cap: DEVICE_CAP,
+      overCapDevices: [],
+    };
+  }
+  const license = found.license;
   if (!license) {
     return { status: "ok", device: null, activeCount: 0, cap: DEVICE_CAP, overCapDevices: [] };
   }
@@ -248,7 +267,9 @@ export async function listDevices(
   client: SupabaseClient,
   userId: string,
 ): Promise<LicenseDevice[]> {
-  const license = await findActiveLicenseForUser(client, userId);
+  const found = await findActiveLicenseForUser(client, userId);
+  if (found.error) throw new Error("Device lookup unavailable");
+  const license = found.license;
   if (!license) return [];
   const { data } = await client
     .from("license_devices")
@@ -265,7 +286,9 @@ export async function revokeDevice(
   deviceId: string,
 ): Promise<{ ok: boolean; reason?: string }> {
   if (!isUuid(deviceId)) return { ok: false, reason: "invalid_id" };
-  const license = await findActiveLicenseForUser(client, userId);
+  const found = await findActiveLicenseForUser(client, userId);
+  if (found.error) return { ok: false, reason: "db_error" };
+  const license = found.license;
   if (!license) return { ok: false, reason: "no_license" };
   const { data: target } = await client
     .from("license_devices")

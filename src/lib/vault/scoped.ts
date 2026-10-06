@@ -130,9 +130,13 @@ export class ScopedBrowserVault extends Vault {
     const source = new Vault(globalThis.crypto, new VaultDB(this.pendingGuest!));
     await source.open();
     let verified = false;
+    let emptyGuest = false;
     try {
       if (!(await source.isInitialized())) {
+        // Nothing in it to merge. Opening it created an empty database, so remove that rather than
+        // leave one behind for every browser session a signed-in seller starts.
         this.pendingGuest = undefined;
+        emptyGuest = true;
         return;
       }
       const meta = await source.rawMeta();
@@ -190,9 +194,14 @@ export class ScopedBrowserVault extends Vault {
       forgetGuestVault();
     } finally {
       // Only a verified merge removes the guest database; anything else leaves it for a retry.
-      if (verified) await source.destroy();
+      if (verified || emptyGuest) await source.destroy();
       else await source.close();
     }
+  }
+  /** True when every record id in `source` is also in this vault — the copy landed in full. */
+  private async holdsEverythingIn(source: Vault): Promise<boolean> {
+    const have = new Set((await this.list()).map((r) => r.id));
+    return (await source.list()).every((r) => have.has(r.id));
   }
   override open(): Promise<void> {
     this.opening ??= this.openScoped().catch((error) => {
@@ -239,16 +248,32 @@ export class ScopedBrowserVault extends Vault {
     if (user && !(await this.isInitialized())) {
       const guest = new Vault(globalThis.crypto, new VaultDB(guestName));
       await guest.open();
+      // Destroyed only when nothing is left in it that the account does not hold: it was empty, or
+      // its copy into the account was verified. Anything else is left for a retry.
+      let removable = false;
       try {
         if (await guest.isInitialized()) {
           const meta = await guest.rawMeta();
-          await this.copyIntoEmpty(
-            guest,
-            meta?.mode.kind === "passphrase" ? guestSecret() : undefined,
-          );
+          try {
+            await this.copyIntoEmpty(
+              guest,
+              meta?.mode.kind === "passphrase" ? guestSecret() : undefined,
+            );
+            removable = await this.holdsEverythingIn(guest);
+          } catch (error) {
+            // Another tab initialised this account between the check above and the copy. Its key
+            // stands; the guest data is merged on unlock like any other returning sign-in.
+            if (!(await this.isInitialized())) throw error;
+            this.pendingGuest = guestName;
+            this.pendingGuestSecret = guestSecret();
+            return;
+          }
+        } else {
+          removable = true;
         }
       } finally {
-        await guest.close();
+        if (removable) await guest.destroy();
+        else await guest.close();
       }
       forgetGuestVault();
     }

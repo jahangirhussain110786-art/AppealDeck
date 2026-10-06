@@ -50,7 +50,10 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
     "INAUTHENTIC",
     /inauthentic|not authentic|(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)|(?:complaints?|concerns?|reports?)[^.!?\n]{0,40}?\b(?:about|regarding|concerning|related to) the authenticity|authenticity (?:complaints?|concerns?)/i,
   ],
-  ["RELATED_ACCOUNT", /related[\s-]?account/i],
+  [
+    "RELATED_ACCOUNT",
+    /related[\s-]?account|(?:related|linked|associated)\s+(?:to|with)\s+(?:another|an?\s+other|a\s+different|other)\s+(?:seller\s+)?accounts?/i,
+  ],
   [
     "INTELLECTUAL_PROPERTY",
     /intellectual property|trademark|counter[\s-]?notification|rights owner|infringement/i,
@@ -59,7 +62,7 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   // seller down the wrong response route, which is the exact failure this work exists to stop.
   [
     "PRODUCT_SAFETY",
-    /product safety|safety (?:complaint|incident|concern)|product recall|recall(?:ed)? product|recall notice|unsafe product|hazardous (?:material|product|good)/i,
+    /product safety|safety (?:complaint|incident|concern)|product recall|recall(?:ed)? product|recall notice|unsafe product|hazardous (?:material|product|good)|\bCPSIA\b|Children['’]?s Product Certificate|safety documentation/i,
   ],
   [
     // The gated-category alternatives were added 23 Sep 2026 after B-01's fixtures found that a
@@ -97,9 +100,14 @@ export function parseNotice(raw: string): ParsedNotice {
   const legacySeventeenDay = /17\s*days/i.test(raw);
   const windows = new Set<number>();
   const patterns = [
-    /\byou (?:can|may) appeal within\s+(\d{1,3})\s+days?\b/gi,
-    /\b(?:submit|file|send)\b[^.!?;\n]{0,65}?\b(?:appeal|plan of action)\b[^.!?;\n]{0,40}?\bwithin\s+(\d{1,3})\s+days?\b/gi,
-    /\b(?:you have|within)\s+(?:exactly\s+)?(\d{1,3})\s+days?\b[^.!?;\n]{0,60}?\bto\s+(?:appeal|submit (?:an? |your |a )?(?:appeal|plan of action))\b/gi,
+    // "30", "thirty (30)" and "30 calendar" all read as the number of days.
+    /\b(?:you\s+)?(?:can|may|must|should)\s+appeal\s+within\s+(?:[a-z-]+\s*\(\s*)?(\d{1,3})\s*\)?(?:\s+calendar)?\s+days?\b/gi,
+    /\bif\s+you\s+(?:wish\s+to\s+|want\s+to\s+)?appeal\s+within\s+(?:[a-z-]+\s*\(\s*)?(\d{1,3})\s*\)?(?:\s+calendar)?\s+days?\b/gi,
+    // The gap stops at a comma and at words that start Amazon's own clause ("we will review it
+    // within 5 days" is Amazon's timetable, not the seller's window).
+    /\b(?:submit|file|send)\b(?:(?![.!?;,\n]|\b(?:we|will|amazon|your\s+funds?)\b)[\s\S]){0,65}?\b(?:appeal|plan of action)\b(?:(?![.!?;,\n]|\b(?:we|will|amazon|your\s+funds?)\b)[\s\S]){0,40}?\bwithin\s+(?:[a-z-]+\s*\(\s*)?(\d{1,3})\s*\)?(?:\s+calendar)?\s+days?\b/gi,
+    /\bappeal\b(?:(?![.!?;,\n]|\b(?:we|will|amazon)\b)[\s\S]){0,25}?\b(?:must|should|needs?\s+to)\s+be\s+(?:submitted|filed|sent)\s+within\s+(?:[a-z-]+\s*\(\s*)?(\d{1,3})\s*\)?(?:\s+calendar)?\s+days?\b/gi,
+    /\b(?:you have|within)\s+(?:exactly\s+)?(?:[a-z-]+\s*\(\s*)?(\d{1,3})\s*\)?(?:\s+calendar)?\s+days?\b[^.!?;\n]{0,60}?\bto\s+(?:appeal|(?:submit|file)\s+(?:an?\s+|your\s+|a\s+)?(?:appeal|plan of action))\b/gi,
     /\bappeal\s+(?:window|deadline)\s*(?:is|of|:)?\s*(\d{1,3})\s+days?\b/gi,
   ];
   for (const pattern of patterns) {

@@ -51,3 +51,12 @@ describe("GET /api/license/status", () => {
     expect(body).toEqual({ status: "none", plan: null });
   });
 });
+
+describe("GET /api/license/status failure handling (6 Oct 2026)", () => {
+  it("answers 503 when the lookup throws", async () => {
+    getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
+    fetchLicenseForUserMock.mockRejectedValue(new Error("License lookup unavailable"));
+    const res = await GET();
+    expect(res.status).toBe(503);
+  });
+});

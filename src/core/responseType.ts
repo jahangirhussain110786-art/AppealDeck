@@ -97,7 +97,15 @@ function pushClause(out: Clause[], raw: string, from: number, to: number): void 
  * negation produces a wrong instruction, while an over-eager one only costs us a supporting quote.
  */
 const NEGATION =
-  /\b(do not|don't|does not|no need to|not required|not requested|not necessary|no additional|no further|rather than|instead of|without)\b/i;
+  /\b(do not|don't|does not|no need to|not required|not requested|not necessary|no additional|no further)\b/i;
+/**
+ * "rather than", "instead of" and "without" negate only what FOLLOWS them: "invoices rather than
+ * screenshots" still asks for invoices, and "without delay" is an adverb, not a refusal.
+ */
+const WEAK_NEGATION =
+  /\b(?:rather than|instead of|without(?!\s+(?:any\s+|further\s+|undue\s+)?(?:delay|hesitation)))\b/i;
+/** "invoices that do not show prices" describes a document; it does not tell the seller not to send it. */
+const RELATIVE_NEGATION = /\b(?:that|which|who)\s+(?:do|does|did)\s+not\b/gi;
 
 /**
  * Clauses that describe what has already happened. "Your previous Plan of Action was received" is
@@ -268,7 +276,9 @@ export function determineResponseType(raw: string, formInstructions = ""): Respo
     for (const clause of splitClauses(source.text)) {
       // "Providing falsified documents is a serious violation" states a rule; it asks for nothing.
       const past = describesThePast(clause.text) || GERUND_SUBJECT.test(clause.text);
-      const negated = NEGATION.test(clause.text);
+      const negationText = clause.text.replace(RELATIVE_NEGATION, " ");
+      const negated = NEGATION.test(negationText);
+      const weak = WEAK_NEGATION.exec(clause.text);
       for (const [type, basePattern] of PATTERNS) {
         /*
           Both filters stop a *request* from counting when it is negated or already in the past. The
@@ -282,6 +292,7 @@ export function determineResponseType(raw: string, formInstructions = ""): Respo
         const pattern = source.terse && type === "PLAN_OF_ACTION" ? POA_TERM : basePattern;
         const found = pattern.exec(clause.text);
         if (!found) continue;
+        if (type !== "NO_ACTION_REQUESTED" && weak && found.index > weak.index) continue;
         const localStart = clause.start + found.index;
         matches.push({
           type,

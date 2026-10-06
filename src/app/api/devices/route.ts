@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { listDevices, revokeDevice, deriveFingerprintFromRequest } from "@/lib/devices";
+import { serviceUnavailableResponse } from "@/lib/licenseGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,12 @@ export async function GET(req: NextRequest) {
   if (!supabaseAdmin || !email) {
     return NextResponse.json({ devices: [], cap: 5, currentDeviceId: null });
   }
-  const devices = await listDevices(supabaseAdmin, user.id);
+  let devices;
+  try {
+    devices = await listDevices(supabaseAdmin, user.id);
+  } catch {
+    return serviceUnavailableResponse();
+  }
   const fingerprint = await deriveFingerprintFromRequest(req, user.id);
   const currentDeviceId = devices.find((d) => d.device_fingerprint === fingerprint)?.id ?? null;
   const safeDevices = devices.map((d) => ({
@@ -53,6 +59,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "deviceId (uuid) required" }, { status: 400 });
   }
   const result = await revokeDevice(supabaseAdmin, user.id, parsed.data.deviceId);
+  if (!result.ok && result.reason === "db_error") return serviceUnavailableResponse();
   if (!result.ok) {
     return NextResponse.json(
       { error: result.reason ?? "revoke_failed" },

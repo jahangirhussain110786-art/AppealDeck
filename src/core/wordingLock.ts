@@ -115,7 +115,15 @@ const EMAIL = /[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,10}/g;
 const URL = /\bhttps?:\/\/\S+|\b(?:[a-z0-9-]{1,63}\.){1,10}[a-z]{2,63}\b(?:\/\S*)?/gi;
 const NEGATION = /\b(?:not|never|no|without|cannot)\b|n['’]t\b/gi;
 const PLANNED =
-  /\b(?:will|intend(?:ed|s)?|planning|planned|plan to|plans to|aim to|hope to|expect to)\b/gi;
+  /\b(?:will|would|shall|intend(?:ed|s)?(?:\s+to)?|planning|planned|plan to|plans to|aim to|hope to|expect to|going to|about to|in the process of|scheduled to|yet to)\b/gi;
+// Spelled-out quantities are facts exactly as digits are ("ten" must not become "twelve"). "one" is
+// left out: it is mostly a pronoun or article ("no one", "one of our").
+const NUMBER_WORD =
+  /\b(?:two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|dozen)\b/gi;
+/** "1,000" and "1000" are one number. */
+function withoutThousandsCommas(text: string): string {
+  return text.replace(/(?<=\d),(?=\d{3}(?!\d))/g, "");
+}
 
 function norm(token: string): string {
   // Trailing punctuation belongs to the sentence, not the fact.
@@ -147,7 +155,9 @@ export interface WordingLockResult {
 /**
  * Checks recognized tokens and explicit polarity markers, not the truth or meaning of the prose.
  */
-export function checkWordingLock(original: string, rewrite: string): WordingLockResult {
+export function checkWordingLock(originalText: string, rewriteText: string): WordingLockResult {
+  const original = withoutThousandsCommas(originalText);
+  const rewrite = withoutThousandsCommas(rewriteText);
   const added: string[] = [];
   const dropped: string[] = [];
   const allWordsInOriginal = new Set(
@@ -158,7 +168,7 @@ export function checkWordingLock(original: string, rewrite: string): WordingLock
       .filter(Boolean),
   );
 
-  for (const pattern of [WITH_DIGIT, MONTH_OR_DAY, EMAIL, URL]) {
+  for (const pattern of [WITH_DIGIT, MONTH_OR_DAY, NUMBER_WORD, EMAIL, URL]) {
     const before = tokens(original, pattern);
     const after = tokens(rewrite, pattern);
     for (const t of after) if (!before.has(t)) added.push(t);

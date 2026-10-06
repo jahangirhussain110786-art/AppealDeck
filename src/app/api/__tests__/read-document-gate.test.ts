@@ -416,3 +416,40 @@ describe("unclassified cases", () => {
     expect(callGeminiMock).not.toHaveBeenCalled();
   });
 });
+
+describe("/api/read-document failure handling (6 Oct 2026)", () => {
+  it("answers 503 when the entitlement lookup fails", async () => {
+    isLicenseActiveMock.mockRejectedValue(new Error("down"));
+    expect((await handleReadDocument(makeReq(valid))).status).toBe(503);
+    isLicenseActiveMock.mockResolvedValue(true);
+    claimCasePassMock.mockRejectedValue(new Error("down"));
+    expect((await handleReadDocument(makeReq(valid))).status).toBe(503);
+    expect(callGeminiMock).not.toHaveBeenCalled();
+  });
+
+  it.each(["busy", "timeout", "upstream_error"])(
+    "flags a %s provider failure for the breaker, keeping the 200 body",
+    async (reason) => {
+      callGeminiMock.mockResolvedValue({ ok: false, reason, message: "m" });
+      const res = await handleReadDocument(makeReq(valid));
+      expect(res.status).toBe(200);
+      expect(res.headers.get("x-provider-failure")).toBe("1");
+      expect(await res.json()).toMatchObject({ ok: false, reason: "unavailable" });
+    },
+  );
+
+  it.each(["spend_cap", "not_configured"])(
+    "does not flag %s as a provider outage",
+    async (reason) => {
+      callGeminiMock.mockResolvedValue({ ok: false, reason, message: "m" });
+      const res = await handleReadDocument(makeReq(valid));
+      expect(res.headers.get("x-provider-failure")).toBeNull();
+    },
+  );
+
+  it("flags an unreadable model answer", async () => {
+    callGeminiMock.mockResolvedValue({ ok: true, model: "m", text: "not json at all" });
+    const res = await handleReadDocument(makeReq(valid));
+    expect(res.headers.get("x-provider-failure")).toBe("1");
+  });
+});

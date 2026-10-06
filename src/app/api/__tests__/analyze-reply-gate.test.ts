@@ -87,3 +87,14 @@ describe("/api/analyze-reply auth + license gates", () => {
     expect(body.confidence).toBe("rule");
   });
 });
+
+describe("/api/analyze-reply failure handling (6 Oct 2026)", () => {
+  it("answers 503 when the entitlement lookup fails", async () => {
+    resetMocks();
+    getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
+    isLicenseActiveMock.mockRejectedValue(new Error("License lookup unavailable"));
+    const res = await POST(makeReq({ reply: "Amazon requires docs." }));
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe("Service temporarily unavailable");
+  });
+});

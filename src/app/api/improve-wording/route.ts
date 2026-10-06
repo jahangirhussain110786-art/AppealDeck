@@ -14,6 +14,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { claimCasePass, isLicenseActive } from "@/lib/license";
+import { serviceUnavailableResponse } from "@/lib/licenseGuard";
+import { PROVIDER_FAILURE_HEADER } from "@/lib/breaker";
 import { CaseIdSchema } from "@/lib/caseSchema";
 import { rateLimitWording, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { withGeminiBreaker } from "@/lib/llm/gemini";
@@ -42,7 +44,13 @@ export async function handleImproveWording(
   const user = await getApiUser();
   if (!user) return unauthorizedJsonResponse();
 
-  if (!(await isLicenseActive(user.id))) {
+  let active: boolean;
+  try {
+    active = await isLicenseActive(user.id);
+  } catch {
+    return serviceUnavailableResponse();
+  }
+  if (!active) {
     return NextResponse.json(
       { error: "Wording help comes with the Appeal Pass.", code: "case_pass_required" },
       { status: 402 },
@@ -67,7 +75,13 @@ export async function handleImproveWording(
   }
   const { caseId, kind, section, text, question } = parsed.data;
 
-  if (!(await claimCasePass(user.id, caseId))) {
+  let hasCasePass: boolean;
+  try {
+    hasCasePass = await claimCasePass(user.id, caseId);
+  } catch {
+    return serviceUnavailableResponse();
+  }
+  if (!hasCasePass) {
     return NextResponse.json(
       {
         error:
@@ -82,7 +96,14 @@ export async function handleImproveWording(
     { section, text, violation: kind, ...(question ? { question } : {}) },
     deps,
   );
-  return NextResponse.json(result);
+  // busy/unavailable mean the provider failed (user-caused refusals such as too_short,
+  // fact_changed and rejected_content do not), and the response is still HTTP 200.
+  const providerFailed =
+    !result.ok && (result.reason === "busy" || result.reason === "unavailable");
+  return NextResponse.json(
+    result,
+    providerFailed ? { headers: { [PROVIDER_FAILURE_HEADER]: "1" } } : undefined,
+  );
 }
 
 export const POST = withGeminiBreaker((req) => handleImproveWording(req));

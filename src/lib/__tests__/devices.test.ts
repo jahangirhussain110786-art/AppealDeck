@@ -13,6 +13,7 @@ type Row = Record<string, any>;
 
 class MemDb {
   licenses: Row[] = [];
+  licenseError = false;
   devices: Row[] = [];
 
   client(): SupabaseClient {
@@ -34,6 +35,7 @@ type Chain = Record<string, any> & {
 
 class LicensesQB {
   private filters: Array<[string, any]> = [];
+  private desc = false;
   constructor(private db: MemDb) {}
   select(_cols: string) {
     return this;
@@ -42,19 +44,25 @@ class LicensesQB {
     this.filters.push([field, value]);
     return this;
   }
-  order() {
+  order(_col?: string, opts?: { ascending?: boolean }) {
+    this.desc = opts?.ascending === false;
     return this;
   }
   limit() {
     return this;
   }
-  async maybeSingle() {
-    return {
-      data:
-        this.db.licenses.find((row) => this.filters.every(([key, value]) => row[key] === value)) ??
-        null,
-      error: null,
-    };
+  then<T>(onFulfilled: (v: any) => T) {
+    if (this.db.licenseError)
+      return Promise.resolve({ data: null, error: { message: "db blip" } }).then(onFulfilled);
+    const rows = this.db.licenses.filter((row) =>
+      this.filters.every(([key, value]) => row[key] === value),
+    );
+    const sorted = [...rows].sort((a, b) =>
+      String(a.created_at ?? "").localeCompare(String(b.created_at ?? "")),
+    );
+    return Promise.resolve({ data: this.desc ? sorted.reverse() : sorted, error: null }).then(
+      onFulfilled,
+    );
   }
 }
 
@@ -187,6 +195,43 @@ describe("devices", () => {
   beforeEach(() => {
     db = new MemDb();
     db.licenses.push({ ...LICENSE });
+  });
+
+  it("fails closed when the licence lookup errors (a blip must not skip the device cap)", async () => {
+    db.licenseError = true;
+    const r = await recordActivation(db.client(), {
+      userId: "user-uuid",
+      email: "user@example.com",
+      fingerprint: await fingerprintFor(1),
+      userAgent: UA,
+    });
+    expect(r.status).toBe("unavailable");
+    expect(db.devices).toHaveLength(0);
+    await expect(listDevices(db.client(), "user-uuid")).rejects.toThrow();
+    expect((await revokeDevice(db.client(), "user-uuid", uuidFor(1))).reason).toBe("db_error");
+  });
+
+  it("attaches devices to the newest non-expired active licence", async () => {
+    db.licenses.length = 0;
+    const past = new Date(Date.now() - 86_400_000).toISOString();
+    db.licenses.push(
+      { ...LICENSE, id: "aaaaaaaa-0000-0000-0000-000000000001", created_at: "2026-01-01" },
+      { ...LICENSE, id: "aaaaaaaa-0000-0000-0000-000000000002", created_at: "2026-02-01" },
+      {
+        ...LICENSE,
+        id: "aaaaaaaa-0000-0000-0000-000000000003",
+        created_at: "2026-03-01",
+        expires_at: past,
+      },
+    );
+    const r = await recordActivation(db.client(), {
+      userId: "user-uuid",
+      email: "user@example.com",
+      fingerprint: await fingerprintFor(1),
+      userAgent: UA,
+    });
+    expect(r.status).toBe("ok");
+    expect(db.devices[0]!.license_id).toBe("aaaaaaaa-0000-0000-0000-000000000002");
   });
 
   it("DEVICE_CAP is the documented 5", () => {

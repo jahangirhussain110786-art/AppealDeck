@@ -122,3 +122,14 @@ describe("/api/compose license + auth gates", () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe("/api/compose failure handling (6 Oct 2026)", () => {
+  it("answers 503 when the entitlement lookup fails", async () => {
+    getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
+    isLicenseActiveMock.mockRejectedValue(new Error("License lookup unavailable"));
+    const res = await POST(
+      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+    );
+    expect(res.status).toBe(503);
+  });
+});

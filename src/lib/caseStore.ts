@@ -174,13 +174,17 @@ async function readActivePointer(vault: Vault): Promise<string | null> {
 }
 
 async function writeActivePointer(vault: Vault, caseId: string): Promise<void> {
-  const existing = await findMetaRecordId(vault, ACTIVE_CASE_POINTER_NAME);
-  if (existing) await vault.delete(existing);
-  await vault.addString({
-    name: ACTIVE_CASE_POINTER_NAME,
-    mimeType: "application/json",
-    data: JSON.stringify({ caseId }),
-    kind: "case",
+  // Delete-then-add in one transaction (6 Oct 2026). Outside one, a second tab reading between the
+  // two steps found no pointer. Safe to nest: Dexie joins a call made inside an outer `atomic`.
+  await vault.atomic(async () => {
+    const existing = await findMetaRecordId(vault, ACTIVE_CASE_POINTER_NAME);
+    if (existing) await vault.delete(existing);
+    await vault.addString({
+      name: ACTIVE_CASE_POINTER_NAME,
+      mimeType: "application/json",
+      data: JSON.stringify({ caseId }),
+      kind: "case",
+    });
   });
   // Only now. Clearing the marker before this point drops the safety net while the vault is still
   // mid-write: this function deletes the old pointer before adding the new one, and a navigation
@@ -203,13 +207,15 @@ async function readCaseIndex(vault: Vault): Promise<CaseIndexEntry[]> {
 }
 
 async function writeCaseIndex(vault: Vault, index: CaseIndexEntry[]): Promise<void> {
-  const existing = await findMetaRecordId(vault, CASE_INDEX_NAME);
-  if (existing) await vault.delete(existing);
-  await vault.addString({
-    name: CASE_INDEX_NAME,
-    mimeType: "application/json",
-    data: JSON.stringify(index),
-    kind: "case",
+  await vault.atomic(async () => {
+    const existing = await findMetaRecordId(vault, CASE_INDEX_NAME);
+    if (existing) await vault.delete(existing);
+    await vault.addString({
+      name: CASE_INDEX_NAME,
+      mimeType: "application/json",
+      data: JSON.stringify(index),
+      kind: "case",
+    });
   });
 }
 

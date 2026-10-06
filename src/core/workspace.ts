@@ -721,7 +721,16 @@ export function requirementsAfterNoticeChange(
               sourceRevision: now.sourceRevision,
               evidenceKind: r.evidenceKind ?? now.evidenceKind,
             }
-          : r,
+          : r.source !== "matrix" &&
+              r.source !== "seller" &&
+              r.status === "needed" &&
+              !r.recordId &&
+              !r.note.trim() &&
+              !r.declined?.reason.trim()
+            ? // The corrected notice no longer names it, our guidance still raises it, and the
+              // seller has done nothing with it: it becomes ours, with no stale Amazon quote.
+              { ...now, id: r.id }
+            : r,
       );
       continue;
     }

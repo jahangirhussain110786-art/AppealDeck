@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { VaultDB } from "@/core/vault/db";
-import { Vault } from "@/core/vault/vault";
+import { Vault, VaultAlreadyInitializedError } from "@/core/vault/vault";
 const { getUser, getSession } = vi.hoisted(() => ({ getUser: vi.fn(), getSession: vi.fn() }));
 vi.mock("@/lib/supabase/client", () => ({
   createSupabaseBrowserClient: () => ({ auth: { getUser, getSession } }),
@@ -267,6 +267,69 @@ describe("vault ownership", () => {
     await reopened.unlockWithDeviceKey();
     expect((await reopened.getString(record.id)).text).toBe("guest draft");
     await reopened.close();
+  });
+  it("removes the guest database after a verified first sign-in copy", async () => {
+    const guestName = guestVaultName();
+    databases.add(guestName);
+    const guest = new ScopedBrowserVault(crypto);
+    await guest.open();
+    await guest.initWithDeviceKey();
+    await guest.addString({ name: "d", mimeType: "text/plain", data: "x" });
+    await guest.close();
+    const id = crypto.randomUUID();
+    databases.add(`appealdeck-vault-user-${id}`);
+    getUser.mockResolvedValue({ data: { user: { id } }, error: null });
+    const account = new ScopedBrowserVault(crypto);
+    await account.open();
+    await account.unlockWithDeviceKey();
+    expect((await indexedDB.databases()).map((d) => d.name)).not.toContain(guestName);
+    await account.close();
+  });
+  it("leaves no empty guest database behind for a signed-in seller with an initialised vault", async () => {
+    const id = crypto.randomUUID();
+    databases.add(`appealdeck-vault-user-${id}`);
+    getUser.mockResolvedValue({ data: { user: { id } }, error: null });
+    const first = new ScopedBrowserVault(crypto);
+    await first.open();
+    await first.initWithDeviceKey();
+    await first.close();
+    // A new browser session: a new guest id, and nothing was ever put in that guest database.
+    forgetGuestVault();
+    const guestName = guestVaultName();
+    const again = new ScopedBrowserVault(crypto);
+    await again.open();
+    await again.unlockWithDeviceKey();
+    expect((await indexedDB.databases()).map((d) => d.name)).not.toContain(guestName);
+    await again.close();
+  });
+  it("takes the already-initialised path when another tab wrote the account key first", async () => {
+    const guestName = guestVaultName();
+    databases.add(guestName);
+    const guest = new ScopedBrowserVault(crypto);
+    await guest.open();
+    await guest.initWithDeviceKey();
+    const draft = createCaseFile("POLICY");
+    await saveCaseFile(guest, draft);
+    await guest.close();
+    const id = crypto.randomUUID();
+    const accountName = `appealdeck-vault-user-${id}`;
+    databases.add(accountName);
+    getUser.mockResolvedValue({ data: { user: { id } }, error: null });
+    // The other tab gets in after this tab's isInitialized() check and before its copy.
+    const spy = vi.spyOn(Vault.prototype, "copyIntoEmpty").mockImplementationOnce(async () => {
+      const other = new Vault(crypto, new VaultDB(accountName));
+      await other.open();
+      await other.initWithDeviceKey();
+      await other.close();
+      throw new VaultAlreadyInitializedError();
+    });
+    const account = new ScopedBrowserVault(crypto);
+    await account.open(); // used to throw
+    spy.mockRestore();
+    expect((await indexedDB.databases()).map((d) => d.name)).toContain(guestName);
+    await account.unlockWithDeviceKey();
+    expect((await listCases(account)).map((c) => c.id)).toContain(draft.id);
+    await account.close();
   });
   it("guest cleanup never deletes the old shared vault", async () => {
     const legacy = new Vault(crypto, new VaultDB("appealdeck-vault"));

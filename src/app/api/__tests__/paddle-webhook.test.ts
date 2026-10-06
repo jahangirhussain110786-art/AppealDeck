@@ -35,6 +35,25 @@ describe("Paddle webhook delivery", () => {
     rpc.mockResolvedValue({ error: { message: "db down" } });
     expect((await POST(request())).status).toBe(503);
   });
+  it("acknowledges a parked payment (200, no retry) but logs it loudly", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    rpc.mockResolvedValue({ data: "unmatched:checkout intent not found", error: null });
+    expect((await POST(request())).status).toBe(200);
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining("PARKED"),
+      expect.objectContaining({ eventId: "evt_test123", reason: "checkout intent not found" }),
+    );
+    spy.mockRestore();
+  });
+  it("stays quiet for an ordinary or duplicate result", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    for (const data of ["ok", "duplicate"]) {
+      rpc.mockResolvedValue({ data, error: null });
+      expect((await POST(request())).status).toBe(200);
+    }
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
   it("rejects stale and invalid signatures before database access", async () => {
     expect((await POST(request(undefined, 301))).status).toBe(401);
     expect((await POST(request(undefined, 0, false))).status).toBe(401);

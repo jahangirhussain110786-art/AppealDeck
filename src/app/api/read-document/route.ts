@@ -24,6 +24,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { claimCasePass, isLicenseActive } from "@/lib/license";
+import { serviceUnavailableResponse } from "@/lib/licenseGuard";
+import { PROVIDER_FAILURE_HEADER } from "@/lib/breaker";
 import { CaseIdSchema } from "@/lib/caseSchema";
 import { rateLimitDocumentRead, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { callGemini, withGeminiBreaker } from "@/lib/llm/gemini";
@@ -167,7 +169,13 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   // response, and it runs a paid model against a whole file. This first check is only the cheap
   // one — any active Pass at all — so an unpaid request is refused before its body is read. The
   // check that matters, a Pass for *this* case, follows once the body names the case.
-  if (!(await isLicenseActive(user.id))) {
+  let active: boolean;
+  try {
+    active = await isLicenseActive(user.id);
+  } catch {
+    return serviceUnavailableResponse();
+  }
+  if (!active) {
     return NextResponse.json(
       { error: "An Appeal Pass is required to check documents." },
       { status: 402 },
@@ -222,7 +230,13 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
     now: a Pass bound to this case, or an unassigned one, which this binds to it. Placed after the
     two refusals above, which cost nothing and must answer the same way for everyone.
   */
-  if (!(await claimCasePass(user.id, caseId))) {
+  let hasCasePass: boolean;
+  try {
+    hasCasePass = await claimCasePass(user.id, caseId);
+  } catch {
+    return serviceUnavailableResponse();
+  }
+  if (!hasCasePass) {
     return NextResponse.json(
       {
         error:
@@ -293,7 +307,15 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
                 ? "Google's AI service is busy right now. Try again in a minute; nothing about your case has changed."
                 : "We could not read that document. Nothing about your case has changed.",
       },
-      { status: 200 },
+      {
+        status: 200,
+        // Our own spend cap and a missing key are not provider outages; busy, timeouts, quota
+        // and upstream errors are, and must count against the breaker.
+        headers:
+          result.reason === "spend_cap" || result.reason === "not_configured"
+            ? undefined
+            : { [PROVIDER_FAILURE_HEADER]: "1" },
+      },
     );
   }
 
@@ -304,7 +326,7 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   } catch {
     return NextResponse.json(
       { ok: false, reason: "unavailable", message: "We could not read that document." },
-      { status: 200 },
+      { status: 200, headers: { [PROVIDER_FAILURE_HEADER]: "1" } },
     );
   }
 
@@ -312,7 +334,7 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   if (!validated.success) {
     return NextResponse.json(
       { ok: false, reason: "unavailable", message: "We could not read that document." },
-      { status: 200 },
+      { status: 200, headers: { [PROVIDER_FAILURE_HEADER]: "1" } },
     );
   }
 

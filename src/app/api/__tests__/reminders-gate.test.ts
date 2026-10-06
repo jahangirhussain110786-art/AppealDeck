@@ -53,6 +53,14 @@ describe("/api/reminders", () => {
     expect(upsertMock).not.toHaveBeenCalled();
   });
 
+  it("answers 409 when the account already holds the maximum of open reminders", async () => {
+    upsertMock.mockRejectedValue(Object.assign(new Error("x"), { code: "reminder_limit" }));
+    const res = await POST(
+      makeReq({ caseRef: "c1", kind: "POLICY", dueAt: "2026-10-01T00:00:00Z" }),
+    );
+    expect(res.status).toBe(409);
+  });
+
   it("rate-limits before touching the database", async () => {
     rateLimitMock.mockResolvedValue({ success: false });
     const res = await POST(

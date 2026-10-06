@@ -119,3 +119,30 @@ describe("/api/improve-wording", () => {
     expect(body).toMatchObject({ ok: false, reason: "unavailable" });
   });
 });
+
+describe("/api/improve-wording failure handling (6 Oct 2026)", () => {
+  it("answers 503, not a generic 500, when the entitlement lookup fails", async () => {
+    isLicenseActiveMock.mockRejectedValue(new Error("License lookup unavailable"));
+    expect((await handleImproveWording(makeReq(valid))).status).toBe(503);
+    isLicenseActiveMock.mockResolvedValue(true);
+    claimCasePassMock.mockRejectedValue(new Error("down"));
+    expect((await handleImproveWording(makeReq(valid))).status).toBe(503);
+    expect(callGeminiMock).not.toHaveBeenCalled();
+  });
+
+  it("flags a provider failure for the breaker without changing the JSON", async () => {
+    callGeminiMock.mockResolvedValue({ ok: false, reason: "busy", message: "b" });
+    const res = await handleImproveWording(makeReq(valid));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-provider-failure")).toBe("1");
+    expect(await res.json()).toMatchObject({ ok: false, reason: "busy" });
+  });
+
+  it("does not flag a user-caused refusal", async () => {
+    const res = await handleImproveWording(makeReq({ ...valid, text: "we made a mistake" }));
+    expect(res.headers.get("x-provider-failure")).toBeNull();
+    modelReturns(`${SELLER_TEXT} Our account will be reinstated.`);
+    const res2 = await handleImproveWording(makeReq(valid));
+    expect(res2.headers.get("x-provider-failure")).toBeNull();
+  });
+});

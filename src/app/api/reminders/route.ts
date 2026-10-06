@@ -57,7 +57,13 @@ export async function POST(req: NextRequest) {
       dueAt: parsed.data.dueAt,
     });
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    // Checked by name, not instanceof: tests (and any future wrapper) replace the module.
+    if ((err as { code?: string } | null)?.code === "reminder_limit")
+      return NextResponse.json(
+        { error: "You have too many open reminders. Clear one before adding another." },
+        { status: 409 },
+      );
     // The seller's case is untouched either way — this only affects whether an email is sent.
     return NextResponse.json({ error: "Reminders are unavailable right now." }, { status: 503 });
   }

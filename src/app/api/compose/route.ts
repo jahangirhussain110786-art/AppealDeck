@@ -4,6 +4,7 @@ import { composePoa, critiquePoa, renderPoaText, isSeverityGated } from "@/core"
 import type { CaseFileData, PoaDraft } from "@/core";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive, claimCasePass } from "@/lib/license";
+import { serviceUnavailableResponse } from "@/lib/licenseGuard";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { recordActivation, deviceErrorResponse, deriveFingerprintFromRequest } from "@/lib/devices";
@@ -59,7 +60,13 @@ export async function POST(req: NextRequest) {
       { error: "This case requires professional help. Self-serve drafting is unavailable." },
       { status: 403 },
     );
-  if (!(await isLicenseActive(user.id))) {
+  let active: boolean;
+  try {
+    active = await isLicenseActive(user.id);
+  } catch {
+    return serviceUnavailableResponse();
+  }
+  if (!active) {
     return NextResponse.json(
       { error: "Appeal Pass required.", code: "case_pass_required" },
       { status: 403 },
@@ -68,18 +75,29 @@ export async function POST(req: NextRequest) {
 
   if (supabaseAdmin && email) {
     const fingerprint = await deriveFingerprintFromRequest(req, user.id);
-    const result = await recordActivation(supabaseAdmin, {
-      userId: user.id,
-      email,
-      fingerprint,
-      userAgent: req.headers.get("user-agent"),
-    });
+    let result;
+    try {
+      result = await recordActivation(supabaseAdmin, {
+        userId: user.id,
+        email,
+        fingerprint,
+        userAgent: req.headers.get("user-agent"),
+      });
+    } catch {
+      return serviceUnavailableResponse();
+    }
     if (result.status !== "ok") {
       return deviceErrorResponse(result);
     }
   }
 
-  if (!(await claimCasePass(user.id, caseData.id)))
+  let hasCasePass: boolean;
+  try {
+    hasCasePass = await claimCasePass(user.id, caseData.id);
+  } catch {
+    return serviceUnavailableResponse();
+  }
+  if (!hasCasePass)
     return NextResponse.json(
       { error: "An Appeal Pass is required for this case.", code: "case_pass_required" },
       { status: 403 },

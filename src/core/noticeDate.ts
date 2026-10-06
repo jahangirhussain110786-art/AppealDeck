@@ -66,7 +66,8 @@ const HEADER =
 /** "1st", "2nd", "23rd", "30th" — written in prose, rarely in a header, harmless to accept in both. */
 const ORDINAL = "(?:st|nd|rd|th)?";
 
-const ISO = /\b(\d{4})-(\d{2})-(\d{2})\b/;
+// `(?!\d)` rather than `\b`, so an ISO timestamp ("2026-03-04T23:30:00-08:00") still reads as its day.
+const ISO = /\b(\d{4})-(\d{2})-(\d{2})(?!\d)/;
 const DAY_MONTH_YEAR = new RegExp(
   `\\b(\\d{1,2})${ORDINAL}\\s+(?:of\\s+)?${MONTH}\\.?,?\\s+(\\d{4})\\b`,
   "i",
@@ -145,7 +146,7 @@ export interface StatedDeadline {
 const WEEKDAY = "(?:(?:mon|tues|wednes|thurs|fri|satur|sun)day,?\\s+)?";
 
 /** Sticky (`y`): each is tried exactly where a cue ends, never searched for further along. */
-const AT_ISO = /(\d{4})-(\d{2})-(\d{2})\b/y;
+const AT_ISO = /(\d{4})-(\d{2})-(\d{2})(?!\d)/y;
 const AT_DAY_MONTH_YEAR = new RegExp(
   `${WEEKDAY}(?:the\\s+)?(\\d{1,2})${ORDINAL}\\s+(?:of\\s+)?${MONTH}\\.?,?\\s+(\\d{4})\\b`,
   "iy",
@@ -168,7 +169,10 @@ const DEADLINE_NOUN_CUE =
 
 // "provide" and "send" added 29 Sep 2026: a product-safety notice saying "provide the following by
 // 20 October 2026" was shown as having no stated date, the last day the seller most needed to see.
-const RESPONDING = /\b(?:appeal|plan of action|poa|submit|resubmit|respond|reply|provide|send)\b/i;
+const RESPONDING =
+  /\b(?:appeal|plan of action|poa|submit|resubmit|respond|response|reply|provide|send|receive)\b/i;
+/** "covering all sales until 31 December 2025": the period a record covers, not a last day. */
+const RECORDS_PERIOD = /\b(?:covering|covers|for the period|sales|period)(?:\s+\w+){0,3}\s*$/i;
 /** "You have until 1 October 2026 to submit an appeal" — the action comes after the date. */
 const RESPONDING_AFTER = /^[^.!?\n]{0,40}?\bto\s+(?:appeal|submit|resubmit|respond|reply)\b/i;
 /** Amazon's timetable or the state of the money, not the seller's last day. */
@@ -203,7 +207,12 @@ function nextOccurrence(sentOn: string, month: number, day: number): string | nu
   const year = Number(sentOn.slice(0, 4));
   const same = isoDay(year, month, day);
   if (!same) return null;
-  return same >= sentOn ? same : isoDay(year + 1, month, day);
+  if (same >= sentOn) return same;
+  // A day just before the notice's own date has already passed; "by March 1" in a notice dated
+  // 4 March is not next year's March 1. Unplaceable beats a deadline a year too late.
+  const gapDays = (Date.parse(sentOn) - Date.parse(same)) / 86_400_000;
+  if (gapDays <= 7) return null;
+  return isoDay(year + 1, month, day);
 }
 
 /**
@@ -262,6 +271,7 @@ export function statedDeadlineOf(raw: string, sentOn: string | null): StatedDead
     if (SOMEONE_ELSES_CLOCK.test(clause) || PAST_TENSE.test(clause)) continue;
     const lead = raw.slice(Math.max(0, cue.index! - 40), cue.index!);
     if (DESCRIBES_A_RECORD.test(lead) && !AN_OBLIGATION.test(lead)) continue;
+    if (RECORDS_PERIOD.test(lead)) continue;
     found.push({ day: date.day, start: at, end: date.end });
   }
 
