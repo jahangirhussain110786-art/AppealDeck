@@ -321,7 +321,8 @@ describe("callGemini retries Google's 'not now' answers", () => {
     const fetchMock = respond([400]);
     const result = await run();
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toBe("upstream_error");
+    // A refused request is the caller's input, not a provider outage (it must not trip the breaker).
+    if (!result.ok) expect(result.reason).toBe("bad_input");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

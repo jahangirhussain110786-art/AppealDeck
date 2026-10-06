@@ -391,7 +391,9 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
         // Our own spend cap and a missing key are not provider outages; busy, timeouts, quota
         // and upstream errors are, and must count against the breaker.
         headers:
-          result.reason === "spend_cap" || result.reason === "not_configured"
+          result.reason === "spend_cap" ||
+          result.reason === "not_configured" ||
+          result.reason === "bad_input"
             ? undefined
             : { [PROVIDER_FAILURE_HEADER]: "1" },
       },

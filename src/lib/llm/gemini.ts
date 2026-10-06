@@ -115,7 +115,13 @@ export type GeminiCallResult =
   | {
       ok: false;
       reason:
-        "not_configured" | "spend_cap" | "upstream_error" | "busy" | "timeout" | "invalid_response";
+        | "not_configured"
+        | "spend_cap"
+        | "upstream_error"
+        | "bad_input"
+        | "busy"
+        | "timeout"
+        | "invalid_response";
       message: string;
     };
 
@@ -361,6 +367,19 @@ async function attemptOnce(
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
+      // A 4xx other than "slow down" / "timed out" means Google refused this request's content (a
+      // corrupt or protected file, say). That is the caller's input, not a provider outage, and it
+      // must not count against the shared circuit breaker (6 Oct 2026).
+      if (res.status >= 400 && res.status < 500 && res.status !== 429 && res.status !== 408) {
+        return {
+          retryable: false,
+          result: {
+            ok: false,
+            reason: "bad_input",
+            message: `Gemini returned ${res.status}: ${text.slice(0, 200)}`,
+          },
+        };
+      }
       return {
         retryable: (res.status === 429 && !isQuotaMessage(text)) || res.status >= 500,
         result: {

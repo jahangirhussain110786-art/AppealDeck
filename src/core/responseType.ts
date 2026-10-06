@@ -59,6 +59,47 @@ export interface ResponseTypeResult {
 interface Clause {
   text: string;
   start: number;
+  /** Set on a lead-in joined to its list items: how much of the original the lead-in covers. */
+  leadLength?: number;
+}
+
+const LIST_ITEM_START = /^(?:[-–—*•]+|\(?\d{1,2}[.)])\s+/;
+/** "1." alone: the sentence scan ends a clause at the full stop, so the item's text is the next clause. */
+const BARE_NUMBER = /^\(?\d{1,2}[.)]$/;
+
+/**
+ * A request written as a list ("Please send us:" then one record per line) is one request. Each
+ * item alone has no verb, so a clause ending in a colon takes the list items that follow it
+ * (7 Oct 2026: such a notice was "not yet clear" even though its records were raised).
+ */
+function withListItems(clauses: Clause[]): Clause[] {
+  const out: Clause[] = [];
+  for (let i = 0; i < clauses.length; i++) {
+    const lead = clauses[i]!;
+    const next = clauses[i + 1];
+    const startsItem = (c: Clause | undefined): boolean =>
+      !!c && (LIST_ITEM_START.test(c.text) || BARE_NUMBER.test(c.text));
+    if (!lead.text.endsWith(":") || !startsItem(next)) {
+      out.push(lead);
+      continue;
+    }
+    let text = lead.text;
+    let j = i + 1;
+    while (j < clauses.length && startsItem(clauses[j])) {
+      const c = clauses[j]!;
+      if (BARE_NUMBER.test(c.text)) {
+        // The item's words are the clause after the bare number.
+        text += " " + (clauses[j + 1]?.text ?? "");
+        j += 2;
+      } else {
+        text += " " + c.text.replace(LIST_ITEM_START, "");
+        j++;
+      }
+    }
+    out.push({ text, start: lead.start, leadLength: lead.text.length });
+    i = j - 1;
+  }
+  return out;
 }
 
 /**
@@ -305,7 +346,7 @@ export function determineResponseType(raw: string, formInstructions = ""): Respo
 
   let matches: ResponseTypeMatch[] = [];
   for (const source of sources) {
-    for (const clause of splitClauses(source.text)) {
+    for (const clause of withListItems(splitClauses(source.text))) {
       // "Providing falsified documents is a serious violation" states a rule; it asks for nothing.
       const past = describesThePast(clause.text) || GERUND_SUBJECT.test(clause.text);
       const negationText = clause.text.replace(RELATIVE_NEGATION, " ");
@@ -328,12 +369,17 @@ export function determineResponseType(raw: string, formInstructions = ""): Respo
           continue;
         }
         if (type !== "NO_ACTION_REQUESTED" && weak && found.index > weak.index) continue;
-        const localStart = clause.start + found.index;
+        // A request spread over a list is marked on its lead-in line: the items are not one
+        // contiguous run of the notice, so a position inside the joined text would point at the
+        // wrong characters.
+        const localStart =
+          clause.leadLength !== undefined ? clause.start : clause.start + found.index;
+        const localLength = clause.leadLength ?? found[0].length;
         matches.push({
           type,
           quote: clause.text,
           start: source.offset === -1 ? -1 : localStart,
-          end: source.offset === -1 ? -1 : localStart + found[0].length,
+          end: source.offset === -1 ? -1 : localStart + localLength,
         });
       }
     }

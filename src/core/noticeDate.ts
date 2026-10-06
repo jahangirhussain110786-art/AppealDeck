@@ -218,7 +218,9 @@ const AT_MONTH_DAY = new RegExp(`${WEEKDAY}${MONTH}\\.?\\s+(\\d{1,2})${ORDINAL}\
 const LAST_DAY_CUE = /\b(?:no later than|not later than|on or before|before|by|until)\s+/gi;
 /** "Appeal deadline: …" names its own subject, so it needs no sentence around it. */
 const DEADLINE_NOUN_CUE =
-  /\b(?:(?:appeal|response|submission|reply)\s+deadline(?:\s+is)?|deadline\s+to\s+(?:appeal|respond|reply))\s*:?\s*/gi;
+  /\b(?:(?:appeal|response|submission|reply)\s+deadline(?:\s+is)?|deadline\s+to\s+(?:appeal|respond|reply|submit\s+(?:an?\s+|your\s+)?(?:appeal|response|plan of action))(?:\s+(?:is|will\s+be))?)\s*:?\s*/gi;
+/** "no later than 5pm on 10 October 2026": a time of day before the date does not change the day. */
+const TIME_OF_DAY = /^\d{1,2}(?::\d{2})?\s*[ap]\.?m\.?(?:\s+[A-Za-z]{2,4})?\s+(?:on\s+)?/i;
 
 // "provide" and "send" added 29 Sep 2026: a product-safety notice saying "provide the following by
 // 20 October 2026" was shown as having no stated date, the last day the seller most needed to see.
@@ -313,7 +315,8 @@ export function statedDeadlineOf(raw: string, sentOn: string | null): StatedDead
   const found: Array<{ day: string | null; start: number; end: number }> = [];
 
   for (const cue of raw.matchAll(LAST_DAY_CUE)) {
-    const at = cue.index! + cue[0].length;
+    const cueEnd = cue.index! + cue[0].length;
+    const at = cueEnd + (TIME_OF_DAY.exec(raw.slice(cueEnd, cueEnd + 30))?.[0].length ?? 0);
     const date = dateAt(raw, at, sentOn);
     if (!date) continue;
     const sentence = sentenceBefore(raw, cue.index!);

@@ -559,7 +559,10 @@ export class Vault {
     );
   }
 
-  async findByPlaintext(data: Uint8Array | string): Promise<VaultListItem | null> {
+  async findByPlaintext(
+    data: Uint8Array | string,
+    scope?: { caseId?: string; evidenceKind?: string },
+  ): Promise<VaultListItem | null> {
     const bytes = typeof data === "string" ? new TextEncoder().encode(data) : data;
     const hash = await sha256Base64(this.provider, bytes);
     const target = `${PLAINTEXT_HASH_VERSION}.${hash}`;
@@ -567,7 +570,13 @@ export class Vault {
     // into memory on every upload just to look for a duplicate.
     const match = await this.db.records
       .orderBy("createdAt")
-      .filter((r) => r.plaintextHash === target)
+      .filter(
+        (r) =>
+          r.plaintextHash === target &&
+          // With a scope, only a copy in the same case and slot counts: the same file kept for
+          // another case must not hide a missing copy here.
+          (!scope || (r.caseId === scope.caseId && r.evidenceKind === scope.evidenceKind)),
+      )
       .first();
     return match ? toListItem(match) : null;
   }

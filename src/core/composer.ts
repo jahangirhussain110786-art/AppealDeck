@@ -376,7 +376,11 @@ function checkNovelty(draft: PoaDraft, findings: CriticFinding[]): void {
   will respond in 2 days"). A duration describing what the seller did, or now does, is a fact.
 */
 const DURATION = String.raw`(?:within|in|after)\s+\d{1,3}\s*(?:business\s+)?(?:hours?|days?)`;
-const OUTCOME = String.raw`(?:reinstat\w*|reactivat\w*|restor(?:e|ed|ation)|back online|unsuspend\w*)`;
+// A fix to the seller's own goods or listing ("restored the correct dimensions", "reinstated the
+// original packaging") is a fact about what they did, not a promise about the account (7 Oct 2026):
+// restore/unsuspend count only with the account or selling privileges as the object, and a
+// reinstate/reactivate followed by some other thing is left alone.
+const OUTCOME = String.raw`(?:reinstat\w*(?!\s+(?:the|our|my|your)\s+(?!account|selling|seller))|reactivat\w*(?!\s+(?:the|our|my|your)\s+(?!account|selling|seller))|restor\w*\s+(?:of\s+)?(?:\w+\s+){0,2}?(?:account|selling\s+privileges)|back online|unsuspend\w*)`;
 const AMAZON_ACTS = String.raw`\bAmazon\b[^.!?\n]{0,30}?\b(?:will|should|would|to)\s+(?:respond|repl(?:y|ies)|review|decide|approve|reinstate)\w*\b`;
 const TIME_PROMISE = new RegExp(
   [

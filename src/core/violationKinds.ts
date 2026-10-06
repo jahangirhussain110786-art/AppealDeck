@@ -136,6 +136,16 @@ const BOILERPLATE = new RegExp(
     "\\btamper[\\s-]+(?:evident|resistant|proof)\\b",
     // "must not be altered / edited" is an instruction about how to submit, not an allegation.
     "\\b(?:do not|don't|must not|should not|cannot|can't|never|not|without|un)\\s*(?:be\\s+)?(?:edited|altered|edit|alter)\\b",
+    // Rules and warnings about falsified records, not accusations (7 Oct 2026). Each names the
+    // fabrication word only inside the rule's own shape, and nothing about "your documents":
+    //   "Invoices must not have been altered or edited"  /  "Your documents have not been altered"
+    "\\b(?:will|would|can|could|may|do|does|did|must|should|have|has|had|are|is|were|was)\\s+not\\s+(?:have\\s+)?(?:been\\s+|be\\s+)?(?:(?:edited|altered|forged|falsified|fabricated|manipulated|doctored)(?:\\s*,\\s*|\\s+(?:or|and)\\s+)?)+",
+    //   "Documents that have been edited or altered will not be accepted"
+    "\\b(?:(?:edited|altered|forged|falsified|fabricated|manipulated|doctored)(?:\\s*,\\s*|\\s+(?:or|and)\\s+)?)+\\s+(?:will|would|can|could)\\s*(?:not|n't)\\s+be\\s+(?:accepted|considered|reviewed|processed|honou?red)\\b",
+    //   "Please do not submit documents that have been edited"  /  "We cannot accept documents that are forged"
+    "\\b(?:(?:do|does|must|should|may)\\s+not|cannot|can't|will\\s+not|won't)\\s+(?:submit|send|upload|provide|accept)\\s+(?:\\w+\\s+){0,3}?(?:that\\s+(?:are|were|have\\s+been)\\s+)?(?:(?:edited|altered|forged|falsified|fabricated|manipulated|doctored)(?:\\s*,\\s*|\\s+(?:or|and)\\s+)?)+",
+    //   "Falsified documents will result in permanent deactivation"
+    "\\b(?:forged|falsified|fabricated|altered|fake)\\s+(?:documents?|invoices?|records?)\\s+(?:will|may|can|could)\\s+(?:result|lead)\\s+in\\b",
   ].join("|"),
   "gi",
 );
@@ -154,7 +164,12 @@ const ALLEGATION_VOCABULARY = new RegExp(
     "\\btamper\\w*",
     "\\bscam\\w*",
     // fake / false / edited ... within a few words of a record noun, both orders
-    `\\b${DOC_WORD}\\s+(?:of\\s+)?(?:[\\w'-]+\\s+){0,3}?${DOC_NOUN}\\b`,
+    `\\b${DOC_WORD}\\s+(?:of\\s+)?(?:(?!(?:and|or|then|so|but)\\b)[\\w'-]+\\s+){0,3}?${DOC_NOUN}\\b`,
+    // Other ordinary ways Amazon says a record was tampered with (7 Oct 2026).
+    "\\bphotoshop\\w*",
+    "\\b(?:invoices?|documents?)\\b[^.!?\\n]{0,60}?\\b(?:have been|had been|were|was|are|appears? to be|appear(?:s)? to have been|seems? to have been)\\s+(?:\\w+\\s+){0,2}?modified\\b",
+    "\\b(?:invoices?|documents?)\\b[^.!?\\n]{0,60}?\\b(?:was|were|is|are)\\s+(?:\\w+\\s+)?not\\s+(?:actually\\s+)?issued\\s+by\\b",
+    "\\b(?:invoices?|documents?)\\b[^.!?\\n]{0,40}?\\bcontain(?:s|ed)?\\s+(?:false|misleading)\\s+information\\b",
     `\\b${DOC_NOUN}\\b[^.!?\\n]{0,60}?\\b(?:(?:were|was|are|is|been|be|being|appears?(?:\\s+to\\s+(?:be|have\\s+been))?|seems?(?:\\s+to\\s+(?:be|have\\s+been))?|looks?(?:\\s+(?:to\\s+be|like))?|found\\s+to\\s+be|determined\\s+to\\s+be)\\s+(?:\\w+\\s+){0,2}?)${DOC_WORD}\\b`,
     // child abuse family
     "\\bchild(?:ren)?\\s+(?:sexual\\w*|sex\\b|abus\\w+|exploit\\w+|pornograph\\w*|porn\\b|endanger\\w*|molest\\w*|trafficking)",
@@ -190,7 +205,7 @@ function splitSentences(text: string): string[] {
 export function findD6Allegation(text: string): { quote: string } | null {
   for (const sentence of splitSentences(text)) {
     const stripped = sentence.replace(BOILERPLATE, " ");
-    if (ALLEGATION_VOCABULARY.test(stripped) || DOCUMENT_FABRICATION.test(sentence))
+    if (ALLEGATION_VOCABULARY.test(stripped) || DOCUMENT_FABRICATION.test(stripped))
       return { quote: sentence.trim().slice(0, 300) };
   }
   return null;

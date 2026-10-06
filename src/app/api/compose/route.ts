@@ -91,6 +91,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  let hasCasePass: boolean;
+  try {
+    hasCasePass = await claimCasePass(user.id, caseData.id);
+  } catch {
+    return serviceUnavailableResponse();
+  }
+  if (!hasCasePass)
+    return NextResponse.json(
+      { error: "An Appeal Pass is required for this case.", code: "case_pass_required" },
+      { status: 403 },
+    );
+
+  // The device cap is applied after the Pass check, so a request for a case with no Pass cannot use
+  // up one of the seller's device slots.
   if (supabaseAdmin && email) {
     const fingerprint = await deriveFingerprintFromRequest(req, user.id);
     let result;
@@ -108,18 +122,6 @@ export async function POST(req: NextRequest) {
       return deviceErrorResponse(result);
     }
   }
-
-  let hasCasePass: boolean;
-  try {
-    hasCasePass = await claimCasePass(user.id, caseData.id);
-  } catch {
-    return serviceUnavailableResponse();
-  }
-  if (!hasCasePass)
-    return NextResponse.json(
-      { error: "An Appeal Pass is required for this case.", code: "case_pass_required" },
-      { status: 403 },
-    );
   const data: CaseFileData = caseData;
 
   const draft = composeDraft(data, attemptNumber);

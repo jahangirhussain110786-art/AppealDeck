@@ -53,12 +53,16 @@ const RULES: ReadonlyArray<PatternRule> = [
   {
     category: "final_decision_negative",
     patterns: [
-      /this decision is final/i,
+      /(?:this|your|the) decision is final/i,
       /no further consideration/i,
       /we will not be able to respond to further appeals/i,
       /permanently deactivated/i,
       // Amazon's other ways of saying the account is gone for good.
-      /permanently (?:suspended|removed|closed|revoked|terminated)/i,
+      /permanently (?:suspended|revoked|terminated)/i,
+      // "Removed" and "closed" are final for the account only (7 Oct 2026): "ASIN B0… has been
+      // permanently removed from the catalog" or "we have permanently closed your related account"
+      // beside a reinstatement is a part still gone, reported as partial, not as a final rejection.
+      /\b(?:account|selling privileges)\b[^.!?\n]{0,40}\bpermanently (?:removed|closed)\b|\bpermanently (?:removed|closed)\b[^.!?\n]{0,30}\b(?:your|the) (?:seller |selling )?account\b/i,
       // Amazon closing the door on further appeals (6 Oct 2026). These beat the non-final "will not
       // reinstate" wording below: "we will not reinstate your selling account. Please do not submit
       // further appeals" is final, and reading it as "needs more information" tells a seller to
@@ -123,6 +127,8 @@ const RULES: ReadonlyArray<PatternRule> = [
       /(?:your appeal|(?:this|the|your) (?:request|plan of action|submission)|it) (?:has|have) been (?:denied|declined|rejected)/i,
       /(?:we(?:'re| are)|amazon is) unable to (?:approve|accept)/i,
       /(?:does|do) not meet our (?:requirements|standards|policies)/i,
+      // "Your plan of action was not accepted", "Your appeal was not successful" (7 Oct 2026).
+      /\b(?:was|were|is|are)\s+not\s+(?:accepted|successful|approved)\b/i,
     ],
   },
   {
@@ -239,7 +245,10 @@ const DOCUMENT_ASK =
   /\b(?:submit|provide|send|upload)\b[^.!?\n]{0,60}\b(?:invoices?|documents?|documentation|certificates?|proof|records?)\b/i;
 /** Something is still removed, blocked or restricted even though the account is back. */
 const STILL_RESTRICTED =
-  /\b(?:remains?|still|continues?\s+to\s+be)\b[^.!?\n]{0,60}\b(?:removed|suppressed|blocked|deactivated|inactive|restricted|unavailable|suspended|under\s+review|on\s+hold|disabled|closed)\b|\bno\s+longer\s+(?:able|permitted|eligible)\s+to\s+sell\b/i;
+  /\b(?:remains?|still|continues?\s+to\s+be)\b[^.!?\n]{0,60}\b(?:removed|suppressed|blocked|deactivated|inactive|restricted|unavailable|suspended|under\s+review|on\s+hold|disabled|closed)\b|\bpermanently\s+(?:removed|closed)\b|\bno\s+longer\s+(?:able|permitted|eligible)\s+to\s+sell\b/i;
+/** An identity check still owed: the ID document is what is asked for. */
+const IDENTITY_ASK =
+  /\b(?:verify|confirm)\s+your\s+(?:identity|account)\b|\b(?:provide|submit|upload|send)\b[^.!?\n]{0,40}\b(?:government.issued\s+id|identification|photo\s+id|id\s+document)\b/i;
 const ASK_NEGATED = /\b(?:no|not|don't|do not)\b/i;
 
 /**
@@ -256,7 +265,8 @@ function openAsksAfterReinstatement(text: string, reinstatement: RegExp[]): Open
     if (ASK_NEGATED.test(sentence)) continue;
     const trimmed = sentence.trim();
     if (PLAN_ASK.test(sentence)) asks.push({ kind: "plan_of_action", quote: trimmed });
-    else if (DOCUMENT_ASK.test(sentence)) asks.push({ kind: "documents", quote: trimmed });
+    else if (DOCUMENT_ASK.test(sentence) || IDENTITY_ASK.test(sentence))
+      asks.push({ kind: "documents", quote: trimmed });
   }
   return asks.length > 0 || restricted ? asks : null;
 }
@@ -269,12 +279,23 @@ function openAsksAfterReinstatement(text: string, reinstatement: RegExp[]): Open
  */
 const NOT_A_STATEMENT =
   /\b(?:not|never|no longer|unable|if|once|when|until|unless|after|would|will be)\b|n't\b|n’t\b|\bremains?\s+(?:suspended|deactivated|under\s+review|blocked|closed)\b|\bstill\s+(?:suspended|deactivated|under\s+review)\b/i;
+/** "After reviewing your appeal, we have reinstated…" states what happened; it is not a condition. */
+const AFTER_REVIEW =
+  /\bafter\s+(?:careful(?:ly)?\s+)?(?:reviewing|review(?:ing)?\s+of|a\s+review\s+of|our\s+review)\b/gi;
 function claimsReinstatement(patterns: RegExp[], text: string): boolean {
-  return text
-    .split(/(?<=[.!?])\s+|\n+/)
-    .some(
-      (sentence) => patterns.some((re) => re.test(sentence)) && !NOT_A_STATEMENT.test(sentence),
-    );
+  return text.split(/(?<=[.!?])\s+|\n+/).some((sentence) =>
+    patterns.some((re) => {
+      const m = re.exec(sentence);
+      if (!m) return false;
+      // Only what comes up to the end of the reinstatement phrase decides whether it is a
+      // statement: "…reinstated, and your listings will be restored" is still a statement.
+      const upTo = sentence.slice(0, m.index + m[0].length).replace(AFTER_REVIEW, " ");
+      const after = sentence.slice(m.index + m[0].length);
+      return (
+        !NOT_A_STATEMENT.test(upTo) && !/^\s*(?:,\s*)?(?:if|unless|once|when|until)\b/i.test(after)
+      );
+    }),
+  );
 }
 
 function sampleText(raw: string): string {

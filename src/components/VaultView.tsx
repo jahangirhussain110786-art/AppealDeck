@@ -403,12 +403,14 @@ export default function VaultView({ userId }: { userId: string }) {
           destinationPassphrase: recoveryPassphrase,
         });
       }
+      // Cleared only once the restore worked: after a wrong passphrase the seller must not have to
+      // type the right one into an empty box from scratch.
+      setRecoveryPassphrase("");
       window.location.reload();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Restore failed");
     } finally {
       setBusy(false);
-      setRecoveryPassphrase("");
     }
   };
 

@@ -364,7 +364,17 @@ function WorkspaceInner({
       alive = false;
     };
   }, [vault, fileId, fileState]);
-  const openCase = useCallback((id: string) => setActiveCaseId(vault, id), [vault]);
+  // Set once the draft flusher exists (it is defined further down). Switching case reloads the page,
+  // and a reload runs no unmount cleanup, so what the seller typed in the last moments must be
+  // written before the switch, not left to the unmount flush.
+  const flushPendingRef = useRef<() => Promise<void>>(async () => {});
+  const openCase = useCallback(
+    async (id: string) => {
+      await flushPendingRef.current();
+      await setActiveCaseId(vault, id);
+    },
+    [vault],
+  );
   usePublishCases(caseSummaries, openCase);
   const setCurrent = useCallback((next: CaseFile) => {
     fileRef.current = next;
@@ -691,7 +701,7 @@ function WorkspaceInner({
    * more, but a run of separate vault writes during teardown is still the wrong shape: each one
    * re-reads the case, and the seller is already navigating. One write says the same thing.
    */
-  const flushAllDraftKeys = useCallback(() => {
+  const flushAllDraftKeys = useCallback((): Promise<void> => {
     for (const timer of draftTimers.current.values()) clearTimeout(timer);
     draftTimers.current.clear();
 
@@ -704,9 +714,9 @@ function WorkspaceInner({
       if (scopedId !== undefined && caseId !== scopedId) continue;
       entries.push([key, value]);
     }
-    if (entries.length === 0) return;
+    if (entries.length === 0) return commitQueue.current.then(() => undefined);
 
-    void commit(
+    return commit(
       (w) => ({
         ...w,
         draft: entries.reduce((draft, [key, value]) => withDraftValue(draft, key, value), w.draft),
@@ -726,6 +736,7 @@ function WorkspaceInner({
     // commit is ref-driven and stable across renders; see its definition.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  flushPendingRef.current = flushAllDraftKeys;
 
   const setDraftField = useCallback(
     (key: string, value: string | undefined) => {

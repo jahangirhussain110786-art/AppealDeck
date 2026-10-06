@@ -459,6 +459,7 @@ describe("time-promise rule", () => {
     "Amazon will respond within 3 days.",
     "We hope Amazon will review this in 24 hours.",
     "Our account should be back online in 5 days.",
+    "We ask for restoration of our selling privileges within 3 days.",
   ])("flags a promise about Amazon's timeline or the outcome: %s", (body) => {
     expect(flagged(body)).toBe(true);
   });
@@ -466,6 +467,8 @@ describe("time-promise rule", () => {
   it.each([
     "We reviewed the last 30 days of orders for the affected ASIN.",
     "We now audit inventory every 30 days.",
+    "On 3 Sep 2026 we fixed the listing and restored the correct dimensions within 24 hours of the complaint.",
+    "We reinstated the original packaging within 2 days.",
     "Our team responds to all buyer messages within 24 hours.",
     "Within 7 days of the complaint we removed the listing.",
     "Amazon asked us to provide invoices within 30 days.",

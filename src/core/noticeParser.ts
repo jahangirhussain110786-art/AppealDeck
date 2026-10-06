@@ -60,7 +60,7 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   // now allowed; "authenticity" still has to be what the complaint is about.
   [
     "INAUTHENTIC",
-    /inauthentic|not authentic|(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)|(?:complaints?|concerns?|reports?)[^.!?\n]{0,40}?\b(?:about|regarding|concerning|related to) the authenticity|authenticity (?:complaints?|concerns?)/i,
+    /inauthentic|not authentic|(?:not|n't)\s+appear\s+(?:to\s+be\s+)?(?:authentic|genuine)|(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)|(?:complaints?|concerns?|reports?)[^.!?\n]{0,40}?\b(?:about|regarding|concerning|related to) the authenticity|authenticity (?:complaints?|concerns?)/i,
   ],
   [
     "RELATED_ACCOUNT",
@@ -198,6 +198,11 @@ export function genericWindowsOf(raw: string): GenericWindows {
       if (!DUTY_BEFORE.test(before) && !(before.trim() === "" && DUTY_AFTER.test(after))) continue;
       if (RECENCY_BEFORE.test(before) || NOT_THE_SELLER.test(before)) continue;
       if (AMAZON_SUBJECT.test(before) && !SELLER_AGENCY.test(before)) continue;
+      // The clause the window is attached to decides who acts: "Once you submit your appeal, we
+      // will review it within 5 days" opens with the seller's step, but the window is Amazon's
+      // review time (7 Oct 2026).
+      const governing = before.split(/,|;|\bthen\b/i).pop() ?? before;
+      if (AMAZON_SUBJECT.test(governing) && !SELLER_AGENCY.test(governing)) continue;
       record(m);
     }
     for (const m of sentence.matchAll(YOU_HAVE)) record(m);

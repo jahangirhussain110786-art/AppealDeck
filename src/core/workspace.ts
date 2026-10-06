@@ -449,7 +449,11 @@ export function requirementEvidenceKind(
 const REQUIREMENT_NEGATION =
   /\b(do not|don't|does not need|not required|not necessary|not needed|no need to|no longer|no additional|no further)\b/i;
 
-const REQUEST_WORD = /\b(provide|submit|upload|send|include|request(?:ed|ing)?)\b/i;
+// "attach", "supply" and the -ing forms (7 Oct 2026): "Please attach copies of your invoices" and
+// "You may appeal by providing supplier invoices" ask just as plainly. Past tense stays out on
+// purpose ("the ID you provided at registration" is history, not a request).
+const REQUEST_WORD =
+  /\b(provid(?:e|ing)|submit(?:ting)?|upload(?:ing)?|send(?:ing)?|includ(?:e|ing)|attach(?:ing)?|suppl(?:y|ying)|request(?:ed|ing)?)\b/i;
 /**
  * A line introducing a list can ask in more ways than a sentence can: "During the call you will be
  * asked to show:", "Have the following ready:". Only ever read on a line that ends with a colon, so
