@@ -189,11 +189,13 @@ export const FINDING_LABELS: Record<FindingStatus, string> = {
 const BANNED_CONCLUSIONS = new RegExp(
   "\\b(" +
     [
-      "authentic",
-      "genuine",
-      "legitimate",
-      "valid(?:ates?|ated)?",
+      "authentic\\w*",
+      "genuine\\w*",
+      "legit\\w*",
+      "valid(?:ates?|ated|ity)?",
       "verified",
+      "bona fide",
+      "no (?:sign|signs|evidence|indication) of (?:forgery|fraud|tampering|alteration)",
       "approved",
       "accepted",
       "will (?:be )?(?:pass|work|succeed)",
@@ -367,8 +369,15 @@ export function buildDocumentCheck(
 
   // Anything the reading found that is not on Amazon's list is kept, after the expected fields, so
   // a genuinely useful observation is not thrown away by a stale matrix.
+  // The label of an extra finding is the model's own text and is shown as a row heading, so it gets
+  // the same filter as a note, and only a handful are kept (a document cannot fill the screen).
+  let extras = 0;
   for (const [key, finding] of byField) {
-    if (!expectedFields.some((f) => fieldKey(f) === key)) findings.push(finding);
+    if (expectedFields.some((f) => fieldKey(f) === key)) continue;
+    if (finding.field.length > 80 || containsBannedConclusion(finding.field) || extras >= 5)
+      continue;
+    extras += 1;
+    findings.push(finding);
   }
 
   const expected = findings.slice(0, expectedFields.length);
@@ -864,10 +873,23 @@ export function savedCheckFor(
   saved: readonly SavedDocumentCheck[] | undefined,
   recordId: string | undefined,
   contentHash: string | undefined,
+  /**
+   * The kind of record the requirement asks for. One file can be linked to several requirements, and
+   * a check run for "supplier invoice" must not be shown, counted or warned about under "brand
+   * authorization" (7 Oct 2026). Unknown on either side means no objection.
+   */
+  evidenceKind?: string,
 ): SavedDocumentCheck | undefined {
   if (!recordId) return undefined;
   const hit = saved?.find((c) => c.recordId === recordId);
   if (!hit) return undefined;
+  if (
+    evidenceKind &&
+    hit.outcome.kind === "fields" &&
+    hit.outcome.result.evidenceKind &&
+    hit.outcome.result.evidenceKind !== evidenceKind
+  )
+    return undefined;
   // Both hashes known and different: the record now holds another file.
   if (hit.contentHash && contentHash && hit.contentHash !== contentHash) return undefined;
   return hit;

@@ -8,6 +8,8 @@ export type RateLimitResult = {
   limit: number;
   remaining: number;
   reset: number;
+  /** True when the limiter itself could not answer (not configured, or the store is down): not the seller's doing. */
+  unavailable?: boolean;
 };
 
 let _compose: Ratelimit | null = null;
@@ -156,6 +158,7 @@ export async function rateLimitCompose(user: AppUser): Promise<RateLimitResult> 
   if (!limiter) {
     return {
       success: process.env.NODE_ENV !== "production",
+      unavailable: process.env.NODE_ENV === "production",
       limit: 30,
       remaining: 30,
       reset: Date.now() + 60_000,
@@ -165,7 +168,13 @@ export async function rateLimitCompose(user: AppUser): Promise<RateLimitResult> 
   try {
     r = await limiter.limit(user.id);
   } catch {
-    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+    return {
+      success: false,
+      limit: 0,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+      unavailable: true,
+    };
   }
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
@@ -175,6 +184,7 @@ export async function rateLimitAnalyzeReply(user: AppUser): Promise<RateLimitRes
   if (!limiter) {
     return {
       success: process.env.NODE_ENV !== "production",
+      unavailable: process.env.NODE_ENV === "production",
       limit: 60,
       remaining: 60,
       reset: Date.now() + 60_000,
@@ -184,7 +194,13 @@ export async function rateLimitAnalyzeReply(user: AppUser): Promise<RateLimitRes
   try {
     r = await limiter.limit(user.id);
   } catch {
-    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+    return {
+      success: false,
+      limit: 0,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+      unavailable: true,
+    };
   }
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
@@ -194,6 +210,7 @@ export async function rateLimitOutcome(user: AppUser): Promise<RateLimitResult> 
   if (!limiter) {
     return {
       success: process.env.NODE_ENV !== "production",
+      unavailable: process.env.NODE_ENV === "production",
       limit: 10,
       remaining: 10,
       reset: Date.now() + 86_400_000,
@@ -203,7 +220,13 @@ export async function rateLimitOutcome(user: AppUser): Promise<RateLimitResult> 
   try {
     r = await limiter.limit(user.id);
   } catch {
-    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+    return {
+      success: false,
+      limit: 0,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+      unavailable: true,
+    };
   }
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
@@ -213,6 +236,7 @@ export async function rateLimitDocumentRead(user: AppUser): Promise<RateLimitRes
   if (!limiter) {
     return {
       success: process.env.NODE_ENV !== "production",
+      unavailable: process.env.NODE_ENV === "production",
       limit: 20,
       remaining: 20,
       reset: Date.now() + 86_400_000,
@@ -222,7 +246,13 @@ export async function rateLimitDocumentRead(user: AppUser): Promise<RateLimitRes
   try {
     r = await limiter.limit(user.id);
   } catch {
-    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+    return {
+      success: false,
+      limit: 0,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+      unavailable: true,
+    };
   }
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
@@ -232,6 +262,7 @@ export async function rateLimitWording(user: AppUser): Promise<RateLimitResult> 
   if (!limiter) {
     return {
       success: process.env.NODE_ENV !== "production",
+      unavailable: process.env.NODE_ENV === "production",
       limit: 40,
       remaining: 40,
       reset: Date.now() + 86_400_000,
@@ -241,7 +272,13 @@ export async function rateLimitWording(user: AppUser): Promise<RateLimitResult> 
   try {
     r = await limiter.limit(user.id);
   } catch {
-    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+    return {
+      success: false,
+      limit: 0,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+      unavailable: true,
+    };
   }
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
@@ -251,6 +288,7 @@ export async function rateLimitReminders(user: AppUser): Promise<RateLimitResult
   if (!limiter) {
     return {
       success: process.env.NODE_ENV !== "production",
+      unavailable: process.env.NODE_ENV === "production",
       limit: 60,
       remaining: 60,
       reset: Date.now() + 86_400_000,
@@ -260,7 +298,13 @@ export async function rateLimitReminders(user: AppUser): Promise<RateLimitResult
   try {
     r = await limiter.limit(user.id);
   } catch {
-    return { success: false, limit: 0, remaining: 0, reset: Date.now() + 60_000 };
+    return {
+      success: false,
+      limit: 0,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+      unavailable: true,
+    };
   }
   return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
 }
@@ -282,6 +326,16 @@ export function waitPhrase(seconds: number): string {
  * for up to a day, each time believing it was a passing hiccup.
  */
 export function tooManyRequestsResponse(result: RateLimitResult) {
+  // A limiter that cannot answer is the service's fault, and "slow down" tells a paying buyer to
+  // wait out a problem that will not clear by waiting.
+  if (result.unavailable) {
+    return new Response(
+      JSON.stringify({
+        error: "This is not available right now. Please try again in a few minutes.",
+      }),
+      { status: 503, headers: { "Content-Type": "application/json", "Retry-After": "120" } },
+    );
+  }
   const seconds = Math.max(1, Math.ceil((result.reset - Date.now()) / 1000));
   const error =
     seconds <= 120

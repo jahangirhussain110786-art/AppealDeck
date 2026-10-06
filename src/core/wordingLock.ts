@@ -121,9 +121,10 @@ const WITH_DIGIT = /[A-Za-z0-9][A-Za-z0-9./:\-#]{0,100}\d[A-Za-z0-9./:\-#]{0,100
 const EMAIL = /[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,10}/g;
 // A bare domain counts too: "docs.example.com" is an address whether or not it starts with www.
 const URL = /\bhttps?:\/\/\S+|\b(?:[a-z0-9-]{1,63}\.){1,10}[a-z]{2,63}\b(?:\/\S*)?/gi;
-const NEGATION = /\b(?:not|never|no|without|cannot)\b|n['’]t\b/gi;
+const NEGATION =
+  /\b(?:not|never|no|without|cannot|unable|unaware|nor|neither|lack(?:s|ed|ing)?|fail(?:s|ed|ing)? to)\b|n['’]t\b/gi;
 const PLANNED =
-  /\b(?:will|would|shall|intend(?:ed|s)?(?:\s+to)?|planning|planned|plan to|plans to|aim to|hope to|expect to|going to|about to|in the process of|scheduled to|yet to)\b/gi;
+  /\b(?:will|would|shall|intend(?:ed|s)?(?:\s+to)?|planning|planned|plan to|plans to|aim to|hope to|expect to|going to|about to|in the process of|scheduled to|yet to|working on|preparing|developing|currently|underway|in progress)\b/gi;
 // Spelled-out quantities are facts exactly as digits are ("ten" must not become "twelve"). "one" is
 // left out: it is mostly a pronoun or article ("no one", "one of our").
 // The small numbers are turned into digits first (see `NUMBER_WORD_DIGITS`), so "12 units" and
@@ -246,6 +247,35 @@ function sentenceInitialNames(text: string): Set<string> {
   return out;
 }
 
+/**
+ * A number with the unit or symbol it is attached to: "30 days", "$500", "5%", "20 units". The bare
+ * digits are already compared one by one, which let "30 days" become "30 months", "$500" become
+ * "€500" and "5 complaints, 20 units" become "20 complaints, 5 units" (7 Oct 2026). Plural endings
+ * and a hyphen are ignored, so "30-day" and "30 days" are the same fact.
+ */
+const MEASURE_WORDS = new Set(
+  "day week month year hour minute unit order item piece complaint case listing review refund return package shipment percent pound kilo kg dollar euro usd eur gbp".split(
+    " ",
+  ),
+);
+const NUMBER_WITH_UNIT = /([$€£]?)(\d[\d.]*)\s*(%|[-]?\s?[a-z]{2,20})?/gi;
+function numberUnitPairs(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const m of text.matchAll(NUMBER_WITH_UNIT)) {
+    const unit = (m[3] ?? "")
+      .toLowerCase()
+      .replace(/^[-\s]+/, "")
+      .replace(/(?<=[a-z]{3})s$/, "");
+    // Months and weekday names are compared separately; ordinals ("3rd") are not units.
+    if (MONTHS_AND_DAYS.includes(unit) || /^(?:st|nd|rd|th)$/.test(unit)) continue;
+    // Only a measure word counts as a unit. The word after a number is otherwise just the next word
+    // of the sentence, and a fluent rewrite moves those freely.
+    const kept = unit === "%" || MEASURE_WORDS.has(unit) ? unit : "";
+    out.add(`${m[1] ?? ""}${m[2]!.replace(/\.$/, "")} ${kept}`.trim());
+  }
+  return out;
+}
+
 export interface WordingLockResult {
   ok: boolean;
   /** Facts the rewrite added, in the rewrite's own spelling. */
@@ -277,6 +307,15 @@ export function checkWordingLock(originalText: string, rewriteText: string): Wor
     for (const t of after) if (!before.has(t)) added.push(spelledAs(rewriteText, t));
     for (const t of before) if (!after.has(t)) dropped.push(spelledAs(originalText, t));
   }
+  {
+    const before = numberUnitPairs(original);
+    const after = numberUnitPairs(rewrite);
+    for (const t of after) if (!before.has(t)) added.push(t);
+    for (const t of before) if (!after.has(t)) dropped.push(t);
+  }
+  // A rewrite that is much longer than what the seller wrote has said something they did not.
+  const wordCount = (t: string) => t.split(/\s+/).filter(Boolean).length;
+  if (wordCount(rewrite) > wordCount(original) * 1.35 + 6) added.push("added content");
   for (const name of midSentenceNames(rewrite)) {
     if (!allWordsInOriginal.has(name)) added.push(name);
   }

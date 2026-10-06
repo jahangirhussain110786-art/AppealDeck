@@ -43,11 +43,17 @@ export interface BuildFingerprintInput {
 export async function fingerprintFromRequest(input: BuildFingerprintInput): Promise<string> {
   // The IP address is deliberately NOT part of the fingerprint: a phone or home connection changes
   // address constantly, and each change would count as a new device until a paying seller hit the cap.
-  const raw = [
-    input.userAgent.trim().toLowerCase(),
-    input.acceptLanguage.trim().toLowerCase(),
-    input.userId,
-  ].join("|");
+  // Version numbers and the language list are left out too (7 Oct 2026): a browser updates about
+  // every four weeks, and each update changed the user-agent text, so one seller on one laptop
+  // filled the five-device cap in months and was then refused until they removed their own ghosts.
+  // What identifies a device is its browser family and system, and the first language.
+  const family = input.userAgent
+    .trim()
+    .toLowerCase()
+    .replace(/[0-9]+(?:[._][0-9]+)*/g, "")
+    .replace(/\s+/g, " ");
+  const language = input.acceptLanguage.trim().toLowerCase().split(/[,;]/)[0]?.split("-")[0] ?? "";
+  const raw = [family, language, input.userId].join("|");
   return hashFingerprint(raw);
 }
 

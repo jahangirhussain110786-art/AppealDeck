@@ -192,14 +192,14 @@ export const WorkspaceSchema = z
     // seller saved would be discarded on the way into the vault.
     answers: z
       .array(z.object({ question: z.string().max(500), answer: z.string().max(12000) }))
-      .max(50)
+      .max(200)
       .optional(),
     // Same reason: stripped here, a removed record would come back on the next confirmation.
     dismissed: z
       .array(
         z.object({
-          key: z.string().max(200),
-          label: z.string().max(200),
+          key: z.string().max(600),
+          label: z.string().max(600),
           reason: z.string().max(2000),
           at: z.string().datetime(),
         }),

@@ -110,7 +110,7 @@ describe("/api/read-document hardening (6 Oct 2026)", () => {
   it("reads the JSON even when trailing prose holds a closing brace", async () => {
     callGeminiMock.mockResolvedValue({
       ok: true,
-      text: '{"findings":[]}\nI left out nothing {really}.',
+      text: '{"findings":[{"field":"supplier business name","status":"present","observed":"Acme Ltd","note":"printed on the invoice"}]}\nI left out nothing {really}.',
     });
     const body = await (await handleReadDocument(makeReq(valid))).json();
     expect(body.ok).toBe(true);

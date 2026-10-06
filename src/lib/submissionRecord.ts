@@ -1,5 +1,5 @@
 import type { Workspace } from "@/core/workspace";
-import { workspaceGaps } from "@/core/workspace";
+import { answerableInWords, workspaceGaps } from "@/core/workspace";
 import type { CriticFinding } from "@/core/composer";
 import type { CaseFile } from "@/core/caseFile";
 import { buildOutcomeRecord, type OutcomeRecord, type OutcomeStatus } from "@/core/outcomeModel";
@@ -28,7 +28,9 @@ export function openItemsAt(w: Workspace, prepared: PreparedResponse): string[] 
   for (const f of prepared.findings) {
     if (f.severity === "error" || f.severity === "warning") items.add(f.message);
   }
-  return [...items];
+  // The stored record accepts 50 items of 2000 characters; a long document-check message must not
+  // make the whole case unsaveable.
+  return [...items].slice(0, 50).map((item) => item.slice(0, 2000));
 }
 
 /**
@@ -87,7 +89,13 @@ export function buildSubmission(input: {
  */
 export function readinessOf(w: Workspace): number {
   if (w.requirements.length === 0) return 100;
-  const done = w.requirements.filter((r) => r.status === "reviewed" && r.recordId).length;
+  // A record the seller declared they cannot obtain, with their reason, is settled too, and a
+  // statement-only record has nothing to link; neither should read as an empty case.
+  const done = w.requirements.filter(
+    (r) =>
+      (r.status === "reviewed" && (r.recordId || (answerableInWords(w, r) && r.note.trim()))) ||
+      (r.status === "cannot_obtain" && Boolean(r.declined?.reason.trim())),
+  ).length;
   return Math.round((100 * done) / w.requirements.length);
 }
 

@@ -133,7 +133,7 @@ import {
 import { peekPendingNotice, clearPendingNotice } from "@/lib/pendingNotice";
 import { importDecodedNotice } from "@/lib/importDecodedNotice";
 import type { Vault, VaultListItem } from "@/core/vault/vault";
-import { formatDate } from "@/lib/format";
+import { formatDate, localToday } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
 import { APP } from "@/content/app";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
@@ -163,6 +163,21 @@ function Loading() {
 }
 
 const SAVE_FAILED = "Not saved: this case changed in another window. Reload to see the latest.";
+
+/** After a document card is replaced, focus the heading of whichever card is open now. */
+function focusOpenDocumentTitle(): void {
+  const attempt = (triesLeft: number) => {
+    const body = document.querySelector<HTMLElement>('[id^="document-"]:not([hidden])');
+    const title = body ? document.getElementById(`${body.id}-title`) : null;
+    if (title) {
+      title.tabIndex = -1;
+      title.focus();
+    } else if (triesLeft > 0) {
+      requestAnimationFrame(() => attempt(triesLeft - 1));
+    }
+  };
+  requestAnimationFrame(() => attempt(5));
+}
 
 export function CaseWorkspace({
   signedIn,
@@ -926,7 +941,9 @@ function WorkspaceInner({
       // 30 Sep 2026: "Check again" while the AI is busy now answers with the reading on the device.
       // That must not overwrite a current AI reading the seller already has: it is shown for now,
       // and the saved AI reading is what comes back on reload.
-      const saved = ws ? savedCheckFor(ws.documentChecks, recordId, req.contentHash) : undefined;
+      const saved = ws
+        ? savedCheckFor(ws.documentChecks, recordId, req.contentHash, evidenceKind)
+        : undefined;
       const keepsAiReading =
         outcome.kind === "fields" &&
         outcome.result.readOn === "device" &&
@@ -1141,7 +1158,12 @@ function WorkspaceInner({
     if (!r.recordId) return null;
     const live = docChecks[r.recordId];
     if (live) return { outcome: live, stale: false };
-    const saved = savedCheckFor(w.documentChecks, r.recordId, r.contentHash);
+    const saved = savedCheckFor(
+      w.documentChecks,
+      r.recordId,
+      r.contentHash,
+      requirementEvidenceKind(r),
+    );
     return saved
       ? { outcome: saved.outcome, at: saved.at, stale: saved.contextKey !== contextKeyNow }
       : null;
@@ -1242,6 +1264,7 @@ function WorkspaceInner({
           old.requirements,
           proposedRequirements(updated, kind),
           old.dismissed,
+          updated.revision,
         ),
         // #86: recomputed on every route confirmation, because the notice text may have changed
         // and a second issue must not survive from a notice the seller has since replaced.
@@ -1989,8 +2012,12 @@ function WorkspaceInner({
                   onChange={async (value) => {
                     const ok = await changeRequirement(value);
                     // Done with this one: move on to the next document that needs the seller.
-                    if (ok && (value.status === "reviewed" || value.status === "cannot_obtain"))
+                    if (ok && (value.status === "reviewed" || value.status === "cannot_obtain")) {
                       setOpenDocument(undefined);
+                      // The card the seller was in is replaced, taking keyboard focus with it. Put it
+                      // on the card that opens next, so a keyboard or screen-reader user keeps their place.
+                      focusOpenDocumentTitle();
+                    }
                     return ok;
                   }}
                   onRemove={(reason) =>
@@ -2314,7 +2341,11 @@ function WorkspaceInner({
                                       deactivatedAt: dateOfNotice(replyParsed.receivedOn),
                                     }),
                                   ),
-                                  file.deadlines,
+                                  // Only a seller date still ahead: one from the earlier round that
+                                  // has passed would show a new round as already overdue.
+                                  file.deadlines?.filter(
+                                    (d) => d.setBy !== "seller" || (d.dueOn ?? "") >= localToday(),
+                                  ),
                                 );
                                 if (
                                   await commit(

@@ -73,7 +73,34 @@ export class VaultAlreadyInitializedError extends Error {
 export class Vault {
   protected db: VaultDB;
   private readonly provider: WebCryptoLike;
-  private dek: CryptoKey | null = null;
+  private dekValue: CryptoKey | null = null;
+  /** What the key store looked like when this tab's key was installed (see `assertKeyUnchanged`). */
+  private keyAtUnlock: Promise<string> | null = null;
+  private get dek(): CryptoKey | null {
+    return this.dekValue;
+  }
+  private set dek(value: CryptoKey | null) {
+    this.dekValue = value;
+    // Read right away, before anything else can change the key store under this tab.
+    this.keyAtUnlock = value ? this.currentKeyFingerprint() : null;
+  }
+  private async currentKeyFingerprint(): Promise<string> {
+    return keyStoreFingerprint((await this.db.meta.get("appealdeck-vault" as never))?.value);
+  }
+  /**
+   * Refuses a write when another tab has replaced this vault's key since this tab unlocked it
+   * (a restore, a purge). A record sealed with the old key would be written successfully and then
+   * never decrypt, which looks like a saved file and is a lost one.
+   */
+  private async assertKeyUnchanged(): Promise<void> {
+    if (!this.keyAtUnlock) return;
+    if ((await this.keyAtUnlock) !== (await this.currentKeyFingerprint())) {
+      throw new VaultCryptoError(
+        "INVALID_INPUT",
+        "This vault was changed in another tab. Reload the page before saving anything else.",
+      );
+    }
+  }
   private deviceKey: CryptoKey | null = null;
   /** The last `createdAt` this instance issued, in ms; see `add`. */
   private lastCreatedMs = 0;
@@ -452,6 +479,7 @@ export class Vault {
       plaintextHash: `${PLAINTEXT_HASH_VERSION}.${hash}`,
       schemaVersion: VAULT_ENVELOPE_VERSION,
     };
+    await this.assertKeyUnchanged();
     await this.db.records.put(record);
     return record;
   }
@@ -495,6 +523,7 @@ export class Vault {
       sizeBytes: bytes.byteLength,
       schemaVersion: VAULT_ENVELOPE_VERSION,
     };
+    await this.assertKeyUnchanged();
     await this.db.records.put(record);
     return record;
   }

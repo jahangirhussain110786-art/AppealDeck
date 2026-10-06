@@ -98,8 +98,12 @@ export async function handleImproveWording(
   );
   // busy/unavailable mean the provider failed (user-caused refusals such as too_short,
   // fact_changed and rejected_content do not), and the response is still HTTP 200.
+  // Our own switch-off or daily cap is not a provider outage and must not count against the shared
+  // breaker (read-document excludes the same); only a failure that carries the provider's.
   const providerFailed =
-    !result.ok && (result.reason === "busy" || result.reason === "unavailable");
+    !result.ok &&
+    (result.reason === "busy" || result.reason === "unavailable") &&
+    result.providerFault !== false;
   return NextResponse.json(
     result,
     providerFailed ? { headers: { [PROVIDER_FAILURE_HEADER]: "1" } } : undefined,

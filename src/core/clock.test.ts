@@ -92,13 +92,26 @@ describe("clockItemsForCase", () => {
         state: "REMEDIATION",
         deadlines: [
           { kind: "appeal_window", label: "Appeal window", dueAt: null },
-          { kind: "funds_appeal_eligible", label: "Funds appeal opens", dueAt: day(5) },
+          { kind: "appeal_window", label: "Appeal by 30 Sep 2026", dueAt: day(5) },
         ],
       }),
       NOW,
     );
     expect(items).toHaveLength(1);
-    expect(items[0]!.label).toBe("Funds appeal opens");
+    expect(items[0]!.label).toBe("Appeal by 30 Sep 2026");
+  });
+
+  it("does not count the date a funds appeal OPENS as a deadline", () => {
+    const items = clockItemsForCase(
+      caseInput({
+        state: "REMEDIATION",
+        deadlines: [
+          { kind: "funds_appeal_eligible", label: "Funds appeal opens", dueAt: day(-30) },
+        ],
+      }),
+      NOW,
+    );
+    expect(items).toHaveLength(0);
   });
 
   /*

@@ -78,3 +78,31 @@ describe("the wording lock", () => {
     expect(checkWordingLock(original, rewrite).ok).toBe(false);
   });
 });
+
+/** 7 Oct 2026 review: changes the digit-by-digit comparison could not see. */
+describe("the wording lock, units and meaning", () => {
+  const original =
+    "We removed 20 units within 30 days and refunded $500 after 5 complaints. We are unable to find the cause.";
+  it.each([
+    ["a changed unit", original.replace("30 days", "30 months")],
+    ["a changed currency", original.replace("$500", "€500")],
+    [
+      "swapped quantities",
+      original.replace("20 units", "5 units").replace("5 complaints", "20 complaints"),
+    ],
+    ["a flipped negation", original.replace("unable to find", "able to find")],
+    [
+      "an invented action",
+      original +
+        " We implemented a comprehensive staff training programme and a weekly quality audit of every listing.",
+    ],
+  ])("refuses %s", (_name, rewrite) => {
+    expect(checkWordingLock(original, rewrite).ok).toBe(false);
+  });
+
+  it("allows a plain reordering of the same facts", () => {
+    const rewrite =
+      "Within 30 days we removed 20 units and refunded $500 after 5 complaints. We are unable to find the cause.";
+    expect(checkWordingLock(original, rewrite).ok).toBe(true);
+  });
+});

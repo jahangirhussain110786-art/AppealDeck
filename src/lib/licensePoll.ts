@@ -9,6 +9,8 @@ export interface PollLicenseOptions {
   intervalMs?: number;
   timeoutMs?: number;
   sleep?: (ms: number) => Promise<void>;
+  /** Stops the poll (the seller left the page). It then rejects with an AbortError. */
+  signal?: AbortSignal;
 }
 
 export class LicensePollTimeoutError extends Error {
@@ -43,6 +45,8 @@ export async function pollLicenseStatus(
     const vault = getBrowserVault();
     try {
       if (await openVaultForVisitor(vault)) caseId = (await loadCaseFile(vault))?.id;
+    } catch {
+      // A vault that cannot be read just means the status is asked for the account as a whole.
     } finally {
       await vault.close();
     }
@@ -52,10 +56,12 @@ export async function pollLicenseStatus(
     : "/api/license/status";
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    const res = await fetchImpl(statusUrl, { cache: "no-store" });
-    if (res.ok) {
-      const data = (await res.json()) as LicensePollResult;
-      if (data.status === "active") {
+    if (options.signal?.aborted) throw new DOMException("Poll cancelled", "AbortError");
+    // One dropped request is not "not paid": keep asking until the deadline.
+    const res = await fetchImpl(statusUrl, { cache: "no-store" }).catch(() => null);
+    if (res?.ok) {
+      const data = (await res.json().catch(() => null)) as LicensePollResult | null;
+      if (data?.status === "active") {
         if (!options.fetchImpl)
           void fetch("/api/checkout/confirmation", { method: "POST" }).catch(() => {});
         return data;

@@ -35,6 +35,25 @@ afterEach(async () => {
   }
 });
 
+describe("a tab holding a replaced key", () => {
+  it("refuses to write records that could never be decrypted", async () => {
+    const { vault: tabA, name } = vaultOn();
+    await tabA.open();
+    await tabA.initWithDeviceKey();
+    await tabA.addString({ name: "a", mimeType: "text/plain", data: "fine" });
+
+    // Another tab wipes the vault and starts it again under a new key.
+    const tabB = vaultOn(name).vault;
+    await tabB.open();
+    await tabB.purge();
+    await tabB.initWithDeviceKey();
+
+    await expect(
+      tabA.addString({ name: "late", mimeType: "text/plain", data: "unreadable" }),
+    ).rejects.toThrow(/another tab/);
+  });
+});
+
 describe("first sign-in race between two tabs", () => {
   it("copyIntoEmpty refuses to overwrite a key another tab already wrote", async () => {
     const guest = vaultOn().vault;

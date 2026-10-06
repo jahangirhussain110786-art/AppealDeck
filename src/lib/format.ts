@@ -7,6 +7,12 @@ export function formatDate(d: Date | string | null): string {
   return `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
 }
 
+/** Today on the seller's own calendar, as YYYY-MM-DD (a date input's value format). */
+export function localToday(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function formatTime(d: Date | string, { tz = true }: { tz?: boolean } = {}): string {
   const date = typeof d === "string" ? new Date(d) : d;
   if (Number.isNaN(date.getTime())) return "";

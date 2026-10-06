@@ -184,7 +184,7 @@ const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
 
 async function fingerprintFor(idx: number): Promise<string> {
   return fingerprintFromRequest({
-    userAgent: `${UA} idx=${idx}`,
+    userAgent: `${UA} device-${String.fromCharCode(97 + idx)}`,
     acceptLanguage: "en-US,en;q=0.9",
     userId: "user-uuid",
   });
@@ -449,5 +449,32 @@ describe("devices", () => {
     expect(r2.device).toBeTruthy();
     expect(r2.device?.revoked_at).toBeNull();
     expect(r2.activeCount).toBe(1);
+  });
+});
+
+describe("device fingerprint", () => {
+  it("does not change when the browser updates or the language list reorders", async () => {
+    const { fingerprintFromRequest } = await import("@/lib/devices");
+    const a = await fingerprintFromRequest({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/141.0.0.0",
+      acceptLanguage: "en-US,en;q=0.9",
+      userId: "u1",
+    });
+    const b = await fingerprintFromRequest({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/142.0.7444.1",
+      acceptLanguage: "en-GB,fr;q=0.8",
+      userId: "u1",
+    });
+    expect(a).toBe(b);
+  });
+
+  it("still tells different browsers and different languages apart", async () => {
+    const { fingerprintFromRequest } = await import("@/lib/devices");
+    const base = { userAgent: "Mozilla/5.0 Chrome/141", acceptLanguage: "en", userId: "u1" };
+    const chrome = await fingerprintFromRequest(base);
+    expect(
+      await fingerprintFromRequest({ ...base, userAgent: "Mozilla/5.0 Firefox/141" }),
+    ).not.toBe(chrome);
+    expect(await fingerprintFromRequest({ ...base, acceptLanguage: "de" })).not.toBe(chrome);
   });
 });

@@ -1,5 +1,5 @@
 import type { ViolationKind } from "./index";
-import { composeWorkspace, workspaceGaps } from "./workspace";
+import { composeWorkspace, requirementEvidenceKind, workspaceGaps } from "./workspace";
 import { savedCheckFor } from "./documentCheck";
 import type { DocumentType } from "./readiness";
 import {
@@ -276,7 +276,12 @@ function checkSavedDocumentChecks(data: CaseFileData, findings: CriticFinding[])
   const w = data.workspace;
   if (!w?.documentChecks?.length) return;
   for (const r of w.requirements) {
-    const saved = savedCheckFor(w.documentChecks, r.recordId, r.contentHash);
+    const saved = savedCheckFor(
+      w.documentChecks,
+      r.recordId,
+      r.contentHash,
+      requirementEvidenceKind(r),
+    );
     if (!saved || saved.outcome.kind !== "fields") continue;
     const { result } = saved.outcome;
     for (const f of result.findings) {

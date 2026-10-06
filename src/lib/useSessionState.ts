@@ -23,7 +23,7 @@ const authConfigured = Boolean(
  */
 function mayHaveSession(): boolean {
   try {
-    return /(?:^|;\s*)sb-[^=;]*-auth-token/.test(document.cookie);
+    return /(?:^|;\s*)sb-[^=;]*-auth-token(?:\.\d+)?=/.test(document.cookie);
   } catch {
     return true;
   }

@@ -82,7 +82,8 @@ export default function SignupPage() {
 
     if (error) {
       setStatus("error");
-      setMessage(error.message);
+      // Fixed wording: the provider's text can reveal whether an address already has an account.
+      setMessage(AUTH.signup.messages.createFailed);
       return;
     }
 

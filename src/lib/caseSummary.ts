@@ -73,10 +73,18 @@ export function summarizeCase(
     archived: Boolean(entry.archived),
   };
   const w = file?.workspace;
-  const done = w ? w.requirements.filter((r) => r.status === "reviewed").length : 0;
+  // A record the seller has declared they cannot obtain, with their reason, is settled: it needs
+  // nothing more from them, and counting it as undone left a ready case saying "Review <record>".
+  const settled = (r: { status: string; declined?: { reason: string } }) =>
+    r.status === "reviewed" || (r.status === "cannot_obtain" && Boolean(r.declined?.reason.trim()));
+  const done = w ? w.requirements.filter(settled).length : 0;
   const total = w ? w.requirements.length : 0;
   const shown = file?.deadlines?.length ? deadlinesForDisplay(file.deadlines) : [];
-  const dated = shown.find((d) => d.dueOn && !d.isIndefinite);
+  // The soonest dated entry, whoever set it: a date the seller entered that is sooner than the
+  // notice's window is the one to work to.
+  const dated = shown
+    .filter((d) => d.dueOn && !d.isIndefinite)
+    .sort((a, b) => (a.dueOn! < b.dueOn! ? -1 : a.dueOn! > b.dueOn! ? 1 : 0))[0];
   const due = dated?.dueOn
     ? { label: dated.label, day: dated.dueOn, days: daysUntilDay(dated.dueOn, now) }
     : shown[0]
@@ -139,7 +147,7 @@ export function summarizeCase(
       total,
       due,
     };
-  const pending = w.requirements.find((r) => r.status !== "reviewed");
+  const pending = w.requirements.find((r) => !settled(r));
   if (pending?.status === "waiting")
     return {
       ...base,

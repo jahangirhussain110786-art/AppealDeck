@@ -181,6 +181,9 @@ export function clockItemsForCase(input: ClockCaseInput, now: number): ClockItem
     // A deadline with no established date is skipped rather than shown with a guessed one. The
     // decoder deliberately returns null when a notice does not state a date (AM-03).
     if (!deadline.dueAt) continue;
+    // The date the funds appeal OPENS is not a cut-off: after it, the appeal is possible, not
+    // overdue, and "past the date" wording would tell the seller the opposite.
+    if (deadline.kind === "funds_appeal_eligible") continue;
     const item = buildItem(input, "deadline", deadline.label, deadline.dueAt, now);
     if (item) items.push(item);
   }

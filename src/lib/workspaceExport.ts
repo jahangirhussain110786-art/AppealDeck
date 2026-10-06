@@ -110,7 +110,12 @@ function requirementLines(r: Requirement, reason: string): string[] {
 function documentCheckLines(w: Workspace): string[] {
   const keyNow = checkContextKey(checkCaseDataForWorkspace(w));
   const checked = w.requirements.flatMap((r) => {
-    const saved = savedCheckFor(w.documentChecks, r.recordId, r.contentHash);
+    const saved = savedCheckFor(
+      w.documentChecks,
+      r.recordId,
+      r.contentHash,
+      requirementEvidenceKind(r),
+    );
     return saved ? [{ r, saved }] : [];
   });
   if (checked.length === 0) return ["Document checks: none run on the files linked here."];

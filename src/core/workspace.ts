@@ -15,6 +15,7 @@ import { STORES } from "../content/stores";
 import { assessNotEnforcement } from "./noticeText";
 import { analyzeReply } from "./responseAnalyzer";
 import { assessNovelty } from "./submissionNovelty";
+import { isNarrativeTextSufficient } from "./readiness";
 
 /**
  * AA-39 (AM-26) added `verification`, `questionnaire` and `acknowledgement`. Before that, a notice
@@ -752,6 +753,12 @@ export function requirementsAfterNoticeChange(
   fresh: readonly Requirement[],
   /** Records the seller removed, with a reason. Never raised again by reading the notice. */
   dismissed: Workspace["dismissed"] = [],
+  /**
+   * The request being read now. A record raised by an EARLIER request is not dropped because this
+   * one does not repeat it: Amazon not asking again does not withdraw the ask, and the reply
+   * preview says as much (7 Oct 2026: confirming a reply silently deleted an outstanding record).
+   */
+  revision?: number,
 ): Requirement[] {
   const keyFor = requirementKey;
   const removed = new Set(dismissed.map((d) => d.key));
@@ -790,7 +797,9 @@ export function requirementsAfterNoticeChange(
     const fromNotice = r.source !== "matrix" && r.source !== "seller";
     const untouched =
       r.status === "needed" && !r.recordId && !r.note.trim() && !r.declined?.reason.trim();
-    if (fromNotice && untouched) continue;
+    const fromEarlierRound =
+      revision !== undefined && r.sourceRevision !== undefined && r.sourceRevision < revision;
+    if (fromNotice && untouched && !fromEarlierRound) continue;
     kept.push(r);
   }
   return [...kept, ...[...freshByKey.values()].filter((r) => !matched.has(keyFor(r)))];
@@ -1209,7 +1218,14 @@ export function rootCauseRewritten(w: Pick<Workspace, "explanation" | "submissio
   const sent = w.submissions
     .filter((s) => s.text.trim())
     .map((s) => ({ at: s.at, revision: s.revision, text: s.text }));
-  if (sent.length === 0 || w.explanation.trim().length < 40) return false;
+  if (w.explanation.trim().length < 40) return false;
+  // Nothing recorded to compare with (the seller no longer has the text of what they sent): a
+  // substantial explanation of their own is the best available answer, and requiring a comparison
+  // that cannot be made left this gap uncleared for good (7 Oct 2026).
+  // Only when a send IS on record (the seller no longer has its text). With nothing recorded at
+  // all, the explanation on file may be the very text Amazon just faulted, and stays a gap.
+  if (sent.length === 0)
+    return w.submissions.length > 0 && isNarrativeTextSufficient(w.explanation);
   const verdict = assessNovelty(w.explanation, sent.slice(-1)).verdict;
   return verdict === "new" || verdict === "revised";
 }
@@ -1390,7 +1406,7 @@ export function composeWorkspace(
         // A statement is listed as a statement: no file name, no page, never read as a document.
         .map((r) =>
           r.filename
-            ? `${r.filename}, page ${r.page}: ${r.note}`
+            ? `${r.filename}${r.page ? `, page ${r.page}` : ""}${r.note.trim() ? `: ${r.note}` : ""}`
             : requirementEvidenceKind(r) === "rights_owner_retraction"
               ? // Never "Rights owner retraction": a note alone is the seller's own statement, and
                 // that label could read to Amazon as though a retraction exists.
@@ -1539,6 +1555,8 @@ export function computeReplyDelta(w: Workspace, replyId: string): ReplyDelta | n
         requirement: {
           ...existing,
           status: "needed",
+          // Amazon named it now, whatever raised it before: it must not go on being shown as ours.
+          source: "notice",
           sourceQuote: askedAgain.sourceQuote,
           sourceRevision: nextRevision,
         },
@@ -1553,7 +1571,12 @@ export function computeReplyDelta(w: Workspace, replyId: string): ReplyDelta | n
       items.push({
         change: "outstanding",
         requirement: askedAgain
-          ? { ...existing, sourceQuote: askedAgain.sourceQuote, sourceRevision: nextRevision }
+          ? {
+              ...existing,
+              source: "notice",
+              sourceQuote: askedAgain.sourceQuote,
+              sourceRevision: nextRevision,
+            }
           : { ...existing, sourceRevision: held(existing) },
         replyQuote: askedAgain?.sourceQuote,
       });

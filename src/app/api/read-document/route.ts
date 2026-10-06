@@ -410,7 +410,7 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
         return one.success ? [one.data] : [];
       })
     : [];
-  if (!validated.success || (validated.data.findings.length > 0 && findings.length === 0)) {
+  if (!validated.success || findings.length === 0) {
     return NextResponse.json(
       { ok: false, reason: "unavailable", message: "We could not read that document." },
       { status: 200, headers: { [PROVIDER_FAILURE_HEADER]: "1" } },

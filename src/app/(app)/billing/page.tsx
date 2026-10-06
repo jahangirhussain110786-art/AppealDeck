@@ -20,7 +20,22 @@ export const metadata: Metadata = { title: APP.metaTitles.billing };
 export default async function BillingPage() {
   const user = await requireUser("/billing");
 
-  const license = await fetchLicenseForUser(user.id);
+  let license: Awaited<ReturnType<typeof fetchLicenseForUser>>;
+  try {
+    license = await fetchLicenseForUser(user.id);
+  } catch {
+    // The page a seller opens to find a paid Pass must say what happened, not show the generic
+    // error screen, when the licence lookup is down.
+    return (
+      <div className="max-w-[67.5rem] space-y-3">
+        <h1 className="text-2xl font-semibold text-foreground">{APP.billing.eyebrow}</h1>
+        <p role="alert" className="text-sm text-muted-foreground">
+          We could not load your Appeal Pass right now. Nothing about it has changed. Reload this
+          page in a minute, or write to billing@appealdeck.com if it keeps happening.
+        </p>
+      </div>
+    );
+  }
   const active = license.status === "active";
 
   return (

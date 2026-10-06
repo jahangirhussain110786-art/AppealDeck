@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FileText, Loader2 } from "lucide-react";
@@ -44,6 +44,10 @@ export function PurchasePanel() {
   const [email, setEmail] = useState<string | undefined>(undefined);
   const [caseCheck, setCaseCheck] = useState<CaseCheck>({ status: "checking" });
   const [hasPass, setHasPass] = useState(false);
+  // The case the checkout is for, so activation is asked about THAT case and not any Pass on the account.
+  const [checkedCaseId, setCheckedCaseId] = useState<string | undefined>(undefined);
+  const pollAbort = useRef<AbortController | null>(null);
+  useEffect(() => () => pollAbort.current?.abort(), []);
   const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
   const sessionState = useSessionState();
   const router = useRouter();
@@ -81,6 +85,7 @@ export function PurchasePanel() {
           setCaseCheck({ status: "none" });
           return;
         }
+        setCheckedCaseId(file.id);
         const label = caseCheckLabel(file.kind, file.id);
         // A case that already has its Pass must not be offered a second one (the server refuses it
         // too). A failed lookup falls through to the normal offer, and the server decides.
@@ -114,10 +119,18 @@ export function PurchasePanel() {
     if (sessionState !== "signed-in") return;
     // `pass_purchased` is counted by CheckoutButton, the one place every purchase passes through.
     setPhase("activating");
-    void pollLicenseStatus()
-      .then(() => router.push("/compose"))
-      .catch(() => setPhase("timeout"));
-  }, [sessionState, router]);
+    pollAbort.current?.abort();
+    const abort = new AbortController();
+    pollAbort.current = abort;
+    void pollLicenseStatus({ caseId: checkedCaseId, signal: abort.signal })
+      .then(() => {
+        // Not if the seller has left this page meanwhile: the poll must not pull them back out.
+        if (!abort.signal.aborted) router.push("/compose");
+      })
+      .catch(() => {
+        if (!abort.signal.aborted) setPhase("timeout");
+      });
+  }, [sessionState, router, checkedCaseId]);
 
   if (phase === "activating") {
     return (

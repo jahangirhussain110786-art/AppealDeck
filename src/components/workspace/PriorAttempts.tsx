@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,8 @@ export function PriorAttempts({
   onMarkSentWaiting?: () => Promise<boolean>;
 }) {
   const [adding, setAdding] = useState(false);
+  // Removing a row or closing the form removes the control that had focus; this is where it goes.
+  const rootRef = useRef<HTMLDivElement>(null);
   const [count, setCount] = useState(1);
   const [at, setAt] = useState("");
   const [text, setText] = useState("");
@@ -82,7 +84,11 @@ export function PriorAttempts({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-border/70 bg-surface-2/40 p-4">
+    <div
+      ref={rootRef}
+      tabIndex={-1}
+      className="space-y-3 rounded-lg border border-border/70 bg-surface-2/40 p-4 focus:outline-none"
+    >
       <div className="flex items-start gap-3">
         <History className="mt-0.5 size-4 shrink-0 text-info" aria-hidden />
         <div className="space-y-1">
@@ -113,7 +119,11 @@ export function PriorAttempts({
                 aria-label={`Remove the response recorded for ${
                   attemptDateRecorded(attempt.at) ? formatDate(attempt.at) : C.priorAttemptNoDate
                 }`}
-                onClick={() => void onSave(removePriorAttempt(workspace, attempt.id))}
+                onClick={() =>
+                  void onSave(removePriorAttempt(workspace, attempt.id)).then(() =>
+                    rootRef.current?.focus(),
+                  )
+                }
               >
                 <Trash2 className="size-4" aria-hidden />
               </Button>

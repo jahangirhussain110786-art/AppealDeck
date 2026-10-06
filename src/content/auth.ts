@@ -24,6 +24,9 @@ export const AUTH = {
       invalidEmail: "Enter a valid email address.",
       // Shown for `?error=` on /login. Only our own words, chosen by reason — the parameter's text
       // is never displayed, because anyone can put any sentence in a link to this page.
+      // Fixed wording for any provider error: Supabase's own text can say whether an address is
+      // registered, which tells a stranger who has an account here.
+      sendFailed: "We could not send that link. Check the address and try again in a minute.",
       linkFailed:
         "That sign-in link did not work. It may have expired or been used already — sign in again, or request a new link.",
     },
@@ -52,6 +55,8 @@ export const AUTH = {
       backToSignIn: "Back to sign in",
       submit: "Create account",
       invalidEmail: "Enter a valid email address.",
+      createFailed:
+        "We could not create that account. If you already have one, sign in instead; otherwise try again in a minute.",
     },
     footer: {
       prompt: "Already have an account?",

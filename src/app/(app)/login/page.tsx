@@ -96,7 +96,7 @@ function LoginPageInner() {
       });
       if (error) {
         setStatus("error");
-        setMessage(error.message);
+        setMessage(AUTH.login.messages.sendFailed);
       } else {
         setStatus("sent");
         setMessage(AUTH.login.messages.magicSent);

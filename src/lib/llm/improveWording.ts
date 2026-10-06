@@ -79,6 +79,8 @@ export type ImproveWordingResult =
       reason: "too_short" | "fact_changed" | "rejected_content" | "busy" | "unavailable";
       /** The facts a discarded suggestion added or dropped, for the seller's information. */
       changed?: { added: string[]; dropped: string[] };
+      /** False when the failure was ours (switched off, daily cap, a request the provider refused). */
+      providerFault?: boolean;
     };
 
 export type ImproveWordingDeps = {
@@ -101,11 +103,14 @@ export async function improveWording(
         text: [
           `The notice is about: ${input.violation.replaceAll("_", " ").toLowerCase()}.`,
           `This section is ${SECTION_PURPOSE[input.section]}.`,
-          ...(input.question ? [`Amazon's question: "${input.question}"`] : []),
+          // The prompt's own delimiters cannot appear inside what is quoted into it.
+          ...(input.question
+            ? [`Amazon's question: "${input.question.replaceAll('"', "'")}"`]
+            : []),
           "",
           "The seller's text, verbatim:",
           '"""',
-          original,
+          original.replaceAll('"""', "'''"),
           '"""',
           "",
           "Return JSON only.",
@@ -117,7 +122,12 @@ export async function improveWording(
     maxOutputTokens: Math.min(4096, Math.ceil(original.length / 2) + 256),
     responseJsonSchema: RESPONSE_JSON_SCHEMA,
   });
-  if (!result.ok) return { ok: false, reason: result.reason === "busy" ? "busy" : "unavailable" };
+  if (!result.ok)
+    return {
+      ok: false,
+      reason: result.reason === "busy" ? "busy" : "unavailable",
+      providerFault: !["spend_cap", "not_configured", "bad_input"].includes(result.reason),
+    };
 
   const parsed = extractJsonObject(result.text);
   if (parsed === undefined) return { ok: false, reason: "unavailable" };
