@@ -27,7 +27,10 @@ export function AppBreadcrumb({ titleSlotId }: { titleSlotId: string }) {
     >
       {isCase ? (
         <>
-          <Link href="/dashboard" className="shrink-0 hover:text-foreground">
+          <Link
+            href="/dashboard"
+            className="inline-flex min-h-11 shrink-0 items-center hover:text-foreground"
+          >
             Cases
           </Link>
           <span aria-hidden>/</span>

@@ -217,7 +217,7 @@ describe("summarizeCheck", () => {
     ]);
     const summary = summarizeCheck(check);
     expect(summary).toMatch(/not found/);
-    expect(summary).toMatch(/could not read/);
+    expect(summary).toMatch(/1 unclear/);
     expect(containsBannedConclusion(summary)).toBe(false);
   });
 

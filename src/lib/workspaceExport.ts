@@ -2,6 +2,7 @@ import type { CaseFile } from "@/core/caseFile";
 import type { Requirement, Workspace } from "@/core/workspace";
 import {
   PROTOCOL_LABELS,
+  attemptDateRecorded,
   workspaceGaps,
   requirementEvidenceKind,
   questionnaireQuestions,
@@ -30,6 +31,41 @@ const STATUS_LABELS: Record<Requirement["status"], string> = {
   reviewed: "reviewed and linked",
   cannot_obtain: "cannot be obtained",
 };
+
+const POSITION_LABELS: Record<Workspace["position"], string> = {
+  unsure: "not stated",
+  accept: "accepts the finding",
+  dispute: "disagrees with the finding",
+};
+
+/**
+ * What a tab was about to save when another window had changed the case, so the seller can keep it
+ * (6 Oct 2026). A refused save leaves the typed words in the form, but a reload to see the other
+ * window's version throws them away; this is the text to put somewhere safe first.
+ */
+export function unsavedText(
+  next: Pick<
+    Workspace,
+    "explanation" | "correctiveActions" | "preventiveMeasures" | "answers" | "draft"
+  >,
+  pending: Iterable<[string, string | undefined]> = [],
+): string {
+  const parts: string[] = [];
+  const add = (label: string, value: string | undefined) => {
+    if (value && value.trim()) parts.push(`${label}:\n${value.trim()}`);
+  };
+  add("What went wrong", next.explanation);
+  add("What you have fixed", next.correctiveActions);
+  add("How you will stop it happening again", next.preventiveMeasures);
+  for (const a of next.answers ?? []) add(`Answer to: ${a.question}`, a.answer);
+  const seen = new Set<string>();
+  for (const [key, value] of pending) {
+    seen.add(key);
+    add(key, value);
+  }
+  for (const [key, value] of Object.entries(next.draft ?? {})) if (!seen.has(key)) add(key, value);
+  return parts.join("\n\n");
+}
 
 const OUTCOME_LABELS: Record<NonNullable<CaseLog["resolution"]>["status"], string> = {
   reinstated: "Reinstated or approved",
@@ -133,8 +169,14 @@ export function buildCaseExport(
   lines.push(
     `Case ${file.id} · ${file.kind === "UNKNOWN" ? "type not identified" : APP.violationKinds[file.kind]}${file.kindSetBy === "seller" ? " (chosen by the seller)" : ""} · ${PROTOCOL_LABELS[w.protocol]}`,
   );
-  lines.push(`Marketplace: ${w.marketplace === "US" ? "Amazon US" : "Not confirmed"}`);
+  // "another store" is a choice the seller made, not an unconfirmed one (6 Oct 2026).
+  lines.push(`Marketplace: ${w.marketplace === "US" ? "Amazon US" : "another Amazon store"}`);
+  lines.push(`Position: ${POSITION_LABELS[w.position]}`);
   lines.push(`Current request: revision ${w.revision}`);
+  if (w.d6Latch)
+    lines.push(
+      `Held for qualified help: the notice carries an allegation we do not prepare responses to. Quoted: "${w.d6Latch.quote}"`,
+    );
   lines.push("");
 
   lines.push("== Deadlines ==");
@@ -226,13 +268,24 @@ export function buildCaseExport(
     lines.push(`${group.heading}:`);
     for (const r of items) lines.push(...requirementLines(r, group.reason));
   }
+  if (w.dismissed?.length) {
+    // A record the seller took off the list is part of the case's story: a specialist asks why.
+    lines.push(`== Records the seller removed (${w.dismissed.length}) ==`);
+    for (const d of w.dismissed)
+      lines.push(`- ${d.label} · removed ${formatDate(d.at)}: ${d.reason || "(no reason given)"}`);
+  }
   lines.push(...documentCheckLines(w));
   lines.push("");
 
   lines.push(`== Submissions (${w.submissions.length}) ==`);
   if (w.submissions.length === 0) lines.push("(no submission recorded)");
   w.submissions.forEach((s, i) => {
-    const when = s.source === "prior" ? "sent before using AppealDeck" : formatDate(s.at);
+    const when =
+      s.source === "prior"
+        ? "sent before using AppealDeck"
+        : attemptDateRecorded(s.at)
+          ? formatDate(s.at)
+          : "date not recorded";
     lines.push(`--- Attempt ${i + 1} · ${when} · revision ${s.revision} ---`);
     if (s.preparedText)
       lines.push("(The seller changed this from the prepared response before sending.)");

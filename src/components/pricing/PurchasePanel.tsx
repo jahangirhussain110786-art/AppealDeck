@@ -42,6 +42,7 @@ export function PurchasePanel() {
   const [phase, setPhase] = useState<CompletionPhase>("idle");
   const [email, setEmail] = useState<string | undefined>(undefined);
   const [caseCheck, setCaseCheck] = useState<CaseCheck>({ status: "checking" });
+  const [hasPass, setHasPass] = useState(false);
   const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
   const sessionState = useSessionState();
   const router = useRouter();
@@ -59,6 +60,12 @@ export function PurchasePanel() {
     if (sessionState !== "signed-in") return;
     let alive = true;
     void (async () => {
+      // Whether this account holds a Pass at all (any case). A Pass covers ONE case, so what the
+      // page says depends on whether it is still free or already used on another case.
+      const any = await fetch("/api/license/status")
+        .then((r) => (r.ok ? (r.json() as Promise<{ status?: string }>) : null))
+        .catch(() => null);
+      if (alive) setHasPass(any?.status === "active");
       const vault = getBrowserVault();
       try {
         if (!(await openVaultForVisitor(vault))) {
@@ -162,13 +169,17 @@ export function PurchasePanel() {
 
       {sessionState === "signed-in" && activeCase.status === "ok" && (
         <p className="text-xs text-muted-foreground">
-          This Pass will cover your active case: {activeCase.label}.
+          {hasPass
+            ? `Your Appeal Pass is already used on another case. A new Pass would cover this one: ${activeCase.label}.`
+            : `This Pass will cover your active case: ${activeCase.label}.`}
         </p>
       )}
 
       {sessionState === "signed-in" && activeCase.status === "none" && (
         <p className="text-xs text-muted-foreground">
-          Start your case before buying a Pass — each Pass covers one case.{" "}
+          {hasPass
+            ? "Your Appeal Pass covers one case, and it is still available. Start your case to use it."
+            : "Start your case before buying a Pass — each Pass covers one case."}{" "}
           <Link href="/case" className="text-link underline underline-offset-4">
             Start your case
           </Link>
@@ -177,8 +188,8 @@ export function PurchasePanel() {
 
       {sessionState === "signed-in" && activeCase.status === "covered" && (
         <p className="text-xs text-muted-foreground">
-          Your active case ({activeCase.label}) already has its Appeal Pass. It covers every
-          revision of that case, so there is nothing more to buy.{" "}
+          Your Appeal Pass covers one case: {activeCase.label}. It covers every revision of that
+          case, so there is nothing more to buy.{" "}
           <Link href="/case" className="text-link underline underline-offset-4">
             Open your case
           </Link>
@@ -206,7 +217,9 @@ export function PurchasePanel() {
             customerEmail={email}
             onCompleted={handleCompleted}
           >
-            {PRICING.cta}
+            {hasPass && activeCase.status === "ok"
+              ? "Buy another Pass for another case"
+              : PRICING.cta}
           </CheckoutButton>
         ) : (
           <Button
@@ -216,7 +229,7 @@ export function PurchasePanel() {
             disabled
           >
             {activeCase.status === "covered"
-              ? "Already covered"
+              ? "Appeal Pass active — covers one case"
               : blocked && consent
                 ? "Resolve your case first"
                 : SHARED.consentPrompt}

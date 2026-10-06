@@ -18,7 +18,7 @@ function FooterGroup({
           <li key={link.href}>
             <Link
               href={link.href}
-              className="inline-flex min-h-8 items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="inline-flex min-h-8 items-center max-sm:min-h-11 [@media(pointer:coarse)]:min-h-11 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {link.label}
             </Link>

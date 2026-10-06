@@ -344,9 +344,9 @@ export function ResponseReview({
                   than an incomplete appeal, which is why the seller confirms it themselves and why
                   the copy says plainly that we cannot check it.
                 */}
-                <label className="flex items-start gap-3 text-sm">
+                <label className="flex min-h-11 cursor-pointer items-start gap-3 py-2 text-sm">
                   <input
-                    className="mt-1 h-4 w-4 accent-primary"
+                    className="mt-0.5 size-5 shrink-0 accent-primary"
                     type="checkbox"
                     checked={attested}
                     disabled={busy || !correctiveActions.trim()}
@@ -514,9 +514,9 @@ export function ResponseReview({
                 </ul>
               ) : null;
             })()}
-            <label className="flex items-start gap-3 text-sm">
+            <label className="flex min-h-11 cursor-pointer items-start gap-3 py-2 text-sm">
               <input
-                className="mt-1 h-4 w-4 accent-primary"
+                className="mt-0.5 size-5 shrink-0 accent-primary"
                 type="checkbox"
                 checked={reviewed}
                 onChange={(e) => setReviewed(e.target.checked)}
@@ -602,7 +602,7 @@ export function ResponseReview({
                 <legend className="sr-only">{C.whatWasSent}</legend>
                 <label className="flex items-start gap-3">
                   <input
-                    className="mt-1 h-4 w-4 accent-primary"
+                    className="mt-0.5 size-5 shrink-0 accent-primary"
                     type="radio"
                     name="workspace-sent-as"
                     checked={!changedBeforeSending}
@@ -612,7 +612,7 @@ export function ResponseReview({
                 </label>
                 <label className="flex items-start gap-3">
                   <input
-                    className="mt-1 h-4 w-4 accent-primary"
+                    className="mt-0.5 size-5 shrink-0 accent-primary"
                     type="radio"
                     name="workspace-sent-as"
                     checked={changedBeforeSending}
@@ -644,9 +644,9 @@ export function ResponseReview({
                   onChange={(e) => setReceipt(e.target.value)}
                 />
               </div>
-              <label className="flex items-start gap-3 text-sm">
+              <label className="flex min-h-11 cursor-pointer items-start gap-3 py-2 text-sm">
                 <input
-                  className="mt-1 h-4 w-4 accent-primary"
+                  className="mt-0.5 size-5 shrink-0 accent-primary"
                   type="checkbox"
                   checked={submitted}
                   onChange={(e) => setSubmitted(e.target.checked)}

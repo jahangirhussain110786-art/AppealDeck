@@ -18,6 +18,7 @@
 
 import type { CaseFile } from "@/core/caseFile";
 import type { Requirement, Workspace } from "@/core/workspace";
+import { attemptDateRecorded } from "@/core/workspace";
 import { formatDate } from "./format";
 
 export interface PackRecord {
@@ -127,7 +128,7 @@ export function buildEvidenceManifest(input: EvidencePackInput): string {
   }
   workspace.submissions.forEach((s, i) => {
     lines.push(
-      `Attempt ${i + 1} · ${formatDate(s.at)} · revision ${s.revision}${
+      `Attempt ${i + 1} · ${attemptDateRecorded(s.at) ? formatDate(s.at) : "date not recorded"} · revision ${s.revision}${
         s.receipt ? ` · reference ${s.receipt}` : ""
       }`,
     );

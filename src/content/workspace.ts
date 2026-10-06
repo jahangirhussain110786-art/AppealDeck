@@ -210,6 +210,7 @@ export const WORKSPACE = {
     wantsWithDoc: "{route} and 1 document",
     agree: "Do you agree with Amazon?",
     notClear: "Not clear yet",
+    readAs: "We read this as: {kind}. Is that right?",
     stores: { US: "Amazon US", other: "Another store, or not sure" },
     positions: {
       unsure: "Not sure yet",
@@ -493,11 +494,13 @@ export const WORKSPACE = {
   // Tracking the wait is free and needs no Appeal Pass; it sends nothing.
   alreadySent: {
     button: "I already sent my appeal and I am waiting",
+    saved: "Saved. We are now waiting on Amazon.",
     note: "This keeps track of your wait and your follow-up date. It does not send anything.",
   },
   priorAttemptAddFirst: "Yes, I already responded",
   priorAttemptAddAnother: "Add another response",
   priorAttemptNoDate: "Date not recorded",
+  priorAttemptFutureDate: "That date has not happened yet. Pick the day you sent it.",
   priorAttemptNoText: "Wording not kept",
   /**
    * #86. A notice naming two things is refused for whichever one the response missed, and the

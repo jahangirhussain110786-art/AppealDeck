@@ -112,6 +112,15 @@ export const WorkspaceSchema = z
     protocol,
     confirmed: z.boolean(),
     professionalReviewRequired: z.boolean(),
+    // The D6 latch. Declared with the field: this validator strips what it does not know, and a
+    // dropped latch would let the next save release a case held for qualified help.
+    d6Latch: z
+      .object({
+        at: z.string().min(1).max(40),
+        quote: z.string().max(400),
+        source: z.string().max(20000),
+      })
+      .optional(),
     requirementsConfirmed: z.boolean(),
     requirements: z.array(requirement).max(30),
     /**

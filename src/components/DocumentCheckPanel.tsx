@@ -92,12 +92,10 @@ export function DocumentCheckPanel({
           {busy
             ? APP.evidenceSlots.check.announceBusy
             : outcome?.kind === "fields"
-              ? APP.evidenceSlots.check.announceDone
-                  .replace(
-                    "{found}",
-                    String(outcome.result.findings.filter((f) => f.status === "present").length),
-                  )
-                  .replace("{total}", String(outcome.result.findings.length))
+              ? APP.evidenceSlots.check.announceDone.replace(
+                  "{summary}",
+                  summarizeCheck(outcome.result),
+                )
               : outcome?.kind === "image"
                 ? APP.evidenceSlots.check.announceImage
                 : ""}
@@ -114,7 +112,7 @@ export function DocumentCheckPanel({
           <div className="space-y-1.5">
             <p className="text-sm text-muted-foreground">{APP.evidenceSlots.check.beforeShort}</p>
             <details className="text-xs text-muted-foreground">
-              <summary className="cursor-pointer text-link">
+              <summary className="inline-flex min-h-11 cursor-pointer items-center text-link">
                 {APP.evidenceSlots.check.moreAbout}
               </summary>
               <p className="mt-1.5">

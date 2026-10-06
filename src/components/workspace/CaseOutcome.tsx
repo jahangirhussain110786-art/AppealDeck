@@ -10,7 +10,7 @@ import { APP } from "@/content/app";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { CaseLog } from "@/lib/caseStore";
+import { hadSubmission, type CaseLog } from "@/lib/caseStore";
 import type { CaseFile } from "@/core/caseFile";
 import { stateForOutcome } from "@/core/caseState";
 import { formatDate } from "@/lib/format";
@@ -42,22 +42,47 @@ export function logWithOutcome(
   current: CaseLog,
   choice: ResolutionStatus | "pending",
   at: string,
+  /** The case's workspace, so a recorded submission counts the same here as in the file state. */
+  workspace?: { submissions: readonly { source?: string }[] },
 ): CaseLog | null {
-  const hadSubmission = current.attemptCount > 0 || current.submittedAt !== undefined;
+  // The one shared definition (caseStore.hadSubmission), which also counts a response the seller
+  // marked as sent outside the product. This used to be computed here without it, so recording an
+  // outcome and taking it back on such a case lost "waiting on Amazon".
+  const sent = hadSubmission(current, workspace);
   if (choice === "pending") {
     if (!current.resolution) return null;
     const { resolution: _cleared, ...rest } = current;
     // The outcome moved the case to a terminal state; taking it back must move it out again.
-    return { ...rest, state: stateForOutcome("pending", rest.state, hadSubmission) };
+    return { ...rest, state: stateForOutcome("pending", rest.state, sent) };
   }
   if (current.resolution?.status === choice) return null;
   return {
     ...current,
     // The state follows the outcome, so the clock, reminders and the dashboard stop treating a
     // settled case as one still waiting on Amazon.
-    state: stateForOutcome(choice, current.state, hadSubmission),
+    state: stateForOutcome(choice, current.state, sent),
     resolution: { status: choice, at },
   };
+}
+
+/**
+ * The log to save when an outcome is recorded, and whether the server's email reminder could not be
+ * cancelled. The cancel is attempted whenever an email reminder was ever switched on — not only for a
+ * signed-in session — and the switch is recorded as off only once the server agreed; if it did not,
+ * the log keeps it on (the only memory that a row may still exist). The outcome itself is always
+ * saved, and nothing here blocks on the cancel failing.
+ */
+export async function logAfterOutcome(
+  current: Pick<CaseLog, "emailReminder">,
+  next: CaseLog,
+  cancel: () => Promise<boolean>,
+): Promise<{ log: CaseLog; cancelFailed: boolean }> {
+  const settles = Boolean(next.resolution) && current.emailReminder === true;
+  if (!settles) return { log: next, cancelFailed: false };
+  const stopped = await cancel();
+  return stopped
+    ? { log: { ...next, emailReminder: false }, cancelFailed: false }
+    : { log: next, cancelFailed: true };
 }
 
 /**
@@ -104,12 +129,13 @@ export function CaseOutcome({
     to "still waiting" shows it off rather than claiming an email the server no longer has.
   */
   const recordOutcome = async (next: CaseLog) => {
-    const settles = Boolean(next.resolution) && current.emailReminder === true;
-    await write(settles ? { ...next, emailReminder: false } : next);
-    if (settles && signedIn) {
-      const stopped = await syncCaseReminder({ caseRef: file.id, kind: file.kind, enabled: false });
-      if (!stopped) toast.error(APP.dashboard.clock.emailFailed);
-    }
+    // 6 Oct 2026: the server's row was cancelled only `if (signedIn)`, so an outcome recorded after
+    // the sign-in had lapsed left an email scheduled about a case the seller had closed.
+    const { log: toSave, cancelFailed } = await logAfterOutcome(current, next, () =>
+      syncCaseReminder({ caseRef: file.id, kind: file.kind, enabled: false }),
+    );
+    await write(toSave);
+    if (cancelFailed) toast.error(APP.dashboard.clock.emailFailed);
   };
 
   return (
@@ -149,6 +175,7 @@ export function CaseOutcome({
                 current,
                 e.target.value as ResolutionStatus | "pending",
                 new Date().toISOString(),
+                w,
               );
               if (next) void recordOutcome(next);
             }}

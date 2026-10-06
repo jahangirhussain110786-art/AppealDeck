@@ -5,7 +5,7 @@ import type { ResponseType } from "./responseType";
 import type { EvidenceKind } from "./evidenceModel";
 import { requirementsFor } from "./evidenceModel";
 import type { ViolationKind } from "./violationKinds";
-import { D6_GATED_ALLEGATION } from "./violationKinds";
+import { findD6Allegation, hasD6Allegation } from "./violationKinds";
 import { KIND_PATTERNS } from "./noticeParser";
 import type { NoticeIssue } from "./noticeIssues";
 import { detectIssues, hasMultipleIssues } from "./noticeIssues";
@@ -14,6 +14,7 @@ import { questionsIn } from "./questionnaire";
 import { STORES } from "../content/stores";
 import { assessNotEnforcement } from "./noticeText";
 import { analyzeReply } from "./responseAnalyzer";
+import { assessNovelty } from "./submissionNovelty";
 
 /**
  * AA-39 (AM-26) added `verification`, `questionnaire` and `acknowledgement`. Before that, a notice
@@ -139,6 +140,16 @@ export interface Workspace {
   protocol: Protocol;
   confirmed: boolean;
   professionalReviewRequired: boolean;
+  /**
+   * The D6 latch (6 Oct 2026). Set the moment any text this case has held (notice, response-page
+   * text, an Amazon reply) carries a fabricated-documents, fraud or child-safety allegation, and
+   * never cleared by editing that text. Without it a seller could open "review notice", delete the
+   * words "forged invoices", and be sold a draft: the router recomputed from the edited text alone.
+   * Released only through `releaseD6Latch`, an explicit "this was the wrong notice" action.
+   * `source` is the text that carried the allegation, kept so the release can check that the
+   * replacement is really a different notice and not the same one with the words removed.
+   */
+  d6Latch?: { at: string; quote: string; source: string };
   requirementsConfirmed: boolean;
   requirements: Requirement[];
   /**
@@ -816,18 +827,130 @@ const VERIFICATION_PATTERN = KIND_PATTERNS.find(([kind]) => kind === "VERIFICATI
  */
 export function professionalReviewApplies(
   w: Pick<Workspace, "notice" | "formInstructions"> &
-    Partial<Pick<Workspace, "professionalReviewRequired" | "previousRequests">>,
+    Partial<Pick<Workspace, "professionalReviewRequired" | "previousRequests" | "d6Latch">>,
 ): boolean {
-  if (D6_GATED_ALLEGATION.test(`${w.notice}\n${w.formInstructions}`)) return true;
+  // The latch outranks the text: editing the words away does not release the case.
+  if (w.d6Latch) return true;
+  if (hasD6Allegation(`${w.notice}\n${w.formInstructions}`)) return true;
   if (!w.professionalReviewRequired) return false;
   return (w.previousRequests ?? []).some((p) =>
-    D6_GATED_ALLEGATION.test(`${p.notice}\n${p.formInstructions}`),
+    hasD6Allegation(`${p.notice}\n${p.formInstructions}`),
   );
+}
+
+/**
+ * Applies the D6 latch to a workspace about to be saved. `prev` is the workspace as it stood before
+ * the change, because the allegation may be in the text the change just removed.
+ *
+ * Reads the current notice and response-page text, every Amazon reply not yet applied (an
+ * unconfirmed reply that carries an allegation latches too: pasting it in is already holding it),
+ * and the same from `prev`. Applied replies and `previousRequests` are history of text that was
+ * once current, so it was read when it was current.
+ *
+ * A latch already held is never dropped by a text change. `release` is the one explicit way out and
+ * is passed only by the "wrong notice" action; it also stops `prev`'s text re-latching the very
+ * allegation the seller is replacing.
+ */
+export function latchD6(
+  prev: Pick<Workspace, "notice" | "formInstructions" | "replies" | "d6Latch"> | null | undefined,
+  next: Workspace,
+  opts?: { release?: boolean },
+): Workspace {
+  if (opts?.release) {
+    const { d6Latch: _released, ...rest } = next;
+    const found = [
+      `${next.notice}\n${next.formInstructions}`,
+      ...next.replies.filter((r) => !r.applied).map((r) => r.text),
+    ];
+    return found.some(hasD6Allegation) ? latchFrom(rest, found) : rest;
+  }
+  const held = next.d6Latch ?? prev?.d6Latch;
+  if (held) return next.d6Latch === held ? next : { ...next, d6Latch: held };
+  const texts = [
+    `${next.notice}\n${next.formInstructions}`,
+    ...next.replies.filter((r) => !r.applied).map((r) => r.text),
+    ...(prev
+      ? [
+          `${prev.notice}\n${prev.formInstructions}`,
+          ...prev.replies.filter((r) => !r.applied).map((r) => r.text),
+        ]
+      : []),
+  ];
+  return latchFrom(next, texts);
+}
+
+function latchFrom(w: Workspace, texts: string[]): Workspace {
+  for (const text of texts) {
+    const found = findD6Allegation(text);
+    if (found)
+      return {
+        ...w,
+        d6Latch: { at: new Date().toISOString(), quote: found.quote, source: text.slice(0, 20000) },
+      };
+  }
+  return w;
+}
+
+function normalisedSentences(text: string): string[] {
+  return text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((s) =>
+      s
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .replace(/\s+/g, " ")
+        .trim(),
+    )
+    .filter(Boolean);
+}
+
+/** At or above this share of the new notice's sentences already in the latched text, it is the same notice. */
+export const D6_RELEASE_MAX_OVERLAP = 0.5;
+
+/**
+ * The explicit "this was the wrong notice" action, the only way a D6 latch is released.
+ *
+ * It requires the new notice to share fewer than half of its sentences with the latched text, so
+ * deleting the offending words (which leaves the rest of the notice intact) cannot release the case.
+ * The old text is not kept in `previousRequests`, where it would be read as history of a confirmed
+ * request; the history line carries the quoted allegation instead. The case returns to unconfirmed,
+ * and if the new text carries an allegation too, `latchD6` latches it again straight away.
+ */
+export function releaseD6Latch(
+  w: Workspace,
+  notice: string,
+  formInstructions = "",
+): { ok: true; workspace: Workspace } | { ok: false; reason: string } {
+  if (!w.d6Latch) return { ok: false, reason: "This case is not held for professional review." };
+  const newText = `${notice}\n${formInstructions}`;
+  const mine = normalisedSentences(newText);
+  if (notice.trim().length < 30 || mine.length === 0)
+    return { ok: false, reason: STORES.d6Release.tooShort };
+  const latched = new Set(normalisedSentences(w.d6Latch.source));
+  const shared = mine.filter((s) => latched.has(s)).length / mine.length;
+  if (shared >= D6_RELEASE_MAX_OVERLAP) return { ok: false, reason: STORES.d6Release.sameNotice };
+  const released = latchD6(
+    undefined,
+    addWorkspaceEvent(
+      {
+        ...w,
+        notice,
+        formInstructions,
+        confirmed: false,
+        requirementsConfirmed: false,
+        professionalReviewRequired: false,
+        protocol: "clarification",
+      },
+      `${STORES.d6Release.history} Earlier wording: "${w.d6Latch.quote}"`,
+    ),
+    { release: true },
+  );
+  return { ok: true, workspace: released };
 }
 
 export function routeWorkspace(
   w: Pick<Workspace, "notice" | "formInstructions" | "position" | "marketplace"> &
-    Partial<Pick<Workspace, "professionalReviewRequired" | "previousRequests">>,
+    Partial<Pick<Workspace, "professionalReviewRequired" | "previousRequests" | "d6Latch">>,
 ): { protocol: Protocol; reason: string } {
   const route = routeCore(w);
   // Another store goes down the same routes as the US one; it only carries a plain notice that the
@@ -839,7 +962,7 @@ export function routeWorkspace(
 
 function routeCore(
   w: Pick<Workspace, "notice" | "formInstructions" | "position" | "marketplace"> &
-    Partial<Pick<Workspace, "professionalReviewRequired" | "previousRequests">>,
+    Partial<Pick<Workspace, "professionalReviewRequired" | "previousRequests" | "d6Latch">>,
 ): { protocol: Protocol; reason: string } {
   const text = `${w.notice}\n${w.formInstructions}`;
   /**
@@ -999,6 +1122,15 @@ export function removePriorAttempt(w: Workspace, id: string): Workspace {
   };
 }
 
+/**
+ * False for the placeholder `recordPriorAttempt` stores when the seller gave no date (the epoch).
+ * Anything that shows an attempt's date must check this first, or "1 Jan 1970" reaches the screen.
+ */
+export function attemptDateRecorded(at: string): boolean {
+  const t = Date.parse(at);
+  return Number.isFinite(t) && t !== 0;
+}
+
 /** Attempts the seller made before this case existed. */
 export function priorAttempts(w: Workspace) {
   return w.submissions.filter((s) => s.source === "prior");
@@ -1060,6 +1192,23 @@ const PLAN_FAULT = new RegExp(
     "|\\b(?:does not|did not|doesn't|didn't|fails? to|failed to|not)\\s+(?:\\w+\\s+){0,3}?(?:identif\\w+|explain\\w*|address\\w*|describ\\w+|includ\\w+|detail\\w*|provid\\w+)\\s+(?:\\w+\\s+){0,4}?(?:root cause|corrective|preventive)",
   "i",
 );
+
+/**
+ * Whether the seller's "What went wrong?" answer now differs materially from the last response they
+ * sent (6 Oct 2026). The "root cause is missing" gap used to be raised for as long as the reply that
+ * said so was the latest one, so a seller who had fully rewritten the section still saw it and the
+ * draft stayed a watermarked working draft. Compared against what was actually sent, with the same
+ * sentence measure the duplicate-submission guard uses: only a rewrite clears it, a one-word edit
+ * does not. With no earlier text to compare against there is nothing to measure, so it stays raised.
+ */
+export function rootCauseRewritten(w: Pick<Workspace, "explanation" | "submissions">): boolean {
+  const sent = w.submissions
+    .filter((s) => s.text.trim())
+    .map((s) => ({ at: s.at, revision: s.revision, text: s.text }));
+  if (sent.length === 0 || w.explanation.trim().length < 40) return false;
+  const verdict = assessNovelty(w.explanation, sent.slice(-1)).verdict;
+  return verdict === "new" || verdict === "revised";
+}
 
 /** The latest reply, and the current request when it is itself a reply, fault the plan. */
 export function planFaulted(w: Pick<Workspace, "notice" | "revision" | "replies">): boolean {
@@ -1175,8 +1324,9 @@ export function workspaceGaps(w: Workspace): string[] {
           ? `Answer “How will you stop it happening again?”. ${STORES.nothingToCorrectHint}`
           : "Answer “How will you stop it happening again?”: who does what, and how often.",
       );
-    // A refusal that says the plan itself is missing its root cause is the first thing to fix.
-    if (planFaulted(w)) gaps.push(STORES.rootCauseFaulted);
+    // A refusal that says the plan itself is missing its root cause is the first thing to fix, and
+    // it stays until the seller has actually rewritten that section (it used to be uncleareable).
+    if (planFaulted(w) && !rootCauseRewritten(w)) gaps.push(STORES.rootCauseFaulted);
   }
   // First, not last: a reply changes what every other item means, and the dashboard shows only
   // the first gap — so a case with an unread reply used to open on "Review Supplier invoice".
@@ -1237,7 +1387,11 @@ export function composeWorkspace(
         .map((r) =>
           r.filename
             ? `${r.filename}, page ${r.page}: ${r.note}`
-            : `${r.label} (statement, no file): ${r.note}`,
+            : requirementEvidenceKind(r) === "rights_owner_retraction"
+              ? // Never "Rights owner retraction": a note alone is the seller's own statement, and
+                // that label could read to Amazon as though a retraction exists.
+                `Seller's statement: ${r.note} (no retraction from the rights owner is attached)`
+              : `${r.label} (statement, no file): ${r.note}`,
         )
         .join("\n") || "No reviewed records linked.",
   });
@@ -1448,12 +1602,68 @@ export function applyWorkspaceReply(w: Workspace, replyId: string): Workspace {
     requirements: delta ? delta.requirements : w.requirements,
     replies: w.replies.map((r) => (r.id === replyId ? { ...r, applied: true } : r)),
   };
-  return addWorkspaceEvent(
-    updated,
-    counts
-      ? `Started a new revision from the reply. Asked for again: ${counts.reopened}. New in this reply: ${counts.added}. Still on your list: ${counts.outstanding}. Kept as reviewed: ${counts.carried}. Check the response page in Seller Central.`
-      : "Started a new revision from the reply. Check the response page in Seller Central and your records list.",
+  // A reply that carries an allegation latches here even when nobody confirms it afterwards: the
+  // reply text is now the notice, and applying it is reading it.
+  return latchD6(
+    w,
+    addWorkspaceEvent(
+      updated,
+      counts
+        ? `Started a new revision from the reply. Asked for again: ${counts.reopened}. New in this reply: ${counts.added}. Still on your list: ${counts.outstanding}. Kept as reviewed: ${counts.carried}. Check the response page in Seller Central.`
+        : "Started a new revision from the reply. Check the response page in Seller Central and your records list.",
+    ),
   );
+}
+
+/**
+ * The workspace exactly as it is posted to `/api/compose`.
+ *
+ * The client used to blank `previousRequests`, which made the server compute a different route from
+ * the one the seller was looking at: a case that stayed a Plan of Action because an earlier round was
+ * one routed to "documents" on the server and was refused, and a gated case routed as ordinary. The
+ * fields `routeWorkspace` reads (`previousRequests` with their protocol and request text, the D6
+ * latch and flag) now travel; what the server does not need does not (history, recorded submissions,
+ * saved document readings, unsaved drafts, requirement lists of earlier rounds). One function, so a
+ * test can run the router on the very object that is sent.
+ */
+export function composePayloadWorkspace(w: Workspace): Workspace {
+  return {
+    ...w,
+    history: [],
+    previousRequests: w.previousRequests.map((p) => ({ ...p, requirements: [] })),
+    submissions: [],
+    replies: w.replies.filter((r) => !r.applied),
+    documentChecks: undefined,
+    draft: undefined,
+  };
+}
+
+/**
+ * What recording or removing a prior attempt changes: the attempts and the history line, merged into
+ * the workspace as it stands when the save runs. The card used to hand back a whole workspace and the
+ * commit wrote it over `old`, discarding anything an earlier queued save had changed (6 Oct 2026).
+ * History is merged by id so an event added meanwhile is kept.
+ */
+export function mergePriorAttempts(
+  old: Workspace,
+  updated: Pick<Workspace, "submissions" | "history">,
+): Workspace {
+  return {
+    ...old,
+    submissions: updated.submissions,
+    history: [
+      ...old.history,
+      ...updated.history.filter((h) => !old.history.some((o) => o.id === h.id)),
+    ].slice(-200),
+  };
+}
+
+/**
+ * `view` if it names one of `tabs` itself. `in` would also accept "constructor", "toString" and
+ * the other keys every object inherits, from a hand-edited address.
+ */
+export function validView(tabs: object, view: string | undefined): string | undefined {
+  return view && Object.hasOwn(tabs, view) ? view : undefined;
 }
 
 /**

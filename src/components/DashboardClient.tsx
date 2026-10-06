@@ -135,7 +135,13 @@ function buildContext(file: CaseFile, log: CaseLog | null): CaseStateContext {
  * previously fetched, typed, and passed in, then silently discarded (`license: _license`). A
  * seller had no way to see from Dashboard whether their Pass was active without going to Billing.
  */
-function PassStatusRow({ license }: { license: LicenseSummary }) {
+function PassStatusRow({
+  license,
+  hasCase = true,
+}: {
+  license: LicenseSummary;
+  hasCase?: boolean;
+}) {
   const active = license.status === "active";
   return (
     <div
@@ -153,8 +159,16 @@ function PassStatusRow({ license }: { license: LicenseSummary }) {
         {active ? APP.dashboard.active.heading : APP.dashboard.inactive.heading}
       </span>
       {/* The heading already names the Pass; "Plan: appeal_pass" printed an internal key. */}
+      {active && (
+        <span className="text-xs text-muted-foreground">
+          {hasCase ? APP.dashboard.active.coversOne : APP.dashboard.active.coversOneNoCase}
+        </span>
+      )}
       {!active && (
-        <Link href="/pricing" className="ml-auto text-xs underline underline-offset-4">
+        <Link
+          href="/pricing"
+          className="-my-3 ml-auto inline-block py-3 text-xs underline underline-offset-4"
+        >
           {APP.dashboard.inactive.cta}
         </Link>
       )}
@@ -534,7 +548,10 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
             }}
           />
         )}
-        <ClockBriefCard brief={clockBrief} undated={undatedWindows(file.deadlines)} />
+        {/* Nothing is due on a settled case: no clock, and no "appeal window" line under it. */}
+        {!log.resolution && file.state !== "APPROVED" && file.state !== "CLOSED" && (
+          <ClockBriefCard brief={clockBrief} undated={undatedWindows(file.deadlines)} />
+        )}
         {!log.resolution && (!awaitingAmazon || log.waitingOn) && (
           <WaitingOnCard log={log} onSaveLog={saveWorkspaceLog} />
         )}
@@ -656,7 +673,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
           if (!caseFile) {
             return (
               <div className="animate-fade-in space-y-4">
-                <PassStatusRow license={license} />
+                <PassStatusRow license={license} hasCase={false} />
                 <EmptyState
                   icon={FileText}
                   title={APP.dashboard.caseSummary.noCase.title}

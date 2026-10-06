@@ -30,7 +30,7 @@
 // Amazon's real marketplace domains, not "amazon." plus any ending: amazon.top, amazon.xyz and
 // amazon.help are not Amazon, and look-alike domains are exactly what this check exists to catch.
 const AMAZON_TLD =
-  "(?:com|co\\.uk|de|fr|it|es|nl|se|pl|ie|be|com\\.be|com\\.tr|ae|sa|eg|in|co\\.jp|jp|com\\.au|ca|com\\.mx|com\\.br|sg|cn)";
+  "(?:com|co\\.uk|de|fr|it|es|nl|se|pl|ie|be|com\\.be|com\\.tr|ae|sa|eg|in|co\\.jp|jp|com\\.au|ca|com\\.mx|com\\.br|sg|cn|co\\.za)";
 const AMAZON_HOST = new RegExp(`(?:^|\\.)amazon\\.${AMAZON_TLD}$`, "i");
 /** Amazon-owned short-link and asset hosts. They carry no destination of their own to judge. */
 const AMAZON_SHORT_HOST = /^(?:www\.)?(?:amzn\.(?:to|com|eu|asia)|a\.co)$/i;
@@ -53,6 +53,7 @@ export type AuthenticitySignalId =
   | "credentials_requested"
   | "off_platform_contact"
   | "remote_access_requested"
+  | "qr_code_requested"
   | "non_amazon_link"
   | "non_amazon_sender";
 
@@ -118,8 +119,31 @@ function sentenceAt(text: string, index: number): { start: number; end: number }
  * a few words and no further. "We could not verify your account; reply with your password" must
  * not be excused by the "not" that belongs to another clause.
  */
-const NEGATED_JUST_BEFORE =
-  /\b(?:never|do\s+not|don't|don’t|will\s+not|won't|should\s+not|shouldn't|must\s+not|cannot|can't|not)\s+(?:[\w'’-]+[\s,]+){0,4}$/i;
+/*
+  7 Oct 2026: the old reach ("not" plus up to four words, commas skipped) silenced real lures —
+  "Do not worry, just reply with your password", "Please do not hesitate to send us your
+  verification code", "You cannot proceed until you send your password". A negation now counts only
+  when it directly governs the request verb: at most two words between them and no comma. A negated
+  word that starts another thought (hesitate, worry, delay, wait, ignore, until, unless, proceed,
+  verify, without, cannot) never excuses what follows it.
+*/
+const NEGATION_WORD =
+  "(?:never|do\\s+not|don't|don’t|will\\s+not|won't|should\\s+not|shouldn't|must\\s+not|mustn't|cannot|can't|not)";
+const NEGATED_JUST_BEFORE_RAW = new RegExp(`\\b${NEGATION_WORD}((?:\\s+[\\w'’-]+){0,2})\\s*$`, "i");
+const NOT_GOVERNING =
+  /^(?:hesitat\w*|worry|worried|delay\w*|wait\w*|ignor\w*|until|unless|proceed\w*|verify|verif\w*|without|cannot|can't)$/i;
+const NEGATED_JUST_BEFORE = {
+  test(before: string): boolean {
+    const m = NEGATED_JUST_BEFORE_RAW.exec(before);
+    if (!m) return false;
+    const between = m[1]!.trim().split(/\s+/).filter(Boolean);
+    return !between.some((w) => NOT_GOVERNING.test(w));
+  },
+};
+
+/** Amazon stating its own policy about money: "does not accept payment by gift card, wire or crypto". */
+const POLICY_NEGATION =
+  /\b(?:never|(?:does|do|will|would|can|could)\s*(?:not|n't)|cannot|can't|won't)\s+(?:accept|take|ask|request|require|charge|collect|process|allow|use)\b[^.!?;\n]*$/i;
 
 /** A sentence that states a rule or a prohibition rather than making a request. */
 const STATES_A_RULE =
@@ -127,7 +151,11 @@ const STATES_A_RULE =
 
 /** "no fee", "does not charge a fee", "free of charge": the sentence is saying the fee does not exist. */
 const NO_FEE_BEFORE =
-  /(?:\bno\b|\bnot\s+(?:charge|require|ask|request|collect|accept)|\bnever\s+(?:charge|ask|require|request|collect)s?|\b(?:does|do|will|would)\s+not\s+(?:charge|require|ask|request|collect|accept)|free\s+of\s+charge|\bwithout\b)[^.!?\n]{0,50}$/i;
+  /(?:\bno\b|\bnot\s+(?:charge|require|ask|request|collect|accept)|\bnever\s+(?:charge|ask|require|request|collect)s?|\b(?:does|do|will|would)\s+not\s+(?:charge|require|ask|request|collect|accept)|free\s+of\s+charge)[^.!?\n]{0,50}$/i;
+/** "without a reinstatement fee of $250" is a demand; "without any fee" is a promise. An amount after the phrase decides. */
+const WITHOUT_BEFORE = /\bwithout\b[^.!?\n]{0,50}$/i;
+const AMOUNT_RIGHT_AFTER =
+  /^\s*(?:of\s+|is\s+|:\s*)?(?:(?:\$|usd\s?|eur\s?|€|£|gbp\s?)\s?\d|\d[\d,.]*\s?(?:usd|dollars?|eur|euros?|gbp|pounds?|\$|€|£))/i;
 
 interface Hit {
   index: number;
@@ -158,34 +186,54 @@ function firstHit(
  * available from text alone.
  */
 const PAYMENT_METHOD =
-  /\b(?:gift\s?cards?|(?:itunes|google\s+play|steam|apple|razer)\s+(?:gift\s+)?(?:cards?|gold)|prepaid\s+cards?|bitcoin|crypto(?:currency)?|usdt|wire\s+transfer|western\s+union|moneygram|payoneer\s+transfer|zelle|cash\s?app|venmo)\b/gi;
-const PAYER_VERB =
-  /\b(?:pay|paying|send|sending|transfer|purchase|buy|deposit|remit|wire|settle|using|via|through|use|with)\b/i;
+  /\b(?:gift\s?cards?|(?:itunes|google\s+play|steam|apple|razer)\s+(?:gift\s+)?(?:cards?|gold)|prepaid\s+cards?|bitcoin|btc|crypto(?:currency)?|ethereum|binance|usdt|usdc|wire\s+transfer|western\s+union|moneygram|payoneer\s+transfer|paypal|zelle|cash\s?app|venmo|upi|paytm|phonepe)\b/gi;
+/**
+ * The seller is the one paying. "using", "via", "through", "with" and "use" were here and matched
+ * "funds … by wire transfer"; "deposit" is what Amazon does to a seller's bank account. The method's
+ * own words ("wire transfer") are blanked before this is tested, so "transfer" inside the method
+ * name no longer counts as the verb (7 Oct 2026).
+ */
+const PAYER_VERB = /\b(?:pay|paying|send|sending|transfer|purchase|buy|remit|wire|settle)\b/i;
 const FEE_PHRASE =
-  /\b(?:(?:reinstatement|processing|appeal|unlock(?:ing)?|success|release|verification|activation|recovery)\s+fee|upfront\s+(?:fee|payment|deposit|cost)s?|(?:security|refundable)\s+deposit)\b/gi;
-const PAY_AMOUNT =
-  /\b(?:pay|send|transfer|remit|deposit)\s+(?:us\s+|amazon\s+|the\s+support\s+team\s+)?(?:a\s+)?(?:(?:fee|payment|deposit)\s+of\s+)?(?:\$|usd\s?|eur\s?|€|£|gbp\s?)\s?\d[\d,.]*/gi;
+  /\b(?:(?:re-?instatement|re-?activation|processing|appeal|unlock(?:ing)?|unblock(?:ing)?|success|release|verification|activation|recovery|legal|tax|clearance|admin(?:istration|istrative)?)\s+fee|upfront\s+(?:fee|payment|deposit|cost)s?|(?:security|refundable)\s+deposit)\b/gi;
+const MONEY =
+  "(?:(?:\\$|usd\\s?|eur\\s?|€|£|gbp\\s?)\\s?\\d[\\d,.]*|\\d[\\d,.]*\\s?(?:usd|dollars?|eur|euros?|gbp|pounds?))";
+const PAY_AMOUNT = new RegExp(
+  `\\b(?:pay|send|transfer|remit|deposit)\\s+(?:us\\s+|amazon\\s+|the\\s+support\\s+team\\s+)?(?:a\\s+)?(?:(?:fee|payment|deposit)\\s+of\\s+)?${MONEY}`,
+  "gi",
+);
+/** Amazon is the one paying: "We will deposit $1,234.56 into your bank account". */
+const AMAZON_IS_THE_PAYER =
+  /\b(?:we|amazon)(?:\s+(?:will|would|shall|can|may|have|are|now))*(?:\s*'ll)?\s*$/i;
+const PAID_INTO_SELLER_ACCOUNT = /^[^.!?\n]{0,40}?\b(?:into|to)\s+your\s+(?:\w+\s+){0,2}account\b/i;
+const BUYERS_ONLY = /\b(?:buyers?|customers?)\b/i;
 
 function findPayment(text: string): Hit | null {
   return (
-    firstHit(
-      text,
-      PAY_AMOUNT,
-      (s, before) => !NO_FEE_BEFORE.test(before) && !STATES_A_RULE.test(s),
-    ) ??
-    firstHit(
-      text,
-      FEE_PHRASE,
-      (s, before) => !NO_FEE_BEFORE.test(before) && !STATES_A_RULE.test(s),
-    ) ??
+    firstHit(text, PAY_AMOUNT, (s, before, m) => {
+      if (NO_FEE_BEFORE.test(before) || STATES_A_RULE.test(s)) return false;
+      if (AMAZON_IS_THE_PAYER.test(before)) return false;
+      if (PAID_INTO_SELLER_ACCOUNT.test(s.slice(before.length + m[0].length))) return false;
+      return true;
+    }) ??
+    firstHit(text, FEE_PHRASE, (s, before, m) => {
+      if (NO_FEE_BEFORE.test(before) || STATES_A_RULE.test(s)) return false;
+      if (WITHOUT_BEFORE.test(before)) {
+        return AMOUNT_RIGHT_AFTER.test(s.slice(before.length + m[0].length));
+      }
+      return true;
+    }) ??
     // A payment *method* alone proves nothing ("gift cards" appears in a policy sentence about
     // buyers); it counts when the sentence has the seller paying and is not stating a rule.
-    firstHit(
-      text,
-      PAYMENT_METHOD,
-      (s, before) =>
-        PAYER_VERB.test(s) && !STATES_A_RULE.test(s) && !NEGATED_JUST_BEFORE.test(before),
-    )
+    firstHit(text, PAYMENT_METHOD, (s, before, m) => {
+      const withoutMethod = s.replace(m[0], " ");
+      if (!PAYER_VERB.test(withoutMethod)) return false;
+      if (STATES_A_RULE.test(s) || POLICY_NEGATION.test(before)) return false;
+      if (NEGATED_JUST_BEFORE.test(before)) return false;
+      // A sentence about what buyers do ("buyers pay with PayPal") asks nothing of the seller.
+      if (BUYERS_ONLY.test(s) && !/\b(?:you|your|us)\b/i.test(s)) return false;
+      return true;
+    })
   );
 }
 
@@ -210,18 +258,23 @@ const ENTER_CODE = new RegExp(`\\benter\\b[^.!?\\n]{0,60}?\\b${CODE_OBJECT}\\b`,
 const OFF_CHANNEL =
   /\b(?:reply|respond|e-?mail|text|whatsapp|forward|read\s+(?:it\s+)?(?:out|back)|tell|give|call|message)\b/i;
 
+/** "Amazon will never ask you to share your password": the policy sentence, with the verb a few words later. */
+const CREDENTIAL_POLICY =
+  /\b(?:never|(?:will|does|do|would|can|could)\s*(?:not|n't)|won't|cannot|can't)\s+(?:ask|request|require|need)\b[^.!?;\n]{0,25}$/i;
+
 function findCredentials(text: string): Hit | null {
+  const excused = (before: string): boolean =>
+    NEGATED_JUST_BEFORE.test(before) || CREDENTIAL_POLICY.test(before);
   return (
-    firstHit(text, HAND_OVER, (_s, before) => !NEGATED_JUST_BEFORE.test(before)) ??
-    firstHit(text, ASKED_FOR, (_s, before) => !NEGATED_JUST_BEFORE.test(before)) ??
+    firstHit(text, HAND_OVER, (_s, before) => !excused(before)) ??
+    firstHit(text, ASKED_FOR, (_s, before) => !excused(before)) ??
     // "Enter the verification code we sent to your phone" is what a genuine identity check says: the
     // seller types a code Amazon sent into Amazon's own page. It only counts when the sentence also
     // moves the code elsewhere, or points at a site that is not Amazon's.
     firstHit(
       text,
       ENTER_CODE,
-      (s, before) =>
-        !NEGATED_JUST_BEFORE.test(before) && (OFF_CHANNEL.test(s) || foreignHostsIn(s).length > 0),
+      (s, before) => !excused(before) && (OFF_CHANNEL.test(s) || foreignHostsIn(s).length > 0),
     )
   );
 }
@@ -253,19 +306,56 @@ function findOffPlatform(text: string): Hit | null {
       text,
       PERSONAL_PHONE,
       (s, before) => !STATES_A_RULE.test(s) && !NEGATED_JUST_BEFORE.test(before),
+    ) ??
+    // A helpline lure: "Call 1-888-555-0199 immediately", "call this number to unlock your account".
+    firstHit(
+      text,
+      HELPLINE_LURE,
+      (s, before) => !STATES_A_RULE.test(s) && !NEGATED_JUST_BEFORE.test(before),
     )
   );
 }
+
+const PHONE_NUMBER = "\\+?\\d[\\d\\s().-]{7,20}\\d";
+const HELPLINE_LURE = new RegExp(
+  `\\b(?:call|dial|phone)\\b(?=[^.!?\\n]{0,40}?(?:${PHONE_NUMBER})[^.!?\\n]{0,40}\\b(?:immediately|now|today|urgent(?:ly)?|right\\s+away|asap|at\\s+once)\\b)|\\b(?:call|dial|phone)\\s+(?:this|the\\s+following|our)\\s+(?:toll[\\s-]?free\\s+)?(?:number|helpline|hotline)\\b|\\b(?:call|dial)\\s+(?:our\\s+)?(?:helpline|hotline)\\b`,
+  "gi",
+);
 
 /* ---------------------------------------------------------------- remote access */
 
 const REMOTE_ACCESS =
   /\b(?:any\s?desk|team\s?viewer|ultra\s?viewer|ammyy(?:\s+admin)?|rustdesk|quick\s?assist|logmein|splashtop|supremo|zoho\s+assist|remote\s+(?:access|desktop|control|support)\s+(?:software|tool|session|app|program))\b/gi;
+/** Amazon describing what it did ("we used a remote desktop tool") is not a request that the seller install one. */
+const WE_USED_IT = /\bwe\s+(?:have\s+|had\s+)?(?:used|ran|run|operated|employed)\b/i;
+/** What the seller is being asked to do about the tool. */
+const ASKS_SELLER_TO =
+  /\b(?:install|download|open|launch|run|allow|enable|grant|start|connect|share\s+your\s+screen|let\s+(?:us|him|her|our|the)|give\s+(?:us|him|her)|please|you\s+(?:must|need|should|will|have\s+to|can)|we\s+(?:need|require|ask)\s+you)\b/i;
+const GENERIC_REMOTE_TOOL = /^remote\s/i;
 
 function findRemoteAccess(text: string): Hit | null {
   return firstHit(
     text,
     REMOTE_ACCESS,
+    (s, before, m) =>
+      !NEGATED_JUST_BEFORE.test(before) &&
+      !STATES_A_RULE.test(s) &&
+      !WE_USED_IT.test(s) &&
+      // The generic phrase is a lure only when the seller is asked to do something with it.
+      (!GENERIC_REMOTE_TOOL.test(m[0]) || ASKS_SELLER_TO.test(s)),
+  );
+}
+
+/* ---------------------------------------------------------------- QR codes */
+
+/** "Scan the QR code to verify your account": a code is a link the seller cannot read before following it. */
+const QR_LURE =
+  /\bscan\b[^.!?\n]{0,40}\bqr(?:[\s-]?code)?\b|\bqr[\s-]?code\b[^.!?\n]{0,60}\b(?:verif\w+|unlock|reinstat\w+|restore|reactivat\w+|appeal)\b/gi;
+
+function findQrCode(text: string): Hit | null {
+  return firstHit(
+    text,
+    QR_LURE,
     (s, before) => !NEGATED_JUST_BEFORE.test(before) && !STATES_A_RULE.test(s),
   );
 }
@@ -336,11 +426,22 @@ const LURE_WORDS =
 const LURE_CUE =
   /\b(?:visit|go\s+to|open|log\s?in\s+(?:to|at)|sign\s+in\s+(?:to|at)|click|navigate\s+to|head\s+to|browse\s+to)\s+(?:the\s+(?:link|site|website|page)\s+)?$/i;
 
-function bareDomainHosts(text: string, taken: UrlToken[]): string[] {
+interface HostHit {
+  host: string;
+  index: number;
+}
+
+/** Hosts written with more than two labels, or with letters outside ASCII (a Cyrillic "е" in "sеllercentral"). */
+const UNICODE_HOST =
+  /(?<![@\p{L}\p{N}./_-])((?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,40}[\p{L}\p{N}])?\.){2,6}\p{L}{2,24})(?![\p{L}\p{N}@-])/gu;
+/** A bare IPv4 address with a path ("192.168.4.4/login"). */
+const BARE_IP = /(?<![\w.])((?:\d{1,3}\.){3}\d{1,3})(?::\d{2,5})?(?=\/)/g;
+
+function bareDomainHits(text: string, taken: UrlToken[]): HostHit[] {
   // Blank out addresses already handled, so a URL is not read twice.
   let scrubbed = text;
   for (const t of taken) scrubbed = scrubbed.replace(t.url, " ".repeat(t.url.length));
-  const hosts: string[] = [];
+  const hits: HostHit[] = [];
   for (const m of scrubbed.matchAll(BARE_DOMAIN)) {
     const host = m[1]!.toLowerCase();
     if (isAmazonHost(host) || AMAZON_SHORT_HOST.test(host) || AMAZON_ASSET_HOST.test(host))
@@ -349,20 +450,66 @@ function bareDomainHosts(text: string, taken: UrlToken[]): string[] {
     const at = m.index ?? 0;
     const before = scrubbed.slice(Math.max(0, at - 40), at);
     const hasPath = Boolean(m[2]);
-    if (hasPath || LURE_WORDS.test(host) || LURE_CUE.test(before)) hosts.push(host);
+    if (hasPath || LURE_WORDS.test(host) || LURE_CUE.test(before)) hits.push({ host, index: at });
   }
-  return hosts;
+  // Look-alikes written without a scheme: "sеllercentral.amazon.com.verify-now.example".
+  for (const m of scrubbed.matchAll(UNICODE_HOST)) {
+    const host = m[1]!.toLowerCase();
+    if (isAmazonHost(host) || AMAZON_SHORT_HOST.test(host) || AMAZON_ASSET_HOST.test(host))
+      continue;
+    const nonAscii = /[^\u0000-\u007f]/.test(host);
+    if (nonAscii || /(?:amazon|amzn|sellercentral)/.test(host))
+      hits.push({ host, index: m.index ?? 0 });
+  }
+  for (const m of scrubbed.matchAll(BARE_IP)) {
+    const octets = m[1]!.split(".").map(Number);
+    if (octets.every((o) => o <= 255)) hits.push({ host: m[1]!, index: m.index ?? 0 });
+  }
+  return hits;
 }
 
 /** Non-Amazon hosts in a piece of text, written with or without a scheme. */
-function foreignHostsIn(text: string): string[] {
+function foreignHostHits(text: string): HostHit[] {
   const tokens = urlTokens(text);
   return [
-    ...new Set([
-      ...tokens.flatMap((t) => foreignHostsOfUrl(t.url)),
-      ...bareDomainHosts(text, tokens),
-    ]),
+    ...tokens.flatMap((t) => foreignHostsOfUrl(t.url).map((host) => ({ host, index: t.index }))),
+    ...bareDomainHits(text, tokens),
   ];
+}
+
+function foreignHostsIn(text: string): string[] {
+  return [...new Set(foreignHostHits(text).map((h) => h.host))];
+}
+
+/** Government and education sites are not where a forger sends anyone. */
+const OFFICIAL_HOST =
+  /(?:^|\.)(?:gov|mil|edu)(?:\.[a-z]{2})?$|(?:^|\.)gov\.[a-z]{2}$|(?:^|\.)europa\.eu$|(?:^|\.)gc\.ca$/i;
+const SHORTENER_HOST =
+  /^(?:www\.)?(?:bit\.ly|tinyurl\.com|cutt\.ly|t\.ly|rb\.gy|goo\.gl|is\.gd|ow\.ly|shorturl\.at|tiny\.cc|rebrand\.ly)$/i;
+/** What a link in a lure sentence asks the seller to do with it. */
+const LINK_ACTION =
+  /\b(?:click|tap|open|visit|go\s+to|log\s?in|login|sign\s?in|verify|confirm|unlock|reinstate|restore|reactivate|update\s+your|download|follow|access|navigate|head\s+to|browse\s+to|link\s+below|below\s+link|the\s+link|seller\s?central)\b/i;
+
+/**
+ * A link is worth flagging when it is dressed up as Amazon, hidden behind a shortener, a bare IP or
+ * look-alike letters, or sits in a sentence that tells the seller to act on it. A plain mention of
+ * a supplier's or a regulator's site in an invoice request ("www.anker.com", "www.gov.uk") is none
+ * of those and no longer raises the alarm (7 Oct 2026).
+ */
+function linkIsALure(text: string, hit: HostHit): boolean {
+  if (OFFICIAL_HOST.test(hit.host)) return false;
+  if (/[^\u0000-\u007f]/.test(hit.host) || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hit.host)) return true;
+  if (LOOKALIKE.test(hit.host) || SHORTENER_HOST.test(hit.host)) return true;
+  const bounds = sentenceAt(text, hit.index);
+  const sentence = text.slice(bounds.start, bounds.end);
+  if (LINK_ACTION.test(sentence)) return true;
+  // The address alone on its line: the line above is the sentence that introduces it.
+  if (sentence.replace(/\S+/, "").trim().length < 15) {
+    const above = text.slice(Math.max(0, bounds.start - 200), Math.max(0, bounds.start - 1));
+    const prevLine = above.slice(above.lastIndexOf("\n") + 1);
+    if (LINK_ACTION.test(prevLine)) return true;
+  }
+  return false;
 }
 
 /* ---------------------------------------------------------------- addresses */
@@ -459,14 +606,20 @@ export function assessNoticeAuthenticity(raw: string): AuthenticityAssessment {
     "Amazon never asks you to install software that lets someone else see or control your computer.",
     findRemoteAccess(text),
   );
+  push(
+    "qr_code_requested",
+    "This message asks you to scan a QR code",
+    "A QR code hides where it leads. Open Seller Central yourself instead; a genuine notice is always visible in your account.",
+    findQrCode(text),
+  );
 
   // Links. A genuine notice sends a seller to Seller Central; a forgery needs them somewhere else.
-  const tokens = urlTokens(text);
   const foreignHosts = [
-    ...new Set([
-      ...tokens.flatMap((t) => foreignHostsOfUrl(t.url)),
-      ...bareDomainHosts(text, tokens),
-    ]),
+    ...new Set(
+      foreignHostHits(text)
+        .filter((hit) => linkIsALure(text, hit))
+        .map((hit) => hit.host),
+    ),
   ];
   if (foreignHosts.length > 0) {
     signals.push({

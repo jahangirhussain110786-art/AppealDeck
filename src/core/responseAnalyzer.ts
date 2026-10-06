@@ -42,8 +42,11 @@ const RULES: ReadonlyArray<PatternRule> = [
       // stay out.
       /your appeal (?:has been|was) (?:approved|accepted|granted)/i,
       /(?:account|selling (?:account|privileges)) (?:has|have) been reactivated/i,
-      /(?:we(?:'ve|’ve| have)|amazon has) (?:reinstated|reactivated|restored)/i,
-      /lifted (?:the|your) (?:account )?(?:suspension|restriction|block)/i,
+      // An object is required (7 Oct 2026): "We have restored your ability to list in Toys" and "We
+      // have lifted the restriction on your ASIN" restore a part, not the account, and were read as
+      // "you are back".
+      /(?:we(?:'ve|’ve| have)|amazon has) (?:reinstated|reactivated|restored) (?:your|the) (?:seller |selling )?(?:accounts?|privileges|listings?)\b/i,
+      /lifted (?:the|your) (?:account|selling|seller)(?: account)? (?:suspension|restriction|block)\b|lifted (?:the )?(?:suspension|restriction|block) (?:on|from|of) (?:your )?(?:seller |selling )?account\b|lifted your (?:suspension|restriction|block)\b(?! on)/i,
       /(?:your )?listings? (?:has|have|are|is|were|was) (?:been )?(?:restored|reinstated|reactivated)/i,
     ],
   },
@@ -64,7 +67,10 @@ const RULES: ReadonlyArray<PatternRule> = [
       /no further appeals?/i,
       /(?:may|can|could) not appeal (?:this|the|your)?\s*(?:decision )?further/i,
       /(?:cannot|can't|can not|will not|won't|unable to) (?:accept|review|consider|respond to) (?:any )?(?:further|additional|more) appeals?/i,
-      /no longer (?:able|permitted|eligible) to sell/i,
+      // Final only for selling as a whole ("no longer able to sell on Amazon", "…to sell."). A
+      // category, an ASIN or a product ("no longer able to sell in the Grocery category", "…to sell
+      // this product until you provide an invoice") is a restriction that goes on (7 Oct 2026).
+      /no longer (?:able|permitted|eligible) to sell(?:\s+(?:on|at|through|with|using)\s+amazon(?:\.com)?\b|(?=\s*(?:[.!?]|\n|$)))/i,
       // "We are unable to reinstate" is deliberately not here (25 Sep 2026). It opens Amazon's
       // ordinary refusal — "...at this time. Please also provide invoices..." — which invites the
       // next attempt. Filing it as final told a seller the case was over, and recorded the case as
@@ -89,6 +95,7 @@ const RULES: ReadonlyArray<PatternRule> = [
       /send (?:us )?(?:your )?(?:invoices?|receipts?)/i,
       /upload (?:your|the) documentation/i,
       /supplier invoice/i,
+      /\b(?:provide|submit|upload|send)\s+(?:us\s+)?(?:an?|the|your|valid|updated|copies of)\s+(?:supplier\s+|valid\s+)?invoices?\b/i,
     ],
     evidenceKind: "supplier_invoice",
   },
@@ -227,12 +234,12 @@ function analyzeText(raw: string): AnalysisResult {
 }
 
 const PLAN_ASK =
-  /\b(?:submit|provide|send|file|resubmit|include)\b[^.!?\n]{0,60}\bplan of action\b|\bplan of action\b[^.!?\n]{0,40}\b(?:is|are)\s+(?:required|needed)\b/i;
+  /\b(?:submit|provide|send|file|resubmit|include)\b[^.!?\n]{0,60}\bplan of action\b|\bplan of action\b[^.!?\n]{0,40}\b(?:is|are)\s+(?:still\s+|also\s+|now\s+)?(?:required|needed)\b/i;
 const DOCUMENT_ASK =
   /\b(?:submit|provide|send|upload)\b[^.!?\n]{0,60}\b(?:invoices?|documents?|documentation|certificates?|proof|records?)\b/i;
 /** Something is still removed, blocked or restricted even though the account is back. */
 const STILL_RESTRICTED =
-  /\b(?:remains?|still|continues?\s+to\s+be)\b[^.!?\n]{0,60}\b(?:removed|suppressed|blocked|deactivated|inactive|restricted|unavailable)\b/i;
+  /\b(?:remains?|still|continues?\s+to\s+be)\b[^.!?\n]{0,60}\b(?:removed|suppressed|blocked|deactivated|inactive|restricted|unavailable|suspended|under\s+review|on\s+hold|disabled|closed)\b|\bno\s+longer\s+(?:able|permitted|eligible)\s+to\s+sell\b/i;
 const ASK_NEGATED = /\b(?:no|not|don't|do not)\b/i;
 
 /**
@@ -261,7 +268,7 @@ function openAsksAfterReinstatement(text: string, reinstatement: RegExp[]): Open
  * when they are not is the one error this analyser must not make.
  */
 const NOT_A_STATEMENT =
-  /\b(?:not|never|no longer|unable|if|once|when|until|unless|after|would|will be)\b|n't\b|n’t\b/i;
+  /\b(?:not|never|no longer|unable|if|once|when|until|unless|after|would|will be)\b|n't\b|n’t\b|\bremains?\s+(?:suspended|deactivated|under\s+review|blocked|closed)\b|\bstill\s+(?:suspended|deactivated|under\s+review)\b/i;
 function claimsReinstatement(patterns: RegExp[], text: string): boolean {
   return text
     .split(/(?<=[.!?])\s+|\n+/)

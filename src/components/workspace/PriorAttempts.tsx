@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DetailDisclosure } from "./WorkspaceVisuals";
 import {
+  attemptDateRecorded,
   priorAttempts,
   recordPriorAttempt,
   removePriorAttempt,
@@ -15,6 +16,12 @@ import {
 } from "@/core/workspace";
 import { formatDate } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
+
+/** Today on the seller's own calendar, as YYYY-MM-DD (a date input's value format). */
+function localToday(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 /**
  * #91: the question the product never asked.
@@ -48,13 +55,22 @@ export function PriorAttempts({
   const [count, setCount] = useState(1);
   const [at, setAt] = useState("");
   const [text, setText] = useState("");
+  const [dateError, setDateError] = useState("");
   const recorded = priorAttempts(workspace);
 
   async function add() {
     // The wording and date the seller gives belong to the latest attempt; each earlier one is
     // recorded without wording, which is all the count can honestly say about it.
+    // The count is how many times in TOTAL, so only the difference is added; recorded attempts
+    // are never removed. The wording the seller gives always becomes one new record.
+    if (at && at > localToday()) {
+      setDateError(C.priorAttemptFutureDate);
+      return;
+    }
+    setDateError("");
+    const toAdd = Math.max(1, count - recorded.length);
     let next = workspace;
-    for (let i = 1; i < count; i += 1) next = recordPriorAttempt(next, { at: "", text: "" });
+    for (let i = 1; i < toAdd; i += 1) next = recordPriorAttempt(next, { at: "", text: "" });
     next = recordPriorAttempt(next, { at: at ? new Date(at).toISOString() : "", text });
     const ok = await onSave(next);
     if (ok) {
@@ -84,9 +100,7 @@ export function PriorAttempts({
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">
-                  {attempt.at === new Date(0).toISOString()
-                    ? C.priorAttemptNoDate
-                    : formatDate(attempt.at)}
+                  {attemptDateRecorded(attempt.at) ? formatDate(attempt.at) : C.priorAttemptNoDate}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
                   {attempt.text ? attempt.text : C.priorAttemptNoText}
@@ -97,9 +111,7 @@ export function PriorAttempts({
                 variant="outline"
                 disabled={busy}
                 aria-label={`Remove the response recorded for ${
-                  attempt.at === new Date(0).toISOString()
-                    ? C.priorAttemptNoDate
-                    : formatDate(attempt.at)
+                  attemptDateRecorded(attempt.at) ? formatDate(attempt.at) : C.priorAttemptNoDate
                 }`}
                 onClick={() => void onSave(removePriorAttempt(workspace, attempt.id))}
               >
@@ -149,9 +161,20 @@ export function PriorAttempts({
               id="prior-attempt-date"
               type="date"
               value={at}
-              max={new Date().toISOString().slice(0, 10)}
-              onChange={(e) => setAt(e.target.value)}
+              max={localToday()}
+              aria-invalid={dateError ? true : undefined}
+              aria-describedby={dateError ? "prior-attempt-date-error" : undefined}
+              className="min-h-11"
+              onChange={(e) => {
+                setAt(e.target.value);
+                setDateError("");
+              }}
             />
+            {dateError && (
+              <p id="prior-attempt-date-error" role="alert" className="text-xs text-destructive">
+                {dateError}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="prior-attempt-text">{C.priorAttemptTextLabel}</Label>

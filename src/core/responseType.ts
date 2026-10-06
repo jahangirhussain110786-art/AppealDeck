@@ -202,6 +202,21 @@ const POA_REQUESTED = new RegExp(
 );
 
 /**
+ * A plan of action mentioned without being asked for (7 Oct 2026): "No Plan of Action is required."
+ * (the noun's own "No" is not one of the verbs NEGATION knows), "If you need a Plan of Action
+ * template, see Seller Central help." (a conditional offer of help), and the template/form/guide
+ * pages themselves.
+ */
+const POA_NOT_REQUESTED = new RegExp(
+  [
+    `\\bno\\s+(?:(?:an?|your|the|updated|new|written|further|additional|separate)\\s+)*${POA_NOUN}\\b`,
+    `\\bif\\s+you\\s+(?:need|want|require|would\\s+like|prefer|are\\s+looking)\\b`,
+    `${POA_NOUN}\\s+(?:template|form|example|sample|guide|instructions|help)\\b`,
+  ].join("|"),
+  "i",
+);
+
+/**
  * Document nouns Amazon names. `identification` and the identity documents were missing from the
  * first version, so a verification notice asking for a passport produced no request at all.
  */
@@ -309,6 +324,9 @@ export function determineResponseType(raw: string, formInstructions = ""): Respo
         const pattern = source.terse && type === "PLAN_OF_ACTION" ? POA_TERM : basePattern;
         const found = pattern.exec(clause.text);
         if (!found) continue;
+        if (type === "PLAN_OF_ACTION" && !source.terse && POA_NOT_REQUESTED.test(clause.text)) {
+          continue;
+        }
         if (type !== "NO_ACTION_REQUESTED" && weak && found.index > weak.index) continue;
         const localStart = clause.start + found.index;
         matches.push({

@@ -18,7 +18,7 @@ import { OfflineNotice } from "@/components/OfflineNotice";
 import { DetailDisclosure, VIEW_ICONS } from "@/components/workspace/WorkspaceVisuals";
 import { guidanceFor } from "@/core/guidance";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
-import { stripInvisibleChars } from "@/lib/idNormalize";
+import { handlePaste, stripInvisibleChars } from "@/lib/idNormalize";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
 import { buildNoticeAnnotations, buildDecodeSpans } from "@/lib/decodeAnnotations";
 import { stashPendingNotice } from "@/lib/pendingNotice";
@@ -88,6 +88,8 @@ type DecodeError = {
   sellerText: boolean;
   /** A shape the product could name (language, damaged text): the message already says what to do. */
   named: boolean;
+  /** A language refusal the seller may override: "read it anyway" resends with `force`. */
+  canContinue: boolean;
 };
 
 type Status = "empty" | "loading" | "error" | "result";
@@ -118,7 +120,7 @@ export default function DecodeClient() {
     await submitText(text);
   }
 
-  async function submitText(value: string) {
+  async function submitText(value: string, force = false) {
     if (!value.trim()) return;
     const submitted = value.trim();
     setStatus("loading");
@@ -128,7 +130,7 @@ export default function DecodeClient() {
       const res = await fetch("/api/decode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: submitted }),
+        body: JSON.stringify(force ? { text: submitted, force: true } : { text: submitted }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -137,6 +139,7 @@ export default function DecodeClient() {
           message: body.message ?? body.error ?? DECODE.result.errorHint,
           sellerText: body.looksLikeSellerText === true,
           named: body.supported === false || body.garbled === true,
+          canContinue: body.canContinue === true && body.supported === false,
         });
         setStatus("error");
         return;
@@ -149,7 +152,12 @@ export default function DecodeClient() {
       saveSessionPaste(value, true);
       trackFunnelEvent(FUNNEL_EVENTS.decodeCompleted, { kind: data.kind });
     } catch {
-      setError({ message: DECODE.result.errorNetwork, sellerText: false, named: true });
+      setError({
+        message: DECODE.result.errorNetwork,
+        sellerText: false,
+        named: true,
+        canContinue: false,
+      });
       setStatus("error");
     }
   }
@@ -237,6 +245,8 @@ export default function DecodeClient() {
         // refusal and the seller's own letter already say exactly what to do.
         hint={error && !error.named && !error.sellerText ? DECODE.result.errorNotNotice : undefined}
         sellerText={error?.sellerText ?? false}
+        canContinue={error?.canContinue ?? false}
+        onContinue={() => void submitText(text, true)}
         onEdit={editPasted}
         onPasteInstead={pasteAmazonInstead}
       />
@@ -256,7 +266,7 @@ export default function DecodeClient() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="inline-flex min-h-11 items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <span aria-hidden>← </span>
                   {DECODE.result.decodeAnother}
@@ -337,6 +347,14 @@ export default function DecodeClient() {
                     id="notice"
                     placeholder={DECODE.textarea.placeholder}
                     value={text}
+                    // The full normaliser runs on a paste and on the server, never per keystroke.
+                    onPaste={(e) =>
+                      handlePaste(e, (value) => {
+                        setText(value);
+                        saveSessionPaste(value);
+                        if (value.length < 1) setStatus("empty");
+                      })
+                    }
                     onChange={(e) => {
                       const value = stripInvisibleChars(e.target.value);
                       setText(value);
@@ -432,6 +450,41 @@ function headlineKey(result: DecodeResponse): keyof typeof DECODE.result.headlin
   return result.responseType?.type ?? "UNDETERMINED";
 }
 
+/**
+ * An all-numeric date near "by / before / until" (or the header date the parser found) that reads
+ * two ways, 12/10/2026 being 12 October or 10 December. Null when there is none or it is settled.
+ */
+function ambiguousDateIn(
+  text: string,
+  parsed: ReturnType<typeof parseNotice> | null,
+): { written: string; a: string; b: string } | null {
+  const m =
+    /\b(?:by|before|until|no later than|on or before)\s+(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})\b/i.exec(
+      text,
+    );
+  if (m) {
+    const x = Number(m[1]);
+    const y = Number(m[2]);
+    const year = Number(m[3]);
+    if (x >= 1 && x <= 12 && y >= 1 && y <= 12 && x !== y) {
+      const iso = (mo: number, d: number) =>
+        `${year}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      return {
+        written: `${m[1]}/${m[2]}/${m[3]}`,
+        a: iso(y, x), // day first: x is the day
+        b: iso(x, y), // month first: x is the month
+      };
+    }
+  }
+  const header = parsed?.ambiguousReceipt;
+  if (header) {
+    const [a, b] = header;
+    const [yy, mm, dd] = a.split("-");
+    return { written: `${dd}/${mm}/${yy}`, a, b };
+  }
+  return null;
+}
+
 /** The answer, before any detail: what the reply is, when it is due, whether it looks forged. */
 function ResultFacts({
   result,
@@ -445,16 +498,19 @@ function ResultFacts({
   const r = DECODE.result;
   const firstDue = result.deadlines.find((d) => d.dueAt && d.dueOn);
   // A stated length with no start date runs from receipt: show the length, never a made-up day.
-  // The legacy 17-day pattern is never presented as current policy, so it keeps "No date stated".
+  // A 17-day window is shown as the length the notice states ("17 days, from when you got the
+  // notice"), not as a date and not as policy: the deadline list below still says to verify it.
   const parsed = firstDue ? null : parseNotice(text);
   const windowDays =
     parsed &&
     parsed.statedWindowDays !== null &&
-    !(parsed.legacySeventeenDay && parsed.statedWindowDays === 17) &&
     result.deadlines.some((d) => d.kind === "appeal_window" && d.startsOnReceipt)
       ? parsed.statedWindowDays
       : null;
   const flagged = (result.authenticity?.length ?? 0) > 0;
+  // A numeric date that could be read two ways is shown as written, with both readings. Never
+  // counted into a deadline (the engine does not), so this is a note, not a due date.
+  const ambiguous = firstDue || windowDays !== null ? null : ambiguousDateIn(text, parsed);
   return (
     <div className="mt-10 grid gap-3.5 md:grid-cols-[1.3fr_1fr_1fr]">
       <div className="flex items-center gap-4 rounded-[18px] bg-white/[0.05] p-5 ring-1 ring-inset ring-white/[0.08]">
@@ -482,10 +538,20 @@ function ResultFacts({
                 })
               : windowDays !== null
                 ? r.factWindow.replace("{n}", String(windowDays))
-                : r.factNoDate}
+                : ambiguous
+                  ? r.factAmbiguousShort
+                  : r.factNoDate}
           </span>
           {windowDays !== null && (
             <span className="block text-xs text-muted-foreground">{r.factWindowNote}</span>
+          )}
+          {ambiguous && (
+            <span className="block text-xs text-muted-foreground">
+              {r.factAmbiguous
+                .replace("{date}", ambiguous.written)
+                .replace("{a}", formatDay(ambiguous.a))
+                .replace("{b}", formatDay(ambiguous.b))}
+            </span>
           )}
         </span>
       </div>
@@ -516,32 +582,50 @@ function ErrorView({
   message,
   hint,
   sellerText,
+  canContinue,
   onEdit,
+  onContinue,
   onPasteInstead,
 }: {
   message: string;
   hint?: string;
   sellerText: boolean;
+  canContinue: boolean;
   onEdit: () => void;
+  onContinue: () => void;
   onPasteInstead: () => void;
 }) {
   return (
-    <Alert variant="destructive">
-      <AlertTitle>{DECODE.result.errorTitle}</AlertTitle>
-      {/* Said once: the API's message is written for this paste and already says what to do. */}
-      <AlertDescription>{message}</AlertDescription>
-      {hint && <AlertDescription className="mt-2">{hint}</AlertDescription>}
-      <div className="mt-3 flex flex-wrap gap-2">
-        {sellerText ? (
-          <Button size="sm" onClick={onPasteInstead}>
-            {DECODE.result.errorSellerAction}
+    // On a solid card, like the warnings in the result: the column rises over the navy stage and
+    // the alert's see-through tint left its title dark red on dark navy.
+    <div className="rounded-lg bg-card shadow-card">
+      <Alert variant="destructive">
+        <AlertTitle>{DECODE.result.errorTitle}</AlertTitle>
+        {/* Said once: the API's message is written for this paste and already says what to do. */}
+        <AlertDescription>{message}</AlertDescription>
+        {hint && <AlertDescription className="mt-2">{hint}</AlertDescription>}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {canContinue ? (
+            <Button size="sm" onClick={onContinue} className="h-auto min-h-9 whitespace-normal">
+              {DECODE.result.errorContinue}
+            </Button>
+          ) : null}
+          {sellerText ? (
+            <Button size="sm" onClick={onPasteInstead} className="h-auto min-h-9 whitespace-normal">
+              {DECODE.result.errorSellerAction}
+            </Button>
+          ) : null}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onEdit}
+            className="h-auto min-h-9 whitespace-normal"
+          >
+            {DECODE.result.errorEdit}
           </Button>
-        ) : null}
-        <Button variant="outline" size="sm" onClick={onEdit}>
-          {DECODE.result.errorEdit}
-        </Button>
-      </div>
-    </Alert>
+        </div>
+      </Alert>
+    </div>
   );
 }
 

@@ -20,9 +20,11 @@ import { DECODE } from "@/content/marketing";
 import { APP } from "@/content/app";
 import { STORES } from "@/content/stores";
 import { assessNoticeAuthenticity } from "@/core/noticeAuthenticity";
-import { stripInvisibleChars } from "@/lib/idNormalize";
+import { handlePaste, stripInvisibleChars } from "@/lib/idNormalize";
 import { detectOtherAmazonStore } from "@/lib/amazonStore";
 import { KindOverride } from "./KindOverride";
+import { kindForConfirmedNotice } from "@/core/classifier";
+import { parseNotice } from "@/core/noticeParser";
 import type { ViolationKind } from "@/core";
 
 const selectStyle =
@@ -37,6 +39,7 @@ const selectStyle =
 export function RequestReview({
   workspace,
   kind,
+  kindSetBySeller = false,
   busy,
   onSave,
   onCommitWorkspace,
@@ -48,6 +51,8 @@ export function RequestReview({
   workspace: Workspace;
   /** B-06: what the decoder read, so the seller can say it is wrong. */
   kind: ViolationKind;
+  /** The seller chose the kind themselves, so the notice's wording never overrides it. */
+  kindSetBySeller?: boolean;
   busy: boolean;
   /** Confirms the route. Only the fields a route confirmation may change survive it. */
   onSave: (w: Workspace) => Promise<boolean>;
@@ -77,10 +82,20 @@ export function RequestReview({
   const decoded = Boolean(workspace.decodedNoticeHash);
   const R = C.request;
   const tooShort = value.notice.trim().length < 30;
+  // What the classifier reads from the pasted text, the same rule confirming the route applies, so
+  // the seller sees the reading BEFORE pressing "Yes, this is right" (it used to say "Not clear yet").
+  const shownKind = useMemo(
+    () =>
+      kindForConfirmedNotice(
+        { kind, kindSetBy: kindSetBySeller ? "seller" : undefined },
+        parseNotice(value.notice),
+      ),
+    [kind, kindSetBySeller, value.notice],
+  );
   // Counted the way confirming will list them, so the seller sees the size of the job first.
   const documents = workspace.confirmed
     ? workspace.requirements.length
-    : proposedRequirements(value, kind).length;
+    : proposedRequirements(value, shownKind).length;
   const wants =
     documents === 0
       ? PROTOCOL_LABELS[route.protocol]
@@ -96,6 +111,16 @@ export function RequestReview({
         value={value.notice}
         maxLength={50000}
         rows={7}
+        onPaste={(e) =>
+          handlePaste(
+            e,
+            (next) => {
+              setValue({ ...value, notice: next });
+              onDraftChange("request.notice", next === workspace.notice ? undefined : next);
+            },
+            50000,
+          )
+        }
         onChange={(e) => {
           // Sanitised here, at the point the notice is stored, because entities.ts guarantees
           // raw.slice(start, end) === value and stripping later would slide every span.
@@ -107,8 +132,14 @@ export function RequestReview({
     </div>
   );
 
+  const problemText =
+    shownKind === "UNKNOWN"
+      ? R.notClear
+      : workspace.confirmed
+        ? APP.violationKinds[shownKind]
+        : R.readAs.replace("{kind}", APP.violationKinds[shownKind]);
   const summary: Array<[string, string]> = [
-    [R.problem, kind === "UNKNOWN" ? R.notClear : APP.violationKinds[kind]],
+    [R.problem, problemText],
     [R.store, R.stores[value.marketplace]],
     [R.wants, wants],
     [R.agree, R.positions[value.position]],
@@ -184,7 +215,9 @@ export function RequestReview({
                   {text}
                   {label === R.wants && (
                     <details className="mt-1 font-normal">
-                      <summary className="cursor-pointer text-sm text-link">{R.whyRoute}</summary>
+                      <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm text-link">
+                        {R.whyRoute}
+                      </summary>
                       <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                         {route.reason}
                       </p>
@@ -250,6 +283,19 @@ export function RequestReview({
                 placeholder="Paste the document requests or questions shown on the response page…"
                 maxLength={12000}
                 aria-describedby="workspace-form-help"
+                onPaste={(e) =>
+                  handlePaste(
+                    e,
+                    (next) => {
+                      setValue({ ...value, formInstructions: next });
+                      onDraftChange(
+                        "request.formInstructions",
+                        next === workspace.formInstructions ? undefined : next,
+                      );
+                    },
+                    12000,
+                  )
+                }
                 onChange={(e) => {
                   const next = stripInvisibleChars(e.target.value);
                   setValue({ ...value, formInstructions: next });
@@ -269,7 +315,7 @@ export function RequestReview({
               kind while this was open, the select would default to the old one, and applying it
               would revert our reading and record that as the seller's choice.
             */}
-            <KindOverride key={kind} kind={kind} busy={busy} onChange={onKindChange} />
+            <KindOverride key={shownKind} kind={shownKind} busy={busy} onChange={onKindChange} />
           </div>
         </DetailDisclosure>
         {/*

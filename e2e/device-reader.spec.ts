@@ -61,7 +61,7 @@ test("a guest's invoice is read on the device, never uploaded, and the reading s
   await expect(
     documents(page)
       .getByRole("status")
-      .filter({ hasText: /Reading finished: \d+ of \d+ items found/ }),
+      .filter({ hasText: /Reading finished\. .*The results are below/ }),
   ).toHaveCount(1);
   // The problem invoice is a quotation from 2024 with no supplier address or phone: something
   // must be reported as not found or conflicting, not passed.

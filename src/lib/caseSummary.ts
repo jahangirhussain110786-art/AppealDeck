@@ -2,6 +2,8 @@ import type { CaseFile } from "@/core/caseFile";
 import { deadlinesForDisplay } from "@/core/deadlinesModel";
 import { formatDay } from "@/core";
 import { workspaceCanCompose } from "@/core/workspace";
+import { classifyStage1 } from "@/core/classifier";
+import { parseNotice } from "@/core/noticeParser";
 import { analyzeReply } from "@/core/responseAnalyzer";
 import { STORES } from "@/content/stores";
 import {
@@ -55,9 +57,18 @@ export function summarizeCase(
   /** The case's own log, when the caller has it: the seller's recorded outcome lives there. */
   log?: CaseLog | null,
 ): CaseSummary {
+  // A case saved before its notice was read has no kind in the index. Name it by what the notice
+  // says (the classifier's reading) so the row is not titled "Unknown / other".
+  const read =
+    entry.kind === "UNKNOWN" && file?.workspace?.notice
+      ? classifyStage1(parseNotice(file.workspace.notice)).kind
+      : entry.kind;
   const base = {
     id: entry.id,
-    title: caseTitle(entry),
+    title: caseTitle({
+      id: entry.id,
+      kind: file?.kind && file.kind !== "UNKNOWN" ? file.kind : read,
+    }),
     current: entry.id === activeId,
     archived: Boolean(entry.archived),
   };

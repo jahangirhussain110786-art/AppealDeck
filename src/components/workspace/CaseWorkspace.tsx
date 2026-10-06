@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { usePathname } from "next/navigation";
 import { ArrowRight, Check, FileSearch, FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,12 @@ import {
   routeWorkspace,
   professionalReviewApplies,
   workspaceCanCompose,
+  latchD6,
+  releaseD6Latch,
+  mergePriorAttempts,
+  attemptDateRecorded,
+  validView,
+  composePayloadWorkspace,
   type Requirement,
   type Workspace,
 } from "@/core/workspace";
@@ -99,13 +106,19 @@ import {
   saveCaseFile,
   loadCaseLog,
   saveCaseLog,
+  saveCaseLogAndState,
   setActiveCaseId,
+  outcomeBlocksStateChange,
+  fileForCommit,
+  isPastSubmission,
+  type CaseLog,
 } from "@/lib/caseStore";
+import { logWithOutcome } from "./CaseOutcome";
 import { loadCaseSummaries, type CaseSummary } from "@/lib/caseSummary";
 import { usePublishCases } from "@/components/CaseListContext";
 import { WorkspaceSchema } from "@/lib/workspaceSchema";
 import { proposedIssues, totalAttempts } from "@/core/workspace";
-import { buildCaseExport } from "@/lib/workspaceExport";
+import { buildCaseExport, unsavedText } from "@/lib/workspaceExport";
 import { buildSubmission, submissionHistoryMessage } from "@/lib/submissionRecord";
 import { buildEvidenceManifest, manifestFilename } from "@/lib/evidencePack";
 import {
@@ -236,7 +249,10 @@ function WorkspaceInner({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [records, setRecords] = useState<VaultListItem[]>([]);
-  const [tab, setTab] = useState(initialView && initialView in C.tabs ? initialView : "overview");
+  const [tab, setTab] = useState(
+    // `in` also accepts "constructor" and other prototype keys from a hand-edited URL.
+    validView(C.tabs, initialView) ?? "overview",
+  );
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (tab === "overview") params.delete("view");
@@ -293,6 +309,12 @@ function WorkspaceInner({
   const [saved, setSaved] = useState(false);
   // Set when a commit fails, so the header never says "Saved" for text that is not on disk.
   const [saveFailed, setSaveFailed] = useState<string | null>(null);
+  // What a refused (conflicting) save was about to write, offered as text to copy before a reload.
+  const [unsavedCopy, setUnsavedCopy] = useState<string | null>(null);
+  const lastAttempt = useRef<Workspace | null>(null);
+  // The "this was the wrong notice" form, shown only while the D6 latch holds the case.
+  const [releaseText, setReleaseText] = useState("");
+  const [releaseError, setReleaseError] = useState("");
   const [result, setResult] = useState<WorkspaceResponse | null>(null);
   const [purchase, setPurchase] = useState(false);
   const [newLabel, setNewLabel] = useState("");
@@ -328,6 +350,20 @@ function WorkspaceInner({
       alive = false;
     };
   }, [vault, fileId, fileState, deadlineKey]);
+  // The case log holds the outcome the seller recorded; the case page reads it to say so.
+  const [log, setLog] = useState<CaseLog | null>(null);
+  useEffect(() => {
+    if (!fileId) return;
+    let alive = true;
+    void loadCaseLog(vault, fileId)
+      .then((l) => {
+        if (alive) setLog(l);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [vault, fileId, fileState]);
   const openCase = useCallback((id: string) => setActiveCaseId(vault, id), [vault]);
   usePublishCases(caseSummaries, openCase);
   const setCurrent = useCallback((next: CaseFile) => {
@@ -441,6 +477,8 @@ function WorkspaceInner({
       deadlines?: CaseFile["deadlines"];
       kind?: ViolationKind;
       kindSetBy?: CaseFile["kindSetBy"];
+      /** Only the "wrong notice" action: lets this save drop the D6 latch (see `releaseD6Latch`). */
+      releaseD6Latch?: boolean;
     },
   ): Promise<boolean> => {
     const run = commitQueue.current.then(() => runCommit(update, message, state, opts));
@@ -462,6 +500,8 @@ function WorkspaceInner({
       deadlines?: CaseFile["deadlines"];
       kind?: ViolationKind;
       kindSetBy?: CaseFile["kindSetBy"];
+      /** Only the "wrong notice" action: lets this save drop the D6 latch (see `releaseD6Latch`). */
+      releaseD6Latch?: boolean;
     },
   ) => {
     if (!fileRef.current) return false;
@@ -482,18 +522,16 @@ function WorkspaceInner({
         },
       );
       if (message) next = addWorkspaceEvent(next, message);
+      // The D6 latch is applied here, in the one place every save passes through, so no confirm,
+      // reply or edit path can forget it. `current.workspace` is the text as it stood before this
+      // change, which is where an allegation the change just removed still is.
+      next = latchD6(current.workspace, next, opts?.releaseD6Latch ? { release: true } : undefined);
       WorkspaceSchema.parse(next);
-      const updated = {
-        ...current,
-        workspace: next,
-        // 6 Oct 2026: a later save no longer turns "waiting on Amazon" into "revision". Typing,
-        // ticking a record, changing case facts or the kind are bookkeeping; the case leaves
-        // SUBMITTED only when a caller names the new state (applying a reply, a new round).
-        state: state ?? current.state,
-        ...(opts?.deadlines !== undefined ? { deadlines: opts.deadlines } : {}),
-        ...(opts?.kind !== undefined ? { kind: opts.kind } : {}),
-        ...(opts?.kindSetBy !== undefined ? { kindSetBy: opts.kindSetBy } : {}),
-      };
+      lastAttempt.current = next;
+      // `keepState` says this change is bookkeeping about a case that has already moved on, so the
+      // state a caller named is not applied (a marketplace change on a waiting case).
+      const nextState = opts?.keepState ? undefined : state;
+      let updated!: CaseFile;
       await vault.atomic(async () => {
         const disk = await loadCaseFile(vault);
         if (
@@ -503,14 +541,41 @@ function WorkspaceInner({
           throw new Error(
             "This case changed in another window. Reload before saving to preserve both versions.",
           );
+        /*
+          The file-level fields (state, kind, deadlines) come from disk, not from this tab's copy.
+          The check above compares only the workspace, so a stale tab used to write its own `state`
+          back and quietly turn a recorded CLOSED into SUBMITTED while the log still said rejected.
+          Anything this commit names (a new state, kind or deadlines) still wins.
+        */
+        const oldLog = await loadCaseLog(vault, current.id);
+        // 6 Oct 2026: a later save no longer turns "waiting on Amazon" into "revision". Typing,
+        // ticking a record, changing case facts or the kind are bookkeeping; the case leaves
+        // SUBMITTED only when a caller names the new state (applying a reply, a new round).
+        updated = fileForCommit(current, disk, next, {
+          state: nextState,
+          deadlines: opts?.deadlines,
+          kind: opts?.kind,
+          kindSetBy: opts?.kindSetBy,
+        });
+        const stateOnDisk = disk && disk.id === current.id ? disk.state : current.state;
+        if (outcomeBlocksStateChange(stateOnDisk, oldLog, nextState))
+          throw new Error(STORES.outcomeBlocksRound);
         await saveCaseFile(vault, updated);
-        if (state) {
-          const oldLog = await loadCaseLog(vault);
+        if (nextState) {
+          const sentHere = next.submissions.some((s) => s.source !== "prior");
           await saveCaseLog(vault, {
             ...oldLog,
-            state,
+            state: nextState,
             attemptCount: Math.max(oldLog?.attemptCount ?? 0, next.submissions.length),
-            ...(state === "SUBMITTED" ? { submittedAt: next.submissions.at(-1)?.at } : {}),
+            ...(nextState === "SUBMITTED"
+              ? {
+                  submittedAt: next.submissions.at(-1)?.at,
+                  // "Marked as sent" records no submission; this is what says something was sent.
+                  ...(sentHere
+                    ? {}
+                    : { markedSentAt: oldLog?.markedSentAt ?? new Date().toISOString() }),
+                }
+              : {}),
           });
         }
       });
@@ -518,6 +583,7 @@ function WorkspaceInner({
       setCurrent(updated);
       setSaved(true);
       setSaveFailed(null);
+      setUnsavedCopy(null);
       setResult(null);
       setPurchase(false);
       return true;
@@ -525,11 +591,23 @@ function WorkspaceInner({
       setError(e instanceof Error ? e.message : C.error);
       // Never leave "Saved" showing after a failed save. What the seller typed stays in the form.
       setSaved(false);
+      const conflict = e instanceof Error && e.message.startsWith("This case changed");
       setSaveFailed(
-        e instanceof Error && e.message.startsWith("This case changed")
+        conflict
           ? SAVE_FAILED
-          : "Not saved. Try again; what you typed is still here.",
+          : e instanceof Error && e.message === STORES.outcomeBlocksRound
+            ? e.message
+            : "Not saved. Try again; what you typed is still here.",
       );
+      if (conflict) {
+        // The reload that shows the other window's version would discard what this tab was saving.
+        // Keep it as text the seller can copy first.
+        const text = unsavedText(
+          lastAttempt.current ?? { explanation: "", correctiveActions: "", preventiveMeasures: "" },
+          draftPending.current,
+        );
+        setUnsavedCopy(text || null);
+      }
       return false;
     } finally {
       saving.current = heldBefore;
@@ -934,17 +1012,10 @@ function WorkspaceInner({
         body: JSON.stringify({
           caseData: {
             ...fresh,
-            workspace: {
-              ...w,
-              history: [],
-              previousRequests: [],
-              submissions: [],
-              replies: w.replies.filter((r) => !r.applied),
-              // Saved document readings are for the seller's own review and export; preparing the
-              // response does not use them, so they do not travel with it.
-              documentChecks: undefined,
-              draft: undefined,
-            },
+            // The router must see what this tab sees: earlier requests (which keep a Plan of Action a
+            // Plan of Action) and the D6 latch travel with it. Saved document readings and unsaved
+            // drafts do not; see `composePayloadWorkspace`.
+            workspace: composePayloadWorkspace(w),
           },
           attemptNumber: Math.min(99, totalAttempts(w) + 1),
         }),
@@ -1135,6 +1206,7 @@ function WorkspaceInner({
           formInstructions: updated.formInstructions,
           professionalReviewRequired: true,
           previousRequests: old.previousRequests,
+          d6Latch: old.d6Latch,
         }),
         requirementsConfirmed: false,
         // B-05: the kind unions the evidence matrix in, so a record this violation family nearly
@@ -1161,7 +1233,15 @@ function WorkspaceInner({
         ? `Saved the notice and checked what Amazon asks for. We read it as: ${APP.violationKinds[kind]}.`
         : "Saved the notice and checked what Amazon asks for.",
       "INTAKE",
-      kindChanged ? { kind, deadlines } : { deadlines },
+      /*
+        6 Oct 2026: this always committed state "INTAKE", and "review notice" is offered in every
+        state, so a seller who only changed the marketplace on a case already waiting on Amazon lost
+        "waiting on Amazon" (and its clock and reply flow). Past submission the state is kept.
+      */
+      {
+        ...(kindChanged ? { kind, deadlines } : { deadlines }),
+        keepState: Boolean(current && isPastSubmission(current.state)),
+      },
     );
     if (ok) {
       setReviewRequest(false);
@@ -1174,28 +1254,85 @@ function WorkspaceInner({
     the timeline lists them all. The wording is the notice's own ("Appeal by 1 Oct 2026"), or says
     plainly that the date must come from Account Health; no countdown is invented for an undated one.
   */
-  const deadlineLines: TimelineDeadline[] = file.deadlines?.length
-    ? deadlinesForDisplay(file.deadlines).map((d) => ({
-        hot: Boolean(d.dueOn || d.dueAt) && !d.isIndefinite,
-        text: d.isIndefinite
-          ? `${d.label} — no countdown to track`
-          : d.dueOn
-            ? // The day as the notice gives it; a stated date is already in its own label
-              // ("Appeal by 1 Oct 2026"). Under a week away it also says how many days are left.
-              [
-                d.startsOn ? `${d.label}, closes ${formatDay(d.dueOn)}` : d.label,
-                daysLeftLabel(d.dueOn),
-              ]
-                .filter(Boolean)
-                .join(" · ")
-            : d.dueAt
-              ? `${d.label}: ${formatDate(d.dueAt)}`
-              : d.startsOnReceipt
-                ? // Amazon gave the length; the notice did not carry its date.
-                  `${d.label}, from the day you received this notice`
-                : `${d.label} · confirm the date in Account Health`,
-      }))
-    : [];
+  /*
+    A case the seller has recorded an outcome for (6 Oct 2026). The case page used to go on showing
+    "Review <record>" and the appeal deadlines after the case had ended, because only a case waiting
+    on Amazon was special-cased. Nothing is due on a settled case, so the next step and the dates are
+    replaced by the outcome and a way to take it back.
+  */
+  const settled = file.state === "APPROVED" || file.state === "CLOSED";
+  // What the classifier reads from the pasted notice (same rule as confirming the route).
+  const readKind = () =>
+    kindForConfirmedNotice({ kind: file.kind, kindSetBy: file.kindSetBy }, parseNotice(w.notice));
+  const releaseLatch = async () => {
+    const check = releaseD6Latch(w, releaseText);
+    if (!check.ok) {
+      setReleaseError(check.reason);
+      return;
+    }
+    setReleaseError("");
+    cancelDraftFields(REQUEST_DRAFT_KEYS);
+    // Built from the workspace as it stands when the save runs, not from this render's copy.
+    const ok = await commit(
+      (old) => {
+        const out = releaseD6Latch(old, releaseText);
+        return out.ok
+          ? { ...out.workspace, draft: withoutDraftKeys(out.workspace.draft, REQUEST_DRAFT_KEYS) }
+          : old;
+      },
+      undefined,
+      undefined,
+      { releaseD6Latch: true, keepState: true },
+    );
+    if (ok) {
+      setReleaseText("");
+      setReviewRequest(false);
+      setTab("overview");
+      toast.success(STORES.d6Release.done);
+    }
+  };
+  const takeBackOutcome = async () => {
+    if (!log?.resolution || saving.current || uploading.current) return;
+    const back = logWithOutcome(log, "pending", new Date().toISOString(), w);
+    if (!back) return;
+    saving.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      await saveCaseLogAndState(vault, back);
+      setLog(back);
+      const fresh = await loadCaseFile(vault, file.id);
+      if (fresh) setCurrent(fresh);
+    } catch {
+      setError("Could not take the outcome back. Nothing was changed. Try again.");
+    } finally {
+      saving.current = false;
+      setBusy(false);
+    }
+  };
+  const deadlineLines: TimelineDeadline[] =
+    file.deadlines?.length && !settled
+      ? deadlinesForDisplay(file.deadlines).map((d) => ({
+          hot: Boolean(d.dueOn || d.dueAt) && !d.isIndefinite,
+          text: d.isIndefinite
+            ? `${d.label} — no countdown to track`
+            : d.dueOn
+              ? // The day as the notice gives it; a stated date is already in its own label
+                // ("Appeal by 1 Oct 2026"). Under a week away it also says how many days are left.
+                [
+                  d.startsOn ? `${d.label}, closes ${formatDay(d.dueOn)}` : d.label,
+                  daysLeftLabel(d.dueOn),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+              : d.dueAt
+                ? `${d.label}: ${formatDate(d.dueAt)}`
+                : d.startsOnReceipt
+                  ? // Amazon gave the length; the notice did not carry its date.
+                    `${d.label}, from the day you received this notice`
+                  : `${d.label} · confirm the date in Account Health`,
+        }))
+      : [];
   const caseTitle = file.kind === "UNKNOWN" ? C.title : APP.violationKinds[file.kind];
   /*
     A verification case is not composable, so it fell into the "clarify" branch: headed "Clarify the
@@ -1415,6 +1552,21 @@ function WorkspaceInner({
         <Alert variant="destructive" role="alert">
           <AlertTitle>Action not completed</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
+          {unsavedCopy && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-3"
+              onClick={() => {
+                void navigator.clipboard
+                  ?.writeText(unsavedCopy)
+                  .then(() => toast.success(STORES.copiedUnsaved))
+                  .catch(() => setError(unsavedCopy));
+              }}
+            >
+              {STORES.copyUnsaved}
+            </Button>
+          )}
         </Alert>
       )}
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_21.25rem]">
@@ -1446,6 +1598,46 @@ function WorkspaceInner({
               value="overview"
               className="mt-5 space-y-5 data-[state=inactive]:hidden"
             >
+              {/*
+                D6: why the case is held, said in words, and the one way out. Editing the notice here
+                never releases it, because the notice Amazon sent still says what it said.
+              */}
+              {w.d6Latch && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle as="h2" className="text-base">
+                      {STORES.d6Release.title}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">{STORES.d6Release.why}</p>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">The notice says: </span>
+                      <q>{w.d6Latch.quote}</q>
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-sm text-muted-foreground">{STORES.d6Release.body}</p>
+                    <Label htmlFor="d6-release-notice">Correct notice</Label>
+                    <Textarea
+                      id="d6-release-notice"
+                      maxLength={50000}
+                      value={releaseText}
+                      onChange={(e) => setReleaseText(e.target.value)}
+                    />
+                    {releaseError && (
+                      <p role="alert" className="text-sm text-destructive">
+                        {releaseError}
+                      </p>
+                    )}
+                    <Button
+                      variant="outline"
+                      disabled={busy || !releaseText.trim()}
+                      onClick={() => void releaseLatch()}
+                    >
+                      {STORES.d6Release.action}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
               {/* B-04: after two responses and another refusal, a different route, not a third copy. */}
               {shouldOfferChangeOfApproach(w) && <ChangeOfApproach />}
               {!w.confirmed || reviewRequest ? (
@@ -1462,6 +1654,7 @@ function WorkspaceInner({
                     key={`${file.id}-${w.revision}-${reviewRequest}-${file.kind}`}
                     workspace={w}
                     kind={file.kind}
+                    kindSetBySeller={file.kindSetBy === "seller"}
                     busy={busy}
                     onSave={confirmRequest}
                     /*
@@ -1496,26 +1689,59 @@ function WorkspaceInner({
                   */
                     // No message here: `recordPriorAttempt` already adds the history event, and a
                     // second one made every recorded attempt appear twice.
-                    onCommitWorkspace={(updated) => commit(() => updated)}
+                    // Merges only what a prior attempt changes (the attempts and their history line)
+                    // into the workspace as it is now. The updater runs after earlier queued saves,
+                    // so replacing it with the snapshot the card was rendered from discarded them.
+                    onCommitWorkspace={(updated) =>
+                      commit((old) => mergePriorAttempts(old, updated))
+                    }
                     // A5: free, sends nothing; only while the case has not already moved on.
                     onMarkSentWaiting={
                       file.state === "SUBMITTED" ||
                       file.state === "APPROVED" ||
                       file.state === "CLOSED"
                         ? undefined
-                        : () =>
-                            commit(
+                        : () => {
+                            const read = readKind();
+                            return commit(
                               (old) =>
                                 markSentWaiting({ state: "SUBMITTED" as const, workspace: old })
                                   .workspace!,
                               undefined,
                               "SUBMITTED",
-                            )
+                              // A case still unnamed takes the classifier's reading of its
+                              // notice, so the dashboard row is not titled "Unknown / other".
+                              read !== file.kind ? { kind: read } : undefined,
+                            ).then((ok) => {
+                              if (ok) toast.success(C.alreadySent.saved);
+                              return ok;
+                            });
+                          }
                     }
                     draft={w.draft}
                     onDraftChange={setDraftField}
                   />
                 </>
+              ) : settled ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle as="h2" className="text-[1.375rem] tracking-[-0.025em]">
+                      {log?.resolution
+                        ? STORES.outcomeRecorded[log.resolution.status]
+                        : "This case is marked as ended. Nothing is due on it."}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">{STORES.outcomeRecorded.note}</p>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => void takeBackOutcome()}
+                    >
+                      {STORES.outcomeRecorded.takeBack}
+                    </Button>
+                  </CardContent>
+                </Card>
               ) : (
                 <>
                   <NextStepCard
@@ -1614,7 +1840,7 @@ function WorkspaceInner({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <details>
-                    <summary className="cursor-pointer text-sm font-medium">
+                    <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium">
                       {C.documents.seeNotice}
                     </summary>
                     <p className="mt-3 whitespace-pre-wrap break-words text-sm text-muted-foreground">
@@ -1624,7 +1850,7 @@ function WorkspaceInner({
                     </p>
                   </details>
                   <details open={w.requirements.length === 0}>
-                    <summary className="cursor-pointer text-sm font-medium">
+                    <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium">
                       {C.documents.addOther}
                     </summary>
                     <div className="mt-4 space-y-4">
@@ -1796,9 +2022,9 @@ function WorkspaceInner({
                     )}
                   </div>
                 )}
-                <label className="flex items-start gap-3 text-sm">
+                <label className="flex min-h-11 cursor-pointer items-start gap-3 py-2 text-sm">
                   <input
-                    className="mt-1 h-4 w-4 accent-primary"
+                    className="mt-0.5 size-5 shrink-0 accent-primary"
                     type="checkbox"
                     checked={w.requirementsConfirmed}
                     disabled={busy || !w.confirmed}
@@ -1890,7 +2116,7 @@ function WorkspaceInner({
                 <CardContent className="space-y-5">
                   {w.previousRequests.map((request) => (
                     <details className="rounded-lg border border-border p-4" key={request.revision}>
-                      <summary className="cursor-pointer text-sm font-medium">
+                      <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium">
                         Earlier request · revision {request.revision}
                       </summary>
                       <p className="mt-3 whitespace-pre-wrap break-words text-sm">
@@ -1924,8 +2150,10 @@ function WorkspaceInner({
                   )}
                   {w.submissions.map((s, i) => (
                     <details className="rounded-lg border border-border p-4" key={s.id}>
-                      <summary className="cursor-pointer text-sm font-medium">
-                        Attempt {i + 1} · {formatDate(s.at)} · revision {s.revision}
+                      <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium">
+                        Attempt {i + 1} ·{" "}
+                        {attemptDateRecorded(s.at) ? formatDate(s.at) : C.priorAttemptNoDate} ·
+                        revision {s.revision}
                       </summary>
                       <pre className="mt-3 whitespace-pre-wrap break-words font-sans text-sm">
                         {s.text}
@@ -1987,84 +2215,99 @@ function WorkspaceInner({
                   >
                     Save reply for review
                   </Button>
-                  {w.replies.map((r) => (
-                    <div className="space-y-3 rounded-lg bg-surface-2 p-4" key={r.id}>
-                      <Badge variant="secondary">
-                        {r.applied
-                          ? "Applied to a new revision"
-                          : "Review before changing the plan"}
-                      </Badge>
-                      <DetailDisclosure title={`Read reply · ${formatDate(r.at)}`}>
-                        <p className="whitespace-pre-wrap break-words">{r.text}</p>
-                      </DetailDisclosure>
-                      {!r.applied && <ReplyReading text={r.text} />}
-                      {!r.applied && (
-                        <>
-                          {/*
+                  {w.replies.map((r) => {
+                    // Only the newest unread reply can be acted on. An older one is history: a
+                    // later reply (final, reinstated or a new request) has overtaken it.
+                    const newestUnapplied = [...w.replies].reverse().find((x) => !x.applied)?.id;
+                    const superseded = !r.applied && r.id !== newestUnapplied;
+                    const ends = replyEndsCase(r.text);
+                    return (
+                      <div className="space-y-3 rounded-lg bg-surface-2 p-4" key={r.id}>
+                        <Badge variant="secondary">
+                          {r.applied
+                            ? "Applied to a new revision"
+                            : superseded
+                              ? STORES.replySuperseded
+                              : ends === "reinstated"
+                                ? "Reads as reinstated"
+                                : ends === "final"
+                                  ? "Reads as a final decision"
+                                  : "Review before changing the plan"}
+                        </Badge>
+                        <DetailDisclosure title={`Read reply · ${formatDate(r.at)}`}>
+                          <p className="whitespace-pre-wrap break-words">{r.text}</p>
+                        </DetailDisclosure>
+                        {!r.applied && !superseded && <ReplyReading text={r.text} />}
+                        {!r.applied && !superseded && (
+                          <>
+                            {/*
                             B-03: the delta is shown before the revision starts, so "confirm before
                             applying" is literal. It is recomputed from the authoritative workspace
                             inside the commit below rather than passed down from here, so a stale
                             preview can never be the thing that gets written.
                           */}
-                          <ReplyDeltaReview workspace={w} replyId={r.id} />
-                          {replyEndsCase(r.text) ? (
-                            <p className="text-sm text-foreground">
-                              {replyEndsCase(r.text) === "reinstated"
-                                ? STORES.replyReinstated
-                                : STORES.replyFinal}
-                            </p>
-                          ) : (
-                            <p className="text-xs text-muted-foreground">
-                              The reply becomes the request for the next round. What you already
-                              sent stays unchanged.
-                            </p>
-                          )}
-                          <Button
-                            disabled={busy}
-                            size="sm"
-                            variant={replyEndsCase(r.text) ? "ghost" : "default"}
-                            onClick={async () => {
-                              // The reply carries whatever new time window Amazon stated, if any
-                              // — the case's deadlines were frozen at the original notice and
-                              // would otherwise keep showing a now-irrelevant (possibly already
-                              // expired) date after this revision starts.
-                              // No `noticeReceivedAt`: this was `new Date()`, which counted the
-                              // reply's window from the moment it was applied rather than from when
-                              // Amazon sent it. The reply's own header date is used if it has one.
-                              // A date the seller entered is theirs, not the reply's, so it is
-                              // kept; Amazon's new window, if the reply states one, sits beside it.
-                              const replyParsed = parseNotice(r.text);
-                              const recomputed = withSellerDeadlines(
-                                serializeDeadlines(
-                                  computeDeadlines({
-                                    parsed: replyParsed,
-                                    kind: file.kind,
-                                    deactivatedAt: dateOfNotice(replyParsed.receivedOn),
-                                  }),
-                                ),
-                                file.deadlines,
-                              );
-                              if (
-                                await commit(
-                                  (old) => applyWorkspaceReply(old, r.id),
-                                  undefined,
-                                  "REVISION",
-                                  { deadlines: recomputed },
-                                )
-                              ) {
-                                setReviewRequest(false);
-                                setTab("overview");
-                              }
-                            }}
-                          >
-                            {replyEndsCase(r.text)
-                              ? STORES.replyStartAnyway
-                              : "Start the next round with this reply"}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  ))}
+                            {/* A reinstated or final reply starts no revision, so the "what changes
+                              if you start one" preview is not shown for it. */}
+                            {!ends && <ReplyDeltaReview workspace={w} replyId={r.id} />}
+                            {replyEndsCase(r.text) ? (
+                              <p className="text-sm text-foreground">
+                                {replyEndsCase(r.text) === "reinstated"
+                                  ? STORES.replyReinstated
+                                  : STORES.replyFinal}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">
+                                The reply becomes the request for the next round. What you already
+                                sent stays unchanged.
+                              </p>
+                            )}
+                            <Button
+                              disabled={busy}
+                              size="sm"
+                              variant={replyEndsCase(r.text) ? "ghost" : "default"}
+                              onClick={async () => {
+                                // The reply carries whatever new time window Amazon stated, if any
+                                // — the case's deadlines were frozen at the original notice and
+                                // would otherwise keep showing a now-irrelevant (possibly already
+                                // expired) date after this revision starts.
+                                // No `noticeReceivedAt`: this was `new Date()`, which counted the
+                                // reply's window from the moment it was applied rather than from when
+                                // Amazon sent it. The reply's own header date is used if it has one.
+                                // A date the seller entered is theirs, not the reply's, so it is
+                                // kept; Amazon's new window, if the reply states one, sits beside it.
+                                const replyParsed = parseNotice(r.text);
+                                const recomputed = withSellerDeadlines(
+                                  serializeDeadlines(
+                                    computeDeadlines({
+                                      parsed: replyParsed,
+                                      kind: file.kind,
+                                      deactivatedAt: dateOfNotice(replyParsed.receivedOn),
+                                    }),
+                                  ),
+                                  file.deadlines,
+                                );
+                                if (
+                                  await commit(
+                                    (old) => applyWorkspaceReply(old, r.id),
+                                    undefined,
+                                    "REVISION",
+                                    { deadlines: recomputed },
+                                  )
+                                ) {
+                                  setReviewRequest(false);
+                                  setTab("overview");
+                                }
+                              }}
+                            >
+                              {replyEndsCase(r.text)
+                                ? STORES.replyStartAnyway
+                                : "Start the next round with this reply"}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
               <Card>
@@ -2234,7 +2477,7 @@ function WorkspaceInner({
                   {C.local}.{" "}
                   <Link
                     href="/vault"
-                    className="font-medium text-link underline underline-offset-4"
+                    className="-my-3 inline-block py-3 font-medium text-link underline underline-offset-4"
                   >
                     {C.overview.openVault}
                   </Link>

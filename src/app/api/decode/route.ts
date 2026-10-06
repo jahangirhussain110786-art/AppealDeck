@@ -44,6 +44,8 @@ const DecodeBody = z.object({
     .trim()
     .min(1, "Field 'text' is required.")
     .max(50_000, "Notice text exceeds 50,000 character limit."),
+  /** "Continue anyway": skips the language refusal for a seller who knows the notice is readable. */
+  force: z.boolean().optional(),
 });
 
 /** Why a paste was refused, in the seller's terms. The page already shows `error` for any 422. */
@@ -51,11 +53,17 @@ function refuse(message: string, extra: Record<string, unknown> = {}) {
   return NextResponse.json({ error: message, message, ...extra }, { status: 422 });
 }
 
-/** Phrases only a reply to the seller's own submission uses. */
+/**
+ * Phrases only a reply to something the seller already sent uses: a reference to their earlier
+ * appeal, plan, submission or request. "We have reviewed your account" and "We have received your
+ * request" open a first-contact notice as often as a reply, so they no longer count on their own
+ * (7 Oct 2026: a first notice was told "this looks like Amazon's reply" and lost its performance
+ * record).
+ */
 const REPLY_MARKERS =
-  /\byour (?:appeal|plan of action|POA|submission|reply|response)\b|\bwe(?:'ve| have) (?:reviewed|received your)\b|\bthank you for (?:your|submitting|contacting|providing)\b|\bregarding your (?:appeal|case)\b/i;
+  /\byour (?:appeal|plan of action|POA|submission|reply|response)\b|\bwe(?:'ve| have) (?:reviewed|received) your (?:appeal|plan of action|POA|submission|reply|response|request to reinstate|documents?|invoices?)\b|\bthank you for (?:your (?:appeal|plan of action|submission|reply|response)|submitting|providing)\b|\bregarding your (?:appeal|case)\b/i;
 const REQUESTING_REPLY_MARKERS =
-  /\bthank you for\b|\bwe(?:'ve| have) (?:reviewed|received your)\b/i;
+  /\bthank you for (?:your (?:appeal|plan of action|submission|reply|response|documents?|invoices?)|submitting|providing)\b|\bwe(?:'ve| have) (?:reviewed|received) your (?:appeal|plan of action|POA|submission|reply|response|documents?|invoices?)\b/i;
 /** Categories that, with a reply marker, mean "this is Amazon answering something you sent". */
 const REPLY_CATEGORIES = new Set([
   "reinstated",
@@ -94,11 +102,14 @@ export async function POST(req: NextRequest) {
   let working = normalizeNoticeText(parsed.data.text).trim();
 
   const language = detectLanguage(working);
-  if (!language.supported) {
+  if (!language.supported && !parsed.data.force) {
     return refuse(nonEnglishMessage(language.name), {
       language: language.code,
       languageName: language.name,
       supported: false,
+      // The detector is a word-frequency guess. A seller who can see the notice is English may
+      // send it again with `force: true` and have it decoded as written.
+      canContinue: true,
     });
   }
 

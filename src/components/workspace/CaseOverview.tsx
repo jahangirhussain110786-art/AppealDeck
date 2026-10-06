@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { formatDay } from "@/core";
 import { formatDate } from "@/lib/format";
 import { replyCriticisms } from "@/core/replyFeedback";
-import type { Requirement, Workspace } from "@/core/workspace";
+import { attemptDateRecorded, type Requirement, type Workspace } from "@/core/workspace";
 import { WORKSPACE as C } from "@/content/workspace";
 
 /**
@@ -283,7 +283,9 @@ export function CaseTimeline({
               : C.overview.timeline.sent.replace("{n}", String(sent))
           }
         >
-          <When>{formatDate(submission.at)}</When>
+          <When>
+            {attemptDateRecorded(submission.at) ? formatDate(submission.at) : C.priorAttemptNoDate}
+          </When>
         </Item>
       ),
     });

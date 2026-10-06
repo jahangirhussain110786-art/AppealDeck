@@ -190,14 +190,21 @@ function CaseCard({
         <span className="flex flex-wrap items-center gap-2.5">
           <strong className="text-[1.0625rem] font-semibold tracking-[-0.015em]">{s.title}</strong>
           <StatusPill tone={s.status === "act" ? "need" : "new"} dot>
-            {s.status === "act" ? S.act : s.waitingAmazon ? S.waitingAmazon : S.waiting}
+            {s.status === "act"
+              ? S.act
+              : s.status === "closed"
+                ? S.outcomeRecorded
+                : s.waitingAmazon
+                  ? S.waitingAmazon
+                  : S.waiting}
           </StatusPill>
           {(s.current || switching) && (
             <StatusPill tone="mute">{switching ? S.opening : S.current}</StatusPill>
           )}
         </span>
         <span className="text-sm text-foreground/80">{s.next}</span>
-        {s.due && <span className="text-xs text-muted-foreground md:hidden">{s.due.label}</span>}
+        {/* Once per card (it used to be rendered a second time in the desktop column). */}
+        {s.due && <span className="text-xs text-muted-foreground">{s.due.label}</span>}
       </span>
       <span className="hidden flex-col gap-2 md:flex">
         <span className="flex justify-between text-[0.8125rem] tabular-nums text-muted-foreground">
@@ -213,7 +220,6 @@ function CaseCard({
             style={{ width: `${pct}%` }}
           />
         </span>
-        {s.due && <span className="text-xs text-muted-foreground">{s.due.label}</span>}
       </span>
       <ChevronRight aria-hidden className="size-[18px] text-muted-foreground/70" />
     </button>

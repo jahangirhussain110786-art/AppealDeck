@@ -12,7 +12,22 @@ export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "info" | "warning" | "destructive" | "success";
 }
 
+/** A leading icon: a component element with no children of its own (a lucide icon). */
+function isIcon(node: React.ReactNode): node is React.ReactElement {
+  if (!React.isValidElement(node) || typeof node.type === "string") return false;
+  const props = node.props as { children?: unknown };
+  return props.children === undefined && node.type !== AlertTitle && node.type !== AlertDescription;
+}
+
+/**
+ * An icon (optional) beside ONE column. Everything after the icon is stacked in that column, so a
+ * title, several messages and a button row can be passed as separate children and still read top
+ * to bottom, however narrow the screen. (Before 7 Oct 2026 each child became its own flex column.)
+ */
 function Alert({ className, variant = "info", children, ...props }: AlertProps) {
+  const all = React.Children.toArray(children);
+  const icon = all.length > 0 && isIcon(all[0]) ? all[0] : null;
+  const body = icon ? all.slice(1) : all;
   return (
     <div
       role={variant === "destructive" ? "alert" : "status"}
@@ -23,7 +38,8 @@ function Alert({ className, variant = "info", children, ...props }: AlertProps) 
       )}
       {...props}
     >
-      {children}
+      {icon}
+      {body.length > 0 && <div className="min-w-0 flex-1">{body}</div>}
     </div>
   );
 }

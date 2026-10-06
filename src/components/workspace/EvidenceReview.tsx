@@ -404,7 +404,9 @@ export function EvidenceReview({
                 <CannotObtainForm item={item} guidance={guidance} busy={busy} onChange={onChange} />
               )}
               <details className="border-t border-border pt-3">
-                <summary className="cursor-pointer text-sm font-medium">{D.correct}</summary>
+                <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium">
+                  {D.correct}
+                </summary>
                 <div className="mt-4 space-y-3">
                   <Label htmlFor={`source-${item.id}`}>{D.correctLabel}</Label>
                   <Textarea

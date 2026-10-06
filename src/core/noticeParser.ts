@@ -139,7 +139,23 @@ const YOU_HAVE = new RegExp(
   `\\byou\\s+(?:will\\s+)?(?:have|are\\s+given|get)\\s+(?:exactly\\s+|up\\s+to\\s+)?${NUM}${UNIT}(?:\\s+(?:from|after)\\b[^.!?\\n]{0,60}?)?\\s+to\\s+(?:${SELLER_VERBS})\\b`,
   "gi",
 );
-const HAS_SELLER_VERB = new RegExp(`\\b(?:${SELLER_VERBS})\\b`, "i");
+/*
+  7 Oct 2026: "within N days" counted whenever ANY seller verb sat anywhere in the sentence, so
+  "Provide invoices dated within 365 days of the date of this notice" became a 365-day appeal window,
+  "Customers may return items within 30 days" a 30-day one and "Sellers must confirm shipment within
+  2 business days" a 2-day one. A window now counts only when a duty the seller performs is right
+  next to it (the verb within ~100 characters before, or just after a window that opens the
+  sentence), and not when the window describes how recent a document must be, or when customers or
+  buyers are the ones acting. return/confirm/update are no longer duties here.
+*/
+const DUTY_VERBS =
+  "respond|reply|verify|upload|submit|resubmit|appeal|send|provide|complete|correct|contact";
+const DUTY_BEFORE = new RegExp(`\\b(?:${DUTY_VERBS})\\b[^.!?;]{0,100}$`, "i");
+const DUTY_AFTER = new RegExp(`^[^.!?;]{0,80}?\\b(?:${DUTY_VERBS})\\b`, "i");
+/** The window says how recent a document must be, not how long the seller has. */
+const RECENCY_BEFORE =
+  /\b(?:dated|issued|purchased|placed|created|generated|made|from|no\s+older\s+than|not\s+older\s+than|(?:in|during|over)\s+the\s+(?:past|last|previous)|(?:past|last|previous))\s*$/i;
+const NOT_THE_SELLER = /\b(?:customers?|buyers?|shoppers?|consumers?)\b/i;
 /** Amazon is the actor: its own timetable ("we will review within 5 days"), not the seller's deadline. */
 const AMAZON_SUBJECT =
   /\b(?:we|amazon|our\s+team)\b|\b(?:funds?|payments?|disbursements?)\s+(?:will|may|can|should|is|are)\b/i;
@@ -178,7 +194,9 @@ export function genericWindowsOf(raw: string): GenericWindows {
     if (sentence.length > 1000) continue;
     for (const m of sentence.matchAll(WITHIN)) {
       const before = sentence.slice(0, m.index);
-      if (!HAS_SELLER_VERB.test(sentence)) continue;
+      const after = sentence.slice((m.index ?? 0) + m[0].length);
+      if (!DUTY_BEFORE.test(before) && !(before.trim() === "" && DUTY_AFTER.test(after))) continue;
+      if (RECENCY_BEFORE.test(before) || NOT_THE_SELLER.test(before)) continue;
       if (AMAZON_SUBJECT.test(before) && !SELLER_AGENCY.test(before)) continue;
       record(m);
     }

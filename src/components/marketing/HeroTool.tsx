@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { stashDecodeDraft } from "@/lib/decodeDraft";
-import { stripInvisibleChars } from "@/lib/idNormalize";
+import { handlePaste, stripInvisibleChars } from "@/lib/idNormalize";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 import { HOME } from "@/content/marketing";
 
@@ -47,7 +47,7 @@ export function HeroTool() {
               setText(SAMPLE_NOTICE_TEXT);
               setSample(true);
             }}
-            className="inline-flex min-h-10 items-center rounded-md px-2 text-sm font-medium text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-link hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {t.sample}
           </button>
@@ -55,6 +55,12 @@ export function HeroTool() {
         <textarea
           id="hero-notice"
           value={text}
+          onPaste={(e) =>
+            handlePaste(e, (value) => {
+              setText(value);
+              setSample(false);
+            })
+          }
           onChange={(e) => {
             setText(stripInvisibleChars(e.target.value));
             setSample(false);

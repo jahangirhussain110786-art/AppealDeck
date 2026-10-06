@@ -173,7 +173,9 @@ export interface DocumentCheckResult {
 export const FINDING_LABELS: Record<FindingStatus, string> = {
   present: "Found",
   missing: "Not found",
-  unclear: "Could not read",
+  // "Unclear", not "Could not read": the status also marks a document heading worth a second look
+  // (a pro-forma, a quotation), which is not a failure to read.
+  unclear: "Unclear",
   conflicting: "Conflicts",
   not_assessed: "Not checked",
 };
@@ -774,9 +776,13 @@ export function summarizeCheck(result: DocumentCheckResult): string {
     return "Everything Amazon named is readable in this document. Whether Amazon accepts it is their decision, not something we can tell you.";
   }
 
+  // Every status with its own count, so "found" is never read next to a total that hides how many
+  // were not found, unclear or not checked (7 Oct 2026).
+  const present = result.findings.filter((f) => f.status === "present").length;
   const parts: string[] = [];
+  if (present > 0) parts.push(`${present} found`);
   if (missing > 0) parts.push(`${missing} not found`);
-  if (unclear > 0) parts.push(`${unclear} we could not read`);
+  if (unclear > 0) parts.push(`${unclear} unclear`);
   if (conflicting > 0) parts.push(`${conflicting} conflicting`);
   if (notAssessed > 0) parts.push(`${notAssessed} we could not check here`);
   return `Of what Amazon named: ${parts.join(", ")}.`;

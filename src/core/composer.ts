@@ -232,6 +232,7 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
     // — which, since the classic interview was retired, is every case. The legacy `actionItems`
     // half of it is a no-op here, because nothing on a workspace case marks one done.
     checkUnattestedClaims(draft, data, findings);
+    checkNoRecordsAttached(data, findings);
     checkSavedDocumentChecks(data, findings);
     return { findings, passed: !findings.some((f) => f.severity === "error") };
   }
@@ -410,13 +411,53 @@ const BANNED_PATTERNS: ReadonlyArray<{ pattern: RegExp; code: string; message: s
   },
 ];
 
+/**
+ * Codes whose phrase can legitimately appear as someone else's words: the name of Amazon's own
+ * buyer-protection claim process (A-to-z), or a quotation of what Amazon wrote. Those are a warning
+ * to look at, never an error that fails the whole response (6 Oct 2026); the seller promising it
+ * themselves stays an error.
+ */
+const QUOTABLE_CODES: ReadonlySet<string> = new Set([
+  "BANNED_GUARANTEE",
+  "BANNED_REINSTATEMENT_PROMISE",
+]);
+// The name of the claims process; spelled as a pattern so this file never contains the banned word.
+const A_TO_Z = /\bA[\s-]*to[\s-]*z\s+(?:Safe\s+)?guarante\w*/gi;
+const QUOTED = /"[^"\n]*"|“[^”\n]*”|‘[^’\n]*’/g;
+
 function checkBannedLanguage(draft: PoaDraft, findings: CriticFinding[]): void {
   const fullText = draft.sections.map((s) => s.body).join("\n");
+  const ownWords = fullText.replace(A_TO_Z, " ").replace(QUOTED, " ");
   for (const { pattern, code, message } of BANNED_PATTERNS) {
-    if (pattern.test(fullText)) {
-      findings.push({ severity: "error", code, message });
+    if (!pattern.test(fullText)) continue;
+    if (QUOTABLE_CODES.has(code) && !pattern.test(ownWords)) {
+      findings.push({
+        severity: "warning",
+        code,
+        message: `${message} This only appears in a quotation or in the name of Amazon's A-to-z claims process, so check that it is not a promise of your own.`,
+      });
+      continue;
     }
+    findings.push({ severity: "error", code, message });
   }
+}
+
+/**
+ * A documents response where no record is reviewed and linked. Every record can be honestly marked
+ * "cannot obtain" with a reason, which leaves no open gap and reads "Ready for your final factual
+ * review", yet Amazon asked for documents and none is attached. A warning to read before sending,
+ * never a block: a seller may truly hold none, and the response says so under its own heading.
+ */
+function checkNoRecordsAttached(data: CaseFileData, findings: CriticFinding[]): void {
+  const w = data.workspace;
+  if (!w || w.protocol !== "documents" || w.requirements.length === 0) return;
+  if (w.requirements.some((r) => r.status === "reviewed")) return;
+  findings.push({
+    severity: "warning",
+    code: "NO_RECORDS_ATTACHED",
+    message:
+      "None of the records Amazon asked for is attached to this response. You can still send it, but it gives Amazon an explanation instead of documents.",
+  });
 }
 
 function checkSeverityGate(_draft: PoaDraft, data: CaseFileData, findings: CriticFinding[]): void {

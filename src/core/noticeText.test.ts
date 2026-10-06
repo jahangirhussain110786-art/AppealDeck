@@ -99,12 +99,13 @@ describe("normalizeNoticeText", () => {
     );
   });
 
-  it("puts a lone Date header that lost its line break back on its own line", () => {
+  it("never turns a mid-line Date: into the receipt date (7 Oct 2026)", () => {
+    // Reversed from the earlier behaviour: a lone "Date:" after an ordinary word is body text, and
+    // splitting it out made "Order Date: 12 May 2026" the day the notice arrived.
     const flat =
       "Hello seller Date: 12 September 2026 Your account was suspended for policy violations.";
-    expect(parseNotice(flat).receivedOn).toBeNull();
-    expect(parseNotice(normalizeNoticeText(flat)).receivedOn).toBe("2026-09-12");
-    expect(normalizeNoticeText(flat).split("\n")[1]).toMatch(/^Date: 12 September 2026/);
+    expect(parseNotice(normalizeNoticeText(flat)).receivedOn).toBeNull();
+    expect(normalizeNoticeText(flat).split("\n")).toHaveLength(1);
     expect(normalizeNoticeText("Please update your Date: field today")).toBe(
       "Please update your Date: field today",
     );
@@ -163,15 +164,22 @@ describe("several notices in one paste", () => {
 
   it("detects two messages, by Date headers, by separators and by repeated subjects", () => {
     expect(detectMultipleNotices(two)).toBe(true);
-    expect(detectMultipleNotices("Subject: A\nbody one\nSubject: B\nbody two")).toBe(true);
     expect(
-      detectMultipleNotices("Hello\n-----Original Message-----\nx\n-----Original Message-----\ny"),
+      detectMultipleNotices(
+        "Subject: A\nthe first message body is long enough to count\nSubject: B\nthe second message body is also long enough",
+      ),
     ).toBe(true);
+    expect(
+      detectMultipleNotices(
+        "Hello there\n-----Original Message-----\nthe first message body is long enough to count\n-----Original Message-----\nthe second message body is also long enough",
+      ),
+    ).toBe(true);
+    // A forward with a one-line note on top is one notice (two bodies are needed to call it two).
     expect(
       detectMultipleNotices(
         "Date: 1 Sep 2026\nHello\n---------- Forwarded message ---------\nFrom: Amazon",
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("does not take one forwarded message, or any corpus notice, for two", () => {

@@ -51,9 +51,9 @@ export function IssuesRaised({
           ))}
         </ol>
         {onConfirm && (
-          <label className="flex items-start gap-3 text-sm">
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 py-2 text-sm">
             <input
-              className="mt-1 h-4 w-4 accent-primary"
+              className="mt-0.5 size-5 shrink-0 accent-primary"
               type="checkbox"
               disabled={busy}
               checked={Boolean(workspace.issuesConfirmed)}

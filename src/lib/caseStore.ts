@@ -2,10 +2,11 @@
 
 import type { Vault } from "@/core/vault/vault";
 import type { CaseFile } from "@/core/caseFile";
-import type { CaseState, ReplyCategory } from "@/core/caseState";
+import { isSubmitted, type CaseState, type ReplyCategory } from "@/core/caseState";
 import type { EvidenceKind } from "@/core/evidenceModel";
 import type { ViolationKind } from "@/core";
 import { repairStoredDeadlines } from "@/core/deadlinesModel";
+import { syncCaseReminder } from "./reminderSync";
 
 export const CASE_FILE_NAME = "case_file";
 export const CASE_LOG_NAME = "case_log";
@@ -111,6 +112,12 @@ export interface CaseLog {
   state: CaseState;
   attemptCount: number;
   submittedAt?: string;
+  /**
+   * The seller said they sent a response outside this product ("mark as sent"). No submission is
+   * recorded for it, so without this the log had nothing saying "something was sent" and taking an
+   * outcome back moved the case to INTAKE instead of waiting. Counted by `hadSubmission`.
+   */
+  markedSentAt?: string;
   /** Readiness score (0-100) at the moment `submittedAt` was recorded — a snapshot, not
    * recomputed later. Feeds the EF-5 opt-in outcome record's `readinessAtSubmit` field
    * (src/core/outcomeModel.ts). Absent on cases submitted before this field existed. */
@@ -432,6 +439,19 @@ export async function loadCaseLog(vault: Vault, requestedCaseId?: string): Promi
  * instead of an empty page while others still exist.
  */
 export async function deleteCase(vault: Vault, caseId: string): Promise<{ documents: number }> {
+  /*
+    6 Oct 2026: the server's reminder row was cancelled only by a caller that knew the seller was
+    signed in, so a case deleted after the sign-in lapsed left an email going out about it. Best
+    effort and never blocking: whenever the log says an email reminder was ever switched on, ask the
+    server to drop it. A refusal (signed out, offline) changes nothing about the deletion.
+  */
+  try {
+    const log = await loadCaseLog(vault, caseId);
+    if (log?.emailReminder && typeof fetch === "function")
+      await syncCaseReminder({ caseRef: caseId, kind: "UNKNOWN", enabled: false });
+  } catch {
+    // Not being able to cancel must never keep a seller from deleting their own case.
+  }
   return vault.atomic(async () => {
     const records = await vault.list({ caseId });
     for (const r of records) await vault.delete(r.id);
@@ -461,18 +481,87 @@ export async function deleteCase(vault: Vault, caseId: string): Promise<{ docume
  */
 export function fileStateAfterLog(
   file: Pick<CaseFile, "state"> & { workspace?: { submissions: readonly { source?: string }[] } },
-  log: Pick<CaseLog, "resolution" | "attemptCount" | "submittedAt">,
+  log: Pick<CaseLog, "resolution" | "attemptCount" | "submittedAt" | "markedSentAt">,
 ): CaseState | null {
   if (log.resolution) {
     const next: CaseState = log.resolution.status === "reinstated" ? "APPROVED" : "CLOSED";
     return next === file.state ? null : next;
   }
   if (file.state !== "APPROVED" && file.state !== "CLOSED") return null;
-  const hadSubmission =
-    log.attemptCount > 0 ||
-    log.submittedAt !== undefined ||
-    Boolean(file.workspace?.submissions.some((s) => s.source !== "prior"));
-  return hadSubmission ? "SUBMITTED" : "INTAKE";
+  return hadSubmission(log, file.workspace) ? "SUBMITTED" : "INTAKE";
+}
+
+/**
+ * Whether anything was sent to Amazon on this case: a recorded submission, a response the seller
+ * marked as sent outside the product, or a non-zero attempt count. One definition, read by both the
+ * log writer (`logWithOutcome`) and the file-state writer (`fileStateAfterLog`) — they used to
+ * compute it differently, so recording an outcome and taking it back on a "marked as sent" case
+ * lost the waiting state (6 Oct 2026).
+ */
+export function hadSubmission(
+  log: Pick<CaseLog, "attemptCount" | "submittedAt" | "markedSentAt"> | null | undefined,
+  workspace?: { submissions: readonly { source?: string }[] },
+): boolean {
+  return (
+    (log?.attemptCount ?? 0) > 0 ||
+    log?.submittedAt !== undefined ||
+    log?.markedSentAt !== undefined ||
+    Boolean(workspace?.submissions.some((s) => s.source !== "prior"))
+  );
+}
+
+/**
+ * Whether a case has moved past preparing its first response: waiting on Amazon, in a later round,
+ * or ended. Reviewing the notice on such a case is bookkeeping and must not send it back to INTAKE
+ * (6 Oct 2026: a marketplace change on a waiting case lost "waiting on Amazon").
+ */
+export function isPastSubmission(state: CaseState): boolean {
+  return isSubmitted(state) || state === "APPROVED" || state === "CLOSED";
+}
+
+/**
+ * The case file a workspace commit writes. The file-level fields (`state`, `kind`, `deadlines`, and
+ * anything else that is not the workspace) are taken from what is on disk, never from the copy a tab
+ * loaded earlier: the commit's conflict check compares only the workspace, so a stale tab that wrote
+ * its own `state` back quietly turned a recorded CLOSED into SUBMITTED while the log still said
+ * rejected (6 Oct 2026). Whatever the commit itself names — a state, a kind, deadlines — still wins.
+ */
+export function fileForCommit(
+  current: CaseFile,
+  disk: CaseFile | null | undefined,
+  workspace: NonNullable<CaseFile["workspace"]>,
+  named: {
+    state?: CaseState;
+    deadlines?: CaseFile["deadlines"];
+    kind?: CaseFile["kind"];
+    kindSetBy?: CaseFile["kindSetBy"];
+  },
+): CaseFile {
+  const base = disk && disk.id === current.id ? disk : current;
+  return {
+    ...base,
+    workspace,
+    state: named.state ?? base.state,
+    ...(named.deadlines !== undefined ? { deadlines: named.deadlines } : {}),
+    ...(named.kind !== undefined ? { kind: named.kind } : {}),
+    ...(named.kindSetBy !== undefined ? { kindSetBy: named.kindSetBy } : {}),
+  };
+}
+
+/**
+ * A commit that would move a case out of a recorded outcome (APPROVED / CLOSED with a
+ * `resolution`) into a working state — a new submission, a new revision, intake — is refused,
+ * because the log would go on saying the case ended while a round restarted. The seller takes the
+ * outcome back first, an explicit step that cannot lose the outcome record silently.
+ */
+export function outcomeBlocksStateChange(
+  currentState: CaseState,
+  log: Pick<CaseLog, "resolution"> | null | undefined,
+  nextState: CaseState | undefined,
+): boolean {
+  if (!nextState || !log?.resolution) return false;
+  const settled = (s: CaseState) => s === "APPROVED" || s === "CLOSED";
+  return settled(currentState) && !settled(nextState);
 }
 
 /**

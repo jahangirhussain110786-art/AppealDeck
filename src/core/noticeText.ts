@@ -63,6 +63,10 @@ function decodeEntitiesOnce(text: string): string {
         body[1]!.toLowerCase() === "x" ? parseInt(body.slice(2), 16) : Number(body.slice(1));
       if (!Number.isFinite(code) || code < 1 || code > 0x10ffff) return whole;
       if (code >= 0xd800 && code <= 0xdfff) return whole;
+      // "&#13;" and "&#1;" must not put a control character into the text (7 Oct 2026).
+      if (code === 9) return " ";
+      if (code === 10 || code === 13) return "\n";
+      if (code < 0x20 || (code >= 0x7f && code <= 0x9f)) return "";
       return String.fromCodePoint(code);
     }
     const named = NAMED_ENTITIES[body.toLowerCase()];
@@ -90,7 +94,12 @@ function stripHtml(text: string): string {
     text
       .replace(/<!--[\s\S]{0,5000}?-->/g, "")
       // The target of a link is evidence the authenticity check needs; the visible text rarely is.
-      .replace(/<a\s[^<>]{0,500}?href\s*=\s*["']([^"'<>]{1,500})["'][^<>]{0,500}>/gi, " $1 ")
+      // Quoted or unquoted ("<a href=https://evil.example/x>" lost its target and the link check
+      // went silent: 7 Oct 2026).
+      .replace(
+        /<a\s[^<>]{0,500}?href\s*=\s*(?:["']([^"'<>]{1,500})["']|([^\s"'<>]{1,500}))[^<>]{0,500}>/gi,
+        (_whole, quoted: string | undefined, bare: string | undefined) => ` ${quoted ?? bare} `,
+      )
       .replace(/<\s*br\s*\/?>/gi, "\n")
       .replace(/<\/\s*(?:p|div|li|tr|h[1-6]|table|blockquote|ul|ol)\s*>/gi, "\n")
       // Only real HTML tags: "<noreply@amazon.com>" is an address and "<https://…>" is a link.
@@ -100,23 +109,21 @@ function stripHtml(text: string): string {
 
 const HEADER_LABELS = /(?:^|[ ])(From|To|Cc|Bcc|Date|Sent|Subject|Received|Reply-To):\s/g;
 
+const NOT_A_HEADER_QUALIFIER =
+  /^(?:order|complaint|deactivation|due|response|ship|shipping|delivery|invoice|purchase|appeal|expiry|expiration|start|end|effective|issue|issued|review|closing|close|deadline|reply|submission|case|opened|created|resolution)$/i;
+
 /** A header block flattened onto one line ("From: x Date: y Subject: z") goes back to one line each. */
 function explodeFlattenedHeaders(line: string): string {
-  const hits = [...line.matchAll(HEADER_LABELS)];
-  if (hits.length === 1) {
-    // A lone "Date:" in the middle of a line whose line breaks were lost, followed by something
-    // that reads as a date: the header belongs on its own line, or the receipt date is never found.
-    const only = hits[0]!;
-    const at = only.index! + 1;
-    if (
-      only.index! > 0 &&
-      /^(?:Date|Sent|Received)$/.test(only[1]!) &&
-      /\d/.test(line.slice(at, at + 40))
-    ) {
-      return `${line.slice(0, only.index!).trimEnd()}\n${line.slice(at)}`;
-    }
-    return line;
-  }
+  // Only a run that starts with a header label is a flattened header block. A lone "Date:" in the
+  // middle of a body line ("Order Date: 12 May 2026", "Response Due Date: 30 October 2026") was
+  // split onto its own line and became the receipt date: never again (7 Oct 2026).
+  if (!/^(?:From|To|Cc|Bcc|Date|Sent|Subject|Received|Reply-To):\s/.test(line)) return line;
+  const hits = [...line.matchAll(HEADER_LABELS)].filter((m) => {
+    if (m.index === 0) return true;
+    // "Order Date:", "Due Date:" and the like are body labels, not header lines.
+    const before = line.slice(0, m.index!).trimEnd().split(" ").pop() ?? "";
+    return !NOT_A_HEADER_QUALIFIER.test(before);
+  });
   if (hits.length < 2) return line;
   let out = "";
   let last = 0;
@@ -130,6 +137,23 @@ function explodeFlattenedHeaders(line: string): string {
   return out + line.slice(last);
 }
 
+/**
+ * Leading whitespace and `>` quote markers. A marker counts only when it is followed by a space (or
+ * another marker or the end of the line), and not when what follows is a number or a currency/percent
+ * sign, so "> 1% over the last 60 days" and ">= 10" keep their meaning.
+ */
+function stripQuoteMarkers(line: string): string {
+  let rest = line.replace(/^\s+/, "");
+  for (;;) {
+    const m = /^>(?:>*)(?=[ \t]|$|[A-Za-z])[ \t]*/.exec(rest);
+    if (!m) break;
+    const after = rest.slice(m[0].length);
+    if (/^[\d%$€£]/.test(after) && m[0].replace(/[ \t]/g, "").length === 1) break;
+    rest = after.replace(/^\s+/, "");
+  }
+  return rest;
+}
+
 const HEADER_LINE =
   /^(?:from|to|cc|bcc|date|sent|subject|received|reply-to|date sent|date received|notification date):/i;
 const LIST_ITEM = /^(?:[-*•]|\d{1,3}[.)])\s/;
@@ -141,13 +165,34 @@ interface JoinedLine {
   words: number;
 }
 
+const KEEPS_HYPHEN = /^(?:pre|non|anti|self|ex|co|multi|semi|cross|third|well|high|low)$/i;
 const ENDS_A_SENTENCE = /[.!?:;]["')\]]?$/;
 
-function canJoin(cur: JoinedLine, lastPart: string, next: string): boolean {
+/** A line that starts a new record: a date, an order number, a bullet or a "Label:" line. Never joined onto the line above. */
+const STARTS_A_RECORD =
+  /^(?:\d{1,2}(?:st|nd|rd|th)?\s+(?:of\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}\b|\d{4}-\d{2}-\d{2}\b|\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\b|#\s?\d|\d{3}-\d{7}-\d{7}\b|[A-Za-z][A-Za-z0-9 ()/&'-]{0,28}:(?:\s|$))/i;
+
+/**
+ * Lines wrapped at one column are all about as long as each other. Found by looking at the longest
+ * lines: three or more within a few characters of the longest means the text was hard-wrapped there.
+ */
+function wrapColumn(lines: string[]): number {
+  let longest = 0;
+  for (const l of lines) if (l.length <= 100 && l.length > longest) longest = l.length;
+  if (longest < 55) return 0;
+  const near = lines.filter((l) => l.length >= longest - 12 && l.length <= longest).length;
+  return near >= 3 ? longest - 12 : 0;
+}
+
+function canJoin(cur: JoinedLine, lastPart: string, next: string, wrapAt: number): boolean {
   if (lastPart === "" || next === "") return false;
   if (ENDS_A_SENTENCE.test(lastPart.slice(-3))) return false;
   if (HEADER_LINE.test(cur.parts[0]!) || HEADER_LINE.test(next)) return false;
   if (LIST_ITEM.test(next)) return false;
+  if (STARTS_A_RECORD.test(next)) return false;
+  // A break before a capital letter: only inside text that is plainly wrapped at one column, and
+  // only after a line that reached it ("...submit your\nPlan of Action within 90 days").
+  if (/^[A-Z]/.test(next)) return wrapAt > 0 && lastPart.length >= wrapAt && cur.words >= 3;
   if (/^[a-z]/.test(next)) return cur.words >= 3 || cur.length >= 25;
   // A number can start the next wrapped line ("... within\n90 days"); only after a long line, so a
   // "Case ID" label above its value is left alone.
@@ -185,13 +230,14 @@ export function normalizeNoticeText(raw: string, options: NormalizeOptions = {})
     .replace(/(?<=\d)[‒-―−](?=\d)/g, "-")
     // Markdown emphasis. Underscores only as a matched pair around text, so "Laboratory: ______"
     // keeps its blank.
-    .replace(/\*\*/g, "")
+    // Only a matched **word** pair: "****1234" and "j***@x" are masked values, not emphasis.
+    .replace(/(?<![*\w])\*\*(?=[^*\s])([^*\n]{1,100}?)(?<=[^*\s])\*\*(?!\*)/g, "$1")
     .replace(/(?<![_\w])__(?=[^\s_])([^\n]{1,200}?)(?<=[^\s_])__(?![_\w])/g, "$1");
 
   const lines = text.split("\n").flatMap((line) => {
     // Trailing spaces are left alone: a seller typing a space at the end of a line in a normalised
     // textarea must not have it taken away under the cursor.
-    const cleaned = line.replace(/^[>\s]+/, "").replace(/ {2,}/g, " ");
+    const cleaned = stripQuoteMarkers(line).replace(/ {2,}/g, " ");
     return explodeFlattenedHeaders(cleaned).split("\n");
   });
 
@@ -205,15 +251,19 @@ export function normalizeNoticeText(raw: string, options: NormalizeOptions = {})
   // Hyphenation across a line break, then unwrapping of hard-wrapped lines.
   const wordCount = (s: string): number => (s === "" ? 0 : s.split(" ").length);
   const joined: JoinedLine[] = [];
+  const wrapAt = wrapColumn(collapsed);
   for (const line of collapsed) {
     const cur = joined[joined.length - 1];
     const lastIndex = cur ? cur.parts.length - 1 : 0;
     const lastPart = cur ? cur.parts[lastIndex]!.trimEnd() : "";
     if (cur && /[A-Za-z]-$/.test(lastPart.slice(-2)) && /^[a-z]/.test(line)) {
-      cur.parts[lastIndex] = lastPart.slice(0, -1) + line;
-      cur.length += line.length - 1;
+      // "docu-\nment" loses its hyphen; "A-\nto-z" and "pre-\nfulfillment" are compounds and keep it.
+      const left = /([A-Za-z]+)-$/.exec(lastPart)?.[1] ?? "";
+      const keep = left.length === 1 || KEEPS_HYPHEN.test(left);
+      cur.parts[lastIndex] = keep ? lastPart + line : lastPart.slice(0, -1) + line;
+      cur.length += keep ? line.length : line.length - 1;
       cur.words += wordCount(line) - 1;
-    } else if (cur && canJoin(cur, lastPart, line)) {
+    } else if (cur && canJoin(cur, lastPart, line, wrapAt)) {
       cur.parts[lastIndex] = lastPart;
       cur.parts.push(line);
       cur.length += line.length + 1;
@@ -229,8 +279,11 @@ export function normalizeNoticeText(raw: string, options: NormalizeOptions = {})
 
 const SEPARATOR =
   /^[-_=*~ ]*(?:forwarded message|original message|begin forwarded message)[-_=*~ a-z]*$/i;
-const DATE_HEADER_LINE = /^(?:date|sent)\s*:/i;
-const SUBJECT_LINE = /^subject\s*:/i;
+/** A header line that says a message begins here: a block with a From or a Subject. A bare "Date:" does not. */
+const IDENTIFYING_HEADER = /^(?:from|subject)\s*:/i;
+/** A message has to carry some text of its own, or it is a forwarder's header and not a second notice. */
+const MIN_MESSAGE_BODY = 30;
+const FORWARD_INTRO = /^(?:begin\s+)?forwarded\s+message\s*:?$/i;
 
 export interface NoticeSegment {
   /** Offset of the segment's first character in the text it was cut from. */
@@ -244,6 +297,15 @@ export interface NoticeSegment {
  * separators and at the start of each header block. A single forwarded email (one separator, one
  * header block) is one segment; two messages are two.
  */
+/*
+  Rewritten 7 Oct 2026. The old rule cut at every "Date:" and "Subject:" line, so a forwarder's header
+  plus the inner header counted as two notices, a wrapped "To:" line made the next header a "second
+  notice", and — worst — a notice that lists orders as blocks ("Date: 12 September 2026 / Order: … /
+  ASIN: …") was cut at every block and the route decoded only the latest one, losing the ASINs and
+  the response type. Now a message starts only at a header block that names a sender or a subject (or
+  at an "Original Message" separator), and a cut stands only when both messages it separates carry a
+  body of their own. When in doubt the text is not split: decoding all of it is the safe reading.
+*/
 export function splitNotices(text: string): NoticeSegment[] {
   const lines: Array<{ text: string; start: number }> = [];
   let at = 0;
@@ -251,65 +313,143 @@ export function splitNotices(text: string): NoticeSegment[] {
     lines.push({ text: line, start: at });
     at += line.length + 1;
   }
-  const cuts: number[] = [];
-  let seenBody = false;
-  let inHeaders = false;
-  lines.forEach((line, i) => {
-    const t = line.text.trim();
-    if (t === "") return;
+  const trimmed = lines.map((l) => l.text.trim());
+  const isHeaderLine = new Array<boolean>(lines.length).fill(false);
+  /** Line indexes where a message may begin, and whether that message opens with a sender/subject block. */
+  const starts: Array<{ line: number; identifies: boolean }> = [];
+
+  let i = 0;
+  while (i < lines.length) {
+    const t = trimmed[i]!;
+    if (t === "") {
+      i++;
+      continue;
+    }
     if (SEPARATOR.test(t)) {
-      if (seenBody) cuts.push(i);
-      seenBody = false;
-      inHeaders = true;
-      return;
+      starts.push({ line: i, identifies: false });
+      i++;
+      continue;
     }
-    if (HEADER_LINE.test(t)) {
-      if (!inHeaders && seenBody) cuts.push(i);
-      inHeaders = true;
-      return;
+    if (!HEADER_LINE.test(t)) {
+      i++;
+      continue;
     }
-    inHeaders = false;
-    seenBody = true;
-  });
-  const bounds = [0, ...cuts.map((i) => lines[i]!.start), text.length];
-  const segments: NoticeSegment[] = [];
-  for (let i = 0; i < bounds.length - 1; i++) {
-    const start = bounds[i]!;
-    const end = bounds[i + 1]!;
-    if (start === end && i > 0) continue;
-    segments.push({ start, end, text: text.slice(start, end) });
+    // A header block: consecutive header lines, plus the continuation of a wrapped recipient list.
+    let j = i;
+    let identifies = false;
+    while (j < lines.length) {
+      const tj = trimmed[j]!;
+      if (tj === "") break;
+      if (HEADER_LINE.test(tj)) {
+        if (IDENTIFYING_HEADER.test(tj)) identifies = true;
+      } else {
+        const prev = trimmed[j - 1]!;
+        const continuesRecipients =
+          j > i &&
+          (/[,;]$/.test(prev) || (tj.includes("@") && tj.length < 200 && !/[.!?]\s/.test(tj)));
+        if (!continuesRecipients) break;
+      }
+      isHeaderLine[j] = true;
+      j++;
+    }
+    if (identifies) {
+      // A separator line right above the block belongs to it.
+      let k = i - 1;
+      while (k >= 0 && trimmed[k] === "") k--;
+      const line = k >= 0 && SEPARATOR.test(trimmed[k]!) ? k : i;
+      const last = starts[starts.length - 1];
+      if (last && last.line === line) last.identifies = true;
+      else starts.push({ line, identifies: true });
+    }
+    i = Math.max(j, i + 1);
   }
-  return segments.filter((s) => s.text.trim() !== "");
+
+  // Segments between the starts. The first one runs from the top of the paste.
+  interface Seg {
+    from: number;
+    to: number;
+    identifies: boolean;
+  }
+  const cutLines = starts.map((s) => s.line).filter((l) => l > 0);
+  // Dozens of "messages" in one paste is a list that looks like headers, not a mail thread.
+  if (cutLines.length > 40) return text.trim() === "" ? [] : [{ start: 0, end: text.length, text }];
+  let segs: Seg[] = [];
+  let from = 0;
+  let firstIdentifies = starts.some((s) => s.line === 0 && s.identifies);
+  for (const l of cutLines) {
+    segs.push({ from, to: l, identifies: firstIdentifies });
+    from = l;
+    firstIdentifies = starts.find((s) => s.line === l)!.identifies;
+  }
+  segs.push({ from, to: lines.length, identifies: firstIdentifies });
+
+  const bodyLength = (s: Seg): number => {
+    let n = 0;
+    for (let l = s.from; l < s.to; l++) {
+      const t = trimmed[l]!;
+      if (t === "" || isHeaderLine[l] || SEPARATOR.test(t) || FORWARD_INTRO.test(t)) continue;
+      n += t.length;
+    }
+    return n;
+  };
+
+  // Merge until every message has a body of its own; a lone preamble belongs to the message below it.
+  let changed = true;
+  while (changed && segs.length > 1) {
+    changed = false;
+    for (let s = 0; s < segs.length; s++) {
+      if (bodyLength(segs[s]!) >= MIN_MESSAGE_BODY) continue;
+      const into = s > 0 ? s - 1 : s + 1;
+      const lo = Math.min(s, into);
+      const hi = Math.max(s, into);
+      const merged: Seg = {
+        from: segs[lo]!.from,
+        to: segs[hi]!.to,
+        identifies: segs[lo]!.identifies || segs[hi]!.identifies,
+      };
+      segs = [...segs.slice(0, lo), merged, ...segs.slice(hi + 1)];
+      changed = true;
+      break;
+    }
+  }
+  // A leading paragraph with no header of its own is the sender's note, not a second notice.
+  if (segs.length > 1 && !segs[0]!.identifies && segs[1]!.identifies) {
+    segs = [{ from: segs[0]!.from, to: segs[1]!.to, identifies: true }, ...segs.slice(2)];
+  }
+
+  return segs
+    .map((s) => {
+      const start = lines[s.from]!.start;
+      const end = s.to >= lines.length ? text.length : lines[s.to]!.start;
+      return { start, end, text: text.slice(start, end) };
+    })
+    .filter((s) => s.text.trim() !== "");
 }
 
-/** More than one message pasted into one box. */
+/** More than one message pasted into one box: two separate bodies, each with its own header or separator. */
 export function detectMultipleNotices(text: string): boolean {
-  const lines = text.split("\n").map((l) => l.trim());
-  const dates = lines.filter((l) => DATE_HEADER_LINE.test(l)).length;
-  const subjects = lines.filter((l) => SUBJECT_LINE.test(l)).length;
-  const markers = lines.filter((l) => SEPARATOR.test(l)).length;
-  if (dates >= 2 || subjects >= 2 || markers >= 2) return true;
-  if (markers === 1) {
-    // A forward is one message after its marker; a reply chain has text and headers before it.
-    const first = lines.findIndex((l) => SEPARATOR.test(l));
-    return lines.slice(0, first).some((l) => DATE_HEADER_LINE.test(l) || SUBJECT_LINE.test(l));
-  }
-  return (
-    splitNotices(text).filter((s) => s.text.trim().length > 40).length >= 2 && dates + subjects >= 2
-  );
+  return splitNotices(text).length >= 2;
 }
 
 /* ------------------------------------------------------------------ the seller's own text */
 
+/**
+ * Only patterns that Amazon's own staff never write. "I apologize", "I understand", "I have
+ * reviewed", "I assure" and "I hope" are what a Seller Support agent writes too, so they never count
+ * (7 Oct 2026: a genuine first-person Seller Support reply was refused as the seller's own appeal).
+ */
 const FIRST_PERSON_APPEAL: ReadonlyArray<RegExp> = [
   /\bI\s+(?:am|’m|'m)\s+writing\s+to\s+(?:appeal|request|ask|dispute)\b/i,
   /\bI\s+(?:would\s+like|wish|want)\s+to\s+appeal\b/i,
-  /\bI\s+(?:respectfully\s+)?(?:request|ask)\s+(?:that\s+)?(?:you\s+)?(?:reinstate|reactivate|review)\b/i,
+  /\bI\s+(?:respectfully\s+)?(?:request|ask)\s+(?:that\s+)?(?:you\s+)?(?:reinstate|reactivate)\b/i,
   /\b(?:please\s+)?(?:reinstate|reactivate)\s+my\s+(?:seller\s+|selling\s+)?(?:account|privileges|listings?)\b/i,
   /\bmy\s+(?:seller\s+|selling\s+)?account\s+(?:was|has\s+been|got)\s+(?:suspended|deactivated|blocked)\b/i,
-  /\bI\s+(?:apologi[sz]e|take\s+full\s+responsibility|have\s+(?:taken|implemented|reviewed|corrected))\b/i,
-  /\bI\s+(?:understand|assure|promise|hope)\b/i,
+  /\bmy\s+appeal\b/i,
+  /\bI\s+take\s+full\s+responsibility\b/i,
 ];
+/** Amazon's own sign-off or team label on a line of its own ("Amazon Seller Support", not "Dear Amazon…"). */
+const AMAZON_SIGNOFF =
+  /^[^\S\n]*(?:the )?amazon(?:\.com)?(?: seller)? (?:support|performance|team|account health(?: team)?)(?: team)?[^\S\n]*[.,]?[^\S\n]*$/im;
 const SIGN_OFF =
   /^\s*(?:sincerely|best\s+regards|kind\s+regards|regards|yours\s+(?:sincerely|faithfully)|thank\s+you\s+for\s+your\s+(?:time|consideration|understanding))\b/im;
 const AMAZON_VOICE =
@@ -323,6 +463,7 @@ const AMAZON_VOICE =
  */
 export function looksLikeSellerText(text: string): boolean {
   if (AMAZON_VOICE.test(text)) return false;
+  if (AMAZON_SIGNOFF.test(text)) return false;
   const first = FIRST_PERSON_APPEAL.filter((re) => re.test(text)).length;
   if (first >= 2) return true;
   return first >= 1 && SIGN_OFF.test(text);
@@ -347,10 +488,22 @@ function isGarbledToken(token: string): boolean {
   if (token.length < 4) return false;
   if (isDigitRunWithLetter(token)) return true; // 2O26
   if (!/[a-z]/.test(token)) return false; // all-caps tokens are ASINs and codes
-  if (/[a-z]{2,}[0158][a-z]+/i.test(token)) return true; // sell1ng, Amaz0n, vi0lations
+  // sell1ng, Amaz0n, vi0lations — only when the repair is a word a notice uses. A lowercase SKU
+  // ("yoga5mat", "lamp8usb") or a tracking parameter ("ab1cd") is not damage (7 Oct 2026).
+  if (/[a-z]{2,}[0158][a-z]+/i.test(token) && repairToken(token) !== token) return true;
   // poIicy: a capital I or O inside a lowercase word, counted only when the repair is a known word.
   if (/[a-z]{2,}[IO][a-z]{2,}/.test(token) && repairToken(token) !== token) return true;
   return false;
+}
+
+/** A token inside a URL, or glued to "=" or "_" (a query parameter, a snake_case name), is an identifier, not damaged text. */
+function insideIdentifierContext(text: string, at: number, length: number): boolean {
+  const before = text[at - 1];
+  const after = text[at + length];
+  if (before === "=" || before === "_" || after === "=" || after === "_") return true;
+  // Inside a URL: the whitespace-delimited word that holds the token starts like one.
+  const wordStart = Math.max(text.lastIndexOf(" ", at), text.lastIndexOf("\n", at)) + 1;
+  return /^(?:https?:\/\/|www\.)/i.test(text.slice(wordStart, wordStart + 8));
 }
 
 /** "2O26", "l2": a number with a letter standing in for a digit. Mostly digits, so an ASIN never qualifies. */
@@ -396,7 +549,10 @@ export interface GarbleAssessment {
 export function assessGarbled(text: string): GarbleAssessment {
   const tokens = text.match(/[A-Za-z0-9]{4,40}/g) ?? [];
   let suspect = 0;
-  for (const token of tokens) if (isGarbledToken(token)) suspect++;
+  for (const m of text.matchAll(/[A-Za-z0-9]{4,40}/g)) {
+    if (insideIdentifierContext(text, m.index!, m[0].length)) continue;
+    if (isGarbledToken(m[0])) suspect++;
+  }
   return {
     garbled: suspect >= 3 && suspect / Math.max(tokens.length, 1) >= 0.02,
     suspectTokens: suspect,
@@ -409,8 +565,10 @@ export function assessGarbled(text: string): GarbleAssessment {
  * the join is one of those words. Never applied silently: `/api/decode` says it did it.
  */
 export function repairOcrText(text: string): string {
-  const repaired = text.replace(/[A-Za-z0-9]{4,40}/g, (token) =>
-    isGarbledToken(token) ? repairToken(token) : token,
+  const repaired = text.replace(/[A-Za-z0-9]{4,40}/g, (token, offset: number) =>
+    !insideIdentifierContext(text, offset, token.length) && isGarbledToken(token)
+      ? repairToken(token)
+      : token,
   );
   return repaired.replace(
     /\b([A-Za-z]{2,10}) ([A-Za-z]{1,8})\b/g,
@@ -475,7 +633,11 @@ export interface SpeakerTurn {
 
 const AMAZON_LABEL =
   /^(?:>\s*)*(?:amazon(?:\s+seller)?(?:\s+(?:support|performance|team))?|seller\s+support|seller\s+performance|account\s+health\s+team|support(?:\s+team)?)\s*(?:\([^)\n]{1,30}\))?\s*:/i;
-const SELLER_LABEL = /^(?:>\s*)*(?:seller(?:\s*\((?:you|me)\))?|you|me|customer)\s*:/i;
+/**
+ * The seller's turn is labelled "Seller (you)", "You" or "Me". A bare "Seller:" or "Customer:" is
+ * ordinary text in a notice ("Customer: … complained") and no longer cuts a paste into turns.
+ */
+const SELLER_LABEL = /^(?:>\s*)*(?:seller\s*\((?:you|me)\)|you|me)\s*:/i;
 
 /**
  * The turns of a pasted Seller Support thread. An unlabelled opening is Amazon's when the first
@@ -519,6 +681,8 @@ export function splitSpeakerTurns(text: string): SpeakerTurn[] {
 export function lastAmazonTurn(text: string): { start: number; end: number } | null {
   const turns = splitSpeakerTurns(text);
   if (turns.length < 2) return null;
+  // A thread has at least one turn Amazon labelled as its own; without that the paste is a notice.
+  if (!turns.some((t) => t.speaker === "amazon" && t.labelled)) return null;
   const hasSeller = turns.some((t) => t.speaker === "seller");
   const amazonTurns = turns.filter((t) => t.speaker === "amazon");
   if (!hasSeller && amazonTurns.length < 2) return null;

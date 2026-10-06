@@ -211,6 +211,10 @@ export const DECODE = {
     saveAnyway: "Save as a case anyway",
     errorEdit: "Edit what I pasted",
     errorSellerAction: "Paste Amazon's message instead",
+    errorContinue: "Read it anyway. Results for non-English text may be wrong.",
+    // Reply-due tile when the notice gives a date or a length we cannot count from (7 Oct 2026).
+    factAmbiguous: "Date written {date}: could be {a} or {b}. Check your notice.",
+    factAmbiguousShort: "Date unclear",
     errorNotNotice:
       "If this is a letter you wrote to Amazon, it is not a notice. Paste the message Amazon sent you.",
     factProblem: "The problem",

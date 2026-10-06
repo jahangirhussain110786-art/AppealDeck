@@ -21,7 +21,9 @@ export const STORES = {
     "You can still try: open the appeal in Account Health if the button is there, and contact Seller Support in the same case. Amazon decides.",
 
   /** Reply reading says Amazon has reinstated the account. */
-  replyReinstated: "This reply reads as reinstatement. Record the outcome on your dashboard.",
+  replyReinstated: "Amazon says the account is reinstated. Record the outcome.",
+  /** An older reply, once a later one has been added: only the newest can be acted on. */
+  replySuperseded: "Superseded by a later reply",
   /** Reply reading says the decision is final. */
   replyFinal: "Amazon says this decision is final. Record the outcome.",
   /** Dashboard row line once the seller has recorded how the case ended. */
@@ -49,6 +51,38 @@ export const STORES = {
   /** Hint for the one record a related-account or wrong-claim case can answer in words. */
   relationshipHint:
     "No file is needed for this record. Say in your own words how the accounts are or are not related, or why the claim is wrong, and keep it factual.",
+
+  /**
+   * The D6 latch. A case held for qualified help stays held when the words that triggered it are
+   * edited out, because the notice Amazon sent still says what it said. The one way out is to say the
+   * notice pasted was the wrong one and give the right one.
+   */
+  d6Release: {
+    why: "Amazon's notice accuses the account of fabricated documents, fraud or a child-safety matter. We do not prepare responses to these, and editing the notice text here does not change what Amazon sent.",
+    title: "Was this the wrong notice?",
+    body: "If you pasted the wrong notice, paste the right one below. It has to be a different notice, not this one with words removed. If the new one carries an allegation too, the case is held again.",
+    action: "Replace with the correct notice",
+    tooShort: "Paste the whole notice. It is too short to read.",
+    sameNotice:
+      "This is mostly the same text as the notice that held the case. Paste the notice Amazon actually sent you. Taking words out of this one does not release the case.",
+    history: "You replaced a notice that held this case for qualified help with a different one.",
+    done: "Notice replaced. Check how we read it.",
+  },
+
+  /** Round-starting actions are refused while an outcome is recorded; the outcome is not lost silently. */
+  outcomeBlocksRound:
+    "You recorded an outcome for this case. Take the outcome back before starting another round, so the record does not say the case ended while you are still working on it.",
+  /** The /case page for a case with a recorded outcome. */
+  outcomeRecorded: {
+    reinstated: "You recorded this case as reinstated or approved. Nothing is due.",
+    rejected: "You recorded this case as rejected or denied. Nothing is due on it.",
+    withdrawn: "You recorded this case as withdrawn. Nothing is due on it.",
+    takeBack: "Take the outcome back",
+    note: "This is your own record; AppealDeck does not check with Amazon.",
+  },
+  /** Offered when saving is refused because another tab changed the case. */
+  copyUnsaved: "Copy my unsaved text",
+  copiedUnsaved: "Copied. Paste it somewhere safe, then reload.",
 
   /** Dashboard next-step lines for a case that cannot be answered here. */
   nextStep: {

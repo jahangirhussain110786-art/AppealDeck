@@ -9,7 +9,9 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { recordActivation, deviceErrorResponse, deriveFingerprintFromRequest } from "@/lib/devices";
 import { CaseDataSchema } from "@/lib/caseSchema";
-import { workspaceCanCompose } from "@/core/workspace";
+import { workspaceCanCompose, professionalReviewApplies, routeWorkspace } from "@/core/workspace";
+import { hasD6Allegation } from "@/core/violationKinds";
+import { STORES } from "@/content/stores";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +49,22 @@ export async function POST(req: NextRequest) {
   }
 
   const { caseData, attemptNumber = 1 } = parsed.data;
+  /*
+    D6, checked here from what was posted and never from a flag the client asserts. A latched case,
+    a notice or an unapplied reply that carries a fabricated-documents, fraud or child-safety
+    allegation, and any route that comes out `specialist` are refused with the referral wording,
+    whoever calls this route and whatever the client chose to send.
+  */
+  if (
+    caseData.workspace &&
+    (professionalReviewApplies(caseData.workspace) ||
+      routeWorkspace(caseData.workspace).protocol === "specialist" ||
+      caseData.workspace.replies.some((r) => !r.applied && hasD6Allegation(r.text)))
+  )
+    return NextResponse.json(
+      { error: STORES.d6Release.why, code: "professional_review" },
+      { status: 422 },
+    );
   if (caseData.workspace && !workspaceCanCompose(caseData.workspace))
     return NextResponse.json(
       {

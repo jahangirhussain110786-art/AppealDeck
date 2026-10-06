@@ -151,7 +151,7 @@ export const APP = {
       // Read out by a screen reader when a reading starts and when it finishes; short, and not the
       // words shown on the page, so nothing is heard twice.
       announceBusy: "Reading your document. This can take a few seconds.",
-      announceDone: "Reading finished: {found} of {total} items found. The results are below.",
+      announceDone: "Reading finished. {summary} The results are below.",
       announceImage: "Picture checks finished. The results are below.",
       aiNotUsed: "Why not the AI reading:",
       // What a device reading says about the file, chosen by whether the AI request went first
@@ -187,6 +187,7 @@ export const APP = {
       act: "You need to act",
       waiting: "Waiting",
       waitingAmazon: "Waiting on Amazon",
+      outcomeRecorded: "Outcome recorded",
       checklist: "Checklist",
       of: "{done} of {total}",
       days: "{n}d",
@@ -243,6 +244,9 @@ export const APP = {
     },
     active: {
       heading: "Appeal Pass active",
+      // A Pass covers ONE case, so say so wherever its status is shown.
+      coversOne: "Your Appeal Pass covers one case.",
+      coversOneNoCase: "Your Appeal Pass covers one case. Start a case to use it.",
       planLabel: "Plan",
     },
     inactive: {

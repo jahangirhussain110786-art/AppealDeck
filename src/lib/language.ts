@@ -115,7 +115,13 @@ export function detectLanguage(text: string): LanguageGuess {
 
   const perScript = SCRIPTS.map((s) => ({ ...s, n: count(sample, s.pattern) }));
   const nonLatin = perScript.reduce((sum, s) => sum + s.n, 0);
-  if (nonLatin / letters > 0.3) {
+  const opening = text.slice(0, OPENING_CHARS);
+  const openingLetters = Math.max(count(opening, /\p{L}/gu), 1);
+  const openingNonLatin = SCRIPTS.reduce((sum, s) => sum + count(opening, s.pattern), 0);
+  if (
+    nonLatin / letters > 0.3 &&
+    (text.length <= OPENING_CHARS || openingNonLatin / openingLetters > 0.3)
+  ) {
     // Japanese is written with Han characters as well as kana, so any real amount of kana wins.
     const kana = perScript.find((s) => s.code === "ja")!;
     if (kana.n / letters > 0.03) return { code: "ja", name: kana.name, supported: false };
@@ -123,8 +129,23 @@ export function detectLanguage(text: string): LanguageGuess {
     return { code: top.code, name: top.name, supported: false };
   }
 
+  const whole = foreignVerdict(sample);
+  if (!whole) return ENGLISH;
+  // The opening has to say the same thing (7 Oct 2026): an English notice that ends in a list of
+  // French or German product titles, or a foreign footer, is still an English notice.
+  if (text.length > OPENING_CHARS) {
+    const opening = foreignVerdict(text.slice(0, OPENING_CHARS));
+    if (!opening || opening.code !== whole.code) return ENGLISH;
+  }
+  return { code: whole.code, name: whole.name, supported: false };
+}
+
+const OPENING_CHARS = 600;
+
+/** The non-English language the text plainly is, or null. */
+function foreignVerdict(sample: string): { code: string; name: string } | null {
   const words = sample.toLowerCase().match(/[\p{L}]+/gu) ?? [];
-  if (words.length < MIN_WORDS) return ENGLISH;
+  if (words.length < MIN_WORDS) return null;
   const scores = STOP_SETS.map(([code, name, set]) => {
     let hits = 0;
     for (const w of words) if (set.has(w)) hits++;
@@ -133,8 +154,6 @@ export function detectLanguage(text: string): LanguageGuess {
   const english = scores.find((s) => s.code === "en")!.score;
   const best = scores.filter((s) => s.code !== "en").sort((a, b) => b.score - a.score)[0]!;
   // A foreign language has to be plainly ahead: frequent, and well clear of how English the text is.
-  if (best.score >= 0.12 && best.score > english * 1.5) {
-    return { code: best.code, name: best.name, supported: false };
-  }
-  return ENGLISH;
+  if (best.score >= 0.12 && best.score > english * 1.5) return { code: best.code, name: best.name };
+  return null;
 }
