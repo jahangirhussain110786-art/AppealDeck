@@ -20,7 +20,8 @@ async function typeNoticeAndSave(page: import("@playwright/test").Page, text: st
   await page.getByLabel("Amazon notice").fill(text);
   // Blur so the field commits, then wait out the debounce plus a margin for the vault write.
   await page.getByLabel("Amazon notice").blur();
-  await page.waitForTimeout(1500);
+  // Waits for the app's own confirmation that the vault write landed, not for a guess of how long it takes.
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 }
 
 test("separate guest tabs cannot purge each other's in-progress case", async ({

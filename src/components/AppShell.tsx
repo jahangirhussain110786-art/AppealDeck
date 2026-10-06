@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AppBreadcrumb } from "@/components/AppBreadcrumb";
@@ -28,6 +28,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const pathname = usePathname() ?? "";
+  const router = useRouter();
   if (BARE_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`))) {
     return (
       <main id="main" className="min-h-svh">
@@ -60,6 +61,16 @@ export function AppShell({
                   ) : (
                     <Link
                       href={signInHref}
+                      // The page's query string (`?view=response`) is part of where the seller was.
+                      // Added when the link is used, so rendering stays static (useSearchParams
+                      // would make every page under this shell render on the client).
+                      onClick={(event) => {
+                        if (!window.location.search) return;
+                        event.preventDefault();
+                        router.push(
+                          `/login?next=${encodeURIComponent(pathname + window.location.search)}`,
+                        );
+                      }}
                       className="inline-flex h-9 items-center rounded-full bg-surface-1 px-3.5 text-sm font-medium text-foreground shadow-sm ring-1 ring-inset ring-border transition-colors hover:ring-input"
                     >
                       {SHARED.nav.signIn}

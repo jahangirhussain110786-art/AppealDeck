@@ -717,6 +717,21 @@ function compareReferenceIds(f: FieldFinding, caseIds: readonly string[]): Field
   if (matched.length > 0) {
     return { ...f, comparedWith, note: `Cites ${matched.join(", ")}, which your notice names.` };
   }
+  // A bare run of digits is not necessarily a complaint ID: an invoice number or a phone number is
+  // one too. Only a number the quote itself labels as an ID, case, complaint or reference can
+  // conflict with the notice's.
+  const labelled =
+    /\b(?:complaint|case|report|reference|ref|id|number|no|claim)\b[^0-9]{0,25}\d{6,15}|#\s*\d{6,15}/i.test(
+      f.observed!,
+    );
+  if (printed.length > 0 && !labelled) {
+    return {
+      ...f,
+      status: "not_assessed",
+      comparedWith,
+      note: `The document shows ${printed.join(", ")}, but it is not labelled as a complaint or case ID, so we have not compared it with ${caseIds.join(", ")}.`,
+    };
+  }
   if (printed.length > 0) {
     return {
       ...f,

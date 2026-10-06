@@ -12,7 +12,8 @@ test.describe("Access ladder — signed-out workspace, gate, case preview", () =
   const typeNotice = async (page: import("@playwright/test").Page, text: string) => {
     await page.getByLabel("Amazon notice").fill(text);
     await page.getByLabel("Amazon notice").blur();
-    await page.waitForTimeout(1500);
+    // Waits for the app's own confirmation that the vault write landed, not for a guess of how long it takes.
+    await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   };
 
   test("signed out: what you type survives a reload", async ({ page }) => {

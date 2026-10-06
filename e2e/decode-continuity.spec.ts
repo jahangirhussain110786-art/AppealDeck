@@ -145,7 +145,8 @@ test("a decoded notice starts a second case without destroying the first", async
   await page.goto("/case?kind=POLICY");
   await page.getByLabel("Amazon notice").fill(firstNotice);
   await page.getByLabel("Amazon notice").blur();
-  await page.waitForTimeout(1500);
+  // Waits for the app's own confirmation that the vault write landed, not for a guess of how long it takes.
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 
   await decodeSample(page);
   await page
