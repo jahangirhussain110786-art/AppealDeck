@@ -338,6 +338,11 @@ export const APP = {
       newBadgeShort: "New",
       sinceNote:
         "Based on dates you set and dates stated in your notice. Amazon does not notify us about your case.",
+      addToCalendar: "Add these dates to my calendar",
+      calendarHelp:
+        "Downloads a calendar file with an alert the day before each date. Nothing is sent anywhere.",
+      calendarDescription:
+        "From your AppealDeck case. The date comes from your notice or one you set; Amazon does not notify AppealDeck. Check it against Account Health in Seller Central.",
       waitingTitle: "Waiting on someone else",
       waitingDescription:
         "Record who you are waiting on, so a stalled case reads as waiting rather than unfinished.",

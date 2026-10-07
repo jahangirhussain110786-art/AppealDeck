@@ -461,6 +461,9 @@ export const WORKSPACE = {
     title: "Start with your notice",
     body: "Paste your notice on the Overview tab first. Then this page will ask you the right questions.",
   },
+  exportWord: "Download as Word",
+  exportPdf: "Print or save as PDF",
+  printBlocked: "Your browser blocked the print window. Allow pop-ups for this site and try again.",
   confirmFirst: {
     title: "Confirm your notice first",
     body: "On the Overview tab, check how we read your notice and press “Yes, this is right”. Then this page can prepare your response. You can write your answers here in the meantime.",

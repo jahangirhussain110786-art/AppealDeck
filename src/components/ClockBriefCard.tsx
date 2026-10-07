@@ -1,6 +1,8 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, CheckCircle2, Clock } from "lucide-react";
+import { AlertTriangle, CalendarClock, CalendarPlus, CheckCircle2, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { buildIcs, calendarEventsFor } from "@/lib/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { describeClockItem, type ClockBrief, type ClockItem } from "@/core";
@@ -66,6 +68,17 @@ export function ClockBriefCard({
     );
   }
 
+  const calendarEvents = calendarEventsFor(items, APP.dashboard.clock.calendarDescription);
+  const downloadCalendar = () => {
+    const url = URL.createObjectURL(
+      new Blob([buildIcs(calendarEvents, new Date())], { type: "text/calendar" }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "appealdeck-case-dates.ics";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   const lead = items[0]!;
   const title =
     lead.urgency === "overdue"
@@ -92,6 +105,17 @@ export function ClockBriefCard({
             <ClockRow key={`${item.caseId}-${item.source}-${item.dueAt}`} item={item} />
           ))}
         </ul>
+        {calendarEvents.length > 0 && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Button type="button" variant="outline" size="sm" onClick={downloadCalendar}>
+              <CalendarPlus aria-hidden />
+              {APP.dashboard.clock.addToCalendar}
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              {APP.dashboard.clock.calendarHelp}
+            </span>
+          </div>
+        )}
         <p className="border-t border-border pt-3 text-xs text-muted-foreground">
           {APP.dashboard.clock.sinceNote}
         </p>

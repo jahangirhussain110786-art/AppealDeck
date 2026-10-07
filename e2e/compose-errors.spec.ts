@@ -93,3 +93,47 @@ test("a device-limit refusal is shown as a sentence, not as its error code", asy
   await expect(page.getByText(/5 of 5 allowed devices/)).toBeVisible();
   await expect(page.getByText("device_cap_reached")).toHaveCount(0);
 });
+
+// A prepared response can be kept as a Word file or printed to PDF. Compose is answered with a fixed
+// draft so the test does not depend on the dev account's Pass or device slots.
+test("a prepared response downloads as a Word file and opens a clean print page", async ({
+  page,
+}) => {
+  const draft = {
+    docType: "poa",
+    mode: { mode: "full-draft", reason: "Ready for your final factual review." },
+    sections: [{ heading: "Root Cause", body: WENT_WRONG }],
+    metadata: {
+      generatedAt: "2026-10-07T00:00:00.000Z",
+      kind: "POLICY",
+      evidenceComplete: true,
+      attemptNumber: 1,
+      aiDrafted: false,
+    },
+  };
+  await prepareWith(page, {
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      rendered: `## Root Cause\n\n${WENT_WRONG}\n`,
+      draft,
+      critique: { findings: [], passed: true },
+    }),
+  });
+  await page.getByRole("checkbox", { name: /I reviewed the facts/ }).check();
+
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Download as Word" }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe("appealdeck-response.docx");
+  const bytes = (await import("node:fs")).readFileSync((await download.path())!);
+  expect(bytes.subarray(0, 2).toString()).toBe("PK");
+
+  const [popup] = await Promise.all([
+    page.waitForEvent("popup"),
+    page.getByRole("button", { name: "Print or save as PDF" }).click(),
+  ]);
+  await expect(popup.locator("h1")).toHaveText("Plan of Action");
+  await expect(popup.getByText(WENT_WRONG.slice(0, 40))).toBeVisible();
+});

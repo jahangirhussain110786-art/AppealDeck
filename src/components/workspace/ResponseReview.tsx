@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CopyButton } from "@/components/CopyButton";
+import { toast } from "sonner";
+import { downloadResponseDocx, printResponse } from "@/lib/responseDocument";
 import { ComposeGate } from "@/components/ComposeGate";
 import {
   answerFor,
@@ -530,10 +532,28 @@ export function ResponseReview({
               {C.finalReview}
             </label>
             {reviewed && (
-              <CopyButton
-                text={result.rendered}
-                label={gaps.length ? "Copy working draft" : "Copy response"}
-              />
+              <div className="flex flex-wrap gap-2">
+                <CopyButton
+                  text={result.rendered}
+                  label={gaps.length ? "Copy working draft" : "Copy response"}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => downloadResponseDocx(result.draft)}
+                >
+                  {C.exportWord}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (!printResponse(result.draft)) toast.error(C.printBlocked);
+                  }}
+                >
+                  {C.exportPdf}
+                </Button>
+              </div>
             )}
             <p className="text-xs text-muted-foreground">{C.steps.attachFrom}</p>
             {/*
