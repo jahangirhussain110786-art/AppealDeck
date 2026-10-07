@@ -258,7 +258,9 @@ export function normalizeNoticeText(raw: string, options: NormalizeOptions = {})
     const lastPart = cur ? cur.parts[lastIndex]!.trimEnd() : "";
     if (cur && /[A-Za-z]-$/.test(lastPart.slice(-2)) && /^[a-z]/.test(line)) {
       // "docu-\nment" loses its hyphen; "A-\nto-z" and "pre-\nfulfillment" are compounds and keep it.
-      const left = /([A-Za-z]+)-$/.exec(lastPart)?.[1] ?? "";
+      // Only the last few letters decide this, so only the tail is searched: on one very long
+      // unbroken line the whole-string search was quadratic (303 ms on 50,000 characters).
+      const left = /([A-Za-z]+)-$/.exec(lastPart.slice(-40))?.[1] ?? "";
       const keep = left.length === 1 || KEEPS_HYPHEN.test(left);
       cur.parts[lastIndex] = keep ? lastPart + line : lastPart.slice(0, -1) + line;
       cur.length += keep ? line.length : line.length - 1;
@@ -496,14 +498,39 @@ function isGarbledToken(token: string): boolean {
   return false;
 }
 
-/** A token inside a URL, or glued to "=" or "_" (a query parameter, a snake_case name), is an identifier, not damaged text. */
-function insideIdentifierContext(text: string, at: number, length: number): boolean {
-  const before = text[at - 1];
-  const after = text[at + length];
-  if (before === "=" || before === "_" || after === "=" || after === "_") return true;
-  // Inside a URL: the whitespace-delimited word that holds the token starts like one.
-  const wordStart = Math.max(text.lastIndexOf(" ", at), text.lastIndexOf("\n", at)) + 1;
-  return /^(?:https?:\/\/|www\.)/i.test(text.slice(wordStart, wordStart + 8));
+/**
+ * A token inside a URL, or glued to "=" or "_" (a query parameter, a snake_case name), is an
+ * identifier, not damaged text.
+ *
+ * Returns a checker for one text, called with token offsets in increasing order. Finding the start
+ * of the whitespace-delimited word that holds a token by searching back from every token is
+ * quadratic on one very long unbroken string: 50,000 characters of "https://https://…" took about
+ * half a second in each of two passes on the public decoder. The checker remembers the last word
+ * start and only looks at the characters between two tokens.
+ */
+export function identifierContext(text: string): (at: number, length: number) => boolean {
+  let lastAt = -1;
+  let lastStart = 0;
+  function wordStartOf(at: number): number {
+    let start: number;
+    if (lastAt >= 0 && at >= lastAt) {
+      let i = at - 1;
+      while (i >= lastAt && text[i] !== " " && text[i] !== "\n") i--;
+      start = i >= lastAt ? i + 1 : lastStart;
+    } else {
+      start = Math.max(text.lastIndexOf(" ", at), text.lastIndexOf("\n", at)) + 1;
+    }
+    lastAt = at;
+    lastStart = start;
+    return start;
+  }
+  return (at, length) => {
+    const before = text[at - 1];
+    const after = text[at + length];
+    if (before === "=" || before === "_" || after === "=" || after === "_") return true;
+    const wordStart = wordStartOf(at);
+    return /^(?:https?:\/\/|www\.)/i.test(text.slice(wordStart, wordStart + 8));
+  };
 }
 
 /** "2O26", "l2": a number with a letter standing in for a digit. Mostly digits, so an ASIN never qualifies. */
@@ -549,8 +576,9 @@ export interface GarbleAssessment {
 export function assessGarbled(text: string): GarbleAssessment {
   const tokens = text.match(/[A-Za-z0-9]{4,40}/g) ?? [];
   let suspect = 0;
+  const insideIdentifier = identifierContext(text);
   for (const m of text.matchAll(/[A-Za-z0-9]{4,40}/g)) {
-    if (insideIdentifierContext(text, m.index!, m[0].length)) continue;
+    if (insideIdentifier(m.index!, m[0].length)) continue;
     if (isGarbledToken(m[0])) suspect++;
   }
   return {
@@ -565,10 +593,9 @@ export function assessGarbled(text: string): GarbleAssessment {
  * the join is one of those words. Never applied silently: `/api/decode` says it did it.
  */
 export function repairOcrText(text: string): string {
+  const insideIdentifier = identifierContext(text);
   const repaired = text.replace(/[A-Za-z0-9]{4,40}/g, (token, offset: number) =>
-    !insideIdentifierContext(text, offset, token.length) && isGarbledToken(token)
-      ? repairToken(token)
-      : token,
+    !insideIdentifier(offset, token.length) && isGarbledToken(token) ? repairToken(token) : token,
   );
   return repaired.replace(
     /\b([A-Za-z]{2,10}) ([A-Za-z]{1,8})\b/g,

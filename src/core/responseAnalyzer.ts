@@ -99,6 +99,9 @@ const RULES: ReadonlyArray<PatternRule> = [
       /send (?:us )?(?:your )?(?:invoices?|receipts?)/i,
       /upload (?:your|the) documentation/i,
       /supplier invoice/i,
+      // 7 Oct 2026: Amazon's plain ways of asking for records without naming one.
+      /\b(?:we|amazon) (?:need|require)s? (?:the following|you to (?:provide|send|submit|upload))\b/i,
+      /\breply (?:to this (?:message|email) )?with (?:the )?(?:requested )?(?:documents?|documentation|invoices?)\b/i,
       /\b(?:provide|submit|upload|send)\s+(?:us\s+)?(?:an?|the|your|valid|updated|copies of)\s+(?:supplier\s+|valid\s+)?invoices?\b/i,
     ],
     evidenceKind: "supplier_invoice",
@@ -116,6 +119,13 @@ const RULES: ReadonlyArray<PatternRule> = [
       /please provide more (?:detail|information)/i,
       /your plan of action (?:is|was) (?:insufficient|incomplete|unclear)/i,
       /we need more details about/i,
+      // 7 Oct 2026: the same refusals worded another way. "We will not be reinstating" and "has not
+      // been reinstated" are refusals, never the reinstatement their words contain.
+      /(?:does|do|did) not contain enough (?:information|detail)/i,
+      /not enough (?:information|detail)/i,
+      /we (?:will|are) not (?:be )?reinstating/i,
+      /(?:has|have) not been reinstated|(?:is|remains) not reinstated/i,
+      /(?:submit|send|provide|file) (?:us )?(?:a|another) new (?:plan of action|appeal)/i,
       // A refusal that does not say it is final: the case goes on (see final_decision_negative).
       /we(?:'re| are) (?:unable|not able) to reinstate/i,
       /we (?:can(?:'t|not)|will not|won't|are not going to) reinstate/i,

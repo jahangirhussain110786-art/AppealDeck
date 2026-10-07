@@ -23,8 +23,8 @@
 | Phase | Lens | Areas | Status |
 | --- | --- | --- | --- |
 | 1 | Money, identity and trust boundary | 1.1 Payments & entitlements · 1.2 Auth, sessions & redirects · 1.3 API routes & input hardening · 1.4 Database, migrations & RLS · 1.5 Secrets, config & deployment | DONE (7 Oct 2026) |
-| 2 | The seller's data | 2.1 Vault & encryption · 2.2 Case store, persistence & migration of old data · 2.3 Backup, restore, export · 2.4 Documents & the device reader · 2.5 Privacy copy vs. actual data flow | NOT STARTED |
-| 3 | The engine's judgement | 3.1 Notice parsing, classification & response type · 3.2 Evidence model & requirements · 3.3 Deadlines, clocks & reminders · 3.4 Reply analyser & escalation · 3.5 Composer, critic, wording lock & D6 | NOT STARTED |
+| 2 | The seller's data | 2.1 Vault & encryption · 2.2 Case store, persistence & migration of old data · 2.3 Backup, restore, export · 2.4 Documents & the device reader · 2.5 Privacy copy vs. actual data flow | IN PROGRESS (read-through done; live walk in Phase 4) |
+| 3 | The engine's judgement | 3.1 Notice parsing, classification & response type · 3.2 Evidence model & requirements · 3.3 Deadlines, clocks & reminders · 3.4 Reply analyser & escalation · 3.5 Composer, critic, wording lock & D6 | IN PROGRESS: 3.1, 3.2 (partly), 3.3, 3.4 done; 3.5 pending |
 | 4 | The seller's journey | 4.1 First 5 minutes (home → decode → case) · 4.2 The case workspace end to end · 4.3 Dashboard, multi-case, billing, devices · 4.4 Empty, error, offline, slow & hostile states · 4.5 Seams between steps (resume, gates, redirects) | NOT STARTED |
 | 5 | Launch fitness | 5.1 Accessibility, responsive & visual · 5.2 Performance & bundle · 5.3 SEO, content truth & legal copy · 5.4 Tests, CI & observability · 5.5 Dead, unfinished & half-built code; docs vs. reality | NOT STARTED |
 
@@ -87,37 +87,37 @@ Files: `.env.example`, `docs/DEPLOYMENT.md`, `docs/CURRENT-STATE.md`, `next.conf
 
 ### 2.1 Vault & encryption
 Files: `src/core/vault/*`, `VaultGate`, `VaultView`, `VaultLockedState`, `src/lib/vault/*`.
-- [ ] Device-key mode vs. passphrase mode; relock paths both ways; no page asks for a passphrase by default.
-- [ ] Wrong passphrase, forgotten passphrase (disclosure shown), idle lock timers cleared.
-- [ ] Nonce/IV uniqueness, key wrapping, envelope versioning, tamper detection.
-- [ ] Large files, quota errors, IndexedDB eviction (`storage.persist`) and the on-page honesty message.
-- [ ] Guest-session wipe on new browser session vs. same-tab reload.
+- [~] (code read: guest vault secret is tab-session only by design; crypto parameters bounded; covered by 4 vault test files; live walk in 4.5) Device-key mode vs. passphrase mode; relock paths both ways; no page asks for a passphrase by default.
+- [x] (idle-lock warning and lock timers are cleared on activity and unmount) Wrong passphrase, forgotten passphrase (disclosure shown), idle lock timers cleared.
+- [x] (fresh random 12-byte IV per encryption, 256-bit AES-GCM, PBKDF2 310k, stored KDF params bounded 1k..2M iterations and salt >= 16 bytes) Nonce/IV uniqueness, key wrapping, envelope versioning, tamper detection.
+- [~] (`storage.persist()` and the on-page message exist; abandoned guest databases are pruned after 7 days; 15 MB/60 MB read costs measured 30 Sep) Large files, quota errors, IndexedDB eviction (`storage.persist`) and the on-page honesty message.
+- [x] (guest vault name and secret live in `sessionStorage`; reload keeps it, a new browser session cannot read the old one) Guest-session wipe on new browser session vs. same-tab reload.
 
 ### 2.2 Case store, persistence & migration of old data
 Files: `src/lib/caseStore.ts`, `caseSchema.ts`, `workspaceSchema.ts`, `workspaceDraft.ts`, `src/core/workspace.ts`, `legacyMigration.ts`.
-- [ ] Zod schema accepts every field the model writes (the validator strips unknown keys — the repeated silent-drop trap).
-- [ ] Serialized commit queue: concurrent saves, stale-key writes, case switch races.
-- [ ] Old-format cases (classic interview, positional drafts, click-counted deadlines) load and repair.
-- [ ] Delete case removes its records; active-case pointer survives it.
+- [F] (L-007: added a compile-time two-way parity test, `workspaceSchema.parity.test.ts`; no field is dropped today) Zod schema accepts every field the model writes (the validator strips unknown keys — the repeated silent-drop trap).
+- [~] (covered by caseStore tests and bug sweeps 6-8; not re-fuzzed) Serialized commit queue: concurrent saves, stale-key writes, case switch races.
+- [~] (`legacyMigration` tests pass; not re-tested live) Old-format cases (classic interview, positional drafts, click-counted deadlines) load and repair.
+- [~] (covered by `journey.spec.ts`) Delete case removes its records; active-case pointer survives it.
 
 ### 2.3 Backup, restore, export
 Files: `src/lib/vault/backup*`, restore UI, `workspaceExport.ts`, `evidencePack.ts`.
-- [ ] Encrypted cloud backup: size limit message, retention, restore into an empty vault and into a vault with data.
-- [ ] Portable backup file round trip with documents.
-- [ ] Case notes / evidence pack export includes everything the seller entered (questionnaire answers, checks, submissions) and nothing they did not.
+- [~] (`backup.test.ts` passes: size limit message, retention of 3; live restore walk pending) Encrypted cloud backup: size limit message, retention, restore into an empty vault and into a vault with data.
+- [~] (portable restore covered by `integrity.spec.ts`) Portable backup file round trip with documents.
+- [~] (`workspaceExport.test.ts`, `evidencePack.test.ts`) Case notes / evidence pack export includes everything the seller entered (questionnaire answers, checks, submissions) and nothing they did not.
 
 ### 2.4 Documents & the device reader
 Files: `src/lib/documentChecks/*`, `read-document` route, `FileDropZone`, `DocumentCheckPanel`, `scripts/copy-reader-assets.mjs`.
-- [ ] Guest files never uploaded; signed-in files sent only after Pass check; identity/bank/address documents never sent.
-- [ ] pdf.js and OCR failure, hang, password-protected, huge, zero-byte, wrong-type files all end in a plain message, never a spinner.
-- [ ] A reading claims only what the words support (no false "Found").
-- [ ] Reader assets are served correctly on the real deployment.
+- [~] (device-reader e2e passes in the full run, 10 tests) Guest files never uploaded; signed-in files sent only after Pass check; identity/bank/address documents never sent.
+- [~] (device-reader and pdf-worker-compat e2e) pdf.js and OCR failure, hang, password-protected, huge, zero-byte, wrong-type files all end in a plain message, never a spinner.
+- [~] (`localReading.test.ts`) A reading claims only what the words support (no false "Found").
+- [ ] Reader assets are served correctly on the real deployment (re-check against appealdeck.vercel.app).
 
 ### 2.5 Privacy copy vs. actual data flow
 Files: `src/content/legal.ts`, `legal/*.md`, `DataFlow.tsx`, `workspace.ts` privacy line.
-- [ ] Trace each outbound call (decode, compose, extract, analyze-reply, improve-wording, read-document, analytics, email) and confirm the privacy page and diagram describe exactly that.
-- [ ] Retention, deletion and data-subject-request statements are achievable by a one-person operator.
-- [ ] Any change to privacy wording is flagged to the founder, not made quietly.
+- [x] (traced: decode, compose, analyze-reply, improve-wording, read-document, analytics, email, reminders, outcome. No route logs request content; Gemini warnings log task/model/reason only. One gap: L-008) Trace each outbound call (decode, compose, extract, analyze-reply, improve-wording, read-document, analytics, email) and confirm the privacy page and diagram describe exactly that.
+- [~] (billing@ and privacy@ mailboxes must exist: founder, DEPLOYMENT 6a) Retention, deletion and data-subject-request statements are achievable by a one-person operator.
+- [x] Any change to privacy wording is flagged to the founder, not made quietly.
 
 ---
 
@@ -127,26 +127,26 @@ Files: `src/content/legal.ts`, `legal/*.md`, `DataFlow.tsx`, `workspace.ts` priv
 
 ### 3.1 Notice parsing, classification & response type
 Files: `noticeParser.ts`, `classifier.ts`, `responseType.ts`, `noticeIssues.ts`, `entities.ts`, `noticeText.ts`, `noticeAuthenticity.ts`, fixtures.
-- [ ] Run fresh, unseen notice wordings (not the fixture corpus) through decode; list misreads.
-- [ ] Multi-issue notices, non-English fragments, forwarded/quoted mail, tiny and huge inputs.
-- [ ] Scam check: silent on every genuine fixture, loud on forged ones; never returns a verdict.
-- [ ] Non-US marketplaces: behaviour matches what we sell (founder call open).
+- [F] (14 fresh wordings run; four families misread as UNKNOWN: fixed, L-009) Run fresh, unseen notice wordings (not the fixture corpus) through decode; list misreads.
+- [F] (hostile-input timing: two quadratic paths found and fixed, L-010, L-011) Multi-issue notices, non-English fragments, forwarded/quoted mail, tiny and huge inputs.
+- [x] (the fresh corpus: the forged 'verify your account within 24 hours' notice was flagged, the other 13 were silent) Scam check: silent on every genuine fixture, loud on forged ones; never returns a verdict.
+- [!] (still the founder call from 29 Sep: the case route dead-ends outside the US store while the Pass is sold worldwide) Non-US marketplaces: behaviour matches what we sell (founder call open).
 
 ### 3.2 Evidence model & requirements
 Files: `evidenceModel.ts`, `requirementGuidance.ts`, `guidance.ts`, `factsLedger.ts`, `documentCheck.ts`.
-- [ ] Every violation kind has required records, a plain reason, and an obtain-or-alternative path.
+- [~] (SDS and exemption sheets now name a record; UNKNOWN still has an empty matrix by design) Every violation kind has required records, a plain reason, and an obtain-or-alternative path.
 - [ ] Notice-named records ∪ matrix records; `raisedWhen` conditions; no record raised on negation or past tense.
 - [ ] Document check statuses (Found / Not found / Conflicts / Not checked) honest for scans.
 
 ### 3.3 Deadlines, clocks & reminders
 Files: `noticeDate.ts`, `deadlinesModel.ts`, `clock.ts`, `caseReminders.ts`, `api/reminders`, `api/jobs/case-reminders`.
-- [ ] Time zones (UTC vs. seller calendar), DST, month ends, "from receipt" vs. stated date.
-- [ ] A deadline is shown only if grounded; ungrounded windows say so.
+- [x] (full core + lib suite, 1856 tests, passes under TZ = Kiritimati, Los Angeles, Karachi and Pago Pago) Time zones (UTC vs. seller calendar), DST, month ends, "from receipt" vs. stated date.
+- [x] (every fresh notice without a stated date shows 'Appeal window ambiguous - verify...'; stated dates are counted) A deadline is shown only if grounded; ungrounded windows say so.
 - [ ] Reminder end to end: set → stored → cron fires → email sent → status visible; failure paths.
 
 ### 3.4 Reply analyser & escalation
 Files: `responseAnalyzer.ts`, `replyFeedback.ts`, `escalation.ts`, `submissionNovelty.ts`, `ReplyDeltaReview`.
-- [ ] Refusals never read as reinstated; ambiguous stays ambiguous.
+- [F] (15 fresh replies; 5 clear refusals/requests read 'unrecognized': fixed, L-012; none read 'reinstated') Refusals never read as reinstated; ambiguous stays ambiguous.
 - [ ] Reply delta keeps reviewed work; reopen/added/outstanding/carried behave.
 - [ ] Repeat-submission-without-change guard; change-of-approach panel conditions.
 
@@ -231,6 +231,12 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 | L-004 | 1.5 | P3 | A stray 34 KB research prompt was tracked at the repo root. | `git ls-files` | FIXED | moved to `docs/handoffs/2026-09-21-prompt-for-chatgpt.txt` |
 | L-005 | 1.4 | P3 | `licenses` and `license_events` answer anon with `200 []` (RLS only) while other tables refuse at grant level. Safe today; one wrong policy would expose them. | live REST probe | OPEN, optional migration 0016 (F-3) | |
 | L-006 | 1.1 | P3 | The dashboard reply card (legacy non-workspace cases only) is Pass-gated at account level. Harmless. | `DashboardClient.tsx`, `analyze-reply` route | NOTED | |
+| L-007 | 2.2 | P3 | Nothing stopped `Workspace` and its server-side validator drifting apart; the validator silently strips unknown keys, which has dropped fields before. | compile-time probe showed parity today | FIXED | `workspaceSchema.parity.test.ts` fails the typecheck on drift |
+| L-008 | 2.5 | P3 | The privacy page says a licence record is "email, plan, status"; it also carries the case identifier of the case it covers (an opaque random ID). | `licenses.case_id`, `checkout_intents.case_id` | FOUNDER CALL F-4 (wording) | |
+| L-009 | 3.1 | P2 | Four ordinary notice families read as `UNKNOWN`: a dangerous-goods review asking for a Safety Data Sheet (the sheet was never raised as a record), an 'approval required' category, 'used sold as new' item-condition complaints, and review-manipulation removals. UNKNOWN costs the family's guidance and record list. | 14 fresh notices through `runDecode` | FIXED | patterns in `noticeParser.ts`/`workspace.ts`; `freshNotices.test.ts` incl. negatives |
+| L-010 | 3.1/1.3 | P2 | `/api/decode` is public: the OCR damage check and repair were quadratic on one long unbroken string (400 ms and 540 ms each on 50 KB; 1.6 s in the old suite under load), so a script inside the rate limit could burn serverless CPU. | per-pass timing probe | FIXED | `identifierContext` remembers the word start (7 ms and 12 ms now); differential test against the old search on random text |
+| L-011 | 3.1/1.3 | P2 | Un-hyphenating wrapped lines was quadratic on text made of hyphen breaks (303 ms on 50 KB). | per-pass timing across every hostile shape | FIXED | search limited to the last 40 characters; tight 150 ms budgets added to `noticeText.cost.test.ts` |
+| L-012 | 3.4 | P2 | Common refusals and requests read as `unrecognized`: 'does not contain enough information', 'we will not be reinstating', 'has not been reinstated', 'send a new plan of action', 'we need the following ... reply with the documents'. Honest fallback, but the seller got no help. None ever read as reinstated. | 15 fresh replies through `analyzeReply` | FIXED | rules added; `responseAnalyzer.fresh.test.ts` pins both directions |
 
 ## Founder calls raised by this audit
 
@@ -238,11 +244,18 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 | --- | --- | --- | --- |
 | F-1 | Should Sign out end only this device's session (`scope: "local"`)? Recommendation: yes. | 1.2 | OPEN |
 | F-2 | Enforce the CSP (needs a report endpoint and a clean console pass first) or drop it? | 1.5 | OPEN |
+| F-4 | Mention the case identifier in the privacy page's licence-record sentence? Recommendation: yes. | 2.5 | OPEN |
 | F-3 | Apply optional migration 0016 (revoke anon select on licences)? Low urgency. | 1.4 | OPEN |
 
 ## Unverified
 
 (Suspicions without evidence yet. Promote to the register or delete — never leave a claim here as fact.)
+
+## Method notes (learned during this audit)
+
+- Never write a regex through a shell heredoc or `node -e` string: `\b` became a literal backspace in `responseAnalyzer.ts` and the new rule silently never matched. Use the Edit tool, then scan: `grep -nP "[\x00-\x08\x0b\x0c\x0e-\x1f]" src/core/*.ts src/lib/*.ts`.
+- `grep -r` over the repo stalls on `node_modules` and old worktrees; use `git grep`.
+- A passing unit test of a regex literal proves nothing about the same regex inside the module: test through the exported function.
 
 ## Gate baseline
 
@@ -252,4 +265,4 @@ HEAD `117355d` + L-001 fix, 7 Oct 2026: typecheck 0 (was 5 errors) · lint 0 · 
 
 | Date | Done | Stopped at / next |
 | --- | --- | --- |
-| 2026-10-07 | Plan written (5 phases × 5 areas, 25 areas). Gate baseline recorded; found and fixed L-001 (CI red since 6 Oct on test typecheck). Phase 1 done (1.1-1.5): live-DB verification of migrations 0013-0015, auth redirect probes, route-by-route hardening table, secrets scan. | Start Phase 2 at 2.1 Vault & encryption. Confirm CI green after the Phase 1 commit (`gh run list`). |
+| 2026-10-07 | Plan written (5 phases × 5 areas, 25 areas). Gate baseline recorded; found and fixed L-001 (CI red since 6 Oct on test typecheck). Phase 1 done (1.1-1.5). Phase 2 read-through done. Phase 3: fresh notices (4 families fixed), hostile-input timing (2 quadratic paths fixed), fresh replies (5 wordings fixed), timezone matrix. | Next: 3.5 composer/critic/wording lock/D6 spot checks, then Phase 4 live walks (needs a built server + signed-in session), then Phase 5. Run Playwright CI mode after Phase 3 changes. |

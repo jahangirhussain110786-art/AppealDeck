@@ -98,3 +98,21 @@ describe("the decoder's new passes stay cheap on hostile input", () => {
     }
   });
 });
+
+/**
+ * 7 Oct 2026. The generous ceiling above hid two quadratic paths for weeks: the OCR damage check
+ * and repair took ~0.4 s and ~0.5 s each on 50,000 characters of one unbroken URL-like string, and
+ * un-hyphenating wrapped lines took ~0.3 s on text made of hyphen breaks. These budgets are tight
+ * enough (a fraction of the old cost) to catch their return and still ten times what they take now.
+ */
+describe("the two paths that were quadratic stay linear", () => {
+  it("OCR damage check and repair on one long unbroken string", () => {
+    const text = normalizeNoticeText(shapes["repeated schemes"]!);
+    expect(elapsed(() => assessGarbled(text))).toBeLessThan(150);
+    expect(elapsed(() => repairOcrText(text))).toBeLessThan(150);
+  });
+
+  it("normalising text made of hyphenated line breaks", () => {
+    expect(elapsed(() => normalizeNoticeText(shapes["hyphen breaks"]!))).toBeLessThan(150);
+  });
+});

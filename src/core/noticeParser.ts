@@ -74,7 +74,7 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   // seller down the wrong response route, which is the exact failure this work exists to stop.
   [
     "PRODUCT_SAFETY",
-    /product safety|safety (?:complaint|incident|concern)|product recall|recall(?:ed)? product|recall notice|unsafe product|hazardous (?:material|product|good)|\bCPSIA\b|Children['’]?s Product Certificate|safety documentation/i,
+    /product safety|safety (?:complaint|incident|concern)|product recall|recall(?:ed)? product|recall notice|unsafe product|hazardous (?:material|product|good)|dangerous goods?|\bhazmat\b|safety data sheets?|\bSDS\b|exemption sheets?|\bCPSIA\b|Children['’]?s Product Certificate|safety documentation/i,
   ],
   [
     // The gated-category alternatives were added 23 Sep 2026 after B-01's fixtures found that a
@@ -83,7 +83,7 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
     // Kept as narrow, distinctive phrases rather than a bare "approval": Amazon uses that word in
     // routine contexts that have nothing to do with a restriction.
     "RESTRICTED_PRODUCT",
-    /restricted product|prohibited product|restricted[\s-]?products? policy|not (?:permitted|allowed) (?:for sale|to be sold|on)|restricted to (?:qualified|approved|pre-?approved) sellers?|(?:need|require)s? approval to (?:sell|list)/i,
+    /restricted product|prohibited product|restricted[\s-]?products? policy|not (?:permitted|allowed) (?:for sale|to be sold|on)|restricted to (?:qualified|approved|pre-?approved) sellers?|(?:need|require)s? approval to (?:sell|list)|categor(?:y|ies)[^.!?\n]{0,40}requires? approval|not (?:currently )?approved to sell/i,
   ],
   [
     // Identity/business verification only. Authenticity-of-documents wording is INAUTHENTIC_DOCUMENTS
@@ -100,7 +100,7 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   ["FUNDS", /disbursement|funds? (?:is|are|under) (?:on hold|under review)|disbursement-appeals/i],
   [
     "POLICY",
-    /policy (?:violation|compliance)|repeated policy violations|violations of (?:our |Amazon(?:'s)? )?policies/i,
+    /policy (?:violation|compliance)|repeated policy violations|violations of (?:our |Amazon(?:'s)? )?policies|used sold as new|item condition complaints?|review manipulation|manipulat\w+ (?:of )?(?:customer |product )?reviews/i,
   ],
 ];
 

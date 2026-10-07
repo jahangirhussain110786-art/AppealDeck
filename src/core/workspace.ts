@@ -383,7 +383,7 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
   },
   {
     pattern:
-      /\b(test reports?|compliance certificates?|certificates? of (?:conformity|compliance)|lab(?:oratory)? (?:test )?reports?)\b/i,
+      /\b(test reports?|compliance certificates?|certificates? of (?:conformity|compliance)|lab(?:oratory)? (?:test )?reports?|safety data sheets?|SDS|exemption sheets?)\b/i,
     evidenceKind: "compliance_report",
   },
 ];
