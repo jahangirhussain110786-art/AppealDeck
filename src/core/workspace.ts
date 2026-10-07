@@ -1236,6 +1236,66 @@ export function planFaulted(w: Pick<Workspace, "notice" | "revision" | "replies"
   return texts.some((t) => t && PLAN_FAULT.test(t));
 }
 
+/**
+ * The to-dos about what the seller has *written*: unanswered questions, answers too short to be
+ * answers, and a root cause a refusal said was missing. Split out of `workspaceGaps` (7 Oct 2026)
+ * so the composer can tell a draft that is unfinished because of its writing from one that is
+ * unfinished only because a record or a tick is outstanding. Same lines, same order, same
+ * conditions as before: `workspaceGaps` appends this list unchanged.
+ */
+export function writtenPartGaps(w: Workspace): string[] {
+  const gaps: string[] = [];
+  const route = routeWorkspace(w);
+  const composable =
+    COMPOSABLE_PROTOCOLS.includes(w.protocol) || COMPOSABLE_PROTOCOLS.includes(route.protocol);
+  /*
+    What the written part must contain depends on what was asked (audit item L, 23 Sep 2026). A
+    single 40-character minimum was applied to every protocol, which kept a correct one-line
+    acknowledgement a "working draft" forever while accepting any 40 characters of anything.
+  */
+  const questions = questionnaireQuestions(w);
+  const noWrongdoing = disputesFinding(w);
+  if (!composable) {
+    // Nothing is written here for these protocols, so no written-part to-dos.
+  } else if (questions.length) {
+    for (const q of questions) {
+      if (!answerFor(w, q).trim()) gaps.push(`Answer Amazon's question: ${q}`);
+    }
+  } else if (w.protocol === "acknowledgement") {
+    if (!w.explanation.trim()) gaps.push("Write the acknowledgement Amazon asked for.");
+  } else if (w.explanation.trim().length < 40) {
+    gaps.push(
+      w.protocol === "operational"
+        ? "Answer “What went wrong?” in a few sentences, naming the cause."
+        : "Say in a few sentences what your documents show Amazon.",
+    );
+  }
+  if (w.protocol === "operational") {
+    /*
+      6 Oct 2026: a seller who did nothing wrong (a wrongly linked account, a claim that is simply
+      wrong) was forced to invent corrective actions to clear these two lines. The bar is the same
+      (a few real sentences) but the question now says that "nothing needed correcting, because…"
+      is an answer. Kept for every other operational case exactly as before.
+    */
+    if (w.correctiveActions.trim().length < 40)
+      gaps.push(
+        noWrongdoing
+          ? `Answer “What have you fixed already?”. ${STORES.nothingToCorrectHint}`
+          : "Answer “What have you fixed already?”, saying what is finished and what is still in progress.",
+      );
+    if (w.preventiveMeasures.trim().length < 40)
+      gaps.push(
+        noWrongdoing
+          ? `Answer “How will you stop it happening again?”. ${STORES.nothingToCorrectHint}`
+          : "Answer “How will you stop it happening again?”: who does what, and how often.",
+      );
+    // A refusal that says the plan itself is missing its root cause is the first thing to fix, and
+    // it stays until the seller has actually rewritten that section (it used to be uncleareable).
+    if (planFaulted(w) && !rootCauseRewritten(w)) gaps.push(STORES.rootCauseFaulted);
+  }
+  return gaps;
+}
+
 /*
   The seller reads every line below as a to-do: in "Before you send", as the dashboard's next step,
   in the export and in a submission's "still open" note. Reworded 29 Sep 2026 (AM-32) from engine
@@ -1303,51 +1363,7 @@ export function workspaceGaps(w: Workspace): string[] {
     if (!sourceQuoteResolves(w, r))
       gaps.push(`Check Amazon's words for this document against your notice: ${r.label}`);
   }
-  /*
-    What the written part must contain depends on what was asked (audit item L, 23 Sep 2026). A
-    single 40-character minimum was applied to every protocol, which kept a correct one-line
-    acknowledgement a "working draft" forever while accepting any 40 characters of anything.
-  */
-  const questions = questionnaireQuestions(w);
-  const noWrongdoing = disputesFinding(w);
-  if (!composable) {
-    // Nothing is written here for these protocols, so no written-part to-dos.
-  } else if (questions.length) {
-    for (const q of questions) {
-      if (!answerFor(w, q).trim()) gaps.push(`Answer Amazon's question: ${q}`);
-    }
-  } else if (w.protocol === "acknowledgement") {
-    if (!w.explanation.trim()) gaps.push("Write the acknowledgement Amazon asked for.");
-  } else if (w.explanation.trim().length < 40) {
-    gaps.push(
-      w.protocol === "operational"
-        ? "Answer “What went wrong?” in a few sentences, naming the cause."
-        : "Say in a few sentences what your documents show Amazon.",
-    );
-  }
-  if (w.protocol === "operational") {
-    /*
-      6 Oct 2026: a seller who did nothing wrong (a wrongly linked account, a claim that is simply
-      wrong) was forced to invent corrective actions to clear these two lines. The bar is the same
-      (a few real sentences) but the question now says that "nothing needed correcting, because…"
-      is an answer. Kept for every other operational case exactly as before.
-    */
-    if (w.correctiveActions.trim().length < 40)
-      gaps.push(
-        noWrongdoing
-          ? `Answer “What have you fixed already?”. ${STORES.nothingToCorrectHint}`
-          : "Answer “What have you fixed already?”, saying what is finished and what is still in progress.",
-      );
-    if (w.preventiveMeasures.trim().length < 40)
-      gaps.push(
-        noWrongdoing
-          ? `Answer “How will you stop it happening again?”. ${STORES.nothingToCorrectHint}`
-          : "Answer “How will you stop it happening again?”: who does what, and how often.",
-      );
-    // A refusal that says the plan itself is missing its root cause is the first thing to fix, and
-    // it stays until the seller has actually rewritten that section (it used to be uncleareable).
-    if (planFaulted(w) && !rootCauseRewritten(w)) gaps.push(STORES.rootCauseFaulted);
-  }
+  gaps.push(...writtenPartGaps(w));
   // First, not last: a reply changes what every other item means, and the dashboard shows only
   // the first gap — so a case with an unread reply used to open on "Review Supplier invoice".
   if (w.replies.some((r) => !r.applied))
@@ -1448,6 +1464,18 @@ export function composeWorkspace(
       reason: gaps.length
         ? "Resolve the listed items before submitting."
         : "Ready for your final factual review.",
+      // What kind of unfinished: "evidence" here means unfinished for any reason other than the
+      // writing (a record still to attach, a tick still to give), so the draft-strength line does
+      // not call good writing thin because a file is missing (7 Oct 2026).
+      ...(gaps.length
+        ? {
+            gapReason: (writtenPartGaps(w).length === 0
+              ? "evidence"
+              : writtenPartGaps(w).length === gaps.length
+                ? "narrative"
+                : "both") as "evidence" | "narrative" | "both",
+          }
+        : {}),
     },
     sections,
     watermark: gaps.length ? "WORK IN PROGRESS — NOT READY TO SUBMIT" : undefined,

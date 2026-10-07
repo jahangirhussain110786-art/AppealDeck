@@ -24,9 +24,17 @@ export const DRAFT_STRENGTH_TONE = {
 
 export function computeDraftStrength(
   mode: ComposerMode,
-  findings: readonly CriticFinding[],
+  allFindings: readonly CriticFinding[],
 ): DraftStrength {
-  if (mode.mode === "gap-draft") return "weak";
+  // The critic restates every outstanding to-do as a `WORKSPACE_GAP` warning. Those are what makes a
+  // draft a gap draft, which `mode` already carries; counted again here they made a missing record
+  // read as "parts of the writing need work".
+  const findings = allFindings.filter((f) => f.code !== "WORKSPACE_GAP");
+  // An unfinished draft is "weak" when its writing is part of what is unfinished. When only a record
+  // or a tick is outstanding (`gapReason: "evidence"`) the writing is judged on its own findings:
+  // calling a seller's complete, specific answers "thin" because a file is not linked yet is
+  // untrue, and the missing record is already listed under "Before you send" (7 Oct 2026).
+  if (mode.mode === "gap-draft" && mode.gapReason !== "evidence") return "weak";
   if (findings.some((f) => f.severity === "error")) return "weak";
   if (findings.some((f) => f.severity === "warning")) return "needs_work";
   return "strong";

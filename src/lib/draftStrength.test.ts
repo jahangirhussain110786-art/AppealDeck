@@ -11,8 +11,25 @@ function finding(severity: CriticFinding["severity"]): CriticFinding {
 }
 
 describe("computeDraftStrength", () => {
-  it("is weak whenever the draft is a gap draft, regardless of findings", () => {
+  it("is weak whenever the writing is part of what is unfinished, regardless of findings", () => {
     expect(computeDraftStrength(gapDraft, [])).toBe("weak");
+    expect(computeDraftStrength({ ...gapDraft, gapReason: "both" }, [])).toBe("weak");
+    // A gap draft that does not say why is treated as the writing's, as before.
+    expect(computeDraftStrength({ mode: "gap-draft", reason: "incomplete" }, [])).toBe("weak");
+  });
+
+  it("judges the writing on its findings when only a record or a tick is outstanding", () => {
+    const evidenceOnly: ComposerMode = { ...gapDraft, gapReason: "evidence" };
+    expect(computeDraftStrength(evidenceOnly, [])).toBe("strong");
+    expect(computeDraftStrength(evidenceOnly, [finding("warning")])).toBe("needs_work");
+    expect(computeDraftStrength(evidenceOnly, [finding("error")])).toBe("weak");
+    // The critic restates the missing record as a warning; that is the gap, not the writing.
+    const restated: CriticFinding = {
+      severity: "warning",
+      code: "WORKSPACE_GAP",
+      message: "Add the file",
+    };
+    expect(computeDraftStrength(evidenceOnly, [restated])).toBe("strong");
   });
 
   it("is weak when any finding is an error, even on a full draft", () => {

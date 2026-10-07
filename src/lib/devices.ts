@@ -321,7 +321,7 @@ export function deviceErrorResponse(result: DeviceActivationResult) {
   return new Response(
     JSON.stringify({
       error: "device_cap_reached",
-      message: `Your Appeal Pass is active on ${result.activeCount} of ${result.cap} allowed devices. Revoke one to continue.`,
+      message: `Your Appeal Pass is active on ${result.activeCount} of ${result.cap} allowed devices. Open Billing and remove one, then try again.`,
       activeCount: result.activeCount,
       cap: result.cap,
     }),

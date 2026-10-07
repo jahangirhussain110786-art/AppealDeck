@@ -11,6 +11,19 @@ describe("apiErrorMessage", () => {
     );
   });
 
+  it("shows the sentence written for the seller, never an error code", () => {
+    expect(
+      apiErrorMessage(
+        403,
+        {
+          error: "device_cap_reached",
+          message: "Your Appeal Pass is active on 5 of 5 allowed devices.",
+        },
+        "x",
+      ),
+    ).toBe("Your Appeal Pass is active on 5 of 5 allowed devices.");
+  });
+
   it("blames the service, not the seller, for an error page or a rate limit with no JSON", () => {
     for (const status of [429, 500, 502, 504])
       expect(apiErrorMessage(status, null, "fallback")).toMatch(/not available right now/);

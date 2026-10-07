@@ -23,9 +23,10 @@ async function signInAsDev(page: Page) {
   await expect(page).toHaveURL(/dashboard/);
 }
 
-test("a platform error page while preparing a response is not shown as a parse error", async ({
-  page,
-}) => {
+async function prepareWith(
+  page: Page,
+  reply: { status: number; contentType: string; body: string },
+) {
   test.skip(
     !process.env.DEV_LOGIN_EMAIL || !process.env.DEV_LOGIN_PASSWORD,
     "Dev authentication fixture required",
@@ -58,16 +59,37 @@ test("a platform error page while preparing a response is not shown as a parse e
       body: JSON.stringify({ status: "active" }),
     }),
   );
-  await page.route("**/api/compose", (route) =>
-    route.fulfill({
-      status: 504,
-      contentType: "text/html",
-      body: "<html><body>An error occurred with your deployment</body></html>",
-    }),
-  );
+  await page.route("**/api/compose", (route) => route.fulfill(reply));
   await page.getByRole("button", { name: /prepare working draft/i }).click();
+}
+
+test("a platform error page while preparing a response is not shown as a parse error", async ({
+  page,
+}) => {
+  await prepareWith(page, {
+    status: 504,
+    contentType: "text/html",
+    body: "<html><body>An error occurred with your deployment</body></html>",
+  });
   await expect(page.getByText(/not available right now/i)).toBeVisible();
   await expect(page.getByText(/Unexpected token/i)).toHaveCount(0);
   // Nothing the seller wrote was lost.
   await expect(page.getByLabel(/what went wrong/i)).toHaveValue(WENT_WRONG);
+});
+
+// The server sends a code in `error` and the sentence in `message`; the seller reads the sentence.
+test("a device-limit refusal is shown as a sentence, not as its error code", async ({ page }) => {
+  await prepareWith(page, {
+    status: 403,
+    contentType: "application/json",
+    body: JSON.stringify({
+      error: "device_cap_reached",
+      message:
+        "Your Appeal Pass is active on 5 of 5 allowed devices. Open Billing and remove one, then try again.",
+      activeCount: 5,
+      cap: 5,
+    }),
+  });
+  await expect(page.getByText(/5 of 5 allowed devices/)).toBeVisible();
+  await expect(page.getByText("device_cap_reached")).toHaveCount(0);
 });
