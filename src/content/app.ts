@@ -516,6 +516,11 @@ export const APP = {
         "Create an encrypted cloud backup for this account. It includes all cases and files in this vault, up to about 7 MB of files in total. A larger vault cannot be backed up; download the largest files separately.",
       disclosure:
         "File contents are encrypted. Filenames, tags, file types and case references are included as visible metadata.",
+      restoredTitle: "Your vault was restored",
+      restoredDescription:
+        "This browser now opens it automatically. You can protect it with a passphrase on this page.",
+      restoredStillProtected:
+        "It is protected by your backup passphrase here. Enter it to open the vault. You can switch to automatic unlock on this page.",
       passphraseLabel: "Backup passphrase",
       passphraseHint: "At least 8 characters",
       passphraseHelp:

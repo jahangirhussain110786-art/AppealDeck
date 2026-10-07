@@ -86,6 +86,9 @@ function evidenceKindLabel(kind: EvidenceKind): string {
   return kind.replace(/_/g, " ");
 }
 
+// Set before the reload that follows a restore, read after it.
+const RESTORED_FLAG = "appealdeck-vault-restored";
+
 export default function VaultView({ userId }: { userId: string }) {
   const vault = useVault();
   const [gateRevision, setGateRevision] = React.useState(0);
@@ -386,6 +389,23 @@ export default function VaultView({ userId }: { userId: string }) {
     }
   };
 
+  // Said once after the page reloads, because a toast raised before the reload is gone with it.
+  React.useEffect(() => {
+    try {
+      const flag = sessionStorage.getItem(RESTORED_FLAG);
+      if (!flag) return;
+      sessionStorage.removeItem(RESTORED_FLAG);
+      toast.success(APP.vault.backup.restoredTitle, {
+        description:
+          flag === "device"
+            ? APP.vault.backup.restoredDescription
+            : APP.vault.backup.restoredStillProtected,
+      });
+    } catch {
+      /* storage unavailable: nothing to say */
+    }
+  }, []);
+
   const restore = async (legacy = false) => {
     setBusy(true);
     try {
@@ -402,6 +422,23 @@ export default function VaultView({ userId }: { userId: string }) {
           sourcePassphrase: recoveryPassphrase,
           destinationPassphrase: recoveryPassphrase,
         });
+      }
+      // The restored vault is protected by the backup passphrase. Put it back to this browser's
+      // ordinary state, unlocking by itself, so the seller is not met by a passphrase prompt on
+      // every page for a passphrase they only typed to restore (7 Oct 2026). If that step fails the
+      // vault simply stays passphrase-protected and the message says so.
+      let unlocksItself = true;
+      if (!legacy) {
+        try {
+          await vault.relockWithDeviceKey(recoveryPassphrase);
+        } catch {
+          unlocksItself = false;
+        }
+        try {
+          sessionStorage.setItem(RESTORED_FLAG, unlocksItself ? "device" : "passphrase");
+        } catch {
+          /* the message is a courtesy; the restore itself is done */
+        }
       }
       // Cleared only once the restore worked: after a wrong passphrase the seller must not have to
       // type the right one into an empty box from scratch.
