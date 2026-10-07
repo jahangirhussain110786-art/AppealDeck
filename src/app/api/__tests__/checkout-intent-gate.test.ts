@@ -177,3 +177,29 @@ describe("/api/checkout/intent eligibility gate", () => {
     expect(insertMock).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("/api/checkout/intent region gate (7 Oct 2026)", () => {
+  const withCountry = (country: string): NextRequest =>
+    new Request("http://localhost:3000/api/checkout/intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-vercel-ip-country": country },
+      body: JSON.stringify({ caseId: "c1", kind: "POLICY", consent: true }),
+    }) as unknown as NextRequest;
+
+  it("refuses a buyer in the EU, EEA or UK before creating anything", async () => {
+    for (const country of ["DE", "GB", "NO"]) {
+      const res = await POST(withCountry(country));
+      expect(res.status, country).toBe(403);
+      expect(await res.json()).toMatchObject({ code: "region_blocked" });
+    }
+    expect(insertMock).not.toHaveBeenCalled();
+    expect(fetchLicenseMock).not.toHaveBeenCalled();
+  });
+
+  it("lets a buyer in the US or Saudi Arabia through", async () => {
+    for (const country of ["US", "SA"]) {
+      const res = await POST(withCountry(country));
+      expect(res.status, country).toBe(200);
+    }
+  });
+});

@@ -172,7 +172,7 @@ export const LEGAL = {
         title: "Licence to use",
         body: [
           "Subject to your compliance, we grant you a limited, non-exclusive, non-transferable right to use the Free decoder and, with an active Appeal Pass, the response preparation features.",
-          "The Free decoder is available to everyone. Appeal Pass features require an active Appeal Pass on your account and an eligible Amazon notice type.",
+          "The Appeal Pass is not currently offered to buyers in the European Union, the European Economic Area or the United Kingdom. The Free decoder is available to everyone. Appeal Pass features require an active Appeal Pass on your account and an eligible Amazon notice type.",
           "One Appeal Pass licence is tied to one case. It covers every revision you prepare for that case, including a response to a later reply from Amazon, with no additional charge and no expiry date. The Pass is tied to that case, so a case you delete or lose cannot be replaced under the same Pass, and a separate notice or a different case requires its own Appeal Pass. An Appeal Pass can be used on up to 5 devices at once; you can remove a device in Billing.",
         ],
       },

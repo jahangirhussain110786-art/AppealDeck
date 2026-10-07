@@ -366,7 +366,7 @@ export const PRICING = {
   },
   createAccount: "Create an account",
   checkoutNote:
-    "Payment is handled by Paddle, which also sends the tax receipt. A case that already has its Pass is not charged again.",
+    "Payment is handled by Paddle, which also sends the tax receipt. A case that already has its Pass is not charged again. The Pass is not on sale to buyers in the EU, the EEA or the United Kingdom yet; the free decoder works everywhere.",
   subline: "Decoding is free. Pay once, only when you want the full response.",
   // 6 Oct 2026: the one plain sentence about what costs money, beside the plans and the checkout.
   freeVersusPass:

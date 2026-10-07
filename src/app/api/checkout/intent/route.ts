@@ -6,6 +6,7 @@ import { fetchLicenseForUser } from "@/lib/license";
 import { CaseIdSchema, ViolationKindSchema } from "@/lib/caseSchema";
 import { isSeverityGated } from "@/core";
 import { LEGAL } from "@/content/legal";
+import { isPurchaseBlocked, REGION_BLOCKED_MESSAGE } from "@/lib/region";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { WorkspaceSchema } from "@/lib/workspaceSchema";
 import { workspaceCanCompose } from "@/core/workspace";
@@ -22,6 +23,13 @@ const Body = z.object({
 export async function POST(req: NextRequest) {
   const user = await getApiUser();
   if (!user?.email) return unauthorizedJsonResponse();
+  // Where the Pass is not on sale yet (EU, EEA, UK by default): decided by the buyer's country, which
+  // Vercel supplies from the request, before anything is created. See `src/lib/region.ts`.
+  if (isPurchaseBlocked(req.headers.get("x-vercel-ip-country")))
+    return NextResponse.json(
+      { error: REGION_BLOCKED_MESSAGE, code: "region_blocked" },
+      { status: 403 },
+    );
   const rate = await rateLimitCompose(user);
   if (!rate.success) return tooManyRequestsResponse(rate);
   const parsed = Body.safeParse(await req.json().catch(() => null));

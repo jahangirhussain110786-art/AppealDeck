@@ -123,6 +123,12 @@ describe("the rendered Privacy page", () => {
     expect(privacy).toMatch(/switch to your own wording/);
   });
 
+  it("says where the Pass is not on sale", () => {
+    expect(text("terms")).toMatch(
+      /not currently offered to buyers in the European Union, the European Economic Area or the United Kingdom/,
+    );
+  });
+
   it("says translation happens on the device", () => {
     expect(privacy).toMatch(/translation happens on your device by your browser's own translator/);
   });
