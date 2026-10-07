@@ -125,3 +125,29 @@ describe("an acknowledgement", () => {
     expect(workspaceGaps(w)).toContain("Write the acknowledgement Amazon asked for.");
   });
 });
+
+describe("a numbered form that mixes questions with prompts", () => {
+  const form =
+    "To help us review your account please answer the following questions:\n1. Describe how you source your products.\n2. Who are your suppliers?\n3. Do you operate other seller accounts?\n4. Explain what changed since your last appeal.\nSubmit your answers in the appeal form.";
+
+  it("keeps every item, in order, in Amazon's own words", () => {
+    expect(questionsIn(form)).toEqual([
+      "Describe how you source your products.",
+      "Who are your suppliers?",
+      "Do you operate other seller accounts?",
+      "Explain what changed since your last appeal.",
+    ]);
+  });
+
+  it("does not turn a numbered list of documents into a questionnaire", () => {
+    const docs =
+      "Please send the following:\n1. Provide a copy of your supplier invoice.\n2. Describe the units on the invoice.\n3. Upload your business licence.";
+    expect(questionsIn(docs)).toEqual([]);
+  });
+
+  it("ignores prompts that sit outside a list that has a question", () => {
+    expect(questionsIn("Describe what happened.\nWho are your suppliers?")).toEqual([
+      "Who are your suppliers?",
+    ]);
+  });
+});

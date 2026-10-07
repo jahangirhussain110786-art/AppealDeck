@@ -207,8 +207,8 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
     expect(text("terms")).not.toMatch(/drafts a Plan of Action/i);
   });
 
-  it("dates the changed documents 2026-10-06", () => {
-    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-06");
+  it("dates the changed documents (privacy 2026-10-07, terms 2026-10-06)", () => {
+    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-07");
     expect(LEGAL.lastUpdated.terms).toBe("2026-10-06");
     expect(LEGAL.lastUpdated.refund).toBe("2026-10-06");
   });

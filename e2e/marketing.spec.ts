@@ -225,3 +225,9 @@ test.describe("Auth gate", () => {
     await expect(page.getByRole("button", { name: /send reset link/i })).toBeVisible();
   });
 });
+
+test("the internal component gallery is a real 404 in production", async ({ request }) => {
+  // CI runs a production build. It used to answer 200 with the not-found page as its body.
+  const res = await request.get("/dev/ui");
+  expect(res.status()).toBe(404);
+});

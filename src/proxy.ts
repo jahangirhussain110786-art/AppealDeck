@@ -75,6 +75,10 @@ function redirectToOtherHost(req: NextRequest): NextResponse | null {
 }
 
 export async function proxy(req: NextRequest) {
+  // The internal component gallery answers 200 with a 404 body in production, because its own
+  // notFound() runs after the loading shell has started streaming. Refuse it here with a real 404.
+  if (process.env.NODE_ENV === "production" && req.nextUrl.pathname.startsWith("/dev/"))
+    return NextResponse.rewrite(new URL("/not-found-dev", req.url), { status: 404 });
   const redirect = redirectToOtherHost(req);
   if (redirect) return redirect;
   // Not redirected: keep a signed-in seller's session fresh before the page renders.

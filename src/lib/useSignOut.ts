@@ -33,7 +33,9 @@ export function useSignOut() {
         window.location.assign("/login");
         return;
       }
-      const { error } = await supabase.auth.signOut();
+      // This device only: the default (global) scope also ended the seller's session on their phone
+      // and every other browser (7 Oct 2026).
+      const { error } = await supabase.auth.signOut({ scope: "local" });
       if (error) {
         toast.error("Sign out failed", { description: error.message });
         setPending(false);
