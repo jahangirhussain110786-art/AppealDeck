@@ -245,6 +245,7 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 | L-018 | 5.2 | P2 | Mobile Lighthouse (slow-4G, 4x CPU) scores performance 69-86 on the public pages, LCP about 4 s; desktop is 100 and unthrottled LCP is 0.6 s. With the script chunks blocked LCP is 2.4 s and the score 98, so the cost is script weight: every page ships about 820 KB uncompressed (react-dom 223 KB, a 157 KB client runtime, Radix 56 KB, lucide 42 KB, Sonner 38 KB, framer-motion, Paddle 27 KB); `/` 881 KB, `/pricing` 1.39 MB. CI runs the desktop preset and only warns. Preloading fewer fonts was tried and changed nothing (reverted). | 3 mobile runs per page; no-JS run; chunk inspection | OPEN, not a launch blocker | candidates: load the Toaster and framer-motion lazily, trim `/pricing`; needs a before/after run per change |
 | L-019 | 5.3 | P2 | Only the home page had a share-preview image. Every page that sets its own `openGraph` (all of them, through `pageMetadata`) dropped the inherited file-based image while still declaring a "large image" Twitter card, so a guide posted in a seller forum or the pricing page shared as a bare link. | `og:image` count per page via curl: 0 on 9 of 10 public pages | FIXED | `pageMetadata` now carries the image (a byte-identical copy already in `public/brand/`); `pageMetadata.test.ts` fails if the two copies drift; `e2e/share-cards.spec.ts` checks 10 pages; built app shows one absolute og:image and twitter:image per page, one (not two) on the home page |
 | L-020 | 5.3 | P3 | `/dev/ui` (internal component gallery) answers HTTP 200 on a production build but renders the 404 page (the page's `notFound()` runs after `loading.tsx` has started the response). Nothing leaks, `robots.txt` disallows `/dev/`, and real 404s elsewhere return 404. | curl on a production build | NOTED | fix by blocking the route in `proxy.ts` or deleting the page from production builds if it ever matters |
+| L-021 | 5.1 | P2 | On a 305 px content width (a 320 px phone with a classic scrollbar, which CI's Linux Chromium has) the home page scrolled sideways by 12 px: the plan cards' "Decode my notice - free" button is `whitespace-nowrap` and wider than its card. CI caught it at 2 px; Windows runs and phones with overlay scrollbars did not. | CI log of run 37594909239; 305 px sweep of 12 public pages and 7 app views | FIXED | the three plan buttons fill the card and may wrap; `reflow.spec.ts` now runs at 305 px so Windows and Linux agree; all 12 public pages and the dashboard, case (4 tabs), vault and billing measure 0 |
 
 ## Founder calls raised by this audit
 
@@ -261,6 +262,7 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 
 ## Method notes (learned during this audit)
 
+- A Windows-only local run can miss what Linux CI sees: Linux headless Chromium has 15 px classic scrollbars, so a 320 px viewport has 305 px of content. Test layout at 305 px, and check `gh run list` after every push.
 - Never write a regex through a shell heredoc or `node -e` string: `\b` became a literal backspace in `responseAnalyzer.ts` and the new rule silently never matched. Use the Edit tool, then scan: `grep -nP "[\x00-\x08\x0b\x0c\x0e-\x1f]" src/core/*.ts src/lib/*.ts`.
 - `grep -r` over the repo stalls on `node_modules` and old worktrees; use `git grep`.
 - A passing unit test of a regex literal proves nothing about the same regex inside the module: test through the exported function.
@@ -269,7 +271,7 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 
 HEAD `117355d` + L-001 fix, 7 Oct 2026 (superseded below by the 7 Oct end-of-batch figures): typecheck 0 (was 5 errors) · lint 0 · lint:copy PASS · lint:reachability PASS · lint:sources PASS · format 0 · vitest 2054/2054 in 148 files · build clean · Playwright chromium `CI=1 --retries=0` 137 passed / 0 failed / 2 skipped (signed-in tests ran; `.env.local` loaded). Lighthouse not yet run.
 
-After the Phase 2-5 fixes (7 Oct 2026, end of session): typecheck 0 (incl. tests) · lint 0 · lint:copy/reachability/sources PASS · format 0 · vitest 2082/2082 in 154 files · build clean · Playwright chromium `CI=1 --retries=0` 160 passed / 0 failed / 2 skipped · Lighthouse (local, mobile preset) accessibility/best practices/SEO 100 on 6 public pages.
+After the Phase 2-5 fixes (7 Oct 2026, end of session): typecheck 0 (incl. tests) · lint 0 · lint:copy/reachability/sources PASS · format 0 · vitest 2082/2082 in 154 files · build clean · Playwright chromium `CI=1 --retries=0` 160 passed / 0 failed / 2 skipped (reflow spec moved to 305 px after CI caught L-021) · Lighthouse (local, mobile preset) accessibility/best practices/SEO 100 on 6 public pages.
 
 ## Session log
 

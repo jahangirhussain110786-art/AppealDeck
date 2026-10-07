@@ -281,7 +281,9 @@ function PlansSection() {
                 asChild
                 size="lg"
                 variant={featured ? "default" : "outline"}
-                className="mt-auto"
+                // Fills the card and may wrap: a nowrap button wider than its card pushed the home
+                // page 2 px past a 320 px screen on CI (Linux scrollbars) and 12 px at 305 px.
+                className="mt-auto h-auto min-h-[3.25rem] w-full whitespace-normal py-2.5 text-center"
               >
                 <Link href={featured ? "/pricing" : i === 0 ? "/decode" : "/signup"}>
                   {"cta" in plan && plan.cta
