@@ -24,9 +24,9 @@
 | --- | --- | --- | --- |
 | 1 | Money, identity and trust boundary | 1.1 Payments & entitlements · 1.2 Auth, sessions & redirects · 1.3 API routes & input hardening · 1.4 Database, migrations & RLS · 1.5 Secrets, config & deployment | DONE (7 Oct 2026) |
 | 2 | The seller's data | 2.1 Vault & encryption · 2.2 Case store, persistence & migration of old data · 2.3 Backup, restore, export · 2.4 Documents & the device reader · 2.5 Privacy copy vs. actual data flow | IN PROGRESS (read-through done; live walk in Phase 4) |
-| 3 | The engine's judgement | 3.1 Notice parsing, classification & response type · 3.2 Evidence model & requirements · 3.3 Deadlines, clocks & reminders · 3.4 Reply analyser & escalation · 3.5 Composer, critic, wording lock & D6 | IN PROGRESS: 3.1, 3.2 (partly), 3.3, 3.4 done; 3.5 pending |
-| 4 | The seller's journey | 4.1 First 5 minutes (home → decode → case) · 4.2 The case workspace end to end · 4.3 Dashboard, multi-case, billing, devices · 4.4 Empty, error, offline, slow & hostile states · 4.5 Seams between steps (resume, gates, redirects) | NOT STARTED |
-| 5 | Launch fitness | 5.1 Accessibility, responsive & visual · 5.2 Performance & bundle · 5.3 SEO, content truth & legal copy · 5.4 Tests, CI & observability · 5.5 Dead, unfinished & half-built code; docs vs. reality | NOT STARTED |
+| 3 | The engine's judgement | 3.1 Notice parsing, classification & response type · 3.2 Evidence model & requirements · 3.3 Deadlines, clocks & reminders · 3.4 Reply analyser & escalation · 3.5 Composer, critic, wording lock & D6 | IN PROGRESS: 3.1-3.4 done; 3.5 pending |
+| 4 | The seller's journey | 4.1 First 5 minutes (home → decode → case) · 4.2 The case workspace end to end · 4.3 Dashboard, multi-case, billing, devices · 4.4 Empty, error, offline, slow & hostile states · 4.5 Seams between steps (resume, gates, redirects) | IN PROGRESS: 4.1, 4.2, 4.5 partly walked |
+| 5 | Launch fitness | 5.1 Accessibility, responsive & visual · 5.2 Performance & bundle · 5.3 SEO, content truth & legal copy · 5.4 Tests, CI & observability · 5.5 Dead, unfinished & half-built code; docs vs. reality | IN PROGRESS: 5.1 reflow, 5.5 TODO scan done |
 
 Status values: `NOT STARTED` · `IN PROGRESS` · `DONE` · `BLOCKED (founder)`.
 
@@ -164,12 +164,12 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 *Question asked: walking as a real, frightened first-timer, where do they stop, get lost, or get told something untrue?*
 
 ### 4.1 First 5 minutes (home → decode → case)
-- [ ] Home, `/decode`, sample notice, paste-from-home hand-off, result, "start your case".
+- [x] (walked with 5 fresh notices: product safety, policy, warning, reply, non-notice; each gives the right headline, due date, records, and next step) Home, `/decode`, sample notice, paste-from-home hand-off, result, "start your case".
 - [ ] Copy truthfulness on each page (what is free, what is paid, what is local).
-- [ ] Phone width, slow network, reduced motion.
+- [~] (320/375/768 reflow swept on 16 pages, L-013; slow network and reduced motion covered by existing e2e only) Phone width, slow network, reduced motion.
 
 ### 4.2 The case workspace end to end
-- [ ] Guest and signed-in: confirm reading → documents (each record) → response questions → prepare → check → send; Back/Next and any-order use.
+- [~] (guest and signed-in dev account walked from decode to a prepared-response gate: L-014 found; per-case Pass gate and $249 consent shown correctly; a full Pass-holding prepare is covered by `journey.spec.ts`) Guest and signed-in: confirm reading → documents (each record) → response questions → prepare → check → send; Back/Next and any-order use.
 - [ ] Round 2+: record the reply, delta, new response, history.
 - [ ] Verification, funds, policy, IP/related-account, gated-category tracks each reach a sensible end.
 - [ ] Gated pro-help cases are never sold a draft.
@@ -195,8 +195,8 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 *Question asked: would we be comfortable if a stranger, a search engine, a regulator or an appeals professional inspected this today?*
 
 ### 5.1 Accessibility, responsive & visual
-- [ ] axe on every public and signed-in page, light and dark; keyboard-only walk; focus management on step changes; contrast test current.
-- [ ] 375 / 768 / 1024 / 1440 px both themes; no horizontal scroll; targets ≥ 44 px.
+- [~] (axe runs in `a11y.spec.ts` and passed in the full CI-mode run; keyboard-only walk not done) axe on every public and signed-in page, light and dark; keyboard-only walk; focus management on step changes; contrast test current.
+- [~] (320/375/768 no horizontal scroll after L-013; 1024/1440 and dark mode not re-swept; targets: L-015) 375 / 768 / 1024 / 1440 px both themes; no horizontal scroll; targets ≥ 44 px.
 
 ### 5.2 Performance & bundle
 - [ ] Per-route bundle stats vs. last baseline; public pages free of Supabase/Dexie/fixtures.
@@ -209,13 +209,13 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 - [ ] Terms/Privacy/Refund agree with each other and with the checkout and with the code (disclosures test current).
 
 ### 5.4 Tests, CI & observability
-- [ ] Full gate set green from clean checkout: typecheck (incl. tests), lint, lint:copy/reachability/sources, format, vitest, build, Playwright CI mode, Lighthouse.
+- [x] (typecheck incl. tests 0, lint 0, lint:copy/reachability/sources PASS, format 0, vitest 2079/2079 in 153 files, build, Playwright chromium CI 149 passed / 0 failed / 2 skipped; Lighthouse not run locally) Full gate set green from clean checkout: typecheck (incl. tests), lint, lint:copy/reachability/sources, format, vitest, build, Playwright CI mode, Lighthouse.
 - [ ] Coverage holes: list core behaviours with no test that would fail on regression (esp. the seams in 4.5).
 - [ ] Production observability: how would the founder learn a webhook failed, a cron died, or the model broke? (Sentry remains a deferred founder call; record the minimum viable alternative.)
 
 ### 5.5 Dead, unfinished & half-built code; docs vs. reality
 - [ ] Re-run reachability scans (components, routes, `src/core`, `src/lib`, crons); inspect gallery-only items.
-- [ ] Grep `TODO|FIXME|XXX|not implemented|coming soon|placeholder` in `src/` and visible copy.
+- [x] (none in shipped code or copy) Grep `TODO|FIXME|XXX|not implemented|coming soon|placeholder` in `src/` and visible copy.
 - [ ] `docs/CURRENT-STATE.md` rows vs. what the code does today; CLAUDE.md/AGENTS.md stale claims listed.
 - [ ] Repo hygiene: stray files, stale worktrees, ignored artefacts.
 
@@ -237,6 +237,11 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 | L-010 | 3.1/1.3 | P2 | `/api/decode` is public: the OCR damage check and repair were quadratic on one long unbroken string (400 ms and 540 ms each on 50 KB; 1.6 s in the old suite under load), so a script inside the rate limit could burn serverless CPU. | per-pass timing probe | FIXED | `identifierContext` remembers the word start (7 ms and 12 ms now); differential test against the old search on random text |
 | L-011 | 3.1/1.3 | P2 | Un-hyphenating wrapped lines was quadratic on text made of hyphen breaks (303 ms on 50 KB). | per-pass timing across every hostile shape | FIXED | search limited to the last 40 characters; tight 150 ms budgets added to `noticeText.cost.test.ts` |
 | L-012 | 3.4 | P2 | Common refusals and requests read as `unrecognized`: 'does not contain enough information', 'we will not be reinstating', 'has not been reinstated', 'send a new plan of action', 'we need the following ... reply with the documents'. Honest fallback, but the seller got no help. None ever read as reinstated. | 15 fresh replies through `analyzeReply` | FIXED | rules added; `responseAnalyzer.fresh.test.ts` pins both directions |
+| L-013 | 5.1 | P2 | `/pricing` scrolled sideways by 11 px at 320 px wide (WCAG reflow). The comparison table's screen-reader-only "Included" labels, in cells scrolled out of view, are absolutely positioned and the scroll wrapper was not their containing block, so they widened the page. | Playwright overflow sweep over 16 pages x 3 widths; hide-and-measure isolated the table | FIXED | `relative` on the shared `Table` wrapper; `e2e/reflow.spec.ts` covers all 12 public pages at 320 px and was shown failing (11 px) on the old code |
+| L-014 | 4.2 | P2 | The Response tab told a seller who had not yet pressed "Yes, this is right" that "We cannot prepare a response for this kind of notice here", for a policy case that can get a Plan of Action. It contradicts the Overview ("$249 once, only if you want us to prepare the response"). | signed-in and guest walks of a policy case | FIXED | `workspaceAwaitsConfirmation` + a "Confirm your notice first" alert; `workspace.confirmation.test.ts` (4 cases incl. specialist notices not nagged); verified in the built app |
+| L-015 | 5.1 | P3 | The Checkbox control is 20 x 20 px (below the 24 px WCAG 2.5.8 minimum for the control itself; its label row is clickable). Announcement-bar buttons are 28 px, the show-password toggle 24 px: all pass. | `/pricing` small-target scan | OPEN | bump `Checkbox` to `size-6` when the next visual pass runs |
+| L-016 | 4.1 | P3 | Pasting an Amazon *reply* into `/decode` still shows the tiles "The problem: Notice not clearly classified" and "Reply due: No date stated", which do not apply to a reply. The reply banner itself is right. | decode walk | OPEN | hide the three tiles when the paste is a reply |
+| L-017 | 5.4 | P3 | My own first version of the quadratic-path regression test used absolute budgets and flaked under the full suite's parallel load (218 ms vs 150 ms). | full vitest run | FIXED | now compares growth from 5 KB to 50 KB (linear about 10x, quadratic about 100x); each test shown failing on the old code and passing 3 times on the new |
 
 ## Founder calls raised by this audit
 
@@ -259,10 +264,12 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 
 ## Gate baseline
 
-HEAD `117355d` + L-001 fix, 7 Oct 2026: typecheck 0 (was 5 errors) · lint 0 · lint:copy PASS · lint:reachability PASS · lint:sources PASS · format 0 · vitest 2054/2054 in 148 files · build clean · Playwright chromium `CI=1 --retries=0` 137 passed / 0 failed / 2 skipped (signed-in tests ran; `.env.local` loaded). Lighthouse not yet run.
+HEAD `117355d` + L-001 fix, 7 Oct 2026 (superseded below by the 7 Oct end-of-batch figures): typecheck 0 (was 5 errors) · lint 0 · lint:copy PASS · lint:reachability PASS · lint:sources PASS · format 0 · vitest 2054/2054 in 148 files · build clean · Playwright chromium `CI=1 --retries=0` 137 passed / 0 failed / 2 skipped (signed-in tests ran; `.env.local` loaded). Lighthouse not yet run.
+
+After the Phase 2-4 fixes (7 Oct 2026): typecheck 0 · lint 0 · lint:copy/reachability/sources PASS · format 0 · vitest 2079/2079 in 153 files · build clean · Playwright chromium `CI=1 --retries=0` 149 passed / 0 failed / 2 skipped.
 
 ## Session log
 
 | Date | Done | Stopped at / next |
 | --- | --- | --- |
-| 2026-10-07 | Plan written (5 phases × 5 areas, 25 areas). Gate baseline recorded; found and fixed L-001 (CI red since 6 Oct on test typecheck). Phase 1 done (1.1-1.5). Phase 2 read-through done. Phase 3: fresh notices (4 families fixed), hostile-input timing (2 quadratic paths fixed), fresh replies (5 wordings fixed), timezone matrix. | Next: 3.5 composer/critic/wording lock/D6 spot checks, then Phase 4 live walks (needs a built server + signed-in session), then Phase 5. Run Playwright CI mode after Phase 3 changes. |
+| 2026-10-07 | Plan written (5 phases × 5 areas, 25 areas). Gate baseline recorded; found and fixed L-001 (CI red since 6 Oct on test typecheck). Phase 1 done (1.1-1.5). Phase 2 read-through done. Phase 3: fresh notices (4 families fixed), hostile-input timing (2 quadratic paths fixed), fresh replies (5 wordings fixed), timezone matrix. Phase 4/5 walks: Response-tab contradiction (L-014), pricing reflow at 320 px (L-013), responsive sweep, TODO scan. All gates green. | Next: 3.5 composer/critic/wording-lock/D6 spot checks; 4.3 dashboard/billing/devices walk with a Pass-holding case; 4.4 offline/API-failure states; 5.2 Lighthouse + bundle stats; 5.3 SEO/copy sweep; 5.5 CURRENT-STATE vs code. |

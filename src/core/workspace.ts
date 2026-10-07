@@ -1355,6 +1355,16 @@ export function workspaceGaps(w: Workspace): string[] {
   return gaps;
 }
 
+/**
+ * A case whose notice can be answered with a drafted response, once the seller has confirmed how we
+ * read it. Distinct from "cannot be answered here" (a specialist route, a clarification, a non-US
+ * store): until 7 Oct 2026 the Response tab said "We cannot prepare a response for this kind of
+ * notice" to a seller who had simply not pressed "Yes, this is right" yet.
+ */
+export function workspaceAwaitsConfirmation(w: Workspace): boolean {
+  return !w.confirmed && COMPOSABLE_PROTOCOLS.includes(routeWorkspace(w).protocol);
+}
+
 export function workspaceCanCompose(w: Workspace): boolean {
   return (
     COMPOSABLE_PROTOCOLS.includes(routeWorkspace(w).protocol) &&

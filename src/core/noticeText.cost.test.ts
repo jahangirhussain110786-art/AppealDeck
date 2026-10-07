@@ -102,17 +102,41 @@ describe("the decoder's new passes stay cheap on hostile input", () => {
 /**
  * 7 Oct 2026. The generous ceiling above hid two quadratic paths for weeks: the OCR damage check
  * and repair took ~0.4 s and ~0.5 s each on 50,000 characters of one unbroken URL-like string, and
- * un-hyphenating wrapped lines took ~0.3 s on text made of hyphen breaks. These budgets are tight
- * enough (a fraction of the old cost) to catch their return and still ten times what they take now.
+ * un-hyphenating wrapped lines took ~0.3 s on text made of hyphen breaks.
+ *
+ * These checks compare how the cost grows rather than how long it takes: ten times the text should
+ * cost about ten times as much, and a quadratic path costs about a hundred times. A growth ratio
+ * holds whatever else the machine is doing; an absolute budget here failed once under the full
+ * suite's parallel load, at 218 ms against a 150 ms limit, on code that takes 10 ms alone.
  */
+function growth(shape: string, run: (text: string) => unknown, normalize = true): number {
+  const make = (size: number) =>
+    (MARKER + shape.repeat(Math.ceil(size / shape.length))).slice(0, size);
+  const prepare = (text: string) => (normalize ? normalizeNoticeText(text) : text);
+  const small = prepare(make(5_000));
+  const large = prepare(make(50_000));
+  const median = (text: string) => {
+    const runs = [elapsed(() => run(text)), elapsed(() => run(text)), elapsed(() => run(text))];
+    return runs.sort((a, b) => a - b)[1]!;
+  };
+  // A floor under the small run, so a sub-millisecond reading cannot inflate the ratio.
+  return median(large) / Math.max(median(small), 3);
+}
+
 describe("the two paths that were quadratic stay linear", () => {
-  it("OCR damage check and repair on one long unbroken string", () => {
-    const text = normalizeNoticeText(shapes["repeated schemes"]!);
-    expect(elapsed(() => assessGarbled(text))).toBeLessThan(150);
-    expect(elapsed(() => repairOcrText(text))).toBeLessThan(150);
+  const QUADRATIC_IS_ABOUT_100 = 40;
+
+  it("OCR damage check on one long unbroken string", () => {
+    expect(growth("https://", assessGarbled)).toBeLessThan(QUADRATIC_IS_ABOUT_100);
+  });
+
+  it("OCR repair on one long unbroken string", () => {
+    expect(growth("https://", repairOcrText)).toBeLessThan(QUADRATIC_IS_ABOUT_100);
   });
 
   it("normalising text made of hyphenated line breaks", () => {
-    expect(elapsed(() => normalizeNoticeText(shapes["hyphen breaks"]!))).toBeLessThan(150);
+    // Raw text: the hyphen breaks are what is being joined, so it must not be normalised first.
+    const joinHyphens = (t: string) => normalizeNoticeText(t);
+    expect(growth("a-\nb", joinHyphens, false)).toBeLessThan(QUADRATIC_IS_ABOUT_100);
   });
 });

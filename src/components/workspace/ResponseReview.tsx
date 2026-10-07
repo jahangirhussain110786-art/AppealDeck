@@ -15,6 +15,7 @@ import {
   answerFor,
   questionnaireQuestions,
   totalAttempts,
+  workspaceAwaitsConfirmation,
   workspaceCanCompose,
   workspaceGaps,
   type Workspace,
@@ -409,6 +410,11 @@ export function ResponseReview({
               <Alert variant="info">
                 <AlertTitle>{C.noNoticeYet.title}</AlertTitle>
                 <AlertDescription>{C.noNoticeYet.body}</AlertDescription>
+              </Alert>
+            ) : workspaceAwaitsConfirmation(w) ? (
+              <Alert variant="info">
+                <AlertTitle>{C.confirmFirst.title}</AlertTitle>
+                <AlertDescription>{C.confirmFirst.body}</AlertDescription>
               </Alert>
             ) : (
               <Alert variant="info">
