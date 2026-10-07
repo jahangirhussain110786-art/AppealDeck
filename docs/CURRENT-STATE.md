@@ -22,7 +22,7 @@ so without it buying a Pass, preparing a response, document checks, wording help
 outcome sharing and reply reading all answer "too many requests". "Live" below means live once
 Upstash is set. Added 24 Sep 2026: this file did not mention Upstash at all. **28 Sep 2026:** connected
 to the Vercel project through the Storage integration (`KV_REST_API_*` names, read by
-`src/lib/redisEnv.ts`); not yet proven on a deployment, because the project has never been deployed.
+`src/lib/redisEnv.ts`); not yet proven on a deployment. The project was deployed to test hosting on 28 Sep 2026 (`appealdeck.vercel.app`) and its public pages were checked there, but the signed-in server features were not exercised, because the Supabase service key and `CRON_SECRET` were not yet set. (Corrected 7 Oct 2026: this line said the project had never been deployed.)
 
 ## The case, from notice to outcome
 

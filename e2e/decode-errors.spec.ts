@@ -64,3 +64,55 @@ test("a pasted Amazon reply shows no problem or due-date tiles", async ({ page }
   await expect(page.getByText("Scam check", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open my case" })).toBeVisible();
 });
+
+/**
+ * 7 Oct 2026 (launch audit). When the decoder itself fails (a 503, a rate limit, an HTML error page
+ * from the platform) nothing is wrong with the seller's paste. The page said "If this is a letter
+ * you wrote to Amazon, it is not a notice" under every one of them, and a stalled request left the
+ * button spinning for good.
+ */
+const REAL_NOTICE =
+  "Subject: Account deactivated\nDate: 2 October 2026\n\nYour Amazon selling account has been deactivated for inauthentic items. You may appeal within 30 days. Submit a plan of action.";
+
+for (const [name, status, body, contentType, expected] of [
+  [
+    "a 503",
+    503,
+    JSON.stringify({ error: "Service temporarily unavailable" }),
+    "application/json",
+    "Service temporarily unavailable",
+  ],
+  [
+    "a rate limit",
+    429,
+    JSON.stringify({ error: "Too many requests. Please slow down and try again in a minute." }),
+    "application/json",
+    "Too many requests",
+  ],
+  ["an HTML error page", 500, "<html>Internal Server Error</html>", "text/html", "not available"],
+] as const) {
+  test(`${name} does not tell the seller their notice is not a notice`, async ({ page }) => {
+    await page.route("**/api/decode", (route) =>
+      route.fulfill({ status, contentType, body, headers: {} }),
+    );
+    await page.goto("/decode");
+    await page.getByLabel("Your notice").fill(REAL_NOTICE);
+    await page.getByRole("button", { name: "Decode", exact: true }).click();
+    const alert = page.getByRole("alert").filter({ hasText: "Could not decode" });
+    await expect(alert).toContainText(expected);
+    await expect(alert).not.toContainText("it is not a notice");
+    // The notice is still in the box, and Edit what I pasted is still offered.
+    await expect(page.getByLabel("Your notice")).toHaveValue(REAL_NOTICE);
+  });
+}
+
+test("a request that never answers gives up after 30 seconds and says so", async ({ page }) => {
+  await page.clock.install();
+  await page.route("**/api/decode", () => new Promise(() => {}));
+  await page.goto("/decode");
+  await page.getByLabel("Your notice").fill(REAL_NOTICE);
+  await page.getByRole("button", { name: "Decode", exact: true }).click();
+  await page.clock.fastForward(31_000);
+  const alert = page.getByRole("alert").filter({ hasText: "Could not decode" });
+  await expect(alert).toContainText("taking longer than it should");
+});

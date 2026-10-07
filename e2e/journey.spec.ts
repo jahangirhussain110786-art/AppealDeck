@@ -178,6 +178,9 @@ test("every public page names itself as canonical, not the home page", async ({ 
 test("the theme switch changes the colour scheme and remembers it", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/");
+  // A click before the page has hydrated reaches a button with no handler yet and does nothing; it
+  // dropped under the full suite's parallel load (7 Oct 2026). Let the page settle first.
+  await page.waitForLoadState("networkidle");
   const html = page.locator("html");
   await expect(html).not.toHaveClass(/\bdark\b/);
   await page.getByRole("button", { name: "Toggle colour theme" }).click();

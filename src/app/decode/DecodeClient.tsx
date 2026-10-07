@@ -92,6 +92,9 @@ type DecodeError = {
   canContinue: boolean;
 };
 
+/** Longest the decoder is waited for. The server answers in well under a second; this is for a stalled connection. */
+const DECODE_TIMEOUT_MS = 30_000;
+
 type Status = "empty" | "loading" | "error" | "result";
 
 /** Notes the result shows in a card of their own, so they are not repeated in the notes list. */
@@ -135,19 +138,29 @@ export default function DecodeClient() {
     setStatus("loading");
     setError(null);
     trackFunnelEvent(FUNNEL_EVENTS.decoderSession);
+    // A request that never answers would leave the button spinning for good.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), DECODE_TIMEOUT_MS);
     try {
       const res = await fetch("/api/decode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(force ? { text: submitted, force: true } : { text: submitted }),
+        signal: controller.signal,
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        // Rate-limited or the server's own trouble: nothing is wrong with the paste, so the page
+        // must not suggest it was not a notice (7 Oct 2026).
+        const serverSide = res.status === 429 || res.status >= 500;
         setError({
           // One calm message, written by the API for this exact paste. Nothing is appended to it.
-          message: body.message ?? body.error ?? DECODE.result.errorHint,
+          message:
+            body.message ??
+            body.error ??
+            (serverSide ? DECODE.result.errorServer : DECODE.result.errorHint),
           sellerText: body.looksLikeSellerText === true,
-          named: body.supported === false || body.garbled === true,
+          named: serverSide || body.supported === false || body.garbled === true,
           canContinue: body.canContinue === true && body.supported === false,
         });
         setStatus("error");
@@ -162,12 +175,14 @@ export default function DecodeClient() {
       trackFunnelEvent(FUNNEL_EVENTS.decodeCompleted, { kind: data.kind });
     } catch {
       setError({
-        message: DECODE.result.errorNetwork,
+        message: controller.signal.aborted ? DECODE.result.errorSlow : DECODE.result.errorNetwork,
         sellerText: false,
         named: true,
         canContinue: false,
       });
       setStatus("error");
+    } finally {
+      clearTimeout(timer);
     }
   }
 

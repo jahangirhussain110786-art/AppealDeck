@@ -8,6 +8,7 @@ import { loadCaseFile } from "@/lib/caseStore";
 import { openVaultForVisitor } from "@/lib/vault/visitor";
 import type { Vault } from "@/core/vault/vault";
 import { APP } from "@/content/app";
+import { apiErrorMessage } from "@/lib/apiError";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 
 declare global {
@@ -175,11 +176,14 @@ export function CheckoutButton({
           workspace: file.workspace,
         }),
       });
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
       if (!response.ok)
         throw new Error(
-          response.status === 401 ? "Sign in before buying your case's Appeal Pass." : data.error,
+          response.status === 401
+            ? "Sign in before buying your case's Appeal Pass."
+            : apiErrorMessage(response.status, data, "Checkout could not open."),
         );
+      if (!data?.intentId || !data?.priceId) throw new Error("Checkout could not open.");
       // B-12: fired here rather than on the button click, so the gap between this and
       // `pass_purchased` is abandonment at the payment step and nothing else. A click that fails
       // to reach Paddle (locked vault, no case, intent rejected) is a different problem and must

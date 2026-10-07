@@ -257,6 +257,10 @@ export const DECODE = {
     errorTitle: "Could not decode",
     errorFallback: "Something went wrong.",
     errorNetwork: "Network error. Try again.",
+    errorServer:
+      "The decoder is not available right now. Your notice is fine and is still in the box. Try again in a minute.",
+    errorSlow:
+      "This is taking longer than it should. Your notice is still in the box. Try again, or check your connection.",
     errorHint: "Paste the full Amazon notice and try again.",
     startPoaCta: "Open case workspace",
     // AA-39: the decoder's actual decision. Phrased as what Amazon asked for, never as advice

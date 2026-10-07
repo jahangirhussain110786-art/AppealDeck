@@ -137,6 +137,7 @@ import { formatDate, localToday } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
 import { APP } from "@/content/app";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
+import { apiErrorMessage } from "@/lib/apiError";
 
 /**
  * Shared by the two text downloads below — one blob-URL lifecycle rather than two copies of it.
@@ -1061,12 +1062,15 @@ function WorkspaceInner({
           attemptNumber: Math.min(99, totalAttempts(w) + 1),
         }),
       });
-      const data = await response.json();
-      if (response.status === 403 && data.code === "case_pass_required") {
+      const data = await response.json().catch(() => null);
+      if (response.status === 403 && data?.code === "case_pass_required") {
         setPurchase(true);
         return;
       }
-      if (!response.ok) throw new Error(data.error ?? "Could not prepare the response. Try again.");
+      if (!response.ok || !data)
+        throw new Error(
+          apiErrorMessage(response.status, data, "Could not prepare the response. Try again."),
+        );
       setResult(data as WorkspaceResponse);
       setPurchase(false);
       // Defined in analytics.ts and sent from nowhere until 23 Sep 2026, so the funnel could not
