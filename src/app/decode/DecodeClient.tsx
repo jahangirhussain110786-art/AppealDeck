@@ -517,53 +517,65 @@ function ResultFacts({
       ? parsed.statedWindowDays
       : null;
   const flagged = (result.authenticity?.length ?? 0) > 0;
+  const isReply = Boolean(result.looksLikeReply);
   // A numeric date that could be read two ways is shown as written, with both readings. Never
   // counted into a deadline (the engine does not), so this is a note, not a due date.
   const ambiguous = firstDue || windowDays !== null ? null : ambiguousDateIn(text, parsed);
   return (
-    <div className="mt-10 grid gap-3.5 md:grid-cols-[1.3fr_1fr_1fr]">
-      <div className="flex items-center gap-4 rounded-[18px] bg-white/[0.05] p-5 ring-1 ring-inset ring-white/[0.08]">
-        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/[0.08]">
-          <FileSearch aria-hidden className="size-5 text-primary" />
-        </span>
-        <span className="min-w-0">
-          {/* The headline already says what to send; this tile names what it is about. */}
-          <span className="block text-xs text-muted-foreground">{r.factProblem}</span>
-          <span className="block text-lg font-semibold leading-snug tracking-tight">
-            {result.kind === "UNKNOWN" ? guidance.title : APP.violationKinds[result.kind]}
-          </span>
-        </span>
-      </div>
-      <div className="flex items-center gap-4 rounded-[18px] bg-primary/15 p-5 ring-1 ring-inset ring-primary/35">
-        <CountdownRing size={48} tone="stage" />
-        <span className="min-w-0">
-          <span className="block text-xs font-semibold text-primary">{r.factDue}</span>
-          <span className="block text-lg font-semibold leading-snug tracking-tight tabular-nums">
-            {firstDue?.dueAt
-              ? new Date(firstDue.dueAt).toLocaleDateString("en-GB", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                })
-              : windowDays !== null
-                ? r.factWindow.replace("{n}", String(windowDays))
-                : ambiguous
-                  ? r.factAmbiguousShort
-                  : r.factNoDate}
-          </span>
-          {windowDays !== null && (
-            <span className="block text-xs text-muted-foreground">{r.factWindowNote}</span>
-          )}
-          {ambiguous && (
-            <span className="block text-xs text-muted-foreground">
-              {r.factAmbiguous
-                .replace("{date}", ambiguous.written)
-                .replace("{a}", formatDay(ambiguous.a))
-                .replace("{b}", formatDay(ambiguous.b))}
+    <div
+      className={cn(
+        "mt-10 grid gap-3.5",
+        !isReply && "md:grid-cols-[1.3fr_1fr_1fr]",
+        isReply && "md:max-w-sm",
+      )}
+    >
+      {/* A pasted Amazon reply has no "problem" to classify and no reply-due date: only the scam check applies. */}
+      {!isReply && (
+        <>
+          <div className="flex items-center gap-4 rounded-[18px] bg-white/[0.05] p-5 ring-1 ring-inset ring-white/[0.08]">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/[0.08]">
+              <FileSearch aria-hidden className="size-5 text-primary" />
             </span>
-          )}
-        </span>
-      </div>
+            <span className="min-w-0">
+              {/* The headline already says what to send; this tile names what it is about. */}
+              <span className="block text-xs text-muted-foreground">{r.factProblem}</span>
+              <span className="block text-lg font-semibold leading-snug tracking-tight">
+                {result.kind === "UNKNOWN" ? guidance.title : APP.violationKinds[result.kind]}
+              </span>
+            </span>
+          </div>
+          <div className="flex items-center gap-4 rounded-[18px] bg-primary/15 p-5 ring-1 ring-inset ring-primary/35">
+            <CountdownRing size={48} tone="stage" />
+            <span className="min-w-0">
+              <span className="block text-xs font-semibold text-primary">{r.factDue}</span>
+              <span className="block text-lg font-semibold leading-snug tracking-tight tabular-nums">
+                {firstDue?.dueAt
+                  ? new Date(firstDue.dueAt).toLocaleDateString("en-GB", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                    })
+                  : windowDays !== null
+                    ? r.factWindow.replace("{n}", String(windowDays))
+                    : ambiguous
+                      ? r.factAmbiguousShort
+                      : r.factNoDate}
+              </span>
+              {windowDays !== null && (
+                <span className="block text-xs text-muted-foreground">{r.factWindowNote}</span>
+              )}
+              {ambiguous && (
+                <span className="block text-xs text-muted-foreground">
+                  {r.factAmbiguous
+                    .replace("{date}", ambiguous.written)
+                    .replace("{a}", formatDay(ambiguous.a))
+                    .replace("{b}", formatDay(ambiguous.b))}
+                </span>
+              )}
+            </span>
+          </div>
+        </>
+      )}
       <div className="flex items-center gap-4 rounded-[18px] bg-white/[0.05] p-5 ring-1 ring-inset ring-white/[0.08]">
         <span
           className={cn(

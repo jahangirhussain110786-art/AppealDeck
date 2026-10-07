@@ -6,6 +6,20 @@
 import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/urls";
 
+/**
+ * The share image. Next drops the root segment's file-based `opengraph-image` for any page that sets
+ * its own `openGraph`, and every public page does through this helper, so only the home page had a
+ * preview image and every other shared link (a guide posted in a seller forum, the pricing page) was
+ * a bare link under a "large image" card with no image (found 7 Oct 2026, launch audit). The file is
+ * a copy of `src/app/opengraph-image.png`; `pageMetadata.test.ts` fails if they drift apart.
+ */
+export const SHARE_IMAGE = {
+  url: "/brand/og-1200x630.png",
+  width: 1200,
+  height: 630,
+  alt: "AppealDeck: Decode your Amazon notice. Draft your Plan of Action. You submit it yourself.",
+} as const;
+
 export interface PageMetadataInput {
   title: string;
   description: string;
@@ -30,11 +44,13 @@ export function pageMetadata({
       title,
       description,
       url: new URL(canonical, SITE_URL).toString(),
+      images: [SHARE_IMAGE],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [{ url: SHARE_IMAGE.url, alt: SHARE_IMAGE.alt }],
     },
   };
 }

@@ -42,3 +42,25 @@ test("Back from Open case workspace restores the pasted notice and its result", 
     SAMPLE_NOTICE_TEXT.slice(0, 20),
   );
 });
+
+/**
+ * 7 Oct 2026 (launch audit): a pasted Amazon reply is not a notice to classify. It said "The
+ * problem: Notice not clearly classified" and "Reply due: No date stated", which mean nothing for a
+ * reply; only the scam check applies. The reply banner and its way into the case stay.
+ */
+test("a pasted Amazon reply shows no problem or due-date tiles", async ({ page }) => {
+  await page.goto("/decode");
+  await page
+    .getByLabel("Your notice")
+    .fill(
+      "Hello,\n\nThank you for sending your appeal. We reviewed the information you provided, but it doesn't address the root cause. We are unable to reinstate your selling account at this time. Please submit a new Plan of Action with a detailed root cause, the actions you have taken, and clear preventive measures.\n\nBest regards,\nSeller Performance Team",
+    );
+  await page.getByRole("button", { name: "Decode", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: /looks like Amazon.s reply/i }).first(),
+  ).toBeVisible();
+  await expect(page.getByText("The problem", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Reply due", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Scam check", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open my case" })).toBeVisible();
+});
