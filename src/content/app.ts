@@ -473,8 +473,7 @@ export const APP = {
       subtitle:
         "Your Appeal Pass works on up to {cap} devices. If you hit the limit, revoke an older device to activate a new one.",
       none: "No active devices recorded yet.",
-      noneDesc:
-        "No active devices recorded yet. Your current device will appear here once you have used AppealDeck.",
+      noneDesc: "Your current device will appear here once you have used AppealDeck.",
       loading: "Loading devices…",
       loadError: "Couldn't load your devices",
       loadErrorDesc: "Your device list is unavailable. Try again to see current access.",
