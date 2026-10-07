@@ -105,14 +105,27 @@ describe("the rendered Privacy page", () => {
   });
 
   /**
-   * 24 Sep 2026 (ChatGPT audit §9). The policy said preparing a response sent the seller's wording
-   * to Google Gemini; `/api/compose` never calls a model for a workspace response. If AI drafting
-   * is switched on for workspace responses, this test is meant to fail until the policy says so.
+   * 7 Oct 2026, founder decision: the AI writes a Plan of Action's narrative sections. On 24 Sep this
+   * test pinned the opposite (nothing sent to an AI provider), and was written to fail the day AI
+   * drafting was switched on until the policy said so. It now pins what is true: the policy says
+   * what is sent, that it is checked and discarded when it adds a detail, that files are never
+   * sent, and that other response types are not written by AI.
    */
-  it("says response preparation is not sent to an AI provider, as it is not", () => {
-    expect(privacy).toMatch(/not sent to Google Gemini or any other AI provider/);
-    expect(privacy).not.toMatch(/Preparing a response sends your notice text[^.]*Gemini/i);
-    expect(privacy).not.toMatch(/Gemini drafting/i);
+  it("says a Plan of Action is written by AI, what is sent, and what is not", () => {
+    expect(privacy).toMatch(/written by AI/);
+    expect(privacy).toMatch(/your three written answers/);
+    expect(privacy).toMatch(/throws it away if it adds a date, number, name, document or action/);
+    expect(privacy).toMatch(/Your files are never sent for this/);
+    expect(privacy).toMatch(
+      /section listing your supporting records is put together by our server/,
+    );
+    expect(privacy).toMatch(/is not written by AI/);
+    expect(privacy).toMatch(/switch to your own wording/);
+  });
+
+  it("tells the seller in the terms that AI can misstate and that they are responsible", () => {
+    expect(text("terms")).toMatch(/written by an AI model/);
+    expect(text("terms")).toMatch(/you remain responsible for what you submit to Amazon/);
   });
 
   /**
@@ -133,9 +146,9 @@ describe("the rendered Privacy page", () => {
     );
   });
 
-  it("names the two things a seller can choose to send to an AI provider", () => {
+  it("names the three things sent to an AI provider, and no others", () => {
     expect(privacy).toMatch(
-      /only things we send to an AI provider are a business document you ask us to check and a section you ask us to improve the wording of/i,
+      /things we send to an AI provider are therefore: that drafting, a business document you ask us to check, and a section you ask us to improve the wording of/i,
     );
   });
 
@@ -207,9 +220,9 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
     expect(text("terms")).not.toMatch(/drafts a Plan of Action/i);
   });
 
-  it("dates the changed documents (privacy 2026-10-07, terms 2026-10-06)", () => {
+  it("dates the changed documents (privacy and terms 2026-10-07)", () => {
     expect(LEGAL.lastUpdated.privacy).toBe("2026-10-07");
-    expect(LEGAL.lastUpdated.terms).toBe("2026-10-06");
+    expect(LEGAL.lastUpdated.terms).toBe("2026-10-07");
     expect(LEGAL.lastUpdated.refund).toBe("2026-10-06");
   });
 });
@@ -238,11 +251,13 @@ describe("the FAQ says what the privacy policy says", () => {
     expect(faq).not.toMatch(/AI suggestions|field suggestions|interview drafting/i);
   });
 
-  it("names the same two things as what reaches an AI provider", () => {
+  it("names the same three things as what reaches an AI provider", () => {
     const processing = FAQ.items.find((i) => i.id === "processing");
-    expect(`${processing?.a} ${processing?.detail}`).toMatch(
-      /only things sent to an AI provider[^.]*business document you ask us to check and a section of your response you ask us to improve the wording of/,
-    );
+    const text = `${processing?.a} ${processing?.detail}`;
+    expect(text).toMatch(/write a Plan of Action/);
+    expect(text).toMatch(/never the files/);
+    expect(text).toMatch(/a business document you ask us to check/);
+    expect(text).toMatch(/a section of your response you ask us to improve the wording of/);
   });
 });
 

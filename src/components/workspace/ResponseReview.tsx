@@ -56,7 +56,42 @@ function AnswerHelp({ id, hint, example }: { id: string; hint?: string; example?
   );
 }
 
-export type WorkspaceResponse = { rendered: string; draft: PoaDraft; critique: CriticResult };
+type WordingView = { rendered: string; draft: PoaDraft; critique: CriticResult };
+/** How the AI drafting step went, as the server reports it. */
+export type AiStatus =
+  | { status: "not_applicable" }
+  | { status: "used"; retried: boolean }
+  | { status: "fallback"; reason: string; detail?: string };
+/**
+ * What `/api/compose` returns, with the other version of the wording kept in `alternate`: when the
+ * AI wrote the narrative, `showing` is "ai" and `alternate` is the seller's own wording, and the
+ * seller can swap. Everything downstream (copy, export, "record what I sent") reads the top-level
+ * fields, so the choice the seller made is always the text they copied and the text recorded.
+ */
+export type WorkspaceResponse = WordingView & {
+  ai?: AiStatus;
+  showing?: "ai" | "own";
+  alternate?: WordingView;
+};
+
+/** The server's shape to the client's: the seller's own wording becomes the alternate view. */
+export function receiveWorkspaceResponse(
+  data: WordingView & { ai?: AiStatus; ownWording?: WordingView },
+): WorkspaceResponse {
+  const { ownWording, ...rest } = data;
+  return ownWording ? { ...rest, showing: "ai", alternate: ownWording } : rest;
+}
+
+export function swapWording(r: WorkspaceResponse): WorkspaceResponse {
+  if (!r.alternate) return r;
+  const { rendered, draft, critique } = r;
+  return {
+    ...r,
+    ...r.alternate,
+    showing: r.showing === "ai" ? "own" : "ai",
+    alternate: { rendered, draft, critique },
+  };
+}
 export function ResponseReview({
   file,
   vault,
@@ -70,6 +105,7 @@ export function ResponseReview({
   onSave,
   onConfirmIssues,
   onGenerate,
+  onSwapWording,
   onSubmit,
 }: {
   file: CaseFile & { workspace: Workspace };
@@ -84,6 +120,7 @@ export function ResponseReview({
   onSave: (w: Workspace) => Promise<boolean>;
   onConfirmIssues: (confirmed: boolean) => void;
   onGenerate: () => void;
+  onSwapWording: () => void;
   onSubmit: (sent: { receipt: string; sentText?: string }) => Promise<boolean>;
 }) {
   const w = file.workspace;
@@ -488,6 +525,37 @@ export function ResponseReview({
             {result.draft.watermark && (
               <Alert variant="warning">
                 <AlertDescription>{result.draft.watermark}</AlertDescription>
+              </Alert>
+            )}
+            {result.ai && result.ai.status !== "not_applicable" && (
+              <Alert
+                variant={
+                  result.ai.status === "used" && result.showing === "ai" ? "info" : "warning"
+                }
+              >
+                <AlertDescription className="space-y-2">
+                  <span className="block">
+                    {result.ai.status === "used"
+                      ? result.showing === "own"
+                        ? C.aiDraft.showingOwn
+                        : C.aiDraft.written
+                      : ((C.aiDraft.fallback as Record<string, string>)[result.ai.reason] ??
+                        C.aiDraft.fallbackOther)}
+                  </span>
+                  {result.alternate && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setReviewed(false);
+                        onSwapWording();
+                      }}
+                    >
+                      {result.showing === "own" ? C.aiDraft.useAi : C.aiDraft.useOwn}
+                    </Button>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
             <pre className="whitespace-pre-wrap break-words rounded-lg border border-border bg-background p-5 font-sans text-sm leading-loose shadow-inset sm:p-8">

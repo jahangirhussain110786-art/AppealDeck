@@ -12,6 +12,10 @@ import { CaseDataSchema } from "@/lib/caseSchema";
 import { workspaceCanCompose, professionalReviewApplies, routeWorkspace } from "@/core/workspace";
 import { hasD6Allegation } from "@/core/violationKinds";
 import { STORES } from "@/content/stores";
+import { isGeminiConfigured } from "@/lib/llm/gemini";
+import { draftResponse } from "@/lib/llm/draftResponse";
+import { draftRequestFrom } from "@/lib/draftRequest";
+import type { DraftSections } from "@/core/draftVerification";
 
 export const dynamic = "force-dynamic";
 
@@ -124,33 +128,91 @@ export async function POST(req: NextRequest) {
   }
   const data: CaseFileData = caseData;
 
-  const draft = composeDraft(data, attemptNumber);
-  const critique = critiquePoa(draft, data);
+  const ownDraft = composeDraft(data, attemptNumber);
+
+  /*
+    7 Oct 2026, founder decision: the AI writes the Plan of Action's three narrative sections from
+    the seller's own answers, the notice and the records they reviewed. It is never trusted: a
+    draft that adds a date, a number, a name or a document the material does not contain is thrown
+    away (`verifyAiDraft`), and the seller's own wording, which the deterministic draft is built
+    from, is returned alongside so they can switch back. Everything that names a file stays code.
+  */
+  let draft = ownDraft;
+  let ai: AiStatus = { status: "not_applicable" };
+  if (data.workspace && data.workspace.protocol === "operational") {
+    const aiRequest = draftRequestFrom(data.workspace, data.kind, attemptNumber);
+    if (aiRequest) {
+      if (!isGeminiConfigured()) {
+        ai = { status: "fallback", reason: "not_configured" };
+      } else {
+        const outcome = await draftResponse(aiRequest);
+        if (outcome.ok) {
+          draft = withAiSections(ownDraft, outcome.sections);
+          ai = { status: "used", retried: outcome.retried };
+        } else {
+          ai = { status: "fallback", reason: outcome.reason, detail: outcome.detail };
+        }
+      }
+    }
+  }
+  const view = (d: PoaDraft) => ({
+    docType: d.docType,
+    mode: d.mode,
+    sections: d.sections,
+    watermark: d.watermark,
+    metadata: d.metadata,
+  });
 
   return NextResponse.json({
-    draft: {
-      docType: draft.docType,
-      mode: draft.mode,
-      sections: draft.sections,
-      watermark: draft.watermark,
-      metadata: draft.metadata,
-    },
-    critique,
+    draft: view(draft),
+    critique: critiquePoa(draft, data),
     rendered: renderPoaText(draft),
+    ai,
+    ...(ai.status === "used"
+      ? {
+          ownWording: {
+            draft: view(ownDraft),
+            critique: critiquePoa(ownDraft, data),
+            rendered: renderPoaText(ownDraft),
+          },
+        }
+      : {}),
   });
 }
 
+type AiStatus =
+  | { status: "not_applicable" }
+  | { status: "used"; retried: boolean }
+  | { status: "fallback"; reason: string; detail?: string };
+
+const AI_SECTIONS = {
+  "Root Cause": "rootCause",
+  "Corrective Actions": "correctiveActions",
+  "Preventive Measures": "preventiveMeasures",
+} as const;
+
+/** The deterministic draft with the three narrative sections replaced, and marked as AI-written. */
+function withAiSections(draft: PoaDraft, sections: DraftSections): PoaDraft {
+  return {
+    ...draft,
+    sections: draft.sections.map((s) => {
+      const key = AI_SECTIONS[s.heading as keyof typeof AI_SECTIONS];
+      return key ? { ...s, body: sections[key], source: "ai" as const } : s;
+    }),
+    metadata: { ...draft.metadata, aiDrafted: true },
+  };
+}
+
 /**
- * Always deterministic. Preparing a response assembles the seller's own confirmed wording and exact
- * evidence references and sends nothing to any AI provider — the privacy policy says so, and
- * `legalDisclosures.test.ts` pins it.
+ * The seller's own draft, assembled in code from their confirmed wording and exact evidence
+ * references. It is what every response starts from, what the AI draft is checked against, and
+ * what the seller gets when the AI cannot run or its draft fails the fact check.
  *
- * Until 24 Sep 2026 a legacy branch here rewrote Root Cause and Preventive Measures with Gemini
- * (AM-23) for a case with no workspace. Every case has had a workspace since 22 Sep, so no seller
- * could reach it, but a hand-built request without one could — which made the privacy sentence
- * true only for the product's own screens. It is removed. AI help with wording is now a separate,
- * opt-in step with a fact lock (`/api/improve-wording`), and its result is only ever what the seller
- * chooses to keep in their own fields.
+ * History: until 24 Sep 2026 a legacy branch here rewrote sections with Gemini (AM-23) for a case
+ * with no workspace, and from 24 Sep this function sent nothing to any AI provider. On 7 Oct 2026
+ * the founder decided the AI writes the Plan of Action's narrative sections; that now happens in
+ * `POST` above, behind `verifyAiDraft`, and the privacy page says so (`legalDisclosures.test.ts`
+ * pins it).
  */
 function composeDraft(data: CaseFileData, attemptNumber: number): PoaDraft {
   return composePoa(data, attemptNumber);

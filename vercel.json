@@ -52,6 +52,9 @@
     "src/app/api/read-document/route.ts": {
       "maxDuration": 60
     },
+    "src/app/api/compose/route.ts": {
+      "maxDuration": 60
+    },
     "src/app/api/improve-wording/route.ts": {
       "maxDuration": 60
     },

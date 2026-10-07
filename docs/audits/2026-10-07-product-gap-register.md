@@ -13,6 +13,8 @@ Size: **S** under a day, **M** a few days, **L** a week or more. Status: **Verif
 | **D1** monitoring | Daily `/api/jobs/ops-digest`: counts parked payments, stuck confirmation emails and failed reminders, emails `OPS_ALERT_EMAIL` only when something is wrong, else logs an error line | `src/lib/opsDigest.ts` |
 | **D2** health | `/api/health` (200 only when the database answers and the rate limiter is configured; no detail) for a free uptime monitor | `src/app/api/health/route.ts` |
 
+**B5 AI drafting: built (7 Oct 2026, founder decision).** The AI writes the three narrative sections of a Plan of Action from the seller's answers, the notice, the names and notes of reviewed records, and (after a refusal) Amazon's stated reasons, against a dated, sourced brief of Amazon's current expectations (`src/core/policyBrief.ts`, checked 2026-10-07). Code, not the model, decides what is used: `verifyAiDraft` rejects any added date, number, name, ID, action or document, any dropped seller fact, strengthened wording (found in the first live run: "checked every unit" became "completed a physical inspection"), padding and forbidden phrases; one retry with the exact complaint; otherwise the seller's own wording, with the reason shown. Needs the paid Gemini tier. Only Plans of Action; other response types stay in the seller's own words.
+
 Not yet an evidence-pack file (B1 covered the response only; the manifest download remains `.txt`).
 
 **Deliberately not built, with reasons**

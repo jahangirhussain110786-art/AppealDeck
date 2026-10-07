@@ -29,7 +29,12 @@ import {
 } from "./CaseOverview";
 import { RequestReview } from "./RequestReview";
 import { EvidenceReview } from "./EvidenceReview";
-import { ResponseReview, type WorkspaceResponse } from "./ResponseReview";
+import {
+  ResponseReview,
+  receiveWorkspaceResponse,
+  swapWording,
+  type WorkspaceResponse,
+} from "./ResponseReview";
 import { ReplyDeltaReview } from "./ReplyDeltaReview";
 import { SellerDeadlineField } from "./SellerDeadlineField";
 import { daysLeftLabel } from "./deadlineText";
@@ -1071,7 +1076,7 @@ function WorkspaceInner({
         throw new Error(
           apiErrorMessage(response.status, data, "Could not prepare the response. Try again."),
         );
-      setResult(data as WorkspaceResponse);
+      setResult(receiveWorkspaceResponse(data));
       setPurchase(false);
       // Defined in analytics.ts and sent from nowhere until 23 Sep 2026, so the funnel could not
       // tell a seller who bought a Pass and prepared a response from one who stopped.
@@ -2154,6 +2159,7 @@ function WorkspaceInner({
                     );
                   }}
                   onGenerate={() => void generate()}
+                  onSwapWording={() => setResult((r) => (r ? swapWording(r) : r))}
                   onSubmit={recordSubmission}
                 />
               )}

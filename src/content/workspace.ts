@@ -461,6 +461,24 @@ export const WORKSPACE = {
     title: "Start with your notice",
     body: "Paste your notice on the Overview tab first. Then this page will ask you the right questions.",
   },
+  // 7 Oct 2026: the AI writes the Plan of Action's three narrative sections.
+  aiDraft: {
+    written:
+      "The root cause, corrective actions and preventive measures were written by AI from your answers, your notice and the records you reviewed. It may use only what you told it. Check every fact against your records before you copy it.",
+    showingOwn: "This is your own wording, put in order. The AI draft is one tap away.",
+    useOwn: "Use my own wording",
+    useAi: "Use the AI draft",
+    fallback: {
+      fact_check_failed:
+        "The AI draft added details you did not give, so it was discarded. This draft is built from your own wording.",
+      not_configured:
+        "AI drafting is switched off right now. This draft is built from your own wording.",
+      busy: "AI drafting is busy right now. This draft is built from your own wording. Prepare it again in a minute to retry.",
+      unavailable:
+        "AI drafting was not available this time. This draft is built from your own wording. Prepare it again to retry.",
+    },
+    fallbackOther: "AI drafting did not run. This draft is built from your own wording.",
+  },
   exportWord: "Download as Word",
   exportPdf: "Print or save as PDF",
   printBlocked: "Your browser blocked the print window. Allow pop-ups for this site and try again.",

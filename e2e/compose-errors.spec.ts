@@ -137,3 +137,74 @@ test("a prepared response downloads as a Word file and opens a clean print page"
   await expect(popup.locator("h1")).toHaveText("Plan of Action");
   await expect(popup.getByText(WENT_WRONG.slice(0, 40))).toBeVisible();
 });
+
+// The AI wrote the narrative: the seller is told so, can switch to their own wording and back, and
+// what they copy is always what is on screen.
+test("an AI-written response says so and can be switched to the seller's own wording", async ({
+  page,
+}) => {
+  const view = (marker: string) => ({
+    docType: "poa",
+    mode: { mode: "full-draft", reason: "Ready for your final factual review." },
+    sections: [{ heading: "Root Cause", body: marker }],
+    metadata: {
+      generatedAt: "2026-10-07T00:00:00.000Z",
+      kind: "POLICY",
+      evidenceComplete: true,
+      attemptNumber: 1,
+      aiDrafted: marker.startsWith("AI"),
+    },
+  });
+  const part = (marker: string) => ({
+    draft: view(marker),
+    rendered: `## Root Cause\n\n${marker}\n`,
+    critique: { findings: [], passed: true },
+  });
+  await prepareWith(page, {
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      ...part("AI wording of the root cause."),
+      ai: { status: "used", retried: false },
+      ownWording: part("Seller's own wording of the root cause."),
+    }),
+  });
+  await expect(page.getByText(/were written by AI from your answers/)).toBeVisible();
+  await expect(page.getByText("AI wording of the root cause.")).toBeVisible();
+
+  await page.getByRole("checkbox", { name: /I reviewed the facts/ }).check();
+  await page.getByRole("button", { name: "Use my own wording" }).click();
+  await expect(page.getByText("Seller's own wording of the root cause.")).toBeVisible();
+  await expect(page.getByText("AI wording of the root cause.")).toHaveCount(0);
+  // Switching un-ticks the review: it is a different text now.
+  await expect(page.getByRole("checkbox", { name: /I reviewed the facts/ })).not.toBeChecked();
+
+  await page.getByRole("button", { name: "Use the AI draft" }).click();
+  await expect(page.getByText("AI wording of the root cause.")).toBeVisible();
+});
+
+test("when the AI draft is discarded the seller is told why", async ({ page }) => {
+  await prepareWith(page, {
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      draft: {
+        docType: "poa",
+        mode: { mode: "full-draft", reason: "Ready" },
+        sections: [{ heading: "Root Cause", body: WENT_WRONG }],
+        metadata: {
+          generatedAt: "2026-10-07T00:00:00.000Z",
+          kind: "POLICY",
+          evidenceComplete: true,
+          attemptNumber: 1,
+          aiDrafted: false,
+        },
+      },
+      rendered: `## Root Cause\n\n${WENT_WRONG}\n`,
+      critique: { findings: [], passed: true },
+      ai: { status: "fallback", reason: "fact_check_failed" },
+    }),
+  });
+  await expect(page.getByText(/added details you did not give, so it was discarded/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use my own wording" })).toHaveCount(0);
+});

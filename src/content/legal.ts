@@ -19,7 +19,7 @@ export type LegalDoc = "privacy" | "terms" | "refund";
 export const LEGAL = {
   lastUpdated: {
     privacy: "2026-10-07",
-    terms: "2026-10-06",
+    terms: "2026-10-07",
     refund: "2026-10-06",
   },
   privacy: {
@@ -29,7 +29,7 @@ export const LEGAL = {
         id: "what-we-collect",
         title: "What we collect",
         body: [
-          "When you decode a notice, its text is sent to AppealDeck for analysis. Preparing a response sends your case text and document references to AppealDeck. Uploading a file does not, by itself, send it anywhere.",
+          "When you decode a notice, its text is sent to AppealDeck for analysis. Preparing a response sends your case text and document references to AppealDeck, and, for a Plan of Action, on to Google Gemini to write it (see How we use it). Uploading a file does not, by itself, send it anywhere.",
           "If you ask us to check a business document — an invoice, an authorization letter, a sales report, a listing screenshot or a certificate — that check is made in one of two places, and only when you ask for it on that specific file. When you are signed in and the AI reading is available, the document is sent to AppealDeck and on to Google Gemini, so its contents can be read against what Amazon asked you for. It is used for that one request, which may be sent to Google more than once if the first attempt fails, and we do not keep a copy. With it we send the ASINs and case IDs from your notice, and any business details you entered in your case (your registered business name and address, and your suppliers), so our server can compare them with what the document shows; those are not sent to Google Gemini. When you are not signed in, or the file is too large to send, the document is instead read on your own device, without AI, by software that runs in your browser and is served from this site; it is not uploaded. If a signed-in check cannot be read by the AI (it is switched off, busy or over its limit), the file has already reached AppealDeck, together with those case details, and in some of those cases the file has also gone on to Google Gemini; it is then read on your device as well, and the result says so. Before it sends anything, the app asks whether the case has an Appeal Pass; without one, the file is read on your device and is not sent.",
           'If you press "Improve the wording" on a section of your response, the text of that one section (and, for a questionnaire answer, Amazon\'s question) is sent to AppealDeck and on to Google Gemini, which suggests clearer wording. It is used for that one request and we do not keep a copy. The suggestion is shown beside your own text and nothing changes unless you choose it. Automated checks reject changes to recognized numbers, dates, identifiers, contact details, names and explicit negation or planning language. These checks cannot detect every invented claim or change in meaning. Review each suggestion against your records before using it.',
           "Identity and financial documents are treated differently. Passports, national identity cards, driving licences, bank statements, and utility bills or other proof of address are never uploaded for checking when you file them under the matching document type. Do not file them under any other type: a file filed under another type is treated as that type. Documents filed under the matching type are examined on your own device, in your browser, and we look only at whether the picture is large enough, sharp enough, well lit and fully in frame — we do not read what the document says.",
@@ -67,7 +67,7 @@ export const LEGAL = {
             (`/api/improve-wording`). Preparing the response itself still calls no model, so the
             first sentence stands; the last now names the second thing a seller can choose to send.
           */
-          "Preparing a response is done on AppealDeck's server, from the wording you wrote and your document references. It is not sent to Google Gemini or any other AI provider, and it never includes your files. The only things we send to an AI provider are a business document you ask us to check and a section you ask us to improve the wording of, each as described above.",
+          "Preparing a response is done on AppealDeck's server, from the wording you wrote and your document references. For a Plan of Action the Root Cause, Corrective Actions and Preventive Measures sections are written by AI: your notice text, your three written answers, and the names of the records you reviewed with your notes about them are sent to Google Gemini, which is told to use only those facts. Our own code then checks the result and throws it away if it adds a date, number, name, document or action you did not give; you then get a draft built from your own wording instead, and you can switch to your own wording at any time. Your files are never sent for this, and the section listing your supporting records is put together by our server, never by AI. A document request, a questionnaire or a verification request is not written by AI. The things we send to an AI provider are therefore: that drafting, a business document you ask us to check, and a section you ask us to improve the wording of, each as described above.",
           "To limit abuse, we keep your IP address (for the free decoder) and your account ID (when you are signed in) in Upstash, only to count requests; these counters expire after the rate-limit window.",
           "To measure how many visitors reach each step of the free decoder and the Appeal Pass, using a cookieless analytics tool (Plausible) that counts page visits without collecting personal data or setting cross-site identifiers.",
         ],
@@ -156,7 +156,7 @@ export const LEGAL = {
             makes saying the opposite plainly the cheapest protection available.
           */
           "AppealDeck is software, not a law firm and not a substitute for one. Nothing here is legal advice, and we do not claim that this software performs the work of a lawyer, a consultant or a professional appeal writer. If your situation needs legal judgement, get a qualified professional.",
-          "All content is provided as-is, without warranties of any kind. Your use of the service is at your own discretion.",
+          "Parts of a Plan of Action are written by an AI model from the facts you give it. An AI can misread or misstate, so you must check every statement against your own records before you send anything, and you remain responsible for what you submit to Amazon. All content is provided as-is, without warranties of any kind. Your use of the service is at your own discretion.",
         ],
       },
       {

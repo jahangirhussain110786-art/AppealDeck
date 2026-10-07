@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { policyBriefAgeDays, policyBriefIsStale } from "@/core/policyBrief";
 
 /**
  * What the founder needs to hear about without going looking.
@@ -16,10 +17,15 @@ export interface OpsStatus {
   stuckConfirmations: number;
   /** Case reminders that were due, are unsent, and have recorded an error. */
   failedReminders: number;
+  /** Days since Amazon's expectations were last re-checked, when that is overdue; otherwise 0. */
+  policyBriefOverdueDays: number;
 }
 
 export const isAllClear = (s: OpsStatus) =>
-  s.parkedPayments === 0 && s.stuckConfirmations === 0 && s.failedReminders === 0;
+  s.parkedPayments === 0 &&
+  s.stuckConfirmations === 0 &&
+  s.failedReminders === 0 &&
+  s.policyBriefOverdueDays === 0;
 
 async function countOf(query: PromiseLike<{ count: number | null; error: unknown }>) {
   const { count, error } = await query;
@@ -48,7 +54,13 @@ export async function collectOpsStatus(client: SupabaseClient): Promise<OpsStatu
         .lte("due_at", new Date().toISOString()),
     ),
   ]);
-  return { parkedPayments, stuckConfirmations, failedReminders };
+  const now = new Date();
+  return {
+    parkedPayments,
+    stuckConfirmations,
+    failedReminders,
+    policyBriefOverdueDays: policyBriefIsStale(now) ? policyBriefAgeDays(now) : 0,
+  };
 }
 
 export function buildOpsDigest(status: OpsStatus): { subject: string; text: string } {
@@ -64,6 +76,10 @@ export function buildOpsDigest(status: OpsStatus): { subject: string; text: stri
   if (status.failedReminders)
     lines.push(
       `${status.failedReminders} case reminder email(s) are due and failed to send. Find them: select * from case_reminders where sent_at is null and last_error is not null;`,
+    );
+  if (status.policyBriefOverdueDays)
+    lines.push(
+      `The Plan of Action policy brief (src/core/policyBrief.ts) was last checked ${status.policyBriefOverdueDays} days ago. The AI writes every appeal against it, so re-check Amazon's current expectations (the sources are listed in that file), update the rules and POLICY_BRIEF_CHECKED_ON.`,
     );
   return {
     subject: `AppealDeck needs attention: ${lines.length} thing${lines.length === 1 ? "" : "s"} to look at`,
