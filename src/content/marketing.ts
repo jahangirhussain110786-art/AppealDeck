@@ -212,6 +212,14 @@ export const DECODE = {
     errorEdit: "Edit what I pasted",
     errorSellerAction: "Paste Amazon's message instead",
     errorContinue: "Read it anyway. Results for non-English text may be wrong.",
+    // 7 Oct 2026: the browser's own on-device translator, where it has one. Nothing is sent to us or
+    // anyone else to translate; the English text is then decoded as usual.
+    translate: "Translate to English on this device",
+    translating: "Translating on this device…",
+    translateFailed:
+      "Your browser could not translate this. Paste the notice into your browser's translate feature, or into Seller Central's own language setting, then paste the English text here.",
+    translatedNote:
+      "Translated from {language} by your browser, on this device. Machine translation can change a date, an ID or a number: check every one against the original notice.",
     // Reply-due tile when the notice gives a date or a length we cannot count from (7 Oct 2026).
     factAmbiguous: "Date written {date}: could be {a} or {b}. Check your notice.",
     factAmbiguousShort: "Date unclear",

@@ -123,6 +123,10 @@ describe("the rendered Privacy page", () => {
     expect(privacy).toMatch(/switch to your own wording/);
   });
 
+  it("says translation happens on the device", () => {
+    expect(privacy).toMatch(/translation happens on your device by your browser's own translator/);
+  });
+
   it("tells the seller in the terms that AI can misstate and that they are responsible", () => {
     expect(text("terms")).toMatch(/written by an AI model/);
     expect(text("terms")).toMatch(/you remain responsible for what you submit to Amazon/);

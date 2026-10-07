@@ -17,6 +17,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { OfflineNotice } from "@/components/OfflineNotice";
 import { DetailDisclosure, VIEW_ICONS } from "@/components/workspace/WorkspaceVisuals";
 import { guidanceFor } from "@/core/guidance";
+import { canTranslateToEnglish, translateToEnglish } from "@/lib/translate";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { handlePaste, stripInvisibleChars } from "@/lib/idNormalize";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
@@ -90,6 +91,8 @@ type DecodeError = {
   named: boolean;
   /** A language refusal the seller may override: "read it anyway" resends with `force`. */
   canContinue: boolean;
+  /** The language the refusal named, so the browser can be asked to translate it. */
+  language?: { code: string; name: string };
 };
 
 /** Longest the decoder is waited for. The server answers in well under a second; this is for a stalled connection. */
@@ -162,6 +165,10 @@ export default function DecodeClient() {
           sellerText: body.looksLikeSellerText === true,
           named: serverSide || body.supported === false || body.garbled === true,
           canContinue: body.canContinue === true && body.supported === false,
+          language:
+            typeof body.language === "string" && body.supported === false
+              ? { code: body.language, name: String(body.languageName ?? body.language) }
+              : undefined,
         });
         setStatus("error");
         return;
@@ -238,6 +245,44 @@ export default function DecodeClient() {
   }
 
   /** Back to the box with the paste still in it, and the cursor there. */
+  // Translation by the browser's own on-device translator, where it has one. Nothing is sent
+  // anywhere to translate; the English text is then decoded like any pasted notice.
+  // The language the browser has said it can translate, so a refusal in another language never
+  // shows a button that would fail.
+  const [translatableLanguage, setTranslatableLanguage] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [translatedFrom, setTranslatedFrom] = useState<string | null>(null);
+  const refusedLanguage = error?.language?.code;
+  const canTranslate = Boolean(refusedLanguage) && translatableLanguage === refusedLanguage;
+  useEffect(() => {
+    let live = true;
+    if (refusedLanguage)
+      void canTranslateToEnglish(refusedLanguage).then(
+        (ok) => live && ok && setTranslatableLanguage(refusedLanguage),
+      );
+    return () => {
+      live = false;
+    };
+  }, [refusedLanguage]);
+
+  async function translateAndDecode() {
+    if (!error?.language) return;
+    setTranslating(true);
+    const out = await translateToEnglish(text, error.language.code);
+    setTranslating(false);
+    if (!out.ok) {
+      setError({
+        ...error,
+        message: DECODE.result.translateFailed,
+        canContinue: error.canContinue,
+      });
+      return;
+    }
+    setText(out.text);
+    setTranslatedFrom(error.language.name);
+    void submitText(out.text);
+  }
+
   function editPasted() {
     setStatus("empty");
     requestAnimationFrame(() => document.getElementById("notice")?.focus());
@@ -260,7 +305,18 @@ export default function DecodeClient() {
   // in the button, not a skeleton wipe).
   let main: React.ReactNode = null;
   if (status === "result" && result) {
-    main = <ResultView result={result} guidance={guidance!} text={decodedText} />;
+    main = (
+      <>
+        {translatedFrom && (
+          <Alert variant="warning" className="mb-4 bg-card">
+            <AlertDescription>
+              {DECODE.result.translatedNote.replace("{language}", translatedFrom)}
+            </AlertDescription>
+          </Alert>
+        )}
+        <ResultView result={result} guidance={guidance!} text={decodedText} />
+      </>
+    );
   } else if (status === "error") {
     main = (
       <ErrorView
@@ -271,6 +327,9 @@ export default function DecodeClient() {
         sellerText={error?.sellerText ?? false}
         canContinue={error?.canContinue ?? false}
         onContinue={() => void submitText(text, true)}
+        canTranslate={canTranslate}
+        translating={translating}
+        onTranslate={() => void translateAndDecode()}
         onEdit={editPasted}
         onPasteInstead={pasteAmazonInstead}
       />
@@ -619,6 +678,9 @@ function ErrorView({
   hint,
   sellerText,
   canContinue,
+  canTranslate,
+  translating,
+  onTranslate,
   onEdit,
   onContinue,
   onPasteInstead,
@@ -627,6 +689,9 @@ function ErrorView({
   hint?: string;
   sellerText: boolean;
   canContinue: boolean;
+  canTranslate: boolean;
+  translating: boolean;
+  onTranslate: () => void;
   onEdit: () => void;
   onContinue: () => void;
   onPasteInstead: () => void;
@@ -641,6 +706,16 @@ function ErrorView({
         <AlertDescription>{message}</AlertDescription>
         {hint && <AlertDescription className="mt-2">{hint}</AlertDescription>}
         <div className="mt-3 flex flex-wrap gap-2">
+          {canTranslate ? (
+            <Button
+              size="sm"
+              onClick={onTranslate}
+              disabled={translating}
+              className="h-auto min-h-9 whitespace-normal"
+            >
+              {translating ? DECODE.result.translating : DECODE.result.translate}
+            </Button>
+          ) : null}
           {canContinue ? (
             <Button size="sm" onClick={onContinue} className="h-auto min-h-9 whitespace-normal">
               {DECODE.result.errorContinue}
