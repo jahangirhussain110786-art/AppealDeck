@@ -1,3 +1,5 @@
+import { planOfActionExamples } from "./guideExamples";
+
 /**
  * B-25: the four guide pages, chosen and ordered by `docs/handoffs/2026-09-25-keyword-research.md`.
  * Sellers search for their problem, never for a "decoder", so each guide answers one problem and
@@ -9,7 +11,15 @@
  * evidence and outreach, no dispute drafting). Re-verify every policy statement quarterly.
  */
 
-export type GuideSection = { heading: string; body?: string; points?: string[] };
+/** A worked example shown as a quoted block, clearly labelled, with the reasons it works beside it. */
+export type GuideExample = { label: string; paragraphs: string[] };
+
+export type GuideSection = {
+  heading: string;
+  body?: string;
+  points?: string[];
+  example?: GuideExample;
+};
 
 export type Guide = {
   slug: string;
@@ -291,6 +301,7 @@ export const GUIDES: Guide[] = [
     },
     cta: "Paste your IP complaint notice to pull out the IDs, ASINs and what it asks for.",
   },
+  planOfActionExamples,
 ];
 
 export function guideBySlug(slug: string): Guide | undefined {

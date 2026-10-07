@@ -69,6 +69,18 @@ export function GuideView({ guide }: { guide: Guide }) {
               {s.body && (
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
               )}
+              {s.example && (
+                <figure className="mt-4 rounded-xl border border-border bg-surface-1 p-5 sm:p-6">
+                  <figcaption className="mb-3 inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                    {s.example.label}
+                  </figcaption>
+                  <div className="space-y-3 text-sm leading-relaxed text-foreground">
+                    {s.example.paragraphs.map((p) => (
+                      <p key={p}>{p}</p>
+                    ))}
+                  </div>
+                </figure>
+              )}
               {s.points && (
                 <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-muted-foreground">
                   {s.points.map((p) => (
