@@ -22,7 +22,7 @@
 
 | Phase | Lens | Areas | Status |
 | --- | --- | --- | --- |
-| 1 | Money, identity and trust boundary | 1.1 Payments & entitlements · 1.2 Auth, sessions & redirects · 1.3 API routes & input hardening · 1.4 Database, migrations & RLS · 1.5 Secrets, config & deployment | NOT STARTED |
+| 1 | Money, identity and trust boundary | 1.1 Payments & entitlements · 1.2 Auth, sessions & redirects · 1.3 API routes & input hardening · 1.4 Database, migrations & RLS · 1.5 Secrets, config & deployment | DONE (7 Oct 2026) |
 | 2 | The seller's data | 2.1 Vault & encryption · 2.2 Case store, persistence & migration of old data · 2.3 Backup, restore, export · 2.4 Documents & the device reader · 2.5 Privacy copy vs. actual data flow | NOT STARTED |
 | 3 | The engine's judgement | 3.1 Notice parsing, classification & response type · 3.2 Evidence model & requirements · 3.3 Deadlines, clocks & reminders · 3.4 Reply analyser & escalation · 3.5 Composer, critic, wording lock & D6 | NOT STARTED |
 | 4 | The seller's journey | 4.1 First 5 minutes (home → decode → case) · 4.2 The case workspace end to end · 4.3 Dashboard, multi-case, billing, devices · 4.4 Empty, error, offline, slow & hostile states · 4.5 Seams between steps (resume, gates, redirects) | NOT STARTED |
@@ -38,46 +38,46 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `DONE` · `BLOCKED (founder)`.
 
 ### 1.1 Payments & entitlements
 Files: `src/app/api/checkout/*`, `src/app/api/webhooks/paddle`, `src/lib/license*.ts`, `licenseGuard.ts`, `licensePoll.ts`, `src/components/CheckoutButton.tsx`, `src/components/pricing/*`, `supabase/migrations/0009,0012,0014,0015`, `scripts/setup-paddle-sandbox.mjs`.
-- [ ] Webhook: signature check, replay/idempotency, out-of-order events, unknown event types, refund (`adjustment.*`) revokes the Pass.
-- [ ] One Pass per case enforced in DB and API; double-purchase refused (409) and page says so.
-- [ ] Guest → account → purchase: the Pass attaches to the right case ID after sign-in and activation resumes into the draft.
-- [ ] Price is $249 everywhere a buyer can see it, including the sandbox script and consent text (no stray $199).
-- [ ] Failure modes: Paddle down, webhook late, license-status lookup failing (fail open vs. closed chosen deliberately and documented).
-- [ ] D8 consent: explicit prior consent captured before checkout opens; confirmation email path (Resend) and its attempt cap.
-- [ ] Gating: every Pass-only route (`compose`, `read-document`, `improve-wording`, …) checks the Pass for *that case* server-side.
+- [x] Webhook: HMAC-SHA256 with a 5-minute window and constant-time compare; idempotent on `event_id`; advisory locks per transaction; adjustments arriving before completion handled; refund/chargeback revoke and a reversal restores (0015 guards the unique index). Unmatched payments are parked and logged, not dropped.
+- [x] One Pass per case: API 409, webhook parks a duplicate, and the partial unique index `licenses_one_active_pass_per_case` is live (verified by inserting two throwaway active rows on the live project: the second was refused with 23505; rows deleted).
+- [~] (re-trace in 4.5) Guest → account → purchase: the Pass attaches to the right case ID after sign-in and activation resumes into the draft.
+- [x] Price is $249 everywhere a buyer can see it, including the sandbox script and consent text (no stray $199).
+- [x] Failure modes: lookup errors answer 503, never 403 (a paying seller is told to retry); intent returns 503 when the licence lookup fails; a failed Paddle script replaces the button text and toasts; the poll keeps asking until its 90 s deadline.
+- [x] D8 consent (server stores its own consent text; the client can only send `consent: true`; migration 0013 caps email attempts at 5, verified live; actual delivery needs `RESEND_API_KEY`, founder): explicit prior consent captured before checkout opens; confirmation email path (Resend) and its attempt cap.
+- [x] Gating: every Pass-only route (`compose`, `read-document`, `improve-wording`, …) checks the Pass for *that case* server-side.
 
 ### 1.2 Auth, sessions & redirects
 Files: `src/proxy.ts`, `src/lib/auth.ts`, `src/lib/supabase/*`, `src/lib/urls.ts`, `src/app/(app)/{login,signup,auth,forgot-password,reset-password}`, `ProfileMenu`.
-- [ ] `?next=` is validated everywhere (open-redirect, protocol-relative, backslash, encoded forms).
-- [ ] Sign-out ends the session in this tab and does not leave stale signed-in pages (router cache); global vs. local sign-out (founder question still open).
-- [ ] Session refresh in the proxy forwards cookies; expired session behaves.
-- [ ] Magic link / Google OAuth / password reset round trips, including with no auth backend configured.
-- [ ] Email-enumeration and error-message leakage on login, signup, reset.
-- [ ] Cross-tab sign-in/out.
+- [x] (probed CR/LF, tab, encoded slash, `/..//`, NUL, backslash, RTL override: every result stays on our origin) `?next=` is validated everywhere (open-redirect, protocol-relative, backslash, encoded forms).
+- [!] (hard navigation, no stale page; but Supabase's default global scope ends the seller's sessions on every device: founder call F-1) Sign-out ends the session in this tab and does not leave stale signed-in pages (router cache); global vs. local sign-out (founder question still open).
+- [x] Session refresh in the proxy forwards cookies; expired session behaves.
+- [x] (callback handles `error`, missing code, no client; recovery keeps `continue`) Magic link / Google OAuth / password reset round trips, including with no auth backend configured.
+- [x] (signup uses fixed wording; password login shows Supabase's single invalid-credentials text) Email-enumeration and error-message leakage on login, signup, reset.
+- [~] (covered by bug sweep 5; not re-tested) Cross-tab sign-in/out.
 
 ### 1.3 API routes & input hardening
 Files: every `src/app/api/**/route.ts`, `src/lib/rateLimit*`, `src/lib/breaker.ts`, `src/lib/llm/*`, `src/core/inputCost.test.ts`.
-- [ ] Every route: method handling, body size cap, Zod strictness, content-type, error shape (no stack/secret leakage).
-- [ ] Rate limits: per-IP/per-user/per-case, what happens when Upstash is absent (fail closed in prod, usable in dev).
-- [ ] Spend cap and circuit breaker count at the call, after auth and Pass.
-- [ ] Hostile-input CPU: every regex/loop over user text bounded (re-fuzz after recent core changes).
-- [ ] Prompt-injection posture: model output is never trusted as a decision; schema-constrained; fact lock holds.
-- [ ] Cron routes require `CRON_SECRET`; every cron is registered in `vercel.json`.
+- [x] (table checked across all 14 routes: auth, rate limit, Zod, size cap) Every route: method handling, body size cap, Zod strictness, content-type, error shape (no stack/secret leakage).
+- [x] (all fail closed without Upstash except `/api/decode`, which fails open on purpose: free and CPU-bounded; client IP from `x-forwarded-for`, which Vercel overwrites) Rate limits: per-IP/per-user/per-case, what happens when Upstash is absent (fail closed in prod, usable in dev).
+- [~] (counted at the call per the third audit pass; not re-tested) Spend cap and circuit breaker count at the call, after auth and Pass.
+- [~] (`inputCost.test.ts` passes in the full run; re-fuzz after Phase 3 changes) Hostile-input CPU: every regex/loop over user text bounded (re-fuzz after recent core changes).
+- [~] (re-check in 3.5) Prompt-injection posture: model output is never trusted as a decision; schema-constrained; fact lock holds.
+- [x] (constant-time, fails closed when unset; both crons registered, and `lint:reachability` enforces it) Cron routes require `CRON_SECRET`; every cron is registered in `vercel.json`.
 
 ### 1.4 Database, migrations & RLS
 Files: `supabase/migrations/0001–0015`, `docs/MIGRATIONS.md`, `scripts/check-entitlement-migration.mjs`, `verify-entitlement-security.mjs`.
-- [ ] Migrations apply in order on a clean database; 0013 (unapplied per notes) and 0015 status checked against the live project and recorded.
-- [ ] RLS: anon and authenticated roles cannot read/write other users' rows; service-role-only functions are not callable by anon.
-- [ ] Constraints and indexes match what the code assumes (unique Pass per case, attempt caps, outcome CHECKs).
-- [ ] Backup workflow (`backup.yml`) correct; restore procedure written and plausible.
+- [x] (0013, 0014, 0015 are applied on the live project, verified by behaviour; a clean-database replay of 0001-0015 was not run: no scratch database) Migrations apply in order on a clean database; 0013 (unapplied per notes) and 0015 status checked against the live project and recorded.
+- [x] (anon is refused at grant level on checkout_intents, payment_*, purchase_email_outbox, outcome_events, case_reminders; `licenses` and `license_events` return `[]` to anon by RLS only, see L-005; 0009 dropped the user UPDATE policy and revoked write grants; authenticated-role write attempts not tested, would need the dev password) RLS: anon and authenticated roles cannot read/write other users' rows; service-role-only functions are not callable by anon.
+- [x] Constraints and indexes match what the code assumes (unique Pass per case, attempt caps, outcome CHECKs).
+- [~] (red until the two secrets exist, founder; no restore drill yet) Backup workflow (`backup.yml`) correct; restore procedure written and plausible.
 
 ### 1.5 Secrets, config & deployment
 Files: `.env.example`, `docs/DEPLOYMENT.md`, `docs/CURRENT-STATE.md`, `next.config.mjs`, `vercel.json`, `.github/workflows/*`, `.gitignore`.
-- [ ] No secret or real credential in the tree or history that matters (`tmp-seed.log`, `prompt-for-chatgpt.txt`, `test-results`, `kilo.json` reviewed; stray files removed or ignored).
-- [ ] Every env var the code reads is in `.env.example` and DEPLOYMENT, with fail-safe behaviour when unset.
-- [ ] Security headers / CSP decision (none today — recorded founder call), cookies flags, CORS.
-- [ ] `GEMINI_PAID_TIER_CONFIRMED` behaviour in production when false/unset is honest in the UI and privacy copy.
-- [ ] Build from a clean checkout works (`npm ci && npm run build`), Node version pinned, CI mirrors it.
+- [x] (pattern scan of tracked files for Supabase, Google, Paddle and Resend key shapes found none; `tmp-seed.log`, `test-results`, `.env.local` are ignored; the stray `prompt-for-chatgpt.txt` was moved, L-004) No secret or real credential in the tree or history that matters (`tmp-seed.log`, `prompt-for-chatgpt.txt`, `test-results`, `kilo.json` reviewed; stray files removed or ignored).
+- [x] (only tooling variables differ) Every env var the code reads is in `.env.example` and DEPLOYMENT, with fail-safe behaviour when unset.
+- [!] (nosniff, DENY, HSTS, Referrer-Policy and Permissions-Policy are set; the CSP is Report-Only with no report endpoint: founder call F-2) Security headers / CSP decision (none today — recorded founder call), cookies flags, CORS.
+- [~] (handled in 2.5 and 3.5) `GEMINI_PAID_TIER_CONFIRMED` behaviour in production when false/unset is honest in the UI and privacy copy.
+- [x] (Node 24 pinned in `engines` and CI; CI was red on typecheck, L-001, fixed) Build from a clean checkout works (`npm ci && npm run build`), Node version pinned, CI mirrors it.
 
 ---
 
@@ -226,12 +226,19 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 | ID | Area | Severity (P0 launch-blocker / P1 / P2) | Finding | Evidence | Status | Fix / commit |
 | --- | --- | --- | --- | --- | --- | --- |
 | L-001 | 5.4 | P1 | CI red on every push since at least 6 Oct (bug sweeps 4–8): `npm run typecheck` fails on 5 test-file type errors (`draftQuality.test.ts` attested `true` vs `{at}`; `caseCommitIntegrity.test.ts` excess `state` on a `Pick`). CI stops at typecheck, so build, e2e and Lighthouse never ran in CI for those pushes. Local gates were green because vitest does not typecheck. | `gh run view 37466036288 --log-failed` shows the 5 TS errors; `npm run typecheck` reproduced locally | FIXED | tests corrected; typecheck 0, build, Playwright CI 137/0/2 |
+| L-002 | 1.5 | P2 | The Content-Security-Policy ships as `Report-Only` with no report endpoint: no protection and no signal. | `vercel.json` headers | FOUNDER CALL F-2 | |
+| L-003 | 1.2 | P2 | Sign-out uses Supabase's default global scope: signing out on one device ends every session of that seller. | `src/lib/useSignOut.ts` | FOUNDER CALL F-1 | |
+| L-004 | 1.5 | P3 | A stray 34 KB research prompt was tracked at the repo root. | `git ls-files` | FIXED | moved to `docs/handoffs/2026-09-21-prompt-for-chatgpt.txt` |
+| L-005 | 1.4 | P3 | `licenses` and `license_events` answer anon with `200 []` (RLS only) while other tables refuse at grant level. Safe today; one wrong policy would expose them. | live REST probe | OPEN, optional migration 0016 (F-3) | |
+| L-006 | 1.1 | P3 | The dashboard reply card (legacy non-workspace cases only) is Pass-gated at account level. Harmless. | `DashboardClient.tsx`, `analyze-reply` route | NOTED | |
 
 ## Founder calls raised by this audit
 
 | # | Call | Raised in | Status |
 | --- | --- | --- | --- |
-| — | none yet | — | — |
+| F-1 | Should Sign out end only this device's session (`scope: "local"`)? Recommendation: yes. | 1.2 | OPEN |
+| F-2 | Enforce the CSP (needs a report endpoint and a clean console pass first) or drop it? | 1.5 | OPEN |
+| F-3 | Apply optional migration 0016 (revoke anon select on licences)? Low urgency. | 1.4 | OPEN |
 
 ## Unverified
 
@@ -245,4 +252,4 @@ HEAD `117355d` + L-001 fix, 7 Oct 2026: typecheck 0 (was 5 errors) · lint 0 · 
 
 | Date | Done | Stopped at / next |
 | --- | --- | --- |
-| 2026-10-07 | Plan written (5 phases × 5 areas, 25 areas). Gate baseline recorded; found and fixed L-001 (CI red since 6 Oct on test typecheck). | Start at 1.1 Payments & entitlements. After pushing, confirm CI is green (`gh run list`). |
+| 2026-10-07 | Plan written (5 phases × 5 areas, 25 areas). Gate baseline recorded; found and fixed L-001 (CI red since 6 Oct on test typecheck). Phase 1 done (1.1-1.5): live-DB verification of migrations 0013-0015, auth redirect probes, route-by-route hardening table, secrets scan. | Start Phase 2 at 2.1 Vault & encryption. Confirm CI green after the Phase 1 commit (`gh run list`). |
