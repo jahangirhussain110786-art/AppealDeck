@@ -105,6 +105,7 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
    - Events: `transaction.completed`, `adjustment.created`, `adjustment.updated`
    - Copy the signing secret into `PADDLE_WEBHOOK_SECRET`.
    - _Corrected 28 Sep 2026:_ this list used to name five `subscription.*` events. `apply_paddle_event` (migration `0009`) grants a Pass on `transaction.completed` and removes it on an `adjustment.*` refund or chargeback, and ignores the subscription events. Following the old list, a refunded buyer would have kept the Pass.
+5a. **Default payment link (found 7 Oct 2026, in the sandbox).** Paddle dashboard → Checkout → Checkout settings → **Default payment link**: set it to `https://appealdeck.com/pricing` (the page that opens the checkout), in the sandbox and again in live. Without it the overlay opens and then fails with `transaction_default_checkout_url_not_set`, and no seller can pay. Paddle may also require the domain to be approved before live checkout works; check Paddle dashboard → Checkout → Website approval when you set up live.
 5. Paddle dashboard → Checkout → Live: confirm your business details (Pakistan Individual seller — set country to PK; Paddle will tell you at checkout which countries can't be sold to and handle VAT for the rest).
 
 ## 6. Upstash production setup (founder action)
