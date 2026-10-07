@@ -331,3 +331,12 @@ Format:
   - `src/content/{workspace,marketing}.ts`
   - `e2e/{decode-continuity,journey,response-continuity,workspace}.spec.ts`
 - Decider: Founder (the direction); AI assistant (the brief, the design and the build).
+
+## 7 Oct 2026 — Founder decisions on the six open product questions
+
+- **AI drafting: YES (founder, in chat).** The appeal is always written by the AI from the seller's details, the notice and the attached proofs; it must never invent a fact or a proof; it must follow Amazon's required Plan of Action structure and Amazon's current rules, not outdated ones. This reverses the 24 Sep 2026 position that preparing a response calls no model, so the privacy page changes in the same commit. Conditions kept from earlier decisions: paid Gemini tier only (D9), the fact lock applies to the whole draft, and when the model cannot run or a draft fails the lock the seller still gets the deterministic draft, told plainly.
+- **Translation help: YES, wiring only.** No translation engine of our own. Use the browser's built-in on-device translator where it exists; nothing leaves the device.
+- **Markets: US first, Saudi Arabia next.** EU and UK are not targeted. Purchases from those countries are blocked by a configurable country list until the EU/UK compliance work is done. The free decoder stays open (it cannot be geo-blocked reliably, and privacy law still applies to it).
+- **Email forwarding: belongs to the future extension.** Parked. Note for whoever builds it: AM-27 (no reading or scripting of Seller Central) still binds; a mailbox reader needs its own consent and scope design.
+- **Worked examples: YES, researched.** Real wording, tone and concerns from public sources; names, IDs and ASINs replaced; clearly marked as examples. Source text is paraphrased, not copied (copyright).
+- **Expert handoff (expiring encrypted share link): ON HOLD.** Do not build until the founder says so in words such as "Yes you can implement this expert expiry share link handoff system".
