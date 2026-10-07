@@ -4,6 +4,24 @@
 
 Size: **S** under a day, **M** a few days, **L** a week or more. Status: **Verified** = checked in code or in the running app on 7 Oct.
 
+## Built since this register was written (7 Oct 2026, later)
+
+| Item | What exists now | Where |
+| --- | --- | --- |
+| **B2** calendar | "Add these dates to my calendar" on the dashboard clock card: an `.ics` with an all-day event and a day-before alert per upcoming date, stable ids so a re-import updates, nothing sent anywhere | `src/lib/calendar.ts`, `e2e/calendar.spec.ts` |
+| **B1** export | "Download as Word" (a real `.docx`, written with no library, validated with Python's zip and XML parsers) and "Print or save as PDF" (a clean print page) beside Copy on the prepared response, behind the same review tick; the draft's watermark and unresolved-items section travel with it, and the file says it is a working document | `src/lib/responseDocument.ts`, `src/lib/zip.ts`, `e2e/compose-errors.spec.ts` |
+| **D1** monitoring | Daily `/api/jobs/ops-digest`: counts parked payments, stuck confirmation emails and failed reminders, emails `OPS_ALERT_EMAIL` only when something is wrong, else logs an error line | `src/lib/opsDigest.ts` |
+| **D2** health | `/api/health` (200 only when the database answers and the rate limiter is configured; no detail) for a free uptime monitor | `src/app/api/health/route.ts` |
+
+Not yet an evidence-pack file (B1 covered the response only; the manifest download remains `.txt`).
+
+**Deliberately not built, with reasons**
+
+- **B3 automatic backup.** A backup is locked with a passphrase the seller types. Refreshing it automatically would mean keeping that passphrase available, in memory for the tab or stored, and each save would upload the whole vault. That trades the product's "we never hold your key" promise for convenience and needs a design decision, not a patch. The manual backup and the two-browser restore are proven.
+- **B4 offline shell (service worker).** A cached copy of signed-in pages (which show the seller's email) on a shared computer, and stale-build hazards after each deploy, are real costs for a product people use under stress. Worth doing only with a deliberate cache and sign-out purge design.
+- **B10 several reminders per case.** The calendar file now carries every date, and a case already has a seller follow-up date plus the "waiting on someone" date. A schema change for more is not justified yet.
+- **B5, B6, B8, B9, B7** need founder decisions or real content (AI drafting, translation, an email-in address, examples written from sources, expert handoff). **C2** must be written by the founder; it is never invented. **A1 to A9** are the founder's.
+
 ## A. Before the first paying seller (almost all founder actions)
 
 | # | Item | Evidence | Why it matters | Who / size |

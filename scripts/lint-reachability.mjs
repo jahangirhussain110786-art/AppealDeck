@@ -36,6 +36,7 @@ const ROOT = process.cwd();
  */
 const EXTERNAL_ENTRY_POINTS = new Map([
   ["/api/webhooks/paddle", "Paddle posts here; there is no in-app caller by design."],
+  ["/api/health", "An uptime monitor polls this; there is no in-app caller by design."],
   [
     "/api/csp-report",
     "Browsers post Content-Security-Policy violation reports here (vercel.json report-uri).",

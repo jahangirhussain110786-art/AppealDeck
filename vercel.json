@@ -60,6 +60,9 @@
     },
     "src/app/api/jobs/case-reminders/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/jobs/ops-digest/route.ts": {
+      "maxDuration": 30
     }
   },
   "crons": [
@@ -70,6 +73,10 @@
     {
       "path": "/api/jobs/case-reminders",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/jobs/ops-digest",
+      "schedule": "0 7 * * *"
     }
   ]
 }

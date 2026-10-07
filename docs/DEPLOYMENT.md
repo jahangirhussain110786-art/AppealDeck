@@ -51,6 +51,7 @@ Added 24 Sep 2026. These were missing from this guide, so following it would hav
 | Variable                       | Feature                                           | Notes                                                                                     |
 | ------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `RESEND_API_KEY`               | Purchase confirmation email (D8), reminder emails | Without it purchases still provision; unsent confirmations wait in the outbox for retry.  |
+| `OPS_ALERT_EMAIL`              | Daily ops digest (`/api/jobs/ops-digest`) | Your own address. Emailed only when a paid checkout could not be matched, or an email keeps failing. Unset: logged as an error line. Point a free uptime monitor at `/api/health` (200 when the database and limiter answer). |
 | `EMAIL_FROM`                   | Sender for both emails                            | Defaults to `AppealDeck <billing@appealdeck.com>`; the domain must be verified in Resend. |
 | `CRON_SECRET`                  | Both daily jobs (`vercel.json` crons)             | A long random string. Without it both jobs refuse every call, so no email is ever sent.   |
 | `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` | Cookieless funnel analytics                       | The site's domain as registered in Plausible. Without it no event is sent.                |
