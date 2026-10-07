@@ -20,7 +20,7 @@ function operational(parts: {
     requirementsConfirmed: true,
     explanation: parts.explanation,
     correctiveActions: parts.correctiveActions,
-    correctiveActionsAttested: true,
+    correctiveActionsAttested: { at: "2026-10-01T00:00:00.000Z" },
     preventiveMeasures: parts.preventiveMeasures,
   };
 }

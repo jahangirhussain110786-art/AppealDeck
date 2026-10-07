@@ -78,14 +78,13 @@ describe("9. 'marked as sent' counts as something sent, in one shared place", ()
     attemptCount: 0,
     markedSentAt: "2026-10-01T00:00:00.000Z",
   };
+  const intake = (attemptCount: number): CaseLog => ({ state: "INTAKE", attemptCount });
   it("hadSubmission counts markedSentAt, a recorded submission and an attempt count", () => {
     expect(hadSubmission(log)).toBe(true);
-    expect(hadSubmission({ state: "INTAKE", attemptCount: 0 })).toBe(false);
-    expect(hadSubmission({ state: "INTAKE", attemptCount: 1 })).toBe(true);
-    expect(hadSubmission({ state: "INTAKE", attemptCount: 0 }, { submissions: [{}] })).toBe(true);
-    expect(
-      hadSubmission({ state: "INTAKE", attemptCount: 0 }, { submissions: [{ source: "prior" }] }),
-    ).toBe(false);
+    expect(hadSubmission(intake(0))).toBe(false);
+    expect(hadSubmission(intake(1))).toBe(true);
+    expect(hadSubmission(intake(0), { submissions: [{}] })).toBe(true);
+    expect(hadSubmission(intake(0), { submissions: [{ source: "prior" }] })).toBe(false);
   });
   it("record the outcome, then take it back: waiting on Amazon is kept", () => {
     const recorded = logWithOutcome(log, "rejected", "2026-10-02T00:00:00.000Z")!;
