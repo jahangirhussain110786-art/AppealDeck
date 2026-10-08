@@ -325,6 +325,7 @@ const PRODUCT_SAFETY: EvidenceRequirement[] = [
     disqualifiers: [
       "a supplier's own assurance with no test document behind it",
       "a certificate for a different model or variant",
+      "a report that is old, or from a laboratory Amazon does not accept (Amazon can reject these)",
     ],
     whyAmazonWantsIt:
       "Compliance documentation is what distinguishes a product that meets the standard from one that is merely claimed to. For a children's product this is a Children's Product Certificate (CPC), which comes from testing at a CPSC-accepted lab; Amazon may ask for it at any time.",

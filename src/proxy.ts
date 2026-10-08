@@ -32,6 +32,7 @@ const MARKETING_PATHS = [
   "/faq",
   "/support",
   "/guides",
+  "/check-invoice",
 ];
 
 function hostOf(req: NextRequest): string {

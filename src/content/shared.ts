@@ -36,6 +36,7 @@ export const SHARED = {
       faq: "FAQ",
       support: "Support",
       dataFlow: "Where your data goes",
+      checkInvoice: "Free invoice check",
     },
     neverSubmits:
       "You submit your appeal yourself in Seller Central. AppealDeck never logs in to your account.",

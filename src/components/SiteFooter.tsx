@@ -44,6 +44,7 @@ export function SiteFooter() {
           title={SHARED.footer.groups.product}
           links={[
             { href: "/decode", label: SHARED.nav.decode },
+            { href: "/check-invoice", label: SHARED.footer.nav.checkInvoice },
             { href: "/pricing", label: SHARED.nav.pricing },
             { href: "/faq", label: SHARED.nav.faq },
             { href: "/privacy#data-flow", label: SHARED.footer.nav.dataFlow },

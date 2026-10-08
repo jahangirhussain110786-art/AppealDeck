@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes: { path: string; lastModified?: string }[] = [
     { path: "" },
     { path: "/decode" },
+    { path: "/check-invoice" },
     { path: "/pricing" },
     { path: "/faq" },
     { path: "/support" },

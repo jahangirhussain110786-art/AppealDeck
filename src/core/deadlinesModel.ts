@@ -2,6 +2,7 @@ import type { ViolationKind } from "./index";
 import type { ParsedNotice } from "./noticeParser";
 import { isSeverityGated } from "./violationKinds";
 import { formatDay } from "./noticeDate";
+import { isOfferLevelNotice, OFFER_LEVEL_DEADLINE_LABEL } from "./noticeScope";
 
 export type DeadlineKind =
   | "appeal_window"
@@ -180,7 +181,9 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
     out.push({
       kind: "appeal_window",
       dueAt: null,
-      label: "Appeal window ambiguous — verify the exact date in your Account Health dashboard",
+      label: isOfferLevelNotice(input.parsed.raw)
+        ? OFFER_LEVEL_DEADLINE_LABEL
+        : "Appeal window ambiguous — verify the exact date in your Account Health dashboard",
     });
   }
 

@@ -161,6 +161,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       "Stop selling and stop shipping the affected item before you do anything else.",
       "Establish whether a formal recall, a safety complaint, or a documentation request is involved — they are different processes.",
       "Gather the compliance paperwork for the product: test reports, certificates, and the supplier's own safety documentation. For a children's product, a Children's Product Certificate (CPC) comes from testing at a CPSC-accepted lab, and Amazon may ask for it at any time.",
+      "Check how Amazon wants the testing handled for your category. For some regulated products, such as toys and supplements, Amazon now has the testing validated through an approved testing provider and may not accept a document you upload yourself, and it can reject a report that is old or from a laboratory it does not accept. Look under Policy Compliance in Account Health for what applies to your product before ordering any test.",
       "Describe what happens to the affected inventory, and to customers who already received it.",
     ],
     severityNote:

@@ -776,6 +776,32 @@ Explain the root cause of the cancellations, the corrective action already taken
     },
   },
   {
+    id: "performance-5-fbm-offer-level",
+    kind: "PERFORMANCE_METRIC",
+    source:
+      "Synthetic — written from press reports of Amazon's 31 Aug 2026 announcement that a failing seller-fulfilled offer is deactivated on its own (PPC Land, 8 Oct 2026 research note); Amazon's real email wording was not available, so no real seller's notice or Amazon sentence is reproduced.",
+    raw: `Your Fulfilled by Merchant offer has been temporarily deactivated
+
+The following Fulfilled by Merchant (FBM) offer has been temporarily deactivated because it put your Account Health at risk.
+
+Policy: On-Time Delivery Rate
+SKU: HM-4471-BLK   ASIN: B0C1234567
+
+Your other listings and your overall Account Health are not affected.
+
+A deactivated offer is shown in Account Health under Other Policy Violations, with the steps to reactivate it.`,
+    expected: {
+      ...base("PERFORMANCE_METRIC", false),
+      appealWindowDays: null,
+      fundsAppealEligibleDays: null,
+      fundsReviewDays: null,
+      legacySeventeenDayPattern: false,
+      missingInvoiceTrap: false,
+      notes:
+        "One offer, not the account: no appeal window exists and none may be shown; the seller is sent to Account Health for the steps.",
+    },
+  },
+  {
     id: "safety-1-recall",
     kind: "PRODUCT_SAFETY",
     source:

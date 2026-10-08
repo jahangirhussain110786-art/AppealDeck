@@ -613,7 +613,7 @@ export function repairOcrText(text: string): string {
 export type NotEnforcementKind = "warning" | "listing_removal";
 
 const ENFORCED =
-  /\b(?:has|have)\s+been\s+(?:deactivated|suspended|terminated|blocked|closed|revoked)\b|\bwe(?:’ve|'ve|\s+have)\s+(?:deactivated|suspended|terminated|blocked|closed)\b|\b(?:is|are)\s+(?:now\s+)?(?:deactivated|suspended|blocked|closed)\b|\bselling\s+privileges\s+(?:have\s+been|are)\s+(?:removed|suspended|revoked)\b|\bpermanently\s+(?:deactivated|suspended|closed|removed)\b/i;
+  /\b(?:has|have)\s+been\s+(?:temporarily\s+)?(?:deactivated|suspended|terminated|blocked|closed|revoked)\b|\bwe(?:’ve|'ve|\s+have)\s+(?:deactivated|suspended|terminated|blocked|closed)\b|\b(?:is|are)\s+(?:now\s+)?(?:temporarily\s+)?(?:deactivated|suspended|blocked|closed)\b|\bselling\s+privileges\s+(?:have\s+been|are)\s+(?:removed|suspended|revoked)\b|\bpermanently\s+(?:deactivated|suspended|closed|removed)\b/i;
 const WARNING =
   /\b(?:at\s+risk|target\s+not\s+met|not\s+meeting|below\s+(?:the\s+)?target|does\s+not\s+meet\s+(?:the\s+)?(?:target|requirement)|(?:may|could|might)\s+(?:result\s+in|lead\s+to)\s+(?:deactivation|suspension|account\s+(?:deactivation|suspension))|(?:metric|health)\s+(?:summary|snapshot)|needs?\s+attention)/i;
 const LISTING_REMOVAL =

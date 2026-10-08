@@ -22,6 +22,7 @@
  */
 
 import { lastAmazonTurn } from "./noticeText";
+import { isOfferLevelNotice, OFFER_LEVEL_REASON } from "./noticeScope";
 
 export type ResponseType =
   | "PLAN_OF_ACTION"
@@ -408,7 +409,7 @@ export function determineResponseType(raw: string, formInstructions = ""): Respo
       confidence: "undetermined",
       matches: [],
       competing: [],
-      reason: UNDETERMINED_REASON,
+      reason: isOfferLevelNotice(raw) ? OFFER_LEVEL_REASON : UNDETERMINED_REASON,
     };
   }
 
