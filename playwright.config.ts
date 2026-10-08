@@ -22,6 +22,18 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
       testIgnore: "e2e/screenshots.spec.ts",
     },
+    // Sellers use Safari and Firefox too. Not part of the default CI run (which names the chromium
+    // project); run with `npm run test:e2e:cross` (7 Oct 2026).
+    {
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
+      testIgnore: "e2e/screenshots.spec.ts",
+    },
+    {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
+      testIgnore: "e2e/screenshots.spec.ts",
+    },
     {
       name: "screenshots",
       testMatch: "e2e/screenshots.spec.ts",

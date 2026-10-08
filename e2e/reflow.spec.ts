@@ -18,6 +18,7 @@ const PAGES = [
   "/terms",
   "/refund",
   "/guides",
+  "/guides/plan-of-action-examples",
   "/login",
   "/signup",
   "/forgot-password",
