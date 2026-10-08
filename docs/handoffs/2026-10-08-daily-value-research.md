@@ -70,3 +70,24 @@ Founder to choose which of items 1 to 4 comes first. Then a short spec is writte
 ## Sources
 
 [Eva Guru](https://eva.guru/blog/amazon-account-health/), [MrJeffAmz August 2026 news](https://mrjeffamz.com/blog/amazon-seller-news-2026), [Amazon Sellers Attorney](https://www.amazonsellers.attorney/blog/amazon-account-health-changes-2026-new-fbm-deactivation-policy), [PPC Land](https://ppc.land/amazon-blocks-the-failing-fbm-offer-not-the-account-from-august-31/), [policy tracker](https://www.autopilotbrand.com/resources/amazon-policy-tracker), [Amazon forum](https://sellercentral-europe.amazon.com/seller-forums/discussions/t/b0e96886-8fe0-4a2f-b996-65263c93c5e6), [Jarvio](https://jarvio.io/blog/top-10-amazon-seller-tools), [Seller Engine](https://sellerengine.com/more-stringent-invoice-requirements-amazon).
+
+## Second pass: what sellers and practitioners say goes wrong (8 Oct 2026, later)
+
+**Honest limit.** No genuine customer reviews of appeal or Plan of Action tools were found: Trustpilot and Reddit returned nothing on them, and most sources are consultants and vendors selling appeal help. Their claims about approval rates are unverified and must not be used in marketing. What several independent sources agree on is why appeals are refused:
+
+- Answering a different problem from the one Amazon raised (the most-cited cause).
+- Resubmitting the same text or files, or recycled template wording.
+- Invented or unsupported details; promises about the future instead of work already done.
+- Vague rejections with no stated reason, and sellers unsure what to fix.
+- Missing a short deadline; documents sent the wrong way (Amazon notices say documents sent through a Seller Support case are not considered for the review).
+- Large upfront fees and credential sharing with third parties.
+
+**What the product already covered:** duplicate and near-duplicate submission guard, a fact lock on wording help, future-tense and vague-time checks, deadline tracking, "never share your login" warnings, a change-of-approach panel after two refusals (Contact Us / call-back, written escalation, when to bring a consultant), and rights-owner retraction guidance for IP cases.
+
+**Built from this pass:**
+
+- A warning when a response uses none of its own notice's topic words and two or more of another topic's (`OFF_TOPIC_RESPONSE`, `src/core/composer.ts`, `composerIssueMatch.test.ts`). Warning only, never blocks.
+- One sentence in the "send it to Amazon" step: send documents with the response, not in a Seller Support case.
+- Fonts self-hosted, because a Google Fonts fetch failure broke a CI build and a local build the same morning.
+
+**Not done, and why:** a "rejection diagnosis" checklist after a refusal (which question went unanswered, which document was missing or outside the period) is the next candidate, but the existing reply analyser and change-of-approach panel already cover most of it; it should wait for real seller feedback on whether they are enough.

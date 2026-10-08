@@ -86,7 +86,7 @@ export const WORKSPACE = {
     finish:
       "Read it, then copy it into Amazon's appeal page and attach your files. Come back and record what you sent.",
     attachFrom:
-      "Download the linked originals from Documents and attach each one where the response page in Seller Central asks for it. Copying does not record a submission.",
+      "Download the linked originals from Documents and attach each one where the response page in Seller Central asks for it. Send them there, not in a Seller Support case: some Amazon notices say documents sent through a case are not considered for the review. Copying does not record a submission.",
   },
   // The Response tab (29 Sep 2026): plain questions, a one-line hint, and an example in every box.
   responseFields: {
