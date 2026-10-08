@@ -228,6 +228,7 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
     checkVagueTimePhrases(draft, findings);
     checkAbsolutePromises(draft, findings);
     checkNarrativeQuality(draft, data, findings);
+    checkAnswersTheIssue(draft, data, findings);
     // A-01: this branch returns early, so EF-2's attestation check never ran on a workspace case
     // — which, since the classic interview was retired, is every case. The legacy `actionItems`
     // half of it is a no-op here, because nothing on a workspace case marks one done.
@@ -253,6 +254,7 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
   checkVagueTimePhrases(draft, findings);
   checkAbsolutePromises(draft, findings);
   checkNarrativeQuality(draft, data, findings);
+  checkAnswersTheIssue(draft, data, findings);
   checkDocumentFreshness(data, findings);
 
   const passed = !findings.some((f) => f.severity === "error");
@@ -704,6 +706,139 @@ function checkNarrativeQuality(
         "Corrective Actions names no date, number, document or specific action taken. Say what you did, to what, and when.",
     });
   }
+}
+
+/*
+  Does the response speak to the issue the notice raised?
+
+  Added 8 Oct 2026 from the practitioner literature on why appeals are refused: the commonest single
+  cause named is answering a different problem from the one Amazon flagged (an authenticity
+  complaint answered with a note about late shipments). Every other check here reads how the text is
+  written; none read what it is about.
+
+  Deliberately blunt and quiet. Each kind has a short list of the words a response to it almost
+  always uses. The finding fires only when the narrative uses none of its own kind's words and at
+  least two distinct words of another kind, so a response that mixes topics (a late shipment caused
+  by a supplier) never trips it. It is a warning, never an error: the notice may have been read
+  wrongly, and the seller can correct the issue we read.
+*/
+const TOPIC_WORDS: Readonly<Record<string, { label: string; terms: readonly RegExp[] }>> = {
+  INAUTHENTIC: {
+    label: "authenticity and supplier records",
+    terms: [
+      /\bauthentic\w*/i,
+      /\bgenuine\b/i,
+      /\bcounterfeit\w*/i,
+      /\binvoices?\b/i,
+      /\bsuppliers?\b/i,
+      /\bauthori[sz]ed (?:distributor|reseller|retailer)\b/i,
+      /\bwholesale\w*/i,
+      /\bbrand owner\b/i,
+      /\bsourcing\b/i,
+    ],
+  },
+  PERFORMANCE_METRIC: {
+    label: "shipping and order performance",
+    terms: [
+      /\blate shipment\w*/i,
+      /\border defect\w*/i,
+      /\bvalid tracking\b/i,
+      /\bcancell?ations?\b/i,
+      /\bcarriers?\b/i,
+      /\bhandling time\w*/i,
+      /\bon-?time delivery\b/i,
+      /\bdispatch\w*/i,
+      /\bshipping\b/i,
+    ],
+  },
+  INTELLECTUAL_PROPERTY: {
+    label: "intellectual property",
+    terms: [
+      /\btrademark\w*/i,
+      /\bcopyright\w*/i,
+      /\bpatents?\b/i,
+      /\brights? owners?\b/i,
+      /\binfring\w*/i,
+      /\bintellectual property\b/i,
+      /\bbrand registry\b/i,
+      /\bretraction\w*/i,
+    ],
+  },
+  PRODUCT_SAFETY: {
+    label: "product safety",
+    terms: [
+      /\brecall\w*/i,
+      /\bhazard\w*/i,
+      /\bsafety\b/i,
+      /\btest reports?\b/i,
+      /\binjur\w*/i,
+      /\bCPSC\b/,
+      /\bflammab\w*/i,
+      /\bcompliance certificate\w*/i,
+    ],
+  },
+  VERIFICATION: {
+    label: "identity verification",
+    terms: [
+      /\bidentity\b/i,
+      /\bpassport\b/i,
+      /\bverification\b/i,
+      /\bvideo call\b/i,
+      /\bproof of address\b/i,
+      /\bbank statement\w*/i,
+      /\bgovernment (?:issued )?id\b/i,
+    ],
+  },
+  RELATED_ACCOUNT: {
+    label: "a related account",
+    terms: [
+      /\brelated accounts?\b/i,
+      /\blinked accounts?\b/i,
+      /\banother account\b/i,
+      /\bsecond account\b/i,
+      /\bassociated account\b/i,
+      /\bshared (?:ip|device)\b/i,
+    ],
+  },
+};
+const TOPIC_OF_KIND: Readonly<Record<string, string>> = {
+  INAUTHENTIC: "INAUTHENTIC",
+  INAUTHENTIC_DOCUMENTS: "INAUTHENTIC",
+  PERFORMANCE_METRIC: "PERFORMANCE_METRIC",
+  INTELLECTUAL_PROPERTY: "INTELLECTUAL_PROPERTY",
+  PRODUCT_SAFETY: "PRODUCT_SAFETY",
+  VERIFICATION: "VERIFICATION",
+  RELATED_ACCOUNT: "RELATED_ACCOUNT",
+};
+
+function distinctTopicHits(topic: string, text: string): number {
+  return TOPIC_WORDS[topic]!.terms.filter((t) => t.test(text)).length;
+}
+
+function checkAnswersTheIssue(
+  draft: PoaDraft,
+  data: CaseFileData,
+  findings: CriticFinding[],
+): void {
+  const own = TOPIC_OF_KIND[data.kind];
+  if (!own) return;
+  const text = NARRATIVE_HEADINGS.map((h) => draft.sections.find((s) => s.heading === h))
+    .filter((s): s is PoaSection => !!s && !isMachineLabelOnly(s.body))
+    .map((s) => s.body)
+    .join("\n");
+  // Too short to say what it is about: the narrative checks already ask for more.
+  if (text.trim().length < 120) return;
+  if (distinctTopicHits(own, text) > 0) return;
+  const other = Object.keys(TOPIC_WORDS)
+    .filter((t) => t !== own)
+    .map((t) => ({ topic: t, hits: distinctTopicHits(t, text) }))
+    .sort((a, b) => b.hits - a.hits)[0];
+  if (!other || other.hits < 2) return;
+  findings.push({
+    severity: "warning",
+    code: "OFF_TOPIC_RESPONSE",
+    message: `Your notice is about ${TOPIC_WORDS[own]!.label}, but this response talks about ${TOPIC_WORDS[other.topic]!.label}. Amazon refuses a response that answers a different problem from the one it raised. If we read the notice wrongly, correct the issue at the top of the case; if not, rewrite the sections to answer what the notice says.`,
+  });
 }
 
 /**
