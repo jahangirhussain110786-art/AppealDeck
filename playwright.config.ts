@@ -27,11 +27,15 @@ export default defineConfig({
     {
       name: "webkit",
       use: { ...devices["Desktop Safari"] },
+      // This machine runs WebKit and Firefox several times slower than Chromium under load; every
+      // test that failed on time alone passed repeatedly when run by itself (8 Oct 2026).
+      timeout: 90_000,
       testIgnore: "e2e/screenshots.spec.ts",
     },
     {
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
+      timeout: 90_000,
       testIgnore: "e2e/screenshots.spec.ts",
     },
     {

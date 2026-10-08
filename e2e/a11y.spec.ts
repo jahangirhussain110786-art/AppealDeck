@@ -83,9 +83,10 @@ test.describe("Auth gate", () => {
   });
 
   test("unauthenticated /compose redirects to /login", async ({ page }) => {
-    await page.goto("/compose");
-    await page.waitForURL(/\/login/);
-    expect(page.url()).toContain("/login");
+    // WebKit throws "Frame load interrupted" from waitForURL when the redirect cuts the load short;
+    // the retrying assertion waits for the same end state without that.
+    await page.goto("/compose").catch(() => undefined);
+    await expect(page).toHaveURL(/\/login/);
   });
 
   test("unauthenticated /vault stays on the route", async ({ page }) => {
@@ -108,13 +109,21 @@ test.describe("Auth gate", () => {
 });
 
 test.describe("Keyboard navigation (unauthenticated)", () => {
-  test("login form is keyboard-navigable", async ({ page }) => {
+  test("login form is keyboard-navigable", async ({ page, browserName }) => {
     await page.goto("/login");
     const email = page.getByLabel(/email/i);
     await email.focus();
     await email.fill("seller@example.com");
+    // Email, then the "Forgot?" link, then the password. WebKit (Safari's default) does not stop
+    // on links when tabbing, so there the password comes one press sooner; Chromium and Firefox
+    // keep the link in the order and that is still asserted below.
     await page.keyboard.press("Tab");
-    await page.keyboard.press("Tab");
+    const firstStop = await page.evaluate(() => document.activeElement?.tagName);
+    if (firstStop === "A") {
+      await page.keyboard.press("Tab");
+    } else {
+      expect(browserName).toBe("webkit");
+    }
     const password = page.getByLabel(/^password$/i);
     await expect(password).toBeFocused();
     await password.fill("hunter2");

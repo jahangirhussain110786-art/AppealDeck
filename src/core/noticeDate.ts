@@ -182,7 +182,8 @@ export function receiptDateReadings(raw: string): [string, string] | null {
  *   submitting or responding — or is introduced as the "appeal deadline" or "response deadline".
  * - **Not Amazon's own timetable, and not the seller's history.** "We will review your appeal by…",
  *   "funds are held until…", "invoices dated before…" and anything in the past tense are refused.
- * - **Only unambiguous formats**, exactly as the header reader: never an all-numeric date.
+ * - **Only unambiguous formats**, exactly as the header reader: an all-numeric date only when the
+ *   text itself settles which part is the day (see `numericDateIn`).
  * - **A date without a year** ("by October 1") is placed only against the notice's own header date,
  *   as the first such day on or after it. With no header there is no honest year to give it.
  * - **Exactly one day, and not before the notice itself.** Two different deadlines, or one that
@@ -200,6 +201,7 @@ const WEEKDAY = "(?:(?:mon|tues|wednes|thurs|fri|satur|sun)day,?\\s+)?";
 
 /** Sticky (`y`): each is tried exactly where a cue ends, never searched for further along. */
 const AT_ISO = /(\d{4})-(\d{2})-(\d{2})(?!\d)/y;
+const AT_NUMERIC = new RegExp(NUMERIC_DATE.source, "y");
 const AT_DAY_MONTH_YEAR = new RegExp(
   `${WEEKDAY}(?:the\\s+)?(\\d{1,2})${ORDINAL}\\s+(?:of\\s+)?${MONTH}\\.?,?\\s+(\\d{4})\\b`,
   "iy",
@@ -285,6 +287,14 @@ function dateAt(
   };
   let m = tryAt(AT_ISO);
   if (m) return { day: isoDay(Number(m[1]), Number(m[2]), Number(m[3])), end: at + m[0].length };
+  // 8 Oct 2026: "by 15/11/2026" can only be 15 November, and was left as "verify the exact date".
+  // An all-numeric date is accepted only when the text itself settles it (a part above 12, a dot,
+  // equal parts); March-or-December stays unplaced, so a deadline is never guessed.
+  m = tryAt(AT_NUMERIC);
+  if (m) {
+    const numeric = numericDateIn(m[0]);
+    if (numeric) return { day: numeric.day, end: at + m[0].length };
+  }
   m = tryAt(AT_DAY_MONTH_YEAR);
   if (m) {
     return { day: isoDay(Number(m[3]), monthNumber(m[2]!), Number(m[1])), end: at + m[0].length };

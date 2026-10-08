@@ -194,7 +194,12 @@ function toGray(pixels: Uint8ClampedArray, width: number, height: number): Float
  */
 export async function analyzeIdentityImage(file: Blob): Promise<IdentityImageReport | null> {
   if (!file.type.startsWith("image/")) return null;
-  if (typeof createImageBitmap !== "function" || typeof OffscreenCanvas === "undefined") {
+  // 8 Oct 2026: OffscreenCanvas is missing from Safari before 16.4 and from some WebKit builds, so
+  // the check said a perfectly good PNG could not be checked. A page canvas does the same work.
+  if (
+    typeof createImageBitmap !== "function" ||
+    (typeof OffscreenCanvas === "undefined" && typeof document === "undefined")
+  ) {
     return null;
   }
   let bitmap: ImageBitmap | undefined;
@@ -209,8 +214,16 @@ export async function analyzeIdentityImage(file: Blob): Promise<IdentityImageRep
     const scale = Math.min(1, 1600 / Math.max(sourceWidth, sourceHeight));
     const width = Math.max(1, Math.round(sourceWidth * scale));
     const height = Math.max(1, Math.round(sourceHeight * scale));
-    const canvas = new OffscreenCanvas(width, height);
-    const ctx = canvas.getContext("2d");
+    let canvas: OffscreenCanvas | HTMLCanvasElement;
+    if (typeof OffscreenCanvas !== "undefined") {
+      canvas = new OffscreenCanvas(width, height);
+    } else {
+      canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+    }
+    const ctx = canvas.getContext("2d") as
+      OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null;
     if (!ctx) return null;
     ctx.drawImage(bitmap, 0, 0, width, height);
     const { data } = ctx.getImageData(0, 0, width, height);

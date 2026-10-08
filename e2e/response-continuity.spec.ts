@@ -27,6 +27,12 @@ test("clearing a saved response remains blank after autosave and reload", async 
   await field.fill("");
   await expect(page.getByText("Saving…", { exact: true })).toBeVisible();
   await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  // A slow save can land after the field was cleared; the page then re-checks what is typed against
+  // what was saved and starts one more autosave (900 ms debounce). Wait for that to settle, so the
+  // reload below tests what was stored, not how fast this machine is (found in WebKit, 8 Oct 2026).
+  await page.waitForTimeout(1500);
+  await expect(page.getByText("Saving…", { exact: true })).toBeHidden();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.reload();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   await expect(field).toHaveValue("");

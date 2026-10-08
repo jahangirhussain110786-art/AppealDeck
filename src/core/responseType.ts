@@ -236,6 +236,8 @@ const POA_REQUESTED = new RegExp(
   [
     `\\b(?:${REQUEST_VERB_SOURCE}|explain(?:s|ing)?|describ(?:e|es|ing)|writ(?:e|ing)|prepar(?:e|es|ing)|complet(?:e|es|ing))\\b[^\\n]{0,120}?(?:\\bplan of action\\b|\\bPOA\\b|\\broot cause\\b|\\bcorrective action)`,
     `^(?!.*\\b(?:we|amazon)\\s+(?:will|may|can|shall|would|might)\\b)[^\\n]*?\\b(?:respond|reply)\\b[^\\n]{0,120}?\\bwith\\s+(?:(?:an?|your|the|updated|new|written)\\s+)*${POA_NOUN}\\b`,
+    // "Tell us what caused the issue" is the root-cause half of a plan of action, asked in plain words.
+    `\\b(?:tell|let)\\s+us\\b[^\\n]{0,40}?\\bwhat\\s+(?:caused|led\\s+to)\\b`,
     `\\b(?:need|require|request|expect|want)s?\\s+(?:(?:an?|your|the|updated|new|written)\\s+)+${POA_NOUN}\\b`,
     `\\b${POA_NOUN}\\b[^.\\n]{0,40}\\b(?:is|are)\\s+(?:required|needed|requested|due|necessary)\\b`,
   ].join("|"),
@@ -264,7 +266,7 @@ const POA_NOT_REQUESTED = new RegExp(
 // Bank statements, utility bills and business licences added 29 Sep 2026: a funds notice asking for
 // "a bank statement showing the account holder name" was read as "not yet clear".
 const DOCUMENT_NOUN =
-  "(?:invoice|receipt|document|documentation|record|proof|certificate|certification|identification|identity document|government[\\s-]issued (?:ID|identification)|passport|letter of authori[sz]ation|authori[sz]ation letter|sales report|order report|tracking|screenshot|test report|bank statement|utility bill|business licen[cs]e)";
+  "(?:invoice|receipt|document|documentation|record|proof|certificate|certification|identification|identity document|government[\\s-]issued (?:ID|identification)|passport|letter of authori[sz]ation|authori[sz]ation letter|sales report|order report|tracking|screenshot|test report|bank statement|utility bill|business licen[cs]e|safety data sheet|SDS|exemption sheet|photographs?|product images?)";
 
 const PATTERNS: ReadonlyArray<readonly [Exclude<ResponseType, "UNDETERMINED">, RegExp]> = [
   ["PLAN_OF_ACTION", POA_REQUESTED],

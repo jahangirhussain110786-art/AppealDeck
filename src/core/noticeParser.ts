@@ -94,13 +94,20 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   ],
   [
     "PERFORMANCE_METRIC",
-    /order defect rate|\bODR\b|late shipment rate|\bLSR\b|valid tracking rate|\bVTR\b|pre-?fulfil?l?ment cancel(?:lation)? rate|cancellation rate|on-?time delivery rate/i,
+    /order defect rate|\bODR\b|late shipment rate|\bLSR\b|valid tracking rate|\bVTR\b|pre-?fulfil?l?ment cancel(?:lation)? rate|cancellation rate|on-?time delivery rate|account health rating|inbound (?:defect|performance|non-?compliance)|fba (?:privileges|inbound)[^.!?\n]{0,40}\b(?:suspended|restricted|blocked)/i,
   ],
-  ["LISTING", /listing[\s-]?(?:policy|violation|removed|closed)|detail[\s-]?page policy/i],
+  [
+    "LISTING",
+    // 8 Oct 2026 (fresh-wording probe): "we have removed ASIN B0… from sale", "Buy Box eligibility is
+    // suppressed" and "not as described" all fell to UNKNOWN. Only a named ASIN counts as the thing
+    // removed: "Your listings have been removed" is boilerplate in account deactivations (the public
+    // sample says it), and matching it here would pull those out of POLICY and the other kinds.
+    /listing[\s-]?(?:policy|violation|removed|closed)|detail[\s-]?page policy|\basins?\b[^.!?\n]{0,60}\b(?:removed|suppressed|blocked)\b|\bremoved\b[^.!?\n]{0,40}\basins?\b|buy box[^.!?\n]{0,40}\bsuppress|\bnot as described\b/i,
+  ],
   ["FUNDS", /disbursement|funds? (?:is|are|under) (?:on hold|under review)|disbursement-appeals/i],
   [
     "POLICY",
-    /policy (?:violation|compliance)|repeated policy violations|violations of (?:our |Amazon(?:'s)? )?policies|used sold as new|item condition complaints?|review manipulation|manipulat\w+ (?:of )?(?:customer |product )?reviews/i,
+    /policy (?:violation|compliance)|repeated policy violations|violations of (?:our |Amazon(?:'s)? )?policies|used sold as new|item condition complaints?|review manipulation|manipulat\w+ (?:of )?(?:customer |product )?reviews|customer product reviews policy|(?:offer\w*|incentiv\w*|compensat\w*|paid|paying)\b[^.!?\n]{0,40}\breviews?\b|price gouging|significantly higher than recent prices/i,
   ],
 ];
 

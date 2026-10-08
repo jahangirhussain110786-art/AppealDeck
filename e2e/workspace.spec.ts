@@ -61,7 +61,15 @@ async function reviewEvidence(page: Page) {
 
 test("workspace persists a sourced evidence plan, waiting state and factual review", async ({
   page,
+  browserName,
 }) => {
+  // A long walk (about 30 s in WebKit on this machine): triple the time limit outside Chromium.
+  test.slow(browserName !== "chromium");
+  // Full-page captures are review artifacts, not assertions; WebKit takes over 30 s to render one
+  // of this page, so they are taken in Chromium only (found running the suite in WebKit, 8 Oct 2026).
+  const shoot = async (options: Parameters<typeof page.screenshot>[0]) => {
+    if (browserName === "chromium") await page.screenshot(options);
+  };
   await configure(page);
   await reviewEvidence(page);
   await page.reload();
@@ -78,19 +86,19 @@ test("workspace persists a sourced evidence plan, waiting state and factual revi
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
-  await page.screenshot({
+  await shoot({
     path: "test-results/workspace-mobile.png",
     fullPage: true,
     animations: "disabled",
   });
   await page.setViewportSize({ width: 1440, height: 1050 });
-  await page.screenshot({
+  await shoot({
     path: "test-results/workspace-desktop.png",
     fullPage: true,
     animations: "disabled",
   });
   await page.getByRole("tab", { name: "Documents", exact: true }).click();
-  await page.screenshot({
+  await shoot({
     path: "test-results/workspace-evidence.png",
     fullPage: true,
     animations: "disabled",
@@ -99,7 +107,7 @@ test("workspace persists a sourced evidence plan, waiting state and factual revi
   await page.emulateMedia({ colorScheme: "dark" });
   await expect(page.locator("html")).toHaveClass(/dark/);
   await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
-  await page.screenshot({
+  await shoot({
     path: "test-results/workspace-dark.png",
     fullPage: true,
     animations: "disabled",

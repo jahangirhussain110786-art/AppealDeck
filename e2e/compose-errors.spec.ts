@@ -134,6 +134,17 @@ test("a prepared response downloads as a Word file and opens a clean print page"
   const bytes = (await import("node:fs")).readFileSync((await download.path())!);
   expect(bytes.subarray(0, 2).toString()).toBe("PK");
 
+  // The product calls the popup's own print(), which opens a native dialog; headless Firefox never
+  // returns from it and the click hangs. The popup is wrapped so its print() does nothing: what is
+  // under test is the page that opens, not the operating system's print dialog.
+  await page.evaluate(() => {
+    const open = window.open.bind(window);
+    window.open = (...args) => {
+      const win = open(...args);
+      if (win) win.print = () => {};
+      return win;
+    };
+  });
   const [popup] = await Promise.all([
     page.waitForEvent("popup"),
     page.getByRole("button", { name: "Print or save as PDF" }).click(),

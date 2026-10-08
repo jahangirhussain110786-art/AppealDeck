@@ -1,3 +1,5 @@
+> **READ FIRST, EVERY SESSION — [docs/PARKED-ITEMS.md](docs/PARKED-ITEMS.md) (8 Oct 2026).** The register of everything still open: parked product items, founder-only items, and unfinished work. **Mention every row of it whenever the founder asks what is open or left.** A parked item is built ONLY after the founder types its exact `EXECUTE PARKED P-xx <name>` phrase; "yes", "go ahead", "do it", "proceed" or any general approval never releases one.
+
 > **18 Sep 2026 integrity update:** Current implementation and live migration details are in [docs/handoffs/2026-09-18-integrity-fixes.md](docs/handoffs/2026-09-18-integrity-fixes.md). This supersedes older status claims below: account-ID and per-case entitlements, transactional Paddle processing, isolated guest/account vaults, portable backup restore, strict request validation and corrected CI are now implemented. Supabase migrations 0009 and 0010 were applied; Paddle setup is sandbox-only. No app deployment occurred. Production webhook delivery and confirmation email configuration remain launch checks.
 
 # AppealDeck Project Context

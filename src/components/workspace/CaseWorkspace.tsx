@@ -512,6 +512,10 @@ function WorkspaceInner({
       releaseD6Latch?: boolean;
     },
   ): Promise<boolean> => {
+    // Busy from the moment the save is asked for, not from when it reaches the front of the queue:
+    // an autosave ahead of it can take a while, and the response fields are read-only while busy, so
+    // anything typed in that wait would be discarded when the save lands (found in WebKit, 8 Oct 2026).
+    if (!opts?.silent) setBusy(true);
     const run = commitQueue.current.then(() => runCommit(update, message, state, opts));
     // The chain must survive a rejection, or one failure would strand every later save.
     commitQueue.current = run.catch(() => undefined);
@@ -535,7 +539,10 @@ function WorkspaceInner({
       releaseD6Latch?: boolean;
     },
   ) => {
-    if (!fileRef.current) return false;
+    if (!fileRef.current) {
+      if (!opts?.silent) setBusy(false);
+      return false;
+    }
     // Restored rather than cleared in `finally`. `generate` and the new-case action hold this flag
     // as their own guard; now that commits no longer bail out when it is set, a queued save that
     // blindly cleared it would release someone else's guard halfway through their work.

@@ -29,6 +29,18 @@ export const WCAG_AA_TAGS = ["wcag2a", "wcag2aa", "wcag21aa"];
  * measured, which is a real lead.
  */
 export async function waitForEntryAnimations(page: Page) {
+  // Two frames first: a colour transition only exists once the browser has recalculated styles after
+  // the change, and WebKit does that lazily. Without this the check below can find nothing running
+  // a moment before the transition starts, and axe then measures one theme's text on the other's
+  // background (found running the suite in WebKit, 8 Oct 2026).
+  await page
+    .evaluate(
+      () =>
+        new Promise<void>((done) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => done())),
+        ),
+    )
+    .catch(() => undefined);
   await page
     .waitForFunction(
       () => {

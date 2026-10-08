@@ -205,6 +205,13 @@ export function ResponseReview({
     // stays disabled and the attestation never reaches the vault.
     attested !== Boolean(w.correctiveActionsAttested) ||
     answersDirty;
+  /*
+    8 Oct 2026, found by running the suite in WebKit. This sheet is keyed on the saved text (see
+    CaseWorkspace), so when a save lands it starts over from the saved case. A seller who typed or
+    cleared a field while that save was still in flight had the change quietly discarded, and the
+    field jumped back to the old text. The fields are therefore read-only while a save is landing
+    (`busy`); typing waits a moment instead of being lost.
+  */
   const supported = workspaceCanCompose(w);
   /** The case with the answers as typed; `now` dates a first attestation when it is saved. */
   const withAnswers = (now = ""): Workspace => ({
@@ -284,6 +291,7 @@ export function ResponseReview({
                     placeholder={F.answerPlaceholder}
                     aria-describedby={`workspace-answer-${i}-help`}
                     value={answerValue(q)}
+                    readOnly={busy}
                     onChange={(e) => changeAnswer(q, e.target.value)}
                   />
                   <AnswerHelp
@@ -322,6 +330,7 @@ export function ResponseReview({
               rows={5}
               maxLength={12000}
               value={explanation}
+              readOnly={busy}
               aria-describedby={
                 w.protocol === "operational"
                   ? "workspace-explanation-example"
@@ -365,6 +374,7 @@ export function ResponseReview({
                   maxLength={12000}
                   aria-describedby="workspace-corrective-hint workspace-corrective-example"
                   value={correctiveActions}
+                  readOnly={busy}
                   onChange={(e) => changeCorrective(e.target.value)}
                 />
                 <AnswerHelp id="workspace-corrective-example" example={F.correctivePlaceholder} />
@@ -417,6 +427,7 @@ export function ResponseReview({
                   maxLength={12000}
                   aria-describedby="workspace-prevention-hint workspace-prevention-example"
                   value={preventiveMeasures}
+                  readOnly={busy}
                   onChange={(e) => changePreventive(e.target.value)}
                 />
                 <AnswerHelp id="workspace-prevention-example" example={F.preventionPlaceholder} />

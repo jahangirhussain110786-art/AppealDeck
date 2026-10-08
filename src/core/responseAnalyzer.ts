@@ -132,6 +132,10 @@ const RULES: ReadonlyArray<PatternRule> = [
       // Amazon's usual reasons for refusing an appeal, added 29 Sep 2026 from researched wording.
       /does not address our concerns/i,
       /does not identify the root cause/i,
+      // 8 Oct 2026: "The plan of action you submitted does not address the root cause. Please
+      // resubmit with more detail." — among the commonest refusals — read as unrecognised.
+      /(?:does|do) not (?:adequately |fully |clearly |sufficiently )?(?:address|explain|describe) (?:the |our |each )?(?:root cause|concerns?|issues?)/i,
+      /please (?:re-?submit|revise) (?:your|the|a) (?:plan of action|appeal|submission|response)|please re-?submit\b/i,
       // 6 Oct 2026: a refusal worded as a denial or as a standard not met. Not "final": it does not
       // say so, and the case goes on.
       /(?:your appeal|(?:this|the|your) (?:request|plan of action|submission)|it) (?:has|have) been (?:denied|declined|rejected)/i,

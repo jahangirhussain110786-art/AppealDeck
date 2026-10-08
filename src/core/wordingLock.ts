@@ -123,6 +123,15 @@ const EMAIL = /[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,10}/g;
 const URL = /\bhttps?:\/\/\S+|\b(?:[a-z0-9-]{1,63}\.){1,10}[a-z]{2,63}\b(?:\/\S*)?/gi;
 const NEGATION =
   /\b(?:not|never|no|without|cannot|unable|unaware|nor|neither|lack(?:s|ed|ing)?|fail(?:s|ed|ing)? to)\b|n['’]t\b/gi;
+// 8 Oct 2026: counting negation words alone let "we have never sold used items" become "we no longer
+// sell used items" through, which admits past sales. "Never" is counted on its own, and a claim that
+// something changed over time ("no longer", "formerly", "stopped") is a fact the seller must have
+// given, not one a rewrite may add.
+const NEVER = /\bnever\b/gi;
+const CHANGED_OVER_TIME =
+  /\b(?:no longer|any ?more|used to|formerly|previously|stopped|ceased|discontinued|at one time)\b/gi;
+// Words that make a statement absolute. A rewrite that adds one has made the seller's claim stronger.
+const ABSOLUTE = /\b(?:always|entirely|completely|fully|none)\b/gi;
 const PLANNED =
   /\b(?:will|would|shall|intend(?:ed|s)?(?:\s+to)?|planning|planned|plan to|plans to|aim to|hope to|expect to|going to|about to|in the process of|scheduled to|yet to|working on|preparing|developing|currently|underway|in progress)\b/gi;
 // Spelled-out quantities are facts exactly as digits are ("ten" must not become "twelve"). "one" is
@@ -330,6 +339,9 @@ export function checkWordingLock(originalText: string, rewriteText: string): Wor
   }
   for (const [label, pattern] of [
     ["negation", NEGATION],
+    ["never", NEVER],
+    ["a change over time", CHANGED_OVER_TIME],
+    ["an absolute claim", ABSOLUTE],
     ["planned action", PLANNED],
   ] as const) {
     const before = [...original.matchAll(pattern)].length;
