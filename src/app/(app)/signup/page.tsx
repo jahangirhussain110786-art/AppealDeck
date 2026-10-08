@@ -20,6 +20,7 @@ import { APP_URL } from "@/lib/urls";
 import { safeNext } from "@/lib/safeNext";
 import { AUTH } from "@/content/auth";
 import type { AuthStatus } from "@/components/AuthCard";
+import { useAdoptPrehydration } from "@/lib/useAdoptPrehydration";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -29,6 +30,8 @@ export default function SignupPage() {
   const showContinue = next.startsWith("/case");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const adoptEmail = useAdoptPrehydration(setEmail);
+  const adoptPassword = useAdoptPrehydration(setPassword);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [status, setStatus] = useState<AuthStatus>("idle");
@@ -155,7 +158,8 @@ export default function SignupPage() {
                 spellCheck={false}
                 inputMode="email"
                 required
-                value={email}
+                ref={adoptEmail}
+                defaultValue=""
                 onChange={(e) => setEmail(e.target.value)}
                 onBlur={handleEmailBlur}
                 aria-describedby={emailError ? "email-error" : undefined}
@@ -173,7 +177,8 @@ export default function SignupPage() {
                 autoComplete="new-password"
                 required
                 minLength={8}
-                value={password}
+                ref={adoptPassword}
+                defaultValue=""
                 onChange={(e) => setPassword(e.target.value)}
                 onBlur={handlePasswordBlur}
                 aria-describedby={passwordError ? "password-error" : undefined}

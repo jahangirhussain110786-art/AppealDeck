@@ -48,6 +48,7 @@ import {
   type ExtractedEntity,
 } from "@/core";
 import type { DeadlineLike } from "@/components/DeadlineChip";
+import { useAdoptPrehydration } from "@/lib/useAdoptPrehydration";
 
 /** Wire shape of `/api/decode`: `dueAt` arrives as an ISO string, not a `Date`. */
 type DecodeResponse = {
@@ -111,6 +112,7 @@ export default function DecodeClient() {
   // v5: a notice pasted into the home page's tool arrives here in memory. It is read at first
   // render and decoded straight away, because the seller already pressed Decode there.
   const [text, setText] = useState(() => peekDecodeDraft()?.text ?? "");
+  const adoptNotice = useAdoptPrehydration(setText);
   const [status, setStatus] = useState<Status>(() => (peekDecodeDraft() ? "loading" : "empty"));
   const [result, setResult] = useState<DecodeResponse | null>(null);
   const [decodedText, setDecodedText] = useState("");
@@ -428,6 +430,7 @@ export default function DecodeClient() {
                   </div>
                   <Textarea
                     id="notice"
+                    ref={adoptNotice}
                     placeholder={DECODE.textarea.placeholder}
                     value={text}
                     // The full normaliser runs on a paste and on the server, never per keystroke.

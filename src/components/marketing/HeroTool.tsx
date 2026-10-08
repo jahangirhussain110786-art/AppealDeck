@@ -8,6 +8,7 @@ import { stashDecodeDraft } from "@/lib/decodeDraft";
 import { handlePaste, stripInvisibleChars } from "@/lib/idNormalize";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 import { HOME } from "@/content/marketing";
+import { useAdoptPrehydration } from "@/lib/useAdoptPrehydration";
 
 /**
  * The paste tool in the home hero (v5): a polished object with the real input in it. Decoding
@@ -16,6 +17,7 @@ import { HOME } from "@/content/marketing";
 export function HeroTool() {
   const router = useRouter();
   const [text, setText] = useState("");
+  const adoptNotice = useAdoptPrehydration(setText);
   const [sample, setSample] = useState(false);
   const t = HOME.tool;
 
@@ -54,6 +56,7 @@ export function HeroTool() {
         </div>
         <textarea
           id="hero-notice"
+          ref={adoptNotice}
           value={text}
           onPaste={(e) =>
             handlePaste(e, (value) => {

@@ -16,6 +16,7 @@ import { APP_URL } from "@/lib/urls";
 import { safeNext } from "@/lib/safeNext";
 import { AUTH } from "@/content/auth";
 import type { AuthStatus } from "@/components/AuthCard";
+import { useAdoptPrehydration } from "@/lib/useAdoptPrehydration";
 
 export default function ResetPasswordPage() {
   return (
@@ -30,6 +31,8 @@ function ResetPasswordPageInner() {
   const next = safeNext(searchParams.get("next"), APP_URL);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const adoptPassword = useAdoptPrehydration(setPassword);
+  const adoptConfirm = useAdoptPrehydration(setConfirm);
   const [passwordError, setPasswordError] = useState("");
   const [confirmError, setConfirmError] = useState("");
   const [status, setStatus] = useState<AuthStatus>("idle");
@@ -115,7 +118,8 @@ function ResetPasswordPageInner() {
           autoComplete="new-password"
           required
           minLength={8}
-          value={password}
+          ref={adoptPassword}
+          defaultValue=""
           onChange={(e) => setPassword(e.target.value)}
           onBlur={handlePasswordBlur}
           aria-describedby={passwordError ? "password-error" : undefined}
@@ -137,7 +141,8 @@ function ResetPasswordPageInner() {
           autoComplete="new-password"
           required
           minLength={8}
-          value={confirm}
+          ref={adoptConfirm}
+          defaultValue=""
           onChange={(e) => setConfirm(e.target.value)}
           onBlur={handleConfirmBlur}
           aria-describedby={confirmError ? "confirm-error" : undefined}

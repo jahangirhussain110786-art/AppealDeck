@@ -19,6 +19,7 @@ import { safeNext } from "@/lib/safeNext";
 import { AUTH } from "@/content/auth";
 import { isValidEmail, validatePasswordLength } from "@/lib/validation";
 import type { AuthStatus } from "@/components/AuthCard";
+import { useAdoptPrehydration } from "@/lib/useAdoptPrehydration";
 
 export default function LoginPage() {
   return (
@@ -36,6 +37,8 @@ function LoginPageInner() {
   const showContinue = next.startsWith("/case");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const adoptEmail = useAdoptPrehydration(setEmail);
+  const adoptPassword = useAdoptPrehydration(setPassword);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [mode, setMode] = useState<"password" | "magic">("password");
@@ -168,7 +171,8 @@ function LoginPageInner() {
               spellCheck={false}
               inputMode="email"
               required
-              value={email}
+              ref={adoptEmail}
+              defaultValue=""
               onChange={(e) => setEmail(e.target.value)}
               onBlur={handleEmailBlur}
               aria-describedby={emailError ? "email-error" : undefined}
@@ -199,7 +203,8 @@ function LoginPageInner() {
                 id="password"
                 autoComplete="current-password"
                 required
-                value={password}
+                ref={adoptPassword}
+                defaultValue=""
                 onChange={(e) => setPassword(e.target.value)}
                 onBlur={handlePasswordBlur}
                 aria-describedby={passwordError ? "password-error" : undefined}

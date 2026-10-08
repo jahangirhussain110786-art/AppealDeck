@@ -10,6 +10,7 @@ import { APP_URL } from "@/lib/urls";
 import { safeNext } from "@/lib/safeNext";
 import { AUTH } from "@/content/auth";
 import type { AuthStatus } from "@/components/AuthCard";
+import { useAdoptPrehydration } from "@/lib/useAdoptPrehydration";
 
 export default function ForgotPasswordPage() {
   return (
@@ -26,6 +27,7 @@ function ForgotPasswordPageInner() {
   const next = safeNext(nextParam, APP_URL);
   const loginHref = nextParam ? `/login?next=${encodeURIComponent(next)}` : "/login";
   const [email, setEmail] = useState("");
+  const adoptEmail = useAdoptPrehydration(setEmail);
   const [status, setStatus] = useState<AuthStatus>("idle");
   const [message, setMessage] = useState("");
 
@@ -90,7 +92,8 @@ function ForgotPasswordPageInner() {
                 spellCheck={false}
                 inputMode="email"
                 required
-                value={email}
+                ref={adoptEmail}
+                defaultValue=""
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1"
               />
