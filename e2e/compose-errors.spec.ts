@@ -26,6 +26,7 @@ async function signInAsDev(page: Page) {
 async function prepareWith(
   page: Page,
   reply: { status: number; contentType: string; body: string },
+  delayMs = 0,
 ) {
   test.skip(
     !process.env.DEV_LOGIN_EMAIL || !process.env.DEV_LOGIN_PASSWORD,
@@ -59,7 +60,10 @@ async function prepareWith(
       body: JSON.stringify({ status: "active" }),
     }),
   );
-  await page.route("**/api/compose", (route) => route.fulfill(reply));
+  await page.route("**/api/compose", async (route) => {
+    if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
+    await route.fulfill(reply);
+  });
   await page.getByRole("button", { name: /prepare working draft/i }).click();
 }
 
@@ -207,4 +211,26 @@ test("when the AI draft is discarded the seller is told why", async ({ page }) =
   });
   await expect(page.getByText(/added details you did not give, so it was discarded/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Use my own wording" })).toHaveCount(0);
+});
+
+// Writing and checking a draft can take most of a minute. The seller is told, not left with a grey button.
+test("while the draft is being written the button says so and the seller is told how long it can take", async ({
+  page,
+}) => {
+  const prepared = prepareWith(
+    page,
+    {
+      status: 504,
+      contentType: "text/html",
+      body: "<html></html>",
+    },
+    2500,
+  );
+  await prepared;
+  await expect(page.getByRole("button", { name: "Writing your draft…" })).toBeDisabled();
+  await expect(page.getByRole("status").filter({ hasText: "up to a minute" })).toBeVisible();
+  // And it returns to normal when the answer arrives.
+  await expect(page.getByRole("button", { name: /Prepare working draft/ })).toBeEnabled({
+    timeout: 10_000,
+  });
 });

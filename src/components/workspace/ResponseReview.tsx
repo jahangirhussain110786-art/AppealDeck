@@ -2,7 +2,7 @@
 import * as React from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, FileCheck2, FilePenLine, CircleDot } from "lucide-react";
+import { ArrowRight, FileCheck2, FilePenLine, CircleDot, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -497,10 +497,28 @@ export function ResponseReview({
               ) : purchase ? (
                 <ComposeGate vault={vault} caseId={file.id} onActivated={onGenerate} />
               ) : (
-                <Button disabled={busy} onClick={() => void prepare()}>
-                  <FileCheck2 className="mr-2 h-4 w-4" aria-hidden />
-                  {gaps.length ? "Prepare working draft" : "Prepare response"}
-                </Button>
+                <>
+                  <Button disabled={busy} onClick={() => void prepare()}>
+                    {busy ? (
+                      <Loader2
+                        className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none"
+                        aria-hidden
+                      />
+                    ) : (
+                      <FileCheck2 className="mr-2 h-4 w-4" aria-hidden />
+                    )}
+                    {busy
+                      ? C.preparing.button
+                      : gaps.length
+                        ? "Prepare working draft"
+                        : "Prepare response"}
+                  </Button>
+                  {busy && (
+                    <p role="status" className="text-sm text-muted-foreground">
+                      {C.preparing.note}
+                    </p>
+                  )}
+                </>
               )}
               <p className="text-xs text-muted-foreground">{F.sendNote}</p>
             </>

@@ -97,6 +97,23 @@ function getWordingLimiter(): Ratelimit | null {
   return _wording;
 }
 
+let _draft: Ratelimit | null = null;
+function getDraftLimiter(): Ratelimit | null {
+  if (!hasUpstashEnv()) return null;
+  if (!_draft) {
+    const redis = new Redis(redisCredentials()!);
+    // New AI drafts only: a repeat of the same material is served from `draftCache` and never
+    // reaches this. Twenty a day is a lot of real revisions for one seller and a ceiling on cost.
+    _draft = new Ratelimit({
+      redis,
+      limiter: Ratelimit.fixedWindow(20, "1 d"),
+      analytics: true,
+      prefix: "ratelimit:draft",
+    });
+  }
+  return _draft;
+}
+
 function getRemindersLimiter(): Ratelimit | null {
   if (!hasUpstashEnv()) return null;
   if (!_reminders) {
@@ -265,6 +282,32 @@ export async function rateLimitWording(user: AppUser): Promise<RateLimitResult> 
       unavailable: process.env.NODE_ENV === "production",
       limit: 40,
       remaining: 40,
+      reset: Date.now() + 86_400_000,
+    };
+  }
+  let r;
+  try {
+    r = await limiter.limit(user.id);
+  } catch {
+    return {
+      success: false,
+      limit: 0,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+      unavailable: true,
+    };
+  }
+  return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
+}
+
+export async function rateLimitDraft(user: AppUser): Promise<RateLimitResult> {
+  const limiter = getDraftLimiter();
+  if (!limiter) {
+    return {
+      success: process.env.NODE_ENV !== "production",
+      unavailable: process.env.NODE_ENV === "production",
+      limit: 20,
+      remaining: 20,
       reset: Date.now() + 86_400_000,
     };
   }

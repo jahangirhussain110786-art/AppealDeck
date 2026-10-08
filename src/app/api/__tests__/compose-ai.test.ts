@@ -12,14 +12,27 @@ vi.mock("@/lib/license", () => ({
   claimCasePass: () => Promise.resolve(true),
   isLicenseActive: () => Promise.resolve(true),
 }));
+const allowance = vi.hoisted(() => ({ ok: true }));
+const cache = vi.hoisted(() => ({ value: null as unknown, stored: [] as unknown[] }));
+vi.mock("@/lib/draftCache", () => ({
+  draftCacheKey: () => "k",
+  getCachedDraft: () => Promise.resolve(cache.value),
+  setCachedDraft: (_k: string, v: unknown) => {
+    cache.stored.push(v);
+    return Promise.resolve();
+  },
+}));
 vi.mock("@/lib/ratelimit", () => ({
+  rateLimitDraft: () =>
+    Promise.resolve({ success: allowance.ok, limit: 20, remaining: 1, reset: Date.now() + 1000 }),
   rateLimitCompose: () =>
     Promise.resolve({ success: true, limit: 30, remaining: 30, reset: Date.now() + 60_000 }),
   tooManyRequestsResponse: () => new Response("rate limited", { status: 429 }),
 }));
 vi.mock("@/lib/supabase/server", () => ({ supabaseAdmin: null }));
 vi.mock("@/lib/llm/gemini", () => ({ isGeminiConfigured: () => configured.on }));
-vi.mock("@/lib/llm/draftResponse", () => ({
+vi.mock("@/lib/llm/draftResponse", async (importActual) => ({
+  ...(await importActual<typeof import("@/lib/llm/draftResponse")>()),
   draftResponse: (...args: unknown[]) => draftResponseMock(...args),
 }));
 
@@ -69,6 +82,9 @@ const aiSections = {
 beforeEach(() => {
   draftResponseMock.mockReset();
   configured.on = true;
+  allowance.ok = true;
+  cache.value = null;
+  cache.stored = [];
 });
 
 describe("/api/compose with AI drafting", () => {
@@ -152,5 +168,45 @@ describe("/api/compose with AI drafting", () => {
     );
     expect(request.notice).toContain("Used Sold as New");
     expect(request.answers.rootCause).toContain("We listed returned items as new");
+  });
+
+  it("remembers a verified draft, and serves the same one without asking the model again", async () => {
+    draftResponseMock.mockResolvedValue({ ok: true, sections: aiSections, retried: false });
+    await post(body());
+    expect(cache.stored).toHaveLength(1);
+
+    // The same material again: the stored sections must also pass the fact check to be used.
+    cache.value = {
+      rootCause:
+        "We listed returned items as new: customer returns went back into our new-condition stock without anyone opening the packaging, so four customers received opened items in September.",
+      correctiveActions:
+        "On 30 September we removed all 12 affected listings and relisted the returned units as Used - Like New.",
+      preventiveMeasures:
+        "Our warehouse lead opens and inspects every return before it can go back on sale and records the result in a returns log.",
+    };
+    draftResponseMock.mockClear();
+    const json = await (await post(body())).json();
+    expect(draftResponseMock).not.toHaveBeenCalled();
+    expect(json.ai).toEqual({ status: "used", retried: false });
+    expect(json.rendered).toContain("so four customers received opened items in September");
+  });
+
+  it("does not trust a stored draft that no longer passes the fact check", async () => {
+    cache.value = {
+      ...aiSections,
+      rootCause: "On 5 October our auditor Dana Cole found 99 opened units.",
+    };
+    draftResponseMock.mockResolvedValue({ ok: true, sections: aiSections, retried: false });
+    const json = await (await post(body())).json();
+    expect(draftResponseMock).toHaveBeenCalledTimes(1);
+    expect(json.rendered).not.toContain("Dana Cole");
+  });
+
+  it("stops asking the model after the seller's daily allowance, and says so", async () => {
+    allowance.ok = false;
+    const json = await (await post(body())).json();
+    expect(draftResponseMock).not.toHaveBeenCalled();
+    expect(json.ai).toEqual({ status: "fallback", reason: "daily_limit" });
+    expect(json.rendered).toContain("We listed returned items as new");
   });
 });

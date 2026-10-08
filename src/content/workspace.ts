@@ -473,11 +473,17 @@ export const WORKSPACE = {
         "The AI draft added details you did not give, so it was discarded. This draft is built from your own wording.",
       not_configured:
         "AI drafting is switched off right now. This draft is built from your own wording.",
+      daily_limit:
+        "You have used today's AI drafts. This draft is built from your own wording. Prepare it again tomorrow to retry.",
       busy: "AI drafting is busy right now. This draft is built from your own wording. Prepare it again in a minute to retry.",
       unavailable:
         "AI drafting was not available this time. This draft is built from your own wording. Prepare it again to retry.",
     },
     fallbackOther: "AI drafting did not run. This draft is built from your own wording.",
+  },
+  preparing: {
+    button: "Writing your draft…",
+    note: "This can take up to a minute while the draft is written and checked against your facts. Your answers are saved.",
   },
   exportWord: "Download as Word",
   exportPdf: "Print or save as PDF",

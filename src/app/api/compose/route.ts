@@ -6,14 +6,16 @@ import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive, claimCasePass } from "@/lib/license";
 import { serviceUnavailableResponse } from "@/lib/licenseGuard";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
+import { rateLimitCompose, rateLimitDraft, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { recordActivation, deviceErrorResponse, deriveFingerprintFromRequest } from "@/lib/devices";
 import { CaseDataSchema } from "@/lib/caseSchema";
 import { workspaceCanCompose, professionalReviewApplies, routeWorkspace } from "@/core/workspace";
 import { hasD6Allegation } from "@/core/violationKinds";
 import { STORES } from "@/content/stores";
 import { isGeminiConfigured } from "@/lib/llm/gemini";
-import { draftResponse } from "@/lib/llm/draftResponse";
+import { buildDraftSources, draftResponse } from "@/lib/llm/draftResponse";
+import { draftCacheKey, getCachedDraft, setCachedDraft } from "@/lib/draftCache";
+import { verifyAiDraft } from "@/core/draftVerification";
 import { draftRequestFrom } from "@/lib/draftRequest";
 import type { DraftSections } from "@/core/draftVerification";
 
@@ -145,12 +147,30 @@ export async function POST(req: NextRequest) {
       if (!isGeminiConfigured()) {
         ai = { status: "fallback", reason: "not_configured" };
       } else {
-        const outcome = await draftResponse(aiRequest);
-        if (outcome.ok) {
-          draft = withAiSections(ownDraft, outcome.sections);
-          ai = { status: "used", retried: outcome.retried };
+        // The same material gets the same draft, without another model call. What comes back from
+        // the cache is checked again before it is used.
+        const cacheKey = draftCacheKey(user.id, aiRequest);
+        const cached = await getCachedDraft(cacheKey);
+        if (cached && verifyAiDraft(buildDraftSources(aiRequest), cached).ok) {
+          draft = withAiSections(ownDraft, cached);
+          ai = { status: "used", retried: false };
         } else {
-          ai = { status: "fallback", reason: outcome.reason, detail: outcome.detail };
+          const allowance = await rateLimitDraft(user);
+          if (!allowance.success) {
+            ai = {
+              status: "fallback",
+              reason: allowance.unavailable ? "unavailable" : "daily_limit",
+            };
+          } else {
+            const outcome = await draftResponse(aiRequest);
+            if (outcome.ok) {
+              draft = withAiSections(ownDraft, outcome.sections);
+              ai = { status: "used", retried: outcome.retried };
+              await setCachedDraft(cacheKey, outcome.sections);
+            } else {
+              ai = { status: "fallback", reason: outcome.reason, detail: outcome.detail };
+            }
+          }
         }
       }
     }

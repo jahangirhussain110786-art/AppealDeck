@@ -19,6 +19,9 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
+      # Production dependencies only: dev tooling is never shipped to a seller. A high advisory in what
+      # does ship fails the build, so it is fixed the day it is published rather than found later.
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run lint:copy
