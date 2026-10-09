@@ -509,12 +509,12 @@ export const FAQ = {
     {
       id: "processing",
       q: "What leaves my browser?",
-      a: "Your notice goes to AppealDeck when you decode it, and preparing a response sends your case text and file references, and for a Plan of Action your words go on to the AI that writes it. The files themselves are never sent for that. Nothing is ever sent to Amazon.",
+      a: "Your notice goes to AppealDeck when you decode it, and preparing a response sends your case text and file references, and your written words go on to the AI that writes the response from them. The files themselves are never sent for that. Nothing is ever sent to Amazon.",
       // 24 Sep 2026: named two features deleted on 22 Sep (AI field suggestions, the interview's
       // drafting flow) and left out the one thing that does reach an AI provider. Now says what
       // the privacy policy says, and legalDisclosures.test.ts holds the two together.
       detail:
-        "The only things sent to an AI provider (Google Gemini) are what it needs to write a Plan of Action (your notice, your written answers and the names and notes of your records, never the files), a business document you ask us to check, and a section of your response you ask us to improve the wording of. We do not keep a copy of any of them. Identity, bank and proof-of-address documents are checked on your device and never uploaded.",
+        "The only things sent to an AI provider (Google Gemini) are what it needs to write a Plan of Action, a document-request response or questionnaire answers (your notice, your written answers and the names and notes of your records, never the files), a business document you ask us to check, and a section of your response you ask us to improve the wording of. We do not keep a copy of any of them. Identity, bank and proof-of-address documents are checked on your device and never uploaded.",
       link: { label: "How processing works", href: "/privacy#how-we-use" },
     },
     {

@@ -113,6 +113,11 @@ export type GeminiCallInput = {
   task?: LlmTask;
   responseJsonSchema?: Record<string, unknown>;
   responseJson?: boolean;
+  /**
+   * Reasoning tokens the model may spend before answering. JSON-mode calls default to 0 (the
+   * schema-mode stall of 25 Sep 2026 was with thinking on); a caller that wants reasoning says so.
+   */
+  thinkingBudget?: number;
 };
 
 export type GeminiCallResult =
@@ -229,15 +234,17 @@ async function callGeminiOnce(input: GeminiCallInput): Promise<GeminiCallResult>
     temperature: input.temperature ?? 0.2,
     maxOutputTokens: input.maxOutputTokens ?? MAX_OUTPUT_TOKENS,
   };
+  const thinking = { thinkingBudget: input.thinkingBudget ?? 0 };
   if (input.responseJsonSchema) {
     generationConfig.responseMimeType = "application/json";
     generationConfig.responseSchema = input.responseJsonSchema;
-    generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    generationConfig.thinkingConfig = thinking;
   } else if (input.responseJson) {
     generationConfig.responseMimeType = "application/json";
-    generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    generationConfig.thinkingConfig = thinking;
   } else {
     generationConfig.responseMimeType = "text/plain";
+    if (input.thinkingBudget !== undefined) generationConfig.thinkingConfig = thinking;
   }
 
   const body = {

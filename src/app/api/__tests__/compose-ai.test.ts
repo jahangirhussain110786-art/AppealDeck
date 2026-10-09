@@ -21,6 +21,9 @@ vi.mock("@/lib/draftCache", () => ({
     cache.stored.push(v);
     return Promise.resolve();
   },
+  otherDraftCacheKey: () => "k2",
+  getCachedOtherDraft: () => Promise.resolve(null),
+  setCachedOtherDraft: () => Promise.resolve(),
 }));
 vi.mock("@/lib/ratelimit", () => ({
   rateLimitDraft: () =>
@@ -31,6 +34,10 @@ vi.mock("@/lib/ratelimit", () => ({
 }));
 vi.mock("@/lib/supabase/server", () => ({ supabaseAdmin: null }));
 vi.mock("@/lib/llm/gemini", () => ({ isGeminiConfigured: () => configured.on }));
+vi.mock("@/lib/llm/draftOther", async (importActual) => ({
+  ...(await importActual<typeof import("@/lib/llm/draftOther")>()),
+  draftOther: () => Promise.resolve({ ok: false, reason: "unavailable" }),
+}));
 vi.mock("@/lib/llm/draftResponse", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/llm/draftResponse")>()),
   draftResponse: (...args: unknown[]) => draftResponseMock(...args),
@@ -146,7 +153,7 @@ describe("/api/compose with AI drafting", () => {
     expect(json.ai).toEqual({ status: "not_applicable" });
   });
 
-  it("does not call the model for a document request", async () => {
+  it("hands a document request to the other drafter, never to the Plan of Action drafter", async () => {
     const json = await (
       await post(
         body({
@@ -156,7 +163,9 @@ describe("/api/compose with AI drafting", () => {
       )
     ).json();
     expect(draftResponseMock).not.toHaveBeenCalled();
-    expect(json.ai).toEqual({ status: "not_applicable" });
+    // 9 Oct 2026: a document request is written by its own drafter (compose-ai-other.test.ts);
+    // here it is stubbed as unavailable, so the route falls back to the seller's wording.
+    expect(json.ai).toEqual({ status: "fallback", reason: "unavailable" });
   });
 
   it("gives the model only the notice, the answers, record labels and reasons", async () => {
@@ -164,10 +173,29 @@ describe("/api/compose with AI drafting", () => {
     await post(body());
     const request = draftResponseMock.mock.calls[0]![0];
     expect(Object.keys(request).sort()).toEqual(
-      ["answers", "attempt", "declined", "kind", "notice", "records", "replyReasons"].sort(),
+      [
+        "answers",
+        "attempt",
+        "declined",
+        "formInstructions",
+        "issues",
+        "kind",
+        "notice",
+        "records",
+        "replyReasons",
+        "requested",
+      ].sort(),
     );
     expect(request.notice).toContain("Used Sold as New");
     expect(request.answers.rootCause).toContain("We listed returned items as new");
+    // 9 Oct 2026: what Amazon asked for, by label and state only; never a file, never a record id.
+    for (const r of request.requested ?? []) {
+      expect(Object.keys(r).sort()).toEqual(["label", "status"]);
+    }
+    for (const i of request.issues ?? []) {
+      expect(Object.keys(i).sort()).toEqual(["kind", "quote"]);
+      expect(request.notice + (request.formInstructions ?? "")).toContain(i.quote);
+    }
   });
 
   it("remembers a verified draft, and serves the same one without asking the model again", async () => {

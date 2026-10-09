@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { describeCheck, verifyAiDraft, type DraftSections } from "./draftVerification";
+import {
+  describeCheck,
+  verifyAiDraft,
+  verifyAiTexts,
+  type DraftSections,
+} from "./draftVerification";
 
 const ANSWERS = {
   rootCause:
@@ -139,5 +144,30 @@ describe("verifyAiDraft", () => {
       correctiveActions: faithful.correctiveActions + " We completed a full audit on 5 October.",
     });
     expect(describeCheck(check)).toMatch(/added details that were not provided/);
+  });
+});
+
+describe("re-pairing a number with a unit the seller already used (9 Oct 2026)", () => {
+  const sources = {
+    all: "our packer was on leave. 14 of 610 orders went late. we check orders every day.",
+    sellerAnswers:
+      "our packer was on leave. 14 of 610 orders went late. we check orders every day.",
+  };
+  it("accepts '14 orders out of 610' for '14 of 610 orders'", () => {
+    const check = verifyAiTexts(sources, [
+      "14 orders out of 610 went late while our packer was on leave. We check orders every day.",
+    ]);
+    expect(check.added).toEqual([]);
+    expect(check.dropped).toEqual([]);
+  });
+  it("still reports a unit the seller never used, and a number they never gave", () => {
+    const days = verifyAiTexts(sources, [
+      "14 of 610 orders went late over 14 weeks. We check orders every day.",
+    ]);
+    expect(days.added).toContain("14 week");
+    const number = verifyAiTexts(sources, [
+      "15 of 610 orders went late. We check orders every day.",
+    ]);
+    expect(number.added).toContain("15");
   });
 });

@@ -3,6 +3,7 @@ import { Redis } from "@upstash/redis";
 import { redisCredentials } from "@/lib/redisEnv";
 import type { DraftSections } from "@/core/draftVerification";
 import type { DraftRequest } from "@/lib/llm/draftResponse";
+import type { OtherDraftTexts } from "@/lib/llm/draftOther";
 
 /**
  * A short-lived memory of the AI draft for exactly the same material.
@@ -50,6 +51,43 @@ export async function setCachedDraft(key: string, sections: DraftSections): Prom
   if (!redis) return;
   try {
     await redis.set(key, sections, { ex: TTL_SECONDS });
+  } catch {
+    // Failing to remember a draft costs one extra model call next time, nothing more.
+  }
+}
+
+/**
+ * The same memory for the other written responses (9 Oct 2026): the explanation and one answer per
+ * question. Checked again by the caller before use, like a Plan of Action draft.
+ */
+export function otherDraftCacheKey(userId: string, request: unknown): string {
+  const hash = createHash("sha256").update(JSON.stringify(request)).digest("hex").slice(0, 40);
+  return `draft:other:v1:${userId}:${hash}`;
+}
+
+export async function getCachedOtherDraft(key: string): Promise<OtherDraftTexts | null> {
+  const redis = client();
+  if (!redis) return null;
+  try {
+    const value = await redis.get<OtherDraftTexts>(key);
+    if (
+      value &&
+      typeof value.explanation === "string" &&
+      Array.isArray(value.answers) &&
+      value.answers.every((a) => typeof a === "string")
+    )
+      return value;
+  } catch {
+    // A cache that cannot be read is the same as a cache with nothing in it.
+  }
+  return null;
+}
+
+export async function setCachedOtherDraft(key: string, texts: OtherDraftTexts): Promise<void> {
+  const redis = client();
+  if (!redis) return;
+  try {
+    await redis.set(key, texts, { ex: TTL_SECONDS });
   } catch {
     // Failing to remember a draft costs one extra model call next time, nothing more.
   }

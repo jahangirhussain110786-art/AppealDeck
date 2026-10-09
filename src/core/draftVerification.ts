@@ -123,13 +123,54 @@ const INFLATING_WORDS = [
 
 const wordCount = (t: string) => t.split(/\s+/).filter(Boolean).length;
 
+/**
+ * "14 of 610 orders" rewritten as "14 orders out of 610" is the same fact; the wording lock reports
+ * the new number-unit pair "14 order" as added and "610 order" as dropped, because for a one-section
+ * reword that pairing is the whole check (9 Oct 2026, found on the first questionnaire draft). For
+ * a whole draft the pair is a rewording, not an invention, when the number and the unit word both
+ * already appear in the text it is measured against. A number that does not appear, or a unit that
+ * does not ("14 days" where the seller never wrote "day"), is still reported.
+ */
+function isUnitRepairing(flag: string, against: string): boolean {
+  // A bare number is also a "pair" (unit absent): "out of 610" against "610 orders". The number
+  // itself is checked separately as a token, so dropping the pair flag loses nothing.
+  const m = /^([$€£]?)(\d[\d.]*)(?: ([a-z%]+))?$/i.exec(flag);
+  if (!m) return false;
+  const number = `${m[1]}${m[2]}`;
+  const unit = m[3]?.toLowerCase();
+  const lower = against.toLowerCase();
+  const hasNumber = new RegExp(`(?<![\\d.])${number.replace(/[$€£.]/g, "\\$&")}(?![\\d.])`).test(
+    lower,
+  );
+  if (!unit) return hasNumber;
+  const hasUnit = unit === "%" ? lower.includes("%") : new RegExp(`\\b${unit}s?\\b`).test(lower);
+  return hasNumber && hasUnit;
+}
+
 export function verifyAiDraft(sources: DraftSources, draft: DraftSections): DraftCheck {
-  const text = [draft.rootCause, draft.correctiveActions, draft.preventiveMeasures].join("\n\n");
+  return verifyAiTexts(sources, [
+    draft.rootCause,
+    draft.correctiveActions,
+    draft.preventiveMeasures,
+  ]);
+}
+
+/**
+ * The same gate for any set of AI-written texts (9 Oct 2026): a document-request explanation, or
+ * one answer per question on Amazon's form. `sellerAnswers` is whatever the seller wrote for those
+ * texts, and every fact in it must survive.
+ */
+export function verifyAiTexts(sources: DraftSources, texts: string[]): DraftCheck {
+  const text = texts.join("\n\n");
 
   // Added facts are measured against everything the model saw; dropped facts against the seller's
   // own answers only (a notice detail the draft leaves out is fine, the seller's own is not).
-  const added = checkWordingLock(sources.all, text).added.filter((f) => f !== "added content");
-  const dropped = checkWordingLock(sources.sellerAnswers, text).dropped;
+  const added = checkWordingLock(sources.all, text)
+    .added.filter((f) => f !== "added content")
+    .filter((f) => !isUnitRepairing(f, sources.all));
+  const dropped = checkWordingLock(sources.sellerAnswers, text).dropped.filter(
+    (f) => !isUnitRepairing(f, text),
+  );
 
   const unsupportedEvidence = EVIDENCE_NOUNS.filter(
     ([, pattern]) => pattern.test(text) && !pattern.test(sources.all),

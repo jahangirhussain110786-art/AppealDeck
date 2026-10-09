@@ -1066,7 +1066,7 @@ function routeCore(
 
 /** Heading used for the seller's written answer, per protocol. `operational` is handled separately
  * because it is the only one with three distinct sections. */
-const RESPONSE_HEADING: Partial<Record<Protocol, string>> = {
+export const RESPONSE_HEADING: Partial<Record<Protocol, string>> = {
   documents: "Response to the document request",
   questionnaire: "Answers to Amazon's questions",
   acknowledgement: "Your acknowledgement",

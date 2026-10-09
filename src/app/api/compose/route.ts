@@ -16,8 +16,12 @@ import { isGeminiConfigured } from "@/lib/llm/gemini";
 import { buildDraftSources, draftResponse } from "@/lib/llm/draftResponse";
 import { draftCacheKey, getCachedDraft, setCachedDraft } from "@/lib/draftCache";
 import { verifyAiDraft } from "@/core/draftVerification";
-import { draftRequestFrom } from "@/lib/draftRequest";
-import type { DraftSections } from "@/core/draftVerification";
+import { draftRequestFrom, otherDraftRequestFrom } from "@/lib/draftRequest";
+import { verifyAiTexts, type DraftSections } from "@/core/draftVerification";
+import { buildOtherSources, draftOther } from "@/lib/llm/draftOther";
+import type { OtherDraftRequest, OtherDraftTexts } from "@/lib/llm/draftOther";
+import { getCachedOtherDraft, otherDraftCacheKey, setCachedOtherDraft } from "@/lib/draftCache";
+import { RESPONSE_HEADING, type Workspace } from "@/core/workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -175,6 +179,51 @@ export async function POST(req: NextRequest) {
       }
     }
   }
+  /*
+    9 Oct 2026: the same for a document request's explanation and a questionnaire's answers, which
+    until now were assembled from the seller's wording with no model. Same gates, same memory, same
+    check: `draftOther` refuses a text that adds or drops a fact, per question.
+  */
+  if (
+    data.workspace &&
+    (data.workspace.protocol === "documents" || data.workspace.protocol === "questionnaire")
+  ) {
+    const otherRequest = otherDraftRequestFrom(data.workspace, data.kind, attemptNumber);
+    if (otherRequest) {
+      if (!isGeminiConfigured()) {
+        ai = { status: "fallback", reason: "not_configured" };
+      } else {
+        const cacheKey = otherDraftCacheKey(user.id, otherRequest);
+        const cached = await getCachedOtherDraft(cacheKey);
+        const cachedOk =
+          cached &&
+          cached.answers.length === otherRequest.questions.length &&
+          verifyAiTexts(buildOtherSources(otherRequest), [cached.explanation, ...cached.answers])
+            .ok;
+        if (cached && cachedOk) {
+          draft = withOtherAiTexts(ownDraft, data.workspace, otherRequest, cached);
+          ai = { status: "used", retried: false };
+        } else {
+          const allowance = await rateLimitDraft(user);
+          if (!allowance.success) {
+            ai = {
+              status: "fallback",
+              reason: allowance.unavailable ? "unavailable" : "daily_limit",
+            };
+          } else {
+            const outcome = await draftOther(otherRequest);
+            if (outcome.ok) {
+              draft = withOtherAiTexts(ownDraft, data.workspace, otherRequest, outcome.texts);
+              ai = { status: "used", retried: outcome.retried };
+              await setCachedOtherDraft(cacheKey, outcome.texts);
+            } else {
+              ai = { status: "fallback", reason: outcome.reason, detail: outcome.detail };
+            }
+          }
+        }
+      }
+    }
+  }
   const view = (d: PoaDraft) => ({
     docType: d.docType,
     mode: d.mode,
@@ -218,6 +267,37 @@ function withAiSections(draft: PoaDraft, sections: DraftSections): PoaDraft {
     sections: draft.sections.map((s) => {
       const key = AI_SECTIONS[s.heading as keyof typeof AI_SECTIONS];
       return key ? { ...s, body: sections[key], source: "ai" as const } : s;
+    }),
+    metadata: { ...draft.metadata, aiDrafted: true },
+  };
+}
+
+/**
+ * The deterministic draft with the explanation (documents) or each answer and the additional
+ * context (questionnaire) replaced by the AI's text, marked as AI-written. Headings are matched the
+ * way `composeWorkspace` wrote them; anything unmatched (supporting records, declined records,
+ * working notes) is left exactly as code assembled it.
+ */
+function withOtherAiTexts(
+  draft: PoaDraft,
+  w: Workspace,
+  req: OtherDraftRequest,
+  texts: OtherDraftTexts,
+): PoaDraft {
+  const explanationHeading =
+    req.protocol === "questionnaire"
+      ? "Additional context"
+      : (RESPONSE_HEADING[w.protocol] ?? "Your response");
+  const byQuestion = new Map(req.questions.map((q, i) => [q.question, texts.answers[i] ?? ""]));
+  return {
+    ...draft,
+    sections: draft.sections.map((s) => {
+      if (s.heading === explanationHeading && texts.explanation.trim())
+        return { ...s, body: texts.explanation, source: "ai" as const };
+      const answer = byQuestion.get(s.heading);
+      if (answer !== undefined && answer.trim())
+        return { ...s, body: answer, source: "ai" as const };
+      return s;
     }),
     metadata: { ...draft.metadata, aiDrafted: true },
   };

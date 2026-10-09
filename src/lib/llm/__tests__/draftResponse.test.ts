@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildDraftPrompt,
+  buildDraftSources,
   draftResponse,
   DRAFT_SYSTEM_PROMPT,
   type DraftRequest,
@@ -122,7 +123,35 @@ describe("the prompt", () => {
     });
     expect(prompt).toContain("AMAZON REPLY");
     expect(prompt).toContain("The invoices do not verify the supply chain.");
-    expect(DRAFT_SYSTEM_PROMPT).toMatch(/answer each reason Amazon gave directly/);
+    expect(DRAFT_SYSTEM_PROMPT).toMatch(/each section must answer the reasons Amazon gave/);
+  });
+
+  it("tells the model what Amazon asked for, in what state, and every issue raised (9 Oct 2026)", () => {
+    const prompt = buildDraftPrompt({
+      ...req,
+      formInstructions: "Provide a plan of action and the invoice.",
+      requested: [
+        { label: "Sales or performance record", status: "reviewed" },
+        { label: "Supplier invoice", status: "waiting" },
+      ],
+      issues: [
+        { kind: "POLICY", quote: "customers complained about item condition" },
+        { kind: "LISTING", quote: "the detail page does not match" },
+      ],
+    });
+    expect(prompt).toContain("FORM (what the response page asks for)");
+    expect(prompt).toContain("Supplier invoice: still being obtained");
+    expect(prompt).toContain("Sales or performance record: attached (listed in RECORDS)");
+    expect(prompt).toContain("ISSUES");
+    expect(prompt).toContain('listing: "the detail page does not match"');
+    expect(DRAFT_SYSTEM_PROMPT).toMatch(/call it by its exact label/);
+    expect(DRAFT_SYSTEM_PROMPT).toMatch(/Address every issue listed under ISSUES/);
+    // A record that is only "asked for" is not one the draft may claim as attached.
+    const sources = buildDraftSources({
+      ...req,
+      requested: [{ label: "Supplier invoice", status: "waiting" }],
+    });
+    expect(sources.all).toContain("Supplier invoice");
   });
 
   it("cannot be broken out of by text inside the notice or the answers", () => {
