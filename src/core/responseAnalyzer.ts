@@ -40,7 +40,10 @@ const RULES: ReadonlyArray<PatternRule> = [
       // Added 6 Oct 2026: the other ways Amazon says it. All still pass through the sentence guard
       // in `claimsReinstatement`, so "if your appeal is approved" and "has not been reinstated"
       // stay out.
-      /your appeal (?:has been|was) (?:approved|accepted|granted)/i,
+      /your (?:appeal|plan of action|poa) (?:has been|was) (?:approved|accepted|granted)/i,
+      // 9 Oct 2026: "After reviewing your plan of action, we have decided to reinstate your selling
+      // privileges." Checked against fresh wording rather than the fixtures, which it missed.
+      /\bwe(?:'ve| have) decided to (?:reinstate|reactivate|restore) (?:your|the) (?:seller |selling )?(?:accounts?|privileges)\b/i,
       /(?:account|selling (?:account|privileges)) (?:has|have) been reactivated/i,
       // An object is required (7 Oct 2026): "We have restored your ability to list in Toys" and "We
       // have lifted the restriction on your ASIN" restore a part, not the account, and were read as
@@ -69,6 +72,8 @@ const RULES: ReadonlyArray<PatternRule> = [
       // keep writing to a queue that has closed.
       /(?:do not|don't|please do not|should not) (?:submit|send|file) (?:any )?(?:further|more|additional) appeals?/i,
       /no further appeals?/i,
+      // The passive form (9 Oct 2026): "Further appeals on this matter will not be reviewed."
+      /\bfurther appeals?\b[^.!?\n]{0,50}\bwill not be (?:reviewed|considered|accepted|processed|responded to)\b/i,
       /(?:may|can|could) not appeal (?:this|the|your)?\s*(?:decision )?further/i,
       /(?:cannot|can't|can not|will not|won't|unable to) (?:accept|review|consider|respond to) (?:any )?(?:further|additional|more) appeals?/i,
       // Final only for selling as a whole ("no longer able to sell on Amazon", "…to sell."). A
@@ -103,6 +108,9 @@ const RULES: ReadonlyArray<PatternRule> = [
       /\b(?:we|amazon) (?:need|require)s? (?:the following|you to (?:provide|send|submit|upload))\b/i,
       /\breply (?:to this (?:message|email) )?with (?:the )?(?:requested )?(?:documents?|documentation|invoices?)\b/i,
       /\b(?:provide|submit|upload|send)\s+(?:us\s+)?(?:an?|the|your|valid|updated|copies of)\s+(?:supplier\s+|valid\s+)?invoices?\b/i,
+      // 9 Oct 2026: "We still need the purchase order that matches it." A request that names the
+      // record without a verb of sending.
+      /\b(?:we|amazon) (?:still )?(?:need|require)s? (?:the |a |an |your |any )?(?:\w+ ){0,3}(?:invoices?|purchase orders?|documents?|documentation|records?|receipts?|certificates?|reports?)\b/i,
     ],
     evidenceKind: "supplier_invoice",
   },
@@ -256,7 +264,7 @@ function analyzeText(raw: string): AnalysisResult {
 const PLAN_ASK =
   /\b(?:submit|provide|send|file|resubmit|include)\b[^.!?\n]{0,60}\bplan of action\b|\bplan of action\b[^.!?\n]{0,40}\b(?:is|are)\s+(?:still\s+|also\s+|now\s+)?(?:required|needed)\b/i;
 const DOCUMENT_ASK =
-  /\b(?:submit|provide|send|upload)\b[^.!?\n]{0,60}\b(?:invoices?|documents?|documentation|certificates?|proof|records?)\b/i;
+  /\b(?:submit|provide|send|upload)\b[^.!?\n]{0,60}\b(?:invoices?|documents?|documentation|certificates?|proof|records?)\b|\b(?:we|amazon)\s+(?:still\s+)?(?:need|require)s?\b[^.!?\n]{0,60}\b(?:invoices?|purchase orders?|documents?|documentation|certificates?|records?|receipts?|reports?)\b/i;
 /** Something is still removed, blocked or restricted even though the account is back. */
 const STILL_RESTRICTED =
   /\b(?:remains?|still|continues?\s+to\s+be)\b[^.!?\n]{0,60}\b(?:removed|suppressed|blocked|deactivated|inactive|restricted|unavailable|suspended|under\s+review|on\s+hold|disabled|closed)\b|\bpermanently\s+(?:removed|closed)\b|\bno\s+longer\s+(?:able|permitted|eligible)\s+to\s+sell\b/i;

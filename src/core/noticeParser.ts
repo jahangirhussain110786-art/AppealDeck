@@ -64,7 +64,7 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   ],
   [
     "RELATED_ACCOUNT",
-    /related[\s-]?account|(?:related|linked|associated)\s+(?:to|with)\s+(?:another|an?\s+other|a\s+different|other)\s+(?:seller\s+)?accounts?/i,
+    /related[\s-]?account|(?:related|linked|associated)\s+(?:to|with)\s+(?:another|an?\s+other|a\s+different|other)\s+(?:seller\s+)?accounts?|(?:operat\w+|hold\w*|maintain\w*|manag\w+|open\w*|creat\w+)\s+(?:multiple|more\s+than\s+one|duplicate)\s+(?:seller\s+|selling\s+)?accounts?/i,
   ],
   [
     "INTELLECTUAL_PROPERTY",
@@ -107,7 +107,7 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   ["FUNDS", /disbursement|funds? (?:is|are|under) (?:on hold|under review)|disbursement-appeals/i],
   [
     "POLICY",
-    /policy (?:violation|compliance)|repeated policy violations|violations of (?:our |Amazon(?:'s)? )?policies|used sold as new|item condition complaints?|review manipulation|manipulat\w+ (?:of )?(?:customer |product )?reviews|customer product reviews policy|(?:offer\w*|incentiv\w*|compensat\w*|paid|paying)\b[^.!?\n]{0,40}\breviews?\b|price gouging|significantly higher than recent prices/i,
+    /policy (?:violation|compliance)|repeated policy violations|violations of (?:our |Amazon(?:'s)? )?policies|used sold as new|(?:item |product )?condition complaints?|(?:sold|listed|offered)\b[^.!?\n]{0,30}\bas new\b[^.!?\n]{0,60}\b(?:used|poor condition)|manipulat\w+[^.!?\n]{0,30}\bsales rank\b|\bsales rank manipulation\b|fair (?:marketplace|pricing) policy|review manipulation|manipulat\w+ (?:of )?(?:customer |product )?reviews|customer product reviews policy|(?:offer\w*|incentiv\w*|compensat\w*|paid|paying)\b[^.!?\n]{0,40}\breviews?\b|price gouging|significantly higher than recent prices/i,
   ],
 ];
 
@@ -157,7 +157,15 @@ const YOU_HAVE = new RegExp(
 */
 const DUTY_VERBS =
   "respond|reply|verify|upload|submit|resubmit|appeal|send|provide|complete|correct|contact";
-const DUTY_BEFORE = new RegExp(`\\b(?:${DUTY_VERBS})\\b[^.!?;]{0,100}$`, "i");
+/*
+  9 Oct 2026: "update your payment method within 7 days" and "update your tax information within 30
+  days" are the seller's own deadlines, and read as none because `update` is not a duty verb (see
+  above: a bare "update" matched too much). Naming the account information that is being updated
+  keeps that protection: it is the seller's own account, never a buyer's or a listing's.
+*/
+const ACCOUNT_UPDATE =
+  "update\\s+your\\s+(?:tax|payment|credit\\s+card|bank|business|account|seller|contact)\\b";
+const DUTY_BEFORE = new RegExp(`\\b(?:(?:${DUTY_VERBS})\\b|${ACCOUNT_UPDATE})[^.!?;]{0,100}$`, "i");
 const DUTY_AFTER = new RegExp(`^[^.!?;]{0,80}?\\b(?:${DUTY_VERBS})\\b`, "i");
 /** The window says how recent a document must be, not how long the seller has. */
 const RECENCY_BEFORE =
