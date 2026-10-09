@@ -226,6 +226,8 @@ export const DECODE = {
     errorNotNotice:
       "If this is a letter you wrote to Amazon, it is not a notice. Paste the message Amazon sent you.",
     factProblem: "The problem",
+    // 9 Oct 2026: under the problem when a second reading placed a notice the rules could not.
+    factReadFrom: "Read from:",
     decodeAnother: "Decode another",
     recordsCount: "{n} records",
     recordsCountOne: "1 record",
@@ -514,7 +516,7 @@ export const FAQ = {
       // drafting flow) and left out the one thing that does reach an AI provider. Now says what
       // the privacy policy says, and legalDisclosures.test.ts holds the two together.
       detail:
-        "The only things sent to an AI provider (Google Gemini) are what it needs to write a Plan of Action, a document-request response or questionnaire answers (your notice, your written answers and the names and notes of your records, never the files), a business document you ask us to check, and a section of your response you ask us to improve the wording of. We do not keep a copy of any of them. Identity, bank and proof-of-address documents are checked on your device and never uploaded.",
+        "The only things sent to an AI provider (Google Gemini) are what it needs to write a Plan of Action, a document-request response or questionnaire answers (your notice, your written answers and the names and notes of your records, never the files), a business document you ask us to check, a section of your response you ask us to improve the wording of, and the text of a notice our own rules cannot place (for a second reading you confirm). We do not keep a copy of any of them. Identity, bank and proof-of-address documents are checked on your device and never uploaded.",
       link: { label: "How processing works", href: "/privacy#how-we-use" },
     },
     {

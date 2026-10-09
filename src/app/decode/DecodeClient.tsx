@@ -54,6 +54,8 @@ import { useAdoptPrehydration } from "@/lib/useAdoptPrehydration";
 type DecodeResponse = {
   kind: ViolationKind;
   confidence: "deterministic" | "llm-needed";
+  /** The second reading of a notice the rules could not place, with the sentence that decided it. */
+  suggestedKind?: { kind: ViolationKind; quote: string };
   deadlines: DeadlineLike[];
   severityGated: boolean;
   /** AA-39. Optional on the wire so a cached response from before this shipped still renders. */
@@ -175,7 +177,14 @@ export default function DecodeClient() {
         setStatus("error");
         return;
       }
-      const data: DecodeResponse = await res.json();
+      const raw: DecodeResponse = await res.json();
+      // A second reading (9 Oct 2026) stands in for "not clearly classified". It is only a starting
+      // point: the case's first screen asks the seller to confirm or change it, and the sentence
+      // that decided it is shown with the result so they can judge it.
+      const second = raw.kind === "UNKNOWN" ? raw.suggestedKind : undefined;
+      const data: DecodeResponse = second
+        ? { ...raw, kind: second.kind, confidence: "llm-needed" }
+        : raw;
       setResult(data);
       // The decoded string, not the typed one: every offset in `data` points into it.
       setDecodedText(data.normalizedText ?? submitted);
@@ -619,6 +628,11 @@ function ResultFacts({
               <span className="block text-lg font-semibold leading-snug tracking-tight">
                 {result.kind === "UNKNOWN" ? guidance.title : APP.violationKinds[result.kind]}
               </span>
+              {result.suggestedKind && (
+                <span className="mt-1 line-clamp-2 block text-xs text-muted-foreground">
+                  {r.factReadFrom} “{result.suggestedKind.quote}”
+                </span>
+              )}
             </span>
           </div>
           <div className="flex items-center gap-4 rounded-[18px] bg-primary/15 p-5 ring-1 ring-inset ring-primary/35">

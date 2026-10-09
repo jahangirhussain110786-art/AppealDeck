@@ -156,9 +156,9 @@ describe("the rendered Privacy page", () => {
     );
   });
 
-  it("names the three things sent to an AI provider, and no others", () => {
+  it("names the four things sent to an AI provider, and no others", () => {
     expect(privacy).toMatch(
-      /things we send to an AI provider are therefore: that drafting, a business document you ask us to check, and a section you ask us to improve the wording of/i,
+      /things we send to an AI provider are therefore: that drafting, a business document you ask us to check, a section you ask us to improve the wording of, and the text of a notice the decoder cannot place/i,
     );
   });
 
@@ -230,9 +230,11 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
     expect(text("terms")).not.toMatch(/drafts a Plan of Action/i);
   });
 
-  it("dates the changed documents (privacy and terms 2026-10-07)", () => {
-    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-07");
-    expect(LEGAL.lastUpdated.terms).toBe("2026-10-07");
+  it("dates the changed documents (privacy and terms 2026-10-09)", () => {
+    // 9 Oct 2026: the AI now also writes document-request and questionnaire responses, and reads a
+    // notice the decoder cannot place.
+    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-09");
+    expect(LEGAL.lastUpdated.terms).toBe("2026-10-09");
     expect(LEGAL.lastUpdated.refund).toBe("2026-10-06");
   });
 });
@@ -268,6 +270,7 @@ describe("the FAQ says what the privacy policy says", () => {
     expect(text).toMatch(/never the files/);
     expect(text).toMatch(/a business document you ask us to check/);
     expect(text).toMatch(/a section of your response you ask us to improve the wording of/);
+    expect(text).toMatch(/a notice our own rules cannot place/);
   });
 });
 

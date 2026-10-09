@@ -14,11 +14,14 @@ const TASK_TIMEOUT_MS: Record<string, number> = {
   "read-document": 25_000,
   "improve-wording": 12_000,
   "draft-poa": 25_000,
+  // A short, anonymous, optional second reading: better none than a slow decode page.
+  "classify-notice": 9_000,
 };
 const TASK_BUDGET_MS: Record<string, number> = {
   "read-document": 55_000,
   "improve-wording": 40_000,
   "draft-poa": 55_000,
+  "classify-notice": 14_000,
 };
 const RETRY_DELAYS_MS = [1_500, 4_000];
 const MAX_OUTPUT_TOKENS = 512;
@@ -32,7 +35,7 @@ const MAX_OUTPUT_TOKENS = 512;
 // Only the tasks the app actually calls. Three more ("critique-poa", "phrase-engine-output",
 // "triage-router") sat here, never called, and the deployment guide told people to set model
 // overrides for them that did nothing; removed 24 Sep 2026.
-export type LlmTask = "improve-wording" | "read-document" | "draft-poa";
+export type LlmTask = "improve-wording" | "read-document" | "draft-poa" | "classify-notice";
 
 const TASK_MODELS: Record<LlmTask, string> = {
   // AA-41: reading a scanned invoice is the hardest perception task in the product — a lite model
@@ -46,6 +49,8 @@ const TASK_MODELS: Record<LlmTask, string> = {
   // Writing the three narrative sections of a Plan of Action from the seller's own facts (7 Oct 2026).
   // The strongest flash tier: a weak model invents detail, and the fact check then discards its work.
   "draft-poa": "gemini-3.5-flash",
+  // Choosing one of ten kinds from a notice and quoting the deciding sentence (9 Oct 2026).
+  "classify-notice": "gemini-3.5-flash",
 };
 
 function envForTask(task: LlmTask): string | undefined {

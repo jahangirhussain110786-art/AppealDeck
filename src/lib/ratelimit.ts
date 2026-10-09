@@ -166,6 +166,41 @@ export async function rateLimitDecode(ip: string): Promise<RateLimitResult> {
   }
 }
 
+let _decodeAi: Ratelimit | null = null;
+let _decodeAiGlobal: Ratelimit | null = null;
+
+/**
+ * The AI second reading on the free decoder (9 Oct 2026). Unlike the decoder itself this spends
+ * money for visitors with no account, so it is capped twice: a few readings per address a day, and
+ * a daily ceiling for everyone together that leaves the rest of the model allowance to sellers who
+ * have paid. It FAILS CLOSED: without Redis, or when either cap is reached, the decoder answers
+ * exactly as it did before and no model is called.
+ */
+export async function rateLimitDecodeAi(ip: string): Promise<boolean> {
+  if (!hasUpstashEnv()) return false;
+  try {
+    if (!_decodeAi || !_decodeAiGlobal) {
+      const redis = new Redis(redisCredentials()!);
+      _decodeAi = new Ratelimit({
+        redis,
+        limiter: Ratelimit.fixedWindow(3, "1 d"),
+        prefix: "ratelimit:decode-ai",
+      });
+      _decodeAiGlobal = new Ratelimit({
+        redis,
+        limiter: Ratelimit.fixedWindow(60, "1 d"),
+        prefix: "ratelimit:decode-ai-global",
+      });
+    }
+    const perIp = await _decodeAi.limit(ip);
+    if (!perIp.success) return false;
+    const everyone = await _decodeAiGlobal.limit("all");
+    return everyone.success;
+  } catch {
+    return false;
+  }
+}
+
 export function isRateLimitEnabled(): boolean {
   return hasUpstashEnv();
 }

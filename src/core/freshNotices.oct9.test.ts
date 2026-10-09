@@ -80,3 +80,30 @@ describe("operating more than one account", () => {
     expect(r.classification.kind).toBe("RELATED_ACCOUNT");
   });
 });
+
+/**
+ * Administrative notices stay unplaced on purpose: there is no kind for them, and a wrong kind
+ * would raise records they do not need. What must hold is that the deadline is still read, so the
+ * seller is not told "no deadline" beside a notice that states one.
+ */
+describe("administrative notices stay unplaced and keep their deadline", () => {
+  const cases: Array<[string, string, string]> = [
+    [
+      "payment method",
+      "We were unable to charge the credit card on file for your seller account. Please update your payment method within 7 days to avoid your selling privileges being suspended.",
+      "Appeal window: 7 days",
+    ],
+    [
+      "tax information",
+      "The TIN you provided does not match IRS records. Please update your tax information in Seller Central within 30 days.",
+      "Appeal window: 30 days",
+    ],
+  ];
+  for (const [name, text, window] of cases) {
+    it(`${name}: no kind, deadline read`, () => {
+      const r = decode(text);
+      expect(r.classification.kind).toBe("UNKNOWN");
+      expect(r.deadlines.map((d) => d.label)).toEqual([window]);
+    });
+  }
+});

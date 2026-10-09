@@ -8,7 +8,10 @@ import {
   analyzeReply,
 } from "@/core";
 import { findUnreadableIds } from "@/core/entities";
-import { rateLimitDecode, tooManyRequestsResponse } from "@/lib/ratelimit";
+import { rateLimitDecode, rateLimitDecodeAi, tooManyRequestsResponse } from "@/lib/ratelimit";
+import { isGeminiConfigured } from "@/lib/llm/gemini";
+import { classifyNotice } from "@/lib/llm/classifyNotice";
+import { hasD6Allegation } from "@/core/violationKinds";
 import { receiptDateOf } from "@/core/noticeDate";
 import {
   GARBLED_MESSAGE,
@@ -241,7 +244,29 @@ export async function POST(req: NextRequest) {
     )
     .map((e) => (offset === 0 ? e : { ...e, start: e.start + offset, end: e.end + offset }));
 
+  /*
+    A second reading, only for a notice the rules could not place (9 Oct 2026). Not for a reply, a
+    warning, a message with scam signals or an allegation the gate already handles; never when the
+    model is off or a daily cap is reached, in which case the answer is exactly what it was before.
+    The reading is a proposal: the client uses it as the starting kind, the seller confirms it on
+    the case's first screen, and it cannot set or clear the falsified-documents gate.
+  */
+  let suggestedKind: { kind: string; quote: string } | undefined;
+  if (
+    result.classification.kind === "UNKNOWN" &&
+    !looksLikeReply &&
+    !enforcement.notEnforcement &&
+    assessNoticeAuthenticity(working).signals.length === 0 &&
+    !hasD6Allegation(decodeText) &&
+    isGeminiConfigured() &&
+    (await rateLimitDecodeAi(ip))
+  ) {
+    const second = await classifyNotice(decodeText);
+    if (second.ok) suggestedKind = { kind: second.kind, quote: second.quote };
+  }
+
   return NextResponse.json({
+    ...(suggestedKind ? { suggestedKind } : {}),
     kind: result.classification.kind,
     confidence: result.classification.confidence,
     language: language.code,
