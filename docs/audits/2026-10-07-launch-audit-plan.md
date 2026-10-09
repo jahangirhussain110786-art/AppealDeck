@@ -26,7 +26,7 @@
 | 2 | The seller's data | 2.1 Vault & encryption · 2.2 Case store, persistence & migration of old data · 2.3 Backup, restore, export · 2.4 Documents & the device reader · 2.5 Privacy copy vs. actual data flow | MOSTLY DONE (code read, schema parity and privacy trace done; live vault upload/restore walk and reader assets on the deployed site still open) |
 | 3 | The engine's judgement | 3.1 Notice parsing, classification & response type · 3.2 Evidence model & requirements · 3.3 Deadlines, clocks & reminders · 3.4 Reply analyser & escalation · 3.5 Composer, critic, wording lock & D6 | MOSTLY DONE (3.1-3.4 done; 3.5 wording lock and POA composer walked; composer output for documents/questionnaire/acknowledgement protocols not walked) |
 | 4 | The seller's journey | 4.1 First 5 minutes (home → decode → case) · 4.2 The case workspace end to end · 4.3 Dashboard, multi-case, billing, devices · 4.4 Empty, error, offline, slow & hostile states · 4.5 Seams between steps (resume, gates, redirects) | MOSTLY DONE (4.1, 4.2 and 4.4 walked and fixed; 4.3 billing/dashboard read; 4.5 guest-to-account merge and two-tab cases read, not walked live) |
-| 5 | Launch fitness | 5.1 Accessibility, responsive & visual · 5.2 Performance & bundle · 5.3 SEO, content truth & legal copy · 5.4 Tests, CI & observability · 5.5 Dead, unfinished & half-built code; docs vs. reality | MOSTLY DONE (5.1 reflow/targets, 5.2 Lighthouse, 5.3 SEO, 5.4 gates, 5.5 TODO scan done; keyboard-only walk, dark-mode sweep, CURRENT-STATE row-by-row check and L-018 script weight still open) |
+| 5 | Launch fitness | 5.1 Accessibility, responsive & visual · 5.2 Performance & bundle · 5.3 SEO, content truth & legal copy · 5.4 Tests, CI & observability · 5.5 Dead, unfinished & half-built code; docs vs. reality | MOSTLY DONE (5.1 reflow/targets, 5.2 Lighthouse, 5.3 SEO, 5.4 gates, 5.5 TODO scan done; CURRENT-STATE row-by-row check and L-018 script weight still open) |
 
 Status values: `NOT STARTED` · `IN PROGRESS` · `DONE` · `BLOCKED (founder)`.
 
@@ -195,8 +195,8 @@ Files: `composer.ts`, `questionnaire.ts`, `wordingLock.ts`, `draftStrength.ts`, 
 *Question asked: would we be comfortable if a stranger, a search engine, a regulator or an appeals professional inspected this today?*
 
 ### 5.1 Accessibility, responsive & visual
-- [~] (axe runs in `a11y.spec.ts` and passed in the full CI-mode run; keyboard-only walk not done) axe on every public and signed-in page, light and dark; keyboard-only walk; focus management on step changes; contrast test current.
-- [~] (320/375/768 no horizontal scroll after L-013; 1024/1440 and dark mode not re-swept; targets: L-015) 375 / 768 / 1024 / 1440 px both themes; no horizontal scroll; targets ≥ 44 px.
+- [x] (9 Oct 2026: `e2e/keyboard-dark.spec.ts`, 15 public pages + every case tab + dashboard/vault/billing/case signed in, light and dark, every severity, WCAG 2.x A/AA; Tab walks assert a skip link first, every stop visible with a focus indicator, no trap; arrow keys on the tab row; dialog traps focus, closes on Escape, returns focus; negative control proved the indicator check can fail; no defects found) axe on every public and signed-in page, light and dark; keyboard-only walk; focus management on step changes; contrast test current.
+- [x] (9 Oct 2026: `reflow.spec.ts` now covers 375/768/1024/1440 in dark for 16 pages and every case view at 375/768/1440, 80 tests, none sideways; targets: L-015) 375 / 768 / 1024 / 1440 px both themes; no horizontal scroll; targets ≥ 44 px.
 
 ### 5.2 Performance & bundle
 - [~] (home 881 KB and `/faq` 843 KB uncompressed, up from 788 KB on 30 Sep; Supabase still appears in two small chunks that the header loads only with an auth cookie: L-018) Per-route bundle stats vs. last baseline; public pages free of Supabase/Dexie/fixtures.
