@@ -23,6 +23,7 @@ import { assessNoticeAuthenticity } from "@/core/noticeAuthenticity";
 import { handlePaste, stripInvisibleChars } from "@/lib/idNormalize";
 import { detectOtherAmazonStore } from "@/lib/amazonStore";
 import { KindOverride } from "./KindOverride";
+import { SecondReading } from "./SecondReading";
 import { kindForConfirmedNotice } from "@/core/classifier";
 import { parseNotice } from "@/core/noticeParser";
 import type { ViolationKind } from "@/core";
@@ -228,6 +229,12 @@ export function RequestReview({
             ))}
           </dl>
         )}
+        <SecondReading
+          notice={value.notice}
+          active={shownKind === "UNKNOWN" && !workspace.confirmed && !tooShort}
+          busy={busy}
+          onUse={onKindChange}
+        />
         {/* #86: named here so a seller learns on the first screen that two things must be answered. */}
         <IssuesRaised workspace={workspace} />
         {otherStore && value.marketplace === "US" && (

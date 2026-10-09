@@ -201,3 +201,49 @@ describe("narrative sufficiency: lexical diversity", () => {
     ).toBe(true);
   });
 });
+
+describe("template wording (9 Oct 2026)", () => {
+  const base = {
+    explanation:
+      "Our packer was on leave from 10 to 19 August 2026 and nobody else knew the label printer, so 14 of 610 orders shipped late.",
+    correctiveActions:
+      "We shipped the 14 late orders by 21 August 2026 and trained Bilal on the label printer on 2 September 2026.",
+    preventiveMeasures:
+      "We check unshipped orders at 9am and 4pm every day, and two people can now print labels.",
+  };
+  const codes = (w: Workspace) => review(w).codes;
+
+  it("warns on the filler phrases an AI draft reaches for", () => {
+    const found = codes(
+      operational({
+        ...base,
+        preventiveMeasures: `${base.preventiveMeasures} Going forward, we will do this to ensure coverage and to prevent this from happening again.`,
+      }),
+    );
+    expect(found).toContain("FILLER_PHRASES");
+  });
+
+  it("is silent on specific wording, and on a phrase inside a longer word", () => {
+    expect(codes(operational(base))).not.toContain("FILLER_PHRASES");
+    expect(
+      codes(
+        operational({
+          ...base,
+          preventiveMeasures: `${base.preventiveMeasures} The forward-looking sensor was replaced on 3 Sep 2026.`,
+        }),
+      ),
+    ).not.toContain("FILLER_PHRASES");
+  });
+
+  it("is a warning, never an error", () => {
+    const w = operational({
+      ...base,
+      correctiveActions: `${base.correctiveActions} We take this seriously.`,
+    });
+    const data = { kind: "UNKNOWN" as const, evidenceSlots: {}, actionItems: [], workspace: w };
+    const finding = critiquePoa(composePoa(data), data).findings.find(
+      (f) => f.code === "FILLER_PHRASES",
+    );
+    expect(finding?.severity).toBe("warning");
+  });
+});

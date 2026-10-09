@@ -260,6 +260,12 @@ export const WORKSPACE = {
     agree: "Do you agree with Amazon?",
     notClear: "Not clear yet",
     readAs: "We read this as: {kind}. Is that right?",
+    // 9 Oct 2026: a second reading, offered when the rules could not place the notice. A proposal.
+    secondReading: {
+      lead: "A closer reading suggests this is: {kind}.",
+      from: "It says",
+      use: "Use this reading",
+    },
     stores: { US: "Amazon US", other: "Another store, or not sure" },
     positions: {
       unsure: "Not sure yet",

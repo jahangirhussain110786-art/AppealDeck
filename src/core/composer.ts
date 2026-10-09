@@ -227,6 +227,7 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
     checkBlameShifting(draft, findings);
     checkVagueTimePhrases(draft, findings);
     checkAbsolutePromises(draft, findings);
+    checkFillerPhrases(draft, findings);
     checkNarrativeQuality(draft, data, findings);
     checkAnswersTheIssue(draft, data, findings);
     // A-01: this branch returns early, so EF-2's attestation check never ran on a workspace case
@@ -253,6 +254,7 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
   checkBlameShifting(draft, findings);
   checkVagueTimePhrases(draft, findings);
   checkAbsolutePromises(draft, findings);
+  checkFillerPhrases(draft, findings);
   checkNarrativeQuality(draft, data, findings);
   checkAnswersTheIssue(draft, data, findings);
   checkDocumentFreshness(data, findings);
@@ -597,6 +599,49 @@ function checkVagueTimePhrases(draft: PoaDraft, findings: CriticFinding[]): void
         "The draft uses a vague time phrase (e.g. 'recently', 'soon') instead of a specific date. Replace it with the actual date the action was taken — a checkable date reads as more credible than a vague one.",
     });
   }
+}
+
+/**
+ * Phrases that read as a template (9 Oct 2026). Reviewers are reported to reject boilerplate
+ * quickly, and an AI draft reaches for these when it has no more facts to add: "to ensure
+ * coverage", "going forward", "to prevent this from happening again". None of them is a wrong
+ * fact, so none can be caught by the fact check; the seller can delete them in seconds once told.
+ * Warning only, and never on the sections the seller did not write about the case itself.
+ */
+const FILLER_PATTERNS: ReadonlyArray<readonly [string, RegExp]> = [
+  ["to ensure", /\bto ensure\b/i],
+  ["in order to", /\bin order to\b/i],
+  ["going forward", /\bgoing forward\b/i],
+  ["moving forward", /\bmoving forward\b/i],
+  [
+    "to prevent this from happening again",
+    /\bto prevent (?:this|it) from (?:happening|occurring|recurring) again\b/i,
+  ],
+  ["to maintain compliance", /\bto (?:maintain|ensure|remain in) compliance\b/i],
+  ["we take this seriously", /\b(?:we|i) take (?:this|these|it) (?:very )?seriously\b/i],
+  ["we value", /\b(?:we|i) (?:truly |greatly |really )?value (?:our|your|amazon)\b/i],
+];
+const NOT_ABOUT_THE_CASE = new Set([
+  "Supporting records",
+  "Records I could not obtain",
+  "Unresolved items — working notes",
+  "Position",
+  "Evidence Gaps (Action Required)",
+  "Evidence Attached",
+]);
+
+function checkFillerPhrases(draft: PoaDraft, findings: CriticFinding[]): void {
+  const text = draft.sections
+    .filter((s) => !NOT_ABOUT_THE_CASE.has(s.heading) && !isMachineLabelOnly(s.body))
+    .map((s) => s.body)
+    .join("\n");
+  const hits = FILLER_PATTERNS.filter(([, p]) => p.test(text)).map(([label]) => label);
+  if (hits.length === 0) return;
+  findings.push({
+    severity: "warning",
+    code: "FILLER_PHRASES",
+    message: `The draft uses wording that reads as a template: ${hits.map((h) => `"${h}"`).join(", ")}. Say the specific thing instead (who does what, how often, since when) or delete the phrase; specific facts read as sincere, generic phrases read as boilerplate.`,
+  });
 }
 
 function checkAbsolutePromises(draft: PoaDraft, findings: CriticFinding[]): void {
