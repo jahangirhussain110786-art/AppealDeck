@@ -8,10 +8,10 @@ import { SURFACES } from "@/content/surfaces";
 
 export default function AppError({ reset }: { error: Error; reset: () => void }) {
   return (
-    <PageState icon={RefreshCw} {...SURFACES.error}>
-      <Button onClick={reset}>{SURFACES.error.primary}</Button>
+    <PageState icon={RefreshCw} {...SURFACES.appError}>
+      <Button onClick={reset}>{SURFACES.appError.primary}</Button>
       <Button asChild variant="outline">
-        <Link href="/">{SURFACES.error.secondary}</Link>
+        <Link href="/dashboard">{SURFACES.appError.secondary}</Link>
       </Button>
     </PageState>
   );

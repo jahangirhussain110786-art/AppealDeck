@@ -64,4 +64,15 @@ export const SURFACES = {
     primary: "Try again",
     secondary: "Back to home",
   },
+  // 9 Oct 2026. Inside the app a seller is mid-case: the worry is not "this page" but "my work".
+  // What they saved is kept in this browser (a guest session lasts as long as the tab), which is
+  // the true and useful thing to say, and the way out is their dashboard, not the marketing home.
+  appError: {
+    eyebrow: "Page unavailable",
+    title: "This page couldn't load.",
+    description:
+      "What you saved is kept in this browser. Try loading the page again, or open your dashboard.",
+    primary: "Try again",
+    secondary: "Open dashboard",
+  },
 } as const;
