@@ -127,6 +127,41 @@ export const WORKSPACE = {
     answerHint: "Name the supplier, what the document shows, and the dates.",
     exampleLabel: "For example:",
     answerPlaceholder: "Answer in your own words, with dates and numbers where you have them.",
+    // 9 Oct 2026. The hint and example under the explanation were written for an invoice and shown
+    // on every document case, so a funds hold or a safety request was told to name a supplier.
+    // Each is guidance on what to say, and an example of the shape, never a claim about the case.
+    byKind: {
+      FUNDS: {
+        hint: "Say what the records show about your business and your bank account, with dates.",
+        example:
+          "For example: The attached statement shows the business account in my name. The payout report lists the orders the held balance comes from.",
+      },
+      PRODUCT_SAFETY: {
+        hint: "Name the product, the test or standard the report covers, and the report date.",
+        example:
+          "For example: The attached test report covers B0EXAMPLE1, is dated 2 Sep 2026, and tests it to the standard the notice names.",
+      },
+      INTELLECTUAL_PROPERTY: {
+        hint: "Say where the product came from or what permission you hold, with dates.",
+        example:
+          "For example: We bought these 40 units from our supplier Harbor Goods on 5 Aug 2026. The attached invoice shows it.",
+      },
+      RELATED_ACCOUNT: {
+        hint: "Say how the other account is connected to you, or that it is not, with dates.",
+        example:
+          "For example: The other account belonged to a previous employer and was closed on 3 Mar 2026. The attached record shows it.",
+      },
+      RESTRICTED_PRODUCT: {
+        hint: "Say what you did with the listing and what approval you hold, with dates.",
+        example:
+          "For example: We removed the listing on 20 Sep 2026. The attached approval covers the category from 1 Jan 2026.",
+      },
+    } as Record<string, { hint: string; example: string }>,
+    // For the boxes under Amazon’s own questions: the question decides the content, so the example
+    // is only the shape of a good answer.
+    questionHint: "Answer this question directly, with dates and numbers where you have them.",
+    questionExample:
+      "For example: 14 of 600 orders shipped late in August, all on one shift. We moved the cut-off time on 2 Sep 2026.",
     additionalPlaceholder:
       "Only if something important is not covered by the questions above. Leave it empty otherwise.",
     save: "Save my answers",

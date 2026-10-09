@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations, WCAG_AA_TAGS } from "./axe";
 import { composePoa, critiquePoa, renderPoaText } from "../src/core/composer";
@@ -900,4 +902,56 @@ test("the seller's business details are saved, survive a reload and join the fac
   await expect(evidence.getByRole("button", { name: "Save business details" })).toBeDisabled();
   await expect(evidence.getByText("Your registered business name", { exact: true })).toBeVisible();
   await expect(evidence.getByText("Your suppliers", { exact: true })).toBeVisible();
+});
+
+/**
+ * 9 Oct 2026. A falsified-documents notice is gated (D6): the product does not prepare a response.
+ * The Response tab said so, but the Documents tab still raised a supplier invoice marked "usually
+ * refused without it", inviting a seller accused of altering invoices to prepare more of them.
+ */
+test("a falsified-documents case is held, and no invoice is raised on its Documents tab", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await page.goto("/case");
+  await page
+    .getByLabel("Amazon notice", { exact: true })
+    .fill(
+      "Subject: Your Amazon selling account\n\nWe reviewed the invoices you submitted. We determined that the documents were altered or falsified. Your account remains deactivated.",
+    );
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
+  await expect(page.getByText("Get professional help with this allegation").first()).toBeVisible();
+
+  await page.getByRole("tab", { name: "Documents", exact: true }).click();
+  const documents = page.getByRole("tabpanel", { name: "Documents", exact: true });
+  await expect(documents.getByText("Supplier invoice")).toHaveCount(0);
+  await expect(documents.getByText(/usually refused without it/)).toHaveCount(0);
+
+  await page.getByRole("tab", { name: "Response", exact: true }).click();
+  await expect(
+    page
+      .getByRole("tabpanel", { name: "Response", exact: true })
+      .getByText("Professional review needed"),
+  ).toBeVisible();
+});
+
+/**
+ * 9 Oct 2026. The hint under a document case's explanation told every seller to "name the
+ * supplier", including one whose funds were held. It now follows the case type.
+ */
+test("a funds-hold case is not told to name a supplier", async ({ page }) => {
+  test.setTimeout(90000);
+  const notices: Array<{ id: string; text: string }> = JSON.parse(
+    readFileSync(join(process.cwd(), "docs/handoffs/2026-09-29-test-notices/notices.json"), "utf8"),
+  );
+  await page.goto("/case");
+  await page
+    .getByLabel("Amazon notice", { exact: true })
+    .fill(notices.find((n) => n.id === "t06-funds-disbursement")!.text);
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
+  await expect(page.getByRole("tab", { name: "Response", exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Response", exact: true }).click();
+  const response = page.getByRole("tabpanel", { name: "Response", exact: true });
+  await expect(response.getByText(/bank account/).first()).toBeVisible();
+  await expect(response.getByText(/Name the supplier/)).toHaveCount(0);
 });

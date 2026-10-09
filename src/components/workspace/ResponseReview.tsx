@@ -296,8 +296,8 @@ export function ResponseReview({
                   />
                   <AnswerHelp
                     id={`workspace-answer-${i}-help`}
-                    hint={F.answerHint}
-                    example={F.explanationPlaceholder}
+                    hint={F.questionHint}
+                    example={F.questionExample}
                   />
                   <SectionTools
                     file={file}
@@ -347,8 +347,8 @@ export function ResponseReview({
               questions.length === 0 && (
                 <AnswerHelp
                   id="workspace-explanation-example"
-                  hint={F.answerHint}
-                  example={F.explanationPlaceholder}
+                  hint={(F.byKind[file.kind] ?? { hint: F.answerHint }).hint}
+                  example={(F.byKind[file.kind] ?? { example: F.explanationPlaceholder }).example}
                 />
               )
             )}

@@ -5,7 +5,7 @@ import type { ResponseType } from "./responseType";
 import type { EvidenceKind } from "./evidenceModel";
 import { requirementsFor } from "./evidenceModel";
 import type { ViolationKind } from "./violationKinds";
-import { findD6Allegation, hasD6Allegation } from "./violationKinds";
+import { findD6Allegation, hasD6Allegation, isSeverityGated } from "./violationKinds";
 import { KIND_PATTERNS } from "./noticeParser";
 import type { NoticeIssue } from "./noticeIssues";
 import { detectIssues, hasMultipleIssues } from "./noticeIssues";
@@ -573,6 +573,15 @@ export function proposedRequirements(
       : [];
   }).sort((a, b) => allText.indexOf(a.sourceQuote) - allText.indexOf(b.sourceQuote));
   if (!violationKind) return named;
+  /*
+    A gated case is not answered here (9 Oct 2026). Records inferred from the matrix exist to build
+    a response, and the product does not write one for a falsified-documents, fraud or child-safety
+    allegation. Before this, the Documents tab of such a case raised a supplier invoice with "Cases
+    like this one are usually refused without it", inviting a seller accused of altering invoices
+    to prepare more of them for a response we will not prepare. What the notice itself names is
+    still listed, so the seller can organise their own notes.
+  */
+  if (isSeverityGated(violationKind) || hasD6Allegation(allText)) return named;
 
   /*
     B-05, the union the spec has asked for since EF-1: "requirement instances = the notice's own

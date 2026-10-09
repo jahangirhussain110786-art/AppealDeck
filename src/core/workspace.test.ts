@@ -140,6 +140,33 @@ describe("request routing", () => {
   });
 });
 
+describe("a gated case raises no inferred records", () => {
+  const forged = {
+    notice:
+      "We determined that the documents you submitted were altered or falsified. Your account remains deactivated.",
+    formInstructions: "",
+    revision: 1,
+  };
+  it("a falsified-documents notice raises nothing from the matrix", () => {
+    // Without the gate this raised a supplier invoice marked "usually refused without it".
+    expect(proposedRequirements(forged, "INAUTHENTIC_DOCUMENTS")).toEqual([]);
+  });
+  it("an allegation in the text gates it even when the kind is another", () => {
+    expect(proposedRequirements(forged, "POLICY")).toEqual([]);
+  });
+  it("a non-gated inauthenticity notice still raises the supplier invoice", () => {
+    const reqs = proposedRequirements(
+      {
+        notice: "We could not verify the authenticity of the product.",
+        formInstructions: "",
+        revision: 1,
+      },
+      "INAUTHENTIC",
+    );
+    expect(reqs.map((r) => r.label)).toContain("Supplier invoice");
+  });
+});
+
 describe("business licence wording in a reply", () => {
   it("is never raised as Proof of address", () => {
     const reqs = proposedRequirements({
