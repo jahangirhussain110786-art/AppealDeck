@@ -6,6 +6,20 @@ export const WORKSPACE = {
     title: "What this reply says",
     reasons: "What Amazon says was wrong, in its own words",
     note: "This is our reading of the wording. Read the reply itself before you act on it.",
+    // 8 Oct 2026. Sellers on Amazon’s own forums report refusals that say only that the information
+    // was not enough. Shown for that category only, folded, so a reply that does name a reason is
+    // not buried. The steps are practitioner guidance and say so; none of them predicts an outcome.
+    unclear: {
+      summary: "Does the reply not say what was missing? Work through this first.",
+      items: [
+        "Read your notice again and check that every question or request in it has its own answer.",
+        "Check each document: is it the one Amazon named, complete, readable, and from the period it asked about?",
+        "Check that your root cause names a specific cause in your business, not only the symptom Amazon reported.",
+        "Do not send the same text or files again. Change something real: a new document, a corrected fact, or something you have since done.",
+        "From the Account Health page, use Contact Us and ask what specifically was insufficient.",
+      ],
+      note: "This comes from guidance by appeal consultants and from Amazon’s seller forums, not from Amazon.",
+    },
     categories: {
       needs_more_information:
         "Amazon did not reinstate the account this time and wants a better answer or more information.",

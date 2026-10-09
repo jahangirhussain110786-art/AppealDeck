@@ -2625,6 +2625,19 @@ function ReplyReading({ text }: { text: string }) {
           ))}
         </div>
       )}
+      {category === "needs_more_information" && (
+        <details className="rounded-md border border-border/70 bg-surface-1 px-3 py-2">
+          <summary className="min-h-11 cursor-pointer py-2 font-medium text-foreground">
+            {C.replyReading.unclear.summary}
+          </summary>
+          <ol className="mt-1 list-decimal space-y-1.5 pb-1 pl-5 text-muted-foreground">
+            {C.replyReading.unclear.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ol>
+          <p className="mt-2 text-xs text-muted-foreground">{C.replyReading.unclear.note}</p>
+        </details>
+      )}
       <p className="text-xs text-muted-foreground">{C.replyReading.note}</p>
     </div>
   );

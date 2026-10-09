@@ -547,6 +547,31 @@ test("an Amazon reply keeps the evidence a seller already reviewed, and says so 
 });
 
 /**
+ * 8 Oct 2026: sellers report refusals that say only that the information was not enough. The
+ * reading offers a short, folded checklist for that case, and does not claim to know the cause.
+ */
+test("a refusal that names no reason offers a checklist for finding what was missing", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await configure(page);
+  await page.getByRole("tab", { name: "History", exact: true }).click();
+  await page
+    .getByLabel("Add Amazon’s next reply")
+    .fill(
+      "We have reviewed your appeal. We are unable to reinstate your account because your plan of action does not include sufficient information.",
+    );
+  await page.getByRole("button", { name: "Save reply for review" }).click();
+  const summary = page.getByText(
+    "Does the reply not say what was missing? Work through this first.",
+  );
+  await expect(summary).toBeVisible();
+  await summary.click();
+  await expect(page.getByText(/Do not send the same text or files again/)).toBeVisible();
+  await expect(page.getByText(/not from Amazon./)).toBeVisible();
+});
+
+/**
  * A-05 / A-06 / A-02. All three existed in src/core, were tested, were ticked off as delivered,
  * and no seller could reach any of them: two rendered only in the dev-only gallery and the third
  * was called only by the interview step engine retired on 22 Sep 2026. This test exists because
