@@ -107,7 +107,7 @@ test.describe("keyboard only", () => {
       const stops = await tabThrough(page, 60);
 
       expect(stops.length, "the page has keyboard stops").toBeGreaterThan(3);
-      expect(stops[0].name.toLowerCase(), "first stop is the skip link").toMatch(/skip/);
+      expect(stops[0]?.name.toLowerCase(), "first stop is the skip link").toMatch(/skip/);
 
       const bad = stops.filter((s) => !s.visible || !s.indicator || !s.inViewport);
       expect(
