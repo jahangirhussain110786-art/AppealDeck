@@ -127,6 +127,8 @@ import { proposedIssues, totalAttempts } from "@/core/workspace";
 import { buildCaseExport, unsavedText } from "@/lib/workspaceExport";
 import { buildSubmission, submissionHistoryMessage } from "@/lib/submissionRecord";
 import { buildEvidenceManifest, manifestFilename } from "@/lib/evidencePack";
+import { buildEvidencePack, type PackVaultFile } from "@/lib/evidencePackFile";
+import { shrinkImage } from "@/lib/imageShrink";
 import {
   evidenceNoteKey,
   HISTORY_REPLY_KEY,
@@ -1028,6 +1030,63 @@ function WorkspaceInner({
       setError(
         "The original file is unavailable. Review its attachment before preparing a response.",
       );
+    }
+  };
+
+  const [packing, setPacking] = useState(false);
+  /*
+    P-10: the upload-ready pack. Decrypts this case's files on the device, builds the zip there, and
+    downloads it. Nothing is sent anywhere.
+  */
+  const downloadPack = async () => {
+    const current = fileRef.current;
+    if (!current?.workspace || packing) return;
+    setPacking(true);
+    try {
+      const records = (await vault.list({ caseId: current.id })).filter(
+        (r) => r.kind === "document",
+      );
+      const files: PackVaultFile[] = [];
+      for (const r of records) {
+        const { bytes } = await vault.get(r.id);
+        files.push({
+          id: r.id,
+          name: r.name,
+          mimeType: r.mimeType,
+          sizeBytes: r.sizeBytes,
+          plaintextHash: r.plaintextHash,
+          createdAt: r.createdAt,
+          bytes: new Uint8Array(bytes),
+        });
+      }
+      const pack = await buildEvidencePack({
+        file: current,
+        workspace: current.workspace,
+        files,
+        shrink: shrinkImage,
+      });
+      if (pack.entries.length === 0) {
+        toast.info(C.pack.none);
+        return;
+      }
+      const url = URL.createObjectURL(
+        new Blob([new Uint8Array(pack.bytes)], { type: "application/zip" }),
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = pack.filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const parts = [C.pack.ready.replace("{n}", String(pack.entries.length))];
+      if (pack.reducedCount > 0)
+        parts.push(C.pack.reduced.replace("{n}", String(pack.reducedCount)));
+      if (pack.overLimitCount > 0)
+        parts.push(C.pack.over.replace("{n}", String(pack.overLimitCount)));
+      (pack.overLimitCount > 0 ? toast.warning : toast.success)(parts.join(" "));
+    } catch {
+      setError(C.pack.failed);
+    } finally {
+      setPacking(false);
     }
   };
 
@@ -2496,6 +2555,14 @@ function WorkspaceInner({
                     >
                       Download evidence manifest
                     </Button>
+                    <Button
+                      variant="outline"
+                      disabled={packing}
+                      onClick={() => void downloadPack()}
+                    >
+                      {packing ? C.pack.building : C.pack.button}
+                    </Button>
+                    <p className="basis-full text-xs text-muted-foreground">{C.pack.help}</p>
                   </div>
                 </CardContent>
               </Card>

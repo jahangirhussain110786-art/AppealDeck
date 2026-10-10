@@ -343,6 +343,18 @@ export const WORKSPACE = {
   // say something we cannot know, so the alert says what we cannot do and what to do about it.
   // 10 Oct 2026: what is different from the response the seller last recorded. It describes their own
   // case (the wording, the documents, the open items) and never says what Amazon will make of it.
+  // P-10, 10 Oct 2026: the upload-ready pack. Built on the device; says what it did and what it did
+  // not, and claims nothing about how Amazon will treat the files.
+  pack: {
+    button: "Download upload-ready pack",
+    building: "Building the pack…",
+    help: "A zip of the files you reviewed, numbered and named by what they answer, each under 5 MB where we can make it so, with an index page. Built on this device. You still upload the files to Amazon yourself.",
+    none: "No reviewed files yet. Add a file to a record on Documents and mark it reviewed, and it goes in the pack.",
+    ready: "Pack ready: {n} files.",
+    reduced: "{n} re-saved smaller.",
+    over: "{n} still over 5 MB: see For your records inside the pack.",
+    failed: "Could not build the pack. Your case and files are unchanged.",
+  },
   changes: {
     nothingTitle: "Nothing has changed since your last response",
     nothingBody:
