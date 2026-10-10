@@ -142,6 +142,7 @@ import { formatDate, localToday } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
 import { APP } from "@/content/app";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
+import { takeProposal } from "@/lib/secondReadingProposal";
 import { apiErrorMessage } from "@/lib/apiError";
 
 /**
@@ -1309,6 +1310,12 @@ function WorkspaceInner({
     if (ok) {
       setReviewRequest(false);
       setFocusNextStep((n) => n + 1);
+      // R-2: did the seller keep the AI's proposed kind when they confirmed the case?
+      const proposed = updated.confirmed ? takeProposal() : null;
+      if (proposed)
+        trackFunnelEvent(FUNNEL_EVENTS.secondReadingConfirmed, {
+          result: proposed === kind ? "kept" : "changed",
+        });
     }
     return ok;
   };

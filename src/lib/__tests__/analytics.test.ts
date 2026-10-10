@@ -32,6 +32,9 @@ describe("funnel events", () => {
       "outcome_reported",
       "gated_screen_shown",
       "poa_generated",
+      "second_reading_shown",
+      "second_reading_used",
+      "second_reading_confirmed",
     ]);
   });
 

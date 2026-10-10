@@ -63,6 +63,57 @@ describe("draftResponse", () => {
     expect(retryPrompt).toContain("rejected because it added details that were not provided");
   });
 
+  it("R-6: retries once, naming the phrases, when a faithful draft reads as a template", async () => {
+    const templated = {
+      ...good,
+      preventiveMeasures: good.preventiveMeasures + " This is to ensure quality going forward.",
+    };
+    const callGemini = vi
+      .fn()
+      .mockResolvedValueOnce(reply(templated))
+      .mockResolvedValueOnce(reply(good));
+    const out = await draftResponse(req, { callGemini });
+    expect(out).toMatchObject({ ok: true, retried: true, sections: good });
+    const retryPrompt = callGemini.mock.calls[1]![0].messages[1].text as string;
+    expect(retryPrompt).toContain('"to ensure", "going forward"');
+  });
+
+  it("R-6: keeps the first draft when the retry is unfaithful, no better, or fails", async () => {
+    const templated = { ...good, rootCause: good.rootCause + " We take this very seriously." };
+    const invented = { ...good, rootCause: good.rootCause + " Our auditor Dana Cole checked." };
+    for (const second of [
+      reply(invented),
+      reply(templated),
+      { ok: false, reason: "busy", message: "x" },
+    ]) {
+      const callGemini = vi
+        .fn()
+        .mockResolvedValueOnce(reply(templated))
+        .mockResolvedValueOnce(second);
+      const out = await draftResponse(req, { callGemini });
+      expect(out).toMatchObject({ ok: true, retried: false, sections: templated });
+      expect(callGemini).toHaveBeenCalledTimes(2);
+    }
+  });
+
+  it("R-6: never retries for a phrase the seller wrote themselves", async () => {
+    const own: DraftRequest = {
+      ...req,
+      answers: {
+        ...req.answers,
+        preventiveMeasures: req.answers.preventiveMeasures + " Going forward this is weekly.",
+      },
+    };
+    const theirs = {
+      ...good,
+      preventiveMeasures: good.preventiveMeasures + " Going forward this is weekly.",
+    };
+    const callGemini = vi.fn().mockResolvedValue(reply(theirs));
+    const out = await draftResponse(own, { callGemini });
+    expect(out).toMatchObject({ ok: true, retried: false });
+    expect(callGemini).toHaveBeenCalledTimes(1);
+  });
+
   it("never returns a draft that still invents something after the retry", async () => {
     const invented = {
       ...good,

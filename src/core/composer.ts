@@ -630,12 +630,21 @@ const NOT_ABOUT_THE_CASE = new Set([
   "Evidence Attached",
 ]);
 
+/**
+ * The template phrases in a text, by label. Shared with the AI drafter (10 Oct 2026, R-6), which
+ * retries once when its draft uses one the seller did not, so the seller gets a cleaner first draft
+ * instead of this warning. One list, so the drafter and the warning can never disagree.
+ */
+export function fillerPhrasesIn(text: string): string[] {
+  return FILLER_PATTERNS.filter(([, p]) => p.test(text)).map(([label]) => label);
+}
+
 function checkFillerPhrases(draft: PoaDraft, findings: CriticFinding[]): void {
   const text = draft.sections
     .filter((s) => !NOT_ABOUT_THE_CASE.has(s.heading) && !isMachineLabelOnly(s.body))
     .map((s) => s.body)
     .join("\n");
-  const hits = FILLER_PATTERNS.filter(([, p]) => p.test(text)).map(([label]) => label);
+  const hits = fillerPhrasesIn(text);
   if (hits.length === 0) return;
   findings.push({
     severity: "warning",

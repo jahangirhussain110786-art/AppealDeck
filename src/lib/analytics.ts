@@ -38,6 +38,15 @@ export const FUNNEL_EVENTS = {
   /** Web-only supplements, never replacements for the canonical six. */
   gatedScreenShown: "gated_screen_shown",
   poaGenerated: "poa_generated",
+  /**
+   * R-2 (10 Oct 2026): how the AI second reading fares, with no notice text. Shown: a proposal
+   * appeared (props: where, kind). Used: the seller took it (where). Confirmed: the seller then
+   * confirmed the case, keeping the proposed kind or changing it (result: kept | changed). The
+   * server half, per-day counts of each model outcome, is in src/lib/secondReadingStore.ts.
+   */
+  secondReadingShown: "second_reading_shown",
+  secondReadingUsed: "second_reading_used",
+  secondReadingConfirmed: "second_reading_confirmed",
 } as const;
 
 export type FunnelEventName = (typeof FUNNEL_EVENTS)[keyof typeof FUNNEL_EVENTS];

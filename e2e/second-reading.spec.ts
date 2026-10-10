@@ -32,6 +32,9 @@ test("the decode page shows the second reading in place of 'not clearly classifi
   await expect(main.getByText("Policy violation").first()).toBeVisible();
   await expect(main.getByText(`Read from: “${QUOTE}”`)).toBeVisible();
   await expect(main.getByText("Notice not clearly classified")).toHaveCount(0);
+  // R-3: marked as an AI suggestion, and the record list says it follows that suggestion.
+  await expect(main.getByText("AI suggestion: check it against your notice")).toBeVisible();
+  await expect(main.getByText(/This list follows the AI suggestion above/)).toBeVisible();
 });
 
 test("with no second reading the decode page is exactly as before", async ({ page }) => {
@@ -43,6 +46,7 @@ test("with no second reading the decode page is exactly as before", async ({ pag
   await page.getByRole("button", { name: "Decode", exact: true }).click();
   await expect(page.getByRole("main").getByText("Notice not clearly classified")).toBeVisible();
   await expect(page.getByText(/Read from:/)).toHaveCount(0);
+  await expect(page.getByText(/AI suggestion/)).toHaveCount(0);
 });
 
 test("the case page offers the reading, and applies it only when asked", async ({ page }) => {
@@ -71,4 +75,22 @@ test("the case page offers nothing when the notice was already placed", async ({
     );
   await page.waitForTimeout(2500);
   await expect(page.getByText(/A closer reading suggests/)).toHaveCount(0);
+});
+
+test("R-4: the case page stops asking once the server says the reading is off", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  let asked = 0;
+  await page.route("**/api/decode", async (route) => {
+    asked += 1;
+    await route.fulfill({ json: { kind: "UNKNOWN", secondReading: "off", notes: [] } });
+  });
+  await page.goto("/case");
+  const field = page.getByLabel("Amazon notice", { exact: true });
+  await field.fill(UNPLACED);
+  await expect.poll(() => asked, { timeout: 15_000 }).toBe(1);
+  await field.fill(`${UNPLACED}\n\nRegards.`);
+  await page.waitForTimeout(2500);
+  expect(asked).toBe(1);
 });

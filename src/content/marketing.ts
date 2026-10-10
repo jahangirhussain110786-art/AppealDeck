@@ -228,6 +228,10 @@ export const DECODE = {
     factProblem: "The problem",
     // 9 Oct 2026: under the problem when a second reading placed a notice the rules could not.
     factReadFrom: "Read from:",
+    // R-3 (10 Oct 2026): an AI-proposed kind is marked as one, so it is checked before it is relied on.
+    factAiReading: "AI suggestion: check it against your notice",
+    recordsFromAi:
+      "This list follows the AI suggestion above. If your notice is about something else, change the problem on your case's first screen and the list changes with it.",
     decodeAnother: "Decode another",
     recordsCount: "{n} records",
     recordsCountOne: "1 record",

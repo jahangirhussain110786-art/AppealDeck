@@ -11,6 +11,13 @@ import { findUnreadableIds } from "@/core/entities";
 import { rateLimitDecode, rateLimitDecodeAi, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { isGeminiConfigured } from "@/lib/llm/gemini";
 import { classifyNotice } from "@/lib/llm/classifyNotice";
+import {
+  countReading,
+  getRememberedReading,
+  locateQuote,
+  readingKey,
+  rememberReading,
+} from "@/lib/secondReadingStore";
 import { hasD6Allegation } from "@/core/violationKinds";
 import { receiptDateOf } from "@/core/noticeDate";
 import {
@@ -252,21 +259,53 @@ export async function POST(req: NextRequest) {
     the case's first screen, and it cannot set or clear the falsified-documents gate.
   */
   let suggestedKind: { kind: string; quote: string } | undefined;
+  /*
+    R-4 (10 Oct 2026): when a reading would have been offered but cannot be, say why, so the case
+    page stops asking after every typing pause. "off": no model on this server. "capped": today's
+    allowance is used. Absent when no reading applies or one was attempted.
+  */
+  let secondReading: "off" | "capped" | undefined;
   if (
     result.classification.kind === "UNKNOWN" &&
     !looksLikeReply &&
     !enforcement.notEnforcement &&
     assessNoticeAuthenticity(working).signals.length === 0 &&
-    !hasD6Allegation(decodeText) &&
-    isGeminiConfigured() &&
-    (await rateLimitDecodeAi(ip))
+    !hasD6Allegation(decodeText)
   ) {
-    const second = await classifyNotice(decodeText);
-    if (second.ok) suggestedKind = { kind: second.kind, quote: second.quote };
+    if (!isGeminiConfigured()) {
+      secondReading = "off";
+    } else {
+      // R-5: a notice read before is answered from memory, without spending today's allowance.
+      const key = readingKey(decodeText);
+      const remembered = await getRememberedReading(key);
+      if (remembered) {
+        await countReading("remembered");
+        if (remembered.kind !== "NONE" && remembered.end <= decodeText.length)
+          suggestedKind = {
+            kind: remembered.kind,
+            quote: decodeText.slice(remembered.start, remembered.end),
+          };
+      } else if (await rateLimitDecodeAi(ip)) {
+        const second = await classifyNotice(decodeText);
+        if (second.ok) {
+          suggestedKind = { kind: second.kind, quote: second.quote };
+          const at = locateQuote(decodeText, second.quote);
+          if (at) await rememberReading(key, { kind: second.kind, ...at });
+          await countReading("proposed");
+        } else {
+          if (second.reason === "none") await rememberReading(key, { kind: "NONE" });
+          await countReading(second.reason);
+        }
+      } else {
+        secondReading = "capped";
+        await countReading("capped");
+      }
+    }
   }
 
   return NextResponse.json({
     ...(suggestedKind ? { suggestedKind } : {}),
+    ...(secondReading ? { secondReading } : {}),
     kind: result.classification.kind,
     confidence: result.classification.confidence,
     language: language.code,

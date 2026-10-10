@@ -9,6 +9,7 @@ import {
   type DraftSources,
 } from "@/core/draftVerification";
 import type { ViolationKind } from "@/core/violationKinds";
+import { fillerPhrasesIn } from "@/core/composer";
 
 /**
  * The AI writes the three narrative sections of a Plan of Action (founder decision, 7 Oct 2026).
@@ -296,6 +297,14 @@ async function attemptOnce(
   };
 }
 
+/** Template phrases in the AI's sections that are not in the seller's own answers. */
+function templatePhrases(sections: DraftSections, sellerAnswers: string): string[] {
+  const own = new Set(fillerPhrasesIn(sellerAnswers));
+  return fillerPhrasesIn(
+    [sections.rootCause, sections.correctiveActions, sections.preventiveMeasures].join("\n"),
+  ).filter((p) => !own.has(p));
+}
+
 export async function draftResponse(
   req: DraftRequest,
   deps: DraftDeps = { callGemini },
@@ -305,7 +314,26 @@ export async function draftResponse(
   const first = await attemptOnce(req, deps);
   if (!first.ok) return first;
   const firstCheck = verifyAiDraft(sources, first.sections);
-  if (firstCheck.ok) return { ok: true, sections: first.sections, retried: false };
+  if (firstCheck.ok) {
+    /*
+      R-6 (10 Oct 2026): a faithful draft that still reads as a template ("to ensure", "going
+      forward") gets the one retry the fact check did not need, told which phrases to drop. Only
+      phrases the seller did not write themselves count: keeping their own words is the job. The
+      retry is used only if it passes the same fact check and has fewer such phrases; otherwise
+      the first draft stands, so this can make a draft better but never worse or unfaithful.
+    */
+    const filler = templatePhrases(first.sections, sources.sellerAnswers);
+    if (filler.length === 0) return { ok: true, sections: first.sections, retried: false };
+    const fillerFailure = `used wording that reads as a template (${filler.map((f) => `"${f}"`).join(", ")}); say the specific thing the seller said instead, or leave the phrase out`;
+    const second = await attemptOnce(req, deps, fillerFailure);
+    if (
+      second.ok &&
+      verifyAiDraft(sources, second.sections).ok &&
+      templatePhrases(second.sections, sources.sellerAnswers).length < filler.length
+    )
+      return { ok: true, sections: second.sections, retried: true, firstFailure: fillerFailure };
+    return { ok: true, sections: first.sections, retried: false };
+  }
 
   // One more go, told exactly what was wrong. The same check decides again.
   const firstFailure = describeCheck(firstCheck);

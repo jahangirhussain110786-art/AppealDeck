@@ -23,6 +23,7 @@ import { handlePaste, stripInvisibleChars } from "@/lib/idNormalize";
 import { assessNoticeLikeness } from "@/lib/noticeLikeness";
 import { buildNoticeAnnotations, buildDecodeSpans } from "@/lib/decodeAnnotations";
 import { stashPendingNotice } from "@/lib/pendingNotice";
+import { noteProposal } from "@/lib/secondReadingProposal";
 import {
   peekDecodeDraft,
   clearDecodeDraft,
@@ -191,6 +192,8 @@ export default function DecodeClient() {
       setStatus("result");
       saveSessionPaste(value, true);
       trackFunnelEvent(FUNNEL_EVENTS.decodeCompleted, { kind: data.kind });
+      if (second)
+        trackFunnelEvent(FUNNEL_EVENTS.secondReadingShown, { where: "decode", kind: second.kind });
     } catch {
       setError({
         message: controller.signal.aborted ? DECODE.result.errorSlow : DECODE.result.errorNetwork,
@@ -411,6 +414,7 @@ export default function DecodeClient() {
                       onClick={() => {
                         markSessionPasteLeaving();
                         stashPendingNotice(decodedText, result.deadlines);
+                        noteSecondReadingUse(result);
                       }}
                     >
                       {DECODE.result.startPoaCta}
@@ -533,6 +537,13 @@ export default function DecodeClient() {
  * What the headline says. A gated case is never headed with a response the case will not prepare,
  * and a verification notice says what it is even when it names no response type.
  */
+/** R-2: the seller took the AI's proposed kind into a case; counted, and noted for confirmation. */
+function noteSecondReadingUse(result: DecodeResponse): void {
+  if (!result.suggestedKind) return;
+  trackFunnelEvent(FUNNEL_EVENTS.secondReadingUsed, { where: "decode" });
+  noteProposal(result.suggestedKind.kind);
+}
+
 function headlineKey(result: DecodeResponse): keyof typeof DECODE.result.headline {
   if (result.severityGated) return "GATED";
   if ((result.authenticity?.length ?? 0) > 0) return "SUSPECT";
@@ -629,9 +640,15 @@ function ResultFacts({
                 {result.kind === "UNKNOWN" ? guidance.title : APP.violationKinds[result.kind]}
               </span>
               {result.suggestedKind && (
-                <span className="mt-1 line-clamp-2 block text-xs text-muted-foreground">
-                  {r.factReadFrom} “{result.suggestedKind.quote}”
-                </span>
+                <>
+                  {/* R-3: an AI proposal is marked as one, not shown like a rule-read kind. */}
+                  <span className="mt-1.5 inline-flex items-center rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-warning ring-1 ring-inset ring-warning/30">
+                    {r.factAiReading}
+                  </span>
+                  <span className="mt-1 line-clamp-2 block text-xs text-muted-foreground">
+                    {r.factReadFrom} “{result.suggestedKind.quote}”
+                  </span>
+                </>
               )}
             </span>
           </div>
@@ -782,6 +799,7 @@ function ResultView({
   const carryNotice = () => {
     markSessionPasteLeaving();
     stashPendingNotice(text, result.deadlines);
+    noteSecondReadingUse(result);
   };
   const r = DECODE.result;
   // Requested records already appear under "What to gather"; listing them again here was noise.
@@ -966,6 +984,11 @@ function ResultView({
                     </StatusPill>
                   )}
                 </div>
+                {result.suggestedKind && (
+                  <p className="border-b border-border bg-warning/10 px-5 py-3 text-xs leading-relaxed text-foreground">
+                    {r.recordsFromAi}
+                  </p>
+                )}
                 {records.length ? (
                   <>
                     <ul>

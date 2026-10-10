@@ -20,6 +20,24 @@ vi.mock("@/lib/ratelimit", () => ({
   tooManyRequestsResponse: () => new Response("rate limited", { status: 429 }),
 }));
 
+const memory = vi.hoisted(() => new Map<string, unknown>());
+const counts = vi.hoisted(() => [] as string[]);
+vi.mock("@/lib/secondReadingStore", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/lib/secondReadingStore")>();
+  return {
+    ...real,
+    getRememberedReading: (key: string) => Promise.resolve(memory.get(key) ?? null),
+    rememberReading: (key: string, value: unknown) => {
+      memory.set(key, value);
+      return Promise.resolve();
+    },
+    countReading: (outcome: string) => {
+      counts.push(outcome);
+      return Promise.resolve();
+    },
+  };
+});
+
 import { POST } from "../decode/route";
 
 // A real-looking Amazon notice in a family no pattern matches.
@@ -41,6 +59,8 @@ beforeEach(() => {
   classifyMock.mockReset();
   gate.configured = true;
   gate.allowed = true;
+  memory.clear();
+  counts.length = 0;
 });
 
 describe("/api/decode second reading", () => {
@@ -94,5 +114,50 @@ describe("/api/decode second reading", () => {
     expect((await decode(UNPLACED)).suggestedKind).toBeUndefined();
     classifyMock.mockResolvedValue({ ok: false, reason: "busy" });
     expect((await decode(UNPLACED)).suggestedKind).toBeUndefined();
+  });
+
+  it("R-4: says why no reading was offered, so the case page can stop asking", async () => {
+    gate.configured = false;
+    expect((await decode(UNPLACED)).secondReading).toBe("off");
+    gate.configured = true;
+    gate.allowed = false;
+    expect((await decode(UNPLACED)).secondReading).toBe("capped");
+    expect(counts).toEqual(["capped"]);
+    // Not for a notice no reading applies to.
+    const placed = await decode(
+      "Subject: Policy violation\n\nWe removed your listings for repeated policy violations. Submit a plan of action within 30 days.",
+    );
+    expect(placed.secondReading).toBeUndefined();
+  });
+
+  it("R-5: answers the same notice again from memory, without spending the allowance or keeping its text", async () => {
+    classifyMock.mockResolvedValue({
+      ok: true,
+      kind: "POLICY",
+      quote: "does not  follow our PROGRAM rules",
+    });
+    await decode(UNPLACED);
+    const [stored] = [...memory.values()];
+    expect(JSON.stringify(stored)).not.toMatch(/follow|program/i);
+    gate.allowed = false; // a cap reached in between does not matter for a remembered notice
+    const again = await decode(UNPLACED);
+    expect(classifyMock).toHaveBeenCalledTimes(1);
+    expect(again.suggestedKind).toEqual({
+      kind: "POLICY",
+      quote: "does not follow our program rules",
+    });
+    expect(again.secondReading).toBeUndefined();
+    expect(counts).toEqual(["proposed", "remembered"]);
+  });
+
+  it("R-5: remembers a 'none' but never provider trouble", async () => {
+    classifyMock.mockResolvedValue({ ok: false, reason: "busy" });
+    await decode(UNPLACED);
+    expect(memory.size).toBe(0);
+    classifyMock.mockResolvedValue({ ok: false, reason: "none" });
+    await decode(UNPLACED);
+    await decode(UNPLACED);
+    expect(classifyMock).toHaveBeenCalledTimes(2);
+    expect(counts).toEqual(["busy", "none", "remembered"]);
   });
 });
