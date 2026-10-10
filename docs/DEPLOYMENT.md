@@ -96,6 +96,9 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
 
 ## 5. Paddle production setup (founder action)
 
+**Quick way (10 Oct 2026):** steps 1–4 below are done by one command you run yourself, with your live key (never give the key to an AI):
+`PADDLE_LIVE_KEY=<live key> SITE_URL=https://appealdeck.com node scripts/setup-paddle-live.mjs`. It creates the $249 product and price, the client token and the webhook, and saves the four settings to Vercel production. Then redeploy. Steps 5, 5a and 5b (business details, default payment link, blocked countries) and website approval still need the Paddle dashboard.
+
 1. Paddle dashboard → Catalog → create 1 product:
    - **Appeal Pass** (one-time, $249 — flat, worldwide, no country tiering; 21 Sep 2026 commercial reset)
    - _Corrected 28 Sep 2026:_ this step used to add a **Guardian Subscription** product. Guardian is deferred (D7) and nothing in the app sells it, so do not create it.
