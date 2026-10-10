@@ -49,3 +49,12 @@ describe("the business details a check carries", () => {
     expect(toCaseFacts("", "", "")).toEqual({});
   });
 });
+
+describe("toCaseFacts: units sold", () => {
+  it("keeps a sensible whole number and drops anything else", () => {
+    expect(toCaseFacts("", "", "", "450")).toEqual({ unitsSold: 450 });
+    expect(toCaseFacts("", "", "", "0")).toEqual({});
+    expect(toCaseFacts("", "", "", "")).toEqual({});
+    expect(toCaseFacts("", "", "", "99999999")).toEqual({});
+  });
+});

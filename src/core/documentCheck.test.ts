@@ -399,7 +399,9 @@ describe("comparisons we have no data for are reported as not checked", () => {
     const f = field(QUANTITY_FIELD, { observed: "Qty 200" });
     expect(f.status).toBe("not_assessed");
     expect(f.observed).toBe("Qty 200");
-    expect(f.note).toMatch(/do not have your sales numbers/);
+    // This one invoice is never compared; the case-level total is `invoiceCoverage`.
+    expect(f.note).toMatch(/not compared with units sold/);
+    expect(f.note).toMatch(/Enter your units sold/);
   });
 
   it("still reports a quantity genuinely absent from the invoice", () => {

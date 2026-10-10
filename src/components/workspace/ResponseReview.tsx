@@ -22,13 +22,16 @@ import {
   workspaceGaps,
   type Workspace,
 } from "@/core/workspace";
-import { answerDraftKey } from "@/lib/workspaceDraft";
+import { answerDraftKey, coachDraftKey } from "@/lib/workspaceDraft";
 import type { CaseFile } from "@/core/caseFile";
 import type { Vault } from "@/core/vault/vault";
 import type { CriticResult, PoaDraft } from "@/core/composer";
 import { BeforeYouSubmitChecklist } from "@/components/BeforeYouSubmitChecklist";
 import { IssuesRaised } from "./IssuesRaised";
-import { assessNovelty, shouldWarnBeforeSubmit } from "@/core/submissionNovelty";
+import { changeReport } from "@/core/changeReport";
+import { ChangesSinceLastTry } from "./ChangesSinceLastTry";
+import { RootCauseCoach } from "./RootCauseCoach";
+import { assessRootCause } from "@/core/rootCauseCoach";
 import { computeDraftStrength, DRAFT_STRENGTH_TONE } from "@/lib/draftStrength";
 import { formatDate } from "@/lib/format";
 import { openItemsAt } from "@/lib/submissionRecord";
@@ -169,11 +172,6 @@ export function ResponseReview({
   const [receipt, setReceipt] = useState("");
   const [changedBeforeSending, setChangedBeforeSending] = useState(false);
   const [sentText, setSentText] = useState("");
-  // AA-42: compares the rendered response against everything already recorded on this case.
-  const novelty = React.useMemo(
-    () => (result ? assessNovelty(result.rendered, w.submissions) : null),
-    [result, w.submissions],
-  );
   // A new draft means a fresh review: every confirmation the seller gave was about the old text.
   // Reset while rendering (React's pattern for state that follows a prop), not in an effect that
   // would first paint the new draft with the old ticks still on.
@@ -196,6 +194,16 @@ export function ResponseReview({
           })
         : [],
     [result, w],
+  );
+  // The root-cause nudge: one cause or several, and whether anything specific is named.
+  const rootCauseNudge = React.useMemo(() => {
+    const nudge = assessRootCause(explanation);
+    return nudge.multipleCauses || nudge.missingSpecifics ? nudge : null;
+  }, [explanation]);
+  // What differs from the response last recorded: the wording, the documents, the open items.
+  const changes = React.useMemo(
+    () => (result ? changeReport(w, result.rendered, openItems) : null),
+    [result, w, openItems],
   );
   const dirty =
     explanation !== w.explanation ||
@@ -325,6 +333,24 @@ export function ResponseReview({
                 {F.rootCauseHint}
               </p>
             )}
+            {w.protocol === "operational" && (
+              <RootCauseCoach
+                kind={file.kind}
+                draft={draft}
+                hasText={explanation.trim().length > 0}
+                busy={busy}
+                onAnswer={(key, value) => onDraftChange(coachDraftKey(key), value)}
+                onUse={(text) =>
+                  changeExplanation(
+                    explanation.trim()
+                      ? `${explanation.trim()}
+
+${text}`
+                      : text,
+                  )
+                }
+              />
+            )}
             <Textarea
               id="workspace-explanation"
               rows={5}
@@ -341,6 +367,23 @@ export function ResponseReview({
               placeholder={questions.length > 0 ? F.additionalPlaceholder : undefined}
               onChange={(e) => changeExplanation(e.target.value)}
             />
+            {w.protocol === "operational" && rootCauseNudge && (
+              <div role="status" className="space-y-1 text-sm text-foreground">
+                {rootCauseNudge.multipleCauses && (
+                  <p className="rounded-lg border border-warning/40 bg-warning/10 p-3">
+                    <span className="font-medium">{C.coach.manyTitle}</span> {C.coach.manyBody}{" "}
+                    <span className="text-muted-foreground">
+                      {C.coach.manyFound.replace("{words}", rootCauseNudge.matched.join(", "))}
+                    </span>
+                  </p>
+                )}
+                {rootCauseNudge.missingSpecifics && (
+                  <p className="rounded-lg border border-border bg-muted/40 p-3 text-muted-foreground">
+                    {C.coach.specificsBody}
+                  </p>
+                )}
+              </div>
+            )}
             {w.protocol === "operational" ? (
               <AnswerHelp id="workspace-explanation-example" example={F.rootCausePlaceholder} />
             ) : (
@@ -675,31 +718,11 @@ export function ResponseReview({
               disables the button, because there are real cases where resending is correct and the
               decision is the seller's.
             */}
-            {novelty && shouldWarnBeforeSubmit(novelty) && (
-              <Alert variant="warning">
-                <AlertTitle>
-                  {novelty.verdict === "cannot-compare"
-                    ? C.novelty.cannotCompareTitle
-                    : "This looks like what you already sent"}
-                </AlertTitle>
-                <AlertDescription>
-                  {novelty.verdict === "cannot-compare"
-                    ? C.novelty.cannotCompareBody
-                    : novelty.message}
-                  {novelty.comparedTo && (
-                    <span className="mt-2 block text-xs">
-                      Compared against the response you recorded on{" "}
-                      {formatDate(novelty.comparedTo.at)} · {Math.round(novelty.similarity * 100)}%
-                      of this draft appeared there already
-                      {novelty.addedSentences > 0
-                        ? ` · ${novelty.addedSentences} new sentence${novelty.addedSentences === 1 ? "" : "s"}`
-                        : ""}
-                      .
-                    </span>
-                  )}
-                </AlertDescription>
-              </Alert>
-            )}
+            {/*
+              10 Oct 2026: widened from the wording alone. The same guard, plus what is different in
+              the documents and the open items since the last recorded response.
+            */}
+            {changes && <ChangesSinceLastTry report={changes} />}
             {/*
               Recording is open whatever state the draft is in (audit item R, 23 Sep 2026). What
               the seller sent is a fact about their case; refusing to record it made the attempt

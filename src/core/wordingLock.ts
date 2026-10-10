@@ -360,3 +360,22 @@ export function checkWordingLock(originalText: string, rewriteText: string): Wor
 
 /** Shortest text worth sending for wording help. Below this there is nothing to improve. */
 export const MIN_WORDING_CHARS = 40;
+
+/**
+ * Every fact `checkWordingLock` recognises in a text, as a set of normalised tokens: anything with a
+ * digit, a month or weekday, a spelled-out count, an email or web address, a number with its unit,
+ * and a capitalised name (10 Oct 2026). The same reading, exposed so that the change report can ask
+ * whether a response contains a fact its predecessor did not, which is what separates new
+ * information from reworded text.
+ */
+export function recognizedFacts(text: string): Set<string> {
+  const normalised = normaliseFacts(text);
+  const out = new Set<string>();
+  for (const pattern of [WITH_DIGIT, MONTH_OR_DAY, NUMBER_WORD, EMAIL, URL]) {
+    const found = pattern === MONTH_OR_DAY ? monthTokens(normalised) : tokens(normalised, pattern);
+    for (const t of found) out.add(t);
+  }
+  for (const pair of numberUnitPairs(normalised)) out.add(pair);
+  for (const name of midSentenceNames(normalised)) out.add(name);
+  return out;
+}

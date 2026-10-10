@@ -10,6 +10,7 @@ import {
 } from "@/core/workspace";
 import { alternativesFor } from "@/core/requirementGuidance";
 import { formatDay } from "@/core/noticeDate";
+import { coverageSentence, invoiceCoverage } from "@/core/invoiceCoverage";
 import type { SerializedDeadline } from "@/core/deadlinesModel";
 import type { CaseLog } from "./caseStore";
 import { REQUIREMENT_GROUPS } from "./evidencePack";
@@ -255,11 +256,20 @@ export function buildCaseExport(
   // G, 24 Sep 2026. Stated by the seller, and labelled as such: a specialist reading the export
   // needs to know these came from the seller, not from a document or from Amazon.
   const facts = w.caseFacts;
-  if (facts && (facts.businessName || facts.businessAddress || facts.suppliers?.length)) {
+  if (
+    facts &&
+    (facts.businessName || facts.businessAddress || facts.suppliers?.length || facts.unitsSold)
+  ) {
     lines.push("== Business details, as the seller stated them ==");
     if (facts.businessName) lines.push(`Registered business name: ${facts.businessName}`);
     if (facts.businessAddress) lines.push(`Registered business address: ${facts.businessAddress}`);
     if (facts.suppliers?.length) lines.push(`Suppliers: ${facts.suppliers.join("; ")}`);
+    if (facts.unitsSold)
+      lines.push(
+        `Units sold of the products in the notice, over the 365 days before it: ${facts.unitsSold}`,
+      );
+    const coverage = invoiceCoverage(w.documentChecks, facts.unitsSold);
+    if (coverage) lines.push(`Invoices against units sold: ${coverageSentence(coverage)}`);
     lines.push("");
   }
 

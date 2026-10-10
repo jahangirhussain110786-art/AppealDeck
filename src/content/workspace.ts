@@ -103,6 +103,24 @@ export const WORKSPACE = {
       "Download the linked originals from Documents and attach each one where the response page in Seller Central asks for it. Send them there, not in a Seller Support case: some Amazon notices say documents sent through a case are not considered for the review. Copying does not record a submission.",
   },
   // The Response tab (29 Sep 2026): plain questions, a one-line hint, and an example in every box.
+  // 10 Oct 2026: the root-cause coach. Appeal writers advise naming one failure point, so the copy
+  // attributes the advice to them and does not say what Amazon will think.
+  coach: {
+    summary: "Not sure what to write? Answer five short questions.",
+    intro:
+      "Answer in your own words. We put your answers together and add nothing, so every fact in it is yours.",
+    optional: "(optional)",
+    example: "For example:",
+    use: "Put my answers in the box",
+    addBelow: "Add my answers below what I wrote",
+    after: "Read it afterwards and fix the wording. Your answers are saved as you type.",
+    manyTitle: "This reads like more than one cause.",
+    manyBody:
+      "Appeal writers advise naming one failure point, not a list of factors. Pick the one that broke first. Put the rest under “What have you fixed already?” and “How will you stop it happening again?”",
+    manyFound: "We noticed: {words}.",
+    specificsBody:
+      "No date, number or order is in this answer yet. Add the product or order and when it happened, so it is about this case.",
+  },
   responseFields: {
     operationalTitle: "What happened. What changed.",
     briefTitle: "Your response brief",
@@ -323,6 +341,32 @@ export const WORKSPACE = {
   },
   // A3: an earlier response is recorded with no wording. "Looks like what you already sent" would
   // say something we cannot know, so the alert says what we cannot do and what to do about it.
+  // 10 Oct 2026: what is different from the response the seller last recorded. It describes their own
+  // case (the wording, the documents, the open items) and never says what Amazon will make of it.
+  changes: {
+    nothingTitle: "Nothing has changed since your last response",
+    nothingBody:
+      "The wording, the documents and the open items are the same as when you recorded it on {date}. Sending it again unchanged is sometimes right, for example when nobody has answered. If Amazon has replied, add what is new first: a document you now hold, an action you have since finished, or a fact you left out.",
+    littleTitle: "Very little has changed since your last response",
+    littleBody:
+      "Compared with the response you recorded on {date}, the wording is almost the same and nothing in it adds a new date, number, name or document. Check that the sentences below say something Amazon has not already seen.",
+    newOrReworded: "New or reworded",
+    changedTitle: "What has changed since your last response",
+    changedIntro: "Compared with the response you recorded on {date}.",
+    priorTitle: "We cannot fully compare with your earlier attempt",
+    priorBody:
+      "You made it before using AppealDeck, so we do not have its wording or its files. Change something Amazon has not already seen: a document you now hold or an action you have since finished.",
+    newSentences: "New in this response",
+    moreSentences: "and {n} more",
+    sameWording:
+      "The wording is almost the same as before. What is different is in the documents or the open items below.",
+    documentsAdded: "Documents added since then",
+    documentsRemoved: "Documents no longer attached",
+    resolved: "Open then, finished now",
+    stillOpen: "Still open from last time",
+    documentsUnknown:
+      "We do not know which files that attempt included, so documents are not compared.",
+  },
   novelty: {
     cannotCompareTitle: "We cannot compare this with what you sent before.",
     cannotCompareBody: "The earlier text was not recorded. Change something before you send.",
@@ -431,6 +475,11 @@ export const WORKSPACE = {
     businessAddress: "Registered business address, exactly as on your seller account",
     suppliers: "Your suppliers (one per line, as each names itself)",
     suppliersHelp: "List every supplier whose invoices you are using. Several is normal.",
+    // 10 Oct 2026: for invoice cases. One number the seller states; we add up their checked invoices.
+    unitsSold: "Units you sold of the products in the notice, in the 365 days before it",
+    unitsSoldHelp:
+      "Only for invoice cases. Take it from Seller Central, Reports, Business Reports. We add up your checked invoices against this number.",
+    coverageTitle: "Your invoices against what you sold",
     save: "Save business details",
     saved: "Updated your business details.",
     privacy:

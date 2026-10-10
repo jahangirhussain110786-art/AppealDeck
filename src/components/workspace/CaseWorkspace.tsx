@@ -69,6 +69,7 @@ import { analyzeReply } from "@/core/responseAnalyzer";
 import { STORES } from "@/content/stores";
 import { replyCriticisms } from "@/core/replyFeedback";
 import { checkCaseDataForWorkspace } from "@/lib/documentChecks/context";
+import { invoiceCoverage } from "@/core/invoiceCoverage";
 import {
   checkContextKey,
   savedCheckFor,
@@ -2011,6 +2012,7 @@ function WorkspaceInner({
               <CaseFactsCard
                 key={JSON.stringify(w.caseFacts ?? {})}
                 facts={w.caseFacts}
+                coverage={invoiceCoverage(w.documentChecks, w.caseFacts?.unitsSold)}
                 busy={busy}
                 onSave={(facts) =>
                   commit((old) => {

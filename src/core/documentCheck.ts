@@ -458,7 +458,7 @@ function compare(
       return {
         ...f,
         status: "not_assessed",
-        note: "This is the quantity printed on the document. We do not have your sales numbers, so we have not compared it with units sold — compare it with your sales report for the same period.",
+        note: "This is the quantity printed on the document. This one invoice is not compared with units sold. Enter your units sold under Your business details and we add up all your checked invoices against it.",
       };
     case "account_record":
       return compareAccountRecord(f, comparison, context?.business);

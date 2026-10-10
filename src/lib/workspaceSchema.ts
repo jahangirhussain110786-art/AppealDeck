@@ -212,6 +212,7 @@ export const WorkspaceSchema = z
         businessName: z.string().max(300).optional(),
         businessAddress: z.string().max(1000).optional(),
         suppliers: z.array(z.string().max(300)).max(20).optional(),
+        unitsSold: z.number().int().positive().max(10_000_000).optional(),
       })
       .optional(),
     // 24 Sep 2026: saved document checks, declared with the field so the first save keeps them.

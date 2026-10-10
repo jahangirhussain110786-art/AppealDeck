@@ -57,3 +57,8 @@ export function withoutDraftKeys(
   for (const key of keys) delete next[key];
   return Object.keys(next).length ? next : undefined;
 }
+
+/** The root-cause coach's answers, kept with the other unsaved fields so a reload does not lose them. */
+export function coachDraftKey(key: string): string {
+  return `response.coach.${key}`;
+}

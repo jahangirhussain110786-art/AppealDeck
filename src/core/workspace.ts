@@ -128,6 +128,12 @@ export interface CaseFacts {
   businessAddress?: string;
   /** Every supplier the seller buys from, as each names itself. Several suppliers are normal. */
   suppliers?: string[];
+  /**
+   * Units the seller sold of the products in the notice, over the 365 days before it (10 Oct 2026).
+   * From their own sales report, never inferred. Invoices are added up against it
+   * (`invoiceCoverage`), which no single-document check could do.
+   */
+  unitsSold?: number;
 }
 
 export interface Workspace {

@@ -353,6 +353,87 @@ test("authenticated workspace preserves the exact response through submission an
 });
 
 /**
+ * 10 Oct 2026. Before a seller records another response, the page says what is different from the
+ * one they last recorded: the wording, the documents, the open items.
+ */
+test("a second response is compared with the last one recorded", async ({ page }) => {
+  test.skip(
+    !process.env.DEV_LOGIN_EMAIL || !process.env.DEV_LOGIN_PASSWORD,
+    "Dev authentication fixture required",
+  );
+  test.setTimeout(120000);
+  await configure(page);
+  await reviewEvidence(page);
+  await page.goto("/login");
+  await page.getByLabel(/email/i).fill(process.env.DEV_LOGIN_EMAIL!);
+  await page.getByLabel(/^password$/i).fill(process.env.DEV_LOGIN_PASSWORD!);
+  await page.getByRole("button", { name: /^sign in$/i }).click();
+  await expect(page).toHaveURL(/dashboard/);
+  await page.goto("/case?view=response");
+  const first =
+    "The supplier invoice identifies the product by code J-104 and records the purchase. The product code corresponds to the affected listing.";
+  await page.getByLabel("Your explanation, in your own words").fill(first);
+  await page.getByRole("button", { name: "Save my answers" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  await page.route("**/api/license/status*", (route) =>
+    route.fulfill({ json: { status: "active", plan: "appeal_pass" } }),
+  );
+  await page.route("**/api/compose", async (route) => {
+    const { caseData, attemptNumber } = route.request().postDataJSON();
+    const draft = composePoa(caseData, attemptNumber);
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        draft,
+        critique: critiquePoa(draft, caseData),
+        rendered: renderPoaText(draft),
+      }),
+    });
+  });
+  await page.getByRole("button", { name: "Prepare response", exact: true }).click();
+  await expect(page.getByText("Review the exact response", { exact: true })).toBeVisible();
+  // Nothing has been recorded yet, so there is nothing to compare with.
+  await expect(page.getByText(/since your last response/)).toHaveCount(0);
+  await page
+    .getByLabel(
+      "I reviewed the facts, attachment names and page references against the response page in Seller Central.",
+    )
+    .check();
+  await page
+    .getByLabel(
+      "I have submitted this exact response and its selected files through the official channel.",
+    )
+    .check();
+  await page.getByRole("button", { name: "Record submission", exact: true }).click();
+  await expect(page.getByText(/Attempt 1 ·/)).toBeVisible();
+  await page
+    .getByLabel("Add Amazon’s next reply")
+    .fill("Please provide the sales report for the affected product.");
+  await page.getByRole("button", { name: "Save reply for review" }).click();
+  await page.getByRole("button", { name: "Start the next round with this reply" }).click();
+  await expect(page.getByRole("tab", { name: "Overview", exact: true })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  // The reply is a new request: read it, then the response can be prepared against it.
+  await page.getByRole("button", { name: "Yes, this is right" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Response", exact: true }).click();
+  await page
+    .getByLabel("Your explanation, in your own words")
+    .fill(`${first} On 3 Oct 2026 our supplier sent the sales report for the affected product.`);
+  await page.getByRole("button", { name: "Save my answers" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  // Round 2 still has open items (the sales report), so the button says working draft.
+  await page.getByRole("button", { name: /^Prepare (?:response|working draft)$/ }).click();
+  await expect(page.getByText("Review the exact response", { exact: true })).toBeVisible();
+  const report = page.getByRole("status").filter({ hasText: "since your last response" });
+  await expect(report).toBeVisible();
+  await expect(report).toContainText("Compared with the response you recorded on");
+});
+
+/**
  * 24 Sep 2026. A share the server refused used to resolve the prompt anyway: the seller pressed
  * "Share it", nothing was recorded, nothing was said, and the card never came back.
  */

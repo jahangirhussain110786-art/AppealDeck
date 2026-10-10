@@ -217,3 +217,30 @@ export function shouldWarnBeforeSubmit(result: NoveltyResult): boolean {
     result.verdict === "cannot-compare"
   );
 }
+
+/** The response's own sentences as written, without headings, notes or the product's scaffolding. */
+function writtenSentences(text: string): string[] {
+  return withoutWorkingNotes(text)
+    .split(/\n|(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => !s.startsWith("#") && normalize(s).length > 0);
+}
+
+/**
+ * Which sentences are new in a draft and which have gone from the earlier text, as written
+ * (10 Oct 2026). `assessNovelty` reports how many; this reports which, because "3 new sentences" is
+ * less useful to a seller than seeing the three. Same sentence measure, so the two never disagree.
+ */
+export function sentenceChanges(
+  draft: string,
+  prior: string,
+): { added: string[]; removed: string[] } {
+  const draftSentences = writtenSentences(draft);
+  const priorSentences = writtenSentences(prior);
+  const priorKeys = new Set(priorSentences.map(normalize));
+  const draftKeys = new Set(draftSentences.map(normalize));
+  return {
+    added: draftSentences.filter((s) => !priorKeys.has(normalize(s))),
+    removed: priorSentences.filter((s) => !draftKeys.has(normalize(s))),
+  };
+}

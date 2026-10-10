@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { IconTile } from "./WorkspaceVisuals";
 import type { CaseFacts } from "@/core/workspace";
+import { coverageSentence, type InvoiceCoverage } from "@/core/invoiceCoverage";
 import { WORKSPACE as C } from "@/content/workspace";
 
 /**
@@ -26,10 +27,13 @@ import { WORKSPACE as C } from "@/content/workspace";
  */
 export function CaseFactsCard({
   facts,
+  coverage,
   busy,
   onSave,
 }: {
   facts: CaseFacts | undefined;
+  /** The checked invoices added up against `unitsSold`, when the seller has stated it. */
+  coverage?: InvoiceCoverage | null;
   busy: boolean;
   onSave: (facts: CaseFacts) => Promise<boolean>;
 }) {
@@ -37,7 +41,9 @@ export function CaseFactsCard({
   const [address, setAddress] = useState(facts?.businessAddress ?? "");
   const [suppliers, setSuppliers] = useState((facts?.suppliers ?? []).join("\n"));
 
-  const next = toCaseFacts(name, address, suppliers);
+  const [units, setUnits] = useState(facts?.unitsSold ? String(facts.unitsSold) : "");
+
+  const next = toCaseFacts(name, address, suppliers, units);
   const unchanged =
     JSON.stringify(next) ===
     JSON.stringify(
@@ -45,6 +51,7 @@ export function CaseFactsCard({
         facts?.businessName ?? "",
         facts?.businessAddress ?? "",
         (facts?.suppliers ?? []).join("\n"),
+        facts?.unitsSold ? String(facts.unitsSold) : "",
       ),
     );
 
@@ -125,6 +132,36 @@ export function CaseFactsCard({
             {C.caseFacts.suppliersHelp}
           </p>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="case-facts-units">{C.caseFacts.unitsSold}</Label>
+          <Input
+            id="case-facts-units"
+            inputMode="numeric"
+            value={units}
+            maxLength={8}
+            spellCheck={false}
+            disabled={busy}
+            aria-describedby="case-facts-units-help"
+            onChange={(e) => setUnits(e.target.value.replace(/\D/g, ""))}
+          />
+          <p id="case-facts-units-help" className="text-xs text-muted-foreground">
+            {C.caseFacts.unitsSoldHelp}
+          </p>
+        </div>
+        {coverage && (
+          <div
+            role="status"
+            className={cn(
+              "rounded-lg border p-3 text-sm",
+              coverage.status === "short"
+                ? "border-warning/40 bg-warning/10"
+                : "border-border bg-muted/40",
+            )}
+          >
+            <p className="font-medium text-foreground">{C.caseFacts.coverageTitle}</p>
+            <p className="mt-1 text-muted-foreground">{coverageSentence(coverage)}</p>
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-3">
           <Button
             type="button"
@@ -143,7 +180,12 @@ export function CaseFactsCard({
 
 /** Trimmed, empty fields left out, suppliers de-duplicated — so saving blank clears rather than
  * storing an empty string that a comparison would then have to know to ignore. */
-export function toCaseFacts(name: string, address: string, suppliers: string): CaseFacts {
+export function toCaseFacts(
+  name: string,
+  address: string,
+  suppliers: string,
+  units = "",
+): CaseFacts {
   const list = [
     ...new Set(
       suppliers
@@ -156,5 +198,8 @@ export function toCaseFacts(name: string, address: string, suppliers: string): C
     ...(name.trim() ? { businessName: name.trim() } : {}),
     ...(address.trim() ? { businessAddress: address.trim() } : {}),
     ...(list.length > 0 ? { suppliers: list } : {}),
+    ...(Number(units) > 0 && Number(units) <= 10_000_000
+      ? { unitsSold: Math.floor(Number(units)) }
+      : {}),
   };
 }
