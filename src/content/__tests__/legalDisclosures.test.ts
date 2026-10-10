@@ -230,10 +230,16 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
     expect(text("terms")).not.toMatch(/drafts a Plan of Action/i);
   });
 
-  it("dates the changed documents (privacy and terms 2026-10-09)", () => {
+  it("says what is kept for the second reading: a fingerprint, never the text (10 Oct 2026)", () => {
+    expect(text("privacy")).toMatch(
+      /seven days under a one-way fingerprint of the notice[^.]*never the notice or the sentence itself/,
+    );
+  });
+
+  it("dates the changed documents (privacy 2026-10-10, terms 2026-10-09)", () => {
     // 9 Oct 2026: the AI now also writes document-request and questionnaire responses, and reads a
-    // notice the decoder cannot place.
-    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-09");
+    // notice the decoder cannot place. 10 Oct 2026: privacy says what that reading keeps.
+    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-10");
     expect(LEGAL.lastUpdated.terms).toBe("2026-10-09");
     expect(LEGAL.lastUpdated.refund).toBe("2026-10-06");
   });
