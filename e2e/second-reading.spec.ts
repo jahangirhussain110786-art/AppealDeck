@@ -13,7 +13,11 @@ async function withSecondReading(page: Page) {
   await page.route("**/api/decode", async (route) => {
     const real = await route.fetch();
     const body = await real.json();
-    if (body.kind === "UNKNOWN") body.suggestedKind = { kind: "POLICY", quote: QUOTE };
+    if (body.kind === "UNKNOWN") {
+      body.suggestedKind = { kind: "POLICY", quote: QUOTE };
+      // A server with no AI key says "off"; a real reading never comes with it.
+      delete body.secondReading;
+    }
     await route.fulfill({ response: real, json: body });
   });
 }

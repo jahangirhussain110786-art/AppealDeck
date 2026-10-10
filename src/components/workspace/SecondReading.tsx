@@ -78,15 +78,14 @@ export function SecondReading({
           suggestedKind?: { kind: string; quote: string };
           secondReading?: "off" | "capped";
         };
-        if (data.secondReading) {
-          stopped = true;
-          return;
-        }
         const s = data.suggestedKind;
         if (s && isViolationKind(s.kind) && s.kind !== "UNKNOWN" && s.quote) {
           answers.set(notice, { kind: s.kind, quote: s.quote });
           setFound({ notice, kind: s.kind, quote: s.quote });
           trackFunnelEvent(FUNNEL_EVENTS.secondReadingShown, { where: "case", kind: s.kind });
+        } else if (data.secondReading) {
+          // A reading, when there is one, wins; "off" or "capped" only stops further asking.
+          stopped = true;
         } else {
           answers.set(notice, null);
         }
