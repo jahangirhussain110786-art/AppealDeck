@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>The Terms and Privacy pages: what the best companies do, and what the law allows</title>
+<style>
+:root{--bg:#f6f5f0;--card:#ffffff;--ink:#14213a;--muted:#566074;--line:#e3e1d8;--navy:#14213a;--navy-ink:#f4f6fb;--orange:#c2410c;--orange-soft:#fdece3;--green:#166534;--green-soft:#e7f5ec;--amber:#8a5a00;--amber-soft:#fdf3d8;--red:#9f1d1d;--red-soft:#fbe9e9;--blue:#1d4ed8;--blue-soft:#e8effd}
+@media (prefers-color-scheme: dark){:root{--bg:#0d1424;--card:#151f35;--ink:#eef1f8;--muted:#a6b0c5;--line:#26324d;--navy:#0a1020;--navy-ink:#f4f6fb;--orange:#fb923c;--orange-soft:#3a2214;--green:#6ee7a0;--green-soft:#12301f;--amber:#f5c451;--amber-soft:#33290f;--red:#fca5a5;--red-soft:#3a1717;--blue:#93b4ff;--blue-soft:#17233f}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.65;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}a{color:var(--blue)}
+code{font:.9em ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--blue-soft);padding:.1em .35em;border-radius:5px;word-break:break-word}
+.hero{background:var(--navy);color:var(--navy-ink);padding:34px 0 30px}
+.hero .tag{display:inline-block;font-size:13px;font-weight:700;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:999px;margin-bottom:16px}
+.hero h1{font-size:30px;line-height:1.2;margin:0 0 14px;font-weight:800}.hero h1 em{font-style:normal;color:#fdba74}
+.hero p{margin:0;font-size:18px;color:#dbe3f2}.hero .meta{margin-top:18px;font-size:14px;color:#aebad2}
+nav.chips{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.chips .scroll{display:flex;gap:8px;overflow-x:auto;padding:10px 18px;max-width:720px;margin:0 auto;scrollbar-width:none}
+nav.chips .scroll::-webkit-scrollbar{display:none}
+nav.chips a{flex:none;text-decoration:none;font-size:14px;font-weight:600;color:var(--ink);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:999px;white-space:nowrap}
+section{padding:34px 0 6px;scroll-margin-top:64px}h2{font-size:25px;line-height:1.25;margin:0 0 6px;font-weight:800}h3{font-size:19px;line-height:1.3;margin:26px 0 6px;font-weight:700}
+p{margin:0 0 14px}.lead{font-size:18px;color:var(--muted);margin-bottom:18px}.small{font-size:15px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+.callout{border-radius:16px;padding:16px 18px;margin:16px 0;border:1px solid transparent}.callout b.t{display:block;margin-bottom:4px}
+.callout.warn{background:var(--amber-soft);border-color:var(--amber)}.callout.info{background:var(--blue-soft);border-color:var(--blue)}.callout.good{background:var(--green-soft);border-color:var(--green)}.callout.bad{background:var(--red-soft);border-color:var(--red)}
+ul.items{list-style:none;margin:10px 0 0;padding:0}
+ul.items li{background:var(--card);border:1px solid var(--line);border-left-width:5px;border-radius:14px;padding:13px 15px;margin:0 0 10px}
+ul.items li b{display:block;font-size:17px;margin-bottom:2px}ul.items li span{display:block;font-size:15.5px;color:var(--muted);line-height:1.55}
+ul.items.green li{border-left-color:var(--green)}ul.items.amber li{border-left-color:var(--amber)}ul.items.red li{border-left-color:var(--red)}ul.items.blue li{border-left-color:var(--blue)}
+ul.items li .flag{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px;margin:6px 6px 0 0;background:var(--amber-soft);color:var(--amber)}
+ol.steps{padding-left:0;list-style:none;counter-reset:s;margin:12px 0}ol.steps li{counter-increment:s;position:relative;padding:4px 0 14px 46px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:32px;height:32px;border-radius:50%;background:var(--navy);color:var(--navy-ink);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+blockquote{margin:12px 0;padding:12px 16px;border-left:4px solid var(--orange);background:var(--orange-soft);border-radius:0 12px 12px 0;font-size:16px}
+.pair{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:10px 0}
+.pair .who{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.02em;margin-bottom:6px}
+.pair .pub{font-weight:700}.pair .trm{color:var(--muted);font-size:15.5px;margin-top:4px}
+footer{padding:34px 0 50px;color:var(--muted);font-size:15px}hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+@media (min-width:640px){body{font-size:18px}.hero h1{font-size:40px}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <span class="tag">Research for you, the founder. Nothing is built.</span>
+  <h1>The Terms and Privacy pages: what the best do, and what the law <em>allows</em></h1>
+  <p>You asked: show our strengths everywhere, and put the true-but-negative things in the Terms and Privacy pages, the way big companies do. Two research agents checked how the best companies really do it and what the law says. The full file with every quote and source is <code>2026-10-12-disclosure-pages-research.md</code>. The plan from this morning has been corrected from it.</p>
+  <div class="meta">Written 12 October 2026 · the plan stays on hold until you approve it</div>
+</div></header>
+<nav class="chips" aria-label="Jump to a part"><div class="scroll">
+  <a href="#answer">The answer</a><a href="#best">What the best do</a><a href="#law">What the law says</a><a href="#plan">Your plan, checked</a><a href="#paddle">Two Paddle findings</a><a href="#you">Only you</a>
+</div></nav>
+<main class="wrap">
+
+<section id="answer">
+  <h2>The short answer</h2>
+  <p class="lead">Half of your idea is exactly what the best companies do. The other half is the thing regulators fine. The plan uses the right half, and today's research fixed four details in it.</p>
+  <div class="card">
+    <p><b>Right:</b> definitions (what a "case" is, what a "round" is, what a "device" is), operating rules (rate limits, fair use, support hours) and privacy mechanics belong in the Terms and Privacy pages. The tick box is what turns them into a contract.</p>
+    <p><b>Not right:</b> anything that would change a buyer's decision to pay cannot live only in the Terms. The US regulator's own words: fine print "may be insufficient", necessary disclosures "should not be relegated to 'terms of use'", and "burying key limitations of the product or service in dense Terms of Service documents" is a named trick. The UK wrote the same into law in 2025. Pakistan's competition regulator says it too: fine-print disclaimers that hide important information "must be avoided", and its fines hit Rs1.007 billion last year.</p>
+    <p style="margin-bottom:0"><b>What the best companies do instead:</b> they put the condition next to the headline, on the same card. "Unlimited file uploads" next to "~5GB max per file". "$0/mo" next to "Mercury is a fintech company, not an FDIC-insured bank". No company we checked hides a number behind a public "unlimited". That is why the plan's three lines stay on the pricing card, and why the "twenty responses" rule becomes an anti-abuse rule instead of a hidden number.</p>
+  </div>
+</section>
+
+<section id="best">
+  <h2>What the best companies do</h2>
+  <p class="lead">Each pair: what the page says, and what the small print or the Terms say. All checked on 12 October.</p>
+  <div class="pair"><div class="who">STRIPE · MERCURY · WISE · SHOPIFY</div><div class="pub">"2.9% + 30¢" · "$0/mo." · "From 0.24%" · "$19/mo"</div><div class="trm">Right beside it, on the same card: "per successful transaction for domestic cards"; "Mercury is a fintech company, not an FDIC-insured bank"; "Fee varies by currency"; "Restrictions apply." Not in the Terms.</div></div>
+  <div class="pair"><div class="who">NOTION · LINEAR</div><div class="pub">"Unlimited file uploads" · "Unlimited members"</div><div class="trm">Same card: "~5GB max per file"; "250 issues", "10MB". Linear's billing document defines the unit and promises nothing is deleted when you downgrade.</div></div>
+  <div class="pair"><div class="who">WISE (fair use)</div><div class="pub">A "guaranteed" exchange rate</div><div class="trm">Help page: the guarantee can be removed for "rate shopping", "excessive cancellations", unfunded transfers; "usually temporary". Behaviours, not a number.</div></div>
+  <div class="pair"><div class="who">37SIGNALS (Basecamp)</div><div class="pub">"We're dedicated to supporting our products forever (or until the last customer turns off the lights)."</div><div class="trm">The conditions are in the same short page: "assuming you continue to abide by our Terms of Service"; "unless it becomes technically impossible".</div></div>
+  <div class="pair"><div class="who">AMAZON (the seller agreement your buyers already read)</div><div class="pub">Help pages we could not reach today</div><div class="trm">The agreement states the number and the exception in one sentence: termination "with 30 days' advance notice"; "We will promptly notify you ... indicating the reason and any options to appeal, except where ..."</div></div>
+  <div class="pair"><div class="who">ALIBABA (your example)</div><div class="pub">A "guarantee" on delivery (the public guide now redirects; quoted from search results)</div><div class="trm">The T&amp;Cs hold the numbers: "10% of the actual order value ... with a maximum limit of US$100"; "within 30 calendar days"; orders "must not exceed US$3,000". Real buyers hit these limits, which is the kind of thing the regulators target. Ours stay far above real use.</div></div>
+  <div class="pair"><div class="who">THOMPSON &amp; HOLT (an appeal firm): the shape to avoid</div><div class="pub">"100% Success* rate in 2018, 2019, 2020 and 2021."</div><div class="trm">Footer small print above "© 2020": "No company can guarantee that your account will be reinstated."</div></div>
+  <div class="pair"><div class="who">RIVERBEND (an appeal firm): the shape for outcomes</div><div class="pub">"We fix tough seller account issues – fast." No success number anywhere.</div><div class="trm">Terms: "We make no guarantees regarding specific outcomes"; "not a law firm or CPA". Because they claim no number, they have nothing to footnote. We claim no number either, which is the stronger position.</div></div>
+  <div class="pair"><div class="who">37SIGNALS · CLOUDFLARE · AUTOMATTIC (privacy pages)</div><div class="pub">A plain summary on top: "We never sell your data."; "We will not sell or rent your personal information."</div><div class="trm">The body alone carries the court-order clause. Every summary keeps where the data goes. Ours already has a short answer above the full policy; it must keep naming Google as the AI provider.</div></div>
+  <div class="callout good"><b class="t">What this means for us</b>"No Amazon login" and "we never submit for you" stay everywhere, as strengths. "Every round included" and "Expires: Never" stay on the order summary with "one case" beside them. The twenty-response rule becomes: "It is for one seller's own case. If a Pass looks like it is being used for several sellers' cases, or at a volume no single case could produce, we ask what is going on before we limit anything." Definitions of case, round, device and AI availability go into the Terms.</div>
+</section>
+
+<section id="law">
+  <h2>What the law says, in one table</h2>
+  <ul class="items blue">
+    <li><b>The price and what is included</b><span>Must be where you pay: the pricing page, the order summary, the checkout card. The Terms may hold the definitions behind the words, as long as none shrinks what the page promised.</span></li>
+    <li><b>A limit that would change the decision to buy</b><span>Amazon decides; software, not a law firm; cases we refuse; files live on your device; written for Amazon US; not sold in the EU/UK. Must sit next to the claim it qualifies, before the pay button, not behind a link. The Terms may repeat it; the Terms are the record, not the disclosure.</span></li>
+    <li><b>An operating rule</b><span>Rate limits, support hours, device removal, what a refund ends. May live only in the Terms, Privacy, Refund or Support pages, if they are linked from the site and contradict nothing public.</span></li>
+    <li><b>A definition</b><span>What a case, a round, a device is. May live in the Terms if the public word keeps its ordinary meaning. A definition that shrinks it ("every round" meaning "up to twenty") is a limit, and moves up a row. AT&amp;T paid $60 million for "unlimited" qualified only in the fine print.</span></li>
+    <li><b>A disclaimer</b><span>"Not legal advice" must be visible before paying and in the footer. "As is", the liability cap and "nothing is privileged" may live in the Terms, in bold, and bind only if the Terms were really accepted.</span></li>
+    <li><b>A privacy fact</b><span>In the Privacy page in full, and true wherever a page says it in short. "Not stored" beside the paste box is false today (we keep a 7-day fingerprint); it becomes "The notice text is not kept."</span></li>
+    <li><b>What Paddle requires</b><span>Product description, pricing, features, Terms/Refund/Privacy linked from navigation, your legal name, a Merchant-of-Record sentence, a refund window Paddle accepts. Fixed by Paddle's checklist, not by the tests above.</span></li>
+  </ul>
+  <div class="callout info"><b class="t">Two facts the morning plan did not use</b>Your buyer is a <b>trader</b>, not a consumer, under EU and UK law (a seller buying a tool for a selling business). So for a US buyer the binding rules are the US ones; the EU/UK rules are the right model for wording, not the enforcement route. And the <b>purchase contract is with Paddle</b> under Paddle's own terms (English law), not with you under Pakistani law; our "laws of Pakistan" line can govern only the licence, and should say so.</div>
+</section>
+
+<section id="plan">
+  <h2>Your plan from this morning, checked</h2>
+  <p class="lead">Most of it holds. Four things changed. These are already corrected in the plan file.</p>
+  <ul class="items green">
+    <li><b>Holds: the three tests, and the three lines that stay on the pricing card</b><span>Test 1 (would it change the decision to pay?) is the regulators' own test. "Amazon decides", "software, not a law firm" and "some cases we do not take" stay before the pay button, reworded to read as confidence. Mercury keeps its status line on its pricing page and does not look weak.</span></li>
+    <li><b>Holds: six of the eight Terms definitions</b><span>Case and round, device, refund, free-decoder limits, AI availability (beside the AI bullet until the paid AI is on), Amazon US scope, support window.</span></li>
+  </ul>
+  <ul class="items amber">
+    <li><b>Changed: the "twenty responses" rule</b><span>No company we checked hides a count behind a public "every". It becomes an anti-abuse rule about one seller's own case, with the number only as an outer bound, and a promise to ask before limiting. Never on a public page.</span></li>
+    <li><b>Changed: "faster than a law firm" is struck</b><span>It compares us to lawyers. That is exactly what the US regulator fined DoNotPay for, and we have no data behind it. The card now says: "Software you run yourself. Not a law firm, and not legal advice. Built around what Amazon's own appeal page asks for."</span></li>
+    <li><b>Changed: the files line keeps its warning</b><span>The rewrite had dropped "clearing the browser removes them", which is the fact that matters. It is back: "Your files stay on your device, encrypted. Clearing the browser removes them, so make the encrypted backup once the case is live."</span></li>
+    <li><b>Changed: the reason behind Test 2</b><span>The plan said "Paddle reads the whole site". Paddle's own pages say it checks that the pages exist, are linked, and the product fits its rules, and that most sites are approved automatically. The real reader of a contradiction is a refund analyst, a chargeback reviewer or a regulator. The test stays; the reason is corrected.</span></li>
+  </ul>
+</section>
+
+<section id="paddle">
+  <h2>Two Paddle findings, and two gaps in the Terms</h2>
+  <ul class="items red">
+    <li><b>Our 7-day refund may fail Paddle's review</b><span>Paddle's published seller-policy guidance (checked by me today): the change-of-mind window "must be 14–90 days"; "a sub-14-day refund window ... fail[s] review". Our live page promises 7 days. Moving to 14 costs nothing measurable and matches Paddle's own 14-day refund-request window. Your call (it is decision D8). <span class="flag">F-15 in the parked-items file</span></span></li>
+    <li><b>The checkout has no "I have read the Terms" tick</b><span>Only the EU-withdrawal checkbox exists. Under US case law, Terms clauses bind only with clear notice and a clear act. Add "I have read the Terms and the Refund policy" with links to that checkbox's label.</span></li>
+    <li><b>The Terms lack the Merchant-of-Record sentence Paddle asks for</b><span>For example: "Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders."</span></li>
+    <li><b>The governing-law line is wrong for the purchase</b><span>The sale is with Paddle under English law. Our "laws of Pakistan" clause should govern the licence only, and say so. Also: the "changes to these terms" line should promise an email to every account holder before a change, and never reduce a Pass already bought; and the liability cap should be in bold with a "does not apply to fraud" carve-out.</span></li>
+  </ul>
+</section>
+
+<section id="you">
+  <h2>Only you can decide these</h2>
+  <ol class="steps">
+    <li><b>The refund window.</b> Keep 7 days and ask Paddle in writing whether it passes, or move to 14 (advice: 14).</li>
+    <li><b>Approve the corrected plan</b> (its section 6): the tests, the eight definitions as corrected, the rewordings, the Terms additions and the checkout tick. Then it is one copy-only batch, built when you name it.</li>
+    <li><b>The lawyer read</b> stays scheduled after Paddle approval. This research is sourced, but it is not legal advice.</li>
+  </ol>
+</section>
+</main>
+<footer><div class="wrap"><hr><p>This page is the plain reading of <code>2026-10-12-disclosure-pages-research.md</code>, which carries every quote with its source and date. Two research agents ran on 12 October 2026 with live web checks; two findings were re-verified by hand. Nothing has been built from it.</p></div></footer>
+<script>(function(){var l=document.querySelectorAll("nav.chips a[href^=\"#\"]");function go(e){var id=this.getAttribute("href").slice(1),el=document.getElementById(id);if(!el)return;e.preventDefault();var n=document.querySelector("nav.chips"),t=el.getBoundingClientRect().top+window.pageYOffset-(n?n.offsetHeight:0)-4;window.scrollTo({top:t,behavior:"smooth"})}for(var i=0;i<l.length;i++)l[i].addEventListener("click",go)})();</script>
+</body>
+</html>
