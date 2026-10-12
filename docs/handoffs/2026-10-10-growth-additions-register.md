@@ -391,6 +391,8 @@ So the next session does not pick them up again. One line each.
 
 ## 11. Suggested build order
 
+> **12 Oct 2026:** the founder struck G-109, G-44, G-46, G-38, G-04/G-79 and G-06/G-78 and approved G-43; the waves below and decision 11 in §12 still name some of them. `2026-10-10-growth-do-and-not-do.md` §0 and the master launch report (`2026-10-12-master-launch-report.md`) override this section.
+
 Waves of 4 to 8 items. Sizes: word = under an hour, S = a day or less, M = several days. The founder picks by ID; nothing starts on a general "go ahead".
 
 | Wave                                     | Items                                                                                                                                                                                                                                                                                          | Size   | What it changes for the visitor                                                                                                                                                              |

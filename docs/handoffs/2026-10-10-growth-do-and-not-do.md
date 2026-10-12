@@ -121,7 +121,7 @@ Defects and untrue words. Highest value per hour. Do these first.
 | G-70           | "Cannot find the notice?" hint; a dashboard prompt when a follow-up date passes                               |
 | G-71           | Restore link in the signed-in empty state; billing says "browsers", not "devices"                             |
 
-### 3.4 The small polish rows (22 rows, fold into the batches above)
+### 3.4 The small polish rows (21 rows after G-109 was struck on 12 Oct, fold into the batches above)
 
 G-89, G-90, G-92, G-95, G-100, G-101, G-102, G-103, G-104, G-105, G-106, G-107, G-108, plus the polish rows already named in batch A and B (G-87, G-88, G-91, G-93, G-94, G-96, G-97, G-98, G-109). All are one string or one label. G-103 (the checkbox lag) is unverified: fix it only if a hand test shows it.
 

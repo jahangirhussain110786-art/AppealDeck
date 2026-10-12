@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>AppealDeck: the master launch report, in plain words</title>
+<style>
+:root{--bg:#f6f5f0;--card:#ffffff;--ink:#14213a;--muted:#566074;--line:#e3e1d8;--navy:#14213a;--navy-ink:#f4f6fb;--orange:#c2410c;--orange-soft:#fdece3;--green:#166534;--green-soft:#e7f5ec;--amber:#8a5a00;--amber-soft:#fdf3d8;--red:#9f1d1d;--red-soft:#fbe9e9;--blue:#1d4ed8;--blue-soft:#e8effd}
+@media (prefers-color-scheme: dark){:root{--bg:#0d1424;--card:#151f35;--ink:#eef1f8;--muted:#a6b0c5;--line:#26324d;--navy:#0a1020;--navy-ink:#f4f6fb;--orange:#fb923c;--orange-soft:#3a2214;--green:#6ee7a0;--green-soft:#12301f;--amber:#f5c451;--amber-soft:#33290f;--red:#fca5a5;--red-soft:#3a1717;--blue:#93b4ff;--blue-soft:#17233f}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.65;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}a{color:var(--blue)}
+code{font:.9em ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--blue-soft);padding:.1em .35em;border-radius:5px;word-break:break-word}
+.hero{background:var(--navy);color:var(--navy-ink);padding:34px 0 30px}
+.hero .tag{display:inline-block;font-size:13px;font-weight:700;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:999px;margin-bottom:16px}
+.hero h1{font-size:30px;line-height:1.2;margin:0 0 14px;font-weight:800}.hero h1 em{font-style:normal;color:#fdba74}
+.hero p{margin:0;font-size:18px;color:#dbe3f2}.hero .meta{margin-top:18px;font-size:14px;color:#aebad2}
+nav.chips{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.chips .scroll{display:flex;gap:8px;overflow-x:auto;padding:10px 18px;max-width:720px;margin:0 auto;scrollbar-width:none}
+nav.chips .scroll::-webkit-scrollbar{display:none}
+nav.chips a{flex:none;text-decoration:none;font-size:14px;font-weight:600;color:var(--ink);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:999px;white-space:nowrap}
+section{padding:34px 0 6px;scroll-margin-top:64px}h2{font-size:25px;line-height:1.25;margin:0 0 6px;font-weight:800}h3{font-size:19px;line-height:1.3;margin:26px 0 6px;font-weight:700}
+p{margin:0 0 14px}.lead{font-size:18px;color:var(--muted);margin-bottom:18px}.small{font-size:15px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 8px;text-align:center}
+.stat b{display:block;font-size:34px;line-height:1.1;font-weight:800}.stat span{display:block;font-size:13.5px;color:var(--muted);margin-top:4px;line-height:1.3}
+.stat.do b{color:var(--green)}.stat.hold b{color:var(--amber)}.stat.no b{color:var(--red)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+.callout{border-radius:16px;padding:16px 18px;margin:16px 0;border:1px solid transparent}.callout b.t{display:block;margin-bottom:4px}
+.callout.warn{background:var(--amber-soft);border-color:var(--amber)}.callout.info{background:var(--blue-soft);border-color:var(--blue)}.callout.good{background:var(--green-soft);border-color:var(--green)}.callout.bad{background:var(--red-soft);border-color:var(--red)}
+ul.items{list-style:none;margin:10px 0 0;padding:0}
+ul.items li{background:var(--card);border:1px solid var(--line);border-left-width:5px;border-radius:14px;padding:13px 15px;margin:0 0 10px}
+ul.items li b{display:block;font-size:17px;margin-bottom:2px}ul.items li span{display:block;font-size:15.5px;color:var(--muted);line-height:1.55}
+ul.items.green li{border-left-color:var(--green)}ul.items.amber li{border-left-color:var(--amber)}ul.items.red li{border-left-color:var(--red)}ul.items.blue li{border-left-color:var(--blue)}
+ul.items li .id{display:inline-block;font-size:12.5px;font-weight:700;border-radius:6px;padding:1px 7px;margin-right:6px;background:var(--blue-soft);color:var(--blue);vertical-align:middle}
+ul.items li .flag{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px;margin:6px 6px 0 0;background:var(--amber-soft);color:var(--amber)}
+ol.steps{padding-left:0;list-style:none;counter-reset:s;margin:12px 0}ol.steps li{counter-increment:s;position:relative;padding:4px 0 14px 46px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:32px;height:32px;border-radius:50%;background:var(--navy);color:var(--navy-ink);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+details{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:10px 0;padding:0}
+details summary{cursor:pointer;list-style:none;padding:15px 18px;font-weight:700;font-size:17px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+details summary::-webkit-details-marker{display:none}details summary::after{content:"+";font-size:24px;line-height:1;color:var(--muted)}details[open] summary::after{content:"–"}
+details .inner{padding:0 18px 8px}
+table.t{width:100%;border-collapse:collapse;font-size:15px;margin:10px 0}table.t th,table.t td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}table.t th{font-size:13px;color:var(--muted)}
+footer{padding:34px 0 50px;color:var(--muted);font-size:15px}hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+@media (min-width:640px){body{font-size:18px}.hero h1{font-size:40px}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <span class="tag">One report from everything. Edit it, or say GO.</span>
+  <h1>AppealDeck: the master launch <em>report</em></h1>
+  <p>Everything the research found since September, in one place: where we stand, who we are against, what makes a seller stay and pay, the complete to-do list in order, and every decision that is yours. Nothing here is built yet. The full file with every number and source is <code>2026-10-12-master-launch-report.md</code>.</p>
+  <div class="meta">Written 12 October 2026 · a GO releases the build batches only, never a parked item, never a decision</div>
+</div></header>
+<nav class="chips" aria-label="Jump to a part"><div class="scroll">
+  <a href="#answer">The answer</a><a href="#stand">Where we stand</a><a href="#against">Who we are against</a><a href="#treasure">Stay and pay</a><a href="#you">Your part</a><a href="#decide">Decide</a><a href="#build">The batches</a><a href="#go">What GO means</a><a href="#after">After launch</a>
+</div></nav>
+<main class="wrap">
+
+<section id="answer">
+  <h2>The short answer</h2>
+  <p class="lead">The product is real and complete for a solo build. Whether it pays is decided by three things that are not code. The work is four layers, and the batches take about two weeks of AI sessions.</p>
+  <div class="stats">
+    <div class="stat do"><b>33</b><span>things a seller can do today</span></div>
+    <div class="stat hold"><b>10</b><span>built, waiting on one setting of yours</span></div>
+    <div class="stat no"><b>3</b><span>things that decide the money, none of them code</span></div>
+  </div>
+  <div class="card">
+    <p><b>The three things:</b> a card must be chargeable (Paddle is the only way to take money from Pakistan; there is no plan C); someone must be sent to the site (the only fast door is the appeal writers and VAs you reach yourself); and a stranger must pay $249 once for software (nobody in this market has yet been seen to). Odds of a first paid Pass within 60 days: 25 to 40%, rising to 40 to 55% if you bring 10 to 20 writers or VAs to live cases.</p>
+    <p><b>What makes a seller stay and pay</b> is now checked against real reviews: a named person who answers, no template, no promise, persistence across every round, a record of what was sent. The product already does most of it by design; three moments fall short today (the first minute, the gate, the first paid round), and every fix is already a row in the plan.</p>
+    <p style="margin-bottom:0"><b>Four things found this week:</b> Paddle's rule says a refund window under 14 days fails its review (we promise 7); the checkout has no "I have read the Terms" tick; our code on GitHub is public; and one open question (sign-out scope) was already closed in code.</p>
+  </div>
+</section>
+
+<section id="stand">
+  <h2>Where we stand</h2>
+  <ul class="items green">
+    <li><b>Live and tested (33 things)</b><span>Free: decode a notice, the scam check, the invoice check on the device, a case saved in the browser, five guides. The case: classify and correct, route, deadlines, the evidence plan, why each record and how to get it, documents, business details, on-device document reading, the facts ledger, invoices against units sold, the prepared response, the questionnaire, what was sent, Amazon's reply applied, what changed, change of approach, the root-cause coach, the evidence pack, exports. Account: sign in, the vault, backups, the dashboard, outcomes.</span></li>
+  </ul>
+  <ul class="items amber">
+    <li><b>Built, waiting on you (10 things)</b><span>The AI document check, the AI-written response and the wording help (paid Gemini tier). Email reminders and the purchase email (Resend key). Buying a Pass (Paddle). Refund revocation (untested against live Paddle). The support mailbox. Plausible. The backup secrets and one restore drill.</span></li>
+    <li><b>One setting under everything signed in</b><span>Upstash. Without it, every signed-in server feature answers "too many requests". Connected on 28 September, not yet proved on a deployment.</span></li>
+  </ul>
+  <p class="small">The honest scorecard (10 Oct): market 6 · product 5 · competition 4 · distribution 3 · operations 7 · money 4 · durability 5. Money, plainly: about $60 a month of hosting; about $230 in your bank per Pass; 5 to 6 Passes a month pays you PKR 300,000; expect zero income for several months.</p>
+</section>
+
+<section id="against">
+  <h2>Who we are against</h2>
+  <h3>The tools and firms that sell an appeal</h3>
+  <p>AppealsPro (free letters, a ticker, fake-looking reviews, no deadline from the notice), Mr Jeff (a score and a root cause invented from the notice; its Trustpilot was suspended for fake reviews), SellerForge (needs your Amazon login), a 751-star GitHub "skill" that is an empty shell, Amazon's own assistant (works inside a healthy account), and the human firms (hundreds of reviews naming people; £700 to $2,495; the one-star pattern is silence after paying). Our first minute beats all of them on honesty and speed; our gaps are a one-tap sample, a shorter phone result, and a first button that says "workspace".</p>
+  <h3>Dastan, and the Pakistani-run field</h3>
+  <ul class="items blue">
+    <li><b>Dastan (dastantraders.com goes to dastan.uk)</b><span>A human agency. The only public record is a UK company registered on 2 October 2025 at a house in Derby, one director (nationality Pakistani per the register; the site names no location for anyone). "Since 2019" has no record behind it. Twenty services, no price anywhere, "20% upfront, 80% after reinstatement", clients from Fiverr and Upwork, WhatsApp 24/7. Every trust device fails a cross-check: a "Verified" badge that lands on a login wall, "15 specialists" above 22 names with no photos, ten reviews shown twice, four different market counts, "94 cases" on the site against "2000+ cases" and "98% success" on Fiverr, counters that show 0, a Trustpilot profile with zero reviews and location "Spain".</span></li>
+    <li><b>ReKommerce</b><span>$795 and $1,495 packages, a $295 non-refundable template pack delivered in 12 hours, and sales interns paid PKR 12,000 a month to hunt suspended sellers. The nearest thing to our Pass in Pakistan, and weaker on everything a buyer can check.</span></li>
+    <li><b>Ecommerce Success Pakistan</b><span>The biggest claimed audience in Pakistan, and it sells its own suspension service at $299 to $1,400 with a PKR 10,000 fee. Answer threads in its group as a member; never co-brand.</span></li>
+    <li><b>The VA agencies and the Fiverr/Upwork writers</b><span>They say in writing they "can't undo an existing suspension"; they run the daily account-health routine and keep the log our case record fits. They are the door, not the rival. Writers charge $5 to $600 per appeal, so a writer cannot pay $249 out of a gig: the client pays, the writer gets a payout.</span></li>
+  </ul>
+  <div class="callout good"><b class="t">What we take, and what we never copy</b>Take: a named person, a kept reply window, registered-entity lines, an "after resolution" phase. Never: "pay after results" (a prediction expressed in money), success rates and case counts without a full count, badges, counters, a roster, repeated testimonials, WhatsApp as the support door, hunting suspended sellers. Your team page is the opposite of Dastan's: one name, one country, four true numbers, nothing a registry or a test file cannot confirm.</div>
+</section>
+
+<section id="treasure">
+  <h2>What makes a seller stay and pay</h2>
+  <p class="lead">From the reviews: the five-star ones praise a named person, being kept informed, speed, persistence across rounds and honesty about chances. The one-star ones are silence, templates, "literally ChatGPT", paid and nothing, and refund trouble. We already refuse every one of those by design; two are invisible and one is not yet real (no named person, no mailbox).</p>
+  <h3>The treasure test</h3>
+  <p class="small">Ten yes/no questions. Today the product scores 2 of 5 after the first free session and 2 of 5 after the first paid round. After the batches: 5 of 5 and 5 of 5, with the two that are yours (your name on the page, a mailbox that answers).</p>
+  <details><summary>After the first free session, can the seller say yes to…</summary><div class="inner"><ol class="steps">
+    <li>I know what Amazon is asking for, in my own notice's words, and by when, or that no date is written and where to look. <b>Yes today.</b></li>
+    <li>I know what happens to my money. <b>No today.</b> Fixed by the "Your money" line.</li>
+    <li>I know which records to gather, why each one, and what to do if I cannot get one. <b>Yes today.</b></li>
+    <li>It told me one true thing I did not know. <b>No today.</b> Fixed by the scam check's "looked for" list, the invoice arithmetic, "do not resend the same text", "nothing is due tonight unless Account Health shows a date".</li>
+    <li>I know what it costs, what stays free, and who is behind it. <b>No today.</b> Fixed by the price at the gate and your name on the page.</li>
+  </ol></div></details>
+  <details><summary>After the first paid round, can the buyer say yes to…</summary><div class="inner"><ol class="steps">
+    <li>I sent Amazon a response made only of my own facts, with no template phrases, that pasted cleanly. <b>No today</b> (the "##" marks; the invisible fact lock).</li>
+    <li>I have the pack and a dated record of exactly what I sent. <b>Yes today.</b></li>
+    <li>When Amazon replied, the case told me what the reply means and what changed, without losing my work. <b>Yes today.</b></li>
+    <li>When I wrote to support, a named person answered inside the stated window. <b>No today.</b> Yours: the mailbox and your sentence.</li>
+    <li>If it goes another round I know what to do next, and I know how to get a refund if I want one. <b>Partly today.</b> Fixed by the "what you now have" panel and the refund decision.</li>
+  </ol></div></details>
+  <h3>The three moments, and the fixes already in the plan</h3>
+  <ul class="items green">
+    <li><b>The first minute</b><span>One tap to a full sample; the truthful deadline line; the "Your money" line; what the scam check looked for; "Start my case — free" instead of "Open case workspace".</span></li>
+    <li><b>The gate</b><span>The $249 price on the screen where the seller decides, and labelled samples of the three paid things no rival has: a prepared response, the pack's index page, a document-check report.</span></li>
+    <li><b>The first paid round</b><span>No "##" in the copied response; the letter and the pack agree on file names; a "what you now have" panel after paying and the same four lines in the purchase email; a visible "your own words" stamp; the pack beside "Open Seller Central"; Amazon's own review-time statement so its silence is not blamed on us.</span></li>
+  </ul>
+  <div class="callout info"><b class="t">A paid "watch" subscription after reinstatement?</b>The evidence says no, for now: Amazon monitors account health free; the human version costs $17 a day; the one paid-watch market with reviews collapsed when Amazon did it free; no seller was found paying for one. Keep it deferred; revisit only if ten reinstated buyers ask in writing.</div>
+</section>
+
+<section id="you">
+  <h2>Your part: the configuration, in order</h2>
+  <p class="lead">No GO starts these. Each one unblocks the next.</p>
+  <ol class="steps">
+    <li><b>Buy and connect appealdeck.com.</b> Everything below hangs on it.</li>
+    <li><b>Make the three email addresses real</b> (free forwarding into one Gmail) and read them daily.</li>
+    <li><b>Supabase mail and Google sign-in on the real domain</b> (custom SMTP through Resend; the OAuth redirect).</li>
+    <li><b>The Vercel secrets and the visitor counter</b> (Supabase service key, cron secret, Resend key, alert email, Plausible).</li>
+    <li><b>Vercel Pro and Supabase Pro.</b></li>
+    <li><b>The Paddle copy pass</b> ("software" not "service"; the Merchant-of-Record sentence; the policy links in the menu; the refund window you decide; the Terms tick at checkout). This is the small batch the AI does first.</li>
+    <li><b>Paddle:</b> the default payment link, the live product at $249, keys, webhook, blocked EU/UK, domain approval (2 to 10 business days).</li>
+    <li><b>Gemini billing</b> on the key's Google project, then the switch on Vercel, then the first live AI check the same day.</li>
+    <li><b>Backup secrets and one restore drill;</b> migration 0016.</li>
+    <li><b>A free uptime monitor</b> on /api/health.</li>
+    <li><b>The live test:</b> buy one Pass with your own card, see the email and the activation, refund yourself, see the Pass revoked.</li>
+    <li><b>The 16 post-deploy checks</b> on the real domain. Then you are live.</li>
+  </ol>
+  <p class="small">In parallel, with no order: the Keyword Planner hour; claim the Trustpilot and Google profiles (location Pakistan); the continuity note in a password manager with emergency access for one trusted person; FBR, PSEB and Payoneer registrations and one tax adviser; your own page and one-line sentence, in your words; a 3-minute walkthrough recording; ten minutes in your own Seller Central to settle four claims; a five-minute look at Dastan's Fiverr and Upwork profiles; the Enablers directory question; delete the two stale worktrees. Later, after Paddle approval: one lawyer read of the Terms and Privacy.</p>
+</section>
+
+<section id="decide">
+  <h2>Decide: the eleven that cost nothing and unblock copy</h2>
+  <p class="lead">Answer by number. If you say nothing, the default applies. The full list of 36 is in the main file.</p>
+  <ul class="items amber">
+    <li><b><span class="id">1</span>The refund window</b><span>Keep 7 days and ask Paddle in writing, or move to 14. <b>Default: 14.</b> Paddle's rule says under 14 fails review.</span></li>
+    <li><b><span class="id">2</span>The Terms and pricing-card plan</b><span>Approve as corrected: the tests, the eight definitions, the rewordings, the Terms additions, the checkout tick. <b>Default: approve.</b></span></li>
+    <li><b><span class="id">3</span>The public code repository</b><span>Keep public knowingly, or make private. <b>Default: private.</b></span></li>
+    <li><b><span class="id">4</span>The support window</b><span>Two business days only if you will read the mailbox every working day; otherwise five. <b>Default: two.</b></span></li>
+    <li><b><span class="id">5</span>EU and UK buyers</b><span>Comply with GDPR, or keep purchases blocked. <b>Default: keep blocked for now.</b></span></li>
+    <li><b><span class="id">6</span>The partner shape for writers and VAs</b><span>Client pays $249 and the writer gets a payout; a monthly per-seat licence; or both. <b>Default: client pays, writer gets a payout.</b> Nobody in Pakistan pays per case for a tool.</span></li>
+    <li><b><span class="id">7</span>Name the batches</b><span>"GO on the master report", or "do batch A", or name IDs. <b>Default: GO, in the order below.</b></span></li>
+    <li><b><span class="id">8</span>Your one-line sentence</b><span>This week if you can. Nobody drafts it for you. Never the word "expert".</span></li>
+    <li><b><span class="id">9</span>The product name in the forum-safe copy</b><span><b>Default: leave it out</b> on Amazon's forum; keep it on the group version.</span></li>
+    <li><b><span class="id">10</span>Urdu on the support page</b><span>One line only if you will answer in Urdu. <b>Default: no line.</b></span></li>
+    <li><b><span class="id">11</span>The three items you struck this morning</b><span>The scam page, the "What we will not do" page, the supplier-letter page. <b>Default: they stay struck.</b></span></li>
+  </ul>
+  <p class="small">Also in the main file: what to do if Paddle refuses twice or Google will not bill your card; the micro ad test (only after the keyword hour); no new features until 50 cases; the price tests in a pre-agreed order; the SP-API (not before 20 paying cases); the free draft check; the price strip; refund speed; check-in emails (a parked item); the human-review path (not now); messaging Dastan and ReKommerce (after the repo is private, last on the list).</p>
+</section>
+
+<section id="build">
+  <h2>The batches a GO releases, in order</h2>
+  <p class="lead">About ten to twelve working days of AI sessions, six commits. Nothing adds a feature; it makes what exists true, clear and worth the money.</p>
+  <ul class="items green">
+    <li><b>1 · Batch A: fix what is wrong today (about 3 days)</b><span>No more "##" in the copied response. The letter and the pack agree on file names. The truthful deadline line. "The notice text is not kept" instead of "Not stored". The $249 price where the seller decides. "Start my case — free". The pricing note as one sentence on a phone. The product-safety fix you approved.</span></li>
+    <li><b>2 · The Terms and pricing-card batch (about 1 day)</b><span>Lead with strengths; the three material lines stay before the pay button, reworded to read as confidence; definitions and operating rules into the Terms; the Merchant-of-Record sentence; the governing-law fix; the Terms tick at checkout; the refund window you chose. Must be live before Paddle reviews the site.</span></li>
+    <li><b>3 · Batch B: the first 60 seconds (about 2.5 days)</b><span>One tap to a full sample. The price and the three labelled sample artefacts at the gate. The "Your money" line. What the scam check looked for. "We could not place this notice." "Nothing has to be sent tonight unless Account Health shows a date." The home page lists everything that is free. The invoice check linked and kept visible. Short answers about the ASIN on the invoice and the supplier's supplier. Three do-and-don't cards. Small home-page fixes.</span></li>
+    <li><b>4 · Batch C: trust and the free doors (about 3 days)</b><span>The free reply reader. The invoice check shows its arithmetic. The "How we test" page with our test notices shared and our misses dated. Your name on the trust band (your sentence). The insider-offer warning. Clearer answers to the two questions a buyer reads first. "Software", not "service". The "your own words" stamp. The "what you now have" panel after paying and the purchase-email lines. A case name and an all-cases spreadsheet for helpers. Downloads beside "Open Seller Central". Amazon's own review-time statement. Help when the notice cannot be found. Help on a second device.</span></li>
+    <li><b>5 · The "feel supported" items (about 2 days, all free)</b><span>Ten ready support answers and an automatic acknowledgement. A help page with search. A security section and security.txt. Tidier emails. A page listing the free tools. Your page wired when you write it.</span></li>
+    <li><b>6 · The documents (half a day)</b><span>The competitor dossier entry. The pre-filled outreach list of 20. The three first-message scripts. Register clean-up so no session re-opens a closed item.</span></li>
+  </ul>
+  <div class="callout warn"><b class="t">Not in any batch, on purpose</b>The holds wait for their triggers (the review ask, the VA page, the problem pages, the newsletter, the community shapes, the expert path, the decode CLI, the tour, and more). The parked items wait for your exact phrase. The struck and skipped items stay struck, with their reasons written down.</div>
+</section>
+
+<section id="go">
+  <h2>What a GO means</h2>
+  <ol class="steps">
+    <li><b>You answer the decisions you want answered now</b> (the rest default as recommended) and write your sentence when you are ready.</li>
+    <li><b>The batches run in order:</b> A, the Terms batch, B, C, the supported items, the documents. One commit each, all checks green, a browser check on a phone and a desktop, pushed, the registers updated.</li>
+    <li><b>Your configuration runs in parallel</b> in the order above. Launch is the day your own test purchase succeeds.</li>
+    <li><b>A GO never</b> releases a parked item, changes a locked decision, builds a hold before its trigger, adds a feature before 50 cases, or publishes a claim the word checks ban.</li>
+  </ol>
+</section>
+
+<section id="after">
+  <h2>After launch: the routine</h2>
+  <ul class="items blue">
+    <li><b>Daily, one fixed hour</b><span>Read the mailboxes; answer within two business days with the ten ready answers and the fixed "will I win?" script; refunds the same day; log every message.</span></li>
+    <li><b>Weekly, 2 to 3 hours</b><span>Answer 3 to 5 suspension threads in the existing groups with a plain reading of the notice (no link or name on Amazon's forum). Talk to writers and VAs in Lahore and Karachi with the outreach list, the scripts, the one-tap sample and the "How we test" page. Fill the numbers sheet.</span></li>
+    <li><b>Monthly</b><span>Ten fresh notices through the decoder, misses fixed and the count published; AI deprecations and prices; Amazon's assistant release notes; the prepay top-up; one problem page once the domain exists.</span></li>
+    <li><b>Quarterly</b><span>The 90-day policy brief; refunds and chargebacks reviewed; the outcomes page once it has a full count; competitor prices re-checked.</span></li>
+    <li><b>Stop or change course when</b><span>Paddle refuses twice with no fixable reason, or Google will not bill the card (the free decoder stays up; the business becomes a different business); 50 cases started with under one Pass (price tests in the pre-agreed order, no features); two missed monthly routines in a row.</span></li>
+  </ul>
+</section>
+</main>
+<footer><div class="wrap"><hr><p>This page is the plain reading of <code>2026-10-12-master-launch-report.md</code>, which carries every number with its tag and source and the complete lists. It compiles the 10 October success assessment and growth register, the 12 October community, disclosure and indirect-competitor research, and an inventory of every open item in the repository. Nothing has been built from it.</p></div></footer>
+<script>(function(){var l=document.querySelectorAll("nav.chips a[href^=\"#\"]");function go(e){var id=this.getAttribute("href").slice(1),el=document.getElementById(id);if(!el)return;e.preventDefault();var n=document.querySelector("nav.chips"),t=el.getBoundingClientRect().top+window.pageYOffset-(n?n.offsetHeight:0)-4;window.scrollTo({top:t,behavior:"smooth"})}for(var i=0;i<l.length;i++)l[i].addEventListener("click",go)})();</script>
+</body>
+</html>
