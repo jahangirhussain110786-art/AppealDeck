@@ -276,6 +276,9 @@ function WorkspaceInner({
   const [newCasePrompt, setNewCasePrompt] = useState(false);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
+  // G-103: the "Amazon asked for nothing else" tick shows the choice at once; the saved value
+  // takes over when the save ends (or the tick goes back if the save failed).
+  const [tickPending, setTickPending] = useState<boolean | null>(null);
   const [error, setError] = useState("");
   const [records, setRecords] = useState<VaultListItem[]>([]);
   const [tab, setTab] = useState(
@@ -2177,7 +2180,7 @@ function WorkspaceInner({
                   <input
                     className="mt-0.5 size-5 shrink-0 accent-primary"
                     type="checkbox"
-                    checked={w.requirementsConfirmed}
+                    checked={tickPending ?? w.requirementsConfirmed}
                     disabled={busy || !w.confirmed}
                     onChange={(e) => {
                       // Read now, not inside the updater. `commit` runs its updater after any
@@ -2185,7 +2188,10 @@ function WorkspaceInner({
                       // by then React has reset this controlled input to the saved value, so a
                       // lazy `e.target.checked` reads `false` and the tick silently undoes itself.
                       const confirmed = e.target.checked;
-                      void commit((old) => ({ ...old, requirementsConfirmed: confirmed }));
+                      setTickPending(confirmed);
+                      void commit((old) => ({ ...old, requirementsConfirmed: confirmed })).finally(
+                        () => setTickPending(null),
+                      );
                     }}
                   />
                   {C.documents.allListed}
