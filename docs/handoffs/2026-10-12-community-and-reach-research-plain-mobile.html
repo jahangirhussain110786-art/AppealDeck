@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>A forum, free tools and support: what the research says, in plain words</title>
+<style>
+:root{
+  --bg:#f6f5f0; --card:#ffffff; --ink:#14213a; --muted:#566074; --line:#e3e1d8;
+  --navy:#14213a; --navy-ink:#f4f6fb; --orange:#c2410c; --orange-soft:#fdece3;
+  --green:#166534; --green-soft:#e7f5ec; --amber:#8a5a00; --amber-soft:#fdf3d8;
+  --red:#9f1d1d; --red-soft:#fbe9e9; --blue:#1d4ed8; --blue-soft:#e8effd;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1424; --card:#151f35; --ink:#eef1f8; --muted:#a6b0c5; --line:#26324d;
+    --navy:#0a1020; --navy-ink:#f4f6fb; --orange:#fb923c; --orange-soft:#3a2214;
+    --green:#6ee7a0; --green-soft:#12301f; --amber:#f5c451; --amber-soft:#33290f;
+    --red:#fca5a5; --red-soft:#3a1717; --blue:#93b4ff; --blue-soft:#17233f;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:17px;line-height:1.65;
+  padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}
+a{color:var(--blue)}
+code{font:.9em ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--blue-soft);padding:.1em .35em;border-radius:5px;word-break:break-word}
+.hero{background:var(--navy);color:var(--navy-ink);padding:34px 0 30px}
+.hero .tag{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.02em;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:999px;margin-bottom:16px}
+.hero h1{font-size:30px;line-height:1.2;margin:0 0 14px;font-weight:800}
+.hero h1 em{font-style:normal;color:#fdba74}
+.hero p{margin:0;font-size:18px;color:#dbe3f2}
+.hero .meta{margin-top:18px;font-size:14px;color:#aebad2}
+nav.chips{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.chips .scroll{display:flex;gap:8px;overflow-x:auto;padding:10px 18px;max-width:720px;margin:0 auto;scrollbar-width:none}
+nav.chips .scroll::-webkit-scrollbar{display:none}
+nav.chips a{flex:none;text-decoration:none;font-size:14px;font-weight:600;color:var(--ink);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:999px;white-space:nowrap}
+section{padding:34px 0 6px;scroll-margin-top:64px}
+h2{font-size:25px;line-height:1.25;margin:0 0 6px;font-weight:800}
+h3{font-size:19px;line-height:1.3;margin:26px 0 6px;font-weight:700}
+p{margin:0 0 14px}
+.lead{font-size:18px;color:var(--muted);margin-bottom:18px}
+.small{font-size:15px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 8px;text-align:center}
+.stat b{display:block;font-size:34px;line-height:1.1;font-weight:800}
+.stat span{display:block;font-size:13.5px;color:var(--muted);margin-top:4px;line-height:1.3}
+.stat.do b{color:var(--green)} .stat.hold b{color:var(--amber)} .stat.no b{color:var(--red)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+.callout{border-radius:16px;padding:16px 18px;margin:16px 0;border:1px solid transparent}
+.callout b.t{display:block;margin-bottom:4px}
+.callout.warn{background:var(--amber-soft);border-color:var(--amber)}
+.callout.info{background:var(--blue-soft);border-color:var(--blue)}
+.callout.good{background:var(--green-soft);border-color:var(--green)}
+.callout.bad{background:var(--red-soft);border-color:var(--red)}
+ul.items{list-style:none;margin:10px 0 0;padding:0}
+ul.items li{background:var(--card);border:1px solid var(--line);border-left-width:5px;border-radius:14px;padding:13px 15px;margin:0 0 10px}
+ul.items li b{display:block;font-size:17px;margin-bottom:2px}
+ul.items li span{display:block;font-size:15.5px;color:var(--muted);line-height:1.55}
+ul.items.green li{border-left-color:var(--green)}
+ul.items.amber li{border-left-color:var(--amber)}
+ul.items.red li{border-left-color:var(--red)}
+ul.items.blue li{border-left-color:var(--blue)}
+ul.items li .flag{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px;margin:6px 6px 0 0;background:var(--amber-soft);color:var(--amber)}
+ul.items li .id{display:inline-block;font-size:12.5px;font-weight:700;border-radius:6px;padding:1px 7px;margin-right:6px;background:var(--blue-soft);color:var(--blue);vertical-align:middle}
+ol.steps{padding-left:0;list-style:none;counter-reset:s;margin:12px 0}
+ol.steps li{counter-increment:s;position:relative;padding:4px 0 14px 46px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:32px;height:32px;border-radius:50%;background:var(--navy);color:var(--navy-ink);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+details{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:10px 0;padding:0}
+details summary{cursor:pointer;list-style:none;padding:15px 18px;font-weight:700;font-size:17px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";font-size:24px;line-height:1;color:var(--muted)}
+details[open] summary::after{content:"–"}
+details .inner{padding:0 18px 8px}
+blockquote{margin:12px 0;padding:12px 16px;border-left:4px solid var(--orange);background:var(--orange-soft);border-radius:0 12px 12px 0;font-size:16px}
+footer{padding:34px 0 50px;color:var(--muted);font-size:15px}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+@media (min-width:640px){ body{font-size:18px} .hero h1{font-size:40px} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="tag">Research for you, the founder. Nothing is built.</span>
+    <h1>A forum, free tools and support: what the research <em>says</em></h1>
+    <p>You asked three things: should we build a place where sellers talk and get answers from us or from experts; what free, open building blocks could make the tool feel complete; and what gives every seller a reason to look once. Four research agents checked the web and our own code. This page is the plain reading. The full file with every source is <code>2026-10-12-community-and-reach-research.md</code>.</p>
+    <div class="meta">Written 12 October 2026 · pick items by their ID (X-01 and so on) · parked items still need their exact phrase</div>
+  </div>
+</header>
+
+<nav class="chips" aria-label="Jump to a part">
+  <div class="scroll">
+    <a href="#answer">The answer</a>
+    <a href="#forum">A forum?</a>
+    <a href="#experts">Experts?</a>
+    <a href="#do">Do now</a>
+    <a href="#wait">Wait</a>
+    <a href="#skip">Skip</a>
+    <a href="#disagree">Where it disagrees</a>
+    <a href="#support">Support</a>
+    <a href="#numbers">Numbers</a>
+    <a href="#you">Only you</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<section id="answer">
+  <h2>The short answer</h2>
+  <p class="lead">No forum. No experts. Yes to thirteen free, boring things that make the product feel supported. Then show up where sellers already talk.</p>
+
+  <div class="stats">
+    <div class="stat do"><b>13</b><span>things to do now, all free</span></div>
+    <div class="stat hold"><b>19</b><span>things to wait on</span></div>
+    <div class="stat no"><b>24</b><span>things to skip</span></div>
+  </div>
+
+  <div class="card">
+    <p><b>A forum of our own: not now.</b> Sellers already have big, busy places to talk. The one independent forum in this niche has about 116 active users a month after years. An empty forum next to a product with zero cases looks like a dead product. The free substitute: you answer suspension threads in the existing groups, two hours a week.</p>
+    <p><b>"Experts answer": no, in any form.</b> Three rules block it: our own D5 (no expert without a signed agreement and a paid audition), the US regulator's DoNotPay order (an "expert" claim needs real, named experts), and the payment company's banned list, which names "access to a community of experts" in so many words. Paddle is our only way to take money; a visible human service risks the whole site.</p>
+    <p><b>Free building blocks: yes.</b> Thirteen items, all free, about 10 to 15 hours of work in total. None adds a feature. They make the product feel looked after.</p>
+    <p style="margin-bottom:0"><b>Two things you should know.</b> Our code on GitHub is <b>public</b> (checked today: anyone can read it). And the visitor counter is switched off until one setting is filled in, so nothing can be measured yet.</p>
+  </div>
+</section>
+
+<section id="forum">
+  <h2>Should we build a discussion forum?</h2>
+  <p class="lead">Not now. Here is why, with the numbers.</p>
+  <ul class="items red">
+    <li><b>The places already exist, and they are big</b><span>r/AmazonSeller 99,000 · r/FulfillmentByAmazon 146,000 · ASGTG about 71,000 to 77,000 · Friendly Advice Worldwide 52,000 · Extreme Commerce and Enablers about 1.2 million each · Amazon's own forum with Amazon staff. A new forum would compete with these for the same few hundred people who answer suspension posts.</span></li>
+    <li><b>Independent forums in this niche stay small</b><span>sellersasksellers.com: 116 active users and 5 sign-ups in the last 30 days, after years. The other one carries casino spam. No vendor we checked runs its own forum; they all use Facebook groups.</span></li>
+    <li><b>A forum needs about 100 people posting a month to look alive</b><span>Which usually means 1,000 to 10,000 members. Discourse itself says launching empty is "the worst thing you can do" and it takes "months if not years". We have zero cases and 2 to 3 hours a week.</span></li>
+    <li><b>Hosting what people post brings real duties</b><span>Pakistan's PECA 2025 (complaint handling, fines), a US copyright agent, UK defamation rules, EU privacy law if Europeans post. And the first posts would be the ones we must keep out: fake-invoice sources and "insider contact" offers (Bloomberg, June 2026).</span></li>
+  </ul>
+  <div class="callout good">
+    <b class="t">What gives the same feeling, for free</b>
+    You answer 3 to 5 suspension threads a week in the existing groups with a plain reading of the poster's own notice (X-01). Later, a "copy for the forum" button that strips names and IDs so a seller can post their result without breaking any rule. And a free hosted Discourse stays on hold behind a written trigger (X-14): 50 cases started and the same question arriving from 10 different people, or 5 active writers asking for a shared place.
+  </div>
+</section>
+
+<section id="experts">
+  <h2>Should we, or experts, answer sellers' cases?</h2>
+  <p class="lead">No. Not us, not "experts", not an AI.</p>
+  <ul class="items red">
+    <li><b>Humans called experts</b><span>D5 first: a signed agreement and a paid test on made-up cases before anyone touches anything. Then the US rules: an expert must really be one, and must really have done the review. The only honest wording, ever, is a fact: "Reviewed by [full name], who has written Amazon appeals since [year]." Never "expert-verified", never a badge.</span></li>
+    <li><b>The payment company</b><span>Paddle's banned list: "pure consulting or advisory services, including legal advice, coaching... and access to a community of experts". Paddle also "reserves the right to exercise judgment". If you ever want a human review, ask Paddle in writing first, and keep the answer. The step-by-step path is in the full file (section 7).</span></li>
+    <li><b>An AI answering in public</b><span>Our AI key is on the free tier (20 requests a day). A free-text answer to a frightened seller turns into a prediction. And we already decided, on purpose, that the product has no open chat. Skip, no trigger.</span></li>
+  </ul>
+</section>
+
+<section id="do">
+  <h2>Do now: thirteen free things</h2>
+  <p class="lead">Each one is a page, a setting, or a habit. None is a new feature. Name the IDs you want.</p>
+  <ul class="items green">
+    <li><b><span class="id">X-01</span>Answer threads in the existing groups, weekly</b><span>3 to 5 suspension threads a week with a plain reading of the poster's notice: what Amazon asks for, the deadline, the records, the scam signals. No link and no product name on Amazon's own forum (it suspends for that). 60 to 90 minutes a week. This month.</span></li>
+    <li><b><span class="id">X-02</span>Make the three email addresses real</b><span>support@, billing@ and privacy@ are on the live site and do not exist. Cloudflare forwards them to one Gmail for free. Needs the real domain first.</span></li>
+    <li><b><span class="id">X-03</span>A private "is the site up?" monitor</b><span>Free, 15 minutes. Alerts only you. Not the public status page, which stays parked.</span></li>
+    <li><b><span class="id">X-04</span>Ten ready answers and an automatic "we got your message" reply</b><span>The ten questions sellers ask, with honest answers, on the support page and saved in Gmail. The exact words for "will I win?" are in the Support part below.</span></li>
+    <li><b><span class="id">X-05</span>A log of every support message</b><span>Date, type, minutes. In 60 days it replaces our guess about support time with a real number.</span></li>
+    <li><b><span class="id">X-06</span>A help page with a search box</b><span>Every FAQ question, the five guides and the support limits in one place, searchable, inside our own site. Free, one session.</span></li>
+    <li><b><span class="id">X-07</span>A "How we test" page with our test notices shared</b><span>Our results with dates, including our misses. The made-up test notices published for anyone to try. A place for writers and developers to report a miss. Never the engine itself. <span class="flag">Read the note about the public code first</span></span></li>
+    <li><b><span class="id">X-08</span>A short "how your data is protected" section</b><span>Only what is true today. Plus the standard file that tells security researchers where to write.</span></li>
+    <li><b><span class="id">X-09</span>Tidier emails</b><span>Rebuild the purchase and reminder emails on a free template kit, and add the missing line "one case, every round" to the purchase email.</span></li>
+    <li><b><span class="id">X-10</span>A page listing the free tools</b><span>The way the big tools do it. After the free doors from the growth plan exist.</span></li>
+    <li><b><span class="id">X-11</span>A booking link for talking to writers and VAs</b><span>Free. Used only in your outreach messages, "20 minutes about the tool". Never on the support or pricing page, where it would look like talking to a person about a case.</span></li>
+    <li><b><span class="id">X-12</span>Switch the visitor counter on</b><span>One setting on Vercel. Until then no channel can be measured.</span></li>
+    <li><b><span class="id">X-13</span>Your own page, in your own words</b><span>Who builds this and why. No AI writes it. The one-line sentence for the home page is part of this.</span></li>
+  </ul>
+</section>
+
+<section id="wait">
+  <h2>Wait on: nineteen things, each with its trigger</h2>
+  <p class="lead">Nothing here is wrong. Each one needs something first.</p>
+  <ul class="items amber">
+    <li><b><span class="id">X-14</span>A free hosted Discourse community</b><span>Trigger: 50 cases started and the same question from 10 different people, or 5 active writers asking for a shared place. Seed it with 10 real support questions before opening.</span></li>
+    <li><b><span class="id">X-15</span>A WhatsApp group for writers and VAs</b><span>Trigger: 5 writers who have each run a live case and ask for it. Agreements signed first. No client notices pasted in.</span></li>
+    <li><b><span class="id">X-16</span>A one-channel Discord</b><span>Trigger: 10 active writers or 50 cases, and you able to check it daily.</span></li>
+    <li><b><span class="id">X-17</span>The "copy for the forum" button</b><span>Trigger: your decision on whether the product name appears in it (advice: leave it out on Amazon's forum).</span></li>
+    <li><b><span class="id">X-18</span>A "what sellers report" page</b><span>Trigger: 3 written, consented quotes from people who ran a live case.</span></li>
+    <li><b><span class="id">X-19</span>A monthly email about policy changes</b><span>Trigger: the real domain, the mailboxes, then 25 opt-in sign-ups. Opt-in only. ASGTG's weekly roundup already owns this slot.</span></li>
+    <li><b><span class="id">X-20</span>AI help drafting your own support replies</b><span>Trigger: paid AI billing switched on. Google's free tier may read and train on the text, so it must not run before then. You read and send every reply.</span></li>
+    <li><b><span class="id">X-21</span>A helpdesk tool instead of Gmail</b><span>Trigger: more than 100 messages a month for two months, or a second person answering.</span></li>
+    <li><b><span class="id">X-22</span>A weekly one-hour live Q&amp;A on YouTube</b><span>Trigger: 10 real cases and 3 people who said they would come. Use the made-up test notices first. Nobody publishes attendance for these; the first ones may be empty.</span></li>
+    <li><b><span class="id">X-23</span>"You can write in English or Urdu" on the support page</b><span>Trigger: you confirm you will answer in Urdu. Then count Urdu messages for 90 days.</span></li>
+    <li><b><span class="id">X-24</span>A real human review, by a named writer</b><span>Trigger: Paddle approved, 50 cases, one writer passed the paid test, and Paddle's written answer. About $500 to $2,000 and 6 to 10 weeks, mostly waiting.</span></li>
+    <li><b><span class="id">X-25</span>A free command-line tool and an AI-assistant "skill" that only decodes</b><span>The install-shape trick that got a rival repo 751 stars in six months. Trigger: real domain, Paddle approval, 50 cases, and your pick. It must only decode, never write the appeal.</span></li>
+    <li><b><span class="id">X-26</span>A first-time guided tour</b><span>Trigger: 50 cases and support messages showing confusion. Free libraries exist; two popular ones need a paid licence, avoid those.</span></li>
+    <li><b><span class="id">X-27</span>A one-question survey after a reinstatement or a refund</b><span>Trigger: review profiles claimed; three refunds processed.</span></li>
+    <li><b><span class="id">X-28</span>Problem pages on the real domain</b><span>In this order: video verification (weakest competition), "appeal denied, what now", funds after deactivation, the new offer-level deactivation. Trigger: the real domain. Never one page per notice type from a template; Google penalises that.</span></li>
+    <li><b><span class="id">X-29</span>A dated "policy changes this year" box</b><span>Trigger: three monthly checks done on time, proving the habit holds.</span></li>
+    <li><b><span class="id">X-30</span>A public status page and a changelog</b><span>Trigger: the exact phrase for the parked item P-01. Free tools picked.</span></li>
+    <li><b><span class="id">X-31</span>Error monitoring</b><span>Trigger: the exact phrase for the parked item P-11. Free tiers picked.</span></li>
+    <li><b><span class="id">X-32</span>Translating the whole site</b><span>Trigger: a writer asks in Urdu, or the non-US store decision. Weeks of work.</span></li>
+  </ul>
+</section>
+
+<section id="skip">
+  <h2>Skip, with the reason</h2>
+  <p class="lead">Written down so nobody researches them again.</p>
+  <details>
+    <summary>Community shapes (5)</summary>
+    <div class="inner">
+      <ul class="items red">
+        <li><b>A forum on our own site</b><span>Cold start against groups of 52,000 to 1.2 million; legal duties for hosted posts; a new public surface before 50 cases.</span></li>
+        <li><b>Our own subreddit or Facebook group</b><span>Empty next to the ones that exist. Use those.</span></li>
+        <li><b>A paid community or membership</b><span>$89 a month with no free plan, and it is exactly what Paddle bans.</span></li>
+        <li><b>"Experts answer" anywhere; an AI bot answering</b><span>See the Experts part above.</span></li>
+        <li><b>Letting a community share invoice "sources" or insider-contact tips</b><span>Our rules route those cases to professional help. One warning line is the limit.</span></li>
+      </ul>
+    </div>
+  </details>
+  <details>
+    <summary>Support shapes (6)</summary>
+    <div class="inner">
+      <ul class="items red">
+        <li><b>A live-chat bubble</b><span>It promises an instant reply one person cannot give. The free chat tools either process in the US or lack an email channel, and one sells human agents by the hour.</span></li>
+        <li><b>A public "ask AppealDeck" AI box</b><span>It would put a wrong promise in front of a frightened seller at scale.</span></li>
+        <li><b>Building our own email intake in code</b><span>Two days of work for what a Gmail filter does.</span></li>
+        <li><b>Promising 24/7, same day, or "within hours"; moving support to WhatsApp</b><span>One person answers. A missed promise is the one-star pattern in this market. And our own scam check flags a move to WhatsApp as a warning sign.</span></li>
+        <li><b>Giving guidance on arbitration or court steps</b><span>The Terms say where we stop. One line pointing to a lawyer.</span></li>
+        <li><b>Drafting replies with the free AI key</b><span>Google's free terms allow training and human review of the text.</span></li>
+      </ul>
+    </div>
+  </details>
+  <details>
+    <summary>Reach shapes (8)</summary>
+    <div class="inner">
+      <ul class="items red">
+        <li><b>Links or our name on Amazon's forum; promotion on Reddit outside the one allowed post</b><span>Suspensions of 1 to 30 days, then permanent. "Immediate ban, no exceptions."</span></li>
+        <li><b>Product Hunt or Hacker News</b><span>Amazon-seller tools get 2 to 127 upvotes there; four posts ever on Hacker News, 1 to 10 points. Wrong room.</span></li>
+        <li><b>YouTube Shorts as a channel</b><span>The one agency that grew on YouTube made about 2,400 videos over years.</span></li>
+        <li><b>A newsletter now</b><span>No audience yet; a weekly promise by one person. Waits as X-19.</span></li>
+        <li><b>One SEO page per notice type from a template</b><span>Google's rules name this as spam. A few thin pages drag the whole small site down.</span></li>
+        <li><b>Open-sourcing the engine; an AI "skill" that writes the appeal</b><span>A copycat could ship our decoder under another name. A drafted appeal outside our fact check is the "copy and paste job" sellers hate.</span></li>
+        <li><b>Paid ads in months 1 to 3</b><span>The maths was already shown closed on 21 September.</span></li>
+        <li><b>Co-branding with Extreme Commerce; saying Amazon's own assistant "does nothing" for suspended sellers; asking for reviews before the profiles are claimed</b><span>Reputation risk; an unproven claim about Amazon; and a review profile that cannot be answered.</span></li>
+      </ul>
+    </div>
+  </details>
+  <details>
+    <summary>Tool shapes (5)</summary>
+    <div class="inner">
+      <ul class="items red">
+        <li><b>A public roadmap or feedback board</b><span>Your parked-items file is the roadmap. A public board collects requests you have decided not to do yet.</span></li>
+        <li><b>A separate help-center host</b><span>Splits the site and skips the copy checks that keep "guarantee" out.</span></li>
+        <li><b>Paid search services; two tour libraries that need a paid licence</b><span>Free alternatives do the job.</span></li>
+        <li><b>Legal-page generators</b><span>They would replace the hand-written sentences our tests pin and the regulators require.</span></li>
+        <li><b>Self-hosting support or newsletter servers; paying for a design kit</b><span>Servers to patch for a one-person team; our own design system already exists.</span></li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<section id="disagree">
+  <h2>Where the research disagrees with your decisions of this morning</h2>
+  <p class="lead">Your decision stands. This is written down so it is not argued again by accident.</p>
+  <ul class="items blue">
+    <li><b>The scam check on its own page</b><span>You said skip. Two agents ranked it the second-best reason for any seller to visit once, because fake "Amazon" emails reach healthy sellers too, and a plain page name can be typed into forums that ban links. If you ever reopen one of the three, this is the strongest case.</span></li>
+    <li><b>The "What we will not do" page</b><span>You said skip. The agents called it the one trust page none of the eight competitors has. Under your "lead with strengths" idea, those lines live in the Terms and on the support page instead, so nothing is hidden.</span></li>
+    <li><b>The free supplier-letter page</b><span>You said skip. The agents ranked it sixth: the most-forwarded document in the whole process. It stays inside the case for now.</span></li>
+  </ul>
+</section>
+
+<section id="support">
+  <h2>Support in months 1 to 3</h2>
+  <p class="lead">Email only. You answer, inside the two business days the site already promises.</p>
+  <ol class="steps">
+    <li><b>Tools:</b> the three addresses forwarded to one Gmail; labels; the ten ready answers saved as templates; one automatic acknowledgement per thread.</li>
+    <li><b>Hours:</b> one fixed 45 to 60 minute block every working day, Pakistan time. That holds up to about 50 messages a month.</li>
+    <li><b>Every reply ends the same way:</b> "Amazon decides the outcome and the review time." and "This is software support, not legal advice, and nothing you send here is privileged."</li>
+    <li><b>Refund:</b> same day, the 7-day policy. <b>Fraud or forged-document cases:</b> the professional-help line only. <b>Arbitration or court:</b> one line, a lawyer.</li>
+    <li><b>Away for more than two business days?</b> Change the support page and the banner before you go. Both must stay true.</li>
+    <li><b>At day 60:</b> the log decides whether two business days stays or becomes five.</li>
+  </ol>
+  <h3>What you say when asked "will I win?"</h3>
+  <blockquote>I can't tell you that, and I won't estimate it. Nobody outside Amazon can; Amazon decides the outcome and the review time. What I can do is check that your response answers what the notice asked for: the records Amazon named, what went wrong, what you changed, and the dates. Paste the notice's request list and tell me which records you have, and I'll tell you what is still missing. Work to the date on your notice; a reply here cannot extend it, so do not wait on me if it is close. This is software support, not legal advice, and nothing you send here is privileged.</blockquote>
+  <p class="small">Never add a timeline, a percentage, "most sellers", "good chance" or "should be fine". In this market the review score follows whether a named person replies, not whether the appeal won: the one-star reviews of the big firms are about silence; the five-star ones praise fast replies from a named person.</p>
+</section>
+
+<section id="numbers">
+  <h2>The honest numbers</h2>
+  <div class="card">
+    <p><b>Months 1 to 3, no domain, no spend, 2 to 3 hours a week:</b> tens to low hundreds of visits a month, almost all from threads and conversations you started. Decodes in the tens. Cases in single digits.</p>
+    <p><b>The ceiling set by others after years:</b> Riverbend about 5,600 visits a month. The funded AI rival AppealsPro is too small for the traffic tools to show. The first paid Pass will not come from Google in this window; it comes from writers running live cases with you.</p>
+    <p style="margin-bottom:0"><b>Your 2 to 3 hours a week:</b> 60 to 90 minutes answering threads (X-01); 60 minutes with writers and VAs in Lahore and Karachi; 15 minutes on the one allowed Reddit post, then only helpful answers there; monthly, the fresh-wording check with the miss count published.</p>
+  </div>
+  <div class="callout warn">
+    <b class="t">Two findings to act on</b>
+    <b>1.</b> Our GitHub repository is public. Checked today from this machine: anyone can read the engine code and every commit message, even though the licence says all rights reserved. Advice: make it private. (Free private repositories get 2,000 minutes of automated checks a month; check our usage first.)<br>
+    <b>2.</b> The visitor counter (Plausible) is wired but off until one setting is filled in on Vercel. Nothing in this plan can be measured before that.
+  </div>
+</section>
+
+<section id="you">
+  <h2>Only you can decide these</h2>
+  <ol class="steps">
+    <li><b>The public code repository.</b> Keep it public on purpose, or make it private (advice: private).</li>
+    <li><b>Which of X-01 to X-13 to do.</b> Name them, or say "do X-01 to X-13". A general "go ahead" starts nothing.</li>
+    <li><b>The three items you struck this morning.</b> They stay struck unless you reopen one by name.</li>
+    <li><b>The support window.</b> Keep two business days only if you will read the mailbox every working day; otherwise change the page to five before launch.</li>
+    <li><b>Urdu.</b> Only if you will answer in Urdu.</li>
+    <li><b>The product name in the "copy for the forum" text.</b> Advice: leave it out on Amazon's forum.</li>
+    <li><b>A human review, ever.</b> Only after 50 cases, and only after asking Paddle in writing.</li>
+  </ol>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <hr>
+    <p>This page is the plain reading of <code>2026-10-12-community-and-reach-research.md</code>, which carries every number with its source and date. Four research agents ran on 12 October 2026 with live web checks. Nothing has been built from it.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var links=document.querySelectorAll("nav.chips a[href^=\"#\"]");
+  function go(e){
+    var id=this.getAttribute("href").slice(1);
+    var el=document.getElementById(id);
+    if(!el) return;
+    e.preventDefault();
+    var nav=document.querySelector("nav.chips");
+    var top=el.getBoundingClientRect().top+window.pageYOffset-(nav?nav.offsetHeight:0)-4;
+    window.scrollTo({top:top,behavior:"smooth"});
+  }
+  for(var i=0;i<links.length;i++) links[i].addEventListener("click",go);
+})();
+</script>
+</body>
+</html>

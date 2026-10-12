@@ -1,6 +1,6 @@
 # Growth additions register: what a first-time visitor should feel, see, get and tell others (10 Oct 2026)
 
-**Status: a register, not a plan. Nothing here is built. The founder picks by ID.**
+**Status: a register, not a plan. Nothing here is built. The founder picks by ID.** The founder's 12 Oct 2026 decisions on these rows are in `2026-10-10-growth-do-and-not-do.md` §0; the HTML copy of this register is the 10 Oct snapshot and §10 below gained a 12 Oct block in this file only.
 
 How to read this file:
 
@@ -384,6 +384,8 @@ So the next session does not pick them up again. One line each.
 - Mr Jeff's "difficulty score" and "root cause" from a pasted notice: a root cause is not in the notice; D6 forbids inventing it for us, and that is a selling point, not a gap.
 
 **Parked, stays parked (built only on its exact phrase):** A-45 → P-12; A-46 → P-13; A-47 → P-01; A-48 → P-03; A-49 (forward Amazon's email) → P-04; A-50 → P-07; the mobile performance pass → P-09. A-30 (check-in emails) and the email half of A-31 are P-07 in substance and wait for the founder's word.
+
+**Checked and rejected, 12 Oct 2026 (the community, support and reach research, `2026-10-12-community-and-reach-research.md` §4):** a seller forum of our own in any shape (self-hosted Discourse, Flarum, NodeBB, Lemmy, Supabase comments, our own subreddit or Facebook group, Circle, a paid community); "experts answer" in any community; an AI answering sellers in public; a live-chat widget or hired chat agents; a public AI answer box; Resend inbound as a support intake; Product Hunt or Hacker News as channels; YouTube Shorts at 2 to 3 hours a week; a newsletter now; templated pages per notice family; open-sourcing the engine; an agent skill that drafts the appeal; a public roadmap or feedback board; a separate help-center host; Algolia DocSearch or Typesense Cloud; Shepherd.js or Intro.js (AGPL); legal-page generators; self-hosting Chatwoot, Listmonk, Fider or Formbricks; Tailwind Plus. Each with its reason in that file. A hosted Discourse Free plan, a writers' WhatsApp community and a one-channel Discord are **held** there behind written triggers, not rejected.
 
 ---
 
