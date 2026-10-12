@@ -46,6 +46,7 @@ export function SiteFooter() {
             { href: "/decode", label: SHARED.nav.decode },
             { href: "/check-invoice", label: SHARED.footer.nav.checkInvoice },
             { href: "/how-we-test", label: SHARED.footer.nav.howWeTest },
+            { href: "/changelog", label: SHARED.footer.nav.changelog },
             { href: "/pricing", label: SHARED.nav.pricing },
             { href: "/faq", label: SHARED.nav.faq },
             { href: "/privacy#data-flow", label: SHARED.footer.nav.dataFlow },
