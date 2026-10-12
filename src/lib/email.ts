@@ -40,7 +40,7 @@ export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput)
   const subject = `Your ${PRICING.pass} purchase confirmation and consent copy`;
   const consentLine = input.consentText ?? LEGAL.consent.withdrawalCheckbox.label;
   const refundLine =
-    "You can request a full refund within 7 days of purchase, no questions asked, by replying to this email or writing to billing@appealdeck.com.";
+    "You can request a full refund within 14 days of purchase, no questions asked, by replying to this email or writing to billing@appealdeck.com.";
 
   const lines = [
     `Thanks for buying the ${PRICING.pass}${dateLabel ? ` on ${dateLabel}` : ""}.`,

@@ -73,7 +73,7 @@ export const SUPPORT = {
         title: "Where your data goes",
         body: "What we read, and what we never keep",
       },
-      { href: "/refund", title: "Paying and refunds", body: "One price per case, 7-day refund" },
+      { href: "/refund", title: "Paying and refunds", body: "One price per case, 14-day refund" },
       { href: "/guides", title: "Guides", body: "Notice types, explained in plain words" },
     ],
   },

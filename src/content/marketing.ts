@@ -155,7 +155,7 @@ export const HOME = {
           "The response prepared from your confirmed facts, every revision",
           "Your business documents read against the notice by AI when it is available, and on your device when it is not",
           "Wording help, when available, checked so dates, numbers and names stay as you wrote them",
-          "7-day refund, no questions asked",
+          "14-day refund, no questions asked",
         ],
         cta: "Get the Appeal Pass",
       },
@@ -435,7 +435,7 @@ export const PRICING = {
     expiresValue: "Never",
     total: "Total, once",
     amount: "$249.00",
-    paidThrough: "Paid through Paddle · refund within 7 days, no reason needed",
+    paidThrough: "Paid through Paddle · refund within 14 days, no reason needed",
   },
   createAccount: "Create an account",
   checkoutNote:
@@ -613,7 +613,7 @@ export const FAQ = {
     {
       id: "refund",
       q: "What is your refund policy?",
-      a: "You can request a refund within 7 days of purchase.",
+      a: "You can request a refund within 14 days of purchase.",
       detail:
         "Write to the address on the Refund page with your receipt or the email address on your account. Read the full policy and digital-delivery consent before buying.",
       link: { label: "Read the refund policy", href: "/refund" },

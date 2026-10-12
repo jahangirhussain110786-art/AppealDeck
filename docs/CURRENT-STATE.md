@@ -95,7 +95,9 @@ Status for all of these: **Live**, tested in `vitest` and Playwright. Source of 
 | Upload-ready pack and Word download beside "Open Seller Central" (G-62)                                                                                                                         | `/case` Response tab  | `e2e` pack tests                                                  |
 | Plain-text copy of the prepared response with no `##` markers (G-28); the pack index lists the file's original name (G-29)                                                                      | `/case` Response tab  | `composer.test.ts`, `evidencePackFile.test.ts`                    |
 
-**Not built from that list, and why:** G-47 and G-86 (the named person on the trust band) wait for the founder's own sentence. G-103 (a possible checkbox lag) is unverified and only fixed if a hand test shows it. P-13 and P-01 (public results page, public changelog) are parked and need their exact phrases. G-109, G-44, G-46, G-38, G-04/G-79 and G-06/G-78 were struck by the founder on 12 Oct.
+**Built later the same day:** the founder's note on the home page (G-47, G-86), the tick that flips at once (G-103), and `/changelog` (P-01, released by its exact phrase; `e2e/changelog.spec.ts`). **Refund window: 14 days** (founder, 12 Oct 2026; amends D8) on every page, in the purchase email and in the checkout consent, which now ends "I have read the Terms and the Refund policy." with both names linked; the Terms state that Paddle is the Merchant of Record (`legalDisclosures.test.ts`, `email.test.ts`, `e2e/faq.spec.ts`).
+
+**Not built from that list, and why:** P-13 (public results page) waits for enough shared outcomes with a full count and its exact phrase. G-109, G-44, G-46, G-38, G-04/G-79 and G-06/G-78 were struck by the founder on 12 Oct.
 
 ## Not built, on purpose
 

@@ -71,7 +71,7 @@ export const ANNOUNCEMENT_BAR = {
     },
     {
       id: "refund",
-      text: "Changed your mind? Refunds within 7 days, no questions asked.",
+      text: "Changed your mind? Refunds within 14 days, no questions asked.",
       href: "/refund",
       linkLabel: "Refund policy",
     },

@@ -14,6 +14,8 @@ describe("buildPurchaseConfirmationEmail", () => {
     expect(email.text).toContain(PRICING.price);
     expect(email.text).toContain(LEGAL.consent.withdrawalCheckbox.label);
     expect(email.text.toLowerCase()).toContain("refund");
+    expect(email.text).toContain("within 14 days of purchase");
+    expect(email.text).not.toMatch(/7 days/);
     expect(email.text).toContain("September 11, 2026");
     expect(email.html).toContain(PRICING.pass);
   });

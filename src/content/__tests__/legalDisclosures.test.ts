@@ -261,7 +261,7 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
     // browsers, not devices (G-93, G-71).
     expect(LEGAL.lastUpdated.privacy).toBe("2026-10-12");
     expect(LEGAL.lastUpdated.terms).toBe("2026-10-12");
-    expect(LEGAL.lastUpdated.refund).toBe("2026-10-06");
+    expect(LEGAL.lastUpdated.refund).toBe("2026-10-12");
   });
 });
 
@@ -310,5 +310,47 @@ describe("last-updated stamps", () => {
       expect(date, doc).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(Number.isNaN(Date.parse(date)), doc).toBe(false);
     }
+  });
+});
+
+describe("what Paddle's reviewer and a buyer both read (12 Oct 2026)", () => {
+  /**
+   * Paddle is the only way this product takes payment, and its seller-policy guidance asks for a
+   * Merchant-of-Record statement in the Terms and a refund window of at least 14 days. A refund
+   * window quoted differently on two pages is what a refund analyst reads as a contradiction.
+   */
+  it("states in the Terms that Paddle is the Merchant of Record", () => {
+    expect(text("terms")).toMatch(/Paddle\.com is the Merchant of Record for all our orders/);
+    expect(text("terms")).toMatch(/Paddle's Buyer Terms/);
+  });
+
+  it("does not claim Pakistani law governs the purchase itself", () => {
+    const terms = text("terms");
+    expect(terms).not.toMatch(/exclusive jurisdiction of the courts of Pakistan/);
+    expect(terms).toMatch(/Your purchase is governed by Paddle's Buyer Terms/);
+  });
+
+  it("gives the same 14-day refund window on every page that states one", () => {
+    const everything = [
+      text("terms"),
+      text("refund"),
+      JSON.stringify(LEGAL.consent),
+      JSON.stringify(LEGAL.meta),
+      JSON.stringify(HOME),
+      JSON.stringify(FAQ),
+    ].join("\n");
+    expect(everything).toMatch(/14-day refund|within 14 days/);
+    expect(everything).not.toMatch(/7-day|within 7 days|seven-day refund/i);
+  });
+
+  it("offers the Paddle receipt route and says what a refund does and does not remove", () => {
+    expect(text("refund")).toMatch(/paddle\.net/);
+    expect(text("refund")).toMatch(/Your case notes and files are on your device and stay yours/);
+  });
+
+  it("makes the buyer tick that they have read the Terms and the Refund policy", () => {
+    expect(LEGAL.consent.withdrawalCheckbox.label).toMatch(
+      /I have read the Terms and the Refund policy\.$/,
+    );
   });
 });

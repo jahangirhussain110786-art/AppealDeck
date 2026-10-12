@@ -16,11 +16,11 @@
 **Status:** draft for founder sign-off. Drives the M-W checkout (B-20, AM-05).
 
 ## Required flow
-1. **Honest-expectations card** shown BEFORE the pay button: states AppealDeck is software, not legal advice, no guarantee of reinstatement, $249 one-time per case, 7-day voluntary refund.
+1. **Honest-expectations card** shown BEFORE the pay button: states AppealDeck is software, not legal advice, no guarantee of reinstatement, $249 one-time per case, 14-day voluntary refund.
 2. **Explicit prior consent checkbox** — rendered **unticked** by default (never pre-ticked):
    > "I expressly consent to receive the digital Appeal Pass immediately, and I acknowledge that my right to cancel under the consumer withdrawal regulations ends once delivery begins."
 3. Purchase is **disabled until the box is checked**.
-4. On success, Paddle (or Polar) sends a **permanent-form confirmation email** repeating: what was bought, price, the consent given, and the 7-day voluntary-refund route.
+4. On success, Paddle (or Polar) sends a **permanent-form confirmation email** repeating: what was bought, price, the consent given, and the 14-day voluntary-refund route.
 
 ## Notes
 - "Guarantee" must not appear anywhere in the checkout (grep gate = 0).

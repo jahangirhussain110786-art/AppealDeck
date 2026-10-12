@@ -13,7 +13,7 @@ test("/faq: every answer is in the page before any click, and questions open by 
   for (const answer of [
     "Decode your notice and organize your case before you decide to pay.",
     "Original files are encrypted in your vault on this device.",
-    "You can request a refund within 7 days of purchase.",
+    "You can request a refund within 14 days of purchase.",
   ]) {
     expect(html, answer).toContain(answer);
   }
@@ -71,4 +71,20 @@ test("pricing keeps the expectations visible before an unchecked delivery consen
       ),
     ),
   ).toBe(true);
+});
+
+// Paddle review (12 Oct 2026): the box the buyer ticks says they have read the Terms and the Refund
+// policy, and both names are links that leave the checkout page where it is.
+test("the checkout consent names the Terms and the Refund policy as links", async ({ page }) => {
+  await page.goto("/pricing");
+  const row = page.locator("label[for='eu-consent']");
+  await expect(row).toContainText("I have read the Terms and the Refund policy.");
+  const terms = row.getByRole("link", { name: "Terms", exact: true });
+  const refund = row.getByRole("link", { name: "Refund policy", exact: true });
+  await expect(terms).toHaveAttribute("href", "/terms");
+  await expect(terms).toHaveAttribute("target", "_blank");
+  await expect(refund).toHaveAttribute("href", "/refund");
+  await expect(refund).toHaveAttribute("target", "_blank");
+  // Following a link must not tick the box.
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
 });

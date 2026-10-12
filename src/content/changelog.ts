@@ -29,6 +29,9 @@ export const CHANGELOG = {
     {
       date: "12 Oct 2026",
       items: [
+        "The refund window is now 14 days, up from 7, on every page and in the purchase email.",
+        "The Terms now say that Paddle is the Merchant of Record for every order, and the Refund page gives the Paddle receipt route.",
+        "The checkout consent now asks you to confirm that you have read the Terms and the Refund policy, with both linked.",
         "The Copy button now copies plain headings, without the double hash marks that would have been pasted into Amazon's box.",
         "A notice that states no date and no appeal window now says so, instead of calling the window “ambiguous”.",
         "The sample notice on the decode page decodes in one tap and is labelled as a sample result.",

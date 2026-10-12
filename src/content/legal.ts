@@ -16,11 +16,20 @@ export type LegalDocData = {
 
 export type LegalDoc = "privacy" | "terms" | "refund";
 
+/** The acceptance sentence at the end of the checkout consent (Paddle review, 12 Oct 2026). */
+export const READ_TERMS = {
+  prefix: "I have read the ",
+  terms: "Terms",
+  joiner: " and the ",
+  refund: "Refund policy",
+  suffix: ".",
+} as const;
+
 export const LEGAL = {
   lastUpdated: {
     privacy: "2026-10-12",
     terms: "2026-10-12",
-    refund: "2026-10-06",
+    refund: "2026-10-12",
   },
   privacy: {
     title: "Privacy",
@@ -226,6 +235,13 @@ export const LEGAL = {
         ],
       },
       {
+        id: "payment",
+        title: "Payment",
+        body: [
+          "Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders. Your purchase is made under Paddle's Buyer Terms; these Terms govern your use of the software and your licence.",
+        ],
+      },
+      {
         id: "liability",
         title: "Liability",
         body: [
@@ -244,7 +260,7 @@ export const LEGAL = {
         id: "governing",
         title: "Governing law",
         body: [
-          "These terms are governed by the laws of Pakistan. Any dispute is subject to the exclusive jurisdiction of the courts of Pakistan.",
+          "Your use of the software and this licence are governed by the laws of Pakistan. Your purchase is governed by Paddle's Buyer Terms. Nothing here removes rights you have under the law of the place you live that cannot be excluded by agreement.",
           "AppealDeck by Hawlton. Founder: Jhangir Hussain, individual seller.",
         ],
       },
@@ -255,25 +271,25 @@ export const LEGAL = {
     sections: [
       {
         id: "window",
-        title: "7-day refund",
+        title: "14-day refund",
         body: [
-          "You may request a refund of the Appeal Pass within 7 days of purchase, no questions asked.",
+          "You may request a refund of the Appeal Pass within 14 days of purchase, no questions asked.",
         ],
       },
       {
         id: "how",
         title: "How to request",
         body: [
-          "Email billing@appealdeck.com with your receipt or the email address on your account.",
+          "Email billing@appealdeck.com with your receipt or the email address on your account. You can also use the refund link on your Paddle receipt (paddle.net).",
           "We process the request within 5 business days; how long it then takes to reach your account depends on your bank.",
-          "Once a full refund is made, access to Appeal Pass features is removed.",
+          "Once a full refund is made, access to Appeal Pass features is removed for that case. Your case notes and files are on your device and stay yours.",
         ],
       },
       {
         id: "statutory",
         title: "Statutory withdrawal right",
         body: [
-          "Because the Appeal Pass is a digital good delivered immediately, you waive your statutory 14-day right of withdrawal once delivery starts. This does not affect your 7-day AppealDeck refund above.",
+          "Because the Appeal Pass is a digital good delivered immediately, where a statutory 14-day right of withdrawal applies to you, you waive it once delivery starts. This does not affect your 14-day AppealDeck refund above.",
         ],
       },
     ],
@@ -281,8 +297,10 @@ export const LEGAL = {
   consent: {
     // Reused by the pricing PurchasePanel (D8).
     withdrawalCheckbox: {
-      label:
-        "I ask AppealDeck to deliver the Appeal Pass immediately and understand that I lose my statutory 14-day right of withdrawal once delivery starts. AppealDeck's voluntary 7-day refund still applies.",
+      // The words the buyer ticks, stored with the checkout and repeated in the confirmation
+      // email. `ConsentRow` turns the two document names in the last sentence into links, so the
+      // sentence is built from the same parts it is split on.
+      label: `I ask AppealDeck to deliver the Appeal Pass immediately and understand that I lose my statutory 14-day right of withdrawal once delivery starts. AppealDeck's voluntary 14-day refund still applies. ${READ_TERMS.prefix}${READ_TERMS.terms}${READ_TERMS.joiner}${READ_TERMS.refund}${READ_TERMS.suffix}`,
     },
     deliveryNote:
       "You will receive a purchase confirmation and a copy of this consent by email. Paddle sends the tax receipt.",
@@ -296,6 +314,6 @@ export const LEGAL = {
     descriptionTerms:
       "AppealDeck decodes notices and prepares responses for you to submit yourself. No automation, no outcome promises.",
     descriptionRefund:
-      "7-day voluntary refund on the Appeal Pass. EU/UK statutory withdrawal with explicit checkout consent.",
+      "14-day voluntary refund on the Appeal Pass. EU/UK statutory withdrawal with explicit checkout consent.",
   },
 } as const;
