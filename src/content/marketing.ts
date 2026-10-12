@@ -491,7 +491,12 @@ export const PRICING = {
   faqIds: ["pass", "outcome", "refund", "files"],
 } as const;
 
-export const FOUNDER_NOTE: { name: string; location: string; text: string } | null = null;
+/** The founder's own note on the home page (12 Oct 2026, written at his direction from his account of why he built it). It claims no credential, no price comparison and no result. */
+export const FOUNDER_NOTE: { name: string; location: string; text: string } | null = {
+  name: "Jhangir Hussain",
+  location: "Pakistan",
+  text: "I build software, and I am an Amazon seller myself. When I saw how much sellers were being asked to pay to be heard after a suspension, often in a panic and on a deadline, I wanted a calmer way through. So I built one: it reads your notice, shows what Amazon is really asking for, checks the documents you already have, and helps you write a clear, honest answer in your own words. It is software, not a law firm, and no one can promise what Amazon will decide. But getting your case in order should not cost a fortune.",
+};
 
 export type FaqItem = {
   id: string;
