@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>What to build next, in plain words</title>
+<style>
+:root{
+  --bg:#f6f5f0; --card:#ffffff; --ink:#14213a; --muted:#566074; --line:#e3e1d8;
+  --navy:#14213a; --navy-ink:#f4f6fb; --orange:#c2410c; --orange-soft:#fdece3;
+  --green:#166534; --green-soft:#e7f5ec; --amber:#8a5a00; --amber-soft:#fdf3d8;
+  --red:#9f1d1d; --red-soft:#fbe9e9; --blue:#1d4ed8; --blue-soft:#e8effd;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1424; --card:#151f35; --ink:#eef1f8; --muted:#a6b0c5; --line:#26324d;
+    --navy:#0a1020; --navy-ink:#f4f6fb; --orange:#fb923c; --orange-soft:#3a2214;
+    --green:#6ee7a0; --green-soft:#12301f; --amber:#f5c451; --amber-soft:#33290f;
+    --red:#fca5a5; --red-soft:#3a1717; --blue:#93b4ff; --blue-soft:#17233f;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:17px; line-height:1.65;
+  padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);
+}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}
+a{color:var(--blue)}
+
+/* top */
+.hero{background:var(--navy);color:var(--navy-ink);padding:34px 0 30px}
+.hero .tag{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.02em;
+  background:rgba(255,255,255,.12);padding:5px 12px;border-radius:999px;margin-bottom:16px}
+.hero h1{font-size:30px;line-height:1.2;margin:0 0 14px;font-weight:800}
+.hero h1 em{font-style:normal;color:#fdba74}
+.hero p{margin:0;font-size:18px;color:#dbe3f2}
+.hero .meta{margin-top:18px;font-size:14px;color:#aebad2}
+
+/* nav chips */
+nav.chips{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.chips .scroll{display:flex;gap:8px;overflow-x:auto;padding:10px 18px;max-width:720px;margin:0 auto;
+  scrollbar-width:none}
+nav.chips .scroll::-webkit-scrollbar{display:none}
+nav.chips a{flex:none;text-decoration:none;font-size:14px;font-weight:600;color:var(--ink);
+  background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:999px;white-space:nowrap}
+
+section{padding:34px 0 6px;scroll-margin-top:64px}
+h2{font-size:25px;line-height:1.25;margin:0 0 6px;font-weight:800}
+h3{font-size:19px;line-height:1.3;margin:26px 0 6px;font-weight:700}
+p{margin:0 0 14px}
+.lead{font-size:18px;color:var(--muted);margin-bottom:18px}
+.small{font-size:15px;color:var(--muted)}
+
+/* number boxes */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 8px;text-align:center}
+.stat b{display:block;font-size:34px;line-height:1.1;font-weight:800}
+.stat span{display:block;font-size:13.5px;color:var(--muted);margin-top:4px;line-height:1.3}
+.stat.do b{color:var(--green)} .stat.hold b{color:var(--amber)} .stat.no b{color:var(--red)}
+
+/* cards and callouts */
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+.callout{border-radius:16px;padding:16px 18px;margin:16px 0;border:1px solid transparent}
+.callout b.t{display:block;margin-bottom:4px}
+.callout.warn{background:var(--amber-soft);border-color:var(--amber)}
+.callout.info{background:var(--blue-soft);border-color:var(--blue)}
+.callout.good{background:var(--green-soft);border-color:var(--green)}
+.callout.bad{background:var(--red-soft);border-color:var(--red)}
+
+/* item lists */
+ul.items{list-style:none;margin:10px 0 0;padding:0}
+ul.items li{background:var(--card);border:1px solid var(--line);border-left-width:5px;
+  border-radius:14px;padding:13px 15px;margin:0 0 10px}
+ul.items li b{display:block;font-size:17px;margin-bottom:2px}
+ul.items li span{display:block;font-size:15.5px;color:var(--muted);line-height:1.55}
+ul.items.green li{border-left-color:var(--green)}
+ul.items.amber li{border-left-color:var(--amber)}
+ul.items.red li{border-left-color:var(--red)}
+ul.items.blue li{border-left-color:var(--blue)}
+ul.items.plain li{border-left-width:1px}
+ul.items li .flag{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;
+  padding:2px 10px;margin:6px 6px 0 0;background:var(--amber-soft);color:var(--amber)}
+
+ol.steps{padding-left:0;list-style:none;counter-reset:s;margin:12px 0}
+ol.steps li{counter-increment:s;position:relative;padding:4px 0 14px 46px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:32px;height:32px;
+  border-radius:50%;background:var(--navy);color:var(--navy-ink);font-weight:700;
+  display:flex;align-items:center;justify-content:center;font-size:15px}
+
+/* compare table as stacked cards on phones */
+.compare{display:grid;gap:12px;margin:14px 0}
+.compare .col{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+.compare .col h4{margin:0 0 8px;font-size:17px}
+.compare .col p{margin:0 0 8px;font-size:16px}
+.compare .col p:last-child{margin-bottom:0}
+.compare .k{font-size:13px;font-weight:700;color:var(--muted);text-transform:none;display:block}
+
+details{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:10px 0;padding:0}
+details summary{cursor:pointer;list-style:none;padding:15px 18px;font-weight:700;font-size:17px;
+  display:flex;justify-content:space-between;gap:12px;align-items:center}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";font-size:24px;line-height:1;color:var(--muted)}
+details[open] summary::after{content:"–"}
+details .inner{padding:0 18px 8px}
+
+footer{padding:34px 0 50px;color:var(--muted);font-size:15px}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+
+@media (min-width:640px){
+  body{font-size:18px}
+  .hero h1{font-size:40px}
+  .compare{grid-template-columns:1fr 1fr}
+  h2{font-size:29px}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="tag">On hold, with your decisions of 12 October. Nothing is built yet.</span>
+    <h1>What should we build next, and what should we <em>skip</em>?</h1>
+    <p>We looked at 109 ideas to make AppealDeck feel better and stronger for a seller who visits for the first time. This page tells you which ones to do, which to wait on, and which to leave alone, and why.</p>
+    <div class="meta">Written 10 October 2026 · your decisions added 12 October 2026</div>
+  </div>
+</header>
+
+<nav class="chips" aria-label="Jump to a part">
+  <div class="scroll">
+    <a href="#decided">Your decisions</a>
+    <a href="#answer">The answer</a>
+    <a href="#why">Why this plan</a>
+    <a href="#do">Do now</a>
+    <a href="#wait">Wait</a>
+    <a href="#skip">Skip</a>
+    <a href="#you">Only you</a>
+    <a href="#how">How to build</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<section id="decided">
+  <h2>Your decisions, 12 October</h2>
+  <p class="lead">You read this page and changed eight ideas. This part records what you said, and answers the two questions you asked. The whole plan stays on hold until you name a batch.</p>
+
+  <h3>Moved from "Do now" to "Skip"</h3>
+  <ul class="items red">
+    <li><b>The "Why don't you show a success rate?" answer</b><span>You said: don't do. The rule itself (no rate without a full count) stays in the Terms and on the "How we test" page.</span></li>
+    <li><b>The "What we will not do" page</b><span>You said: don't do. Those lines already sit on the support page and in the Terms. A page named for what we will not do reads weak.</span></li>
+    <li><b>"Written for Amazon US" above the paste box</b><span>You said: don't do. It stays on the pricing page and in the Terms, and leaves the paste box.</span></li>
+    <li><b>The free supplier-letter page</b><span>You said: don't do. The letter stays inside the case, under "I don't have it".</span></li>
+    <li><b>The scam check on its own page</b><span>You asked how it differs from what we already do with pasted notices. <b>It does not differ.</b> The same check already runs on every pasted notice and inside the case. The page would only be a second front door, named for the question, that sells nothing, so forum moderators who ban commercial links would allow it. Not important now. We can come back to it if you are ever posting in forums.</span></li>
+    <li><b>"What the paid plan is not" under the price</b><span>You asked "how about this too?" Yes, drop it as a list of negatives. The parts that matter (Amazon decides; software, not a law firm) are already on the "Read this before you pay" card, which must stay before the pay button. That card gets reworded to read as confidence instead.</span></li>
+  </ul>
+
+  <h3>Moved from "Skip" to "Do, when ready"</h3>
+  <ul class="items green">
+    <li><b>A public results page</b><span>You said: do, only when there are enough real, shared results with a full count. That is also the page's own rule. On that day it is still released only by its exact phrase: <code>EXECUTE PARKED P-13 outcomes page</code>.</span></li>
+    <li><b>A public "what we changed" page</b><span>You said: do, as a dated list of fixes. Released only by its exact phrase: <code>EXECUTE PARKED P-01 changelog page</code>.</span></li>
+  </ul>
+
+  <h3>Decided</h3>
+  <ul class="items blue">
+    <li><b>The product-safety fix</b><span>You said yes. It joins Batch 1.</span></li>
+    <li><b>Your one-line sentence</b><span>Still yours to write. No AI writes it. The home-page line waits for it.</span></li>
+  </ul>
+
+  <div class="callout info">
+    <b class="t">Two more things written up the same day, both on hold</b>
+    Your idea of leading with strengths and keeping definitions and operating detail in the Terms and Privacy pages is written as a plan for you to approve: <code>2026-10-12-disclosure-placement-plan.md</code>. Three lines stay before the pay button whatever happens (Amazon decides; software, not a law firm; some cases are not sold), reworded so they read as confidence. And the research you asked for on a seller community, free building blocks, support and reach is in <code>2026-10-12-community-and-reach-research.md</code>.
+  </div>
+
+  <p class="small">New counts: 59 to do (two of them "when ready"), 9 to wait on, 41 to skip. Before: 65, 9, 35.</p>
+</section>
+
+<section id="answer">
+  <h2>The short answer</h2>
+  <p class="lead">Do about two thirds of the ideas. Wait on a few. Skip the rest.</p>
+
+  <div class="stats">
+    <div class="stat do"><b>59</b><span>ideas to do now</span></div>
+    <div class="stat hold"><b>9</b><span>ideas to wait on</span></div>
+    <div class="stat no"><b>41</b><span>ideas to skip</span></div>
+  </div>
+
+  <div class="card">
+    <p><b>Why do the 65?</b> Every one of them is a fix, a small wording change, or a page made from things we already have. None adds a new tool. They make the first minute honest, clear and trustworthy, and they are cheap.</p>
+    <p><b>Why wait on 9?</b> Each one needs something first: a decision from you, a fact only you can check, or an earlier piece to be finished.</p>
+    <p style="margin-bottom:0"><b>Why skip 35?</b> Some you have already said must be asked for by an exact sentence. Some are already built. Most are new tools that no seller has asked for yet.</p>
+  </div>
+
+  <div class="callout warn">
+    <b class="t">A correction about my earlier numbers</b>
+    Earlier in this chat I said "about 35", then "about 65", then "63". I had not counted. These numbers are counted from the full list. Four of the 65 are the same job written twice, so the real amount of work is 61 jobs.
+  </div>
+
+  <div class="callout bad">
+    <b class="t">This plan does not fix the big problems</b>
+    A better first minute will not get the payment company to approve you, give you a real website address, switch on paid AI, or bring visitors. Those four are still yours, and they matter more than anything on this page.
+  </div>
+</section>
+
+<section id="why">
+  <h2>Why this plan</h2>
+  <p class="lead">We now have two reports. They ask different questions.</p>
+
+  <div class="compare">
+    <div class="col">
+      <h4>Report 1: "Will this ever pay you?"</h4>
+      <p><span class="k">Its main answer</span>Three things decide it, and none is code: a way to take cards, a way to bring people to the site, and a stranger being willing to pay $249 once.</p>
+      <p><span class="k">Its odds</span>About a 25 to 40 in 100 chance of a first sale within 60 days of a real launch. That is a rough estimate, not a fact.</p>
+      <p><span class="k">Its building rule</span>Do not build new tools until 50 real cases have been started.</p>
+    </div>
+    <div class="col">
+      <h4>Report 2: "What does a first-time visitor feel?"</h4>
+      <p><span class="k">Its main answer</span>Fix what is untrue or confusing in the first minute. Then show trust by how the product works, not by claims. Then open a few free doors nobody else has.</p>
+      <p><span class="k">Its odds</span>None. It does not score or predict anything.</p>
+      <p><span class="k">Its building rule</span>The first four batches are fixes and pages. The last two batches and the "maybe" list are new tools.</p>
+    </div>
+  </div>
+
+  <div class="callout good">
+    <b class="t">Where they agree</b>
+    No new tools before 50 real cases. Trust must be shown, not claimed. And one line of advice in the product is wrong today (product safety, explained below), so it must be fixed.
+  </div>
+  <div class="callout info">
+    <b class="t">Where they disagree</b>
+    The second report wants a few new tools. The first says not yet. This page sides with the first report, so the new tools are in the "skip" part.
+  </div>
+  <p>Neither report replaces the other. You need both: a business that can take payment and find visitors, and a first minute that does not lose them.</p>
+</section>
+
+<section id="do">
+  <h2>Do now: 65 ideas</h2>
+  <p class="lead">Three batches, about 9 days of work in total. Do them in this order.</p>
+
+  <h3>Batch 1: fix what is wrong today (about 3 days)</h3>
+  <p class="small">These are mistakes a visitor can see right now. They are worth the most for the least work.</p>
+  <ul class="items green">
+    <li><b>Stop copying stray "##" marks into Amazon's box</b><span>When a paying seller presses Copy on the finished response, the text includes "## Root Cause" and similar marks. Amazon's box would show those symbols.</span></li>
+    <li><b>Make the letter and the document pack agree on file names</b><span>The letter calls a file one name. The download pack renames the same file. The person at Amazon sees something different from what the letter says.</span></li>
+    <li><b>Say the truth when a notice gives no deadline</b><span>Today the page says the deadline is "unclear" or "a window", when the notice says neither. Replace it with: no deadline is written, check the Appeal button in your Amazon account, and if a date is shown there, that date wins.</span></li>
+    <li><b>Fix the "Not stored" line next to the paste box</b><span>It is no longer true. We keep a short fingerprint of the notice for 7 days (never the text itself). Say that plainly and match the privacy page word for word.</span></li>
+    <li><b>Show the $249 price where the seller decides</b><span>Right now the seller meets a sign-in button, with the price missing. Add one line: "Then $249 once for this case. Everything above stays free."</span></li>
+    <li><b>Rename the button "Open case workspace"</b><span>No seller says "workspace". Use "Start my case, free". Some of our automatic tests look for the old name, so they change in the same step.</span></li>
+    <li><b>Tidy the pricing note on phones</b><span>It sits as a three-line grey box above the heading. Make it one calm sentence.</span></li>
+    <li><b>Fix the product-safety advice</b><span>The product tells a seller to upload a test report. For toys, supplements, batteries and some others, Amazon now takes the result straight from an approved lab, and a seller's own upload is no longer accepted. This is the one line of advice that could cost a seller their case. <span class="flag">You said yes on 12 Oct</span></span></li>
+  </ul>
+
+  <h3>Batch 2: the first 60 seconds (about 3 days)</h3>
+  <p class="small">This is what a frightened seller sees right after pasting a notice.</p>
+  <ul class="items green">
+    <li><b>One tap on "Use a sample" shows a full result</b><span>Today it only fills the box, and you must tap again. A visitor or a helper should see a finished answer in about 10 seconds, clearly marked as a sample.</span></li>
+    <li><b>Add a "Your money" line</b><span>When the notice says funds are held, say what Amazon's own policy allows (a request about 60 days after the account is closed, with the policy date), and say to check the dates in the seller's own account.</span></li>
+    <li><b>Show what the scam check looked at</b><span>Under "No warning signs", list what we checked: a fee demand, a password request, a move to WhatsApp or Telegram, links not on Amazon, a reply address not from Amazon. And say we cannot prove who sent it.</span></li>
+    <li><b>Say "We could not place this notice" at the top</b><span>When we cannot work out the type of notice, say so in the heading, not low on the page. "Nothing below is guessed."</span></li>
+    <li><b>Say the page is written for Amazon US and English notices</b><span>Put that line above the paste box, not only on the pricing page. <span class="flag">Moved to Skip on 12 Oct</span></span></li>
+    <li><b>Explain the hard words on first use</b><span>A short meaning for ASIN (Amazon's product code) and Section 3 (a kind of account review).</span></li>
+    <li><b>Show what the free plan really includes</b><span>The home page lists only the notice reader. Add the reply reader, the invoice check, the deadline clocks and the scam check.</span></li>
+    <li><b>Make the invoice check easy to find and keep it visible</b><span>Link it from the "supplier invoice" item on the result, and keep the "Check this document" button visible after a seller saves the file.</span></li>
+    <li><b>Two short answers sellers keep asking</b><span>What to do when the invoice does not show the product code, and when Amazon wants the invoice from the supplier's own supplier.</span></li>
+    <li><b>Three new "do and don't" cards</b><span>Never share your login (give a helper their own limited access). Ask Amazon which products are involved if the notice names none. Never send the same text twice.</span></li>
+    <li><b>Small fixes to the home page</b><span>The top banner repeats the headline and gets cut off on phones. The sample says "90 days" as if it were the seller's own deadline.</span></li>
+  </ul>
+
+  <h3>Batch 3: trust, and a few free doors (about 3 days)</h3>
+  <p class="small">A first-time visitor has no reason to trust us yet. These show how the product works instead of asking for trust.</p>
+  <ul class="items green">
+    <li><b>A free reply reader</b><span>Paste Amazon's reply and see whether it was a refusal, a request for documents, or a reinstatement, with the exact sentence that says so. Then start a case from it. No free competitor does this.</span></li>
+    <li><b>The invoice check shows its arithmetic</b><span>Days between the invoice and the notice, against Amazon's 365-day limit. Units on the invoice, against units the seller sold. Shown step by step, never "this will pass".</span></li>
+    <li><b>A free page to ask a supplier for a proper invoice</b><span>A ready letter, no sign-up. This is the document a seller will forward most. <span class="flag">Moved to Skip on 12 Oct</span></span></li>
+    <li><b>The scam check on its own page</b><span>"Is this message really from Amazon?" A plain page that sells nothing, easy to share on forums that ban links. <span class="flag">Moved to Skip on 12 Oct</span></span></li>
+    <li><b>A page called "What we will not do"</b><span>No login to your Amazon account. No automation. No fake invoices. No promise about the result. No pretending to be a person. Linked from the top, the footer and the price page. <span class="flag">Moved to Skip on 12 Oct</span></span></li>
+    <li><b>A page called "How we test"</b><span>Our test results shown honestly, including our misses, with dates. The test notices we use are shared too. Nobody else publishes their misses.</span></li>
+    <li><b>An answer to "Why don't you show a success rate?"</b><span>Because honest rates need real data and a full count, and we have none yet. <span class="flag">Moved to Skip on 12 Oct</span></span></li>
+    <li><b>Your name on the home page</b><span>One line: built and answered by one person, Jhangir Hussain, who reads every message. <span class="flag">You write the sentence yourself</span></span></li>
+    <li><b>A warning about "insider" offers</b><span>Messages offering to fix an account for money, on WhatsApp, Telegram or WeChat. Also: a notice missing from your Amazon account is a warning sign, not proof it is fake.</span></li>
+    <li><b>Clearer answers to the first two questions a buyer reads</b><span>"Will this get my account back?" and "What does the paid plan add?" each get one more honest sentence.</span></li>
+    <li><b>"What the paid plan is not"</b><span>Under the price: not a person, not sent for you, not a prediction. <span class="flag">Moved to Skip on 12 Oct</span></span></li>
+    <li><b>Change "independent service" to "software"</b><span>The payment company bans selling human services such as legal advice. Say "software" everywhere. A privacy test is updated at the same time.</span></li>
+    <li><b>Split the long first bullet on the paid plan</b><span>It is about 40 words long. Make it two short lines, and keep it true if the AI is off.</span></li>
+    <li><b>A visible "your own words" stamp</b><span>On the finished response, show that every date, number and name came from the seller's answers, and nothing was added. This answers the worry that "AI appeals get rejected".</span></li>
+    <li><b>Name the reasons Amazon often refuses invoices</b><span>Shop receipts, quotes, handwritten or edited files, very small quantities. And say plainly: we check fields, dates and numbers, we cannot know whether Amazon trusts your supplier.</span></li>
+    <li><b>A case name and a list of all cases</b><span>For a helper with many clients: name each case (client or store), show it on cards, the tab and downloads, and add one spreadsheet file of all cases.</span></li>
+    <li><b>Put the downloads next to "Open Seller Central"</b><span>The document pack and the Word copy sit on another tab. Move them beside the button the seller presses to send.</span></li>
+    <li><b>Say "documents go with the response, not in a support case"</b><span>Put it at the Documents heading, where sellers need it.</span></li>
+    <li><b>Say how long Amazon takes, using Amazon's own words</b><span>An Amazon staff member said most appeals take 3 to 7 working days but can take longer, with no promise. Sellers report anything from 10 days to months. Quote it with the date. Predict nothing.</span></li>
+    <li><b>Help when the notice cannot be found</b><span>Where to look (Performance Notifications, spam folder), and a reminder on the dashboard when a follow-up date passes with no reply.</span></li>
+    <li><b>Help for a second device</b><span>An empty dashboard offers "Restore a saved backup", and the billing page says "up to 5 browsers", because cases live on the browser where they started.</span></li>
+    <li><b>Keep one house rule for every free check</b><span>Say what it found, what it cannot know, and one next step.</span></li>
+  </ul>
+
+  <h3>Small wording fixes (22 more, fold in as you go)</h3>
+  <p class="small">Each is one sentence or one label. Examples:</p>
+  <ul class="items plain">
+    <li><b>Make the checklist words plain</b><span>Replace phrases like "novelty on attempt 1" with "Same text as a previous attempt? First attempt, nothing to compare".</span></li>
+    <li><b>Remove the old percentage on the old progress card</b><span>It still shows a percent. Show "what is in your case file", never a prediction.</span></li>
+    <li><b>Plain words for the consent button</b><span>The legal text itself stays unchanged.</span></li>
+    <li><b>Plain names for document types</b><span>For example "letter from the brand owner withdrawing the complaint".</span></li>
+    <li><b>Put the "this is not an appeal" sentence first</b><span>For account-identity notices, it should be the first thing a seller reads.</span></li>
+    <li><b>Add the "call us" route when the deadline has passed</b><span>Say results vary.</span></li>
+    <li><b>Show the store the notice names</b><span>An Amazon UK notice should not default to "Amazon US" with a note beside it saying otherwise.</span></li>
+    <li><b>Small label fixes</b><span>"Revise the plan" becomes "revise your response". A "Sample data" label next to the sample clock on the sign-in page. The 404 button for a signed-out visitor says "Read a notice". Reminders say "email reminders once you sign in". Document check rows use plain sentences.</span></li>
+    <li><b>The "Amazon asked for nothing else" tick</b><span>It may lag for a moment. Not proven. Fix it only if a hand test shows the problem.</span></li>
+  </ul>
+</section>
+
+<section id="wait">
+  <h2>Wait on: 9 ideas</h2>
+  <p class="lead">Each is a good idea that needs one thing first.</p>
+  <ul class="items amber">
+    <li><b>Ask for a public review after a reinstatement</b><span>Two ideas in one: the ask itself, and the dated review it leads to.</span><span class="flag">Wait: you must claim the review profiles first</span></li>
+    <li><b>A page for helpers and writers</b><span>For people who run accounts for sellers: no login handover, many cases, a pack to hand to clients.</span><span class="flag">Wait: you must decide how they pay first</span></li>
+    <li><b>A video-verification preparation page</b><span>Camera and mic test, matching documents, joining on time.</span><span class="flag">Wait: do after the first 65</span></li>
+    <li><b>A "lost invoices" route</b><span>What Amazon says to do if invoices are gone.</span><span class="flag">Wait: you check the exact wording in your own Amazon account</span></li>
+    <li><b>The document check opens with one plain sentence</b><span>A sentence such as "this file reads as a quote from this company, with no street address".</span><span class="flag">Wait: do after the first 65</span></li>
+    <li><b>"Copy a request to your supplier" from a check result</b><span>Fills a letter from the problems found.</span><span class="flag">Wait: the supplier letter page comes first</span></li>
+    <li><b>Show the next-step routes before a refusal</b><span>What forums and consultants describe, plus a guide "Appeal denied: what now".</span><span class="flag">Wait: needs dated sources</span></li>
+    <li><b>A forum-safe copy of the result</b><span>The seller's own result with names and codes removed, ready to paste in a forum.</span><span class="flag">Wait: careful building, and you decide whether our name appears</span></li>
+  </ul>
+</section>
+
+<section id="skip">
+  <h2>Skip: 35 ideas</h2>
+  <p class="lead">Three kinds, and the reason for each.</p>
+
+  <h3>A. Five you said must be asked for with an exact sentence</h3>
+  <p class="small">These are in your list of parked items. We build one only when you type its exact phrase.</p>
+  <ul class="items red">
+    <li><b>Notices about tax, reserve, payment or selling limits</b><span>A plain next step for these.</span></li>
+    <li><b>A public results page</b><span>Only when there are enough real, shared results with a full count. <span class="flag">Moved to "Do, when ready" on 12 Oct; still needs the exact phrase</span></span></li>
+    <li><b>A public "what we changed" page</b><span>A dated list of fixes. <span class="flag">Moved to "Do, when ready" on 12 Oct; still needs the exact phrase</span></span></li>
+    <li><b>A safe expiring link to show a case to a consultant</b><span>On hold since 7 October.</span></li>
+    <li><b>Several reminders per case</b><span>Needs a database change.</span></li>
+  </ul>
+
+  <h3>B. Three the research said were missing, but they already exist</h3>
+  <ul class="items blue">
+    <li><b>Notice translation on your own device</b><span>Already built.</span></li>
+    <li><b>"One paid plan covers every round, no expiry"</b><span>Already on the pricing page. Only two places are missing it: the confirmation email and the refund page.</span></li>
+    <li><b>"ID and bank documents never leave your device"</b><span>Already shown where a seller attaches the file.</span></li>
+  </ul>
+
+  <h3>C. Twenty-seven new tools nobody has asked for yet</h3>
+  <p class="small">Your first report says: no new tools until 50 real cases. These are good ideas that can wait for real sellers to show which ones matter.</p>
+  <details>
+    <summary>Show all 27</summary>
+    <div class="inner">
+      <ul class="items plain">
+        <li><b>A public calendar of every Amazon deadline</b><span>Type a date, see every window.</span></li>
+        <li><b>A "same appeal again?" checker</b></li>
+        <li><b>A free "check my draft" page</b><span>This gives away part of what the paid plan polishes. Your pricing decision.</span></li>
+        <li><b>A warning when an invoice is dated too new</b></li>
+        <li><b>A tip to appeal the responsible account first</b><span>Needs a second source.</span></li>
+        <li><b>Next steps after a product-safety alert</b></li>
+        <li><b>Guides for linked accounts and for held funds</b></li>
+        <li><b>A guide for single-offer deactivations</b></li>
+        <li><b>A log of every Amazon message</b><span>A different product for helpers.</span></li>
+        <li><b>A Seller Challenge eligibility check</b></li>
+        <li><b>A tax-form reminder clock</b></li>
+        <li><b>"Amazon's number against your number"</b></li>
+        <li><b>Deeper questions to find the root cause</b><span>Ten questions written without real cases would be guesses.</span></li>
+        <li><b>A price comparison strip</b><span>Only if you will re-check it every quarter.</span></li>
+        <li><b>One-click refunds</b><span>Your decision on the promise.</span></li>
+        <li><b>Ten ready answers on the support page</b></li>
+        <li><b>A call log</b></li>
+        <li><b>An Urdu line or page</b><span>Only if you will answer in Urdu.</span></li>
+        <li><b>A partner code for writers and helpers</b><span>Needs your decision and a written agreement.</span></li>
+        <li><b>Check-in emails after sending</b></li>
+        <li><b>A document shelf with expiry dates</b></li>
+        <li><b>A "call me" route after the deadline passes</b></li>
+        <li><b>A "your first 24 hours" block</b></li>
+        <li><b>Save the result as a picture</b></li>
+        <li><b>A box of dated policy changes</b></li>
+        <li><b>A guide to ten regrets sellers post</b></li>
+        <li><b>A small "not legal advice" line under the paste box</b><span>Three "nots" in a row sound defensive.</span></li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<section id="you">
+  <h2>Only you can do these</h2>
+  <p class="lead">An AI cannot do them honestly. Several items above are stuck until you do.</p>
+  <ol class="steps">
+    <li><b>Say yes or no to the product-safety fix.</b> <b>Done: you said yes on 12 October.</b> It joins Batch 1.</li>
+    <li><b>Write the one-line sentence about yourself.</b> In your own words. Never let an AI write it.</li>
+    <li><b>Make sure the support, billing and privacy email addresses exist</b> before the site says you answer within two working days.</li>
+    <li><b>Spend ten minutes in your own Amazon seller account.</b> It settles four things we could not confirm: the review time, the product-safety alert deadlines, the lost-invoice rule, and which account to appeal first.</li>
+  </ol>
+  <div class="callout warn">
+    <b class="t">Still yours, and bigger than all of this</b>
+    Getting the payment company to approve you, a real website address, paid AI billing, and getting people to the site.
+  </div>
+</section>
+
+<section id="how">
+  <h2>How to build it safely</h2>
+  <ol class="steps">
+    <li><b>Go in order:</b> Batch 1, then 2, then 3. One batch at a time, with all the checks run once per batch.</li>
+    <li><b>Every word follows our rules:</b> never "guarantee", never a success rate, never a guess about Amazon's decision, nothing read from your Amazon account.</li>
+    <li><b>Two new features get their own test,</b> because they would silently stop working if disconnected: the one-tap sample and the free reply reader.</li>
+    <li><b>The renamed button changes six automatic tests</b> in the same step.</li>
+    <li><b>Do not start on "go ahead".</b> Tell me the batch, for example "do Batch 1", or name the ideas.</li>
+  </ol>
+
+  <div class="callout good">
+    <b class="t">My advice</b>
+    Say "do Batch 1". The product-safety fix is in, since you said yes. The line about you waits until you write it.
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <hr>
+    <p>This page replaces the longer technical version for reading. It was made from two earlier reports in this folder: the success assessment and the growth register. The full list with evidence is in the growth register.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var links=document.querySelectorAll("nav.chips a[href^=\"#\"]");
+  function go(e){
+    var id=this.getAttribute("href").slice(1);
+    var el=document.getElementById(id);
+    if(!el) return;
+    e.preventDefault();
+    var nav=document.querySelector("nav.chips");
+    var top=el.getBoundingClientRect().top+window.pageYOffset-(nav?nav.offsetHeight:0)-4;
+    window.scrollTo({top:top,behavior:"smooth"});
+  }
+  for(var i=0;i<links.length;i++) links[i].addEventListener("click",go);
+})();
+</script>
+</body>
+</html>
