@@ -63,6 +63,9 @@ export function DecodePanel() {
           ) : (
             <p className="text-sm text-muted-foreground">{DECODE.result.noDeadline}</p>
           )}
+          {/* G-97: the 90 days belongs to this sample, not to every notice. */}
+          <p className="mt-2 text-xs text-muted-foreground">{demo.sampleWindowNote}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{DECODE.result.asinGloss}</p>
         </div>
         {/* v5: the scam check, run on the same sample text, exactly as /decode runs it. */}
         <div className="flex items-center gap-3 rounded-2xl bg-card px-5 py-4 shadow-lift">
@@ -80,6 +83,9 @@ export function DecodePanel() {
             <span className="block text-xs text-muted-foreground">{DECODE.result.factScam}</span>
             <span className="block font-semibold text-foreground">
               {flagged ? DECODE.result.factScamFlagged : DECODE.result.factScamClear}
+            </span>
+            <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+              {DECODE.result.factScamLooked}
             </span>
           </span>
         </div>

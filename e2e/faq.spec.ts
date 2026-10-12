@@ -61,7 +61,7 @@ test("pricing keeps the expectations visible before an unchecked delivery consen
   ).toBeVisible();
   await expect(page.getByRole("checkbox")).not.toBeChecked();
   await expect(
-    page.getByRole("button", { name: "Review delivery consent to continue", exact: true }),
+    page.getByRole("button", { name: "Tick the box above to continue", exact: true }),
   ).toBeDisabled();
   expect(
     await expectations.evaluate((el) =>

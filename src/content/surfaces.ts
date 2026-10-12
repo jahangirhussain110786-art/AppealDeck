@@ -52,8 +52,10 @@ export const SURFACES = {
   notFound: {
     eyebrow: "Page unavailable · 404",
     title: "Let's get you back on track.",
-    description: "This page may have moved. Open your dashboard to continue, or return home.",
+    description: "This page may have moved. Decode a notice, open your dashboard, or return home.",
     primary: "Open dashboard",
+    // G-106: someone who is not signed in has no dashboard to open.
+    primarySignedOut: "Decode a notice",
     secondary: "Back to home",
   },
   error: {

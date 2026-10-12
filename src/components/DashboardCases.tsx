@@ -75,83 +75,96 @@ export function DashboardCases({
   switching,
   onSelect,
   onReopen,
+  onDownloadCsv,
 }: {
   summaries: CaseSummary[];
   busy: boolean;
   switching: string | null;
   onSelect: (id: string) => void;
   onReopen: (id: string) => void;
+  /** G-60: every case as one spreadsheet. Offered once there is more than one case to list. */
+  onDownloadCsv?: () => void;
 }) {
   const open = summaries.filter((s) => !s.archived);
   const closed = summaries.filter((s) => s.archived);
   const [view, setView] = useState<"open" | "closed">("open");
   const shown = view === "open" ? open : closed;
   return (
-    <section aria-labelledby="dashboard-cases" className="space-y-3.5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="dashboard-cases" className="text-xl font-semibold tracking-[-0.02em]">
-          {S.heading}
-        </h2>
-        {closed.length > 0 && (
-          <div
-            role="group"
-            aria-label={S.filter}
-            className="inline-flex rounded-full bg-muted p-1 text-[0.8125rem] ring-1 ring-inset ring-border"
-          >
-            {(["open", "closed"] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                aria-pressed={view === v}
-                onClick={() => setView(v)}
-                className={cn(
-                  "h-8 rounded-full px-3.5 font-medium transition-colors",
-                  view === v
-                    ? "bg-surface-1 text-foreground shadow-card"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {(v === "open" ? S.open : S.closedTab).replace(
-                  "{n}",
-                  String(v === "open" ? open.length : closed.length),
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <div role="region" aria-label={S.heading} className="flex flex-col gap-3">
-        {shown.length === 0 && (
-          <p className="rounded-[18px] bg-card px-5 py-4 text-sm text-muted-foreground ring-1 ring-inset ring-border">
-            {view === "open" ? S.noneOpen : S.noneClosed}
-          </p>
-        )}
-        {shown.map((s) =>
-          s.archived ? (
+    <>
+      <section aria-labelledby="dashboard-cases" className="space-y-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="dashboard-cases" className="text-xl font-semibold tracking-[-0.02em]">
+            {S.heading}
+          </h2>
+          {closed.length > 0 && (
             <div
-              key={s.id}
-              className="flex items-center justify-between gap-3 rounded-[18px] bg-card px-5 py-4 ring-1 ring-inset ring-border"
+              role="group"
+              aria-label={S.filter}
+              className="inline-flex rounded-full bg-muted p-1 text-[0.8125rem] ring-1 ring-inset ring-border"
             >
-              <span className="min-w-0">
-                <span className="block truncate font-semibold">{s.title}</span>
-                <span className="text-[0.8125rem] text-muted-foreground">{S.closed}</span>
-              </span>
-              <Button size="sm" variant="outline" disabled={busy} onClick={() => onReopen(s.id)}>
-                {S.reopen}
-              </Button>
+              {(["open", "closed"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  aria-pressed={view === v}
+                  onClick={() => setView(v)}
+                  className={cn(
+                    "h-8 rounded-full px-3.5 font-medium transition-colors",
+                    view === v
+                      ? "bg-surface-1 text-foreground shadow-card"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {(v === "open" ? S.open : S.closedTab).replace(
+                    "{n}",
+                    String(v === "open" ? open.length : closed.length),
+                  )}
+                </button>
+              ))}
             </div>
-          ) : (
-            <CaseCard
-              key={s.id}
-              summary={s}
-              disabled={busy}
-              switching={switching === s.id}
-              onSelect={() => onSelect(s.id)}
-            />
-          ),
-        )}
-      </div>
-    </section>
+          )}
+        </div>
+        <div role="region" aria-label={S.heading} className="flex flex-col gap-3">
+          {shown.length === 0 && (
+            <p className="rounded-[18px] bg-card px-5 py-4 text-sm text-muted-foreground ring-1 ring-inset ring-border">
+              {view === "open" ? S.noneOpen : S.noneClosed}
+            </p>
+          )}
+          {shown.map((s) =>
+            s.archived ? (
+              <div
+                key={s.id}
+                className="flex items-center justify-between gap-3 rounded-[18px] bg-card px-5 py-4 ring-1 ring-inset ring-border"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold">{s.title}</span>
+                  <span className="text-[0.8125rem] text-muted-foreground">{S.closed}</span>
+                </span>
+                <Button size="sm" variant="outline" disabled={busy} onClick={() => onReopen(s.id)}>
+                  {S.reopen}
+                </Button>
+              </div>
+            ) : (
+              <CaseCard
+                key={s.id}
+                summary={s}
+                disabled={busy}
+                switching={switching === s.id}
+                onSelect={() => onSelect(s.id)}
+              />
+            ),
+          )}
+        </div>
+      </section>
+      {/* G-60: outside the section, so the "Your cases" region holds only the cards. */}
+      {onDownloadCsv && summaries.length > 1 && (
+        <div className="flex justify-end">
+          <Button type="button" variant="outline" size="sm" onClick={onDownloadCsv}>
+            {S.downloadCsv}
+          </Button>
+        </div>
+      )}
+    </>
   );
 }
 

@@ -26,7 +26,7 @@ export const SUPPORT = {
 
   operator: {
     title: "Who operates AppealDeck",
-    body: "AppealDeck is an independent service operated by Jhangir Hussain, trading as Hawlton, an individual seller based in Pakistan. It is not affiliated with, endorsed by or sponsored by Amazon.com, Inc. or its affiliates.",
+    body: "AppealDeck is software, operated by Jhangir Hussain, trading as Hawlton, an individual seller based in Pakistan. It is not affiliated with, endorsed by or sponsored by Amazon.com, Inc. or its affiliates.",
   },
 
   contact: {

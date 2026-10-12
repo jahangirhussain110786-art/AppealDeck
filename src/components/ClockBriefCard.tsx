@@ -40,15 +40,23 @@ export function ClockBriefCard({
   const { items, newItems, hasOverdue } = brief;
 
   if (items.length === 0 && undated.length > 0) {
+    // A stated length with no start day is a window; anything else states no deadline at all.
+    const hasWindow = undated.some(
+      (d) => d.startsOnReceipt || /\b\d{1,3}[\s-]days?\b/i.test(d.label),
+    );
     return (
       <Card className="border-warning/40">
         <CardHeader className="flex-row items-center gap-3 space-y-0">
           <CalendarClock className="size-5 text-warning" aria-hidden />
-          <CardTitle className="text-base">{APP.dashboard.clock.titleUndated}</CardTitle>
+          <CardTitle className="text-base">
+            {hasWindow ? APP.dashboard.clock.titleUndated : APP.dashboard.clock.titleNoDeadline}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <DeadlineChipList deadlines={undated} />
-          <p className="text-sm text-muted-foreground">{APP.dashboard.clock.undatedBody}</p>
+          <p className="text-sm text-muted-foreground">
+            {hasWindow ? APP.dashboard.clock.undatedBody : APP.dashboard.clock.noDeadlineBody}
+          </p>
         </CardContent>
       </Card>
     );

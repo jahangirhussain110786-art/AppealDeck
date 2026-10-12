@@ -139,6 +139,11 @@ export interface CaseFacts {
 export interface Workspace {
   version: 1;
   revision: number;
+  /**
+   * The seller's own name for this case, such as a client or a store (G-60). Optional, shown on
+   * the dashboard, sidebar, tab title and the seller's own exports; see `src/lib/caseLabel.ts`.
+   */
+  label?: string;
   marketplace: "US" | "other";
   notice: string;
   decodedNoticeHash?: string;

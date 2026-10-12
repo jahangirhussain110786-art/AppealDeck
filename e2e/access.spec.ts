@@ -53,7 +53,7 @@ test.describe("Access ladder — signed-out workspace, gate, case preview", () =
 
     await expect(page.getByText("What to gather", { exact: true })).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Open case workspace", exact: true }),
+      page.getByRole("link", { name: "Start my case — free", exact: true }),
     ).toBeVisible();
   });
 

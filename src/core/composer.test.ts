@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { composePoa, critiquePoa, renderPoaText } from "./composer";
+import {
+  composePoa,
+  critiquePoa,
+  renderPoaPlain,
+  renderPoaText,
+  templatePhrasesInDraft,
+} from "./composer";
 import type { CaseFileData } from "./readiness";
 
 function makeCase(overrides: Partial<CaseFileData> = {}): CaseFileData {
@@ -408,6 +414,18 @@ describe("critiquePoa", () => {
   });
 });
 
+describe("renderPoaPlain", () => {
+  it("writes headings as plain capitals with no markdown markers, for pasting into Amazon", () => {
+    const draft = composePoa(makeCase());
+    const text = renderPoaPlain(draft);
+    expect(text).not.toMatch(/^#+s/m);
+    expect(text).toContain("ROOT CAUSE");
+    expect(text).toContain("CORRECTIVE ACTIONS");
+    // Same words as the stored form, so nothing the seller reads differs from what is recorded.
+    for (const section of draft.sections) expect(text).toContain(section.body);
+  });
+});
+
 describe("renderPoaText", () => {
   it("renders sections with headings", () => {
     const draft = composePoa(makeCase());
@@ -475,5 +493,36 @@ describe("time-promise rule", () => {
     "We completed staff training over 5 days.",
   ])("leaves a factual duration alone: %s", (body) => {
     expect(flagged(body)).toBe(false);
+  });
+});
+
+describe("templatePhrasesInDraft (G-35)", () => {
+  it("counts template phrases in the case's own sections and lists them by label", () => {
+    const hits = templatePhrasesInDraft({
+      sections: [
+        {
+          heading: "Root Cause",
+          body: "Going forward we will check each invoice, in order to be sure.",
+        },
+        { heading: "Corrective Actions", body: "We removed the listing on 3 March." },
+      ],
+    });
+    expect(hits).toEqual(expect.arrayContaining(["going forward", "in order to"]));
+  });
+
+  it("finds none in plain specific wording", () => {
+    expect(
+      templatePhrasesInDraft({
+        sections: [{ heading: "Root Cause", body: "Our buyer reused invoice 118 for two ASINs." }],
+      }),
+    ).toEqual([]);
+  });
+
+  it("does not count words in the sections that are not about the case", () => {
+    expect(
+      templatePhrasesInDraft({
+        sections: [{ heading: "Evidence Attached", body: "Going forward, in order to ensure." }],
+      }),
+    ).toEqual([]);
   });
 });

@@ -155,6 +155,18 @@ describe("plain row labels", () => {
         "invoiced quantity consistent with units sold of each cited ASIN in the 365 days before the notice",
       ),
     ).toBe("Do the quantities match what you sold?");
-    expect(plainFieldLabel("supplier business name")).toBe("supplier business name");
+    // G-108: the supplier-invoice rows are asked as questions; anything else stays as stored.
+    expect(plainFieldLabel("supplier business name")).toBe(
+      "Is the supplier's business name printed?",
+    );
+    expect(plainFieldLabel("supplier physical address")).toBe(
+      "Is the supplier's street address printed?",
+    );
+    expect(plainFieldLabel("issue date (within 365 days)")).toBe(
+      "Is the invoice dated within the last 365 days?",
+    );
+    expect(plainFieldLabel("authorized distributor or brand letter")).toBe(
+      "authorized distributor or brand letter",
+    );
   });
 });

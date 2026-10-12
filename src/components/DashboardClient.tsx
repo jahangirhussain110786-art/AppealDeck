@@ -57,6 +57,7 @@ import { VaultGate } from "@/components/VaultGate";
 import { CasePreview } from "@/components/CasePreview";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { openVaultForVisitor } from "@/lib/vault/visitor";
+import { buildCasesCsv, CASES_CSV_FILENAME } from "@/lib/casesCsv";
 import { ensureFreshGuestSession } from "@/lib/vault/guestSession";
 import { ReplyCategoryLabel } from "@/components/ReplyCategoryLabel";
 import { Button } from "@/components/ui/button";
@@ -217,8 +218,9 @@ function ReadinessCard({ score, missingKinds }: { score: number; missingKinds: E
       <CardContent className="space-y-3">
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-xs text-muted-foreground">{READINESS_COPY}</p>
-          <span className="text-2xl font-semibold tabular-nums text-foreground">
-            {Math.round(score * 100)}%
+          {/* G-90: a count of what is missing, not a percentage a seller could read as a forecast. */}
+          <span className="text-lg font-semibold text-foreground">
+            {missingKinds.length === 0 ? "Nothing missing" : `${missingKinds.length} missing`}
           </span>
         </div>
         <Progress value={Math.round(score * 100)} aria-label={READINESS_COPY} />
@@ -520,6 +522,23 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
     email-reminder switch lived only in the classic-case branch below, where no new case can go.
     They were built, tested and ticked off, and no seller with a current case could reach them.
   */
+  /** G-60: built here from the vault and handed to the browser as a file. Nothing is sent. */
+  const downloadCasesCsv = async () => {
+    try {
+      const csv = await buildCasesCsv(vault);
+      const url = URL.createObjectURL(
+        new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }),
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = CASES_CSV_FILENAME;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      toast.error(APP.dashboard.cases.csvFailed);
+    }
+  };
+
   const renderWorkspace = (file: CaseFile) => {
     const log: CaseLog = caseLog ?? {
       state: file.state,
@@ -548,6 +567,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
             onReopen={(id) => {
               void archiveCase(id, false).then((ok) => (ok ? select(id) : undefined));
             }}
+            onDownloadCsv={() => void downloadCasesCsv()}
           />
         )}
         {/* Nothing is due on a settled case: no clock, and no "appeal window" line under it. */}
@@ -685,9 +705,16 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
                       : APP.dashboard.caseSummary.noCase.description
                   }
                   action={
-                    <Button asChild>
-                      <Link href="/case">{APP.dashboard.caseSummary.noCase.cta}</Link>
-                    </Button>
+                    <div className="flex flex-wrap justify-center gap-3">
+                      <Button asChild>
+                        <Link href="/case">{APP.dashboard.caseSummary.noCase.cta}</Link>
+                      </Button>
+                      {signedIn && (
+                        <Button asChild variant="outline">
+                          <Link href="/vault">{APP.dashboard.caseSummary.noCase.restore}</Link>
+                        </Button>
+                      )}
+                    </div>
                   }
                 />
               </div>

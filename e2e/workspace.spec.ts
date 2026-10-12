@@ -175,7 +175,7 @@ test("unsaved edits are never reported as saved, and survive the sign-in redirec
 }) => {
   await configure(page);
   await page.reload();
-  await page.getByRole("button", { name: "Review the request" }).click();
+  await page.getByRole("button", { name: "Check what Amazon wants" }).click();
   const draftText = "Also explain the corrective packaging change made on receipt.";
   await page.getByLabel("What the response page asks for").fill(draftText);
   await expect(page.getByText("Saving…", { exact: true })).toBeVisible();
@@ -186,7 +186,7 @@ test("unsaved edits are never reported as saved, and survive the sign-in redirec
     .click();
   await expect(page).toHaveURL(/\/login\?next=/);
   await page.goBack();
-  await page.getByRole("button", { name: "Review the request" }).click();
+  await page.getByRole("button", { name: "Check what Amazon wants" }).click();
   await expect(page.getByLabel("What the response page asks for")).toHaveValue(
     new RegExp(draftText.slice(0, 20)),
   );
@@ -208,7 +208,7 @@ test("unsaved edits are never reported as saved, and survive the sign-in redirec
 test("every unsaved field survives leaving the page, not only the first one", async ({ page }) => {
   await configure(page);
   await page.reload();
-  await page.getByRole("button", { name: "Review the request" }).click();
+  await page.getByRole("button", { name: "Check what Amazon wants" }).click();
 
   const noticeText =
     "Please provide the supplier invoice for the affected product. Also include the purchase order.";
@@ -222,7 +222,7 @@ test("every unsaved field survives leaving the page, not only the first one", as
     .click();
   await expect(page).toHaveURL(/\/login\?next=/);
   await page.goBack();
-  await page.getByRole("button", { name: "Review the request" }).click();
+  await page.getByRole("button", { name: "Check what Amazon wants" }).click();
 
   await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(noticeText);
   await expect(page.getByLabel("What the response page asks for")).toHaveValue(formText);
@@ -257,7 +257,7 @@ test("starting from Decode carries the notice into a separate case", async ({ pa
     "Performance Notification from Amazon Seller Central: your account has been deactivated for policy violation. Your selling privileges have been removed. Submit a Plan of Action addressing each ASIN affected and the account health issue described in this notice.";
   await page.getByPlaceholder(/paste/i).fill(nextNotice);
   await page.getByRole("button", { name: "Decode", exact: true }).click();
-  await page.getByRole("link", { name: "Open case workspace", exact: true }).click();
+  await page.getByRole("link", { name: "Start my case — free", exact: true }).click();
   await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(nextNotice);
   await page.goto("/dashboard");
   await expect(page.getByRole("region", { name: "Your cases" }).getByRole("button")).toHaveCount(2);
@@ -694,7 +694,7 @@ test("a notice typed into the workspace is classified, and a seller's correction
 
   // A seller's own correction survives the next confirmation instead of being re-classified.
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
-  await page.getByRole("button", { name: "Review the request" }).click();
+  await page.getByRole("button", { name: "Check what Amazon wants" }).click();
   await page.getByRole("button", { name: "Change the issue" }).click();
   await page.getByLabel("The issue on this notice").selectOption("FUNDS");
   await page.getByRole("button", { name: "Use this issue instead" }).click();
@@ -705,7 +705,7 @@ test("a notice typed into the workspace is classified, and a seller's correction
   await page.reload();
   // The case is now titled by its issue, so the correction shows in the heading as well.
   await expect(page.getByRole("heading", { level: 1, name: "Funds hold" })).toBeVisible();
-  await page.getByRole("button", { name: "Review the request" }).click();
+  await page.getByRole("button", { name: "Check what Amazon wants" }).click();
   await expect(page.getByText("Funds hold", { exact: true }).last()).toBeVisible();
 });
 
@@ -870,7 +870,7 @@ test("a seller can correct the issue we read, and we raise the records that issu
   await expect(evidence.getByText("Sales or performance record", { exact: true })).toHaveCount(0);
 
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
-  await page.getByRole("button", { name: "Review the request" }).click();
+  await page.getByRole("button", { name: "Check what Amazon wants" }).click();
   await page.getByRole("button", { name: "Change the issue" }).click();
   await page.getByLabel("The issue on this notice").selectOption("POLICY");
   await page.getByRole("button", { name: "Use this issue instead" }).click();
@@ -905,7 +905,7 @@ test("a corrected notice brings in the record it now asks for, and keeps work al
   await expect(evidence.getByText("Authorization letter", { exact: true })).toHaveCount(0);
 
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
-  await page.getByRole("button", { name: "Review the request" }).click();
+  await page.getByRole("button", { name: "Check what Amazon wants" }).click();
   await page
     .getByLabel("Amazon notice", { exact: true })
     .fill(`${notice} Please also provide a letter of authorization from the brand owner.`);

@@ -159,7 +159,7 @@ function SidebarCases() {
                 aria-hidden
                 className={cn("size-2 rounded-full", c.status === "act" ? "bg-primary" : "bg-info")}
               />
-              <span className="truncate">{c.title.split(" · ")[0]}</span>
+              <span className="truncate">{c.label ?? c.title.split(" · ")[0]}</span>
               <span
                 className={cn(
                   "text-xs tabular-nums",

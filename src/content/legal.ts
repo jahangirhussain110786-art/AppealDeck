@@ -18,8 +18,8 @@ export type LegalDoc = "privacy" | "terms" | "refund";
 
 export const LEGAL = {
   lastUpdated: {
-    privacy: "2026-10-10",
-    terms: "2026-10-09",
+    privacy: "2026-10-12",
+    terms: "2026-10-12",
     refund: "2026-10-06",
   },
   privacy: {
@@ -36,7 +36,7 @@ export const LEGAL = {
           "When you create an account or buy the Appeal Pass, Paddle collects the payment and billing information. We receive a licence record (email, plan, status, and the identifier of the case the Pass covers, a random code that carries no case content) via a Paddle webhook.",
           "Evidence contents are encrypted in your browser. If you choose cloud backup, encrypted contents and unencrypted metadata (including file names, tags, types, case references and content hashes) are uploaded to Supabase Storage. A backup passphrase protects the content key; we do not receive that passphrase.",
           "If you choose to share an outcome, we store the case type, the marketplace, the document type, the number of attempts, how complete the case file was, the result and the number of days it took. The record carries no name, email address, account or case identifier, and none of your text. It is sent only when you choose to share.",
-          "If you hold an Appeal Pass, we keep a record of the browsers you use it on: a hashed browser fingerprint (made from your browser's user-agent string and language settings and your account, not your IP address), the browser's user-agent string and a label, and when it was first and last used. An Appeal Pass works on up to 5 devices, and you can remove one in Billing.",
+          "If you hold an Appeal Pass, we keep a record of the browsers you use it on: a hashed browser fingerprint (made from your browser's user-agent string and language settings and your account, not your IP address), the browser's user-agent string and a label, and when it was first and last used. An Appeal Pass works on up to 5 browsers, and you can remove one in Billing.",
           "If you turn on email reminders for a case, we store the reminder date you chose, the case type, and an identifier for that case, so we can email you when the date arrives. Nothing else about the case is sent: not your notice, your evidence, your draft, or any note you have written. Turning reminders off for a case, or deleting the case on the dashboard, deletes that record.",
           "Before sign-in, your case is encrypted with a secret held for that tab session. Closing the session or clearing browser data can make it unrecoverable. Signing in on that tab transfers the case into your account vault after it is unlocked, preserving existing cases. Account vaults unlock automatically by default; with an Appeal Pass you can add passphrase protection from the Vault page.",
         ],
@@ -163,7 +163,7 @@ export const LEGAL = {
         id: "independence",
         title: "Independence from Amazon",
         body: [
-          "AppealDeck is an independent service operated by Jhangir Hussain, trading as Hawlton, in Pakistan. It is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon, Seller Central and related names are trademarks of Amazon.com, Inc. or its affiliates, used here only to describe the notices this software reads and the responses it helps you prepare.",
+          "AppealDeck is software, operated by Jhangir Hussain, trading as Hawlton, in Pakistan. It is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon, Seller Central and related names are trademarks of Amazon.com, Inc. or its affiliates, used here only to describe the notices this software reads and the responses it helps you prepare.",
           "We never log in to Seller Central, never submit anything to Amazon for you, and have no access to your Amazon account.",
         ],
       },
@@ -173,7 +173,7 @@ export const LEGAL = {
         body: [
           "Subject to your compliance, we grant you a limited, non-exclusive, non-transferable right to use the Free decoder and, with an active Appeal Pass, the response preparation features.",
           "The Appeal Pass is not currently offered to buyers in the European Union, the European Economic Area or the United Kingdom. The Free decoder is available to everyone. Appeal Pass features require an active Appeal Pass on your account and an eligible Amazon notice type.",
-          "One Appeal Pass licence is tied to one case. It covers every revision you prepare for that case, including a response to a later reply from Amazon, with no additional charge and no expiry date. The Pass is tied to that case, so a case you delete or lose cannot be replaced under the same Pass, and a separate notice or a different case requires its own Appeal Pass. An Appeal Pass can be used on up to 5 devices at once; you can remove a device in Billing.",
+          "One Appeal Pass licence is tied to one case. It covers every revision you prepare for that case, including a response to a later reply from Amazon, with no additional charge and no expiry date. The Pass is tied to that case, so a case you delete or lose cannot be replaced under the same Pass, and a separate notice or a different case requires its own Appeal Pass. An Appeal Pass can be used on up to 5 browsers at once; you can remove a browser in Billing.",
         ],
       },
       {

@@ -21,6 +21,32 @@ export interface AnalysisResult {
   partial?: true;
   /** What is still being asked for when `partial` is set. May be empty when only a removal remains. */
   openAsks?: OpenAsk[];
+  /**
+   * The sentence of the reply that carried the reading, as written (G-01). Shown beside our
+   * reading so the seller judges it against Amazon's own words, never instead of them.
+   */
+  quote?: string;
+}
+
+/** The sentence around a position, collapsed to one line and capped. */
+function sentenceAt(text: string, index: number): string {
+  const before = text.slice(0, index);
+  const start = Math.max(before.lastIndexOf("\n"), before.search(/[.!?]\s[^.!?\n]*$/) + 1, 0);
+  const rest = text.slice(index);
+  const stop = rest.search(/[.!?](?:\s|$)|\n/);
+  const end = stop < 0 ? text.length : index + stop + 1;
+  const sentence = text.slice(start, end).replace(/\s+/g, " ").trim();
+  return sentence.length > 280 ? `${sentence.slice(0, 277).trimEnd()}...` : sentence;
+}
+
+function quoteFor(text: string, patterns: readonly RegExp[]): string | undefined {
+  // The first place in the reply that says it, not the first pattern that happens to match.
+  let first: number | undefined;
+  for (const re of patterns) {
+    const m = new RegExp(re.source, re.flags.replace("g", "")).exec(text);
+    if (m && (first === undefined || m.index < first)) first = m.index;
+  }
+  return first === undefined ? undefined : sentenceAt(text, first) || undefined;
 }
 
 interface PatternRule {
@@ -251,6 +277,8 @@ function analyzeText(raw: string): AnalysisResult {
     extractedAsks,
     confidence: overridden ? "ambiguous" : "rule",
   };
+  const quote = quoteFor(text, chosen.patterns);
+  if (quote) result.quote = quote;
   if (chosen.category === "reinstated" && !overridden) {
     const open = openAsksAfterReinstatement(text, chosen.patterns);
     if (open) {

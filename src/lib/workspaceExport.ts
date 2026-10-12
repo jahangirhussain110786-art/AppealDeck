@@ -25,6 +25,7 @@ import {
 import { checkCaseDataForWorkspace } from "./documentChecks/context";
 import { deviceReadingNotes } from "./documentChecks/deviceNotes";
 import { migrateAnswerDrafts } from "./workspaceDraft";
+import { labelOf } from "./caseLabel";
 
 const STATUS_LABELS: Record<Requirement["status"], string> = {
   needed: "still needed",
@@ -172,6 +173,7 @@ export function buildCaseExport(
   const lines: string[] = [];
   lines.push("AppealDeck case export — not a submission, not sent to Amazon");
   lines.push(`Exported ${formatDate(new Date().toISOString())}`);
+  if (labelOf(w)) lines.push(`Case name: ${labelOf(w)}`);
   lines.push(
     `Case ${file.id} · ${file.kind === "UNKNOWN" ? "type not identified" : APP.violationKinds[file.kind]}${file.kindSetBy === "seller" ? " (chosen by the seller)" : ""} · ${PROTOCOL_LABELS[w.protocol]}`,
   );

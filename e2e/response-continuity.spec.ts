@@ -46,7 +46,7 @@ test("reordering a questionnaire keeps drafts attached to their own questions", 
   await page.getByLabel(question, { exact: true }).fill(answer);
   await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
-  await page.getByRole("button", { name: "Review the request", exact: true }).click();
+  await page.getByRole("button", { name: "Check what Amazon wants", exact: true }).click();
   await page
     .getByLabel("What the response page asks for")
     .fill(`Answer the following questions.\n1. ${otherQuestion}\n2. ${question}`);

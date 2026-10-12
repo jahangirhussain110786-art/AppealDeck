@@ -29,6 +29,7 @@ import {
 } from "./RequirementGuidance";
 import type { ViolationKind } from "@/core";
 import { WORKSPACE as C } from "@/content/workspace";
+import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
 
 /**
@@ -125,6 +126,7 @@ export function EvidenceReview({
     evidence matrix is shown as ours, and said so plainly — in the closed header as well as inside,
     so a seller can tell the two apart without opening anything.
   */
+  const gloss = C.recordGloss[requirementEvidenceKind(item) ?? ""];
   const origin =
     item.source === "matrix"
       ? C.inferred.badge
@@ -159,8 +161,25 @@ export function EvidenceReview({
           >
             {item.label}
           </h3>
+          {gloss && <p className="text-sm text-foreground/85">{gloss}</p>}
           <p className="text-sm text-muted-foreground">{origin}</p>
         </div>
+        {/* G-08: once reviewed, the row folds and the check folded with it. Kept in view so a
+            seller can run it without opening the card; it opens the card to show the result. */}
+        {!open && onCheck && item.recordId && item.status === "reviewed" && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={Boolean(checking)}
+            onClick={() => {
+              onCheck();
+              onToggle();
+            }}
+            className="shrink-0"
+          >
+            {APP.evidenceSlots.check.action}
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"

@@ -67,3 +67,34 @@ describe("responseAnalyzer", () => {
     expect(isRuleMatch("Hello, how are you today?")).toBe(false);
   });
 });
+
+describe("the quoted sentence (G-01)", () => {
+  it("quotes the sentence that carries the reading, as written", () => {
+    const r = analyzeReply(
+      "Thank you for your appeal. Unfortunately, we are unable to reinstate your selling account at this time. The plan does not address our concerns.",
+    );
+    expect(r.category).toBe("needs_more_information");
+    expect(r.quote).toBe(
+      "Unfortunately, we are unable to reinstate your selling account at this time.",
+    );
+  });
+
+  it("quotes the first place in the reply that says it", () => {
+    const r = analyzeReply(
+      "We have reviewed your appeal and reinstated your account. Your selling privileges have been restored.",
+    );
+    expect(r.category).toBe("reinstated");
+    expect(r.quote).toBe("We have reviewed your appeal and reinstated your account.");
+  });
+
+  it("has no quote when nothing was recognised", () => {
+    expect(analyzeReply("Hello, your invoice for October is attached.").quote).toBeUndefined();
+  });
+
+  it("caps a very long sentence and never returns more than one line", () => {
+    const long = `We have reviewed your appeal and reinstated your account ${"and so on ".repeat(80)}.`;
+    const q = analyzeReply(long).quote!;
+    expect(q.length).toBeLessThanOrEqual(280);
+    expect(q).not.toMatch(/\n/);
+  });
+});

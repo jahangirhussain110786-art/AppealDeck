@@ -25,7 +25,12 @@ import {
 import { answerDraftKey, coachDraftKey } from "@/lib/workspaceDraft";
 import type { CaseFile } from "@/core/caseFile";
 import type { Vault } from "@/core/vault/vault";
-import type { CriticResult, PoaDraft } from "@/core/composer";
+import {
+  renderPoaPlain,
+  templatePhrasesInDraft,
+  type CriticResult,
+  type PoaDraft,
+} from "@/core/composer";
 import { BeforeYouSubmitChecklist } from "@/components/BeforeYouSubmitChecklist";
 import { IssuesRaised } from "./IssuesRaised";
 import { changeReport } from "@/core/changeReport";
@@ -110,6 +115,8 @@ export function ResponseReview({
   onGenerate,
   onSwapWording,
   onSubmit,
+  onDownloadPack,
+  packing,
 }: {
   file: CaseFile & { workspace: Workspace };
   vault: Vault;
@@ -125,6 +132,9 @@ export function ResponseReview({
   onGenerate: () => void;
   onSwapWording: () => void;
   onSubmit: (sent: { receipt: string; sentText?: string }) => Promise<boolean>;
+  /** G-62: the upload-ready pack, offered beside "Open Seller Central". */
+  onDownloadPack?: () => void;
+  packing?: boolean;
 }) {
   const w = file.workspace;
   const F = C.responseFields;
@@ -542,12 +552,15 @@ ${text}`
                 </div>
               )}
               {!signedIn ? (
-                <Button asChild className="h-auto min-h-11 max-w-full whitespace-normal">
-                  <Link href={signInHref}>
-                    {F.signIn}
-                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
-                  </Link>
-                </Button>
+                <div className="space-y-2">
+                  <Button asChild className="h-auto min-h-11 max-w-full whitespace-normal">
+                    <Link href={signInHref}>
+                      {F.signIn}
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+                    </Link>
+                  </Button>
+                  <p className="text-sm text-muted-foreground">{F.guestPrice}</p>
+                </div>
               ) : purchase ? (
                 <ComposeGate vault={vault} caseId={file.id} onActivated={onGenerate} />
               ) : (
@@ -630,8 +643,24 @@ ${text}`
                 </AlertDescription>
               </Alert>
             )}
+            {(() => {
+              const n = templatePhrasesInDraft(result.draft).length;
+              return (
+                <div className="space-y-1 rounded-lg bg-surface-2 p-4 ring-1 ring-inset ring-border">
+                  <p className="text-sm font-semibold text-foreground">{C.stamp.title}</p>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {result.ai?.status === "used" && result.showing === "ai"
+                      ? C.stamp.ai
+                      : C.stamp.own}
+                  </p>
+                  <p className="text-sm font-medium text-foreground">
+                    {n === 0 ? C.stamp.phrasesNone : C.stamp.phrases.replace("{n}", String(n))}
+                  </p>
+                </div>
+              );
+            })()}
             <pre className="whitespace-pre-wrap break-words rounded-lg border border-border bg-background p-5 font-sans text-sm leading-loose shadow-inset sm:p-8">
-              {result.rendered}
+              {renderPoaPlain(result.draft)}
             </pre>
             {/*
               A-07: `draft.mode.reason` above answers "is every required record here". A draft can
@@ -674,7 +703,7 @@ ${text}`
             {reviewed && (
               <div className="flex flex-wrap gap-2">
                 <CopyButton
-                  text={result.rendered}
+                  text={renderPoaPlain(result.draft)}
                   label={gaps.length ? "Copy working draft" : "Copy response"}
                 />
                 <Button
@@ -711,6 +740,29 @@ ${text}`
               allChecked={result.critique.passed}
               priorSubmissions={w.submissions}
               requirements={w.requirements}
+              beside={
+                <>
+                  {onDownloadPack && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={Boolean(packing)}
+                      onClick={onDownloadPack}
+                    >
+                      {packing ? C.pack.building : C.pack.button}
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadResponseDocx(result.draft)}
+                  >
+                    {C.exportWord}
+                  </Button>
+                </>
+              }
             />
             {/*
               AA-42: the duplicate-submission guard, placed where the seller is about to record a

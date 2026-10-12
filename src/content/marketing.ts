@@ -2,6 +2,8 @@
 // Headline = outcome the seller controls. Sub-line = boundary. Button = verb + object.
 // No banned-pattern / banned-number strings. Banned-list enforced by scripts/lint-copy.mjs.
 
+import { AMAZON_REVIEW_TIME } from "./shared";
+
 /**
  * The home page tells one story, once, in the order a frightened seller needs it (25 Sep 2026):
  * their problem in their own words → what the notice does not tell them → how the work goes →
@@ -28,6 +30,8 @@ export const HOME = {
     readFromText: "Read from the text, not guessed",
     askingFor: "Amazon is asking for",
     whenDue: "When it is due",
+    // G-97: the sample's 90 days is the sample's own window; a real notice states its own.
+    sampleWindowNote: "90 days is this sample's own window. Your notice states yours.",
     recordsTitle: "Records this case starts with",
     primaryCta: "Decode my notice — free",
   },
@@ -36,7 +40,11 @@ export const HOME = {
     label: "Amazon's email",
     placeholder: "Paste the whole email here…",
     sample: "Use a sample",
-    note: "No Amazon login. Not stored.",
+    // G-51: "Not stored" was untrue once a reading is remembered for seven days (R-5). The server
+    // reads the text and keeps no copy of it; the fingerprint kept is not the notice (legal.ts).
+    note: "No Amazon login. Read on our server; we keep no copy.",
+    // G-01: the same door on the home page.
+    replyDoor: "Already appealed? Paste Amazon's reply instead.",
     submit: "Decode",
   },
   /** The layered product view beside the hero tool. Sample data, and labelled as such. */
@@ -121,6 +129,9 @@ export const HOME = {
           "Scam signals, quoted from the message",
           "Deadlines and the records list",
           "Do-now and do-not cards",
+          // G-07: the free layer already does this; a rival's free tier is a gated teaser.
+          "Amazon's reply read in plain words, with its own sentence quoted",
+          "Supplier invoice check, read on your device",
         ],
       },
       {
@@ -139,8 +150,10 @@ export const HOME = {
         note: "Per case, one time",
         price: "$249",
         features: [
-          "Basic document reading on your device is free. The Pass adds an AI reading of business documents against the notice, when the AI service is available (otherwise they are read on your device)",
+          // G-94 and G-37: the first line says what the Pass is; the document line is split off and
+          // stays true when the AI is switched off (the device reading is what runs then).
           "The response prepared from your confirmed facts, every revision",
+          "Your business documents read against the notice by AI when it is available, and on your device when it is not",
           "Wording help, when available, checked so dates, numbers and names stay as you wrote them",
           "7-day refund, no questions asked",
         ],
@@ -164,12 +177,23 @@ export const DECODE = {
     label: "Your notice",
     placeholder: "Paste the full Amazon notice here…",
     hint: "Include the subject line and the date at the top. With them, we can count the deadline from the notice's own date.",
+    // G-70: some sellers have only a banner, or the email never arrived. Says where to look.
+    cannotFind:
+      "Cannot find the notice? Look in Seller Central under Account Health and Performance Notifications, and in your spam folder. If all you have is a banner, open it and paste the text it shows.",
+    // G-01: the free reply reader has no page of its own; this is its door.
+    replyDoor:
+      "Already appealed? Paste Amazon's reply here instead. We will say whether it refused, asked for documents or reinstated, and show the sentence that says so.",
   },
   charCounter: "{count} characters",
-  privacyNote: "Your notice is sent to AppealDeck for analysis. Nothing is sent to Amazon.",
+  privacyNote:
+    "Your notice is sent to AppealDeck to be read, and we keep no copy of it. Only when our own rules cannot place it does it also go to Google Gemini for a second reading. Nothing is sent to Amazon.",
   sampleButton: "Try a sample notice",
   clearButton: "Clear",
   sampleBadge: "Sample notice — not yours",
+  // G-77: the sample now decodes at once; its result says whose it is.
+  sampleResultBadge: "Sample result",
+  sampleResultNote:
+    "Made from a made-up notice, not yours: its 90 days are the sample's own window. Paste your own to decode it.",
   submitButton: "Decode",
   noticeLikenessTitle: "Before you decode",
   likenessHint:
@@ -200,11 +224,30 @@ export const DECODE = {
       "A Plan of Action is a short letter to Amazon: what went wrong, what you fixed, and how you will stop it happening again.",
     accountHealthGloss:
       "Account Health is the page in Seller Central that shows your account status.",
+    // G-98: two terms a first-time seller meets in the result without a word of explanation.
+    // Each appears only when the notice itself uses the term.
+    asinGloss: "An ASIN is the ten-character code Amazon gives each product. Most start with B0.",
+    sectionThreeGloss:
+      "Section 3 is the part of Amazon's Business Solutions Agreement that covers ending or suspending a seller account.",
     multipleDecoded: "We decoded the most recent message, dated {date}.",
     multipleDecodedNoDate: "We decoded the most recent message.",
     replyTitle: "This looks like Amazon's reply to your appeal",
     replyBody:
       "Copy it, open your case, and paste it into the box called Add Amazon's next reply on the History tab. There it is read against what you submitted.",
+    // G-01: the free reply reader. Plain words for what the reply says, always labelled as our
+    // reading and shown beside Amazon's own sentence. It never predicts what Amazon will do next.
+    replyReadingLabel: "What this reply says",
+    replyReading: {
+      reinstated: "It says your account or listings are reinstated.",
+      reinstatedPartial: "It says you are reinstated, but something is still open below.",
+      needs_more_information:
+        "It says Amazon has not reinstated you on what you sent, and asks for more.",
+      document_request: "It asks you for documents.",
+      identity_verification: "It asks you to verify your identity.",
+      final_decision_negative: "It says Amazon's decision is final.",
+      funds_decision: "It is about your funds.",
+    },
+    replyReadingNote: "Our reading of the words, not Amazon's. Check it against the reply itself.",
     replyOpen: "Open my case",
     replyCopy: "Copy this reply",
     notEnforcementTitle: "Nothing to appeal yet",
@@ -248,13 +291,38 @@ export const DECODE = {
     // frightened seller needs first sat three cards further down. Still no invented date.
     factWindow: "{n} days",
     factWindowNote: "from when you got the notice",
+    // G-50: said at the top when the notice could not be placed, so a generic result is not
+    // mistaken for a confident one.
+    // G-03: the second question a seller asks. Quotes the notice's claim, names Amazon's policy and
+    // its date, and promises nothing about the money. The 60 days matches the funds clock.
+    moneyTitle: "Your money",
+    moneyBody:
+      "Your notice says Amazon is holding your funds. If the account is not reinstated, Amazon's Funds Disbursement Eligibility policy lets you ask for them about 60 days after deactivation (the policy is dated 9 Oct 2024, and some sellers are still told 90). That is when you can ask, not a promise it is paid. Confirm the dates in your own account.",
+    // G-100: first sub-line of a verification result. It used to sit lower, under "How we read it".
+    verificationNotAppeal:
+      "This is not an appeal. A Plan of Action is usually the wrong reply to a verification request.",
+    couldNotPlace: "We could not place this notice. Nothing below is guessed.",
     factScam: "Scam check",
     factScamClear: "No warning signs",
     factScamFlagged: "Worth checking",
+    // G-48: what the check looked at, so "No warning signs" is not an unexplained tick. It lists
+    // signals and says plainly it proves nothing; never "genuine" or "safe".
+    // G-49: one line, once. A documented pattern, not a verdict on any message.
+    factScamMore: "Insider offers, and notices that go missing",
+    factScamInsider:
+      "Offers of inside help from someone at Amazon, on WhatsApp, Telegram or WeChat, are a documented scam pattern, most of all around Prime Day and the holidays. And a notice missing from Seller Central is a signal, not proof: in one April 2026 case the email was real.",
+    factScamLooked:
+      "Looked for: a payment or gift-card demand, a request for a password or code, a move to WhatsApp or a phone number, remote access or QR codes, and links or senders that are not Amazon's. It cannot prove a message is real: Account Health settles that.",
     deadlinesTitle: "When it is due",
     noDeadline:
       "We could not read a deadline in this text. Check the date on your Account Health page in Seller Central.",
     recordsTitle: "What to gather",
+    // G-13: a notice about a product that names no ASIN. Writing a root cause for a complaint nobody
+    // has named is how sellers end up inventing one.
+    noAsinDoNow:
+      "The notice names no ASIN. Your first message should ask Amazon which ASINs and which complaint it is about, before you write a response.",
+    // G-08: a link to a free page that already exists, on the row it belongs to.
+    invoiceCheckLink: "Check an invoice first, free",
     recordsAsked: "In your notice",
     noRecords:
       "This notice names no specific records. Check the response page in Seller Central before gathering anything.",
@@ -276,7 +344,7 @@ export const DECODE = {
     errorSlow:
       "This is taking longer than it should. Your notice is still in the box. Try again, or check your connection.",
     errorHint: "Paste the full Amazon notice and try again.",
-    startPoaCta: "Open case workspace",
+    startPoaCta: "Start my case — free",
     // AA-39: the decoder's actual decision. Phrased as what Amazon asked for, never as advice
     // about what will work — the honest-expectations rule in D6 applies to this block too.
     responseTypeTitle: "What Amazon is asking for",
@@ -331,9 +399,8 @@ export const PRICING = {
   // one Pass covers every revision of its case, with no expiry (see legal.ts).
   headline: "One price per case. Every round included.",
   accent: "included.",
-  currency: "USD",
-  currencyNote:
-    "Same price in every country. Guidance, deadlines and records are written for Amazon US, and the decoder reads English notices",
+  // G-91: one sentence under the subtitle; on a phone it was a three-line pill above the headline.
+  currencyNote: "Same price everywhere. Written for Amazon US; English notices.",
   compareTitle: "What each one includes",
   readFirstTitle: "Read this before you pay.",
   readFirstAccent: "pay.",
@@ -464,7 +531,7 @@ export const FAQ = {
     {
       id: "independence",
       q: "Is AppealDeck part of Amazon?",
-      a: "No. AppealDeck is an independent service operated by Jhangir Hussain, trading as Hawlton, in Pakistan.",
+      a: "No. AppealDeck is software, operated by Jhangir Hussain, trading as Hawlton, in Pakistan.",
       detail:
         "We are not affiliated with or endorsed by Amazon. We do not access your Seller Central account or submit appeals for you.",
       link: { label: "About the service", href: "/terms#independence" },
@@ -479,9 +546,17 @@ export const FAQ = {
     {
       id: "outcome",
       q: "Will this get my account reinstated?",
-      a: "Amazon decides the outcome and the review time.",
+      // G-52: the second sentence says what the buyer does get, with no outcome word in it.
+      a: "Amazon decides the outcome and the review time. What you get is the record, the document checks and a response built only from your facts, every round.",
       detail:
         "AppealDeck helps you organize evidence and prepare a factual response. An Appeal Pass pays for that preparation. We do not promise reinstatement.",
+    },
+    {
+      id: "review-time",
+      q: "How long does Amazon take to answer?",
+      a: AMAZON_REVIEW_TIME,
+      detail:
+        "Nobody outside Amazon can say how long your case will take, and we do not guess. While you wait, you can keep the next reply with this attempt, and set a follow-up date so the case tells you when to look again.",
     },
     {
       id: "deadlines",
@@ -526,7 +601,7 @@ export const FAQ = {
     {
       id: "pass",
       q: "What does the Appeal Pass add?",
-      a: "Response preparation and review for one eligible case, plus encrypted backup support.",
+      a: "Response preparation and review for one eligible case, plus encrypted backup support. It also adds an AI reading of your business documents against the notice, when the AI is available.",
       detail:
         "The pass is $249 once, with no subscription, for one case. It covers every revision of that case — if Amazon replies and you need to prepare another response, that stays part of the same pass, with no extra charge and no time limit. A different case needs its own pass. Start by reviewing your request. Cases needing professional help do not offer self-serve drafting.",
     },
@@ -555,7 +630,7 @@ export const FAQ = {
       id: "response",
       name: "Your response",
       hint: "Review, submit & follow up",
-      items: ["review", "outcome", "deadlines", "submit", "replies"],
+      items: ["review", "outcome", "review-time", "deadlines", "submit", "replies"],
     },
     {
       id: "privacy",

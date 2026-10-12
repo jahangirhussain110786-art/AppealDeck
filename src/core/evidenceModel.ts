@@ -81,7 +81,7 @@ const INAUTHENTIC: EvidenceRequirement[] = [
       "edited or annotated PDFs",
     ],
     whyAmazonWantsIt:
-      "Amazon may contact your supplier to check the invoice, so the supplier's contact details must be real and reachable. A genuine invoice for a completed purchase is the main proof that your inventory is authentic and your supply chain is real. Practitioners advise that your business name and address on the invoice should match your seller account.",
+      "Amazon may contact your supplier to check the invoice, so the supplier's contact details must be real and reachable. A genuine invoice for a completed purchase is the main proof that your inventory is authentic and your supply chain is real. Practitioners advise that your business name and address on the invoice should match your seller account. An invoice rarely prints an ASIN. A line is tied to your product by an identifier that is also on your listing: the model number, the UPC or EAN, or the exact product name. If your notice asks for the invoice from the manufacturer or distributor your supplier bought from, or for a letter from the brand, that is a separate document: ask your supplier for it early. Sellers and consultants report that invoices are commonly refused when they are retail receipts showing a store name, handwritten, edited or annotated PDFs, for a very small quantity, from a supplier that is the same as the buyer, or with no product identifier on any line.",
   },
   {
     kind: "brand_authorization",
@@ -326,9 +326,13 @@ const PRODUCT_SAFETY: EvidenceRequirement[] = [
       "a supplier's own assurance with no test document behind it",
       "a certificate for a different model or variant",
       "a report that is old, or from a laboratory Amazon does not accept (Amazon can reject these)",
+      "a report you uploaded yourself where Amazon has the approved lab submit the results (check Policy Compliance in Account Health)",
     ],
+    // G-43 (12 Oct 2026, founder-approved): the testing route is stated first and hedged. Source:
+    // the approved labs' own pages (SGS, Intertek, Eurofins, STC/HQTS), read 10 Oct 2026; Amazon's
+    // own help text was not found, so this says "may", never "must". Pinned in evidenceModel.test.ts.
     whyAmazonWantsIt:
-      "Compliance documentation is what distinguishes a product that meets the standard from one that is merely claimed to. For a children's product this is a Children's Product Certificate (CPC), which comes from testing at a CPSC-accepted lab; Amazon may ask for it at any time.",
+      "Compliance documentation is what distinguishes a product that meets the standard from one that is merely claimed to. Check how your product is tested first: approved testing labs report that for some categories (toys, supplements and batteries among them) Amazon now has an approved lab send the results to Amazon directly, under Policy Compliance, Verify Your Products in Account Health, and may not accept a report you upload yourself. Where your product is not in that program, the document itself is what Amazon reads. For a children's product this is a Children's Product Certificate (CPC), which comes from testing at a CPSC-accepted lab; Amazon may ask for it at any time.",
   },
   {
     kind: "product_images",

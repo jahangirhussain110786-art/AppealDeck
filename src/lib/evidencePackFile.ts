@@ -319,6 +319,10 @@ export function buildIndex(entries: readonly PackEntry[], now: Date): string {
   lines.push("");
   for (const e of entries) {
     lines.push(e.name);
+    // G-29: the response may name the file as the seller saved it, so the reviewer can match
+    // that name to this numbered copy.
+    if (e.originalName && e.originalName !== e.name)
+      lines.push(`  Also referred to in the response as: ${e.originalName}`);
     lines.push(`  Document: ${e.answers.join("; ")}`);
     if (e.note) lines.push(`  Shows: ${e.note.replace(/\s+/g, " ")}`);
     if (e.page) lines.push(`  Refer to page ${e.page}.`);

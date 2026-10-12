@@ -214,6 +214,8 @@ export async function POST(req: NextRequest) {
       ? {
           category: reply.category,
           message: LOOKS_LIKE_REPLY_MESSAGE,
+          // G-01: the sentence that carries the reading, so the page can show it beside "our reading".
+          ...(reply.quote ? { quote: reply.quote } : {}),
           ...(reply.partial ? { partial: true as const, openAsks: reply.openAsks ?? [] } : {}),
         }
       : null;

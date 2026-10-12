@@ -86,6 +86,8 @@ function withoutWorkingNotes(text: string): string {
   for (const line of text.split("\n")) {
     if (/^\s*\*{3}.*\*{3}\s*$/.test(line)) continue;
     if (/^##\s/.test(line)) skipping = /^##\s*Unresolved items\b/i.test(line);
+    // The plain copy (G-28) writes the same heading in capitals, and it is the last section.
+    else if (/^UNRESOLVED ITEMS\b/.test(line)) skipping = true;
     if (!skipping) out.push(line);
   }
   return out.join("\n");

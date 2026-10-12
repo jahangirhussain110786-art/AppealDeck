@@ -39,7 +39,7 @@ async function prepareWith(
   await page.getByLabel("Your notice").fill(NOTICE);
   await page.getByRole("button", { name: "Decode", exact: true }).click();
   await page
-    .getByRole("link", { name: /open case workspace/i })
+    .getByRole("link", { name: /start my case/i })
     .first()
     .click();
   await expect(page).toHaveURL(/\/case/);

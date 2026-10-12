@@ -20,7 +20,7 @@ export function clearDecodeDraft(): void {
 }
 
 /*
-  Back-button memory (6 Oct 2026). Going from the result to "Open case workspace" and pressing Back
+  Back-button memory (6 Oct 2026). Going from the result to "Start my case — free" and pressing Back
   left /decode empty: the module variable above does not survive a navigation back, and the seller
   had to find and paste the notice again. The pasted text is now also kept in sessionStorage, which
   belongs to this tab and is gone when the tab closes; it is cleared by the Clear / Decode another
@@ -31,7 +31,7 @@ const SESSION_KEY = "appealdeck.decode.paste";
 export type SessionPaste = { text: string; decoded: boolean };
 
 /**
- * The paste is remembered only so that Back from "Open case workspace" can bring it back. It is
+ * The paste is remembered only so that Back from "Start my case — free" can bring it back. It is
  * restored once, and only when the seller actually left for a case from this page. A fresh visit
  * to /decode (typing the address, a new tab, a later return) starts empty instead of silently
  * refilling an old notice.

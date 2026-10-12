@@ -4,11 +4,11 @@ import { expectNoAxeViolations, WCAG_AA_TAGS } from "./axe";
 
 async function decodeSample(page: Page) {
   await page.goto("/decode");
-  await page.getByRole("button", { name: "Try a sample notice" }).click();
   const decoded = page.waitForResponse(
     (response) => response.url().endsWith("/api/decode") && response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Decode", exact: true }).click();
+  // G-77: the sample decodes at once.
+  await page.getByRole("button", { name: "Try a sample notice" }).click();
   const result = await (await decoded).json();
   expect(result).toMatchObject({ kind: "POLICY", severityGated: false });
   // The sample carries no header date, so the window is stated relative to receipt rather than
@@ -96,7 +96,7 @@ test("saved notice can be edited by keyboard without losing edits between worksp
   page,
 }) => {
   await decodeSample(page);
-  await page.getByRole("link", { name: "Open case workspace", exact: true }).click();
+  await page.getByRole("link", { name: "Start my case — free", exact: true }).click();
   const notice = page.getByLabel("Amazon notice", { exact: true });
   await expect(notice).not.toBeVisible();
   const disclosure = page.locator("summary").filter({ hasText: "See or change your notice" });
@@ -119,7 +119,7 @@ test("re-entering the same decoded sample resumes edited work and creates no dup
   page,
 }) => {
   await decodeSample(page);
-  await page.getByRole("link", { name: "Open case workspace", exact: true }).click();
+  await page.getByRole("link", { name: "Start my case — free", exact: true }).click();
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   await page
     .getByLabel("What went wrong?")
@@ -156,7 +156,11 @@ test("a decoded notice starts a second case without destroying the first", async
   await expect(page.getByLabel("Amazon notice", { exact: true })).toHaveValue(SAMPLE_NOTICE_TEXT);
 
   await page.goto("/dashboard");
-  const cases = page.getByRole("region", { name: "Your cases" }).getByRole("button");
+  const cases = page
+    .getByRole("region", { name: "Your cases" })
+    .getByRole("button")
+    // The all-cases spreadsheet button (G-60) sits in the same section as the cards.
+    .filter({ hasNotText: "Download all cases" });
   await expect(cases).toHaveCount(2);
   await cases.filter({ hasNotText: "Current" }).click();
   await page.goto("/case");

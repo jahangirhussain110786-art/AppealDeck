@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, m, type TargetAndTransition } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play, X } from "lucide-react";
 import {
@@ -122,7 +123,12 @@ function readReducedMotion() {
 }
 
 export function AnnouncementBar() {
-  const { items, labels, intervalMs, tickerSeconds } = ANNOUNCEMENT_BAR;
+  const { labels, intervalMs, tickerSeconds } = ANNOUNCEMENT_BAR;
+  const pathname = usePathname();
+  // A message that repeats the page it is on is left out of that page (G-96).
+  const items = ANNOUNCEMENT_BAR.items.filter(
+    (i: Announcement) => !(i.hideOn as string[] | undefined)?.includes(pathname),
+  );
   // Read through useSyncExternalStore with a server value of false: framer's useReducedMotion
   // returned the real setting during hydration, so anyone with reduced motion turned on got a
   // hydration mismatch (the server had rendered the ticker's pause button). Found 26 Sep 2026.
@@ -165,7 +171,7 @@ export function AnnouncementBar() {
     }
   };
 
-  const current = items[index] as Announcement;
+  const current = items[index % items.length] as Announcement;
   const effect = EFFECTS[current.effect ?? ANNOUNCEMENT_BAR.effect];
 
   return (

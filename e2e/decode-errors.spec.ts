@@ -25,13 +25,12 @@ test("a paste that is not a notice is refused once, and Edit what I pasted focus
   await expect(box).toHaveValue(pasted);
 });
 
-test("Back from Open case workspace restores the pasted notice and its result", async ({
+test("Back from Start my case — free restores the pasted notice and its result", async ({
   page,
 }) => {
   await page.goto("/decode");
   await page.getByRole("button", { name: "Try a sample notice" }).click();
-  await page.getByRole("button", { name: "Decode", exact: true }).click();
-  const open = page.getByRole("link", { name: "Open case workspace", exact: true });
+  const open = page.getByRole("link", { name: "Start my case — free", exact: true });
   await expect(open).toBeVisible();
   await open.click();
   await page.waitForURL(/\/case/);

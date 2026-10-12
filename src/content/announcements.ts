@@ -28,6 +28,8 @@ export interface Announcement {
   linkLabel?: string;
   /** Overrides the bar's `effect` for this one message in `rotate` mode. */
   effect?: AnnouncementEffect;
+  /** Exact paths where this message is left out (G-96: it repeated the hero on `/`). */
+  hideOn?: string[];
 }
 
 export const ANNOUNCEMENT_BAR = {
@@ -52,6 +54,7 @@ export const ANNOUNCEMENT_BAR = {
       text: "Paste your Amazon notice and see what it asks for. No account needed.",
       href: "/decode",
       linkLabel: "Decode your notice",
+      hideOn: ["/"],
     },
     {
       id: "one-pass",

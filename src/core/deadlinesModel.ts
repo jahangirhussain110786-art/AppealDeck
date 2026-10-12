@@ -4,6 +4,14 @@ import { isSeverityGated } from "./violationKinds";
 import { formatDay } from "./noticeDate";
 import { isOfferLevelNotice, OFFER_LEVEL_DEADLINE_LABEL } from "./noticeScope";
 
+/**
+ * A notice that writes neither a date nor a window (G-87). "Ambiguous" was untrue: nothing is
+ * unclear, nothing is written. Kept apart from a stated length with no start day, which has its own
+ * sentence, and the date Account Health shows is the one that counts.
+ */
+export const NO_DEADLINE_LABEL =
+  "No deadline is written in this notice. Open the Appeal button in Account Health: if Amazon set a date, it shows there and that date wins.";
+
 export type DeadlineKind =
   | "appeal_window"
   | "funds_appeal_eligible"
@@ -181,9 +189,7 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
     out.push({
       kind: "appeal_window",
       dueAt: null,
-      label: isOfferLevelNotice(input.parsed.raw)
-        ? OFFER_LEVEL_DEADLINE_LABEL
-        : "Appeal window ambiguous — verify the exact date in your Account Health dashboard",
+      label: isOfferLevelNotice(input.parsed.raw) ? OFFER_LEVEL_DEADLINE_LABEL : NO_DEADLINE_LABEL,
     });
   }
 

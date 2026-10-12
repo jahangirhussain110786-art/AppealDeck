@@ -39,6 +39,8 @@ import { DECODE } from "@/content/marketing";
 import { APP } from "@/content/app";
 import { AccentWord } from "@/components/ui/accent-word";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
+import { AMAZON_REVIEW_TIME } from "@/content/shared";
+import { mentionsHeldFunds } from "@/core/heldFunds";
 import { cn } from "@/lib/utils";
 import {
   ENTITY_LABELS,
@@ -83,7 +85,13 @@ type DecodeResponse = {
   multipleNotices?: boolean;
   notEnforcement?: boolean;
   notEnforcementKind?: "warning" | "listing_removal";
-  looksLikeReply?: { category: string; message: string; partial?: boolean; openAsks?: string[] };
+  looksLikeReply?: {
+    category: string;
+    message: string;
+    quote?: string;
+    partial?: boolean;
+    openAsks?: string[];
+  };
 };
 
 /** What a refused paste (422) says about itself. */
@@ -217,7 +225,7 @@ export default function DecodeClient() {
       void submitText(draft.text);
       return;
     }
-    // Back from "Open case workspace": the module variable above is gone, the tab's copy is not.
+    // Back from "Start my case — free": the module variable above is gone, the tab's copy is not.
     // Read after mount, never in a state initialiser, so the server and first client render agree.
     restoreKeptPaste();
   });
@@ -236,8 +244,9 @@ export default function DecodeClient() {
     setText(SAMPLE_NOTICE_TEXT);
     saveSessionPaste(SAMPLE_NOTICE_TEXT);
     setUsingSample(true);
-    setStatus("empty");
     setResult(null);
+    // G-77: one tap to a full result. The page labels it as the sample's, never as the seller's.
+    void submitText(SAMPLE_NOTICE_TEXT);
   }
 
   function handleClear() {
@@ -368,12 +377,28 @@ export default function DecodeClient() {
                   <span aria-hidden>← </span>
                   {DECODE.result.decodeAnother}
                 </button>
+                {usingSample && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Badge variant="info">{DECODE.sampleResultBadge}</Badge>
+                    <span className="text-sm text-muted-foreground">{DECODE.sampleResultNote}</span>
+                  </div>
+                )}
                 <h1 className="mt-4 text-balance text-[clamp(2.4rem,1.4rem+3.2vw,3.875rem)] font-semibold leading-[1.02] tracking-[-0.04em] text-foreground">
                   {DECODE.result.headline[headlineKey(result)].lead}{" "}
                   <AccentWord className="text-primary">
                     {DECODE.result.headline[headlineKey(result)].accent}
                   </AccentWord>
                 </h1>
+                {headlineKey(result) === "VERIFICATION" && (
+                  <p className="mt-4 max-w-prose text-base font-medium leading-relaxed text-foreground">
+                    {DECODE.result.verificationNotAppeal}
+                  </p>
+                )}
+                {headlineKey(result) === "UNDETERMINED" && (
+                  <p className="mt-4 max-w-prose text-base font-medium leading-relaxed text-foreground">
+                    {DECODE.result.couldNotPlace}
+                  </p>
+                )}
                 {/* Plain words for the two terms a first-time seller meets here. */}
                 {result.responseType?.type === "PLAN_OF_ACTION" &&
                   headlineKey(result) === "PLAN_OF_ACTION" && (
@@ -381,6 +406,16 @@ export default function DecodeClient() {
                       {DECODE.result.planOfActionGloss}
                     </p>
                   )}
+                {/\bsection 3\b/i.test(decodedText) && (
+                  <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
+                    {DECODE.result.sectionThreeGloss}
+                  </p>
+                )}
+                {(result.entities ?? []).some((e) => e.kind === "asin") && (
+                  <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
+                    {DECODE.result.asinGloss}
+                  </p>
+                )}
                 {(/account health/i.test(decodedText) || result.deadlines.length === 0) && (
                   <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
                     {DECODE.result.accountHealthGloss}
@@ -403,6 +438,21 @@ export default function DecodeClient() {
           {status === "result" && result && guidance && (
             <>
               <ResultFacts result={result} guidance={guidance} text={decodedText} />
+              {/* G-03: held funds are the second thing a frightened seller asks about. Not shown
+                  beside a message with warning signs, which is not to be acted on as Amazon's. */}
+              {!result.looksLikeReply &&
+                !result.notEnforcement &&
+                (result.authenticity?.length ?? 0) === 0 &&
+                mentionsHeldFunds(decodedText) && (
+                  <div className="mt-4 rounded-[18px] bg-white/[0.05] p-5 ring-1 ring-inset ring-white/[0.08]">
+                    <p className="text-sm font-semibold text-foreground">
+                      {DECODE.result.moneyTitle}
+                    </p>
+                    <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground">
+                      {DECODE.result.moneyBody}
+                    </p>
+                  </div>
+                )}
               {/* Directly under the three answers, so it is on screen without scrolling at 390 px.
                   A reply or a warning has no case to open as a plan, so it offers its own actions
                   in the result below instead. */}
@@ -472,6 +522,8 @@ export default function DecodeClient() {
                     <p id="notice-help" className="text-xs text-muted-foreground">
                       {DECODE.textarea.hint}
                     </p>
+                    <p className="text-xs text-muted-foreground">{DECODE.textarea.replyDoor}</p>
+                    <p className="text-xs text-muted-foreground">{DECODE.textarea.cannotFind}</p>
                     <div id="notice-hint" className="sr-only" aria-live="polite">
                       {showHint ? likeness.hint : ""}
                     </div>
@@ -543,6 +595,16 @@ function noteSecondReadingUse(result: DecodeResponse): void {
   trackFunnelEvent(FUNNEL_EVENTS.secondReadingUsed, { where: "decode" });
   noteProposal(result.suggestedKind.kind);
 }
+
+/** Kinds whose complaint is about particular products, so a notice with no ASIN is incomplete. */
+const ASIN_BOUND_KINDS: ReadonlySet<string> = new Set([
+  "INAUTHENTIC",
+  "PRODUCT_SAFETY",
+  "LISTING",
+  "POLICY",
+  "INTELLECTUAL_PROPERTY",
+  "RESTRICTED_PRODUCT",
+]);
 
 function headlineKey(result: DecodeResponse): keyof typeof DECODE.result.headline {
   if (result.severityGated) return "GATED";
@@ -701,6 +763,14 @@ function ResultFacts({
           <span className="block text-lg font-semibold leading-snug tracking-tight">
             {flagged ? r.factScamFlagged : r.factScamClear}
           </span>
+          <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+            {r.factScamLooked}
+          </span>
+          {/* G-49: one line, once, folded so the tile stays the size of the other two answers. */}
+          <details className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            <summary className="cursor-pointer text-link">{r.factScamMore}</summary>
+            <span className="mt-1 block">{r.factScamInsider}</span>
+          </details>
         </span>
       </div>
     </div>
@@ -802,6 +872,13 @@ function ResultView({
     noteSecondReadingUse(result);
   };
   const r = DECODE.result;
+  // G-13: a complaint about products, with no product named, cannot be answered yet.
+  const noAsinNamed =
+    ASIN_BOUND_KINDS.has(result.kind) &&
+    !result.looksLikeReply &&
+    !result.notEnforcement &&
+    !result.severityGated &&
+    !(result.entities ?? []).some((e) => e.kind === "asin");
   // Requested records already appear under "What to gather"; listing them again here was noise.
   const details = (result.entities ?? []).filter((e) => e.kind !== "requested_record");
   // 26 Sep 2026: the seller's notice stays on screen beside the decision, with the phrases that
@@ -936,6 +1013,30 @@ function ResultView({
           {result.looksLikeReply && (
             <Card className="space-y-3 p-5 sm:p-6">
               <h2 className="text-[1.1875rem] font-semibold tracking-[-0.02em]">{r.replyTitle}</h2>
+              {/* G-01: what the reply says, in plain words, with Amazon's own sentence beside it. */}
+              {(() => {
+                const key = result.looksLikeReply.category as keyof typeof r.replyReading;
+                const reading = r.replyReading[key];
+                if (!reading) return null;
+                return (
+                  <div className="space-y-2 rounded-lg bg-surface-2 p-4 ring-1 ring-inset ring-border">
+                    <p className="text-xs font-semibold text-muted-foreground">
+                      {r.replyReadingLabel}
+                    </p>
+                    <p className="text-base font-semibold text-foreground">
+                      {result.looksLikeReply.partial ? r.replyReading.reinstatedPartial : reading}
+                    </p>
+                    {result.looksLikeReply.quote && (
+                      <blockquote className="border-l-2 border-primary/40 pl-3 text-sm italic leading-relaxed text-foreground/80">
+                        {"\u201c"}
+                        {result.looksLikeReply.quote}
+                        {"\u201d"}
+                      </blockquote>
+                    )}
+                    <p className="text-xs text-muted-foreground">{r.replyReadingNote}</p>
+                  </div>
+                );
+              })()}
               <p className="text-sm leading-relaxed text-muted-foreground">{r.replyBody}</p>
               {result.looksLikeReply.partial &&
                 (result.looksLikeReply.openAsks?.length ?? 0) > 0 && (
@@ -1007,6 +1108,14 @@ function ResultView({
                             <span className="block text-sm text-muted-foreground">
                               {record.source === "matrix" ? r.recordInferred : r.recordNamed}
                             </span>
+                            {/invoice/i.test(record.label) && (
+                              <Link
+                                href="/check-invoice"
+                                className="mt-0.5 inline-block text-sm font-medium text-link hover:underline"
+                              >
+                                {r.invoiceCheckLink}
+                              </Link>
+                            )}
                           </span>
                           {/* Ours, and said so — never passed off as something Amazon wrote. */}
                           <Badge
@@ -1071,7 +1180,14 @@ function ResultView({
                 <h2 className="text-[0.9375rem] font-semibold">{r.triageTitle}</h2>
                 <div className="mt-4 grid gap-5 sm:grid-cols-2">
                   {[
-                    { label: r.doNow, items: guidance.triage.doNow, icon: Check, bad: false },
+                    {
+                      label: r.doNow,
+                      items: noAsinNamed
+                        ? [r.noAsinDoNow, ...guidance.triage.doNow]
+                        : guidance.triage.doNow,
+                      icon: Check,
+                      bad: false,
+                    },
                     { label: r.doNot, items: guidance.triage.doNot, icon: Ban, bad: true },
                   ].map(({ label, items, icon: Icon, bad }) => (
                     <div key={label}>
@@ -1094,6 +1210,13 @@ function ResultView({
                   ))}
                 </div>
               </Card>
+
+              {/* G-69: Amazon's own statement, dated, once the seller knows an appeal is coming. */}
+              {!result.looksLikeReply && !result.notEnforcement && !result.severityGated && (
+                <p className="px-1 text-xs leading-relaxed text-muted-foreground">
+                  {AMAZON_REVIEW_TIME}
+                </p>
+              )}
 
               <Card className="p-5 sm:p-6">
                 <h2 className="text-[0.9375rem] font-semibold">{r.howRead}</h2>

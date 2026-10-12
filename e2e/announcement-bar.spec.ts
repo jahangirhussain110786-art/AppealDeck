@@ -1,9 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ANNOUNCEMENT_BAR } from "../src/content/announcements";
+import { ANNOUNCEMENT_BAR, type Announcement } from "../src/content/announcements";
 
 // AM-30 (25 Sep 2026): the announcement bar above the header on the public pages.
-const first = ANNOUNCEMENT_BAR.items[0]!;
-const second = ANNOUNCEMENT_BAR.items[1]!;
+// The home page leaves out a message that repeats its hero (G-96), so "first" is the first one shown there.
+const onHome = (ANNOUNCEMENT_BAR.items as Announcement[]).filter((i) => !i.hideOn?.includes("/"));
+const first = onHome[0]!;
+const second = onHome[1]!;
 const bar = (page: Page) => page.getByRole("region", { name: ANNOUNCEMENT_BAR.labels.region });
 
 test.describe("Announcement bar", () => {
@@ -57,6 +59,30 @@ test.describe("Announcement bar", () => {
     await page.goto("/pricing");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(bar(page)).toHaveCount(0);
+  });
+
+  test("the home page leaves out the message that repeats its headline (G-96)", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    const repeated = (ANNOUNCEMENT_BAR.items as Announcement[]).find((i) =>
+      i.hideOn?.includes("/"),
+    )!;
+    for (let i = 0; i < onHome.length; i++) {
+      await expect(bar(page)).not.toContainText(repeated.text);
+      await bar(page).getByRole("button", { name: ANNOUNCEMENT_BAR.labels.next }).click();
+    }
+    await page.goto("/pricing");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    // Everywhere else it is still one of the messages.
+    const all = (ANNOUNCEMENT_BAR.items as Announcement[]).length;
+    let seen = false;
+    for (let i = 0; i < all && !seen; i++) {
+      seen = (await bar(page).innerText()).includes(repeated.text);
+      await bar(page).getByRole("button", { name: ANNOUNCEMENT_BAR.labels.next }).click();
+    }
+    expect(seen).toBe(true);
   });
 
   test("is not shown to a seller working on their case", async ({ page }) => {

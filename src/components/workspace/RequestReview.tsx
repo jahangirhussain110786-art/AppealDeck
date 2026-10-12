@@ -214,6 +214,24 @@ export function RequestReview({
                 <dt className="text-sm text-muted-foreground">{label}</dt>
                 <dd className="text-[0.9375rem] font-medium text-foreground">
                   {text}
+                  {/* G-102: the hint sits on the row it is about, with the one-tap change beside it,
+                      instead of "Amazon US" beside a note that says otherwise. The store is still
+                      only ever changed by the seller. */}
+                  {label === R.store && otherStore && value.marketplace === "US" && (
+                    <span className="mt-1 block space-y-1.5 font-normal">
+                      <span className="block text-sm text-muted-foreground">
+                        {`Your notice mentions ${otherStore}. ${STORES.nonUsNotice}`}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setValue({ ...value, marketplace: "other" })}
+                      >
+                        {R.useOtherStore}
+                      </Button>
+                    </span>
+                  )}
                   {label === R.wants && (
                     <details className="mt-1 font-normal">
                       <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm text-link">
@@ -237,13 +255,6 @@ export function RequestReview({
         />
         {/* #86: named here so a seller learns on the first screen that two things must be answered. */}
         <IssuesRaised workspace={workspace} />
-        {otherStore && value.marketplace === "US" && (
-          <Alert>
-            <AlertDescription>
-              {`Your notice mentions ${otherStore}. ${STORES.nonUsNotice} If this one is from another store, choose "${R.stores.other}" under "${R.change}".`}
-            </AlertDescription>
-          </Alert>
-        )}
         {/*
           Every control that changes the summary, in one place. Open from the start when the notice
           was typed here rather than decoded, because then there is nothing to summarise yet.

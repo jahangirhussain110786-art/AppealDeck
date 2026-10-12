@@ -17,7 +17,7 @@ test("the dashboard offers the case's dates as a calendar file", async ({ page }
   await page.getByLabel("Your notice").fill(notice);
   await page.getByRole("button", { name: "Decode", exact: true }).click();
   await page
-    .getByRole("link", { name: /open case workspace/i })
+    .getByRole("link", { name: /start my case/i })
     .first()
     .click();
   await expect(page).toHaveURL(/\/case/);

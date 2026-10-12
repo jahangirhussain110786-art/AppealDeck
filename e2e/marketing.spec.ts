@@ -49,10 +49,8 @@ test.describe("Marketing site (public)", () => {
   test("the sample notice loads and decodes to a result card", async ({ page }) => {
     await page.goto("/decode");
     await page.getByRole("button", { name: "Try a sample notice" }).click();
-    const textarea = page.getByRole("textbox", { name: /notice/i }).first();
-    await expect(textarea).not.toHaveValue("");
-
-    await page.getByRole("button", { name: "Decode", exact: true }).click();
+    // G-77: one tap gives the whole result, labelled as the sample's.
+    await expect(page.getByText("Sample result", { exact: true })).toBeVisible();
 
     const main = page.locator("main");
     await expect(main.getByRole("heading", { level: 2 }).first()).toBeVisible();
@@ -129,10 +127,43 @@ test.describe("Marketing site (public)", () => {
     );
   });
 
+  test("the sample result answers the second question and says what it checked (G-03, G-48, G-98, G-08)", async ({
+    page,
+  }) => {
+    await page.goto("/decode");
+    await page.getByRole("button", { name: "Try a sample notice" }).click();
+    const main = page.locator("main");
+    // One tap, and the result says whose it is (G-77).
+    await expect(main.getByText("Sample result", { exact: true })).toBeVisible();
+    // The sample says funds are on hold, so the money line is shown, quoting no promise.
+    await expect(main.getByText("Your money", { exact: true })).toBeVisible();
+    await expect(main.getByText(/not a promise it is paid/)).toBeVisible();
+    // The scam check says what it looked for.
+    await expect(main.getByText(/Looked for: a payment or gift-card demand/)).toBeVisible();
+    // The sample names an ASIN, so the term is explained once.
+    await expect(main.getByText(/An ASIN is the ten-character code/)).toBeVisible();
+    // The supplier-invoice row points at the free invoice check.
+    await expect(
+      main.getByRole("link", { name: "Check an invoice first, free" }).first(),
+    ).toHaveAttribute("href", "/check-invoice");
+  });
+
+  test("a notice that is not about money does not get the money line (G-03)", async ({ page }) => {
+    await page.goto("/decode");
+    await page
+      .getByRole("textbox", { name: /notice/i })
+      .first()
+      .fill(
+        "Amazon Seller Performance. Your listing for ASIN B0EXAMPLE2 was removed because the detail page violates our product policy. To appeal, submit a Plan of Action in Account Health within 17 days.",
+      );
+    await page.getByRole("button", { name: "Decode", exact: true }).click();
+    await expect(page.locator("main").getByRole("heading", { level: 2 }).first()).toBeVisible();
+    await expect(page.locator("main").getByText("Your money", { exact: true })).toHaveCount(0);
+  });
+
   test("a genuine notice is not questioned", async ({ page }) => {
     await page.goto("/decode");
     await page.getByRole("button", { name: "Try a sample notice" }).click();
-    await page.getByRole("button", { name: "Decode", exact: true }).click();
     await expect(page.locator("main").getByRole("heading", { level: 2 }).first()).toBeVisible();
     // The cost of crying wolf here is a seller who delays answering a real deactivation.
     await expect(

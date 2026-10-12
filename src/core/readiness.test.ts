@@ -221,7 +221,7 @@ describe("readiness copy", () => {
   });
 
   it("copy explicitly disclaims being a prediction", () => {
-    expect(READINESS_COPY).toContain("not a prediction");
+    expect(READINESS_COPY).toMatch(/not a prediction/i);
   });
 
   it("label includes the fixed wording", () => {

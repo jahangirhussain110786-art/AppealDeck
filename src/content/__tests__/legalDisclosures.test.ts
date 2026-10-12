@@ -13,7 +13,7 @@
 import { describe, expect, it } from "vitest";
 import { LEGAL } from "../legal";
 import { WORKSPACE } from "../workspace";
-import { FAQ } from "../marketing";
+import { DECODE, FAQ, HOME } from "../marketing";
 
 function text(doc: "privacy" | "terms" | "refund"): string {
   return LEGAL[doc].sections.flatMap((s) => [s.title, ...s.body]).join("\n");
@@ -236,11 +236,31 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
     );
   });
 
-  it("dates the changed documents (privacy 2026-10-10, terms 2026-10-09)", () => {
+  it("keeps the lines beside the paste boxes true to the privacy policy (G-51, 12 Oct 2026)", () => {
+    // "Not stored" was untrue once a reading is remembered for seven days. The boxes now say what
+    // the policy says: read on the server, no copy of the notice, Gemini only when rules cannot place it.
+    expect(HOME.tool.note).not.toMatch(/not stored/i);
+    expect(HOME.tool.note).toMatch(/no copy/i);
+    expect(DECODE.privacyNote).toMatch(/keep no copy/i);
+    expect(DECODE.privacyNote).toMatch(/only when our own rules cannot place it/i);
+    expect(text("privacy")).toMatch(
+      /only when our own rules cannot tell what kind of notice it is, on to Google Gemini/,
+    );
+  });
+
+  it("calls the service software, not an independent service, everywhere it says what it is (G-93)", () => {
+    expect(text("terms")).toMatch(/AppealDeck is software, operated by Jhangir Hussain/);
+    expect(text("terms")).not.toMatch(/independent service/i);
+    expect(JSON.stringify(FAQ.items)).not.toMatch(/independent service/i);
+  });
+
+  it("dates the changed documents (privacy and terms 2026-10-12)", () => {
     // 9 Oct 2026: the AI now also writes document-request and questionnaire responses, and reads a
-    // notice the decoder cannot place. 10 Oct 2026: privacy says what that reading keeps.
-    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-10");
-    expect(LEGAL.lastUpdated.terms).toBe("2026-10-09");
+    // notice the decoder cannot place. 10 Oct 2026: privacy says what that reading keeps. 12 Oct
+    // 2026: the Terms and privacy say "software" rather than "independent service" and count
+    // browsers, not devices (G-93, G-71).
+    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-12");
+    expect(LEGAL.lastUpdated.terms).toBe("2026-10-12");
     expect(LEGAL.lastUpdated.refund).toBe("2026-10-06");
   });
 });

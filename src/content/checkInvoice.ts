@@ -23,12 +23,28 @@ export const CHECK_INVOICE = {
     asinHelp:
       "Paste the ASIN from Amazon's notice, or several separated by spaces or commas. The check then looks for it on the invoice.",
     asinPlaceholder: "B0C1234567",
+    // G-02: two optional numbers turn the field-by-field result into the two sums Amazon's rule is
+    // made of. Both stay on the device with everything else on this page.
+    noticeDateLabel: "Date on Amazon's notice (optional)",
+    noticeDateHelp:
+      "With it, the 365 days are counted back from your notice's date, the way Amazon counts them. Without it, from today.",
+    unitsLabel: "Units you sold of this product in the last 365 days (optional)",
+    unitsHelp:
+      "From your Business Reports in Seller Central. With it, we add the invoice's quantity against it.",
+    unitsPlaceholder: "131",
     dropHint: "PDF, PNG, JPEG or WebP, up to 10 MB",
     reading: "Reading the invoice on your device...",
     again: "Check a different invoice",
     privacy:
       "The file is read in this browser tab. It is not uploaded, not saved and not tied to any account. Close the tab and it is gone.",
     failed: "That file could not be read here. Try a clearer or smaller copy, or a PDF.",
+  },
+  sums: {
+    title: "The two sums, worked out",
+    lead: "Amazon's rule for an authenticity notice comes down to two numbers: how old the invoice is, and whether the invoices cover what you sold. Here is each one with its working.",
+    daysTitle: "How old is the invoice?",
+    unitsTitle: "Does it cover what you sold?",
+    note: "These are sums on what was read from the invoice. They do not tell you whether Amazon will accept it, and Amazon may phone your supplier.",
   },
   covers: {
     title: "What it looks at",

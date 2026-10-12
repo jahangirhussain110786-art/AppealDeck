@@ -110,9 +110,9 @@ test("vault tools retain files and device request failures offer retry", async (
   );
   await page.goto("/billing");
   await expect(
-    page.getByRole("heading", { name: "Couldn't load your devices", exact: true }),
+    page.getByRole("heading", { name: "Couldn't load your browsers", exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("No active devices recorded yet.", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("No browsers recorded yet.", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Try again", exact: true }).click();
-  await expect(page.getByText("No active devices recorded yet.", { exact: true })).toBeVisible();
+  await expect(page.getByText("No browsers recorded yet.", { exact: true })).toBeVisible();
 });

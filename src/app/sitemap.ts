@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "" },
     { path: "/decode" },
     { path: "/check-invoice" },
+    { path: "/how-we-test", lastModified: "2026-10-12" },
     { path: "/pricing" },
     { path: "/faq" },
     { path: "/support" },

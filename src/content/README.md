@@ -19,6 +19,11 @@ All user-facing strings live in typed modules under `src/content/`. No hardcoded
 - **Button** = verb + object.
 - Dates: absolute + relative. Amazon terms defined on first use per page.
 - Sentence case.
+- **Every free check ends the same way** (G-54, 12 Oct 2026): what it found, what it cannot know,
+  and one next step. The invoice check, the document check, the scam check and the decoder's
+  "not advice" line already follow it; a new free check is not finished until all three are on
+  screen. What it cannot know is stated plainly, never hidden in the Terms: confidence about a
+  limit is what a seller trusts.
 
 ## How to add a string
 

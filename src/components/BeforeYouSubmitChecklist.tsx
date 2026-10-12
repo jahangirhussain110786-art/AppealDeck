@@ -46,6 +46,11 @@ interface BeforeYouSubmitChecklistProps {
    * page listing two records by other names. When given, the row reports exactly that list.
    */
   requirements?: ReadonlyArray<{ label: string; status: string }>;
+  /**
+   * G-62: what the seller needs in hand when Seller Central opens (the upload-ready pack, the Word
+   * file), shown in the same row as the button that sends them there.
+   */
+  beside?: React.ReactNode;
 }
 
 function fill(template: string, vars: Record<string, string | number>): string {
@@ -70,6 +75,7 @@ export function BeforeYouSubmitChecklist({
   allChecked,
   priorSubmissions,
   requirements,
+  beside,
 }: BeforeYouSubmitChecklistProps) {
   const copy = APP.compose.checklist;
 
@@ -96,7 +102,8 @@ export function BeforeYouSubmitChecklist({
 
   const evidenceDetail = evidenceComplete
     ? fill(copy.evidenceComplete, {
-        count: requirements ? requirements.length : requiredKinds(caseFile.kind).length,
+        done: requirements ? requirements.length : requiredKinds(caseFile.kind).length,
+        total: requirements ? requirements.length : requiredKinds(caseFile.kind).length,
       })
     : [
         fill(copy.evidenceMissing, { count: missing.length + notAccepted.length }),
@@ -123,7 +130,7 @@ export function BeforeYouSubmitChecklist({
     },
     {
       id: "novelty",
-      label: fill(copy.items.novelty, { n: attemptCount + 1 }),
+      label: copy.items.novelty,
       checked: !needsNovelty,
       // The comparison's own message explains what it found and what to do about it, which is more
       // use than the generic revision copy — so it wins whenever a comparison was possible.
@@ -182,12 +189,19 @@ export function BeforeYouSubmitChecklist({
           ))}
         </ul>
         {readyForSellerCentral && (
-          <Button asChild variant="outline" size="sm" className="mt-3 gap-2">
-            <a href={APP.links.sellerCentralPerformance} target="_blank" rel="noopener noreferrer">
-              {copy.sellerCentral}
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
-            </a>
-          </Button>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {beside}
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <a
+                href={APP.links.sellerCentralPerformance}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {copy.sellerCentral}
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

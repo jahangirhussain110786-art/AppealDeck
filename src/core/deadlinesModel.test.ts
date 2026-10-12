@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   computeDeadlines,
+  NO_DEADLINE_LABEL,
   deadlinesForDisplay,
   repairStoredDeadlines,
   sellerDeadline,
@@ -302,7 +303,7 @@ describe("a response date the seller entered", () => {
   const undated = {
     kind: "appeal_window" as const,
     dueAt: null,
-    label: "Appeal window ambiguous — verify the exact date in your Account Health dashboard",
+    label: NO_DEADLINE_LABEL,
   };
   const stated = {
     kind: "appeal_window" as const,

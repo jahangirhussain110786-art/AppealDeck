@@ -20,6 +20,7 @@ import type { CaseFile } from "@/core/caseFile";
 import type { Requirement, Workspace } from "@/core/workspace";
 import { attemptDateRecorded } from "@/core/workspace";
 import { formatDate } from "./format";
+import { labelOf } from "./caseLabel";
 
 export interface PackRecord {
   filename: string;
@@ -74,6 +75,7 @@ export function buildEvidenceManifest(input: EvidencePackInput): string {
 
   lines.push("AppealDeck evidence manifest — your own record, not a submission");
   lines.push(`Generated ${formatDate(new Date().toISOString())}`);
+  if (labelOf(workspace)) lines.push(`Case name: ${labelOf(workspace)}`);
   lines.push(`Case ${file.id} · ${file.kind.replaceAll("_", " ")}`);
   lines.push("");
   lines.push(

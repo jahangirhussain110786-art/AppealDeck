@@ -18,7 +18,7 @@ export const STORES = {
 
   /** Past a notice's own date. No outcome claim: Amazon decides. */
   pastDeadlineNextStep:
-    "You can still try: open the appeal in Account Health if the button is there, and contact Seller Support in the same case. Amazon decides.",
+    "You can still try: open the appeal in Account Health if the button is there, and contact Seller Support in the same case. Seller Support may also offer to call you back; the option is on its Contact Us page and is not always shown. Amazon decides.",
 
   /** Reply reading says Amazon has reinstated the account. */
   replyReinstated: "Amazon says the account is reinstated. Record the outcome.",

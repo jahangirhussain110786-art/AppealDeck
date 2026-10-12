@@ -1,6 +1,6 @@
 # Growth register: what to do and what not to do (10 Oct 2026)
 
-**Status: ON HOLD, with the founder's adjustments of 12 Oct 2026 in section 0. Nothing here is built. A batch is built only when the founder names it ("do batch A") or names IDs; parked items still need their exact `EXECUTE PARKED` phrase.**
+**Status: BUILT on 12 Oct 2026 (batches A, B and C), on the founder's instruction "let's implement my decisions". What was built, what was not, and the choices made along the way are in section 0.1. Parked items still need their exact `EXECUTE PARKED` phrase.**
 
 **What this is.** A cut of the 109 items in `docs/handoffs/2026-10-10-growth-additions-register.md`, judged against the success assessment in `docs/handoffs/2026-10-10-success-assessment-and-plan.md`. IDs (G-xx) are the register's. Counts come from the register's own verdict column, not from memory.
 
@@ -29,6 +29,26 @@ The founder read the plain-words page (`2026-10-10-growth-plan-plain-mobile.html
 Recorded the same day: the founder's disclosure-placement idea ("lead with strengths; operating detail and definitions in the Terms and Privacy; never look weak") is written up as a plan for approval in `docs/handoffs/2026-10-12-disclosure-placement-plan.md`, on hold with this plan. Three lines stay at the point of sale whatever happens (Amazon decides; software, not a law firm; some cases not sold), reworded to read as confidence. And a separate research round on a seller community, open-source building blocks, support capacity and zero-cost reach is in `docs/handoffs/2026-10-12-community-and-reach-research.md` (R-13).
 
 **Arithmetic:** 65 − 8 rows out (G-46, G-44, G-109, G-04, G-79, G-06, G-78, G-38) + 2 rows in (G-56, G-57) = 59. 35 + 8 − 2 = 41. Hold unchanged at 9. 59 + 9 + 41 = 109.
+
+### 0.1 Built, 12 Oct 2026
+
+**Batch A (defects and untrue words):** G-28 (plain-text copy of the response, no `##` markers; Word and print already used real headings), G-29 (the pack index lists the file's original name beside the numbered copy), G-87 (a notice with neither a date nor a window now says "No deadline is written in this notice", kept apart from a stated window with no start day), G-51 (the privacy line beside the paste boxes now says "read on our server; we keep no copy" and, on /decode, names the Gemini second reading), G-30 (the $249 under the guest response gate), G-88 (button names; the e2e specs changed with them), G-91 (the pricing pill is one sentence), G-43 (product-safety wording: Direct Validation, hedged, pinned by a test).
+
+**Batch B (the first minute):** G-77 (one tap to a labelled sample result), G-03 (a "Your money" line, only for a notice that says funds are held now, never a "may"), G-48, G-50, G-96, G-97, G-98, G-07, G-08 (a link from the invoice row and a "Check this document" button on the closed reviewed row), G-10, G-11, G-12, G-13, G-14.
+
+**Batch C (trust and the free doors):** G-01 (the reply reader: plain words, Amazon's own sentence quoted, labelled as our reading), G-02 (the invoice check's two sums with the working), G-45 and G-80 (/how-we-test and the 13 notices as a download), G-49, G-52, G-93, G-94 and G-37, G-35 and G-64, G-33 and G-34, G-54, G-60, G-62, G-63, G-69, G-70, G-71, and the polish rows G-89, G-90, G-92, G-95, G-100, G-101, G-102, G-104 to G-108.
+
+**Not built, by design:** G-47 and G-86 wait for the founder's own sentence. G-103 is unverified. P-13 and P-01 are parked and need their phrases.
+
+**Choices made while building that the founder may want to reverse:**
+
+1. **The case name (G-60) is not in the pack index**, because that file goes to Amazon and a client's name is the seller's business. It is in the seller's own exports and record.
+2. **G-69's date is "read 10 Oct 2026"**, the day the Amazon representative's statement was verified, because the post's own date was not recorded. Re-read it quarterly (`AMAZON_REVIEW_TIME` in `src/content/shared.ts`).
+3. **The open corpus (G-80) is on the site only**, as a JSON download of the 13 synthetic notices with expected results; no engine code. Its licence is not stated, so nothing is claimed beyond "you are welcome to copy them". The repository question (F-14) is untouched.
+4. **G-63 is said at the Documents heading only**, not on the do-not cards (those lists were already long).
+5. **G-49 sits under the scam check**, once, rather than on every do-not card.
+6. **Billing, the Terms and the Privacy policy now say "browsers"**, not "devices", because the licence is counted per browser. The Terms and Privacy dates moved to 12 Oct 2026, and the Terms and FAQ say "software" where they said "independent service" (G-93).
+7. The Free plan list gained two lines (the reply reader and the invoice check), both of which are real today.
 
 ---
 

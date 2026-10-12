@@ -206,6 +206,8 @@ export const WorkspaceSchema = z
       )
       .max(100)
       .optional(),
+    // G-60: declared with the field, so the first save does not strip it.
+    label: z.string().max(200).optional(),
     // G, 24 Sep 2026: declared with the field, so the first save does not strip it.
     caseFacts: z
       .object({

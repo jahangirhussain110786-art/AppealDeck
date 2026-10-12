@@ -639,12 +639,21 @@ export function fillerPhrasesIn(text: string): string[] {
   return FILLER_PATTERNS.filter(([, p]) => p.test(text)).map(([label]) => label);
 }
 
-function checkFillerPhrases(draft: PoaDraft, findings: CriticFinding[]): void {
+/**
+ * The template phrases in the sections that are about the case, by label (G-35). The same reading
+ * the critic's warning uses, so the number shown on the "your own words" stamp and the warning
+ * under it can never disagree.
+ */
+export function templatePhrasesInDraft(draft: Pick<PoaDraft, "sections">): string[] {
   const text = draft.sections
     .filter((s) => !NOT_ABOUT_THE_CASE.has(s.heading) && !isMachineLabelOnly(s.body))
     .map((s) => s.body)
     .join("\n");
-  const hits = fillerPhrasesIn(text);
+  return fillerPhrasesIn(text);
+}
+
+function checkFillerPhrases(draft: PoaDraft, findings: CriticFinding[]): void {
+  const hits = templatePhrasesInDraft(draft);
   if (hits.length === 0) return;
   findings.push({
     severity: "warning",
@@ -919,6 +928,23 @@ function checkDocumentFreshness(data: CaseFileData, findings: CriticFinding[]): 
       });
     }
   }
+}
+
+/**
+ * The same response as plain text for pasting into Amazon's box, which shows what it is given and
+ * renders no markdown: a heading there is a line of capitals, not `## Heading` (G-28, 12 Oct 2026).
+ * `renderPoaText` stays the stored and compared form, so what a seller recorded earlier still
+ * matches; this is only what the seller sees and copies.
+ */
+export function renderPoaPlain(draft: Pick<PoaDraft, "sections" | "watermark">): string {
+  const lines: string[] = [];
+  if (draft.watermark) {
+    lines.push(`*** ${draft.watermark} ***`, "");
+  }
+  for (const section of draft.sections) {
+    lines.push(section.heading.toUpperCase(), "", section.body, "");
+  }
+  return lines.join("\n");
 }
 
 export function renderPoaText(draft: PoaDraft): string {

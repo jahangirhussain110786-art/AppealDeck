@@ -284,6 +284,8 @@ describe("buildEvidencePack", () => {
     expect(index).toContain("01 Supplier invoice.pdf");
     expect(index).toContain("Shows: Shows the supplier and the date.");
     expect(index).toContain("Refer to page 2.");
+    // G-29: the response may name the file as saved; the reviewer can match it to the numbered copy.
+    expect(index).toContain("Also referred to in the response as: x.pdf");
     expect(index).not.toMatch(/hash|v1\.|AppealDeck|MB|KB/i);
     const record = text(readZip(pack.bytes).get(`For your records/${RECORD_NAME}`));
     expect(record).toContain("v1.hash-a");

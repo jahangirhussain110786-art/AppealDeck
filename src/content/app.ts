@@ -136,7 +136,9 @@ export const APP = {
         "Checked on this device. The picture was never uploaded and we did not read what the document says.",
       localTitle: "How the picture looks",
       recheck: "Check again",
-      noVerdict: "This describes your document only. Whether Amazon accepts it is their decision.",
+      // G-34: says what the check did and what it cannot know, in one place.
+      noVerdict:
+        "This describes your document only: what it shows, its dates and any quantities. We cannot know whether Amazon trusts whoever issued it, and whether Amazon accepts it is their decision.",
       failed: "Could not check that document",
       comparedWith: "Compared with:",
       // Shown before the button is pressed, so a seller knows where the file goes before it goes
@@ -175,6 +177,9 @@ export const APP = {
     // The v5 case list and greeting (26 Sep 2026). Every line is read from the seller's case.
     cases: {
       heading: "Your cases",
+      // G-60: one spreadsheet of every case, built on this device.
+      downloadCsv: "Download all cases (CSV)",
+      csvFailed: "Could not build the spreadsheet. Your cases are unchanged.",
       open: "Open · {n}",
       closedTab: "Closed · {n}",
       filter: "Show cases",
@@ -269,6 +274,8 @@ export const APP = {
         descriptionSignedIn:
           "Your cases are stored on the device where you started them, not on our servers. Open AppealDeck on that device to continue, or start the case again here.",
         cta: "Start your case",
+        // G-71: a seller who started on another device has a backup to bring across, not a lost case.
+        restore: "Restore an encrypted backup",
       },
     },
     deadlines: {
@@ -328,6 +335,10 @@ export const APP = {
       titleUpcoming: "Coming up",
       titleClear: "Nothing is due",
       titleUndated: "Your notice gives a window, not a date",
+      /** G-87: a notice with neither a date nor a window is a different statement from a window with no start. */
+      titleNoDeadline: "No deadline is written in your notice",
+      noDeadlineBody:
+        "Open the Appeal button in Account Health. If Amazon set a date, it shows there, and that date wins. Enter it on your case page and this page will count down to it.",
       undatedBody:
         "Open the notice in Account Health and enter the response date Amazon shows there on your case page. This page will then count down to it.",
       clearBody:
@@ -425,19 +436,20 @@ export const APP = {
       title: "Before you submit",
       submitYourself: "You submit this yourself in Seller Central.",
       evidenceMissing: "{count} still missing",
-      evidenceComplete: "{count} required evidence items present",
+      // G-89: counts a seller can check against the list, in the words the page uses.
+      evidenceComplete: "{done} of {total} attached",
       templatePhrases:
         "Found bracketed placeholders like '[Describe...]' — replace with real facts",
       noTemplatePhrases: "No placeholders detected",
-      noveltyFirst: "First submission — novelty not yet required",
+      noveltyFirst: "First attempt, nothing to compare",
       sellerCentral: "Open Seller Central",
       submitDetail: "AppealDeck never submits to Amazon.",
       evidenceMissingDetail: "Missing: {kinds}",
       evidenceDisqualifiedDetail: "Not accepted: {kinds}",
       items: {
-        evidence: "Required evidence attached",
+        evidence: "Documents attached",
         templatePhrases: "No template phrases left in the draft",
-        novelty: "Novelty on attempt {n}",
+        novelty: "Same text as a previous attempt?",
         submitYourself: "You submit this yourself in Seller Central",
       },
       status: {
@@ -453,7 +465,7 @@ export const APP = {
   billing: {
     title: "Billing",
     eyebrow: "Account tools",
-    subtitle: "Check your pass, manage devices and find payment support.",
+    subtitle: "Check your pass, manage browsers and find payment support.",
     planName: "Appeal Pass",
     dateUnavailable: "Not recorded",
     continue: "Open your dashboard",
@@ -474,14 +486,14 @@ export const APP = {
       cta: "View pass details",
     },
     deviceCap: {
-      title: "Active devices",
+      title: "Browsers you use",
       subtitle:
-        "Your Appeal Pass works on up to {cap} devices. If you hit the limit, revoke an older device to activate a new one.",
-      none: "No active devices recorded yet.",
-      noneDesc: "Your current device will appear here once you have used AppealDeck.",
-      loading: "Loading devices…",
-      loadError: "Couldn't load your devices",
-      loadErrorDesc: "Your device list is unavailable. Try again to see current access.",
+        "Your Appeal Pass works on up to {cap} browsers. A case lives in the browser where you started it, so a new browser starts with no case until you restore a backup. If you hit the limit, remove an older browser to activate a new one.",
+      none: "No browsers recorded yet.",
+      noneDesc: "This browser will appear here once you have used AppealDeck.",
+      loading: "Loading browsers…",
+      loadError: "Couldn't load your browsers",
+      loadErrorDesc: "Your browser list is unavailable. Try again to see current access.",
       retry: "Try again",
       thisDevice: "This device",
       revokeOwnTooltip: "Sign out instead",

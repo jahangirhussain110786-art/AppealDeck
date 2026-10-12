@@ -68,12 +68,6 @@ export default function PricingPage() {
     <MarketingShell bleed>
       <section className="stage dark text-foreground">
         <div className="mx-auto flex max-w-[56rem] flex-col items-center px-4 pb-40 pt-16 text-center sm:px-8 sm:pt-20">
-          <p className="mb-5 inline-flex h-8 items-center gap-2.5 rounded-full bg-white/[0.06] pl-1.5 pr-3.5 text-[0.84375rem] text-muted-foreground ring-1 ring-inset ring-white/[0.08]">
-            <b className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
-              {PRICING.currency}
-            </b>
-            {PRICING.currencyNote}
-          </p>
           <h1 className="text-balance text-[clamp(2.4rem,1.3rem+3.6vw,4.4rem)] font-semibold leading-[1.02] tracking-[-0.045em] text-foreground">
             {HEADLINE ? (
               <>
@@ -88,6 +82,7 @@ export default function PricingPage() {
           <p className="mt-6 max-w-[56ch] text-lg leading-relaxed text-muted-foreground">
             {PRICING.subline}
           </p>
+          <p className="mt-3 text-sm text-muted-foreground">{PRICING.currencyNote}</p>
         </div>
       </section>
 

@@ -1,5 +1,14 @@
 // Copy source for shared strings (footer, common labels, metadata).
 
+/**
+ * G-69 (12 Oct 2026): what Amazon itself has said about review time, said once and reused on the
+ * decode result, the waiting card and the FAQ. It quotes Amazon with its source and the day we read
+ * it, and predicts nothing. Re-read it when the policy brief is re-checked each quarter; if Amazon's
+ * statement changes, this line changes with it, in this one place.
+ */
+export const AMAZON_REVIEW_TIME =
+  "Amazon has said appeals usually take 3 to 7 business days and can take longer, and it does not promise a time frame (an Amazon representative on Seller Forums, read 10 Oct 2026). Sellers report anything from days to months. Not a promise.";
+
 export const SHARED = {
   brand: { name: "AppealDeck" },
   nav: {
@@ -37,11 +46,12 @@ export const SHARED = {
       support: "Support",
       dataFlow: "Where your data goes",
       checkInvoice: "Free invoice check",
+      howWeTest: "How we test",
     },
     neverSubmits:
       "You submit your appeal yourself in Seller Central. AppealDeck never logs in to your account.",
     independence:
-      "AppealDeck is an independent service and is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon and Seller Central are trademarks of Amazon.com, Inc. or its affiliates.",
+      "AppealDeck is software and is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon and Seller Central are trademarks of Amazon.com, Inc. or its affiliates.",
     groups: {
       product: "Product",
       guides: "Guides",
@@ -77,7 +87,8 @@ export const SHARED = {
   navSkip: "Skip to main content",
   tocHeading: "Contents",
   lastUpdated: "Last updated:",
-  consentPrompt: "Review delivery consent to continue",
+  // G-92: plain words for the disabled button. The consent wording itself (D8) is unchanged.
+  consentPrompt: "Tick the box above to continue",
   offline: {
     title: "You are offline",
     desc: "Your unlocked local vault is available. Decoding, response preparation and cloud backup need an internet connection.",

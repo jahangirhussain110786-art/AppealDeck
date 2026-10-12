@@ -42,7 +42,9 @@ export const WORKSPACE = {
   // The Documents tab (29 Sep 2026): one card open at a time, the reason in view, the rest folded.
   documents: {
     title: "Documents Amazon wants",
-    lead: "Add each file and say what it shows. Nothing is sent to Amazon.",
+    // G-63: said here, where the files are gathered, as well as on the copy step. "Some Amazon
+    // notices say" because the origin of the rule is a notice's own wording, not a policy we cite.
+    lead: "Add each file and say what it shows. Nothing is sent to Amazon. Documents go with the response in Seller Central, not in a Seller Support case: some Amazon notices say documents sent through a case are not considered for the review.",
     seeNotice: "See your notice",
     addOther: "Amazon asked for something else? Add it",
     addLabel: "Document name",
@@ -186,6 +188,8 @@ export const WORKSPACE = {
     sendNote:
       "Needs an Appeal Pass for this case. Your answers and file names go to AppealDeck; your files stay in your vault. Nothing is sent to Amazon.",
     signIn: "Sign in to prepare your response",
+    // G-30: the price is on the screen where the seller decides, not only on the overview.
+    guestPrice: "Then $249 once for this case. Everything above stays free.",
   },
   // The v5 overview (26 Sep 2026): next step, checklist, timeline.
   overview: {
@@ -264,7 +268,7 @@ export const WORKSPACE = {
   formHelp:
     "In Account Health, open the notice and click Appeal. If that page lists documents or questions, paste them here. Leave out passwords and payment details.",
   decodedHelp: "Check it. You can change anything later. Nothing is sent to Amazon.",
-  reviewNotice: "Review the request",
+  reviewNotice: "Check what Amazon wants",
   confirmRoute: "Yes, this is right",
   // The first case screen (29 Sep 2026): the answer first, the controls one tap away.
   request: {
@@ -284,6 +288,7 @@ export const WORKSPACE = {
       from: "It says",
       use: "Use this reading",
     },
+    useOtherStore: "This is from another store",
     stores: { US: "Amazon US", other: "Another store, or not sure" },
     positions: {
       unsure: "Not sure yet",
@@ -468,7 +473,7 @@ export const WORKSPACE = {
     // When the date already came from the notice: the seller is being asked to check it, not to
     // supply a missing one.
     labelFromNotice: "Does Amazon's page show a different date? Enter it here.",
-    help: "Find it in Account Health. We count down to it everywhere, including reminders.",
+    help: "Find it in Account Health. We count down to it everywhere, including email reminders once you sign in.",
     save: "Save date",
     saved: "Saved the response date you entered: {date}.",
     entered: "You entered this date from Account Health.",
@@ -578,6 +583,30 @@ export const WORKSPACE = {
     body: "Paste your notice on the Overview tab first. Then this page will ask you the right questions.",
   },
   // 7 Oct 2026: the AI writes the Plan of Action's three narrative sections.
+  // G-95: a plain sentence under the three record names a seller has to decode. Display only: the
+  // labels themselves are keys (reply matching, the AI prompt, the letters) and are not renamed.
+  recordGloss: {
+    rights_owner_retraction: "A letter from the brand owner withdrawing their complaint.",
+    account_resolution_proof: "Proof that the other account is closed or has been transferred.",
+    sourcing_doc: "Where you bought it from, such as a purchase order or a shipping record.",
+  } as Partial<Record<string, string>>,
+  // G-60: the seller's own name for a case. Stays in the encrypted vault and the seller's own
+  // exports; never in the index that goes to Amazon.
+  caseLabel: {
+    label: "Name this case (optional)",
+    placeholder: "A client or store, for example Acme UK",
+    help: "Only you see it. It names the case in your list, tab and exports, never in what you send to Amazon.",
+    saved: "Saved the case name.",
+  },
+  // G-35 and G-64: a visible stamp on the prepared response. It says what the check did, never that
+  // Amazon accepts or detects anything.
+  stamp: {
+    title: "Your facts, checked",
+    ai: "The AI suggested the wording and our code checked it. Every date, number, name and action in it comes from your answers, your notice and your records. A draft that added anything would have been thrown away.",
+    own: "Built from your own wording. Every date, number and name in it comes from your answers, your notice and your records.",
+    phrases: "Template phrases found: {n}",
+    phrasesNone: "Template phrases found: none",
+  },
   aiDraft: {
     written:
       "The root cause, corrective actions and preventive measures were written by AI from your answers, your notice and the records you reviewed. It may use only what you told it. Check every fact against your records before you copy it.",

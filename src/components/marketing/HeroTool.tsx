@@ -83,6 +83,7 @@ export function HeroTool() {
           </Button>
         </div>
       </div>
+      <p className="px-3 pb-1.5 pt-2.5 text-xs text-muted-foreground">{t.replyDoor}</p>
     </form>
   );
 }

@@ -93,3 +93,25 @@ describe("evidenceModel", () => {
     expect(invoiceReq.disqualifiers).toContain("order-confirmation screenshots");
   });
 });
+
+describe("product-safety testing route (G-43, 12 Oct 2026)", () => {
+  // The labs' own pages say Amazon's Direct Validation has an approved lab submit the results for
+  // some categories, so a seller told only "produce a test report" could buy a report Amazon will
+  // not take. Amazon's own help text was not found, so the line is hedged and says where to look.
+  const report = requirementsFor("PRODUCT_SAFETY").find((r) => r.kind === "compliance_report")!;
+
+  it("names the route and where to check it, hedged", () => {
+    expect(report.whyAmazonWantsIt).toMatch(/Verify Your Products/);
+    expect(report.whyAmazonWantsIt).toMatch(/Policy Compliance/);
+    expect(report.whyAmazonWantsIt).toMatch(/may not accept a report you upload yourself/);
+    expect(report.whyAmazonWantsIt).not.toMatch(/\b(?:must|will not|never) (?:accept|upload)/i);
+  });
+
+  it("keeps the path for a product outside the program", () => {
+    expect(report.whyAmazonWantsIt).toMatch(/not in that program, the document itself/);
+  });
+
+  it("warns against a self-uploaded report where the lab submits it", () => {
+    expect(report.disqualifiers.join(" ")).toMatch(/uploaded yourself/);
+  });
+});

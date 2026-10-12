@@ -240,7 +240,8 @@ export function composerModeFor(data: CaseFileData): ComposerMode {
   };
 }
 
-export const READINESS_COPY = "Case-file completeness — not a prediction of Amazon's decision.";
+// G-89: plain words first. It still says outright that this is not a prediction.
+export const READINESS_COPY = "What is in your case file. Not a prediction of Amazon's decision.";
 
 export function readinessLabel(score: number): string {
   return `Case-file completeness: ${Math.round(score * 100)}% — not a prediction of Amazon's decision.`;

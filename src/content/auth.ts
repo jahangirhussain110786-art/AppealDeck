@@ -107,7 +107,8 @@ export const AUTH = {
     },
   },
   preview: {
-    dueIn: "Reply due in",
+    // G-105: the clock is made up, so the label says so.
+    dueIn: "Sample: reply due in",
     // The panel shows made-up case data, so it says so (v5 prototype signin.html).
     eyebrow: "Sample data",
     title: "Come back to exactly where you stopped.",

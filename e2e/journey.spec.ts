@@ -222,7 +222,6 @@ test.describe("accessibility of the app screens, with a case loaded", () => {
   test("/decode, with a decoded result", async ({ page }) => {
     await page.goto("/decode");
     await page.getByRole("button", { name: "Try a sample notice" }).click();
-    await page.getByRole("button", { name: "Decode", exact: true }).click();
     await expect(page.locator("main").getByText("Do now", { exact: true })).toBeVisible();
     await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
   });
@@ -273,7 +272,6 @@ test("the decode lists the records a case like this needs, labelling the ones we
 }) => {
   await page.goto("/decode");
   await page.getByRole("button", { name: "Try a sample notice" }).click();
-  await page.getByRole("button", { name: "Decode", exact: true }).click();
   // Shown as a plain list, each labelled with who raised it, rather than folded away.
   const supplier = page.getByRole("listitem").filter({ hasText: "Supplier invoice" });
   await expect(supplier.getByText("In your notice", { exact: true })).toBeVisible();
@@ -359,13 +357,12 @@ test("the free funnel events fire on decode and on starting a case", async ({ pa
   });
   await page.goto("/decode");
   await page.getByRole("button", { name: "Try a sample notice" }).click();
-  await page.getByRole("button", { name: "Decode", exact: true }).click();
   await expect(page.locator("main").getByText("Do now", { exact: true })).toBeVisible();
   const events = () => page.evaluate(() => (window as unknown as { __events: string[] }).__events);
   expect(await events()).toEqual(expect.arrayContaining(["decoder_session", "decode_completed"]));
 
   // A client-side navigation, so the events recorded on /decode are still in the same page.
-  await page.getByRole("link", { name: "Open case workspace", exact: true }).click();
+  await page.getByRole("link", { name: "Start my case — free", exact: true }).click();
   await expect(page.getByLabel("Amazon notice", { exact: true })).not.toBeEmpty();
   expect(await events()).toContain("intake_started");
 });

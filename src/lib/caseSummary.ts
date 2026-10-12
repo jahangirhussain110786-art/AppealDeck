@@ -16,6 +16,7 @@ import {
 import type { Vault } from "@/core/vault/vault";
 import { daysUntilDay } from "@/lib/format";
 import { APP } from "@/content/app";
+import { labelOf } from "@/lib/caseLabel";
 
 /**
  * One case as the dashboard lists it (v5, 26 Sep 2026): who needs to act, the next thing to do,
@@ -26,6 +27,8 @@ import { APP } from "@/content/app";
 export interface CaseSummary {
   id: string;
   title: string;
+  /** The seller's own name for the case (G-60), when they gave one. */
+  label?: string;
   current: boolean;
   archived: boolean;
   status: "act" | "waiting" | "closed";
@@ -63,12 +66,17 @@ export function summarizeCase(
     entry.kind === "UNKNOWN" && file?.workspace?.notice
       ? classifyStage1(parseNotice(file.workspace.notice)).kind
       : entry.kind;
+  const label = labelOf(file?.workspace);
+  const plainTitle = caseTitle({
+    id: entry.id,
+    kind: file?.kind && file.kind !== "UNKNOWN" ? file.kind : read,
+  });
   const base = {
     id: entry.id,
-    title: caseTitle({
-      id: entry.id,
-      kind: file?.kind && file.kind !== "UNKNOWN" ? file.kind : read,
-    }),
+    // G-60: a name the seller chose leads, and the kind and short id still follow so two cases with
+    // the same name stay distinguishable.
+    title: label ? `${label} · ${plainTitle}` : plainTitle,
+    ...(label ? { label } : {}),
     current: entry.id === activeId,
     archived: Boolean(entry.archived),
   };

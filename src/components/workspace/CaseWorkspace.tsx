@@ -19,6 +19,9 @@ import { FactsLedgerCard } from "@/components/FactsLedgerCard";
 import { CaseFactsCard } from "./CaseFactsCard";
 import Image from "next/image";
 import { AppBarSlot } from "@/components/AppBarSlot";
+import { CaseLabelField } from "./CaseLabelField";
+import { labelOf } from "@/lib/caseLabel";
+import { TabTitle } from "@/components/TabTitle";
 import {
   CaseChecklist,
   CaseTimeline,
@@ -143,6 +146,7 @@ import { importDecodedNotice } from "@/lib/importDecodedNotice";
 import type { Vault, VaultListItem } from "@/core/vault/vault";
 import { formatDate, localToday } from "@/lib/format";
 import { WORKSPACE as C } from "@/content/workspace";
+import { AMAZON_REVIEW_TIME } from "@/content/shared";
 import { APP } from "@/content/app";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { takeProposal } from "@/lib/secondReadingProposal";
@@ -1460,10 +1464,15 @@ function WorkspaceInner({
                 : d.startsOnReceipt
                   ? // Amazon gave the length; the notice did not carry its date.
                     `${d.label}, from the day you received this notice`
-                  : `${d.label} · confirm the date in Account Health`,
+                  : /Account Health/.test(d.label)
+                    ? d.label // already tells the seller where the date is
+                    : `${d.label} · confirm the date in Account Health`,
         }))
       : [];
-  const caseTitle = file.kind === "UNKNOWN" ? C.title : APP.violationKinds[file.kind];
+  const caseKindTitle = file.kind === "UNKNOWN" ? C.title : APP.violationKinds[file.kind];
+  // G-60: the seller's own name leads when they gave one.
+  const caseLabel = labelOf(w);
+  const caseTitle = caseLabel ? `${caseLabel} · ${caseKindTitle}` : caseKindTitle;
   /*
     A verification case is not composable, so it fell into the "clarify" branch: headed "Clarify the
     requested response" and pointed at the case notes, although the Response tab holds its
@@ -1556,6 +1565,7 @@ function WorkspaceInner({
         : undefined;
   return (
     <div className="space-y-5">
+      {caseLabel && <TabTitle title={caseTitle} />}
       <AppBarSlot target="title">
         {/* The case's own issue, once we know it: "Your case workspace" told the seller nothing. */}
         <h1 className="truncate text-sm font-semibold text-foreground">{caseTitle}</h1>
@@ -1920,7 +1930,7 @@ function WorkspaceInner({
                         : replyPending
                           ? C.replyPending.body
                           : awaiting
-                            ? "Your submitted text and document references are preserved in History. Add a reply when one arrives."
+                            ? `Your submitted text and document references are preserved in History. Add a reply when one arrives. ${AMAZON_REVIEW_TIME}`
                             : verifying
                               ? C.overview.verifyBody
                               : !workspaceCanCompose(w) && w.protocol !== "information"
@@ -2212,6 +2222,8 @@ function WorkspaceInner({
                   draft={w.draft}
                   onDraftChange={setDraftField}
                   signInHref={signInHref}
+                  onDownloadPack={() => void downloadPack()}
+                  packing={packing}
                   onConfirmIssues={(confirmed) => {
                     void commit((old) => ({ ...old, issuesConfirmed: confirmed }));
                   }}
@@ -2252,7 +2264,7 @@ function WorkspaceInner({
                     Submissions and replies
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Earlier attempts stay unchanged when you revise the plan.
+                    Earlier attempts stay unchanged when you revise your response.
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-5">
@@ -2570,6 +2582,16 @@ function WorkspaceInner({
           </Tabs>
         </div>
         <aside className="space-y-5 xl:sticky xl:top-[5.25rem]" aria-label="Case context">
+          <CaseLabelField
+            key={caseLabel}
+            value={caseLabel}
+            onSave={(label) =>
+              void commit((old) => ({ ...old, label: label || undefined }), undefined, undefined, {
+                keepState: true,
+                silent: true,
+              })
+            }
+          />
           <CaseTimeline
             workspace={w}
             createdAt={file.createdAt}
