@@ -41,6 +41,7 @@ import { AccentWord } from "@/components/ui/accent-word";
 import { SAMPLE_NOTICE_TEXT } from "@/content/sampleNotice";
 import { AMAZON_REVIEW_TIME } from "@/content/shared";
 import { mentionsHeldFunds } from "@/core/heldFunds";
+import { detectIssues } from "@/core/noticeIssues";
 import { cn } from "@/lib/utils";
 import {
   ENTITY_LABELS,
@@ -456,23 +457,28 @@ export default function DecodeClient() {
               {/* Directly under the three answers, so it is on screen without scrolling at 390 px.
                   A reply or a warning has no case to open as a plan, so it offers its own actions
                   in the result below instead. */}
-              {!result.looksLikeReply && !result.notEnforcement && (
-                <div className="mt-6">
-                  <Button asChild size="lg">
-                    <Link
-                      href={`/case?kind=${result.kind}&view=overview`}
-                      onClick={() => {
-                        markSessionPasteLeaving();
-                        stashPendingNotice(decodedText, result.deadlines);
-                        noteSecondReadingUse(result);
-                      }}
-                    >
-                      {DECODE.result.startPoaCta}
-                      <ArrowRight className="size-4" aria-hidden />
-                    </Link>
-                  </Button>
-                </div>
-              )}
+              {/* A message with warning signs that fits no known case has nothing to start a case
+                  from, and "start my case" beside "this may be a scam" sends the wrong signal
+                  (19 Oct 2026). */}
+              {!result.looksLikeReply &&
+                !result.notEnforcement &&
+                !(result.kind === "UNKNOWN" && (result.authenticity?.length ?? 0) > 0) && (
+                  <div className="mt-6">
+                    <Button asChild size="lg">
+                      <Link
+                        href={`/case?kind=${result.kind}&view=overview`}
+                        onClick={() => {
+                          markSessionPasteLeaving();
+                          stashPendingNotice(decodedText, result.deadlines);
+                          noteSecondReadingUse(result);
+                        }}
+                      >
+                        {DECODE.result.startPoaCta}
+                        <ArrowRight className="size-4" aria-hidden />
+                      </Link>
+                    </Button>
+                  </div>
+                )}
             </>
           )}
 
@@ -701,6 +707,22 @@ function ResultFacts({
               <span className="block text-lg font-semibold leading-snug tracking-tight">
                 {result.kind === "UNKNOWN" ? guidance.title : APP.violationKinds[result.kind]}
               </span>
+              {(() => {
+                // The tile names one issue; a notice that raises a second is refused for whichever
+                // the response missed, so the second is named here too (19 Oct 2026).
+                const also = [
+                  ...new Set(
+                    detectIssues(text)
+                      .map((i) => i.kind)
+                      .filter((k) => k !== result.kind && k !== "UNKNOWN"),
+                  ),
+                ].map((k) => APP.violationKinds[k]);
+                return also.length > 0 && result.kind !== "UNKNOWN" ? (
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    {r.factAlso.replace("{kinds}", also.join(", "))}
+                  </span>
+                ) : null;
+              })()}
               {result.suggestedKind && (
                 <>
                   {/* R-3: an AI proposal is marked as one, not shown like a rule-read kind. */}

@@ -134,3 +134,30 @@ describe("19 Oct 2026 walk-through: a review-incentive notice raises no unrelate
     expect(labels).not.toContain("Listing correction record");
   });
 });
+
+describe("19 Oct 2026 walk-through: round 4", () => {
+  const more = JSON.parse(read("more-notices.json")) as Array<{ id: string; text: string }>;
+  const get = (id: string) => more.find((n) => n.id === id)!.text;
+
+  it("X: an A-to-z claim rate notice is a performance case, not a listing case", () => {
+    expect(runDecode(get("X-a-to-z"), {}).classification.kind).toBe("PERFORMANCE_METRIC");
+  });
+
+  it("a funds notice that mentions A-to-z claims stays a funds notice", () => {
+    expect(runDecode(read("notice-F-funds.txt"), {}).classification.kind).toBe("FUNDS");
+  });
+
+  it("J: an FBA inbound notice does not ask for an order export", () => {
+    const text = get("J-fba-inbound");
+    const kind = runDecode(text, {}).classification.kind;
+    const w: Workspace = { ...newWorkspace(), notice: text };
+    expect(proposedRequirements(w, kind).map((r) => r.label)).not.toContain(
+      "Sales or performance record",
+    );
+  });
+
+  it("U: Amazon asking to 'send a copy of the invoice' is a document request", async () => {
+    const { analyzeReply } = await import("./responseAnalyzer");
+    expect(analyzeReply(get("U-reply-documents")).category).toBe("document_request");
+  });
+});

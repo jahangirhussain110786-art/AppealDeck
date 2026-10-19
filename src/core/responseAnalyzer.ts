@@ -136,6 +136,8 @@ const RULES: ReadonlyArray<PatternRule> = [
       /\b(?:provide|submit|upload|send)\s+(?:us\s+)?(?:an?|the|your|valid|updated|copies of)\s+(?:supplier\s+|valid\s+)?invoices?\b/i,
       // 9 Oct 2026: "We still need the purchase order that matches it." A request that names the
       // record without a verb of sending.
+      // 19 Oct 2026: "Please send a copy of the invoice from the manufacturer, and a letter from the brand".
+      /\b(?:provide|submit|upload|send|attach)\s+(?:us\s+)?(?:an?\s+|the\s+|your\s+)?cop(?:y|ies)\s+of\s+(?:the\s+|your\s+|an?\s+)?(?:\w+\s+){0,4}?(?:invoices?|letters?|certificates?|reports?|statements?|documents?|records?|receipts?)\b/i,
       /\b(?:we|amazon) (?:still )?(?:need|require)s? (?:the |a |an |your |any )?(?:\w+ ){0,3}(?:invoices?|purchase orders?|documents?|documentation|records?|receipts?|certificates?|reports?)\b/i,
     ],
     evidenceKind: "supplier_invoice",

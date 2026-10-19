@@ -315,8 +315,8 @@ export function ResponseReview({
                   />
                   <AnswerHelp
                     id={`workspace-answer-${i}-help`}
-                    hint={F.questionHint}
-                    example={F.questionExample}
+                    hint={F.questionTopics.find((t) => t.pattern.test(q))?.hint ?? F.questionHint}
+                    example={F.questionTopics.find((t) => t.pattern.test(q))?.example}
                   />
                   <SectionTools
                     file={file}

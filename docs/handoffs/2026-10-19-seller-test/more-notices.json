@@ -1,0 +1,81 @@
+[
+  {
+    "id": "J-fba-inbound",
+    "expect": "PERFORMANCE_METRIC or FBA, Plan of Action",
+    "text": "Subject: Your FBA inbound privileges have been suspended\n\nDate: 12 October 2026\n\nHello Lakeview Pet Goods,\n\nYour FBA inbound shipping privileges are suspended because your inbound performance does not meet our requirements. Over the last 60 days, 14 of your 52 shipments were received with incorrect labels, and 6 arrived with prep errors (poly bags without suffocation warnings).\n\nYou cannot create new inbound shipments until the suspension is lifted. Inventory already in a fulfillment center is not affected.\n\nTo request reinstatement of your FBA privileges, submit a Plan of Action that explains the root cause of the labeling and prep errors, the actions you have taken, and your preventive measures. Plans are reviewed within 5 business days.\n\nFBA Inbound Quality Team\nAmazon.com"
+  },
+  {
+    "id": "K-tax-info",
+    "expect": "documents/verification; tax records",
+    "text": "Subject: Action required: update your tax information\n\nDate: 11 October 2026\n\nHello Orchard Row Goods,\n\nWe could not validate the tax information on your seller account. The name and taxpayer identification number you provided do not match the records we hold.\n\nPlease update your tax information in Seller Central (Settings > Account Info > Tax Information) within 14 days. If you do not, we may deactivate your selling account and withhold your funds.\n\nIf your information is correct, you may be asked to provide a copy of your IRS Form SS-4 confirmation letter (CP 575) or a Form W-9.\n\nAmazon Tax Compliance"
+  },
+  {
+    "id": "L-account-health-warning",
+    "expect": "not enforcement / warning, no appeal",
+    "text": "Subject: Your account health is at risk\n\nDate: 10 October 2026\n\nHello Summit Trail Gear,\n\nYour Order Defect Rate is currently 0.9%, which is below the 1% target, but it has increased over the last two weeks. Your Late Shipment Rate is 3.1% against a target of below 4%.\n\nNo action is required at this time. Keep monitoring your Account Health dashboard to make sure your performance stays within target.\n\nAmazon Seller Performance"
+  },
+  {
+    "id": "M-multi-issue",
+    "expect": "multiple issues: authenticity + performance",
+    "text": "Subject: Your selling account has been deactivated\n\nDate: 8 October 2026\n\nHello Willow & Stone Co.,\n\nWe have deactivated your selling account for the following reasons:\n\n1. We received multiple customer complaints that items you sold were not authentic (ASIN B0CM3P7QZ4 and ASIN B0CM3R2LK9).\n2. Your Order Defect Rate has been above 1% for the past 90 days (currently 2.4%).\n\nTo appeal, submit a Plan of Action that addresses both issues. For the authenticity complaints, include invoices from your supplier dated within the last 365 days. For the order defect rate, explain the root cause and the steps you are taking to reduce it.\n\nSeller Performance Team\nAmazon.com"
+  },
+  {
+    "id": "N-questionnaire",
+    "expect": "questionnaire per-question answers",
+    "text": "Subject: Complete the account review questionnaire\n\nDate: 9 October 2026\n\nHello Redfern Kitchen Supply,\n\nWe are reviewing your account. To continue selling, please answer the following questions in the appeal form in Seller Central within 10 days:\n\n1. Describe your business model and how you source the products you sell.\n2. Do you operate, or have you ever operated, other Amazon seller accounts? If so, list them.\n3. What is the source of the inventory for ASIN B0CR8T4NV2?\n4. Who is the beneficial owner of your business?\n\nIncomplete answers may delay the review of your account.\n\nAccount Review Team\nAmazon.com"
+  },
+  {
+    "id": "O-forged-documents",
+    "expect": "gated, professional help, no drafting",
+    "text": "Subject: Your selling account has been deactivated\n\nDate: 7 October 2026\n\nHello Brightline Imports,\n\nWe verified the invoices you submitted for ASIN B0CT5N2YQ8 with the supplier named on them. The supplier confirmed that they did not issue these invoices. The documents you provided appear to have been altered or fabricated. As a result, your selling account has been permanently deactivated.\n\nThis decision is final. Our policies do not allow us to reinstate accounts that have submitted fraudulent documents.\n\nAmazon Seller Performance"
+  },
+  {
+    "id": "P-selling-limit",
+    "expect": "unplaced? selling limit; no appeal",
+    "text": "Subject: Your selling limits have been reduced\n\nDate: 13 October 2026\n\nHello Pinewood Candle Co.,\n\nBased on a review of your recent activity, we have set a limit on the number of units you can list in the Home category. The limit is 500 units per ASIN at any time.\n\nThis limit is not a suspension. As your sales history grows and your account stays in good standing, the limits may increase automatically.\n\nAmazon Seller Support"
+  },
+  {
+    "id": "Q-phishing",
+    "expect": "scam warning, no drafting",
+    "text": "Subject: URGENT: Seller account permanently closed in 24 hours\n\nDear Seller,\n\nYour Amazon seller account will be permanently closed within 24 hours due to unusual activity. To reinstate your account immediately you must pay a reinstatement fee of $250 via gift cards and send the codes to our recovery agent on WhatsApp at +44 7700 900123. You can also verify your account by logging in at amazon-seller-verify.support-center.example and entering your password and the code we text you.\n\nFailure to comply will result in permanent loss of your funds.\n\nAmazon Account Recovery"
+  },
+  {
+    "id": "R-condition",
+    "expect": "POLICY condition complaints POA",
+    "text": "Subject: Used sold as new complaints\n\nDate: 6 October 2026\n\nHello Hartwell Tools,\n\nWe removed ASIN B0CV9K3PH6 because customers reported receiving items that were used or damaged but sold as new. Item condition complaints are a violation of our Seller Code of Conduct.\n\nTo appeal, send a Plan of Action explaining the root cause of the complaints, the actions you have taken, and your preventive measures. You may also be asked for the order IDs of the affected orders.\n\nSeller Performance Team\nAmazon.com"
+  },
+  {
+    "id": "S-reply-reinstated",
+    "kind": "reply",
+    "expect": "reinstated",
+    "text": "Hello Pinecrest Pet Supply,\n\nThank you for your Plan of Action. We have reviewed it and your selling account has been reinstated. You can start listing products again. Please keep your Late Shipment Rate below 4% to avoid further action.\n\nSeller Performance Team"
+  },
+  {
+    "id": "T-reply-final",
+    "kind": "reply",
+    "expect": "final decision negative",
+    "text": "Hello Brightline Imports,\n\nWe have reviewed your appeal. Our decision to deactivate your account is final and we will not review further appeals or Plans of Action. Please do not submit another appeal.\n\nAmazon Seller Performance"
+  },
+  {
+    "id": "U-reply-documents",
+    "kind": "reply",
+    "expect": "document request",
+    "text": "Hello Ridgeline Outdoor Supply,\n\nThank you for your appeal. We need more information before we can make a decision. Please send a copy of the invoice from the manufacturer that Summit Peak Wholesale bought the Trailhead tents from, and a letter from Trailhead Gear Co. confirming your supplier is authorized. Documents must be sent within 5 days.\n\nSeller Performance Team"
+  },
+  {
+    "id": "V-reply-vague",
+    "kind": "reply",
+    "expect": "needs more info, unclear",
+    "text": "Hello Harbor & Pine Kitchenware,\n\nWe reviewed the information you sent and could not reinstate your listing. The information provided was not sufficient. You may submit a new appeal with additional information.\n\nAmazon Seller Support"
+  },
+  {
+    "id": "W-german-store",
+    "expect": "non-US marketplace notice handled",
+    "text": "Betreff: Ihr Verkäuferkonto wurde gesperrt\n\nDatum: 10. Oktober 2026\n\nHallo Schwarzwald Naturprodukte,\n\nwir haben Ihr Verkäuferkonto gesperrt, weil wir Beschwerden von Kunden über die Echtheit Ihrer Artikel erhalten haben (ASIN B0CW2Q8TM1). Um Einspruch einzulegen, reichen Sie bitte einen Maßnahmenplan und Rechnungen Ihrer Lieferanten der letzten 365 Tage ein.\n\nAmazon Verkäufer-Support"
+  },
+  {
+    "id": "X-a-to-z",
+    "expect": "claims / policy or unknown",
+    "text": "Subject: Action required: A-to-z Guarantee claims on your account\n\nDate: 14 October 2026\n\nHello Foxglove Home,\n\nYour A-to-z Guarantee claim rate is 1.8%, above our 1% target, and your account is at risk of deactivation. Customers claimed that items did not arrive or were not as described.\n\nPlease submit a Plan of Action within 7 days that explains what caused the claims and what you will do to prevent them.\n\nSeller Performance Team\nAmazon.com"
+  }
+]

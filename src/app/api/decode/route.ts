@@ -72,9 +72,9 @@ function refuse(message: string, extra: Record<string, unknown> = {}) {
  * record).
  */
 const REPLY_MARKERS =
-  /\byour (?:appeal|plan of action|POA|submission|reply|response)\b|\bwe(?:'ve| have) (?:reviewed|received) your (?:appeal|plan of action|POA|submission|reply|response|request to reinstate|documents?|invoices?)\b|\bthank you for (?:your (?:appeal|plan of action|submission|reply|response)|submitting|providing)\b|\bregarding your (?:appeal|case)\b/i;
+  /\byour (?:appeal|plan of action|POA|submission|reply|response)\b|\bwe(?:'ve| have) (?:reviewed|received) your (?:appeal|plan of action|POA|submission|reply|response|request to reinstate|documents?|invoices?)\b|\bthank you for (?:your (?:appeal|plan of action|submission|reply|response)|submitting|providing)\b|\bregarding your (?:appeal|case)\b|\bwe(?:'ve| have)? reviewed (?:the )?(?:information|documents?|details|evidence|material)(?: that)? you (?:sent|provided|submitted)\b/i;
 const REQUESTING_REPLY_MARKERS =
-  /\bthank you for (?:your (?:appeal|plan of action|submission|reply|response|documents?|invoices?)|submitting|providing)\b|\bwe(?:'ve| have) (?:reviewed|received) your (?:appeal|plan of action|POA|submission|reply|response|documents?|invoices?)\b/i;
+  /\bthank you for (?:your (?:appeal|plan of action|submission|reply|response|documents?|invoices?)|submitting|providing)\b|\bwe(?:'ve| have) (?:reviewed|received) your (?:appeal|plan of action|POA|submission|reply|response|documents?|invoices?)\b|\bwe(?:'ve| have)? reviewed (?:the )?(?:information|documents?|details|evidence|material)(?: that)? you (?:sent|provided|submitted)\b/i;
 /** Categories that, with a reply marker, mean "this is Amazon answering something you sent". */
 const REPLY_CATEGORIES = new Set([
   "reinstated",

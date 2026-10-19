@@ -56,7 +56,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       "Get qualified help before responding. An answer that is wrong here is harder to undo than a late one.",
     ],
     severityNote:
-      "Severity-gated under D6: AppealDeck does not prepare a response to an allegation of falsified documents, fraud or child safety.",
+      "AppealDeck does not prepare a response to an allegation of falsified documents, fraud or child safety. Getting one wrong carries consequences a draft cannot undo, so this needs qualified help.",
     triage: {
       doNow: [
         "Identify which specific document the notice challenges, and who issued it.",

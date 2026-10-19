@@ -94,7 +94,7 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   ],
   [
     "PERFORMANCE_METRIC",
-    /order defect rate|\bODR\b|late shipment rate|\bLSR\b|valid tracking rate|\bVTR\b|pre-?fulfil?l?ment cancel(?:lation)? rate|cancellation rate|on-?time delivery rate|account health rating|inbound (?:defect|performance|non-?compliance)|fba (?:privileges|inbound)[^.!?\n]{0,40}\b(?:suspended|restricted|blocked)/i,
+    /order defect rate|\bODR\b|a-to-z\s+(?:\w+\s+)?claims?\s+rate|late shipment rate|\bLSR\b|valid tracking rate|\bVTR\b|pre-?fulfil?l?ment cancel(?:lation)? rate|cancellation rate|on-?time delivery rate|account health rating|inbound (?:defect|performance|non-?compliance)|fba (?:privileges|inbound)[^.!?\n]{0,40}\b(?:suspended|restricted|blocked)/i,
   ],
   [
     "LISTING",

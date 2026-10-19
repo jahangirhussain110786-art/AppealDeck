@@ -252,3 +252,29 @@ describe("/api/decode tells a warning from an enforcement, and a reply from a no
     expect(body.responseType.type).toBe("NO_ACTION_REQUESTED");
   });
 });
+
+describe("/api/decode reads replies the way Amazon really words them (19 Oct 2026)", () => {
+  const reply = (f: string) =>
+    JSON.parse(
+      require("node:fs").readFileSync(
+        "docs/handoffs/2026-10-19-seller-test/more-notices.json",
+        "utf8",
+      ),
+    ).find((n: { id: string }) => n.id === f).text as string;
+
+  it("a reply that asks for more documents is read as a document request, not refused as 'not a notice'", async () => {
+    const { status, body } = await decode(reply("U-reply-documents"));
+    expect(status).toBe(200);
+    expect(body.looksLikeReply?.category).toBe("document_request");
+  });
+
+  it("'we reviewed the information you sent and could not reinstate' is a refusal reply", async () => {
+    const { body } = await decode(reply("V-reply-vague"));
+    expect(body.looksLikeReply?.category).toBe("needs_more_information");
+  });
+
+  it("a first notice that says 'we reviewed your account' is still not a reply", async () => {
+    const { body } = await decode(POLICY_HARD_WRAPPED);
+    expect(body.looksLikeReply).toBeUndefined();
+  });
+});

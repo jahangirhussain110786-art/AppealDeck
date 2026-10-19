@@ -269,6 +269,8 @@ export const DECODE = {
     errorNotNotice:
       "If this is a letter you wrote to Amazon, it is not a notice. Paste the message Amazon sent you.",
     factProblem: "The problem",
+    // A notice can raise more than one issue; the tile names the first and this names the rest.
+    factAlso: "Also in this notice: {kinds}. A response has to answer each.",
     // 9 Oct 2026: under the problem when a second reading placed a notice the rules could not.
     factReadFrom: "Read from:",
     // R-3 (10 Oct 2026): an AI-proposed kind is marked as one, so it is checked before it is relied on.

@@ -90,3 +90,26 @@ Mobile layout and the live Paddle checkout. The Gemini free tier answered every 
 - A COA is checked against test-report questions ("the standard it was tested against") and a supplement label against "model number readable"; both give a "Not found" that does not fit. Fields would need to come from the notice's own list.
 - The cGMP certificate shares one card with the COA (one card per kind of record).
 - A label image that is a flat graphic, not a photo of the packaged product, is marked "product itself not found". That is true of my test file, and a real photo would pass.
+
+# Round 4: fourteen more notices and replies, probed, then the risky ones run as a seller
+
+`more-notices.json` holds them (FBA inbound, tax information, account-health warning, two issues in one notice, a questionnaire, falsified documents, selling limit, a phishing message, used-sold-as-new, A-to-z claims, a German notice, and four Amazon replies: reinstated, final, asks for documents, vague refusal). `run-notice.cjs` pastes one into the decoder and starts the case.
+
+## Defects found and fixed (each with a test)
+
+1. **A reply that asked for documents was refused as "not an Amazon notice".** It said "Seller Performance Team", never "Amazon", and one marker is not enough. Team signatures and "your selling account" now count. It reads as a document request ("send a copy of the invoice" was also not understood).
+2. **"We reviewed the information you sent and could not reinstate" was decoded as a new notice** ("Start my case") instead of a refusal reply. Now a reply.
+3. **A notice with two issues showed one.** An authenticity and order-defect notice said only "Inauthentic item complaint" on the decode page and the case's first screen. Both now say "Also in this notice: Account performance metrics. A response has to answer each."
+4. **A-to-z claim-rate notice was decoded as a listing problem**, and **an FBA inbound notice asked for an order export**. Fixed.
+5. **A phishing message offered "Start my case — free"** beside "this message has warning signs". Hidden when the message fits no known case and has warning signs.
+6. **The falsified-documents screen said "Severity-gated under D6"**, an internal code, to a seller. Now plain words.
+7. **Every questionnaire box showed the same late-shipment example**, even under "Who is the beneficial owner?". Questions about the business model, other accounts, inventory source and ownership get a hint and example that fit; any other question gets the general hint and no example.
+
+## Decided before: left alone on purpose
+
+- **Tax information and selling-limit notices stay unplaced** (parked item R-8, 9 Oct 2026). I tried placing tax notices and undid it when an existing test showed it was deliberate. They show "we could not place this" with the deadline.
+- **A German notice** is stopped with "AppealDeck reads English notices" and how to switch the account language. Fine.
+
+## Worked as intended
+
+Falsified-documents routed to qualified help with no drafting, the account-health warning read as "a warning, not a suspension", phishing flagged on four counts, reinstated and final-decision replies recognised, the questionnaire given one box per question, a 10-day window counted to "today" on the right day.

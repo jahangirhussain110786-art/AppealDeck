@@ -276,6 +276,8 @@ const PERFORMANCE_METRIC: EvidenceRequirement[] = [
   {
     kind: "metric_export",
     required: true,
+    // Not for FBA inbound errors (labels, prep): there is no order export behind that (19 Oct 2026).
+    raisedWhen: /^(?![\s\S]*\binbound\b)/i,
     fields: [
       "the exact metric named in the notice, and its stated figure",
       "the target figure the notice quotes",

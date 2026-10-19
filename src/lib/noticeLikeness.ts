@@ -40,6 +40,9 @@ const AMAZON_MARKERS: RegExp[] = [
   /reinstat/i,
   /root cause/i,
   /seller account/i,
+  // 19 Oct 2026: replies and notices are often signed by a team and never say "Amazon".
+  /\bseller (?:performance|support|verification)\b/i,
+  /\bselling account\b/i,
   /your listings?\b/i,
 ];
 

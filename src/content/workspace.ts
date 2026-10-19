@@ -222,8 +222,34 @@ export const WORKSPACE = {
     // For the boxes under Amazon’s own questions: the question decides the content, so the example
     // is only the shape of a good answer.
     questionHint: "Answer this question directly, with dates and numbers where you have them.",
-    questionExample:
-      "For example: 14 of 600 orders shipped late in August, all on one shift. We moved the cut-off time on 2 Sep 2026.",
+    // 19 Oct 2026: every box showed the same late-shipment example, including under "Who is the
+    // beneficial owner?". A question that matches a topic gets a hint and a shape that fit it; any
+    // other gets the general hint and no example. Shape only, never a claim about the case.
+    questionTopics: [
+      {
+        pattern: /business model|how you source|sourcing|where (?:do )?you (?:buy|source)/i,
+        hint: "Say what you sell, where you buy it and from whom. Name each supplier.",
+        example:
+          "For example: We sell kitchen tools. We buy from two US distributors, Harbor Goods and Summit Supply, and keep every invoice.",
+      },
+      {
+        pattern: /other (?:amazon )?(?:seller )?accounts|ever operated|multiple accounts/i,
+        hint: "Answer yes or no first. If yes, name each account and say what happened to it.",
+        example: "For example: No. This is the only Amazon seller account I have operated.",
+      },
+      {
+        pattern:
+          /source of (?:the )?inventory|where did (?:you|the) .{0,30}(?:buy|come from)|inventory for ASIN/i,
+        hint: "Name the supplier, the purchase date and quantity, and which invoice shows it.",
+        example:
+          "For example: We bought 120 units from Harbor Goods on 14 Aug 2026. Invoice HG-2088 shows the quantity.",
+      },
+      {
+        pattern: /beneficial owner|who owns|ownership/i,
+        hint: "Give the full legal name of each owner and their share, as on your registration.",
+        example: "For example: Jane Smith, sole owner, as shown on our registration.",
+      },
+    ] as Array<{ pattern: RegExp; hint: string; example: string }>,
     additionalPlaceholder:
       "Only if something important is not covered by the questions above. Leave it empty otherwise.",
     save: "Save my answers",
@@ -324,6 +350,7 @@ export const WORKSPACE = {
     agree: "Do you agree with Amazon?",
     notClear: "Not clear yet",
     readAs: "We read this as: {kind}. Is that right?",
+    alsoIn: "Also in this notice: {kinds}. A response has to answer each.",
     // 9 Oct 2026: a second reading, offered when the rules could not place the notice. A proposal.
     secondReading: {
       lead: "A closer reading suggests this is: {kind}.",

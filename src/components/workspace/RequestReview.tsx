@@ -20,6 +20,7 @@ import { DECODE } from "@/content/marketing";
 import { APP } from "@/content/app";
 import { STORES } from "@/content/stores";
 import { assessNoticeAuthenticity } from "@/core/noticeAuthenticity";
+import { detectIssues } from "@/core/noticeIssues";
 import { handlePaste, stripInvisibleChars } from "@/lib/idNormalize";
 import { detectOtherAmazonStore } from "@/lib/amazonStore";
 import { KindOverride } from "./KindOverride";
@@ -139,8 +140,21 @@ export function RequestReview({
       : workspace.confirmed
         ? APP.violationKinds[shownKind]
         : R.readAs.replace("{kind}", APP.violationKinds[shownKind]);
+  // A notice that raises a second issue says so here, in words (19 Oct 2026).
+  const alsoIssues = [
+    ...new Set(
+      detectIssues(workspace.notice, workspace.formInstructions)
+        .map((i) => i.kind)
+        .filter((k) => k !== shownKind && k !== "UNKNOWN"),
+    ),
+  ].map((k) => APP.violationKinds[k]);
   const summary: Array<[string, string]> = [
-    [R.problem, problemText],
+    [
+      R.problem,
+      alsoIssues.length > 0 && shownKind !== "UNKNOWN"
+        ? `${problemText} ${R.alsoIn.replace("{kinds}", alsoIssues.join(", "))}`
+        : problemText,
+    ],
     [R.store, R.stores[value.marketplace]],
     [R.wants, wants],
     [R.agree, R.positions[value.position]],
