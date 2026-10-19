@@ -293,6 +293,28 @@ const UNQUOTED_NOTE =
   "Reported as present, but nothing was quoted from the document, so we cannot show you where it is. Check it on the original.";
 
 /**
+ * A supplier website is a nice-to-have, and many genuine invoices print only a phone number or an
+ * email. "Not found" beside it, counted in "1 not found", alarmed sellers about an invoice that
+ * was fine (19 Oct 2026). When the invoice does print another way to reach the supplier, a missing
+ * website is reported as not checked, with that said.
+ */
+function softenWebsite(findings: FieldFinding[]): FieldFinding[] {
+  const reachable = findings.some(
+    (f) => /phone number or email|contact/i.test(f.field) && f.status === "present",
+  );
+  if (!reachable) return findings;
+  return findings.map((f) =>
+    /website/i.test(f.field) && f.status === "missing"
+      ? {
+          ...f,
+          status: "not_assessed" as const,
+          note: "No website is printed. This invoice does print another way to reach the supplier.",
+        }
+      : f,
+  );
+}
+
+/**
  * Turns a raw reading into a result the UI can show.
  *
  * Fields Amazon asks for but the reading never mentioned are added back as not assessed rather than
@@ -355,7 +377,7 @@ export function buildDocumentCheck(
     byField.set(fieldKey(field), requireQuote(base));
   }
 
-  const findings: FieldFinding[] = expectedFields.map((field) => {
+  const mapped: FieldFinding[] = expectedFields.map((field) => {
     const found = byField.get(fieldKey(field));
     if (!found) return { field, status: "not_assessed" as const, note: NO_READING_NOTE };
     // Report it under the matrix's own wording, whatever case or punctuation the reading used.
@@ -366,6 +388,7 @@ export function buildDocumentCheck(
       ? softenPictureMismatch(compared, comparison)
       : compared;
   });
+  const findings = softenWebsite(mapped);
 
   // Anything the reading found that is not on Amazon's list is kept, after the expected fields, so
   // a genuinely useful observation is not thrown away by a stale matrix.

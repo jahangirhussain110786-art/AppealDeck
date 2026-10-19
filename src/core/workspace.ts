@@ -401,7 +401,7 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
   },
   {
     pattern:
-      /\b(test reports?|children['’]?s product certificates?|compliance certificates?|certificates? of (?:conformity|compliance)|lab(?:oratory)? (?:test )?reports?|safety data sheets?|SDS|exemption sheets?)\b/i,
+      /\b(test reports?|children['’]?s product certificates?|certificates? of analysis|\bCOA\b|c?GMP certificat\w+|manufacturing certificates?|compliance certificates?|certificates? of (?:conformity|compliance)|lab(?:oratory)? (?:test )?reports?|safety data sheets?|SDS|exemption sheets?)\b/i,
     evidenceKind: "compliance_report",
   },
 ];

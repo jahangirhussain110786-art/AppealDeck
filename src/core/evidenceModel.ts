@@ -208,6 +208,10 @@ const POLICY: EvidenceRequirement[] = [
   {
     kind: "metric_export",
     required: true,
+    // Not for a review-incentive or review-manipulation notice: Amazon does not weigh order records
+    // there, it asks what was stopped and how it will not recur (19 Oct 2026).
+    raisedWhen:
+      /^(?![\s\S]*(?:\bcustomer (?:product )?reviews?\b|\breview (?:manipulation|incentives?)\b|\bincentiv\w*|\bcompensat\w*|\bfive-star\b))/i,
     fields: [
       "an order or sales report for the affected listings, covering the period in the notice",
       "each customer complaint, return or claim on those orders, and how it was resolved",
@@ -369,6 +373,9 @@ const RESTRICTED_PRODUCT: EvidenceRequirement[] = [
   {
     kind: "listing_fix_proof",
     required: true,
+    // Not for a notice that invites the seller to apply for approval (dietary supplements, gated
+    // categories): "evidence the listing is closed" is the wrong ask there (19 Oct 2026).
+    raisedWhen: /^(?![\s\S]*\b(?:request|apply for|seek|submit)\b[^.!?\n]{0,40}\bapproval\b)/i,
     fields: [
       "the flagged ASIN(s)",
       "evidence the listing is closed or removed",

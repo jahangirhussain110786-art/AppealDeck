@@ -15,6 +15,49 @@ const doc = (f) => path.join(DIR, "docs", f);
 const log = (title, text, n = 4000) => console.log(`\n=== ${title} ===\n${String(text).slice(0, n)}`);
 
 const CASES = {
+  G: {
+    notice: "notice-G-restricted.txt",
+    form: "Submit the COA, GMP certificate, label photos and invoice.",
+    files: {
+      "Test report or compliance certificate": "G1-certificate-of-analysis-turmeric.pdf",
+      "Product and label photos": "G4-supplement-facts-label.png",
+      "Supplier invoice": "G3-supplier-invoice-evergreen.pdf",
+    },
+    notes: {
+      "Test report or compliance certificate":
+        "Certificate of Analysis from Cascade Analytical Laboratories (ISO/IEC 17025), report date 2 September 2026, batch AM-TUR-0826, for our turmeric and black pepper capsules.",
+      "Product and label photos": "Photo of the label with the Supplement Facts panel, ingredient list and net quantity of 120 capsules.",
+      "Supplier invoice":
+        "Invoice EN-70418 from Evergreen Nutraceutical Manufacturing dated 28 August 2026 for 1,200 bottles of AM-TUR-120, batch AM-TUR-0826.",
+    },
+    explanation:
+      "We ask for approval to sell Alder & Moss Turmeric and Black Pepper Capsules, ASIN B0DE4M8RT3. The attached Certificate of Analysis is from Cascade Analytical Laboratories, ISO/IEC 17025 accredited, for batch AM-TUR-0826, report date 2 September 2026. The label photo shows the Supplement Facts panel, ingredients and net quantity. The invoice EN-70418 from our manufacturer Evergreen Nutraceutical Manufacturing is dated 28 August 2026 for the same batch. Evergreen's cGMP certificate PNQC-2026-5530 is valid until 10 March 2027.",
+  },
+  H: {
+    notice: "notice-H-reviews.txt",
+    form: "Plan of Action: root cause, corrective actions, preventive measures.",
+    files: {},
+    wentWrong:
+      "We put a card in every parcel from June to October 2026 that offered a 10 dollar gift card to customers who left a five-star review of our shoes. Our marketing contractor, Dale Hobbs, designed the card, and I approved it without checking Amazon's review policy. About 1,400 cards were still in stock when Amazon wrote to us on 14 October.",
+    fixed:
+      "Finished: on 15 October 2026 we stopped using the card, took it out of the packing line and destroyed the remaining 1,400 cards. Finished: on 16 October we wrote a customer communication procedure and ended the contract with the contractor who designed the card. Finished: on 16 October we read Amazon's Customer Product Reviews policy as a team.",
+    prevent:
+      "From 16 October 2026 every insert or message to customers must be read and approved by me, Hannah Quist, before printing, and I keep a dated file of approved inserts. We use only Amazon's Request a Review button, for every customer. I re-read the review policy every quarter.",
+  },
+  I: {
+    notice: "notice-I-verification.txt",
+    form: "Schedule a video call.",
+    files: {
+      "Requested identity record": "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
+      "Bank or financial record": "I1-bank-statement-tidewater-pottery.pdf",
+      "Proof of address": "../../2026-09-29-test-documents/11-utility-bill-proof-of-address.jpg",
+    },
+    notes: {
+      "Requested identity record": "Photo ID of the primary contact on the account.",
+      "Bank or financial record": "September 2026 statement for Tidewater Pottery Studio LLC, account ending 3391.",
+      "Proof of address": "Utility bill for the business address at 9 Quay Street, Gloucester.",
+    },
+  },
   D: {
     notice: "notice-D-product-safety.txt",
     form: "Upload the CPC, test report and photos.",

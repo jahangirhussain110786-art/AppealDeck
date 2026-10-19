@@ -18,7 +18,7 @@
  * mixed-protocol submission is a different and much larger thing than noticing that two exist.
  */
 import type { ViolationKind } from "./index";
-import { KIND_PATTERNS } from "./noticeParser";
+import { KIND_PATTERNS, parseNotice } from "./noticeParser";
 import { KIND_PRIORITY } from "./classifier";
 
 export interface NoticeIssue {
@@ -27,18 +27,6 @@ export interface NoticeIssue {
   /** The sentence in the seller's own notice that named it. */
   sourceQuote: string;
 }
-
-const REMOVAL_CONSEQUENCE = /\b(?:removed|suppressed|blocked)\b/i;
-const LISTING_ITSELF =
-  /listing[\s-]?(?:policy|violation)|detail[\s-]?page policy|not as described|buy box/i;
-/** A removal under one of these is its consequence; the cause is the issue. */
-const CAUSE_KINDS: ReadonlySet<ViolationKind> = new Set<ViolationKind>([
-  "INAUTHENTIC",
-  "INTELLECTUAL_PROPERTY",
-  "PRODUCT_SAFETY",
-  "RESTRICTED_PRODUCT",
-  "RELATED_ACCOUNT",
-]);
 
 /** Splits on sentence and line boundaries, the same way requirement sourcing does. */
 function segments(raw: string): string[] {
@@ -58,6 +46,8 @@ export function detectIssues(raw: string, formInstructions = ""): NoticeIssue[] 
   const text = `${raw}\n${formInstructions}`;
   const parts = segments(text);
   const patterns = new Map(KIND_PATTERNS);
+  // The parser decides whether LISTING is really claimed (a removal under another cause is not).
+  const hints = parseNotice(text).kindHints;
   const claimed = new Set<string>();
   const issues: NoticeIssue[] = [];
 
@@ -88,13 +78,7 @@ export function detectIssues(raw: string, formInstructions = ""): NoticeIssue[] 
       authenticity notice showed "2 issues" and asked the seller for a "listing correction record"
       they had no reason to produce). LISTING is kept when the sentence is about the listing itself.
     */
-    if (
-      kind === "LISTING" &&
-      REMOVAL_CONSEQUENCE.test(quote) &&
-      !LISTING_ITSELF.test(quote) &&
-      [...CAUSE_KINDS].some((k) => patterns.get(k)?.test(text))
-    )
-      continue;
+    if (kind === "LISTING" && !hints.includes("LISTING")) continue;
     claimed.add(quote);
     issues.push({ kind, sourceQuote: quote });
   }

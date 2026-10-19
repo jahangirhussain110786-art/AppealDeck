@@ -82,3 +82,55 @@ describe("19 Oct 2026 walk-through: where documents go", () => {
     expect(submissionEmail(read("notice-C-trademark.txt"))).toBeNull();
   });
 });
+
+describe("19 Oct 2026 walk-through: restricted, review policy, verification", () => {
+  it("G: a supplement approval request asks for the lab, GMP, label and invoice records, and not a 'listing correction'", () => {
+    const { kind, labels } = named(read("notice-G-restricted.txt"));
+    expect(kind).toBe("RESTRICTED_PRODUCT");
+    const w: Workspace = { ...newWorkspace(), notice: read("notice-G-restricted.txt") };
+    const all = proposedRequirements(w, kind).map((r) => r.label);
+    expect(labels.map((r) => r.label)).toEqual(
+      expect.arrayContaining([
+        "Test report or compliance certificate",
+        "Product and label photos",
+        "Supplier invoice",
+      ]),
+    );
+    expect(all).not.toContain("Listing correction record");
+  });
+
+  it("H: a review-incentive removal is a policy case, not a listing case", () => {
+    expect(named(read("notice-H-reviews.txt")).kind).toBe("POLICY");
+  });
+
+  it("I: an identity verification names its three records", () => {
+    const { kind, labels } = named(read("notice-I-verification.txt"));
+    expect(kind).toBe("VERIFICATION");
+    expect(labels.map((r) => r.label)).toEqual(
+      expect.arrayContaining([
+        "Requested identity record",
+        "Bank or financial record",
+        "Proof of address",
+      ]),
+    );
+  });
+});
+
+describe("19 Oct 2026 walk-through: a verification call has a clock", () => {
+  it("I: 'schedule a video call ... within 7 days of this message' is a seven-day window", async () => {
+    const { parseNotice } = await import("./noticeParser");
+    const p = parseNotice(read("notice-I-verification.txt"));
+    expect(p.statedWindowDays).toBe(7);
+  });
+});
+
+describe("19 Oct 2026 walk-through: a review-incentive notice raises no unrelated records", () => {
+  it("H: no order report and no listing correction record", () => {
+    const text = read("notice-H-reviews.txt");
+    const kind = runDecode(text, {}).classification.kind;
+    const w: Workspace = { ...newWorkspace(), notice: text };
+    const labels = proposedRequirements(w, kind).map((r) => r.label);
+    expect(labels).not.toContain("Sales or performance record");
+    expect(labels).not.toContain("Listing correction record");
+  });
+});

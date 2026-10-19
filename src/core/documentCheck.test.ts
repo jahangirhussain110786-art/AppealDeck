@@ -593,3 +593,20 @@ describe("an invoice with no ASIN printed (19 Oct 2026)", () => {
     expect(f.comparedWith).toMatch(/B0ABCDEF12/);
   });
 });
+
+describe("a missing supplier website (19 Oct 2026)", () => {
+  it("is not counted as 'Not found' when the invoice prints a phone number or email", () => {
+    const check = buildDocumentCheck("INAUTHENTIC", "supplier_invoice", [
+      finding({ field: "supplier phone/contact", observed: "+1 (503) 555-0187" }),
+      finding({ field: "supplier website", status: "missing", observed: undefined }),
+    ]);
+    const web = check.findings.find((f) => /website/.test(f.field))!;
+    expect(web.status).toBe("not_assessed");
+  });
+  it("stays 'Not found' when nothing else reaches the supplier", () => {
+    const check = buildDocumentCheck("INAUTHENTIC", "supplier_invoice", [
+      finding({ field: "supplier website", status: "missing", observed: undefined }),
+    ]);
+    expect(check.findings.find((f) => /website/.test(f.field))!.status).toBe("missing");
+  });
+});

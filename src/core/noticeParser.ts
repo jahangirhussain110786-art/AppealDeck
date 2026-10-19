@@ -156,7 +156,7 @@ const YOU_HAVE = new RegExp(
   buyers are the ones acting. return/confirm/update are no longer duties here.
 */
 const DUTY_VERBS =
-  "respond|reply|verify|upload|submit|resubmit|appeal|send|provide|complete|correct|contact";
+  "respond|reply|verify|upload|submit|resubmit|appeal|send|provide|complete|correct|contact|schedule|book|arrange|attend";
 /*
   9 Oct 2026: "update your payment method within 7 days" and "update your tax information within 30
   days" are the seller's own deadlines, and read as none because `update` is not a duty verb (see
@@ -225,10 +225,33 @@ export function genericWindowsOf(raw: string): GenericWindows {
   return { calendar: [...calendar], business: [...business] };
 }
 
+/**
+ * What makes a notice about the listing itself, as opposed to "...removed for ASIN B0..." which only
+ * says what happened. Shared with `noticeIssues` so the two cannot disagree.
+ */
+export const LISTING_ITSELF =
+  /listing[\s-]?(?:policy|violation)|detail[\s-]?page policy|not as described|buy box/i;
+/** Wording a policy notice carries whatever its cause ("violations of our policies"). */
+const POLICY_BOILERPLATE =
+  /policy (?:violation|compliance)|repeated policy violations|violations of (?:our |Amazon(?:'s)? )?policies/gi;
+
 export function parseNotice(raw: string): ParsedNotice {
   const kindHints: ViolationKind[] = [];
   for (const [kind, re] of KIND_PATTERNS) {
     if (re.test(raw)) kindHints.push(kind);
+  }
+  /*
+    "...removed your selling privileges for ASIN B0..., because we found a review incentive" is a
+    removal under a named cause, not a listing breach (19 Oct 2026: a Customer Product Reviews notice
+    was decoded as a listing problem because LISTING outranks POLICY). LISTING is kept when the
+    notice is about the listing itself, or when nothing else, bar generic policy wording, claims it.
+  */
+  if (kindHints.includes("LISTING") && !LISTING_ITSELF.test(raw)) {
+    const stripped = raw.replace(POLICY_BOILERPLATE, " ");
+    const other = KIND_PATTERNS.some(
+      ([kind, re]) => kind !== "LISTING" && re.test(kind === "POLICY" ? stripped : raw),
+    );
+    if (other) kindHints.splice(kindHints.indexOf("LISTING"), 1);
   }
   const legacySeventeenDay = /17\s*days/i.test(raw);
   const windows = new Set<number>();

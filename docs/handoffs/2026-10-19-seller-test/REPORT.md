@@ -67,3 +67,26 @@ Mobile layout and the live Paddle checkout. The Gemini free tier answered every 
 - "Your money" says funds can be asked for about 60 days after deactivation; a notice that says the 90-day review has ended contradicts it (hedged, but it reads oddly).
 - "Your business details: we compare them with your invoices" shows on cases that have no invoice.
 - The free-tier main model was over its daily quota most of the day; the fallback model answered some calls and returned a busy error on others. When both failed, the case produced a plain draft from the seller's own words and said so.
+
+# Round 3: restricted product, review policy, identity verification
+
+| Case | Company | Notice | Documents |
+| --- | --- | --- | --- |
+| G | Alder & Moss Wellness LLC (supplements) | Restricted category: apply for approval within 30 days | Certificate of Analysis, cGMP certificate, label, supplier invoice |
+| H | Quickstep Footwear | Review-incentive policy removal, Plan of Action within 14 days | Written procedure |
+| I | Tidewater Pottery Studio LLC | INFORM Act identity verification, video call within 7 days | Photo ID, bank statement, utility bill |
+
+## Defects found and fixed (each with a test)
+
+1. **H was decoded as a listing problem.** "...removed your selling privileges for ASIN B0..." beat the real cause (a review incentive). A removal under a named cause no longer outranks it. The same rule now decides how many issues a notice raises.
+2. **H was asked for an order report and a "listing correction record"** that Amazon never mentioned for a review policy. Neither is raised for a review or incentive notice.
+3. **G was asked for a "listing correction record"** (proof the listing is closed) although the notice invites the seller to apply for approval. Not raised for approval requests.
+4. **G's Certificate of Analysis and cGMP certificate were not recognised** as requested records. They now are.
+5. **I had no clock.** "Schedule a video call ... within 7 days" was not read as a deadline because "schedule" was not a seller action. It now counts down to 24 Oct.
+6. **A supplier invoice with no website printed showed "Not found"** (and "1 not found" in the summary) although it printed a phone number and an email. Now "not checked", with the reason.
+
+## Found, not changed
+
+- A COA is checked against test-report questions ("the standard it was tested against") and a supplement label against "model number readable"; both give a "Not found" that does not fit. Fields would need to come from the notice's own list.
+- The cGMP certificate shares one card with the COA (one card per kind of record).
+- A label image that is a flat graphic, not a photo of the packaged product, is marked "product itself not found". That is true of my test file, and a real photo would pass.
