@@ -177,6 +177,43 @@ export const WORKSPACE = {
           "For example: We removed the listing on 20 Sep 2026. The attached approval covers the category from 1 Jan 2026.",
       },
     } as Record<string, { hint: string; example: string }>,
+    // 19 Oct 2026: the three Plan of Action boxes showed the same returns example for every case, so
+    // an authenticity or performance appeal was shown a sentence about something else. Shape only,
+    // never a claim about the case; a kind with no entry keeps the general example above.
+    poaByKind: {
+      INAUTHENTIC: {
+        rootCause:
+          "For example: We bought 120 units of B0EXAMPLE1 from our supplier Harbor Goods on 14 Aug 2026 and did not keep the brand's authorization letter with the invoice, so we could not show where the stock came from.",
+        corrective:
+          "For example: Finished: on 15 Oct 2026 we got the brand's authorization letter for Harbor Goods and attach it with invoice HG-2088. In progress: checking every unit left in stock against the packing list, done by 22 Oct.",
+        prevention:
+          "For example: Before we list a new supplier's stock, the owner files the invoice and the brand's letter together. We match invoiced quantities to our sales report every month.",
+      },
+      PERFORMANCE_METRIC: {
+        rootCause:
+          "For example: Our only packer was on leave in the last week of September with no cover, and 21 of 248 orders missed the handling cut-off.",
+        corrective:
+          "For example: Finished: on 10 Oct 2026 we hired a second packer and moved the shipping cut-off from 3pm to 1pm. In progress: syncing stock every 10 minutes, done by 15 Oct.",
+        prevention:
+          "For example: Our warehouse lead checks the open-order count at 11am and 2pm every day and tells the owner if more than 40 orders are waiting. The owner reviews the rates every Monday.",
+      },
+      INTELLECTUAL_PROPERTY: {
+        rootCause:
+          "For example: We list B0EXAMPLE1, which we buy from an authorized distributor, Harbor Goods. The rights owner may not have known our supply route, and we had not sent Amazon the distributor's invoice.",
+        corrective:
+          "For example: Finished: on 16 Oct 2026 we got the brand's letter naming Harbor Goods as its distributor and attach it with invoice HG-2088. Finished: on 17 Oct we wrote to the rights owner asking them to review it.",
+        prevention:
+          "For example: We only buy branded goods from distributors the brand names, and we ask for the authorization letter before the first purchase. The owner keeps the letter with each invoice.",
+      },
+      LISTING: {
+        rootCause:
+          "For example: A staff member copied a competitor's bullet points into the detail page of B0EXAMPLE1 without checking them against our own product.",
+        corrective:
+          "For example: Finished: on 12 Oct 2026 we rewrote the detail page of B0EXAMPLE1 and removed the claim Amazon named. In progress: checking our other 30 listings, done by 25 Oct.",
+        prevention:
+          "For example: A second person reads every new or edited listing against the product before it goes live. We review the full catalogue for policy wording each quarter.",
+      },
+    } as Record<string, { rootCause: string; corrective: string; prevention: string }>,
     // For the boxes under Amazon’s own questions: the question decides the content, so the example
     // is only the shape of a good answer.
     questionHint: "Answer this question directly, with dates and numbers where you have them.",

@@ -395,7 +395,12 @@ ${text}`
               </div>
             )}
             {w.protocol === "operational" ? (
-              <AnswerHelp id="workspace-explanation-example" example={F.rootCausePlaceholder} />
+              <AnswerHelp
+                id="workspace-explanation-example"
+                example={
+                  (F.poaByKind[file.kind] ?? { rootCause: F.rootCausePlaceholder }).rootCause
+                }
+              />
             ) : (
               questions.length === 0 && (
                 <AnswerHelp
@@ -430,7 +435,12 @@ ${text}`
                   readOnly={busy}
                   onChange={(e) => changeCorrective(e.target.value)}
                 />
-                <AnswerHelp id="workspace-corrective-example" example={F.correctivePlaceholder} />
+                <AnswerHelp
+                  id="workspace-corrective-example"
+                  example={
+                    (F.poaByKind[file.kind] ?? { corrective: F.correctivePlaceholder }).corrective
+                  }
+                />
                 <SectionTools
                   file={file}
                   signedIn={signedIn}
@@ -483,7 +493,12 @@ ${text}`
                   readOnly={busy}
                   onChange={(e) => changePreventive(e.target.value)}
                 />
-                <AnswerHelp id="workspace-prevention-example" example={F.preventionPlaceholder} />
+                <AnswerHelp
+                  id="workspace-prevention-example"
+                  example={
+                    (F.poaByKind[file.kind] ?? { prevention: F.preventionPlaceholder }).prevention
+                  }
+                />
                 <SectionTools
                   file={file}
                   signedIn={signedIn}
