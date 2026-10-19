@@ -10,11 +10,20 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   try {
+    // Refuse on the declared size first so an oversized body is never read into memory.
+    const declared = Number(request.headers.get("content-length") ?? 0);
+    if (declared > 10_000) return new NextResponse(null, { status: 413 });
     const raw = await request.text();
     if (raw.length > 10_000) return new NextResponse(null, { status: 413 });
     const parsed = JSON.parse(raw) as Record<string, unknown>;
-    const body = (parsed["csp-report"] ?? parsed) as Record<string, unknown>;
-    const field = (k: string) => String(body[k] ?? "").slice(0, 200);
+    const inner = parsed["csp-report"];
+    const body = (inner && typeof inner === "object" ? inner : parsed) as Record<string, unknown>;
+    // Anyone can post here, so strip line breaks and control characters: a report must not be
+    // able to write a forged log line.
+    const field = (k: string) =>
+      String(body[k] ?? "")
+        .replace(/[\u0000-\u001f\u007f]/g, " ")
+        .slice(0, 200);
     console.warn(
       `[csp] ${field("effective-directive") || field("violated-directive")} blocked ${field("blocked-uri") || field("blockedURL")}`,
     );
