@@ -105,6 +105,7 @@ import {
   composePayloadWorkspace,
   type Requirement,
   type Workspace,
+  submissionEmail,
 } from "@/core/workspace";
 import { getBrowserVault } from "@/lib/vault/browser";
 import { ensureFreshGuestSession } from "@/lib/vault/guestSession";
@@ -1985,7 +1986,11 @@ function WorkspaceInner({
                   <CardTitle as="h2" className="text-[1.375rem] tracking-[-0.025em]">
                     {C.documents.title}
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground">{C.documents.lead}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {submissionEmail(w.notice)
+                      ? C.documents.leadEmail.replace("{email}", submissionEmail(w.notice)!)
+                      : C.documents.lead}
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <details>

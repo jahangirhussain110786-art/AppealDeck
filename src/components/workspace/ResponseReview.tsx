@@ -21,6 +21,7 @@ import {
   workspaceCanCompose,
   workspaceGaps,
   type Workspace,
+  submissionEmail,
 } from "@/core/workspace";
 import { answerDraftKey, coachDraftKey } from "@/lib/workspaceDraft";
 import type { CaseFile } from "@/core/caseFile";
@@ -739,7 +740,11 @@ ${text}`
                 </Button>
               </div>
             )}
-            <p className="text-xs text-muted-foreground">{C.steps.attachFrom}</p>
+            <p className="text-xs text-muted-foreground">
+              {submissionEmail(w.notice)
+                ? C.steps.attachFromEmail.replace("{email}", submissionEmail(w.notice)!)
+                : C.steps.attachFrom}
+            </p>
             {/*
               Retiring the classic interview (22 Sep 2026): `BeforeYouSubmitChecklist` used to live
               only in `ComposeView`, which was that path's drafting step. Removing the path without

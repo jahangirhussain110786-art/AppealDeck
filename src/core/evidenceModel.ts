@@ -321,6 +321,12 @@ const PRODUCT_SAFETY: EvidenceRequirement[] = [
       "test report or compliance certificate for the product",
       "the standard or regulation it was tested against",
       "the issuing laboratory or body",
+      // 19 Oct 2026: a safety notice asks that the report be dated and identify the product tested
+      // ("dated within the last 12 months", "identify the product tested"); the check asked neither.
+      // Presence only, not a date window: how old a report may be depends on the notice, and a
+      // fixed window here would mark a still-valid older report as outside it.
+      "the date of the report",
+      "the model, variant or batch it tested",
     ],
     disqualifiers: [
       "a supplier's own assurance with no test document behind it",

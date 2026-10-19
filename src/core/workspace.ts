@@ -346,7 +346,7 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
   {
     // Passports and driving licences added 29 Sep 2026 with the researched verification notice.
     pattern:
-      /\b(identity document|government.issued (?:ID|identification)|passport|driv(?:er'?s|ing) licen[cs]e|national ID(?: card)?)\b/i,
+      /\b(identity document|government.issued (?:photo )?(?:ID|identification)|passport|driv(?:er'?s|ing) licen[cs]e|national ID(?: card)?)\b/i,
     evidenceKind: "identity_doc",
   },
   {
@@ -387,7 +387,7 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
   },
   {
     pattern:
-      /\b(?:related|linked)[\s-]accounts?\b[^.!?\n]{0,50}\b(?:resolved|closed)\b|\bresolution of the (?:related|linked) account/i,
+      /\b(?:related|linked)[\s-]accounts?\b[^.!?\n]{0,50}\b(?:resolved|closed)\b|\bresolution of the (?:related|linked) account|\b(?:other|previous|former|linked|related) account\b[^.!?\n]{0,50}\b(?:is|was|been) (?:closed|no longer (?:connected|linked|related))\b|\b(?:closed|no longer (?:connected|linked|related))\b[^.!?\n]{0,30}\b(?:other|previous|former) account/i,
     evidenceKind: "account_resolution_proof",
   },
   {
@@ -401,7 +401,7 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
   },
   {
     pattern:
-      /\b(test reports?|compliance certificates?|certificates? of (?:conformity|compliance)|lab(?:oratory)? (?:test )?reports?|safety data sheets?|SDS|exemption sheets?)\b/i,
+      /\b(test reports?|children['’]?s product certificates?|compliance certificates?|certificates? of (?:conformity|compliance)|lab(?:oratory)? (?:test )?reports?|safety data sheets?|SDS|exemption sheets?)\b/i,
     evidenceKind: "compliance_report",
   },
 ];
@@ -466,7 +466,7 @@ export function requirementEvidenceKind(
  * so "no further submission is needed" still raised the record it had just waived.
  */
 const REQUIREMENT_NEGATION =
-  /\b(do not|don't|does not need|not required|not necessary|not needed|no need to|no longer|no additional|no further)\b/i;
+  /\b(do not|don't|does not need|not required|not necessary|not needed|no need to|no longer (?:need|needs|required|requires|necessary|needed|have to|has to|must)|no additional|no further)\b/i;
 
 // "We need to see" / "we require" / "please show" added 19 Oct 2026 (Amazon refusals ask this way).
 // "attach", "supply" and the -ing forms (7 Oct 2026): "Please attach copies of your invoices" and
@@ -989,6 +989,26 @@ export function releaseD6Latch(
   return { ok: true, workspace: released };
 }
 
+/**
+ * The Amazon address a notice tells the seller to send their documents to ("send an email to
+ * disbursement-appeals@amazon.com ... Include ..."), or null. Funds notices work this way, and the
+ * case page said documents go in the response page and "not in a Seller Support case", which is
+ * the opposite of what the notice says (19 Oct 2026). Only an @amazon address after a send verb.
+ */
+export function submissionEmail(notice: string): string | null {
+  for (const sentence of notice.split(/(?<=[.!?])\s+|\n+/)) {
+    // "Ask them to send the retraction to notice-dispute@amazon.com" is the rights owner sending,
+    // not the seller.
+    if (/\b(?:ask|asking|have|tell|them|they|rights? owner|brand|supplier)\b/i.test(sentence))
+      continue;
+    const m = /(?:send|email|e-mail|write)[^.!?\n]{0,80}?\b([\w.+-]+@amazon\.[a-z.]+)/i.exec(
+      sentence,
+    );
+    if (m) return m[1]!.toLowerCase();
+  }
+  return null;
+}
+
 export function routeWorkspace(
   w: Pick<Workspace, "notice" | "formInstructions" | "position" | "marketplace"> &
     Partial<Pick<Workspace, "professionalReviewRequired" | "previousRequests" | "d6Latch">>,
@@ -1024,7 +1044,12 @@ function routeCore(
   if (
     // The classifier's own verification pattern, so the two can never disagree about what counts.
     VERIFICATION_PATTERN.test(text) ||
-    /\bgovernment.issued (?:ID|identification)\b/i.test(text)
+    // A government ID listed among the documents of another kind of appeal does not make it a
+    // verification request. A related-account appeal that asks for an ID was routed to a checklist
+    // with "nothing to draft", leaving the explanation Amazon asked for with nowhere to be written
+    // (19 Oct 2026). The loose phrase counts only when no other family claims the notice.
+    (/\bgovernment.issued (?:photo )?(?:ID|identification)\b/i.test(text) &&
+      !KIND_PATTERNS.some(([kind, pattern]) => kind !== "VERIFICATION" && pattern.test(text)))
   )
     return {
       protocol: "verification",

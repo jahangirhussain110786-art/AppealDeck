@@ -634,6 +634,14 @@ const KEYWORD_FIELDS: ReadonlyArray<KeywordField> = [
     hedge: RECORD_HEDGE,
   },
   {
+    // Added 19 Oct 2026 for the report field a safety notice asks for (the date is read above).
+    field: /\bmodel, variant or batch\b/i,
+    strong:
+      /\b(?:model|variant|batch|lot|sku|style)\b\s*(?:no\.?|number|#)?\s*[:#-]?\s*[A-Z0-9][\w-]*/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
     field: /\bissuing laboratory\b/i,
     strong:
       /\b(?:laborator(?:y|ies)|test(?:ing)? (?:lab|house|cent(?:re|er))|certification body|notified body)\b/i,
@@ -744,6 +752,10 @@ function looksLikeName(line: string): boolean {
   );
 }
 
+/** A label that says a date is when a test report was issued (19 Oct 2026). */
+const REPORT_DATE_LABEL =
+  /\b(?:report|test|issue|issued)\s*date\b|\bdate (?:of (?:report|test|issue)|issued)\b|\bdated\b/i;
+
 const NO_SUPPLIER_SECTION =
   "We could not find a supplier section (such as “From” or “Supplier”) in the text we read. Check it on the original.";
 
@@ -787,7 +799,11 @@ function readField(
   if (/\bdate\b|\btook effect\b/i.test(field) && !/\bdate range\b/i.test(field)) {
     // A date field that is not the issue date ("the date the product stopped being sold"): only a
     // date whose own label says so. The first date on the page is not an answer to it.
-    const wanted = /\bstopped\b/i.test(field) ? STOPPED_LABEL : EFFECT_LABEL;
+    const wanted = /\bstopped\b/i.test(field)
+      ? STOPPED_LABEL
+      : /\bdate of the report\b/i.test(field)
+        ? REPORT_DATE_LABEL
+        : EFFECT_LABEL;
     const match = printedDates(lines).find((d) => wanted.test(d.label));
     return match
       ? present(

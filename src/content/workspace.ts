@@ -45,6 +45,9 @@ export const WORKSPACE = {
     // G-63: said here, where the files are gathered, as well as on the copy step. "Some Amazon
     // notices say" because the origin of the rule is a notice's own wording, not a policy we cite.
     lead: "Add each file and say what it shows. Nothing is sent to Amazon. Documents go with the response in Seller Central, not in a Seller Support case: some Amazon notices say documents sent through a case are not considered for the review.",
+    // When the notice itself says to email documents to an Amazon address (a funds request does).
+    leadEmail:
+      "Add each file and say what it shows. Nothing is sent to Amazon from here. Your notice says to send the request by email to {email}: attach these files to that email, from the address on your seller account.",
     seeNotice: "See your notice",
     addOther: "Amazon asked for something else? Add it",
     addLabel: "Document name",
@@ -101,6 +104,8 @@ export const WORKSPACE = {
     later: "You can write your answers now and add the rest later.",
     finish:
       "Read it, then copy it into Amazon's appeal page and attach your files. Come back and record what you sent.",
+    attachFromEmail:
+      "Download the linked originals from Documents and attach them to your email to {email}, as your notice says, sent from the address on your seller account. Copying does not record a submission.",
     attachFrom:
       "Download the linked originals from Documents and attach each one where the response page in Seller Central asks for it. Send them there, not in a Seller Support case: some Amazon notices say documents sent through a case are not considered for the review. Copying does not record a submission.",
   },
@@ -167,9 +172,9 @@ export const WORKSPACE = {
           "For example: We bought these 40 units from our supplier Harbor Goods on 5 Aug 2026. The attached invoice shows it.",
       },
       RELATED_ACCOUNT: {
-        hint: "Say how the other account is connected to you, or that it is not, with dates.",
+        hint: "Cover the three things Amazon asks: how the other account is connected to you (or that it is not), why the device, address or bank account is shared, and what you have done so the accounts are no longer linked. Give dates.",
         example:
-          "For example: The other account belonged to a previous employer and was closed on 3 Mar 2026. The attached record shows it.",
+          "For example: The other account belonged to a former business partner, who left on 30 Apr 2025. We shared an office, which explains the shared address. That company and its account were closed on 22 May 2025; the attached records show it.",
       },
       RESTRICTED_PRODUCT: {
         hint: "Say what you did with the listing and what approval you hold, with dates.",

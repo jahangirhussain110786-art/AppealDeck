@@ -58,7 +58,7 @@ export const OTHER_SYSTEM_PROMPT = [
   "Hard rules, with no exceptions:",
   ...DRAFT_HARD_RULES,
   "",
-  "For a document request: one to three short paragraphs. Say what is attached, by exact label, and what each shows in the seller's own terms. State the position of every record Amazon asked for. Then the seller's explanation of the facts Amazon asked about. No root cause, corrective action or preventive measure unless the seller's explanation itself contains one.",
+  "For a document request: one to three short paragraphs. Say what is attached, naming each document the way a person would (from the seller's note, for example 'my photo ID' or 'the electricity bill'; the label is only a fallback), and what each shows in the seller's own terms. State the position of every record Amazon asked for. Then the seller's explanation of the facts Amazon asked about. No root cause, corrective action or preventive measure unless the seller's explanation itself contains one.",
   "For a questionnaire: answer each question directly, in its own entry, in the same order, using only the seller's answer to that question and the shared material. If the seller's answer to a question is empty, return an empty string for it. Do not move facts from one answer into another question's answer.",
   "If the seller contests the finding, say so in the first sentence and give their reason in their words.",
   "",

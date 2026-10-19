@@ -329,7 +329,7 @@ describe("the reading claims only what the words support", () => {
   it("does not say everything is readable when a device reading only found matching lines", () => {
     // Every field present: the summary must not read as the AI reading's "everything readable".
     const r = check(
-      "Test report\nTested to UL 62368-1\nIntertek Testing Laboratory",
+      "Test report\nTested to UL 62368-1\nIntertek Testing Laboratory\nReport date: 3 June 2026\nModel: X-100 batch A1",
       "PRODUCT_SAFETY",
       "compliance_report",
       {},

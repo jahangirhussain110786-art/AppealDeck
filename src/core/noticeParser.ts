@@ -60,7 +60,7 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
   // now allowed; "authenticity" still has to be what the complaint is about.
   [
     "INAUTHENTIC",
-    /inauthentic|not authentic|(?:not|n't)\s+appear\s+(?:to\s+be\s+)?(?:authentic|genuine)|(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)|(?:complaints?|concerns?|reports?)[^.!?\n]{0,40}?\b(?:about|regarding|concerning|related to) the authenticity|authenticity (?:complaints?|concerns?)/i,
+    /inauthentic|not authentic|(?:not|n't)\s+appear\s+(?:to\s+be\s+)?(?:authentic|genuine)|(?<!\bif (?:we|amazon) )(?:could not|cannot|unable to) verify (?:the )?(?:authenticity|(?:your |supplier )?(?:documentation|documents|invoices|products))|(?:documentation|documents|invoices)[^.!?\n]{0,35}(?:could not verify|could not be verified)|(?:complaints?|concerns?|reports?)[^.!?\n]{0,40}?\b(?:about|regarding|concerning|related to) the authenticity|authenticity (?:complaints?|concerns?)/i,
   ],
   [
     "RELATED_ACCOUNT",

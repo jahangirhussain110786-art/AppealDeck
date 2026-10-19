@@ -39,3 +39,31 @@ Three invented companies, each with an Amazon-style notice and documents, run th
 ## Not tested
 
 Mobile layout and the live Paddle checkout. The Gemini free tier answered every call, using the fallback model for some.
+
+# Round 2: three more kinds of notice
+
+| Case | Company | Notice | Documents |
+| --- | --- | --- | --- |
+| D | Northwind Kids Co. (play tents) | Children's product safety request, date stated | Lab test report, children's product certificate, label photo |
+| E | Cedar Lane Candles LLC | Account blocked as related to a removed account | Former partner's statement, dissolution papers, utility bill, photo ID |
+| F | Maple & Birch Textiles LLC | Funds held after deactivation; email Amazon to ask | Bank statement, photo ID |
+
+## Defects found and fixed (each with a test)
+
+1. **D was decoded as "Inauthentic item complaint".** "If we cannot verify the documents, the listing will remain removed" was read as a finding. Now a warning is not a finding; D reads as product safety, and no supplier invoice is asked for.
+2. **E raised no documents from the notice.** "...no longer connected to you" made the whole sentence count as "you no longer need to send". Now only "no longer needed/required" does. The proof of address, ID and account-closure records are raised.
+3. **E was sent to a "verification checklist, nothing to draft".** One mention of a government ID made it a verification request, so the explanation Amazon asked for had nowhere to be written. An ID listed inside another kind of appeal no longer does that.
+4. **F's "government-issued photo ID" was not recognised** as the notice's own request (shown as "we added this").
+5. **F told the seller documents go in Seller Central, not by email**, when the notice says to email Amazon. The case now names the address the notice gives.
+6. **The AI wrote "The Requested identity record (file.jpg) is attached"**, our filing word, into the letter. It now names documents the way a person would ("my photo ID"), file name in brackets.
+7. **Bank and address PDFs said "we check identity documents"** when they could not be checked. The message now says what is true.
+8. **Test report checks** asked nothing about the report date or which model or batch it tested; both added.
+9. The related-account hint now lists the three things Amazon asks for.
+
+## Found, not changed
+
+- A children's product certificate and a lab report share one card ("Test report or compliance certificate"), so one list line covers two documents.
+- A proof-of-address or bank-statement PDF cannot be checked at all (by design: those are never read). Only photos get a picture check.
+- "Your money" says funds can be asked for about 60 days after deactivation; a notice that says the 90-day review has ended contradicts it (hedged, but it reads oddly).
+- "Your business details: we compare them with your invoices" shows on cases that have no invoice.
+- The free-tier main model was over its daily quota most of the day; the fallback model answered some calls and returned a busy error on others. When both failed, the case produced a plain draft from the seller's own words and said so.

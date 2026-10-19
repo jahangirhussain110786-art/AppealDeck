@@ -15,6 +15,54 @@ const doc = (f) => path.join(DIR, "docs", f);
 const log = (title, text, n = 4000) => console.log(`\n=== ${title} ===\n${String(text).slice(0, n)}`);
 
 const CASES = {
+  D: {
+    notice: "notice-D-product-safety.txt",
+    form: "Upload the CPC, test report and photos.",
+    files: {
+      "Test report or compliance certificate": "D2-lab-test-report-astm-f963.pdf",
+      "Product and label photos": "D3-label-photo-tracking-label.png",
+    },
+    notes: {
+      "Test report or compliance certificate":
+        "Pacific Rim Product Testing Lab report PRL-2026-77431 dated 24 June 2026 for our 48-inch play tent, batch NW48-0626-A. It covers ASTM F963-23 and 16 CFR 1303 (lead 12 ppm) and 16 CFR 1501, all pass.",
+      "Product and label photos":
+        "Photo of the product label and tracking label. It shows the manufacturer, the date of manufacture 2 June 2026 and batch NW48-0626-A.",
+    },
+    explanation:
+      "The attached test report is from Pacific Rim Product Testing Lab, a CPSC-accepted laboratory, dated 24 June 2026, and covers ASTM F963-23 and 16 CFR 1303 for the Northwind Pop-Up Play Tent, batch NW48-0626-A. The Children's Product Certificate dated 1 July 2026 lists the same rules. The photo shows the tracking label with the manufacturer, the 2 June 2026 date of manufacture and the batch number.",
+  },
+  E: {
+    notice: "notice-E-related-account.txt",
+    form: "Appeal text and supporting documents.",
+    files: {
+      "Requested identity record": "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
+      "Proof of address": "E3-utility-bill-cedar-lane-candles.pdf",
+      "Linked-account resolution record": "E1-statement-former-partner-closure.pdf",
+    },
+    notes: {
+      "Requested identity record": "Photo ID of the owner of Cedar Lane Candles LLC.",
+      "Proof of address": "Electricity bill dated 1 October 2026 for Cedar Lane Candles LLC at Unit 4, 31 Hawthorn Road, Asheville.",
+      "Linked-account resolution record":
+        "Signed statement of Marcus Telford dated 8 October 2026, former co-owner of Wickwood Home Co., saying he left in April 2025 and has no access to our account.",
+    },
+    explanation:
+      "I own Cedar Lane Candles LLC. The other account belonged to Wickwood Home Co., which I co-founded with Marcus Telford. He left on 30 April 2025, the company was dissolved on 20 May 2025, its bank account ending 4417 was closed on 15 May 2025 and its seller account was closed on 22 May 2025. We shared an office at Riverside Workspace, 12 Mill Street, Asheville, which explains the shared IP address. Cedar Lane Candles has had its own bank account since 2025 and now operates from Unit 4, 31 Hawthorn Road, Asheville. The attached statement, the dissolution papers, my ID and the utility bill support this.",
+  },
+  F: {
+    notice: "notice-F-funds.txt",
+    form: "Email disbursement-appeals@amazon.com with the documents.",
+    files: {
+      "Bank or financial record": "F1-bank-statement-maple-birch-textiles.pdf",
+      "Requested identity record": "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
+    },
+    notes: {
+      "Bank or financial record":
+        "Lakeshore Community Bank business checking statement for September 2026, in the name of Maple & Birch Textiles LLC, account ending 6082.",
+      "Requested identity record": "Photo ID of the primary contact on the seller account.",
+    },
+    explanation:
+      "My seller account was deactivated on 6 July 2026 and the 90-day review period has ended. The attached September 2026 statement from Lakeshore Community Bank is in the name of Maple & Birch Textiles LLC, account ending 6082, the account registered on the seller account. The attached photo ID is for the primary contact. I ask for a review of my remaining balance.",
+  },
   A: {
     notice: "notice-A-authenticity.txt",
     form: "Upload the invoices for ASIN B0CK7T2M9R and B0CK7T4L1Q. Add a Plan of Action in the box below (max 5000 characters).",
@@ -138,7 +186,8 @@ const tab = async (page, name) => {
     const check = card.getByRole("button", { name: /check this document/i }).first();
     if (await check.isVisible().catch(() => false)) {
       await check.click();
-      await page.waitForTimeout(9000);
+      await card.getByText(/Reading finished|Checked d|could not read|Nothing to compare/i).first().waitFor({ timeout: 90000 }).catch(() => {});
+      await page.waitForTimeout(1500);
       await snap(page, `5-check-${label.replace(/\W+/g, "-")}`);
       log(`CHECK RESULT (${label})`, await dump(page, `5-check-${label.replace(/\W+/g, "-")}`), 4500);
     }
@@ -176,11 +225,17 @@ const tab = async (page, name) => {
   await tab(page, "Response");
   await snap(page, "7-response");
   log("RESPONSE", await dump(page, "7-response"), 5000);
-  if (!c.wentWrong) return browser.close();
-  await page.getByLabel("What went wrong?").fill(c.wentWrong);
-  await page.getByLabel("What have you fixed already?").fill(c.fixed);
-  await page.getByLabel("How will you stop it happening again?").fill(c.prevent);
-  await page.getByRole("checkbox", { name: /every action i describe as done/i }).check();
+  if (!c.wentWrong && !c.explanation) return browser.close();
+  if (c.explanation) {
+    await page.getByLabel("Your explanation, in your own words").fill(c.explanation);
+    const every = page.getByLabel("My response addresses every issue listed above.");
+    if (await every.isVisible().catch(() => false)) await every.check();
+  } else {
+    await page.getByLabel("What went wrong?").fill(c.wentWrong);
+    await page.getByLabel("What have you fixed already?").fill(c.fixed);
+    await page.getByLabel("How will you stop it happening again?").fill(c.prevent);
+    await page.getByRole("checkbox", { name: /every action i describe as done/i }).check();
+  }
   const complete = page.getByRole("checkbox", { name: /i checked the notice and the appeal page/i });
   if (await complete.isVisible().catch(() => false)) await complete.check();
   await page.getByRole("button", { name: /save my answers/i }).click();

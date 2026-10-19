@@ -195,7 +195,7 @@ describe("the prompt", () => {
     expect(prompt).toContain("Sales or performance record: attached (listed in RECORDS)");
     expect(prompt).toContain("ISSUES");
     expect(prompt).toContain('listing: "the detail page does not match"');
-    expect(DRAFT_SYSTEM_PROMPT).toMatch(/call it by its exact label/);
+    expect(DRAFT_SYSTEM_PROMPT).toMatch(/Name it the way a person would/);
     expect(DRAFT_SYSTEM_PROMPT).toMatch(/Address every issue listed under ISSUES/);
     // A record that is only "asked for" is not one the draft may claim as attached.
     const sources = buildDraftSources({

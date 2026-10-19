@@ -43,6 +43,22 @@ export function isBrowserOnly(kind: EvidenceKind): boolean {
   return BROWSER_ONLY_EVIDENCE_KINDS.includes(kind);
 }
 
+/**
+ * Said when a document we never read cannot be checked either. A bank statement or a utility bill
+ * is nearly always a PDF, so telling its owner "we check identity documents" (19 Oct 2026) read as
+ * if the wrong kind of file had been chosen. We say what is true: this kind is never read, only
+ * photos and scans get a picture check, and a PDF is fine to submit.
+ */
+function browserOnlyUnavailable(kind: EvidenceKind): string {
+  const what =
+    kind === "financial_instrument_doc"
+      ? "bank and financial documents"
+      : kind === "address_proof"
+        ? "proof of address"
+        : "identity documents";
+  return `We never read ${what}. We can only check how the picture looks, on your own device, for a photo or a scan saved as a JPEG, PNG or WebP. A PDF, or an iPhone (HEIC) photo, is fine to submit to Amazon: we simply cannot check it here.`;
+}
+
 export type CheckOutcome =
   /** A business document was read against Amazon's requirements. */
   | { kind: "fields"; result: DocumentCheckResult }
@@ -118,8 +134,7 @@ export async function runDocumentCheck(
       ? { kind: "image", report }
       : {
           kind: "unavailable",
-          message:
-            "We check identity documents on your own device, and we can only do that for a photo or a scan saved as a JPEG, PNG or WebP. A PDF, or an iPhone (HEIC) photo, is fine to submit to Amazon — we simply cannot check it here.",
+          message: browserOnlyUnavailable(input.evidenceKind),
         };
   }
 
