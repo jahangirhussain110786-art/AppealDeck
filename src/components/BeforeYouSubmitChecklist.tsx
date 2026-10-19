@@ -12,6 +12,7 @@ import {
   READINESS_COPY,
 } from "@/core";
 import type { CaseFileData, EvidenceKind } from "@/core";
+import { recognizedFacts } from "@/core/wordingLock";
 import {
   assessNovelty,
   shouldWarnBeforeSubmit,
@@ -98,13 +99,34 @@ export function BeforeYouSubmitChecklist({
     priorSubmissions && priorSubmissions.length > 0
       ? assessNovelty(draftText, priorSubmissions)
       : null;
-  const needsNovelty = novelty ? shouldWarnBeforeSubmit(novelty) : noveltyRequired(attemptCount);
+  /*
+    New facts count as change (19 Oct 2026). A seller who answered "does not identify all owners" by
+    changing one of four answers, or "no figures" by adding the weekly figures, was told "almost word
+    for word what you already sent", because the measure counts sentences and most were unchanged.
+    A date, number or name the last response did not carry is a change in substance.
+  */
+  const lastSent = priorSubmissions?.at(-1)?.text;
+  const newFacts = lastSent
+    ? [...recognizedFacts(draftText)].filter((f) => !recognizedFacts(lastSent).has(f))
+    : [];
+  const needsNovelty = novelty
+    ? shouldWarnBeforeSubmit(novelty) && newFacts.length === 0
+    : noveltyRequired(attemptCount);
 
+  const declaredMissing = requirements
+    ? requirements.filter((r) => r.status === "cannot_obtain").map((r) => r.label)
+    : [];
   const evidenceDetail = evidenceComplete
-    ? fill(copy.evidenceComplete, {
-        done: requirements ? requirements.length : requiredKinds(caseFile.kind).length,
-        total: requirements ? requirements.length : requiredKinds(caseFile.kind).length,
-      })
+    ? declaredMissing.length > 0
+      ? fill(copy.evidenceCompleteWithGaps, {
+          done: requirements!.length - declaredMissing.length,
+          total: requirements!.length,
+          kinds: declaredMissing.join(", "),
+        })
+      : fill(copy.evidenceComplete, {
+          done: requirements ? requirements.length : requiredKinds(caseFile.kind).length,
+          total: requirements ? requirements.length : requiredKinds(caseFile.kind).length,
+        })
     : [
         fill(copy.evidenceMissing, { count: missing.length + notAccepted.length }),
         missing.length > 0 ? fill(copy.evidenceMissingDetail, { kinds: missing.join(", ") }) : null,
@@ -135,7 +157,9 @@ export function BeforeYouSubmitChecklist({
       // The comparison's own message explains what it found and what to do about it, which is more
       // use than the generic revision copy — so it wins whenever a comparison was possible.
       detail: novelty
-        ? novelty.message
+        ? shouldWarnBeforeSubmit(novelty) && newFacts.length > 0
+          ? fill(copy.noveltyNewFacts, { facts: newFacts.slice(0, 4).join(", ") })
+          : novelty.message
         : needsNovelty
           ? expectationsCopy("REVISION")
           : copy.noveltyFirst,

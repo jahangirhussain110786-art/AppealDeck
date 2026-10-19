@@ -122,3 +122,38 @@ describe("dashboardHeadline", () => {
     expect(`${h.lead} ${h.accent}`).toBe("Nothing needs you today.");
   });
 });
+
+describe("summarizeCase, an unread reply (19 Oct 2026)", () => {
+  const withReply = (text: string) =>
+    caseWith((c) => ({
+      ...c,
+      workspace: {
+        ...c.workspace!,
+        confirmed: true,
+        replies: [{ id: "r1", at: NOW.toISOString(), text, applied: false }],
+      },
+    }));
+
+  it("a final decision says to record the outcome, not 'read what it changes'", () => {
+    const f = withReply(
+      "Our decision to deactivate your account is final and we will not review further appeals. Please do not submit another appeal.",
+    );
+    const s = summarizeCase(entry(f), f, NOW, null);
+    expect(s.next).toMatch(/final/i);
+    expect(s.next).toMatch(/record the outcome/i);
+  });
+
+  it("a reinstatement keeps its own line", () => {
+    const f = withReply(
+      "Thank you for your Plan of Action. We have reviewed it and your selling account has been reinstated.",
+    );
+    expect(summarizeCase(entry(f), f, NOW, null).next).toMatch(/If your account is back/);
+  });
+
+  it("a refusal still sends the seller to read what it changes", () => {
+    const f = withReply(
+      "Thank you for your appeal. Your plan of action does not address our concerns, so we are unable to reinstate your account.",
+    );
+    expect(summarizeCase(entry(f), f, NOW, null).next).toMatch(/Read what it changes/);
+  });
+});

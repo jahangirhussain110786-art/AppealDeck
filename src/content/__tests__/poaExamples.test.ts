@@ -45,3 +45,26 @@ describe("questionnaire hints by topic (19 Oct 2026)", () => {
     for (const t of topics) expect(t.example.startsWith("For example: ")).toBe(true);
   });
 });
+
+describe("questionnaire nudges under a thin answer (19 Oct 2026)", () => {
+  const topics = WORKSPACE.responseFields.questionTopics;
+  const owner = topics.find((t) =>
+    t.pattern.test("Who is the beneficial owner of your business?"),
+  )!;
+
+  it("asks for names and shares when the answer is only 'the founder'", () => {
+    expect(owner.needs.test("The owner is the founder, Redfern.")).toBe(false);
+  });
+  it("is satisfied by shares, or by a sole owner", () => {
+    expect(owner.needs.test("Dana Redfern, 70 percent, and Marcus Ibarra, 30 percent.")).toBe(true);
+    expect(owner.needs.test("Jane Smith is the sole owner.")).toBe(true);
+  });
+  it("asks the other-accounts question to be answered yes or no", () => {
+    const t = topics.find((x) => x.pattern.test("Do you operate other Amazon seller accounts?"))!;
+    expect(t.needs.test("This business has grown a lot since 2021.")).toBe(false);
+    expect(t.needs.test("No. This is the only account.")).toBe(true);
+  });
+  it("every nudge is one plain sentence", () => {
+    for (const t of topics) expect(t.nudge.endsWith(".")).toBe(true);
+  });
+});

@@ -15,6 +15,7 @@ import { STORES } from "../content/stores";
 import { assessNotEnforcement } from "./noticeText";
 import { analyzeReply } from "./responseAnalyzer";
 import { assessNovelty } from "./submissionNovelty";
+import { recognizedFacts } from "./wordingLock";
 import { isNarrativeTextSufficient } from "./readiness";
 
 /**
@@ -325,6 +326,11 @@ export const EVIDENCE_KINDS = Object.keys(EVIDENCE_KIND_LABELS) as [
   ...EvidenceKind[],
 ];
 
+/** "...the invoice from the manufacturer that Summit Peak bought from": the supplier's own supplier. */
+const UPSTREAM_INVOICE =
+  /\binvoices?\b[^.!?\n]{0,100}\b(?:that|which)\s+(?!you\b)[\w&.' -]{2,60}?\s(?:bought|purchased|sourced|obtained)\b|\b(?:your )?supplier['’]s (?:supplier|source|manufacturer)\b[^.!?\n]{0,40}\binvoices?\b|\binvoices?\b[^.!?\n]{0,40}\bsupplier['’]s (?:supplier|source|manufacturer)\b/i;
+export const UPSTREAM_INVOICE_LABEL = "Invoice from the supplier's own supplier";
+
 /**
  * `unless`: the same words can name two different records. "Proof of address, such as a bank
  * statement or utility bill" is one proof-of-address record, not a proof of address and a separate
@@ -334,8 +340,20 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
   pattern: RegExp;
   evidenceKind: EvidenceKind;
   unless?: RegExp;
+  /** A name of its own for a second record of the same kind. Falls back to the kind's label. */
+  label?: string;
 }> = [
-  { pattern: /\binvoices?\b/i, evidenceKind: "supplier_invoice" },
+  // The invoice one step up the chain (19 Oct 2026). Amazon's second-round request in an
+  // authenticity case is often "the invoice from the manufacturer that <your supplier> bought from".
+  // That is a different document from the one already attached; treating it as the same record told
+  // the seller their invoice was "asked for again, file stays linked" and invited a resubmission of
+  // the same file. The supplier is named, never "you": "the units you purchased" is the ordinary ask.
+  {
+    pattern: UPSTREAM_INVOICE,
+    evidenceKind: "supplier_invoice",
+    label: UPSTREAM_INVOICE_LABEL,
+  },
+  { pattern: /\binvoices?\b/i, evidenceKind: "supplier_invoice", unless: UPSTREAM_INVOICE },
   {
     // "A letter from the brand confirming the distributor is authorized" (the usual authenticity
     // wording, found in a 19 Oct 2026 walk-through) names the same record as "letter of authorization".
@@ -412,7 +430,10 @@ export const REQUIREMENT_CANDIDATES: ReadonlyArray<{
   label: string;
   evidenceKind: EvidenceKind;
   unless?: RegExp;
-}> = CANDIDATE_PATTERNS.map((c) => ({ ...c, label: EVIDENCE_KIND_LABELS[c.evidenceKind] }));
+}> = CANDIDATE_PATTERNS.map((c) => ({
+  ...c,
+  label: c.label ?? EVIDENCE_KIND_LABELS[c.evidenceKind],
+}));
 
 /**
  * Every label the model can produce, reversed back to its kind.
@@ -423,12 +444,12 @@ export const REQUIREMENT_CANDIDATES: ReadonlyArray<{
  * record the plan already held. Finding a request in a sentence is a parsing problem; identifying a
  * record is an identity problem.
  */
-const KIND_BY_LABEL: ReadonlyMap<string, EvidenceKind> = new Map(
-  (Object.entries(EVIDENCE_KIND_LABELS) as Array<[EvidenceKind, string]>).map(([kind, label]) => [
-    label.toLowerCase(),
-    kind,
-  ]),
-);
+const KIND_BY_LABEL: ReadonlyMap<string, EvidenceKind> = new Map([
+  ...(Object.entries(EVIDENCE_KIND_LABELS) as Array<[EvidenceKind, string]>).map(
+    ([kind, label]): [string, EvidenceKind] => [label.toLowerCase(), kind],
+  ),
+  [UPSTREAM_INVOICE_LABEL.toLowerCase(), "supplier_invoice"],
+]);
 
 /**
  * The evidence kind a requirement's label names, or undefined for one the seller worded themselves.
@@ -1093,6 +1114,23 @@ function routeCore(
     reason = `${reason} Amazon also says your plan is missing something, so the plan stays part of your response.`;
   }
   /*
+    19 Oct 2026: a questionnaire that Amazon refuses ("your answer to question 4 does not identify all
+    owners") became "We cannot prepare a response for this kind of notice here" in round two. The
+    reply has no numbered questions of its own, so the form vanished and the seller could not revise
+    the one answer Amazon faulted. A case that was a questionnaire stays one while the reply only
+    asks for better answers; its questions come from the request it replaced.
+  */
+  if (
+    (protocol === "clarification" || protocol === "documents" || protocol === "information") &&
+    (w.previousRequests ?? []).some((p) => p.protocol === "questionnaire") &&
+    questionsIn(`${w.formInstructions}\n${w.notice}`).length === 0 &&
+    analyzeReply(w.notice).category === "needs_more_information"
+  ) {
+    protocol = "questionnaire";
+    reason =
+      "Amazon is asking for better answers to its questions, so your answers stay part of your response.";
+  }
+  /*
     6 Oct 2026: "I disagree" used to replace the route with `dispute`, which cannot be composed, so
     the seller who was wrongly suspended got no appeal at all. Disagreeing is a position, not a
     different document: when the notice asks for something this product can write, it is still
@@ -1213,10 +1251,18 @@ export function totalAttempts(w: Workspace): number {
 
 /** The questions this case's questionnaire asks, response page first. Empty for any other protocol. */
 export function questionnaireQuestions(
-  w: Pick<Workspace, "protocol" | "formInstructions" | "notice">,
+  w: Pick<Workspace, "protocol" | "formInstructions" | "notice"> &
+    Partial<Pick<Workspace, "previousRequests">>,
 ): string[] {
   if (w.protocol !== "questionnaire") return [];
-  return questionsIn(`${w.formInstructions}\n${w.notice}`);
+  const own = questionsIn(`${w.formInstructions}\n${w.notice}`);
+  if (own.length > 0) return own;
+  // A refusal of a questionnaire carries no questions of its own: the form is the earlier request's.
+  for (const p of [...(w.previousRequests ?? [])].reverse()) {
+    const earlier = questionsIn(`${p.formInstructions}\n${p.notice}`);
+    if (earlier.length > 0) return earlier;
+  }
+  return [];
 }
 
 export function answerFor(w: Pick<Workspace, "answers">, question: string): string {
@@ -1279,8 +1325,17 @@ export function rootCauseRewritten(w: Pick<Workspace, "explanation" | "submissio
   // all, the explanation on file may be the very text Amazon just faulted, and stays a gap.
   if (sent.length === 0)
     return w.submissions.length > 0 && isNarrativeTextSufficient(w.explanation);
-  const verdict = assessNovelty(w.explanation, sent.slice(-1)).verdict;
-  return verdict === "new" || verdict === "revised";
+  const last = sent.slice(-1);
+  const verdict = assessNovelty(w.explanation, last).verdict;
+  if (verdict === "new" || verdict === "revised") return true;
+  /*
+    Adding what Amazon asked for is a revision even when most sentences are unchanged (19 Oct
+    2026): a refusal that said "no figures, no records" was answered with two sentences of weekly
+    figures, and the measure above called the text "almost the same" and kept the gap. New facts (a
+    date, a number, a name) that the last response did not carry are a change in substance.
+  */
+  const before = recognizedFacts(last[0]!.text);
+  return [...recognizedFacts(w.explanation)].some((fact) => !before.has(fact));
 }
 
 /** The latest reply, and the current request when it is itself a reply, fault the plan. */
@@ -1622,7 +1677,13 @@ export function computeReplyDelta(w: Workspace, replyId: string): ReplyDelta | n
     display string is a poor key: rename a record and Amazon asking for it again would read as a
     brand-new requirement, silently orphaning the file and note already attached to it.
   */
-  const keyFor = (r: Requirement) => requirementEvidenceKind(r) ?? r.label.toLowerCase();
+  // Two records can share a kind (the invoice and the invoice one step up the chain), so the
+  // second is keyed apart: otherwise Amazon asking for a new document read as "asked for again" and
+  // reopened the file already attached to the first (19 Oct 2026).
+  const keyFor = (r: Requirement) =>
+    r.label.trim().toLowerCase() === UPSTREAM_INVOICE_LABEL.toLowerCase()
+      ? "supplier_invoice:upstream"
+      : (requirementEvidenceKind(r) ?? r.label.toLowerCase());
   const askedByLabel = new Map(asked.map((r) => [keyFor(r), r]));
   const items: ReplyDeltaItem[] = [];
   const matched = new Set<string>();

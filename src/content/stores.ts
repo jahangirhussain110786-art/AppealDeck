@@ -34,6 +34,8 @@ export const STORES = {
   },
   /** Dashboard row line when an unread reply reads as reinstatement. */
   recordOutcome: "Amazon replied. If your account is back, record the outcome.",
+  /** Dashboard row line when an unread reply reads as a final decision (19 Oct 2026). */
+  recordFinal: "Amazon replied and says the decision is final. Read it, then record the outcome.",
 
   /** Offered beside the sentence above so a mistaken reading never dead-ends the case. */
   replyStartAnyway: "Start a new round anyway",

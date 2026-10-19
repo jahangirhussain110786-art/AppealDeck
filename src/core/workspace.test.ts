@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyWorkspaceReply,
   computeReplyDelta,
+  rootCauseRewritten,
   replyDeltaCounts,
   composeWorkspace,
   newWorkspace,
@@ -1268,5 +1269,48 @@ describe("a refusal that asks for shipping records (19 Oct 2026)", () => {
     });
     expect(reqs.map((r) => r.evidenceKind)).toContain("metric_export");
     expect(reqs[0]!.sourceQuote).toMatch(/carrier scan records/);
+  });
+});
+
+describe("reply delta, the invoice one step up the chain (19 Oct 2026)", () => {
+  it("keeps the attached invoice and adds the manufacturer's as a new record", () => {
+    const w = documentWorkspace();
+    w.replies.push({
+      id: "reply-up",
+      at: new Date().toISOString(),
+      text: "We could not reinstate your listing. Please send a copy of the invoice from the manufacturer that Summit Peak Wholesale bought the tents from.",
+      applied: false,
+    });
+    const delta = computeReplyDelta(w, "reply-up")!;
+    const attached = delta.items.find((i) => i.requirement.label === "Supplier invoice")!;
+    expect(attached.change).toBe("carried");
+    expect(attached.requirement.status).toBe("reviewed");
+    const upstream = delta.items.find(
+      (i) => i.requirement.label === "Invoice from the supplier's own supplier",
+    )!;
+    expect(upstream.change).toBe("added");
+    expect(upstream.requirement.status).toBe("needed");
+  });
+});
+
+describe("rootCauseRewritten, new facts count as a revision (19 Oct 2026)", () => {
+  const sentText =
+    "ROOT CAUSE\nOur only packer was on leave and we ran a promotion, so many orders missed the cutoff.";
+  const base = {
+    submissions: [
+      { id: "s1", at: "2026-10-19T08:00:00.000Z", revision: 1, text: sentText, attachments: [] },
+    ],
+  } as unknown as Pick<Workspace, "explanation" | "submissions">;
+
+  it("is cleared when the seller adds the figures Amazon said were missing", () => {
+    const explanation =
+      "Our only packer was on leave and we ran a promotion, so many orders missed the cutoff. The attached summary shows 21 of 248 orders late in the week of 22 September and 27 of 301 in the week of 29 September.";
+    expect(rootCauseRewritten({ ...base, explanation })).toBe(true);
+  });
+
+  it("is not cleared by the identical text", () => {
+    const explanation =
+      "Our only packer was on leave and we ran a promotion, so many orders missed the cutoff.";
+    expect(rootCauseRewritten({ ...base, explanation })).toBe(false);
   });
 });

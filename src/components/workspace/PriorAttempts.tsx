@@ -83,6 +83,10 @@ export function PriorAttempts({
     }
   }
 
+  // A response recorded in this product already tells the case it was answered before; asking
+  // "have you already replied?" again in round two is noise (19 Oct 2026).
+  if (recorded.length === 0 && workspace.submissions.some((s) => s.source !== "prior")) return null;
+
   return (
     <div
       ref={rootRef}

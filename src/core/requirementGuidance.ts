@@ -103,13 +103,15 @@ export function alternativesFor(kind: EvidenceKind): RequirementAlternative[] {
   }
 
   if (kind === "rights_owner_retraction" || kind === "brand_authorization") {
+    // Worded for the record asked for: a brand's authorization letter is not a "retraction"
+    // (19 Oct 2026: an authenticity case was offered a path about retracting a complaint).
+    const who = kind === "brand_authorization" ? "brand" : "rights owner";
+    const record = kind === "brand_authorization" ? "letter" : "retraction";
     alternatives.push({
       id: "await_rights_owner",
-      label: "Record that the rights owner has not replied",
-      honestyNote:
-        "This path states that you asked and have had no answer, with the date you asked, rather than claiming a retraction you do not have.",
-      consequence:
-        "Nothing moves until the rights owner replies. The response names the gap instead of filling it.",
+      label: `Record that the ${who} has not replied`,
+      honestyNote: `This path states that you asked and have had no answer, with the date you asked, rather than claiming a ${record} you do not have.`,
+      consequence: `Nothing moves until the ${who} replies. The response names the gap instead of filling it.`,
     });
   }
 

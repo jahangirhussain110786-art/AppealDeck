@@ -318,6 +318,17 @@ export function ResponseReview({
                     hint={F.questionTopics.find((t) => t.pattern.test(q))?.hint ?? F.questionHint}
                     example={F.questionTopics.find((t) => t.pattern.test(q))?.example}
                   />
+                  {(() => {
+                    // A reminder under a thin answer (19 Oct 2026): "The owner is the founder" to
+                    // "Who is the beneficial owner?" was accepted without a word.
+                    const topic = F.questionTopics.find((t) => t.pattern.test(q));
+                    const written = answerValue(q).trim();
+                    return topic && written.length > 0 && !topic.needs.test(written) ? (
+                      <p role="status" className="text-sm text-warning">
+                        {topic.nudge}
+                      </p>
+                    ) : null;
+                  })()}
                   <SectionTools
                     file={file}
                     signedIn={signedIn}

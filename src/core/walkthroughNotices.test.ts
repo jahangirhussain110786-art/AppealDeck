@@ -161,3 +161,53 @@ describe("19 Oct 2026 walk-through: round 4", () => {
     expect(analyzeReply(get("U-reply-documents")).category).toBe("document_request");
   });
 });
+
+describe("19 Oct 2026 walk-through: the invoice one step up the chain", () => {
+  const raise = (text: string) =>
+    proposedRequirements({ ...newWorkspace(), notice: text, revision: 2 }).map((r) => r.label);
+
+  it("a refusal asking for 'the invoice from the manufacturer that <supplier> bought from' is a new record", async () => {
+    const more = JSON.parse(read("more-notices.json")) as Array<{ id: string; text: string }>;
+    const labels = raise(more.find((n) => n.id === "U-reply-documents")!.text);
+    expect(labels).toContain("Invoice from the supplier's own supplier");
+    // The ordinary invoice already attached is not asked for again.
+    expect(labels).not.toContain("Supplier invoice");
+  });
+
+  it("the ordinary 'invoices for the units you purchased from your supplier' is still one invoice", () => {
+    const labels = raise(read("notice-A-authenticity.txt"));
+    expect(labels).toContain("Supplier invoice");
+    expect(labels).not.toContain("Invoice from the supplier's own supplier");
+  });
+});
+
+describe("19 Oct 2026 walk-through: a refused questionnaire stays a questionnaire", () => {
+  const questionnaire = (
+    JSON.parse(read("more-notices.json")) as Array<{ id: string; text: string }>
+  ).find((n) => n.id === "N-questionnaire")!.text;
+  const refusal =
+    "Thank you for your response to the account review questionnaire. We could not reinstate your account because your answer to question 4 does not identify all owners of the business and their share of ownership. Please resubmit your answers.";
+
+  it("keeps the form and its four questions after Amazon's refusal is applied", async () => {
+    const { applyWorkspaceReply, routeWorkspace, questionnaireQuestions } =
+      await import("./workspace");
+    const w0: Workspace = { ...newWorkspace(), notice: questionnaire, protocol: "questionnaire" };
+    w0.replies.push({ id: "r1", at: new Date().toISOString(), text: refusal, applied: false });
+    const w1 = applyWorkspaceReply(w0, "r1");
+    const route = routeWorkspace(w1);
+    expect(route.protocol).toBe("questionnaire");
+    expect(questionnaireQuestions({ ...w1, protocol: route.protocol })).toHaveLength(4);
+  });
+
+  it("a final decision does not reopen the questionnaire", async () => {
+    const { applyWorkspaceReply, routeWorkspace } = await import("./workspace");
+    const w0: Workspace = { ...newWorkspace(), notice: questionnaire, protocol: "questionnaire" };
+    w0.replies.push({
+      id: "r1",
+      at: new Date().toISOString(),
+      text: "Our decision is final and we will not review further appeals. Please do not submit another appeal.",
+      applied: false,
+    });
+    expect(routeWorkspace(applyWorkspaceReply(w0, "r1")).protocol).not.toBe("questionnaire");
+  });
+});

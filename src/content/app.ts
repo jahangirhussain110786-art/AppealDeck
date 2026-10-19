@@ -437,7 +437,13 @@ export const APP = {
       submitYourself: "You submit this yourself in Seller Central.",
       evidenceMissing: "{count} still missing",
       // G-89: counts a seller can check against the list, in the words the page uses.
+      // Most sentences repeat the last response but it carries facts that one did not (19 Oct 2026).
+      noveltyNewFacts:
+        "Much of the wording is the same as your last response, but this one adds facts that one did not carry: {facts}.",
       evidenceComplete: "{done} of {total} attached",
+      // Some records could not be obtained and the response says so; "2 of 2 attached" would be false.
+      evidenceCompleteWithGaps:
+        "{done} of {total} attached. Not obtainable, and stated as missing in the response: {kinds}",
       templatePhrases:
         "Found bracketed placeholders like '[Describe...]' — replace with real facts",
       noTemplatePhrases: "No placeholders detected",

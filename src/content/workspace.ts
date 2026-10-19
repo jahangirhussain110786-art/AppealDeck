@@ -231,11 +231,18 @@ export const WORKSPACE = {
         hint: "Say what you sell, where you buy it and from whom. Name each supplier.",
         example:
           "For example: We sell kitchen tools. We buy from two US distributors, Harbor Goods and Summit Supply, and keep every invoice.",
+        // 19 Oct 2026: shown under the box once something is written that does not carry what the
+        // question needs. A reminder, never a block and never a prediction about the answer.
+        needs:
+          /\b(?:from|supplier|distributor|manufactur\w+|wholesale\w*|bought|purchas\w+|source[ds]?)\b/i,
+        nudge: "This does not yet say where you buy the products or from whom.",
       },
       {
         pattern: /other (?:amazon )?(?:seller )?accounts|ever operated|multiple accounts/i,
         hint: "Answer yes or no first. If yes, name each account and say what happened to it.",
         example: "For example: No. This is the only Amazon seller account I have operated.",
+        needs: /\b(?:yes|no|never|only|none)\b/i,
+        nudge: "Start with yes or no, so the answer cannot be misread.",
       },
       {
         pattern:
@@ -243,13 +250,24 @@ export const WORKSPACE = {
         hint: "Name the supplier, the purchase date and quantity, and which invoice shows it.",
         example:
           "For example: We bought 120 units from Harbor Goods on 14 Aug 2026. Invoice HG-2088 shows the quantity.",
+        needs: /\b(?:invoice|purchase order|PO|order)\b|\b\d{1,2} \w+ 20\d\d\b|#?\b\d{4,}\b/i,
+        nudge: "Add the supplier, the purchase date and the invoice or order number.",
       },
       {
         pattern: /beneficial owner|who owns|ownership/i,
         hint: "Give the full legal name of each owner and their share, as on your registration.",
         example: "For example: Jane Smith, sole owner, as shown on our registration.",
+        needs: /\b\d{1,3}\s?(?:%|percent)|\b(?:sole|only|single)\s+owner\b/i,
+        nudge:
+          "This does not give each owner's full legal name and ownership share, or say who the sole owner is.",
       },
-    ] as Array<{ pattern: RegExp; hint: string; example: string }>,
+    ] as Array<{
+      pattern: RegExp;
+      hint: string;
+      example: string;
+      needs: RegExp;
+      nudge: string;
+    }>,
     additionalPlaceholder:
       "Only if something important is not covered by the questions above. Leave it empty otherwise.",
     save: "Save my answers",

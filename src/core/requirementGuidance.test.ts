@@ -180,3 +180,18 @@ describe("record-level reasons", () => {
     expect(disagreeing.size).toBeGreaterThan(0);
   });
 });
+
+describe("alternatives name the record that was asked for (19 Oct 2026)", () => {
+  it("a brand authorization letter is not described as a retraction", () => {
+    const alt = alternativesFor("brand_authorization").find((a) => a.id === "await_rights_owner")!;
+    expect(alt.label).toBe("Record that the brand has not replied");
+    expect(alt.honestyNote).toMatch(/letter/);
+    expect(alt.honestyNote).not.toMatch(/retraction/);
+  });
+  it("a rights-owner retraction keeps its own wording", () => {
+    const alt = alternativesFor("rights_owner_retraction").find(
+      (a) => a.id === "await_rights_owner",
+    )!;
+    expect(alt.label).toBe("Record that the rights owner has not replied");
+  });
+});

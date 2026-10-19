@@ -113,3 +113,32 @@ Mobile layout and the live Paddle checkout. The Gemini free tier answered every 
 ## Worked as intended
 
 Falsified-documents routed to qualified help with no drafting, the account-health warning read as "a warning, not a suspension", phishing flagged on four counts, reinstated and final-decision replies recognised, the questionnaire given one box per question, a 10-day window counted to "today" on the right day.
+
+# Round 5: whole cases, round after round
+
+The earlier rounds tested one screen at a time. These ran three invented cases from the first notice to the outcome, in the real app, as a seller would: `journey-A.cjs`, `journey-B.cjs`, `journey-C.cjs`.
+
+- **A, Ridgeline Outdoor Supply (authenticity):** round 1 with one invoice, the brand letter declared not obtainable. Amazon asks for the manufacturer's invoice and the brand letter. Round 2 adds both, resubmits, the pack is downloaded, Amazon reinstates, the dashboard asks for the outcome.
+- **B, Pinecrest Pet Supply (performance):** a Plan of Action; Amazon refuses and asks for carrier records; the seller first resubmits with nothing changed, then revises with the records; Amazon's final decision.
+- **C, Redfern Kitchen Supply (questionnaire):** four answers, Amazon faults answer 4, the seller revises that one.
+
+## Defects found and fixed (each with a test)
+
+1. **A refused questionnaire became a dead end.** Round 2 said "We cannot prepare a response for this kind of notice here" and the four answers were not shown, so answer 4 could not be revised. It now stays a questionnaire with its questions and earlier answers.
+2. **A request for a new invoice was treated as the old one.** Amazon asked for "the invoice from the manufacturer that Summit Peak bought from"; the case said "asked for again, your file stays linked", inviting the same invoice again. It is now a separate record, "Invoice from the supplier's own supplier", and the attached invoice is kept as reviewed.
+3. **"2 of 2 attached" when one document was declared unobtainable.** It now says "1 of 2 attached. Not obtainable, and stated as missing in the response: Authorization letter".
+4. **The "cannot obtain" choices for a brand letter talked about a "retraction"** and a "rights owner". Worded for the record asked for.
+5. **Adding what Amazon asked for was called "almost word for word".** Adding weekly figures to a root cause, or changing one answer of four, left "Same text as a previous attempt? Not yet" and kept "root cause missing" open. New facts (a date, number or name the last response did not carry) now count as a change.
+6. **A thin questionnaire answer passed in silence.** "The owner is the founder" to "Who is the beneficial owner?" now gets a one-line reminder; so do the business-model, other-accounts and inventory-source questions.
+7. **After a final decision the dashboard said "Read what it changes".** It now says the decision is final and to record the outcome.
+8. **Round two asked "Have you already replied to this notice?"** although a response was recorded here. Hidden once one is.
+
+## Worked as intended, now checked end to end
+
+An unchanged resubmission is caught ("the same text, word for word"); "Nothing has changed since your last response" appears; the change report lists new sentences and added documents; the upload pack is numbered with a reviewer's index; a reinstatement reply leads to "Record the outcome"; Amazon's refusal text is quoted back.
+
+## Still open
+
+- The pack file name carries the case's internal id.
+- The free on-device reading finds little on an invoice whose supplier is in the header.
+- The AI's daily free-tier limit ended most drafts in the fallback "built from your own wording", so the AI-written round 2 letters were not exercised today.

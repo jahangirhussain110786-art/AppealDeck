@@ -122,7 +122,15 @@ export function summarizeCase(
     return {
       ...base,
       status: "act",
-      next: analyzeReply(unread.text).category === "reinstated" ? STORES.recordOutcome : S.replied,
+      // A final decision has nothing to "read what it changes": the case page offers the outcome.
+      next: (() => {
+        const category = analyzeReply(unread.text).category;
+        return category === "reinstated"
+          ? STORES.recordOutcome
+          : category === "final_decision_negative"
+            ? STORES.recordFinal
+            : S.replied;
+      })(),
       done,
       total,
       due,
