@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   applyWorkspaceReply,
@@ -1240,5 +1241,32 @@ describe("saved document checks survive the vault validator", () => {
     };
     const parsed = WorkspaceSchema.parse(w);
     expect(parsed.documentChecks).toEqual(w.documentChecks);
+  });
+});
+
+describe("brand letter named as 'a letter from the brand' (19 Oct 2026 walk-through)", () => {
+  it("raises the authorization letter, not only invoices, for an authenticity notice", () => {
+    const labels = proposedRequirements({
+      notice: readFileSync(
+        "docs/handoffs/2026-10-19-seller-test/notice-A-authenticity.txt",
+        "utf8",
+      ),
+      formInstructions: "",
+      revision: 1,
+    }).map((r) => r.evidenceKind);
+    expect(labels).toContain("supplier_invoice");
+    expect(labels).toContain("brand_authorization");
+  });
+});
+
+describe("a refusal that asks for shipping records (19 Oct 2026)", () => {
+  it("raises the performance record with Amazon's sentence quoted", () => {
+    const reqs = proposedRequirements({
+      notice: readFileSync("docs/handoffs/2026-10-19-seller-test/reply-B-refusal.txt", "utf8"),
+      formInstructions: "",
+      revision: 2,
+    });
+    expect(reqs.map((r) => r.evidenceKind)).toContain("metric_export");
+    expect(reqs[0]!.sourceQuote).toMatch(/carrier scan records/);
   });
 });

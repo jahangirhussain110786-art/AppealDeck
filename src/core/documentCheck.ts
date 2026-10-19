@@ -446,6 +446,23 @@ function compare(
   comparison: FieldComparison,
   context: CheckContext | undefined,
 ): FieldFinding {
+  // An invoice rarely prints an ASIN (the case guidance says so), so "no ASIN printed" is not a
+  // defect in the document and must not be shown as "Not found" beside a product that is on the
+  // invoice by name or SKU (19 Oct 2026: a distributor invoice for exactly the right board was
+  // marked Not found for this). The seller is pointed at the product lines instead.
+  if (comparison.kind === "asin" && f.status === "missing") {
+    const asins = context?.asins ?? [];
+    return {
+      ...f,
+      status: "not_assessed",
+      ...(asins.length > 0
+        ? {
+            comparedWith: `${asins.length === 1 ? "The ASIN" : "ASINs"} on your notice: ${asins.join(", ")}`,
+          }
+        : {}),
+      note: `No ASIN is printed here, so we cannot match it${asins.length > 0 ? ` to ${asins.join(", ")}` : ""} ourselves. Check each line is the product on that listing, by its name or model number.`,
+    };
+  }
   if (f.status !== "present" || !f.observed) return f;
   switch (comparison.kind) {
     case "date_window":

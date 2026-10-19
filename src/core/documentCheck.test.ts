@@ -584,3 +584,12 @@ describe("saved document checks", () => {
     expect(next.map((c) => [c.recordId, c.contentHash])).toEqual([["r1", "new"]]);
   });
 });
+
+describe("an invoice with no ASIN printed (19 Oct 2026)", () => {
+  it("is not shown as 'Not found' when the reading reports the ASIN missing", () => {
+    const f = field(ASIN_FIELD, { status: "missing", observed: undefined, note: "No ASIN here." });
+    expect(f.status).toBe("not_assessed");
+    expect(f.note).toMatch(/Check each line is the product/);
+    expect(f.comparedWith).toMatch(/B0ABCDEF12/);
+  });
+});

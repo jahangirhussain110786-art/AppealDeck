@@ -7,6 +7,18 @@ import type { DraftRequest } from "@/lib/llm/draftResponse";
 import type { OtherDraftRequest } from "@/lib/llm/draftOther";
 
 /**
+ * "Amazon asked for" in the AI prompt. A record we inferred and the seller has not touched is not
+ * something Amazon asked for, and listing it made the letter tell Amazon it was "still being
+ * obtained" (found 19 Oct 2026: a performance appeal announced a sales record nobody had requested).
+ * A record the seller acted on (waiting, reviewed, cannot obtain) is theirs to state, so it stays.
+ */
+export function requestedFor(w: Workspace) {
+  return w.requirements
+    .filter((r) => !(r.source === "matrix" && r.status === "needed"))
+    .map((r) => ({ label: r.label, status: r.status }));
+}
+
+/**
  * What the AI is allowed to see, taken from a case. Returns null when the case is not one the AI
  * writes for: only a Plan of Action (the operational protocol), and only once the seller has
  * written all three answers. A document request or a questionnaire is answered in the seller's own
@@ -49,7 +61,7 @@ export function draftRequestFrom(
     declined: w.requirements
       .filter((r) => r.status === "cannot_obtain" && r.declined?.reason.trim())
       .map((r) => ({ label: r.label, reason: r.declined!.reason.trim() })),
-    requested: w.requirements.map((r) => ({ label: r.label, status: r.status })),
+    requested: requestedFor(w),
     issues: detectIssues(w.notice, w.formInstructions).map((i) => ({
       kind: i.kind,
       quote: i.sourceQuote,
@@ -93,7 +105,7 @@ export function otherDraftRequestFrom(
     declined: w.requirements
       .filter((r) => r.status === "cannot_obtain" && r.declined?.reason.trim())
       .map((r) => ({ label: r.label, reason: r.declined!.reason.trim() })),
-    requested: w.requirements.map((r) => ({ label: r.label, status: r.status })),
+    requested: requestedFor(w),
     issues: detectIssues(w.notice, w.formInstructions).map((i) => ({
       kind: i.kind,
       quote: i.sourceQuote,

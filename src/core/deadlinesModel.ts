@@ -175,7 +175,7 @@ export function computeDeadlines(input: DeadlineInput): Deadline[] {
     });
   } else if (days !== null) {
     const label = legacy
-      ? "Stated 17-day window (LEGACY parse pattern — verify, never presented as current policy)"
+      ? LEGACY_17_DAY_LABEL
       : start
         ? `Appeal window: ${days} days from ${formatDay(start)}`
         : `Appeal window: ${days} days`;
@@ -284,11 +284,22 @@ export function serializeDeadlines(deadlines: readonly Deadline[]): SerializedDe
  * Windows saved between `c9bb022` and the day `dueOn` was added carry `startsOn`, and are genuine;
  * they get the `dueOn` their `dueAt` already encodes, so they display on the right calendar day.
  */
+/**
+ * Shown when a notice mentions a 17-day window. Seventeen days is an old Amazon figure, so the seller
+ * is told to confirm it rather than trust it. (Until 19 Oct 2026 this read "LEGACY parse pattern",
+ * a developer note that a seller saw on the case page.)
+ */
+export const LEGACY_17_DAY_LABEL =
+  "17-day window, as your notice says. Amazon's current window may differ: check Account Health";
+const OLD_LEGACY_17_DAY_LABEL =
+  "Stated 17-day window (LEGACY parse pattern — verify, never presented as current policy)";
+
 export function repairStoredDeadlines(
   deadlines: readonly SerializedDeadline[] | undefined,
 ): SerializedDeadline[] | undefined {
   if (!deadlines) return deadlines;
   return deadlines.map((d) => {
+    if (d.label === OLD_LEGACY_17_DAY_LABEL) d = { ...d, label: LEGACY_17_DAY_LABEL };
     if (d.kind !== "appeal_window" || !d.dueAt || d.dueOn) return d;
     if (d.startsOn) return { ...d, dueOn: d.dueAt.slice(0, 10) };
     // "Appeal window: 30 days from notice" — the old label, written when the start was assumed.

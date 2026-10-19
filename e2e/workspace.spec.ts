@@ -646,7 +646,7 @@ test("a refusal that names no reason offers a checklist for finding what was mis
     );
   await page.getByRole("button", { name: "Save reply for review" }).click();
   const summary = page.getByText(
-    "Does the reply not say what was missing? Work through this first.",
+    "If the reply does not say what was missing, work through this first.",
   );
   await expect(summary).toBeVisible();
   await summary.click();

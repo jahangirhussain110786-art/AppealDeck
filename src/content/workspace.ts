@@ -10,7 +10,7 @@ export const WORKSPACE = {
     // was not enough. Shown for that category only, folded, so a reply that does name a reason is
     // not buried. The steps are practitioner guidance and say so; none of them predicts an outcome.
     unclear: {
-      summary: "Does the reply not say what was missing? Work through this first.",
+      summary: "If the reply does not say what was missing, work through this first.",
       items: [
         "Read your notice again and check that every question or request in it has its own answer.",
         "Check each document: is it the one Amazon named, complete, readable, and from the period it asked about?",

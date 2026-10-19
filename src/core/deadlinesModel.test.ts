@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   computeDeadlines,
+  LEGACY_17_DAY_LABEL,
   NO_DEADLINE_LABEL,
   deadlinesForDisplay,
   repairStoredDeadlines,
@@ -159,7 +160,7 @@ describe("where a window is counted from", () => {
     const [window] = computeDeadlines({ parsed, kind: "POLICY", now: NOW });
     expect(window!.dueAt).toBeNull();
     expect(window!.startsOnReceipt).toBe(true);
-    expect(window!.label).toMatch(/LEGACY/);
+    expect(window!.label).toBe(LEGACY_17_DAY_LABEL);
   });
 
   it("keeps both new fields through serialisation, which is how they reach the vault", () => {
@@ -238,11 +239,18 @@ describe("repairStoredDeadlines", () => {
   });
 
   it("does the same for the legacy 17-day label, keeping its warning", () => {
-    const label =
-      "Stated 17-day window (LEGACY parse pattern — verify, never presented as current policy)";
+    const label = LEGACY_17_DAY_LABEL;
     expect(
       repairStoredDeadlines([{ kind: "appeal_window", dueAt: "2026-10-10T09:14:02.511Z", label }]),
     ).toEqual([{ kind: "appeal_window", dueAt: null, label, startsOnReceipt: true }]);
+  });
+
+  it("rewrites the old developer-note label saved in earlier cases", () => {
+    const old =
+      "Stated 17-day window (LEGACY parse pattern — verify, never presented as current policy)";
+    const [d] = repairStoredDeadlines([{ kind: "appeal_window", dueAt: null, label: old }])!;
+    expect(d.label).toBe(LEGACY_17_DAY_LABEL);
+    expect(d.label).not.toMatch(/LEGACY|parse pattern/);
   });
 
   it("keeps a window counted from the notice's own date, and gives it its closing day", () => {

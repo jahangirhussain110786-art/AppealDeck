@@ -28,6 +28,18 @@ export interface NoticeIssue {
   sourceQuote: string;
 }
 
+const REMOVAL_CONSEQUENCE = /\b(?:removed|suppressed|blocked)\b/i;
+const LISTING_ITSELF =
+  /listing[\s-]?(?:policy|violation)|detail[\s-]?page policy|not as described|buy box/i;
+/** A removal under one of these is its consequence; the cause is the issue. */
+const CAUSE_KINDS: ReadonlySet<ViolationKind> = new Set<ViolationKind>([
+  "INAUTHENTIC",
+  "INTELLECTUAL_PROPERTY",
+  "PRODUCT_SAFETY",
+  "RESTRICTED_PRODUCT",
+  "RELATED_ACCOUNT",
+]);
+
 /** Splits on sentence and line boundaries, the same way requirement sourcing does. */
 function segments(raw: string): string[] {
   return raw
@@ -70,6 +82,19 @@ export function detectIssues(raw: string, formInstructions = ""): NoticeIssue[] 
       issues, and both are kept.
     */
     if (kind === "POLICY" && claimed.has(quote)) continue;
+    /*
+      "...privileges have been removed for ASIN B0...", written under an authenticity or rights
+      complaint, is what happened as a result, not a second breach (found 19 Oct 2026: an
+      authenticity notice showed "2 issues" and asked the seller for a "listing correction record"
+      they had no reason to produce). LISTING is kept when the sentence is about the listing itself.
+    */
+    if (
+      kind === "LISTING" &&
+      REMOVAL_CONSEQUENCE.test(quote) &&
+      !LISTING_ITSELF.test(quote) &&
+      [...CAUSE_KINDS].some((k) => patterns.get(k)?.test(text))
+    )
+      continue;
     claimed.add(quote);
     issues.push({ kind, sourceQuote: quote });
   }

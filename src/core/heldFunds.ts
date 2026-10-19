@@ -26,7 +26,11 @@ const HELD_THEN_MONEY = new RegExp(
   "i",
 );
 /** A sentence that states a possibility or a condition, not a fact about this account. */
-const CONDITIONAL = /\b(?:may|might|could|can(?!['’]t)|reserve the right|if|unless)\b/i;
+// "can no longer list products ... and any funds will be held" is a statement of fact, not "can"
+// as a possibility, so a "can" that opens "can no longer" does not make the sentence conditional
+// (19 Oct 2026: a deactivation notice that said funds are held for 90 days showed no money line).
+const CONDITIONAL =
+  /\b(?:may|might|could|can(?!['’]t|\s+no\s+longer)|reserve the right|if|unless)\b/i;
 
 /** True when a sentence of the notice says money is held, frozen or will not be paid out. */
 export function mentionsHeldFunds(raw: string): boolean {

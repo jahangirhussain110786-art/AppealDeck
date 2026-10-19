@@ -106,3 +106,31 @@ describe("the wording lock, units and meaning", () => {
     expect(checkWordingLock(original, rewrite).ok).toBe(true);
   });
 });
+
+describe("the wording lock, hedges (19 Oct 2026)", () => {
+  const original =
+    "Vellmore filed a complaint, most likely because they did not know we buy through their authorized channel.";
+  it("rejects a rewrite that turns a guess into a fact", () => {
+    const r = checkWordingLock(
+      original,
+      "Vellmore filed a complaint because they did not know we buy through their authorized channel.",
+    );
+    expect(r.ok).toBe(false);
+    expect(r.dropped).toContain("an uncertain claim");
+  });
+  it("accepts a rewrite that keeps the hedge, even in other words", () => {
+    expect(
+      checkWordingLock(
+        original,
+        "Vellmore filed a complaint, probably because they did not know we buy through their authorized channel.",
+      ).ok,
+    ).toBe(true);
+  });
+  it("rejects a rewrite that adds a guess the seller never made", () => {
+    const r = checkWordingLock(
+      "The invoice is dated 14 August 2026.",
+      "The invoice is probably dated 14 August 2026.",
+    );
+    expect(r.added).toContain("an uncertain claim");
+  });
+});

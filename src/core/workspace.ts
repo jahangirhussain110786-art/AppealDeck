@@ -337,7 +337,10 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
 }> = [
   { pattern: /\binvoices?\b/i, evidenceKind: "supplier_invoice" },
   {
-    pattern: /\b(letter of authorization|authori[sz]ation letter|LOA)\b/i,
+    // "A letter from the brand confirming the distributor is authorized" (the usual authenticity
+    // wording, found in a 19 Oct 2026 walk-through) names the same record as "letter of authorization".
+    pattern:
+      /\b(letter of authori[sz]ation|authori[sz]ation letter|LOA|letter from (?:the |your )?(?:brand|brand owner|manufacturer|rights? owner)|brand (?:authori[sz]ation|approval) letter)\b/i,
     evidenceKind: "brand_authorization",
   },
   {
@@ -347,7 +350,11 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
     evidenceKind: "identity_doc",
   },
   {
-    pattern: /\b(sales report|sales records?|order report|metrics? report)\b/i,
+    // Shipping, carrier-scan and tracking records added 19 Oct 2026: Amazon's refusal of a
+    // performance appeal asked for "shipping and carrier scan records for the last 14 days" and
+    // nothing was raised, so the next round started with no record to gather.
+    pattern:
+      /\b(sales report|sales records?|order report|metrics? report|(?:shipping|shipment|carrier|tracking)(?: (?:and|or) (?:carrier|shipping|tracking))?(?: scan)? (?:records?|reports?|logs?|data))\b/i,
     evidenceKind: "metric_export",
   },
   // 29 Sep 2026: a funds notice asking for "a bank statement showing the account holder name" had
@@ -461,11 +468,12 @@ export function requirementEvidenceKind(
 const REQUIREMENT_NEGATION =
   /\b(do not|don't|does not need|not required|not necessary|not needed|no need to|no longer|no additional|no further)\b/i;
 
+// "We need to see" / "we require" / "please show" added 19 Oct 2026 (Amazon refusals ask this way).
 // "attach", "supply" and the -ing forms (7 Oct 2026): "Please attach copies of your invoices" and
 // "You may appeal by providing supplier invoices" ask just as plainly. Past tense stays out on
 // purpose ("the ID you provided at registration" is history, not a request).
 const REQUEST_WORD =
-  /\b(provid(?:e|ing)|submit(?:ting)?|upload(?:ing)?|send(?:ing)?|includ(?:e|ing)|attach(?:ing)?|suppl(?:y|ying)|request(?:ed|ing)?)\b/i;
+  /\b(provid(?:e|ing)|submit(?:ting)?|upload(?:ing)?|send(?:ing)?|includ(?:e|ing)|attach(?:ing)?|suppl(?:y|ying)|request(?:ed|ing)?|we (?:need|require)|need to see|please show)\b/i;
 /**
  * A line introducing a list can ask in more ways than a sentence can: "During the call you will be
  * asked to show:", "Have the following ready:". Only ever read on a line that ends with a colon, so

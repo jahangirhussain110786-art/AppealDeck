@@ -30,3 +30,16 @@ describe("mentionsHeldFunds (G-03)", () => {
     expect(mentionsHeldFunds(text)).toBe(false);
   });
 });
+
+describe("a deactivation that also holds the money (19 Oct 2026)", () => {
+  it("counts 'you can no longer list ... and any funds will be held for 90 days'", () => {
+    expect(
+      mentionsHeldFunds(
+        "Because of this, you can no longer list products for sale on Amazon, and any funds in your account will be held for 90 days from the date of deactivation.",
+      ),
+    ).toBe(true);
+  });
+  it("still ignores a real possibility", () => {
+    expect(mentionsHeldFunds("We can withhold funds if you do not respond.")).toBe(false);
+  });
+});

@@ -133,3 +133,21 @@ describe("a case built from a notice raising two issues", () => {
     expect(workspaceGaps(w).some((g) => /separate problems/i.test(g))).toBe(false);
   });
 });
+
+describe("a removal that follows another complaint is not a second issue (19 Oct 2026)", () => {
+  it("counts an authenticity notice that removes ASINs as one issue", async () => {
+    const { readFileSync } = await import("node:fs");
+    const raw = readFileSync(
+      "docs/handoffs/2026-10-19-seller-test/notice-A-authenticity.txt",
+      "utf8",
+    );
+    expect(detectIssues(raw).map((i) => i.kind)).toEqual(["INAUTHENTIC"]);
+  });
+
+  it("still counts a genuine listing breach beside an authenticity complaint", () => {
+    const kinds = detectIssues(
+      "We received customer complaints about the authenticity of ASIN B0CK7T2M9R. Separately, this detail page policy violation remains unresolved.",
+    ).map((i) => i.kind);
+    expect(kinds).toEqual(expect.arrayContaining(["INAUTHENTIC", "LISTING"]));
+  });
+});

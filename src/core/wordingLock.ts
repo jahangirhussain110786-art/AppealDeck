@@ -132,6 +132,13 @@ const CHANGED_OVER_TIME =
   /\b(?:no longer|any ?more|used to|formerly|previously|stopped|ceased|discontinued|at one time)\b/gi;
 // Words that make a statement absolute. A rewrite that adds one has made the seller's claim stronger.
 const ABSOLUTE = /\b(?:always|entirely|completely|fully|none)\b/gi;
+/**
+ * A seller who writes "most likely" has not established the cause, and a rewrite that drops it states
+ * the guess as a fact to Amazon (seen in a 19 Oct 2026 walk-through: "most likely because they did
+ * not know" came back as "because they did not know"). Hedges must survive a rewrite, in number.
+ */
+const HEDGE =
+  /\b(?:most likely|probably|possibly|perhaps|maybe|i think|we think|i believe|we believe|i suspect|we suspect|may have|might have|could have|seems? to|appears? to|as far as (?:i|we) know)\b/gi;
 const PLANNED =
   /\b(?:will|would|shall|intend(?:ed|s)?(?:\s+to)?|planning|planned|plan to|plans to|aim to|hope to|expect to|going to|about to|in the process of|scheduled to|yet to|working on|preparing|developing|currently|underway|in progress)\b/gi;
 // Spelled-out quantities are facts exactly as digits are ("ten" must not become "twelve"). "one" is
@@ -343,6 +350,7 @@ export function checkWordingLock(originalText: string, rewriteText: string): Wor
     ["a change over time", CHANGED_OVER_TIME],
     ["an absolute claim", ABSOLUTE],
     ["planned action", PLANNED],
+    ["an uncertain claim", HEDGE],
   ] as const) {
     const before = [...original.matchAll(pattern)].length;
     const after = [...rewrite.matchAll(pattern)].length;
