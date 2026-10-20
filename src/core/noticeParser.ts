@@ -90,7 +90,7 @@ export const KIND_PATTERNS: ReadonlyArray<readonly [ViolationKind, RegExp]> = [
     // and is matched above; "INFORM" is never matched as a bare word because Amazon notices routinely
     // open with "we are writing to inform you".
     "VERIFICATION",
-    /identity verification|verify your identity|could not verify your identity|video (?:call|interview|verification)|INFORM Consumers Act|INFORM Act|re-?certif(?:y|ication)|certification page|verify your business (?:information|details)|business verification/i,
+    /identity verification|verify your identity|could not verify your identity|video (?:call|interview|verification)|INFORM Consumers Act|INFORM Act|re-?certif(?:y|ication)|certification page|verify your business (?:information|details)|business verification|verify (?:the |your )?(?:VAT|tax|business)(?: and (?:VAT|tax|business|identity))? (?:information|details)|\bVAT (?:registration|verification)\b/i,
   ],
   [
     "PERFORMANCE_METRIC",

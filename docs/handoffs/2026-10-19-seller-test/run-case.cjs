@@ -15,6 +15,51 @@ const doc = (f) => path.join(DIR, "docs", f);
 const log = (title, text, n = 4000) => console.log(`\n=== ${title} ===\n${String(text).slice(0, n)}`);
 
 const CASES = {
+  S2: {
+    notice: "notice-2-design-patent.txt",
+    form: "Upload documents or ask the rights owner to withdraw the report.",
+    dispute: true,
+    files: { "Supplier invoice": "2A-commercial-invoice-shenzhen-aluminium.pdf" },
+    notes: {
+      "Supplier invoice":
+        "Commercial invoice SZ-AL-260933 from Shenzhen Brightway Metal Products dated 14 June 2026 for 800 AL-114 laptop stands, which we list as B0DM7X3PF2.",
+    },
+    explanation:
+      "We disagree with the report. Our stand, model AL-114, is made by Shenzhen Brightway Metal Products, which designed it in 2022 and published it in its catalogue on 2 April 2022. The attached commercial invoice SZ-AL-260933 dated 14 June 2026 shows we bought 800 of them. The manufacturer's statement of 10 October 2026 says it has no agreement with Orbis Ergonomics Inc. and does not copy its designs.",
+  },
+  S3: {
+    notice: "notice-3-hazmat.txt",
+    form: "Upload the SDS and the UN38.3 test summary.",
+    files: {
+      "Safety data sheet (SDS)": "3A-safety-data-sheet-voltridge-20k.pdf",
+      "UN38.3 battery test summary": "3B-un38-3-test-summary-voltridge.pdf",
+    },
+    notes: {
+      "Safety data sheet (SDS)": "SDS for the VR-20K power bank, revision 2 issued 5 February 2025, 16 sections.",
+      "UN38.3 battery test summary":
+        "UN38.3 test summary for model VR-20K, report ZBS-2025-01877 dated 24 January 2025, 74 Wh, 6 cells, tests T1 to T8 passed.",
+    },
+    explanation:
+      "The attached safety data sheet for the VoltRidge VR-20K power bank was issued on 5 February 2025 and covers all 16 sections. The attached UN38.3 test summary is for the same model, report ZBS-2025-01877 dated 24 January 2025 from Zhejiang Battery Safety Testing Center. The battery is 74 Wh with 6 cells.",
+  },
+  S4: {
+    notice: "notice-4-uk-vat.txt",
+    form: "Send the documents through Account Health.",
+    files: {
+      "Other requested record": "4A-vat-registration-certificate-hmrc.pdf",
+      "Bank or financial record": "4B-bank-statement-cotswold-tea.pdf",
+      "Proof of address": "4C-council-tax-bill-or-utility.pdf",
+      "Requested identity record": "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
+    },
+    notes: {
+      "Other requested record": "HMRC VAT registration certificate, VAT number GB 412 8830 57, effective 1 February 2022.",
+      "Bank or financial record": "September 2026 statement for Cotswold Tea Merchants Ltd, account ending 6615.",
+      "Proof of address": "Water and power bill dated 14 September 2026 for The Old Maltings, Stow-on-the-Wold.",
+      "Requested identity record": "Photo ID of the primary contact on the account.",
+    },
+    explanation:
+      "The attached documents verify Cotswold Tea Merchants Ltd: the HMRC VAT certificate for GB 412 8830 57 effective 1 February 2022, the September 2026 bank statement for the account ending 6615, a bill dated 14 September 2026 for The Old Maltings, Church Lane, Stow-on-the-Wold GL54 1BN, and the photo ID of the primary contact.",
+  },
   G: {
     notice: "notice-G-restricted.txt",
     form: "Submit the COA, GMP certificate, label photos and invoice.",
@@ -205,6 +250,14 @@ const tab = async (page, name) => {
   await page.waitForURL(/\/case/);
   const form = page.getByLabel("What the response page asks for");
   if (await form.isVisible().catch(() => false)) await form.fill(c.form);
+  if (c.dispute) {
+    await page.getByText(/Something wrong\? Change it/).first().click().catch(() => {});
+    await page.waitForTimeout(500);
+    const labelsHere = await page.locator("label, [role=radio], [role=combobox], select").allInnerTexts();
+    console.log("FIRST-SCREEN CONTROLS:", labelsHere.filter((t) => t.length < 90).join(" | "));
+    const dis = page.getByLabel(/i disagree|dispute|no, i disagree/i).first();
+    if (await dis.isVisible().catch(() => false)) await dis.check().catch(() => dis.click());
+  }
   await page.getByRole("button", { name: /yes, this is right/i }).click();
   await page.waitForTimeout(1500);
   log("OVERVIEW", await dump(page, "3-overview"), 2500);
@@ -216,7 +269,7 @@ const tab = async (page, name) => {
 
   // Upload each file against its card, like a seller would.
   for (const [label, file] of Object.entries(c.files ?? {})) {
-    const card = page.getByRole("region", { name: new RegExp(`^${label}`) });
+    const card = page.getByRole("region", { name: new RegExp("^" + label.split("").map((ch) => (/[A-Za-z0-9 ,']/.test(ch) ? ch : "." )).join("")) });
     const openBtn = card.getByRole("button", { name: /^open$/i });
     if (await openBtn.isVisible().catch(() => false)) {
       await openBtn.click();

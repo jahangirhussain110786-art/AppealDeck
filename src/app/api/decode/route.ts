@@ -72,7 +72,10 @@ function refuse(message: string, extra: Record<string, unknown> = {}) {
  * record).
  */
 const REPLY_MARKERS =
-  /\byour (?:appeal|plan of action|POA|submission|reply|response)\b|\bwe(?:'ve| have) (?:reviewed|received) your (?:appeal|plan of action|POA|submission|reply|response|request to reinstate|documents?|invoices?)\b|\bthank you for (?:your (?:appeal|plan of action|submission|reply|response)|submitting|providing)\b|\bregarding your (?:appeal|case)\b|\bwe(?:'ve| have)? reviewed (?:the )?(?:information|documents?|details|evidence|material)(?: that)? you (?:sent|provided|submitted)\b/i;
+  // A first notice says "Your Plan of Action should explain the root cause" (an instruction), and
+  // that read as "this looks like Amazon's reply" (19 Oct 2026). Only a verb about something already
+  // sent counts: "your plan of action does not address", "your appeal has been reviewed".
+  /\byour (?:appeal|plan of action|POA|submission|reply|response)\s+(?:was|were|has|have|had|did|does|do|doesn't|didn't|is|are|isn't|contains?|lacks?|describes?|identif\w+|explains?|did not|does not)\b|\bwe(?:'ve| have) (?:reviewed|received) your (?:appeal|plan of action|POA|submission|reply|response|request to reinstate|documents?|invoices?)\b|\bthank you for (?:your (?:appeal|plan of action|submission|reply|response)|submitting|providing)\b|\bregarding your (?:appeal|case)\b|\bwe(?:'ve| have)? reviewed (?:the )?(?:information|documents?|details|evidence|material)(?: that)? you (?:sent|provided|submitted)\b/i;
 const REQUESTING_REPLY_MARKERS =
   /\bthank you for (?:your (?:appeal|plan of action|submission|reply|response|documents?|invoices?)|submitting|providing)\b|\bwe(?:'ve| have) (?:reviewed|received) your (?:appeal|plan of action|POA|submission|reply|response|documents?|invoices?)\b|\bwe(?:'ve| have)? reviewed (?:the )?(?:information|documents?|details|evidence|material)(?: that)? you (?:sent|provided|submitted)\b/i;
 /** Categories that, with a reply marker, mean "this is Amazon answering something you sent". */

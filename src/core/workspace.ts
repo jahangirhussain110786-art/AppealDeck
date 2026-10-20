@@ -3,7 +3,7 @@ import type { PoaDraft } from "./composer";
 import { determineResponseType, describesThePast } from "./responseType";
 import type { ResponseType } from "./responseType";
 import type { EvidenceKind } from "./evidenceModel";
-import { requirementsFor } from "./evidenceModel";
+import { COMPLIANCE_VARIANTS, requirementsFor } from "./evidenceModel";
 import type { ViolationKind } from "./violationKinds";
 import { findD6Allegation, hasD6Allegation, isSeverityGated } from "./violationKinds";
 import { KIND_PATTERNS } from "./noticeParser";
@@ -336,6 +336,25 @@ export const UPSTREAM_INVOICE_LABEL = "Invoice from the supplier's own supplier"
  * statement or utility bill" is one proof-of-address record, not a proof of address and a separate
  * bank record, so the bank pattern steps aside when the sentence is about an address.
  */
+/** The compliance documents a notice can name one by one. */
+export const COMPLIANCE_DOCUMENTS: ReadonlyArray<{ pattern: RegExp; label: string }> = [
+  { pattern: /\b(?:safety data sheets?|SDS)\b/i, label: COMPLIANCE_VARIANTS.sds.label },
+  {
+    pattern: /\bUN\s?38\.3\b|lithium battery test (?:summary|report)/i,
+    label: COMPLIANCE_VARIANTS.un38_3.label,
+  },
+  {
+    pattern: /\bchildren['’]?s product certificates?\b|\bCPC\b/i,
+    label: COMPLIANCE_VARIANTS.cpc.label,
+  },
+  { pattern: /\bcertificates? of analysis\b|\bCOA\b/i, label: COMPLIANCE_VARIANTS.coa.label },
+  {
+    pattern:
+      /\bc?GMP\b[^.!?\n]{0,40}certificat\w+|\bmanufacturing certificates?\b|\bGood Manufacturing Practices?\b/i,
+    label: COMPLIANCE_VARIANTS.gmp.label,
+  },
+];
+
 const CANDIDATE_PATTERNS: ReadonlyArray<{
   pattern: RegExp;
   evidenceKind: EvidenceKind;
@@ -394,7 +413,7 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
   // rather than mislabelled "Proof of address". Never fires where an address is also named.
   {
     pattern:
-      /\b(business licen[cs]es?|business registration(?: documents?| certificates?)?|trade licen[cs]es?)\b/i,
+      /\b(business licen[cs]es?|business registration(?: documents?| certificates?)?|trade licen[cs]es?|VAT (?:registration )?certificates?|certificates? of (?:incorporation|registration)|company registration)\b/i,
     evidenceKind: "other",
     unless: /\bproof of (?:address|residence)\b|\butility bills?\b/i,
   },
@@ -419,9 +438,22 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
   },
   {
     pattern:
-      /\b(test reports?|children['’]?s product certificates?|certificates? of analysis|\bCOA\b|c?GMP certificat\w+|manufacturing certificates?|compliance certificates?|certificates? of (?:conformity|compliance)|lab(?:oratory)? (?:test )?reports?|safety data sheets?|SDS|exemption sheets?)\b/i,
+      /\b(test reports?|compliance certificates?|certificates? of (?:conformity|compliance)|lab(?:oratory)? (?:test )?reports?|exemption sheets?)\b/i,
     evidenceKind: "compliance_report",
+    // A sentence that names one of the specific documents ("A UN38.3 test summary (the lithium
+    // battery test report required for transport)") is that document, not also a general test report.
+    unless:
+      /\bUN\s?38\.3\b|\blithium battery test\b|\bsafety data sheets?\b|\bcertificates? of analysis\b/i,
   },
+  // A request that names several compliance documents names several documents (19 Oct 2026). One
+  // "Test report or compliance certificate" card could hold one file, so a seller asked for a
+  // safety data sheet and a UN38.3 summary, or a certificate and a lab report, had nowhere to put
+  // the second. Each gets its own card; all share the compliance kind and its guidance.
+  ...COMPLIANCE_DOCUMENTS.map((d) => ({
+    pattern: d.pattern,
+    evidenceKind: "compliance_report" as const,
+    label: d.label,
+  })),
 ];
 
 /** Label comes from the one map, so a candidate and an inferred requirement can never disagree. */
@@ -434,6 +466,19 @@ export const REQUIREMENT_CANDIDATES: ReadonlyArray<{
   ...c,
   label: c.label ?? EVIDENCE_KIND_LABELS[c.evidenceKind],
 }));
+
+/**
+ * The kind of record a seller meant by the name they typed ("Supplier invoice, Magnolia Botanicals"),
+ * or undefined when it matches none. A record added by hand had no kind, so it could not be checked
+ * and its invoice was left out of the units total: a seller with a second supplier (the usual case)
+ * got the second invoice stored but never read or counted (19 Oct 2026).
+ */
+export function evidenceKindFromName(name: string): EvidenceKind | undefined {
+  const exact = KIND_BY_LABEL.get(name.trim().toLowerCase());
+  if (exact) return exact;
+  return REQUIREMENT_CANDIDATES.find((c) => c.pattern.test(name) && !c.unless?.test(name))
+    ?.evidenceKind;
+}
 
 /**
  * Every label the model can produce, reversed back to its kind.
@@ -449,6 +494,10 @@ const KIND_BY_LABEL: ReadonlyMap<string, EvidenceKind> = new Map([
     ([kind, label]): [string, EvidenceKind] => [label.toLowerCase(), kind],
   ),
   [UPSTREAM_INVOICE_LABEL.toLowerCase(), "supplier_invoice"],
+  ...COMPLIANCE_DOCUMENTS.map((d): [string, EvidenceKind] => [
+    d.label.toLowerCase(),
+    "compliance_report",
+  ]),
 ]);
 
 /**

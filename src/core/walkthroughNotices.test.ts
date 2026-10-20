@@ -91,7 +91,8 @@ describe("19 Oct 2026 walk-through: restricted, review policy, verification", ()
     const all = proposedRequirements(w, kind).map((r) => r.label);
     expect(labels.map((r) => r.label)).toEqual(
       expect.arrayContaining([
-        "Test report or compliance certificate",
+        "Certificate of Analysis",
+        "Manufacturing (cGMP) certificate",
         "Product and label photos",
         "Supplier invoice",
       ]),
@@ -209,5 +210,79 @@ describe("19 Oct 2026 walk-through: a refused questionnaire stays a questionnair
       applied: false,
     });
     expect(routeWorkspace(applyWorkspaceReply(w0, "r1")).protocol).not.toBe("questionnaire");
+  });
+});
+
+describe("19 Oct 2026 walk-through: a record the seller adds by hand", () => {
+  it("is given the kind its name says, so it can be checked and counted", async () => {
+    const { evidenceKindFromName } = await import("./workspace");
+    expect(evidenceKindFromName("Supplier invoice, Magnolia Botanicals")).toBe("supplier_invoice");
+    expect(evidenceKindFromName("Second supplier invoice (Atlanta)")).toBe("supplier_invoice");
+    expect(evidenceKindFromName("Letter of authorization from Trailhead")).toBe(
+      "brand_authorization",
+    );
+    expect(evidenceKindFromName("Invoice from the supplier's own supplier")).toBe(
+      "supplier_invoice",
+    );
+  });
+  it("stays unkinded when the name matches nothing we know", async () => {
+    const { evidenceKindFromName } = await import("./workspace");
+    expect(evidenceKindFromName("Photo of the warehouse")).toBeUndefined();
+  });
+});
+
+describe("19 Oct 2026 walk-through: a request naming several compliance documents", () => {
+  const labelsOf = (text: string) => {
+    const kind = runDecode(text, {}).classification.kind;
+    return proposedRequirements({ ...newWorkspace(), notice: text }, kind).map((r) => r.label);
+  };
+
+  it("hazmat: the safety data sheet and the UN38.3 summary are two records", () => {
+    const labels = labelsOf(read("notice-3-hazmat.txt"));
+    expect(labels).toEqual(
+      expect.arrayContaining(["Safety data sheet (SDS)", "UN38.3 battery test summary"]),
+    );
+    // The UN38.3 sentence says "test report" too; it is not a third, general record.
+    expect(labels).not.toContain("Test report or compliance certificate");
+  });
+
+  it("children's product: the certificate and the lab report are two records", () => {
+    const labels = labelsOf(read("notice-D-product-safety.txt"));
+    expect(labels).toEqual(
+      expect.arrayContaining([
+        "Children's Product Certificate",
+        "Test report or compliance certificate",
+      ]),
+    );
+  });
+});
+
+describe("19 Oct 2026 walk-through: a UK VAT and business verification", () => {
+  const text = read("notice-4-uk-vat.txt");
+  it("is a verification, not a funds notice, and names its four records", () => {
+    const kind = runDecode(text, {}).classification.kind;
+    expect(kind).toBe("VERIFICATION");
+    const labels = proposedRequirements({ ...newWorkspace(), notice: text }, kind)
+      .filter((r) => r.source === "notice")
+      .map((r) => r.label);
+    expect(labels).toEqual(
+      expect.arrayContaining([
+        "Other requested record",
+        "Bank or financial record",
+        "Proof of address",
+        "Requested identity record",
+      ]),
+    );
+  });
+});
+
+describe("19 Oct 2026 walk-through: a warning about funds is not a second issue", () => {
+  it("UK VAT verification raises one issue, not 'Funds hold' as well", async () => {
+    const { detectIssues } = await import("./noticeIssues");
+    expect(detectIssues(read("notice-4-uk-vat.txt")).map((i) => i.kind)).toEqual(["VERIFICATION"]);
+  });
+  it("a funds notice that states the hold still raises it", async () => {
+    const { detectIssues } = await import("./noticeIssues");
+    expect(detectIssues(read("notice-F-funds.txt")).map((i) => i.kind)).toContain("FUNDS");
   });
 });

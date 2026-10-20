@@ -1,0 +1,21 @@
+Subject: Action required: Dangerous goods information needed for ASIN B0DN3Y6RW9
+
+Date: 15 October 2026
+
+Hello VoltRidge Power,
+
+Your FBA listing for the following product has been placed in "Dangerous Goods Review" and is not available for sale. Inventory already in our fulfillment centers is blocked from new orders.
+
+ASIN: B0DN3Y6RW9  VoltRidge 20000mAh Portable Power Bank
+Suspected classification: Lithium ion battery, UN3481
+
+To restore the listing, please submit the following through the Manage Your Compliance page within 10 business days:
+
+1. A Safety Data Sheet (SDS) for the product, in English, with all 16 sections complete. The SDS must have been issued within the last 3 years.
+2. A UN38.3 test summary for the battery (the lithium battery test report required for transport), showing the product model and the testing laboratory.
+3. The watt-hour rating of the battery and the number of cells.
+
+If the documents do not match the product on the detail page, the listing will stay blocked. Submitting documents that are not accurate may result in the removal of your selling privileges.
+
+Dangerous Goods Compliance Team
+Amazon.com

@@ -9,6 +9,7 @@ import {
   type DocumentCheckResult,
 } from "@/core/documentCheck";
 import type { EvidenceKind, ViolationKind } from "@/core";
+import { COMPLIANCE_VARIANTS } from "@/core/evidenceModel";
 import { readFieldsFromText, type TextSource } from "@/core/localReading";
 import { pdfDocumentText } from "./pdfText";
 import { runDocumentCheck } from "./runCheck";
@@ -1432,5 +1433,37 @@ describe("the AI reading first, the device when it cannot run", () => {
       expect(f).toMatchObject({ status: "present" });
       expect(f?.observed).toMatch(/valid until 2028/);
     }
+  });
+});
+
+describe("named compliance documents are read against their own questions (19 Oct 2026)", () => {
+  const read = (text: string, variant: keyof typeof COMPLIANCE_VARIANTS) =>
+    readFieldsFromText(text, COMPLIANCE_VARIANTS[variant].fields, {}, "pdf_text").map(
+      (f) => `${f.field}: ${f.status}`,
+    );
+
+  it("a safety data sheet is not asked what standard it was tested against", () => {
+    expect(COMPLIANCE_VARIANTS.sds.fields.join(" ")).not.toMatch(/tested against/);
+    const out = read(
+      "SAFETY DATA SHEET\nProduct: VoltRidge Power Bank, model VR-20K\nManufacturer: Ningbo Ridgeline Energy. Emergency phone +86 574 5550 2210\nIssue date: 5 February 2025",
+      "sds",
+    );
+    expect(out.every((l) => l.endsWith("present"))).toBe(true);
+  });
+
+  it("a UN38.3 summary is found by its name, model, watt-hours and laboratory", () => {
+    const out = read(
+      "UN38.3 TEST SUMMARY\nProduct / model: VR-20K\nWatt-hours: 74 Wh, 6 cells\nTest laboratory: Zhejiang Battery Safety Testing Center, accredited CNAS L11930\nReport date: 24 January 2025",
+      "un38_3",
+    );
+    expect(out.filter((l) => l.endsWith("present")).length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("a Certificate of Analysis is read for its batch and its date", () => {
+    const out = read(
+      "Certificate of Analysis\nCascade Analytical Laboratories, ISO/IEC 17025\nBatch AM-TUR-0826\nReport date: 2 September 2026\nSpecification: min 95%  Result: 96.4%",
+      "coa",
+    );
+    expect(out.filter((l) => l.endsWith("present")).length).toBeGreaterThanOrEqual(4);
   });
 });

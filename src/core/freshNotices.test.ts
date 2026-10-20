@@ -20,7 +20,7 @@ The following ASINs have been identified as potentially subject to dangerous goo
 
   it("reads a dangerous-goods review as product safety and raises the Safety Data Sheet", () => {
     expect(kindOf(hazmat)).toBe("PRODUCT_SAFETY");
-    expect(labels(hazmat)).toContain("Test report or compliance certificate");
+    expect(labels(hazmat)).toContain("Safety data sheet (SDS)");
     expect(isSeverityGated(kindOf(hazmat))).toBe(false);
   });
 

@@ -410,6 +410,74 @@ const RESTRICTED_PRODUCT: EvidenceRequirement[] = [
   },
 ];
 
+/**
+ * The compliance documents a request can name one by one, each with the questions that fit it
+ * (19 Oct 2026). They share one record kind and its guidance, but a safety data sheet was being
+ * checked for "the standard it was tested against" and a Certificate of Analysis for "the model
+ * tested", which are test-report questions. Labels are the cards' names.
+ */
+export type ComplianceVariant = "sds" | "un38_3" | "cpc" | "coa" | "gmp";
+export const COMPLIANCE_VARIANTS: Readonly<
+  Record<ComplianceVariant, { label: string; fields: readonly string[] }>
+> = {
+  sds: {
+    label: "Safety data sheet (SDS)",
+    fields: [
+      "safety data sheet for the product",
+      "the product or model it covers",
+      "the manufacturer and an emergency contact",
+      "the date of issue or revision",
+    ],
+  },
+  un38_3: {
+    label: "UN38.3 battery test summary",
+    fields: [
+      "UN38.3 test summary for the battery",
+      "the product or model tested",
+      "the watt-hours and number of cells",
+      "the testing laboratory",
+      "the date of the report",
+    ],
+  },
+  cpc: {
+    label: "Children's Product Certificate",
+    fields: [
+      "Children's Product Certificate for the product",
+      "the rules or standards it lists",
+      "the importer or manufacturer and a contact",
+      "the date and place of manufacture",
+      "the laboratory and report it relies on",
+    ],
+  },
+  coa: {
+    label: "Certificate of Analysis",
+    fields: [
+      "Certificate of Analysis for the product",
+      "the tests, specifications and results",
+      "the issuing laboratory",
+      "the batch or lot number",
+      "the date of the report",
+    ],
+  },
+  gmp: {
+    label: "Manufacturing (cGMP) certificate",
+    fields: [
+      "cGMP or manufacturing certificate",
+      "the manufacturer's name and address",
+      "the standard it certifies against",
+      "the date of issue and how long it is valid",
+    ],
+  },
+};
+
+/** The variant a requirement's label names, or undefined for the general compliance record. */
+export function complianceVariantForLabel(label: string): ComplianceVariant | undefined {
+  const wanted = label.trim().toLowerCase();
+  return (Object.keys(COMPLIANCE_VARIANTS) as ComplianceVariant[]).find(
+    (v) => COMPLIANCE_VARIANTS[v].label.toLowerCase() === wanted,
+  );
+}
+
 const UNKNOWN: EvidenceRequirement[] = [];
 
 export const EVIDENCE_MATRIX: Readonly<Record<ViolationKind, readonly EvidenceRequirement[]>> = {

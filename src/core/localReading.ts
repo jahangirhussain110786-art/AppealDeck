@@ -633,6 +633,86 @@ const KEYWORD_FIELDS: ReadonlyArray<KeywordField> = [
     clean: true,
     hedge: RECORD_HEDGE,
   },
+  // 19 Oct 2026: the questions that fit a safety data sheet, a UN38.3 summary, a Children's Product
+  // Certificate, a Certificate of Analysis and a cGMP certificate (COMPLIANCE_VARIANTS).
+  {
+    field: /\bsafety data sheet for the product\b/i,
+    strong: /\b(?:safety data sheet|SDS)\b/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\bUN38\.3 test summary\b/i,
+    strong: /\bUN\s?38\.3\b/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\bChildren['’]?s Product Certificate for the product\b/i,
+    strong: /\bchildren['’]?s product certificate\b/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\bCertificate of Analysis for the product\b/i,
+    strong: /\bcertificate of analysis\b/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\bcGMP or manufacturing certificate\b/i,
+    strong: /\bc?GMP\b|\bmanufacturing certificate\b/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\bthe product or model (?:it covers|tested)\b/i,
+    strong: /\b(?:model|product)\b\s*[:#-]?\s*\S+/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\bmanufacturer and an emergency contact\b/i,
+    strong: /\bemergency\s+(?:phone|contact|telephone)\b|\b24[- ]hour\b/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\bwatt-hours and number of cells\b/i,
+    strong: /\b\d+(?:\.\d+)?\s?Wh\b|\bwatt[- ]hours?\b/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\btests, specifications and results\b/i,
+    strong: /\bspecifications?\b|\bresults?\b/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\bbatch or lot number\b/i,
+    strong: /\b(?:batch|lot)\b\s*(?:no\.?|number|#)?\s*[:#-]?\s*[A-Z0-9][\w-]*/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\bimporter or manufacturer and a contact\b/i,
+    strong: /\b(?:importer|manufacturer)\b/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\blaboratory and report it relies on\b/i,
+    strong: /\b(?:laborator\w+|test report)\b/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
+  {
+    field: /\bmanufacturer's name and address\b/i,
+    strong: /\bmanufactur\w+\b/i,
+    clean: true,
+    hedge: RECORD_HEDGE,
+  },
   {
     // Added 19 Oct 2026 for the report field a safety notice asks for (the date is read above).
     field: /\bmodel, variant or batch\b/i,
@@ -642,7 +722,7 @@ const KEYWORD_FIELDS: ReadonlyArray<KeywordField> = [
     hedge: RECORD_HEDGE,
   },
   {
-    field: /\bissuing laboratory\b/i,
+    field: /\b(?:issuing|testing) laboratory\b/i,
     strong:
       /\b(?:laborator(?:y|ies)|test(?:ing)? (?:lab|house|cent(?:re|er))|certification body|notified body)\b/i,
     clean: true,
@@ -756,6 +836,10 @@ function looksLikeName(line: string): boolean {
 const REPORT_DATE_LABEL =
   /\b(?:report|test|issue|issued)\s*date\b|\bdate (?:of (?:report|test|issue)|issued)\b|\bdated\b/i;
 
+/** A label that says a date is when the product was made (19 Oct 2026). */
+const MANUFACTURE_DATE_LABEL =
+  /\b(?:date of manufacture|manufactured|manufacturing date|production date|made on)\b/i;
+
 const NO_SUPPLIER_SECTION =
   "We could not find a supplier section (such as “From” or “Supplier”) in the text we read. Check it on the original.";
 
@@ -801,9 +885,11 @@ function readField(
     // date whose own label says so. The first date on the page is not an answer to it.
     const wanted = /\bstopped\b/i.test(field)
       ? STOPPED_LABEL
-      : /\bdate of the report\b/i.test(field)
+      : /\bdate of (?:the report|issue)\b/i.test(field)
         ? REPORT_DATE_LABEL
-        : EFFECT_LABEL;
+        : /\bmanufactur/i.test(field)
+          ? MANUFACTURE_DATE_LABEL
+          : EFFECT_LABEL;
     const match = printedDates(lines).find((d) => wanted.test(d.label));
     return match
       ? present(
@@ -1024,7 +1110,11 @@ function readField(
     );
   }
 
-  if (/\bstandard or regulation\b/i.test(field)) {
+  if (
+    /\bstandard or regulation\b|\brules or standards\b|\bstandard it certifies against\b/i.test(
+      field,
+    )
+  ) {
     // A line that says what the product was tested to, and denies nothing. A standard named in
     // an assurance ("we do not claim compliance with UL 62368-1") or in a factory's quality
     // certificate (ISO 9001) is not the answer; it is quoted as a pointer.

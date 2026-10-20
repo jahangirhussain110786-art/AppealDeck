@@ -54,7 +54,16 @@ export function detectIssues(raw: string, formInstructions = ""): NoticeIssue[] 
   for (const kind of KIND_PRIORITY) {
     const pattern = patterns.get(kind);
     if (!pattern || !pattern.test(text)) continue;
-    const quote = parts.find((s) => pattern.test(s));
+    /*
+      A warning is not an issue (19 Oct 2026). "...we may deactivate your account and withhold your
+      disbursements" is what could happen if verification fails, and it made a VAT verification show
+      "Also in this notice: Funds hold". For funds, only a sentence that is not conditional counts.
+    */
+    const CONDITIONAL = /\b(?:may|might|could|if|unless|otherwise|should)\b/i;
+    const quote =
+      kind === "FUNDS"
+        ? parts.find((s) => pattern.test(s) && !CONDITIONAL.test(s))
+        : parts.find((s) => pattern.test(s));
     if (!quote) continue;
     /*
       POLICY is a restatement, not a second issue.

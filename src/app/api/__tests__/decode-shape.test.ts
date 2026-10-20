@@ -278,3 +278,23 @@ describe("/api/decode reads replies the way Amazon really words them (19 Oct 202
     expect(body.looksLikeReply).toBeUndefined();
   });
 });
+
+describe("/api/decode does not take a first notice for a reply (19 Oct 2026)", () => {
+  const notices = [
+    "notice-1-section3.txt",
+    "notice-A-authenticity.txt",
+    "notice-B-performance.txt",
+    "notice-2-design-patent.txt",
+    "notice-5-odr-refused-twice.txt",
+  ];
+  for (const f of notices) {
+    it(`${f} is a notice`, async () => {
+      const text = require("node:fs").readFileSync(
+        `docs/handoffs/2026-10-19-seller-test/${f}`,
+        "utf8",
+      );
+      const { body } = await decode(text);
+      expect(body.looksLikeReply).toBeUndefined();
+    });
+  }
+});

@@ -35,6 +35,8 @@
 
 import {
   canonicalRequirementFor,
+  COMPLIANCE_VARIANTS,
+  type ComplianceVariant,
   requirementsFor,
   type EvidenceKind,
   type EvidenceRequirement,
@@ -144,6 +146,8 @@ export function comparisonFor(field: string): FieldComparison | null {
 
 export interface DocumentCheckResult {
   evidenceKind: EvidenceKind;
+  /** Which compliance document this was checked as, when it was one of the named ones. */
+  variant?: ComplianceVariant;
   findings: FieldFinding[];
   /** Disqualifiers from the evidence matrix that the reading appears to trigger. */
   triggeredDisqualifiers: string[];
@@ -246,6 +250,19 @@ export function containsBannedConclusion(text: string): boolean {
 export function requirementForCheck(
   kind: ViolationKind,
   evidenceKind: EvidenceKind,
+  variant?: ComplianceVariant,
+): EvidenceRequirement | undefined {
+  const base = requirementForCheckByKind(kind, evidenceKind);
+  // A named compliance document is asked the questions that fit it, with the record's own
+  // disqualifiers and reasons.
+  if (base && variant && evidenceKind === "compliance_report")
+    return { ...base, fields: [...COMPLIANCE_VARIANTS[variant].fields] };
+  return base;
+}
+
+function requirementForCheckByKind(
+  kind: ViolationKind,
+  evidenceKind: EvidenceKind,
 ): EvidenceRequirement | undefined {
   return (
     requirementsFor(kind).find((r) => r.kind === evidenceKind) ??
@@ -345,9 +362,11 @@ export function buildDocumentCheck(
      * the day and the year.
      */
     fromPicture?: boolean;
+    /** The named compliance document being checked, so its own questions are asked. */
+    variant?: ComplianceVariant;
   },
 ): DocumentCheckResult {
-  const requirement = requirementForCheck(kind, evidenceKind);
+  const requirement = requirementForCheck(kind, evidenceKind, options?.variant);
   const expectedFields = requirement?.fields ?? [];
 
   const byField = new Map<string, FieldFinding>();
@@ -406,6 +425,7 @@ export function buildDocumentCheck(
   const expected = findings.slice(0, expectedFields.length);
   return {
     evidenceKind,
+    ...(options?.variant ? { variant: options.variant } : {}),
     findings,
     triggeredDisqualifiers: triggeredDisqualifiers(requirement, findings),
     allRequiredFieldsPresent:
@@ -685,7 +705,7 @@ export function reanchorDateWindows(
     if (!f.comparedWith.startsWith("Today's date")) return f;
     return compareDateWindow({ ...f, status: "present", note: "" }, comparison.days, context);
   });
-  const requirement = requirementForCheck(kind, result.evidenceKind);
+  const requirement = requirementForCheck(kind, result.evidenceKind, result.variant);
   const expected = findings.slice(0, requirement?.fields.length ?? 0);
   return {
     ...result,

@@ -19,6 +19,7 @@
  */
 
 import type { EvidenceKind, ViolationKind } from "@/core";
+import type { ComplianceVariant } from "@/core/evidenceModel";
 import {
   buildDocumentCheck,
   reanchorDateWindows,
@@ -78,6 +79,8 @@ export interface RunCheckInput {
   caseId: string;
   kind: ViolationKind;
   evidenceKind: EvidenceKind;
+  /** A named compliance document, so it is read against the questions that fit it. */
+  variant?: ComplianceVariant;
   bytes: Uint8Array;
   mimeType: string;
   /** Identifiers from the case's own notices, so the reading can be compared with them. */
@@ -187,7 +190,7 @@ async function readOnDevice(
 }> {
   if (!DEVICE_READABLE.includes(input.mimeType) || input.bytes.byteLength > MAX_DEVICE_BYTES)
     return { outcome: null, tried: false };
-  const requirement = requirementForCheck(input.kind, input.evidenceKind);
+  const requirement = requirementForCheck(input.kind, input.evidenceKind, input.variant);
   if (!requirement) return { outcome: null, tried: false };
   try {
     const read = await readText(input.bytes, input.mimeType);
@@ -211,7 +214,11 @@ async function readOnDevice(
       },
       // Every quote is a line copied out of the document by code, not a model's words. A picture
       // can be misread, so a mismatch in an ID or a name read from one is not shown as a conflict.
-      { quotesAreVerbatim: true, fromPicture: read.source === "ocr" },
+      {
+        quotesAreVerbatim: true,
+        fromPicture: read.source === "ocr",
+        ...(input.variant ? { variant: input.variant } : {}),
+      },
     );
     return {
       outcome: {
@@ -280,6 +287,7 @@ async function readWithAi(input: RunCheckInput): Promise<CheckOutcome> {
         caseId: input.caseId,
         kind: input.kind,
         evidenceKind: input.evidenceKind,
+        ...(input.variant ? { variant: input.variant } : {}),
         mimeType: input.mimeType,
         data: toBase64(input.bytes),
         // The notice date stays here: the server judges dates against its own clock, and the

@@ -106,7 +106,9 @@ import {
   type Requirement,
   type Workspace,
   submissionEmail,
+  evidenceKindFromName,
 } from "@/core/workspace";
+import { complianceVariantForLabel } from "@/core/evidenceModel";
 import { getBrowserVault } from "@/lib/vault/browser";
 import { ensureFreshGuestSession } from "@/lib/vault/guestSession";
 import { addFileToVault } from "@/lib/vault/addFileToVault";
@@ -956,6 +958,7 @@ function WorkspaceInner({
         caseId: fileRef.current?.id ?? "",
         kind: fileRef.current?.kind ?? "UNKNOWN",
         evidenceKind,
+        variant: complianceVariantForLabel(req.label),
         bytes,
         mimeType: record.mimeType || "application/octet-stream",
         caseData,
@@ -2062,6 +2065,9 @@ function WorkspaceInner({
                                   {
                                     id: crypto.randomUUID(),
                                     label: newLabel.trim(),
+                                    ...(evidenceKindFromName(newLabel)
+                                      ? { evidenceKind: evidenceKindFromName(newLabel) }
+                                      : {}),
                                     sourceQuote: fromNotice ? typed : SELLER_SOURCE_NOTE,
                                     status: "needed",
                                     note: "",

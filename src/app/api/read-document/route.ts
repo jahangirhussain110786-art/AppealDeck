@@ -107,6 +107,8 @@ const Body = z.object({
   caseId: CaseIdSchema,
   kind: z.enum(VIOLATION_KINDS),
   evidenceKind: z.string().min(1).max(64),
+  /** A named compliance document (safety data sheet, UN38.3 summary...), when it is one. */
+  variant: z.enum(["sds", "un38_3", "cpc", "coa", "gmp"]).optional(),
   // Checked below, before a Pass is bound: a garbage kind is a 400, not a claimed case.
   mimeType: z.enum(ACCEPTED_MIME),
   /** Base64 without the data: prefix. */
@@ -266,7 +268,7 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
     );
   }
 
-  const { caseId, kind, evidenceKind, mimeType, data, context } = parsed.data;
+  const { caseId, kind, evidenceKind, variant, mimeType, data, context } = parsed.data;
 
   if (!Object.prototype.hasOwnProperty.call(KNOWN_EVIDENCE_KINDS, evidenceKind)) {
     return NextResponse.json({ error: "Unknown record type." }, { status: 400 });
@@ -337,7 +339,7 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
     show does not change with the violation that prompted the request. The lookup is shared with
     `buildDocumentCheck` so the fields the model is asked about are the fields reported back.
   */
-  const requirement = requirementForCheck(kind, evidenceKind as EvidenceKind);
+  const requirement = requirementForCheck(kind, evidenceKind as EvidenceKind, variant);
   if (!requirement) {
     return NextResponse.json(
       { error: "That document type is not one Amazon asks for on this case." },
@@ -421,13 +423,19 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   // conclusion, and re-adds requirements the model omitted as `missing`.
   // Today is the server's UTC date. A window of months is not moved by a timezone, and a date the
   // client supplied would be a date the client chose.
-  const check = buildDocumentCheck(kind, evidenceKind as EvidenceKind, findings as FieldFinding[], {
-    today: new Date().toISOString().slice(0, 10),
-    asins: context?.asins ?? [],
-    referenceIds: context?.referenceIds ?? [],
-    ...(context?.business ? { business: context.business } : {}),
-    ...(context?.suppliers ? { suppliers: context.suppliers } : {}),
-  });
+  const check = buildDocumentCheck(
+    kind,
+    evidenceKind as EvidenceKind,
+    findings as FieldFinding[],
+    {
+      today: new Date().toISOString().slice(0, 10),
+      asins: context?.asins ?? [],
+      referenceIds: context?.referenceIds ?? [],
+      ...(context?.business ? { business: context.business } : {}),
+      ...(context?.suppliers ? { suppliers: context.suppliers } : {}),
+    },
+    variant ? { variant } : undefined,
+  );
 
   return NextResponse.json({ ok: true, check });
 }
