@@ -38,7 +38,12 @@ import {
   type FieldFinding,
 } from "@/core/documentCheck";
 import type { EvidenceKind } from "@/core/evidenceModel";
-import { DOCUMENT_KIND_FIELD, documentKindPointer } from "@/core/localReading";
+import {
+  DOCUMENT_KIND_FIELD,
+  LICENCE_SCOPE_FIELD,
+  documentKindPointer,
+  licenceScopePointer,
+} from "@/core/localReading";
 import { MAX_CHECK_BASE64_CHARS } from "@/lib/documentChecks/limits";
 
 export const dynamic = "force-dynamic";
@@ -230,6 +235,7 @@ const SYSTEM_PROMPT = [
   "Write each note as one plain sentence describing the document. Never predict whether Amazon will accept it.",
   "",
   `If a field is named "${DOCUMENT_KIND_FIELD}", put in 'observed' what the document is called or plainly is, in a few words (for example "invoice", "retail store receipt", "quotation", "pro forma invoice", "credit note", "packing slip", "purchase order"), and use status 'present'. Name it; do not say whether it is acceptable.`,
+  `If a field is named "${LICENCE_SCOPE_FIELD}", quote in 'observed', exactly as printed, the sentence that says what use the document allows (personal, commercial, resale, or the like), and use status 'present'. If no sentence says, use 'missing'. Quote it; do not say whether it is enough.`,
 ].join("\n");
 
 export async function handleReadDocument(req: NextRequest): Promise<Response> {
@@ -356,7 +362,9 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   const askedFields =
     requirement.kind === "supplier_invoice"
       ? [...requirement.fields, DOCUMENT_KIND_FIELD]
-      : requirement.fields;
+      : requirement.kind === "brand_authorization"
+        ? [...requirement.fields, LICENCE_SCOPE_FIELD]
+        : requirement.fields;
 
   const result = await callGemini({
     task: "read-document",
@@ -426,9 +434,14 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   // The document-kind answer becomes a pointer or is dropped; it is never shown as the model wrote it.
   const named = parsedFindings.find((f) => f.field === DOCUMENT_KIND_FIELD);
   const pointer = documentKindPointer(named?.observed);
+  const scopeQuote = parsedFindings.find((f) => f.field === LICENCE_SCOPE_FIELD);
+  const scopePointer = licenceScopePointer(scopeQuote?.observed);
   const findings = [
-    ...parsedFindings.filter((f) => f.field !== DOCUMENT_KIND_FIELD),
+    ...parsedFindings.filter(
+      (f) => f.field !== DOCUMENT_KIND_FIELD && f.field !== LICENCE_SCOPE_FIELD,
+    ),
     ...(pointer ? [pointer] : []),
+    ...(scopePointer ? [scopePointer] : []),
   ];
   if (!validated.success || findings.length === 0) {
     return NextResponse.json(
@@ -458,4 +471,4 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   return NextResponse.json({ ok: true, check });
 }
 
-export const POST = withGeminiBreaker(handleReadDocument);
+export const POST = withGeminiBreaker(handleReadDocument, "read-document");

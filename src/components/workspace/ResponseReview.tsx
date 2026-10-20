@@ -17,6 +17,7 @@ import {
   answerFor,
   questionnaireQuestions,
   totalAttempts,
+  responseHintKey,
   workspaceAwaitsConfirmation,
   workspaceCanCompose,
   workspaceGaps,
@@ -24,6 +25,7 @@ import {
   submissionEmail,
 } from "@/core/workspace";
 import { answerDraftKey, coachDraftKey } from "@/lib/workspaceDraft";
+import { assessAnswerTone } from "@/core/answerNudges";
 import type { CaseFile } from "@/core/caseFile";
 import type { Vault } from "@/core/vault/vault";
 import {
@@ -138,6 +140,7 @@ export function ResponseReview({
   packing?: boolean;
 }) {
   const w = file.workspace;
+  const hintKey = responseHintKey(file.kind, w.notice);
   const F = C.responseFields;
   const [explanation, setExplanation] = useState(draft?.["response.explanation"] ?? w.explanation);
   const [correctiveActions, setCorrective] = useState(
@@ -211,6 +214,8 @@ export function ResponseReview({
     const nudge = assessRootCause(explanation);
     return nudge.multipleCauses || nudge.missingSpecifics ? nudge : null;
   }, [explanation]);
+  // Tone: threats, venting and demands in the written answer, for every kind of response.
+  const toneNudges = React.useMemo(() => assessAnswerTone(explanation), [explanation]);
   // What differs from the response last recorded: the wording, the documents, the open items.
   const changes = React.useMemo(
     () => (result ? changeReport(w, result.rendered, openItems) : null),
@@ -389,6 +394,20 @@ ${text}`
               placeholder={questions.length > 0 ? F.additionalPlaceholder : undefined}
               onChange={(e) => changeExplanation(e.target.value)}
             />
+            {toneNudges.length > 0 && (
+              <div role="status" className="space-y-1 text-sm text-foreground">
+                {toneNudges.map((n) => (
+                  <p key={n.id} className="rounded-lg border border-warning/40 bg-warning/10 p-3">
+                    <span className="font-medium">{C.tone[n.id].title}</span> {C.tone[n.id].body}{" "}
+                    {n.found.length > 0 && (
+                      <span className="text-muted-foreground">
+                        {C.tone.found.replace("{words}", n.found.join(", "))}
+                      </span>
+                    )}
+                  </p>
+                ))}
+              </div>
+            )}
             {w.protocol === "operational" && rootCauseNudge && (
               <div role="status" className="space-y-1 text-sm text-foreground">
                 {rootCauseNudge.multipleCauses && (
@@ -417,8 +436,13 @@ ${text}`
               questions.length === 0 && (
                 <AnswerHelp
                   id="workspace-explanation-example"
-                  hint={(F.byKind[file.kind] ?? { hint: F.answerHint }).hint}
-                  example={(F.byKind[file.kind] ?? { example: F.explanationPlaceholder }).example}
+                  hint={(F.byKind[hintKey] ?? F.byKind[file.kind] ?? { hint: F.answerHint }).hint}
+                  example={
+                    (
+                      F.byKind[hintKey] ??
+                      F.byKind[file.kind] ?? { example: F.explanationPlaceholder }
+                    ).example
+                  }
                 />
               )
             )}
@@ -631,7 +655,12 @@ ${text}`
               Review the exact response
             </CardTitle>
             <p className="text-sm text-foreground">{C.steps.finish}</p>
-            <p className="text-sm text-muted-foreground">{result.draft.mode.reason}</p>
+            <p className="text-sm text-muted-foreground">
+              {/* The page knows what the server cannot: a saved reading that needs another look. */}
+              {result.draft.mode.mode === "full-draft" && gaps.length > 0
+                ? "Resolve the listed items before submitting."
+                : result.draft.mode.reason}
+            </p>
           </CardHeader>
           <CardContent className="space-y-5">
             {result.draft.watermark && (

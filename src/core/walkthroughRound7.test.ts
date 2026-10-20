@@ -134,3 +134,212 @@ describe("J: a vague deactivation that asks for a cause and prevention in plain 
     expect(determineResponseType(t).type).not.toBe("PLAN_OF_ACTION");
   });
 });
+
+describe("a copyright complaint from a small seller", () => {
+  const text = `Subject: Notice of intellectual property rights complaint (ASIN B0DN2K7WQ4)
+Date: Oct 18, 2026
+
+We received a report from a rights owner alleging that the images and designs on your listing infringe their copyright. We have removed the listing. You may also submit an appeal with documents that show you created the design or hold a licence to use it.`;
+  const { kind, all } = labelsFor(text);
+
+  it("asks for what the notice names, in its own words", () => {
+    expect(kind).toBe("INTELLECTUAL_PROPERTY");
+    expect(all).toEqual(
+      expect.arrayContaining(["Proof you created the design", "Licence to use the design"]),
+    );
+  });
+
+  it("does not ask for a brand's authorization letter", () => {
+    expect(all).not.toContain("Authorization letter");
+  });
+});
+
+describe("a licence that allows personal use only", () => {
+  it("is pointed out on the device reading, quoted and not judged", async () => {
+    const { readFieldsFromText } = await import("./localReading");
+    const { requirementForCheck } = await import("./documentCheck");
+    const fields = requirementForCheck("INTELLECTUAL_PROPERTY", "brand_authorization")!.fields;
+    const found = readFieldsFromText(
+      "Order receipt\nFloral Paw Clipart Bundle\nLicence terms\nPersonal use only. You may print this artwork for yourself.\nCommercial use requires a commercial licence, sold separately.",
+      fields,
+      {},
+      "pdf_text",
+    ).find((f) => f.field === "what use the licence allows");
+    expect(found?.status).toBe("unclear");
+    expect(found?.observed).toMatch(/Personal use only/);
+    expect(found?.note).not.toMatch(/\b(?:invalid|fake|worthless|will be refused)\b/i);
+  });
+
+  it("is quiet for a licence that grants commercial use", async () => {
+    const { licenceScopePointer } = await import("./localReading");
+    expect(
+      licenceScopePointer(
+        "You may use the artwork on products you sell, including commercial use.",
+      ),
+    ).toBeUndefined();
+    expect(licenceScopePointer("Personal use only.")?.status).toBe("unclear");
+    expect(licenceScopePointer(undefined)).toBeUndefined();
+  });
+});
+
+describe("the response box hint follows the kind of intellectual property complaint", () => {
+  it("separates copyright and patent from a brand complaint", async () => {
+    const { responseHintKey } = await import("./workspace");
+    expect(
+      responseHintKey(
+        "INTELLECTUAL_PROPERTY",
+        "a rights owner alleges your images infringe their copyright",
+      ),
+    ).toBe("INTELLECTUAL_PROPERTY:copyright");
+    expect(
+      responseHintKey(
+        "INTELLECTUAL_PROPERTY",
+        "Type of complaint: Patent (design patent D912,483)",
+      ),
+    ).toBe("INTELLECTUAL_PROPERTY:patent");
+    expect(responseHintKey("INTELLECTUAL_PROPERTY", "a trademark complaint")).toBe(
+      "INTELLECTUAL_PROPERTY",
+    );
+    expect(responseHintKey("FUNDS", "copyright")).toBe("FUNDS");
+  });
+});
+
+describe("the tone of a written answer", () => {
+  it("names a threat, venting and a demand in a furious paragraph, quoting the words", async () => {
+    const { assessAnswerTone } = await import("./answerNudges");
+    const out = assessAnswerTone(
+      "This is so unfair!! Pawsome Prints is bullying small sellers. Put my listing back right now, i will sue if i have to",
+    );
+    expect(out.map((n) => n.id).sort()).toEqual(["demand", "threat", "venting"]);
+    expect(out.find((n) => n.id === "threat")?.found).toContain("sue");
+    expect(out.find((n) => n.id === "venting")?.found).toContain("unfair");
+  });
+
+  it("says nothing about a calm, specific answer", async () => {
+    const { assessAnswerTone } = await import("./answerNudges");
+    expect(
+      assessAnswerTone(
+        "I drew the paw design myself in March 2026. The attached notebook page shows my first sketch, dated 4 March. Please review the listing.",
+      ),
+    ).toEqual([]);
+    expect(
+      assessAnswerTone(
+        "The patent attorney's analysis is attached and shows the stand does not copy design D912,483.",
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("a prepared response that still carries a threat is not shown as ready", () => {
+  it("raises a warning for the furious paragraph and none for a calm one", async () => {
+    const { composePoa, critiquePoa } = await import("./composer");
+    const { createCaseFile } = await import("./caseFile");
+    const run = (text: string) => {
+      const workspace: Workspace = {
+        ...newWorkspace(),
+        notice: "A rights owner alleges your images infringe their copyright.",
+        protocol: "documents",
+        confirmed: true,
+        explanation: text,
+      };
+      const file = { ...createCaseFile("INTELLECTUAL_PROPERTY"), workspace };
+      return critiquePoa(composePoa(file), file).findings.filter((f) => f.code === "ANSWER_TONE");
+    };
+    expect(
+      run(
+        "This is so unfair!! Pawsome Prints is bullying small sellers. Put my listing back right now, i will sue if i have to",
+      ).length,
+    ).toBe(3);
+    expect(
+      run("I drew the paw design myself in March 2026. The attached sketch page is dated 4 March."),
+    ).toEqual([]);
+  });
+});
+
+describe("a saved reading that found a personal-use licence is raised before sending", () => {
+  it("adds a line under Before you send, and not for a reading without the finding", async () => {
+    const { workspaceGaps } = await import("./workspace");
+    const base: Workspace = {
+      ...newWorkspace(),
+      notice: "Appeal with documents that show you created the design or hold a licence to use it.",
+      protocol: "documents",
+      confirmed: true,
+      explanation: "I bought the artwork and I am attaching the receipt for the licence I bought.",
+      completenessConfirmed: true,
+      requirements: [
+        {
+          id: "r1",
+          label: "Licence to use the design",
+          sourceQuote: "hold a licence to use it",
+          status: "reviewed",
+          note: "receipt for the paw art licence",
+          recordId: "rec1",
+          filename: "licence.pdf",
+          contentHash: "h1",
+          page: 1,
+          evidenceKind: "brand_authorization",
+        },
+      ],
+    } as Workspace;
+    const check = (status: "unclear" | "present") =>
+      ({
+        recordId: "rec1",
+        contentHash: "h1",
+        at: new Date().toISOString(),
+        contextKey: "k",
+        outcome: {
+          kind: "fields",
+          result: {
+            findings: [
+              {
+                field: "what use the licence allows",
+                status,
+                observed: "Personal use only.",
+                note: "n",
+              },
+            ],
+          },
+        },
+      }) as never;
+    expect(workspaceGaps({ ...base, documentChecks: [check("unclear")] }).join("\n")).toMatch(
+      /Read the licence terms in Licence to use the design/,
+    );
+    expect(workspaceGaps({ ...base, documentChecks: [check("present")] }).join("\n")).not.toMatch(
+      /Read the licence terms/,
+    );
+  });
+});
+
+describe("M2: a letter from a named brand", () => {
+  it("raises the authorization letter when the notice says 'a letter from Forgepoint confirming they are authorized'", () => {
+    const { kind, all } = labelsFor(read("notice-M2-authenticity-tools.txt"));
+    expect(kind).toBe("INAUTHENTIC");
+    expect(all).toEqual(expect.arrayContaining(["Supplier invoice", "Authorization letter"]));
+  });
+});
+
+describe("the wrong kind of document on the invoice card", () => {
+  const read2 = async (text: string) => {
+    const { readFieldsFromText } = await import("./localReading");
+    const { requirementForCheck } = await import("./documentCheck");
+    const fields = requirementForCheck("INAUTHENTIC", "supplier_invoice")!.fields;
+    return readFieldsFromText(text, fields, {}, "pdf_text").find(
+      (f) => f.field === "what kind of document this is",
+    );
+  };
+
+  it("points at a bank statement", async () => {
+    const f = await read2(
+      "Severnside Business Bank Statement date: 30 September 2026\nAccount holder\nCotswold Tea Merchants Ltd\nSort code 40-17-22 Account ending 6615\nOpening balance 6,402.18\nClosing balance 7,118.91",
+    );
+    expect(f?.status).toBe("unclear");
+    expect(f?.note).toMatch(/bank statement/);
+  });
+
+  it("does not take a supplier invoice with bank details for a statement", async () => {
+    const f = await read2(
+      "INVOICE\nFROM\nCrestline Trade Supply Co.\n1450 Industrial Parkway, Columbus, OH 43219\nInvoice date: 3 June 2026\nPay to: account holder Crestline Trade Supply Co., sort code 40-17-22, account number 12345678",
+    );
+    expect(f).toBeUndefined();
+  });
+});

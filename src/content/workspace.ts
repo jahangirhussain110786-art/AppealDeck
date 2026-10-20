@@ -1,3 +1,4 @@
+import { TONE_COPY } from "@/core/answerNudges";
 export const WORKSPACE = {
   title: "Your case workspace",
   round: "Round {n}",
@@ -112,6 +113,10 @@ export const WORKSPACE = {
   // The Response tab (29 Sep 2026): plain questions, a one-line hint, and an example in every box.
   // 10 Oct 2026: the root-cause coach. Appeal writers advise naming one failure point, so the copy
   // attributes the advice to them and does not say what Amazon will think.
+  // 20 Oct 2026: what a written answer says about its own tone, found in a live session where the
+  // seller wrote that the rights owner was a bully and that she would sue. Advice is attributed to
+  // appeal writers, never to Amazon, and says nothing about the outcome.
+  tone: TONE_COPY,
   coach: {
     summary: "Not sure what to write? Answer five short questions.",
     intro:
@@ -170,6 +175,18 @@ export const WORKSPACE = {
         hint: "Say where the product came from or what permission you hold, with dates.",
         example:
           "For example: We bought these 40 units from our supplier Harbor Goods on 5 Aug 2026. The attached invoice shows it.",
+      },
+      // 20 Oct 2026: the IP hint and example were written for a brand complaint (a distributor and an
+      // invoice) and were shown on a copyright notice about a seller's own design, and on a patent one.
+      "INTELLECTUAL_PROPERTY:copyright": {
+        hint: "Say who made the design and when, or what licence covers it, and where the licence allows selling products.",
+        example:
+          "For example: I drew the paw design myself in March 2026. The attached notebook page shows my first sketch, dated 4 March.",
+      },
+      "INTELLECTUAL_PROPERTY:patent": {
+        hint: "Say who made the product and when you bought it, or why it does not copy the design, with dates.",
+        example:
+          "For example: We bought 800 of these stands from the manufacturer, Brightway Metal Products, on 14 June 2026. The attached invoice shows it.",
       },
       RELATED_ACCOUNT: {
         hint: "Cover the three things Amazon asks: how the other account is connected to you (or that it is not), why the device, address or bank account is shared, and what you have done so the accounts are no longer linked. Give dates.",

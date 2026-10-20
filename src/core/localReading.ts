@@ -1185,6 +1185,52 @@ const RECEIPT_NOTE =
   "This reads like a store receipt: it shows payment at a shop, not a supplier invoice with a seller and a buyer. If your notice asks for an invoice from a supplier, a store receipt may not answer it. Check what the notice names, and ask the shop whether it can issue an invoice. Amazon decides what it accepts.";
 
 /**
+ * A document of another kind laid on the invoice card (20 Oct 2026, a live session: a seller dropped
+ * his bank statement there and got eight "not checked" rows and no hint that it was the wrong file).
+ * Two or more marks of the kind are needed, and the line quoted is the first.
+ */
+const OTHER_DOCUMENT_KINDS: ReadonlyArray<{ what: string; signs: readonly RegExp[] }> = [
+  {
+    what: "a bank statement",
+    signs: [
+      /\bsort code\b|\bIBAN\b|\brouting number\b/i,
+      /\baccount holder\b|\baccount number\b|\baccount ending\b/i,
+      /\bopening balance\b|\bclosing balance\b|\bstatement (?:date|period)\b/i,
+    ],
+  },
+  {
+    what: "a utility or council bill",
+    signs: [
+      /\bkwh\b|\bmeter reading\b|\bcouncil tax\b|\bwater (?:bill|usage)\b|\belectricity\b|\bgas supply\b/i,
+      /\bamount due\b|\bbilling period\b|\bservice address\b/i,
+    ],
+  },
+  {
+    what: "an identity document",
+    signs: [
+      /\bpassport\b|\bdriv(?:er|ing)(?:'s)? licen[cs]e\b|\bidentity card\b/i,
+      /\bdate of birth\b|\bDOB\b|\bnationality\b|\bexpiry\b/i,
+    ],
+  },
+];
+
+function otherKindOfDocument(lines: readonly string[]): { what: string; line: string } | undefined {
+  for (const kind of OTHER_DOCUMENT_KINDS) {
+    const hits = kind.signs.map((p) => lines.find((l) => l.length <= 160 && p.test(l)));
+    // A supplier's invoice lists its bank details (IBAN, account holder), so for a bank statement the
+    // balances or the statement date are required as well.
+    const needsLast = kind.what === "a bank statement";
+    if (
+      hits.filter(Boolean).length >= Math.min(2, kind.signs.length) &&
+      hits[0] &&
+      (!needsLast || hits[2])
+    )
+      return { what: kind.what, line: hits[0] };
+  }
+  return undefined;
+}
+
+/**
  * Marks of a till receipt, none of which a supplier's invoice carries: a payment card shown by its
  * last digits, a shop's member number, "thank you for shopping", a cashier or till. Three or more are
  * needed, and the line quoted is the first, so one stray "register" in an invoice's body never
@@ -1215,12 +1261,20 @@ function documentTypeFinding(
   const heading = lines.slice(0, 8).find((l) => l.length <= 60 && NOT_AN_INVOICE_HEADING.test(l));
   if (!heading) {
     const receipt = retailReceiptLine(lines);
-    if (!receipt) return undefined;
+    if (receipt)
+      return {
+        field: DOCUMENT_KIND_FIELD,
+        status: "unclear",
+        observed: clip(receipt),
+        note: RECEIPT_NOTE,
+      };
+    const other = otherKindOfDocument(lines);
+    if (!other) return undefined;
     return {
       field: DOCUMENT_KIND_FIELD,
       status: "unclear",
-      observed: clip(receipt),
-      note: RECEIPT_NOTE,
+      observed: clip(other.line),
+      note: `This reads like ${other.what}, not an invoice from a supplier. Check you attached the right file: Amazon is asking for the invoice for the stock you bought. Amazon decides what it accepts.`,
     };
   }
   return {
@@ -1266,7 +1320,48 @@ export function readFieldsFromText(
   const lines = documentLines(text);
   const findings = fields.map((field) => readField(field, lines, lines.join("\n"), ctx, source));
   const kind = documentTypeFinding(fields, lines);
-  return kind ? [...findings, kind] : findings;
+  const scope = licenceScopeFinding(fields, lines);
+  return [...findings, ...(kind ? [kind] : []), ...(scope ? [scope] : [])];
+}
+
+export const LICENCE_SCOPE_FIELD = "what use the licence allows";
+
+/**
+ * Words that limit a licence to personal use. A clipart receipt offered as the licence for selling
+ * coasters said "Personal use only" and nothing in the product read that far (20 Oct 2026, a live
+ * session): the seller was told every document was ready. A line that says it is quoted, never judged.
+ */
+const PERSONAL_USE_ONLY =
+  /\bpersonal use only\b|\bfor personal use\b|\bpersonal,? non[- ]commercial\b|\bnon[- ]commercial (?:use )?only\b|\bnot for (?:commercial use|resale)\b|\bno commercial use\b|\bcommercial use\b[^.\n]{0,80}\b(?:require[sd]?|requires|not (?:permitted|allowed|included)|prohibited|forbidden|sold separately)\b/i;
+
+const LICENCE_SCOPE_NOTE =
+  "This document limits the use it allows to personal or non-commercial use. Amazon is asking for permission to sell products with the design, which a personal-use licence may not give. Read the terms in the original, and ask whoever sold you the artwork whether a commercial licence exists. Amazon decides what it accepts.";
+
+function licenceScopeFinding(
+  fields: readonly string[],
+  lines: readonly string[],
+): FieldFinding | undefined {
+  if (!fields.some((f) => /\bauthori[sz]ation or licen[cs]e proof\b/i.test(f))) return undefined;
+  const line = lines.find((l) => l.length <= 400 && PERSONAL_USE_ONLY.test(l));
+  if (!line) return undefined;
+  return {
+    field: LICENCE_SCOPE_FIELD,
+    status: "unclear",
+    observed: clip(line),
+    note: LICENCE_SCOPE_NOTE,
+  };
+}
+
+/** The same pointer from the line a model quoted for the licence's scope. */
+export function licenceScopePointer(quoted: string | undefined): FieldFinding | undefined {
+  const text = (quoted ?? "").trim().slice(0, 400);
+  if (!text || !PERSONAL_USE_ONLY.test(text)) return undefined;
+  return {
+    field: LICENCE_SCOPE_FIELD,
+    status: "unclear",
+    observed: clip(text),
+    note: LICENCE_SCOPE_NOTE,
+  };
 }
 
 /** Too little text to read anything from: a scan with no text layer, or a blank page. */

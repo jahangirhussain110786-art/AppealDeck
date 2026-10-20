@@ -2,6 +2,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { redisCredentials } from "@/lib/redisEnv";
 import type { AppUser } from "@/lib/auth";
+import { hasUnlimitedDevUsage, isUnlimitedDevUser } from "@/lib/devUsage";
 
 export type RateLimitResult = {
   success: boolean;
@@ -155,6 +156,7 @@ function getDecodeLimiter(): Ratelimit | null {
  * Redis must not stop a frightened seller from reading their notice.
  */
 export async function rateLimitDecode(ip: string): Promise<RateLimitResult> {
+  if (hasUnlimitedDevUsage()) return unlimitedRate();
   const open = { success: true, limit: 40, remaining: 40, reset: Date.now() + 60_000 };
   const limiter = getDecodeLimiter();
   if (!limiter) return open;
@@ -177,6 +179,7 @@ let _decodeAiGlobal: Ratelimit | null = null;
  * exactly as it did before and no model is called.
  */
 export async function rateLimitDecodeAi(ip: string): Promise<boolean> {
+  if (hasUnlimitedDevUsage()) return true;
   if (!hasUpstashEnv()) return false;
   try {
     if (!_decodeAi || !_decodeAiGlobal) {
@@ -206,6 +209,7 @@ export function isRateLimitEnabled(): boolean {
 }
 
 export async function rateLimitCompose(user: AppUser): Promise<RateLimitResult> {
+  if (isUnlimitedDevUser(user)) return unlimitedRate();
   const limiter = getComposeLimiter();
   if (!limiter) {
     return {
@@ -232,6 +236,7 @@ export async function rateLimitCompose(user: AppUser): Promise<RateLimitResult> 
 }
 
 export async function rateLimitAnalyzeReply(user: AppUser): Promise<RateLimitResult> {
+  if (isUnlimitedDevUser(user)) return unlimitedRate();
   const limiter = getAnalyzeReplyLimiter();
   if (!limiter) {
     return {
@@ -258,6 +263,7 @@ export async function rateLimitAnalyzeReply(user: AppUser): Promise<RateLimitRes
 }
 
 export async function rateLimitOutcome(user: AppUser): Promise<RateLimitResult> {
+  if (isUnlimitedDevUser(user)) return unlimitedRate();
   const limiter = getOutcomeLimiter();
   if (!limiter) {
     return {
@@ -284,6 +290,7 @@ export async function rateLimitOutcome(user: AppUser): Promise<RateLimitResult> 
 }
 
 export async function rateLimitDocumentRead(user: AppUser): Promise<RateLimitResult> {
+  if (isUnlimitedDevUser(user)) return unlimitedRate();
   const limiter = getDocumentReadLimiter();
   if (!limiter) {
     return {
@@ -310,6 +317,7 @@ export async function rateLimitDocumentRead(user: AppUser): Promise<RateLimitRes
 }
 
 export async function rateLimitWording(user: AppUser): Promise<RateLimitResult> {
+  if (isUnlimitedDevUser(user)) return unlimitedRate();
   const limiter = getWordingLimiter();
   if (!limiter) {
     return {
@@ -336,6 +344,7 @@ export async function rateLimitWording(user: AppUser): Promise<RateLimitResult> 
 }
 
 export async function rateLimitDraft(user: AppUser): Promise<RateLimitResult> {
+  if (isUnlimitedDevUser(user)) return unlimitedRate();
   const limiter = getDraftLimiter();
   if (!limiter) {
     return {
@@ -362,6 +371,7 @@ export async function rateLimitDraft(user: AppUser): Promise<RateLimitResult> {
 }
 
 export async function rateLimitReminders(user: AppUser): Promise<RateLimitResult> {
+  if (isUnlimitedDevUser(user)) return unlimitedRate();
   const limiter = getRemindersLimiter();
   if (!limiter) {
     return {
@@ -434,4 +444,13 @@ export function tooManyRequestsResponse(result: RateLimitResult) {
       },
     },
   );
+}
+
+function unlimitedRate(): RateLimitResult {
+  return {
+    success: true,
+    limit: Number.MAX_SAFE_INTEGER,
+    remaining: Number.MAX_SAFE_INTEGER,
+    reset: 0,
+  };
 }

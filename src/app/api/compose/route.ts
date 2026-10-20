@@ -1,3 +1,4 @@
+import { withDevUsage } from "@/lib/devUsage";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { composePoa, critiquePoa, renderPoaText, isSeverityGated } from "@/core";
@@ -30,7 +31,7 @@ const ComposeBody = z.object({
   attemptNumber: z.number().int().min(1).max(99).optional(),
 });
 
-export async function POST(req: NextRequest) {
+async function handleCompose(req: NextRequest) {
   const user = await getApiUser();
   if (!user) {
     return unauthorizedJsonResponse();
@@ -317,3 +318,5 @@ function withOtherAiTexts(
 function composeDraft(data: CaseFileData, attemptNumber: number): PoaDraft {
   return composePoa(data, attemptNumber);
 }
+
+export const POST = withDevUsage(handleCompose);

@@ -1,3 +1,4 @@
+import { withDevUsage } from "@/lib/devUsage";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
@@ -91,7 +92,7 @@ interface Note {
   message: string;
 }
 
-export async function POST(req: NextRequest) {
+async function handleDecode(req: NextRequest) {
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     req.headers.get("x-real-ip") ??
@@ -371,3 +372,5 @@ export async function POST(req: NextRequest) {
     notes,
   });
 }
+
+export const POST = withDevUsage(handleDecode);

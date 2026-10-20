@@ -1,3 +1,4 @@
+import { LICENCE_SCOPE_FIELD } from "./localReading";
 import type { CaseFile } from "./caseFile";
 import type { PoaDraft } from "./composer";
 import { determineResponseType, describesThePast } from "./responseType";
@@ -332,6 +333,19 @@ const UPSTREAM_INVOICE =
 export const UPSTREAM_INVOICE_LABEL = "Invoice from the supplier's own supplier";
 export const VAT_CERTIFICATE_LABEL = "VAT registration certificate";
 export const BUSINESS_REGISTRATION_LABEL = "Business registration or licence";
+/**
+ * Which hint and example the response box shows. An intellectual property complaint is a different
+ * question when it is about a copyright or a patent, so those get their own entries.
+ */
+export function responseHintKey(kind: string, notice: string): string {
+  if (kind !== "INTELLECTUAL_PROPERTY") return kind;
+  if (/\bpatents?\b/i.test(notice)) return kind + ":patent";
+  if (/\bcopyright/i.test(notice)) return kind + ":copyright";
+  return kind;
+}
+
+export const CREATION_PROOF_LABEL = "Proof you created the design";
+export const LICENCE_TO_USE_LABEL = "Licence to use the design";
 export const PATENT_ANALYSIS_LABEL = "Patent attorney's analysis";
 export const RIGHTS_OWNER_LICENCE_LABEL = "Licence from the rights owner";
 
@@ -390,6 +404,30 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
       /\b(?:a |an |the )?licen[cs]e (?:from|granted by|issued by) (?:the )?(?:rights? owner|patent (?:holder|owner)|brand)/i,
     evidenceKind: "brand_authorization",
     label: RIGHTS_OWNER_LICENCE_LABEL,
+  },
+  // A copyright notice asks for the same two things in other words (20 Oct 2026, a live session):
+  // "documents that show you created the design or hold a licence to use it". Neither was raised;
+  // the case offered a brand's "Authorization letter" instead.
+  {
+    pattern:
+      /\b(?:show|prove|proving|showing|demonstrat\w+|evidence|proof)\b[^.!?\n]{0,40}\b(?:you|your)\b[^.!?\n]{0,20}\b(?:created|designed|made|authored|drew|painted|photographed)\b|\bproof of (?:creation|authorship|ownership of the (?:design|work|image))|\boriginal (?:artwork|design files?|source files?)\b/i,
+    evidenceKind: "other",
+    label: CREATION_PROOF_LABEL,
+  },
+  {
+    pattern:
+      /\blicen[cs]e (?:to use|for|covering|allowing)\b[^.!?\n]{0,30}\b(?:it|this|the (?:design|image|artwork|work|photo|content))\b|\b(?:hold|have|holds|obtain\w*) an? (?:valid )?licen[cs]e\b/i,
+    evidenceKind: "brand_authorization",
+    label: LICENCE_TO_USE_LABEL,
+    unless:
+      /\blicen[cs]e (?:from|granted by|issued by) (?:the )?(?:rights? owner|patent (?:holder|owner)|brand)/i,
+  },
+  {
+    // "A letter from Forgepoint confirming they are authorized" (20 Oct 2026, a live session): the
+    // brand is named, so none of the generic "letter from the brand" wording matched and only one
+    // document was raised where the notice asked for two.
+    pattern: /\bletter from\b[^.!?\n]{1,50}?\bconfirming\b[^.!?\n]{0,80}\bauthori[sz]ed\b/i,
+    evidenceKind: "brand_authorization",
   },
   {
     // "A letter from the brand confirming the distributor is authorized" (the usual authenticity
@@ -526,6 +564,8 @@ const KIND_BY_LABEL: ReadonlyMap<string, EvidenceKind> = new Map([
     "compliance_report",
   ]),
   [PATENT_ANALYSIS_LABEL.toLowerCase(), "other"],
+  [CREATION_PROOF_LABEL.toLowerCase(), "other"],
+  [LICENCE_TO_USE_LABEL.toLowerCase(), "brand_authorization"],
   [VAT_CERTIFICATE_LABEL.toLowerCase(), "other"],
   [BUSINESS_REGISTRATION_LABEL.toLowerCase(), "other"],
   [RIGHTS_OWNER_LICENCE_LABEL.toLowerCase(), "brand_authorization"],
@@ -1550,6 +1590,20 @@ export function workspaceGaps(w: Workspace): string[] {
     // carried through a reply round.
     if (!sourceQuoteResolves(w, r))
       gaps.push(`Check Amazon's words for this document against your notice: ${r.label}`);
+    // A saved reading found the licence limited to personal use (20 Oct 2026). The seller is told
+    // before they send it as the permission to sell: whether it is enough is not ours to say.
+    const saved = w.documentChecks?.find(
+      (c) => c.recordId === r.recordId && (!r.contentHash || c.contentHash === r.contentHash),
+    );
+    if (
+      saved?.outcome.kind === "fields" &&
+      saved.outcome.result.findings.some(
+        (f) => f.field === LICENCE_SCOPE_FIELD && f.status === "unclear",
+      )
+    )
+      gaps.push(
+        `Read the licence terms in ${r.label}: the document limits its use to personal use, and Amazon is asking about selling.`,
+      );
   }
   gaps.push(...writtenPartGaps(w));
   // First, not last: a reply changes what every other item means, and the dashboard shows only

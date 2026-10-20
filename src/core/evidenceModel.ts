@@ -108,7 +108,7 @@ const IP: EvidenceRequirement[] = [
     // 20 Oct 2026: a design-patent complaint was told its first record was an "Authorization letter".
     // A patent is answered by showing the product does not infringe, who made it, or a licence, and
     // the notice itself lists those; a brand's distributor letter is a trademark answer.
-    raisedWhen: /^(?![\s\S]*\b(?:design |utility )?patents?\b)/i,
+    raisedWhen: /^(?![\s\S]*\b(?:(?:design |utility )?patents?|copyright|created the design)\b)/i,
     fields: ["authorization or license proof", "matching ASIN(s)", "rights-owner name"],
     disqualifiers: ["unverifiable 'we are allowed' statements", "screenshots of listings"],
     whyAmazonWantsIt:

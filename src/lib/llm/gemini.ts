@@ -1,5 +1,7 @@
 import { withBreaker, reserveSpend, type BreakerOptions, type BreakerContext } from "@/lib/breaker";
 import type { NextRequest } from "next/server";
+import { hasUnlimitedDevUsage, withDevUsage } from "@/lib/devUsage";
+import { callGroq, canUseGroq, isGroqConfigured } from "./groq";
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const DEFAULT_MODEL = "gemini-3.5-flash";
@@ -168,7 +170,7 @@ export function isPaidTierConfirmed(): boolean {
 }
 
 export function isGeminiConfigured(): boolean {
-  return Boolean(process.env.GEMINI_API_KEY) && isPaidTierConfirmed();
+  return (Boolean(process.env.GEMINI_API_KEY) && isPaidTierConfirmed()) || isGroqConfigured();
 }
 
 function getApiKey(): string {
@@ -185,8 +187,36 @@ function getApiKey(): string {
  * One line per failure: the task, model, reason and our own message. Never the key, the prompt or
  * the seller's document.
  */
+/**
+ * A request refused because of the key or project, not because of what was asked: Google answers an
+ * invalid key with HTTP 400 ("API key not valid", API_KEY_INVALID), a revoked or restricted one with
+ * 401/403, and a missing model with 404. None of these is the seller's fault, so another provider may
+ * answer; a genuinely malformed request (any other 400) still may not.
+ */
+function isConfigurationError(result: GeminiCallResult): boolean {
+  return (
+    !result.ok &&
+    result.reason === "bad_input" &&
+    (/^Gemini returned (401|403|404):/.test(result.message) ||
+      /API_KEY_INVALID|API key not valid|API key expired/i.test(result.message))
+  );
+}
+
 export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResult> {
-  const result = await callGeminiOnce(input);
+  let fallback: GeminiCallResult | undefined;
+  const tryFallback = async () => {
+    if (!canUseGroq(input)) return undefined;
+    fallback ??= await callGroq(input);
+    return fallback;
+  };
+  let result = await callGeminiOnce(input, tryFallback);
+  if (!result.ok && (result.reason !== "bad_input" || isConfigurationError(result))) {
+    result = (await tryFallback()) ?? result;
+  }
+  if (result.ok && process.env.NODE_ENV !== "production") {
+    // Local testing only: which provider answered which task, so a fallback is visible.
+    console.info(`[ai] ${input.task ?? "default"} answered by ${result.model}`);
+  }
   if (!result.ok) {
     console.warn(
       `[gemini] ${input.task ?? "default"} failed: ${result.reason} — ${result.message.replace(/key=[^&\s]+/g, "key=***")}`,
@@ -195,8 +225,11 @@ export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResu
   return result;
 }
 
-async function callGeminiOnce(input: GeminiCallInput): Promise<GeminiCallResult> {
-  if (!isGeminiConfigured()) {
+async function callGeminiOnce(
+  input: GeminiCallInput,
+  tryFallback: () => Promise<GeminiCallResult | undefined>,
+): Promise<GeminiCallResult> {
+  if (!process.env.GEMINI_API_KEY || !isPaidTierConfirmed()) {
     return {
       ok: false,
       reason: "not_configured",
@@ -206,7 +239,7 @@ async function callGeminiOnce(input: GeminiCallInput): Promise<GeminiCallResult>
     };
   }
 
-  const budget = await reserveSpend(breakerOptions);
+  const budget = hasUnlimitedDevUsage() ? { ok: true } : await reserveSpend(breakerOptions);
   if (!budget.ok) {
     return {
       ok: false,
@@ -275,11 +308,19 @@ async function callGeminiOnce(input: GeminiCallInput): Promise<GeminiCallResult>
   // first was reserved above; a retry, the fallback model and the plain-JSON retry each reserve their
   // own, so a stalled call that sends five requests is counted as five. When the cap (or Redis)
   // refuses, no further request is sent: it fails closed.
-  const mayRequestAgain = async (): Promise<boolean> => (await reserveSpend(breakerOptions)).ok;
+  const mayRequestAgain = async (): Promise<boolean> =>
+    hasUnlimitedDevUsage() || (await reserveSpend(breakerOptions)).ok;
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     if (attempt > 0 && !(await mayRequestAgain())) break;
     const outcome = await attemptOnce(url, body, model, Math.min(timeoutMs, deadline - Date.now()));
     last = outcome.result;
+    if (!last.ok && attempt === 0) {
+      const configurationError = isConfigurationError(last);
+      if (last.reason !== "bad_input" || configurationError) {
+        const alternative = await tryFallback();
+        if (alternative) return alternative;
+      }
+    }
     const delay = RETRY_DELAYS_MS[attempt];
     if (last.ok || !outcome.retryable || delay === undefined) break;
     if (Date.now() + delay + 2_000 > deadline) break;
@@ -473,8 +514,15 @@ function parseGeminiResponse(data: unknown): Parsed | null {
 
 export type GeminiRouteHandler = (req: NextRequest, ctx: BreakerContext) => Promise<Response>;
 
-export function withGeminiBreaker(handler: GeminiRouteHandler): GeminiRouteHandler {
-  return withBreaker(breakerOptions, handler);
+export function withGeminiBreaker(handler: GeminiRouteHandler, task?: LlmTask): GeminiRouteHandler {
+  return withDevUsage(async (req: NextRequest, ctx: BreakerContext) => {
+    if (hasUnlimitedDevUsage()) return handler(req, ctx);
+    const options =
+      task !== "read-document" && isGroqConfigured()
+        ? { ...breakerOptions, name: "ai-text" }
+        : breakerOptions;
+    return withBreaker(options, handler)(req, ctx);
+  });
 }
 
 export const __test = { parseGeminiResponse, breakerOptions, TASK_MODELS, envForTask };

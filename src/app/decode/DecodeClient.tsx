@@ -400,6 +400,13 @@ export default function DecodeClient() {
                     {DECODE.result.couldNotPlace}
                   </p>
                 )}
+                {/* A subject line pasted alone (20 Oct 2026, a live walk-through): the body of the email
+                    is what says what Amazon wants and by when, and the seller was never told it was missing. */}
+                {!usingSample && decodedText.trim().length < 250 && (
+                  <p className="mt-4 max-w-prose text-base font-medium leading-relaxed text-foreground">
+                    {DECODE.result.looksPartial}
+                  </p>
+                )}
                 {/* Plain words for the two terms a first-time seller meets here. */}
                 {result.responseType?.type === "PLAN_OF_ACTION" &&
                   headlineKey(result) === "PLAN_OF_ACTION" && (

@@ -1,5 +1,6 @@
 import type { ViolationKind } from "./index";
 import { composeWorkspace, requirementEvidenceKind, workspaceGaps } from "./workspace";
+import { assessAnswerTone, TONE_COPY } from "./answerNudges";
 import { savedCheckFor } from "./documentCheck";
 import type { DocumentType } from "./readiness";
 import {
@@ -227,6 +228,7 @@ export function critiquePoa(draft: PoaDraft, data: CaseFileData): CriticResult {
     checkBlameShifting(draft, findings);
     checkVagueTimePhrases(draft, findings);
     checkAbsolutePromises(draft, findings);
+    checkAnswerTone(draft, findings);
     checkFillerPhrases(draft, findings);
     checkNarrativeQuality(draft, data, findings);
     checkAnswersTheIssue(draft, data, findings);
@@ -663,6 +665,24 @@ function checkFillerPhrases(draft: PoaDraft, findings: CriticFinding[]): void {
     code: "FILLER_PHRASES",
     message: `The draft uses wording that reads as a template: ${hits.map((h) => `"${h}"`).join(", ")}. Say the specific thing instead (who does what, how often, since when) or delete the phrase; specific facts read as sincere, generic phrases read as boilerplate.`,
   });
+}
+
+/**
+ * Threats, venting and demands in what the seller wrote (20 Oct 2026, from a live session). The free
+ * part of the product warns about them as the seller types; this makes sure a draft that still
+ * carries them is not shown as "ready", because the prepared response was a furious paragraph that
+ * promised to sue and the critic said "nothing flagged in how this draft reads".
+ */
+function checkAnswerTone(draft: PoaDraft, findings: CriticFinding[]): void {
+  const body = draft.sections.map((s) => s.body).join("\n");
+  for (const nudge of assessAnswerTone(body)) {
+    const copy = TONE_COPY[nudge.id];
+    findings.push({
+      severity: "warning",
+      code: "ANSWER_TONE",
+      message: `${copy.title} ${copy.body}${nudge.found.length ? ` We noticed: ${nudge.found.join(", ")}.` : ""}`,
+    });
+  }
 }
 
 function checkAbsolutePromises(draft: PoaDraft, findings: CriticFinding[]): void {

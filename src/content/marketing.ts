@@ -304,6 +304,8 @@ export const DECODE = {
     verificationNotAppeal:
       "This is not an appeal. A Plan of Action is usually the wrong reply to a verification request.",
     couldNotPlace: "We could not place this notice. Nothing below is guessed.",
+    looksPartial:
+      "This looks like only part of your notice. The body of the email says what Amazon wants and by when, so paste all of it, from the subject line to the signature. What is below comes from the lines you pasted.",
     factScam: "Scam check",
     factScamClear: "No warning signs",
     factScamFlagged: "Worth checking",
