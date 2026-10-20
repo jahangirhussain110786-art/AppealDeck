@@ -63,3 +63,13 @@ Notices `notice-1..5`, documents from `make-docs4.cjs` (and `make-docs3.cjs`, `m
 - `.env.local` has `GEMINI_PAID_TIER_CONFIRMED=true`, so local signed-in checks use the free tier (20 requests a day per model). Never copy it to Vercel.
 - The live test host is now `https://appealdeck-project.vercel.app` (the old `appealdeck.vercel.app` stopped resolving; `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_MARKETING_HOST` were changed and redeployed). Still the founder's: add that host to Supabase's redirect allow-list and to Paddle's approved domain.
 - Parked items and founder decisions are unchanged (`docs/PARKED-ITEMS.md`). R-8 says tax and selling-limit notices stay unplaced on purpose: an attempt to place tax notices was undone because of it.
+
+## Update, 20 Oct 2026 (end of day)
+
+Round 7 is pushed (`7c9c186`, all gates green). After it, live sessions (a visible browser driven one step at a time: `live-browser.cjs` to open it, `step.cjs <file.js>` for each step) produced **21 uncommitted files**, unit-tested (core and document-check suites pass) but **not gated as a whole** (no lint, build or Playwright run on them):
+
+- Confirmed live: tone warnings on a furious answer (page and prepared draft), personal-use licence pointer, copyright records.
+- Unit-tested only: IP hint key for copyright and patent, "looks like only part of your notice" line, "letter from a named brand" pattern, wrong-document pointer (bank statement, bill, ID), banner wording on the prepared draft.
+- Not fixed: supplier printed in the letterhead with no "From" label is not read; new document cards have no "what a good one shows" text; the second session (Marcus, `notice-M2-authenticity-tools.txt`, docs M2A/M2B) was not finished; AI drafting untested (Gemini quota out).
+
+First step next time: run every gate, then commit (add paths explicitly: `docs/handoffs/nda/` is untracked on purpose and must never be committed; it was once pushed by mistake and scrubbed from history).
