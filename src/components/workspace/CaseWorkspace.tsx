@@ -46,7 +46,7 @@ import { StepNav } from "./StepNav";
 import { shouldOfferChangeOfApproach, replyEndsCase } from "@/core/escalation";
 import { dateOfNotice } from "@/core/clock";
 import { deadlinesForDisplay, sellerDeadline, withSellerDeadlines } from "@/core/deadlinesModel";
-import { DetailDisclosure, VIEW_ICONS } from "./WorkspaceVisuals";
+import { DetailDisclosure, DocumentStrip, VIEW_ICONS } from "./WorkspaceVisuals";
 import { createCaseFile, type CaseFile } from "@/core/caseFile";
 import {
   isSeverityGated,
@@ -1996,6 +1996,17 @@ function WorkspaceInner({
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {w.requirements.length > 1 && (
+                    <DocumentStrip
+                      items={w.requirements.map((r) => ({
+                        id: r.id,
+                        label: r.label,
+                        status: r.status,
+                      }))}
+                      activeId={shownDocument}
+                      onSelect={(id) => setOpenDocument(id)}
+                    />
+                  )}
                   <details>
                     <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium">
                       {C.documents.seeNotice}
@@ -2092,20 +2103,39 @@ function WorkspaceInner({
                 </CardContent>
               </Card>
               {/* Before the records: a check compares each document with these. */}
-              <CaseFactsCard
-                key={JSON.stringify(w.caseFacts ?? {})}
-                facts={w.caseFacts}
-                coverage={invoiceCoverage(w.documentChecks, w.caseFacts?.unitsSold)}
-                busy={busy}
-                onSave={(facts) =>
-                  commit((old) => {
-                    // Built without the key when empty, never by merging `undefined` over it.
-                    const { caseFacts: _previous, ...rest } = old;
-                    void _previous;
-                    return Object.keys(facts).length > 0 ? { ...rest, caseFacts: facts } : rest;
-                  }, C.caseFacts.saved)
-                }
-              />
+              {/* Only where a document is compared with the account: invoices, letters, bank and address
+                  records, or when the seller has already filled it in. A safety-data-sheet case has
+                  no use for a supplier list. */}
+              {(Boolean(w.caseFacts && Object.keys(w.caseFacts).length > 0) ||
+                w.requirements.some((r) => {
+                  const k = requirementEvidenceKind(r);
+                  return (
+                    k === undefined ||
+                    [
+                      "supplier_invoice",
+                      "brand_authorization",
+                      "sourcing_doc",
+                      "address_proof",
+                      "financial_instrument_doc",
+                      "other",
+                    ].includes(k)
+                  );
+                })) && (
+                <CaseFactsCard
+                  key={JSON.stringify(w.caseFacts ?? {})}
+                  facts={w.caseFacts}
+                  coverage={invoiceCoverage(w.documentChecks, w.caseFacts?.unitsSold)}
+                  busy={busy}
+                  onSave={(facts) =>
+                    commit((old) => {
+                      // Built without the key when empty, never by merging `undefined` over it.
+                      const { caseFacts: _previous, ...rest } = old;
+                      void _previous;
+                      return Object.keys(facts).length > 0 ? { ...rest, caseFacts: facts } : rest;
+                    }, C.caseFacts.saved)
+                  }
+                />
+              )}
               {w.requirements.map((r) => (
                 <EvidenceReview
                   key={`${r.id}-${r.recordId}-${r.status}-${r.sourceQuote}`}

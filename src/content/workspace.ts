@@ -45,7 +45,7 @@ export const WORKSPACE = {
     title: "Documents Amazon wants",
     // G-63: said here, where the files are gathered, as well as on the copy step. "Some Amazon
     // notices say" because the origin of the rule is a notice's own wording, not a policy we cite.
-    lead: "Add each file and say what it shows. Nothing is sent to Amazon. Documents go with the response in Seller Central, not in a Seller Support case: some Amazon notices say documents sent through a case are not considered for the review.",
+    lead: "Add each file and say what it shows. Nothing goes to Amazon from here. Attach files on the response page in Seller Central, not in a Seller Support case: some notices say case attachments are not reviewed.",
     // When the notice itself says to email documents to an Amazon address (a funds request does).
     leadEmail:
       "Add each file and say what it shows. Nothing is sent to Amazon from here. Your notice says to send the request by email to {email}: attach these files to that email, from the address on your seller account.",
@@ -106,9 +106,9 @@ export const WORKSPACE = {
     finish:
       "Read it, then copy it into Amazon's appeal page and attach your files. Come back and record what you sent.",
     attachFromEmail:
-      "Download the linked originals from Documents and attach them to your email to {email}, as your notice says, sent from the address on your seller account. Copying does not record a submission.",
+      "Download the linked files from Documents and attach them to your email to {email}, sent from your seller-account address. Copying does not record a submission.",
     attachFrom:
-      "Download the linked originals from Documents and attach each one where the response page in Seller Central asks for it. Send them there, not in a Seller Support case: some Amazon notices say documents sent through a case are not considered for the review. Copying does not record a submission.",
+      "Download the linked files from Documents and attach each on the response page in Seller Central, not in a Seller Support case. Copying does not record a submission.",
   },
   // The Response tab (29 Sep 2026): plain questions, a one-line hint, and an example in every box.
   // 10 Oct 2026: the root-cause coach. Appeal writers advise naming one failure point, so the copy
@@ -591,7 +591,7 @@ export const WORKSPACE = {
     title: "Your business details",
     closed: "Optional. We compare them with your invoices.",
     description:
-      "Type them once, exactly as in Seller Central. Amazon compares your invoices with your seller account and may contact your suppliers. Each document check compares them too, so a mismatch shows up here first.",
+      "Type them once, exactly as in Seller Central. Amazon compares invoices with your account and may call your suppliers; each document check does too.",
     businessName: "Business name, exactly as registered on your seller account",
     businessAddress: "Registered business address, exactly as on your seller account",
     suppliers: "Your suppliers (one per line, as each names itself)",
@@ -599,7 +599,7 @@ export const WORKSPACE = {
     // 10 Oct 2026: for invoice cases. One number the seller states; we add up their checked invoices.
     unitsSold: "Units you sold of the products in the notice, in the 365 days before it",
     unitsSoldHelp:
-      "Only for invoice cases. Take it from Seller Central, Reports, Business Reports. We add up your checked invoices against this number.",
+      "Invoice cases only. From Seller Central, Business Reports. We add up your checked invoices against it.",
     coverageTitle: "Your invoices against what you sold",
     save: "Save business details",
     saved: "Updated your business details.",
@@ -706,14 +706,14 @@ export const WORKSPACE = {
   // Amazon accepts or detects anything.
   stamp: {
     title: "Your facts, checked",
-    ai: "The AI suggested the wording and our code checked it. Every date, number, name and action in it comes from your answers, your notice and your records. A draft that added anything would have been thrown away.",
+    ai: "The AI suggested the wording; our code checked it. Every date, number, name and action comes from your answers, notice and records. A draft that added anything was thrown away.",
     own: "Built from your own wording. Every date, number and name in it comes from your answers, your notice and your records.",
     phrases: "Template phrases found: {n}",
     phrasesNone: "Template phrases found: none",
   },
   aiDraft: {
     written:
-      "The root cause, corrective actions and preventive measures were written by AI from your answers, your notice and the records you reviewed. It may use only what you told it. Check every fact against your records before you copy it.",
+      "The root cause, corrective actions and preventive measures were written by AI from your answers, notice and reviewed records. It may use only what you told it. Check every fact before you copy.",
     showingOwn: "This is your own wording, put in order. The AI draft is one tap away.",
     useOwn: "Use my own wording",
     useAi: "Use the AI draft",

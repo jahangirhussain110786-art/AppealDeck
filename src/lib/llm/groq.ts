@@ -2,8 +2,22 @@ import { reserveSpend } from "@/lib/breaker";
 import { hasUnlimitedDevUsage } from "@/lib/devUsage";
 import type { GeminiCallInput, GeminiCallResult } from "./gemini";
 
+/**
+ * Groq is a second processor of the seller's text. Locally it is on whenever a key is present; in
+ * production it also needs `GROQ_PRODUCTION_CONFIRMED=true`, set only after the privacy policy
+ * names it (DEPLOYMENT §6c). Forgetting the switch leaves Gemini alone, never a quiet new processor.
+ */
 export function isGroqConfigured(): boolean {
-  return process.env.NODE_ENV !== "production" && Boolean(process.env.GROQ_API_KEY?.trim());
+  const allowed =
+    process.env.NODE_ENV !== "production" || process.env.GROQ_PRODUCTION_CONFIRMED === "true";
+  return allowed && Boolean(process.env.GROQ_API_KEY?.trim());
+}
+
+/** Models tried in turn: Groq limits each model separately, so a second model is a second quota. */
+function groqModels(): string[] {
+  const primary = process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-120b";
+  const second = process.env.GROQ_FALLBACK_MODEL?.trim() || "llama-3.3-70b-versatile";
+  return second === primary ? [primary] : [primary, second];
 }
 
 export function canUseGroq(input: GeminiCallInput): boolean {
@@ -37,7 +51,6 @@ export async function callGroq(input: GeminiCallInput): Promise<GeminiCallResult
     return { ok: false, reason: "spend_cap", message: "Groq's app allowance is used up today." };
   }
 
-  const model = process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-120b";
   const messages = input.messages.map((message) => ({
     role: message.role === "model" ? "assistant" : message.role,
     content: message.text,
@@ -48,6 +61,24 @@ export async function callGroq(input: GeminiCallInput): Promise<GeminiCallResult
       content: `Return only a JSON object matching this schema: ${JSON.stringify(input.responseJsonSchema)}`,
     });
   }
+  let last: GeminiCallResult = {
+    ok: false,
+    reason: "upstream_error",
+    message: "Groq could not complete the request.",
+  };
+  for (const model of groqModels()) {
+    last = await callGroqModel(input, messages, model);
+    // Another model only for a limit or an outage; an answer, or a request it cannot take, ends it.
+    if (last.ok || (last.reason !== "busy" && last.reason !== "upstream_error")) return last;
+  }
+  return last;
+}
+
+async function callGroqModel(
+  input: GeminiCallInput,
+  messages: { role: string; content: string }[],
+  model: string,
+): Promise<GeminiCallResult> {
   const controller = new AbortController();
   const timer = setTimeout(
     () => controller.abort(),
@@ -65,7 +96,7 @@ export async function callGroq(input: GeminiCallInput): Promise<GeminiCallResult
         messages,
         temperature: input.temperature ?? 0.2,
         max_completion_tokens: (input.maxOutputTokens ?? 512) + 1024,
-        reasoning_effort: "low",
+        ...(model.includes("gpt-oss") ? { reasoning_effort: "low" } : {}),
         ...(input.responseJsonSchema || input.responseJson
           ? { response_format: { type: "json_object" } }
           : {}),

@@ -7,6 +7,7 @@ import {
   composePayloadWorkspace,
   newWorkspace,
   proposedRequirements,
+  requirementsAfterNoticeChange,
   recordPriorAttempt,
   writtenPartGaps,
   type Workspace,
@@ -341,5 +342,22 @@ describe("the wrong kind of document on the invoice card", () => {
       "INVOICE\nFROM\nCrestline Trade Supply Co.\n1450 Industrial Parkway, Columbus, OH 43219\nInvoice date: 3 June 2026\nPay to: account holder Crestline Trade Supply Co., sort code 40-17-22, account number 12345678",
     );
     expect(f).toBeUndefined();
+  });
+});
+
+describe("two records of one evidence kind stay two records", () => {
+  it("keeps each compliance document's own notice sentence after the notice is read again", () => {
+    const notice = [
+      "To restore the listing, please submit the following through the Manage Your Compliance page within 10 business days:",
+      "1. A Safety Data Sheet (SDS) for the product, in English, with all 16 sections complete.",
+      "2. A UN38.3 test summary for the battery, showing the product model and the testing laboratory.",
+    ].join("\n");
+    const w = { notice, formInstructions: "", revision: 1 };
+    const first = proposedRequirements(w, "PRODUCT_SAFETY");
+    const merged = requirementsAfterNoticeChange(first, proposedRequirements(w, "PRODUCT_SAFETY"));
+    const quote = (label: RegExp) => merged.find((r) => label.test(r.label))?.sourceQuote;
+    expect(merged).toHaveLength(first.length);
+    expect(quote(/safety data sheet/i)).toMatch(/Safety Data Sheet/);
+    expect(quote(/UN38\.3/i)).toMatch(/UN38\.3 test summary/);
   });
 });

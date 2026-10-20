@@ -188,6 +188,10 @@ If the production project is not on a paid tier, the privacy policy is untrue un
    off — so forgetting this step turns the features off instead of breaking the privacy promise. No
    code can tell a free key from a paid one, which is why this is a written confirmation, not a check.
 
+## 6c. The second AI provider (Groq) — founder decision, off in production by default
+
+Groq answers text tasks when Gemini is over quota, down or rejects its key, so a seller is not left without the AI. It never sees a PDF or image (documents stay with Gemini, then the on-device reader). It is a second company handling the seller's notice text and written answers, so **before** setting `GROQ_API_KEY` and `GROQ_PRODUCTION_CONFIRMED=true` in Vercel: (1) name Groq as a processor in `src/content/legal.ts` (privacy, "What we collect") and its retention terms, (2) check Groq's data-use terms for the plan the key is on, (3) update the pinned assertions in `legalDisclosures.test.ts`. Without the switch, production uses Gemini alone.
+
 ## 7. Deploy
 
 ```bash

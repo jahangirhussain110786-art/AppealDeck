@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { callGemini, isGeminiConfigured, withGeminiBreaker } from "../gemini";
-import { callGroq } from "../groq";
+import { callGroq, isGroqConfigured } from "../groq";
 import { runWithDevUsage } from "@/lib/devUsage";
 import { NextRequest } from "next/server";
 
@@ -142,14 +142,37 @@ describe("Groq local text fallback", () => {
     expect(await callGroq(request)).toMatchObject({ ok: true, text: "drop-box at 9 am" });
   });
 
-  it("does not retry Groq rate limits and never echoes provider bodies or credentials", async () => {
+  it("asks the second Groq model once on a limit, never the same one twice, and never echoes bodies or credentials", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValue(new Response("groq-test sensitive text", { status: 429 }));
     vi.stubGlobal("fetch", fetchMock);
     const result = await callGroq(request);
     expect(result).toEqual({ ok: false, reason: "busy", message: "Groq returned HTTP 429." });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const models = fetchMock.mock.calls.map((c) => JSON.parse(String(c[1]?.body)).model);
+    expect(new Set(models).size).toBe(2);
+  });
+
+  it("answers from the second Groq model when the first is rate limited", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("limit", { status: 429 }))
+      .mockResolvedValueOnce(success());
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await callGroq(request)).toMatchObject({
+      ok: true,
+      model: "groq:llama-3.3-70b-versatile",
+    });
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body)).reasoning_effort).toBeUndefined();
+  });
+
+  it("is switched on in production only by the confirmation switch", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("GROQ_PRODUCTION_CONFIRMED", "");
+    expect(isGroqConfigured()).toBe(false);
+    vi.stubEnv("GROQ_PRODUCTION_CONFIRMED", "true");
+    expect(isGroqConfigured()).toBe(true);
   });
 
   it("rejects truncated answers", async () => {

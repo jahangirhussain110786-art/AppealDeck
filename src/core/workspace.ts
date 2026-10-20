@@ -979,7 +979,15 @@ export function requirementsAfterNoticeChange(
  * one, its label otherwise. The reply comparison uses the same rule.
  */
 export function requirementKey(r: Requirement): string {
-  return requirementEvidenceKind(r) ?? r.label.toLowerCase();
+  const kind = requirementEvidenceKind(r);
+  if (!kind) return r.label.toLowerCase();
+  // Several records can share one kind and still be different records: a safety data sheet and a
+  // UN38.3 summary are both compliance reports, and the supplier's own supplier's invoice is an
+  // invoice. Keyed by kind alone they collapsed into one, so the second card took the first's
+  // quote (20 Oct 2026: the safety data sheet card quoted the UN38.3 sentence).
+  return kind === "compliance_report" || r.label === UPSTREAM_INVOICE_LABEL
+    ? `${kind}:${r.label.toLowerCase()}`
+    : kind;
 }
 
 /**

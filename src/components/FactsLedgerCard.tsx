@@ -29,8 +29,8 @@ export function FactsLedgerCard({ ledger }: { ledger: FactsLedger }) {
         <div className="min-w-0 space-y-1">
           <CardTitle className="text-base">What this case knows</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Every line below came from your notice, your own answers, or a document you uploaded.
-            Nothing here was assumed.
+            {ledger.facts.length} {ledger.facts.length === 1 ? "fact" : "facts"} from your notice,
+            answers and documents. Nothing is assumed.
           </p>
         </div>
       </CardHeader>
@@ -55,33 +55,38 @@ export function FactsLedgerCard({ ledger }: { ledger: FactsLedger }) {
           </Alert>
         )}
 
-        <ul className="space-y-3">
-          {ledger.facts.map((fact, i) => (
-            <li key={`${fact.label}-${fact.status}-${i}`} className="space-y-1">
-              <p className="flex flex-wrap items-baseline gap-2 text-sm">
-                <span className="font-medium text-foreground">{fact.label}</span>
-                <Badge variant={badgeVariant(fact.status)} className="text-xs">
-                  {FACT_STATUS_LABELS[fact.status]}
-                </Badge>
-              </p>
-              {fact.value ? (
-                <p className="font-mono text-sm text-foreground">{fact.value}</p>
-              ) : (
-                // No agreed value on a contradiction — showing one would be picking a winner.
-                <ul className="space-y-0.5">
-                  {fact.entries.map((e, i) => (
-                    <li key={i} className="font-mono text-sm text-foreground">
-                      {e.value}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {fact.entries.map((e) => describeSource(e.source)).join(" · ")}
-              </p>
-            </li>
-          ))}
-        </ul>
+        <details className="group" open={ledger.facts.length <= 4}>
+          <summary className="cursor-pointer text-sm font-medium text-primary">
+            Show all {ledger.facts.length}
+          </summary>
+          <ul className="mt-3 space-y-3">
+            {ledger.facts.map((fact, i) => (
+              <li key={`${fact.label}-${fact.status}-${i}`} className="space-y-1">
+                <p className="flex flex-wrap items-baseline gap-2 text-sm">
+                  <span className="font-medium text-foreground">{fact.label}</span>
+                  <Badge variant={badgeVariant(fact.status)} className="text-xs">
+                    {FACT_STATUS_LABELS[fact.status]}
+                  </Badge>
+                </p>
+                {fact.value ? (
+                  <p className="font-mono text-sm text-foreground">{fact.value}</p>
+                ) : (
+                  // No agreed value on a contradiction — showing one would be picking a winner.
+                  <ul className="space-y-0.5">
+                    {fact.entries.map((e, i) => (
+                      <li key={i} className="font-mono text-sm text-foreground">
+                        {e.value}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {fact.entries.map((e) => describeSource(e.source)).join(" · ")}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </details>
       </CardContent>
     </Card>
   );

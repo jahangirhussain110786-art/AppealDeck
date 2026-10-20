@@ -783,7 +783,7 @@ const KEYWORD_FIELDS: ReadonlyArray<KeywordField> = [
 
 const NOT_CHECKED =
   "We cannot judge this from the words alone, so we have not checked it. Look for it on the original.";
-const FOUND = "Found in the text we read. Check it says what Amazon asked for.";
+const FOUND = "Found in the text.";
 
 const present = (field: string, observed: string, note: string): FieldFinding => ({
   field,

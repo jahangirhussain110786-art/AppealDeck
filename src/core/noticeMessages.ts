@@ -53,7 +53,7 @@ export const LOOKS_LIKE_REPLY_MESSAGE =
 
 /** A business-day window. `days` is the number of business days the notice states. */
 export function businessDaysMessage(days: number): string {
-  return `This message gives ${days} business ${days === 1 ? "day" : "days"} to respond. We do not turn business days into a calendar date, because that depends on holidays we cannot see. Check the exact date in Seller Central.`;
+  return `This message gives ${days} business ${days === 1 ? "day" : "days"} to respond. We do not convert business days to a date, because holidays vary. Check the exact date in Seller Central.`;
 }
 
 /** An all-numeric header date that could be read two ways. `readings` are YYYY-MM-DD strings. */

@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 import {
+  Check,
   ChevronDown,
+  Circle,
+  Clock,
+  MinusCircle,
   FilePenLine,
   FolderOpen,
   History,
@@ -8,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 
 export const VIEW_ICONS: Record<string, LucideIcon> = {
   overview: LayoutDashboard,
@@ -72,5 +77,67 @@ export function DetailDisclosure({
       </summary>
       <div className="px-4 pb-4 text-sm leading-relaxed text-muted-foreground">{children}</div>
     </details>
+  );
+}
+
+const STRIP_STATUS = {
+  reviewed: { icon: Check, tone: "text-success", label: "Reviewed" },
+  needed: { icon: Circle, tone: "text-muted-foreground", label: "To add" },
+  waiting: { icon: Clock, tone: "text-warning", label: "Waiting" },
+  cannot_obtain: { icon: MinusCircle, tone: "text-warning", label: "Can't get it" },
+} as const;
+
+/**
+ * The whole document list at a glance: a bar for how far along, one chip per record with its state
+ * as an icon and a word (never colour alone). A tap opens that record's card.
+ */
+export function DocumentStrip({
+  items,
+  activeId,
+  onSelect,
+}: {
+  items: { id: string; label: string; status: keyof typeof STRIP_STATUS }[];
+  activeId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const done = items.filter((i) => i.status === "reviewed" || i.status === "cannot_obtain").length;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <Progress
+          value={Math.round((done / Math.max(items.length, 1)) * 100)}
+          aria-label={`${done} of ${items.length} documents ready`}
+          className="h-2.5"
+        />
+        <span className="shrink-0 text-sm font-medium tabular-nums">
+          {done}/{items.length}
+        </span>
+      </div>
+      <ul className="flex flex-wrap gap-2">
+        {items.map((item) => {
+          const s = STRIP_STATUS[item.status] ?? STRIP_STATUS.needed;
+          const Icon = s.icon;
+          return (
+            <li key={item.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(item.id)}
+                aria-current={activeId === item.id ? "true" : undefined}
+                className={cn(
+                  "inline-flex min-h-9 max-w-[16rem] items-center gap-1.5 rounded-full px-3 text-sm ring-1 ring-inset ring-border transition-colors hover:bg-surface-2",
+                  activeId === item.id && "bg-surface-2 font-medium ring-primary",
+                )}
+              >
+                <Icon className={cn("size-4 shrink-0", s.tone)} aria-hidden />
+                <span className="truncate">
+                  {item.label}
+                  <span className="sr-only"> — {s.label}</span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

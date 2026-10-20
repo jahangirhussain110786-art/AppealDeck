@@ -161,14 +161,14 @@ export const APP = {
       // uploaded" is only ever said when no request was made; a result saved before this was
       // recorded claims nothing either way (30 Sep 2026 review).
       deviceNoteNotSent:
-        "The file was never uploaded. This reading finds labels and patterns in the text, such as dates, ASINs and names; it does not understand the document the way the AI reading does. Check each line against the original.",
+        "The file was never uploaded. This finds labels and patterns, not meaning. Check each line against the original.",
       deviceNoteSent:
-        "The file was sent to AppealDeck for the AI reading, which did not run, and was then read on this device. This reading finds labels and patterns in the text, such as dates, ASINs and names; it does not understand the document the way the AI reading does. Check each line against the original.",
+        "The file was sent to AppealDeck for the AI reading, which did not run, so it was read on this device. This finds labels and patterns, not meaning. Check each line against the original.",
       deviceNoteUnknown:
-        "This reading was made on this device. It finds labels and patterns in the text, such as dates, ASINs and names; it does not understand the document the way the AI reading does. Check each line against the original.",
+        "This reading was made on this device. It finds labels and patterns, not meaning. Check each line against the original.",
       // A scan or a photo is read by OCR, which can misread a letter or a digit.
       pictureNote:
-        "Read from a picture. Letters and digits can be misread, and a zero can look like the letter O, so check every date, name, ID and ASIN against the original.",
+        "Read from a picture. Letters and digits can be misread, so check every date, name, ID and ASIN against the original.",
       beforeDevice:
         "Identity, bank and proof-of-address documents are checked on this device only. The file is never uploaded.",
     },

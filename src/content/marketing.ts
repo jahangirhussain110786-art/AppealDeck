@@ -316,7 +316,7 @@ export const DECODE = {
     factScamInsider:
       "Offers of inside help from someone at Amazon, on WhatsApp, Telegram or WeChat, are a documented scam pattern, most of all around Prime Day and the holidays. And a notice missing from Seller Central is a signal, not proof: in one April 2026 case the email was real.",
     factScamLooked:
-      "Looked for: a payment or gift-card demand, a request for a password or code, a move to WhatsApp or a phone number, remote access or QR codes, and links or senders that are not Amazon's. It cannot prove a message is real: Account Health settles that.",
+      "Looked for: a payment or gift-card demand, a password or code request, a move to WhatsApp or a phone, remote access or QR codes, and non-Amazon links or senders. It cannot prove a message is real; Account Health settles that.",
     deadlinesTitle: "When it is due",
     noDeadline:
       "We could not read a deadline in this text. Check the date on your Account Health page in Seller Central.",

@@ -34,13 +34,27 @@ import { WORKSPACE as C } from "@/content/workspace";
 /** The one honest sentence explaining why Amazon asks. */
 export function GuidanceWhy({ guidance }: { guidance: RequirementGuidance }) {
   if (!guidance.whyAmazonWantsIt) return null;
+  // First sentence in view, the rest one tap away: the full reason is long and most sellers need
+  // only its start. Nothing is dropped.
+  const text = guidance.whyAmazonWantsIt;
+  const cut = text.search(/[.!?](\s|$)/);
+  const first = cut === -1 ? text : text.slice(0, cut + 1);
+  const rest = cut === -1 ? "" : text.slice(cut + 1).trim();
   return (
     <div className="flex items-start gap-2">
       <HelpCircle className="mt-0.5 size-4 shrink-0 text-info" aria-hidden />
-      <p className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">{C.guidance.why}: </span>
-        {guidance.whyAmazonWantsIt}
-      </p>
+      <div className="text-sm text-muted-foreground">
+        <p>
+          <span className="font-medium text-foreground">{C.guidance.why}: </span>
+          {first}
+        </p>
+        {rest && (
+          <details className="mt-1">
+            <summary className="cursor-pointer text-xs font-medium text-primary">More</summary>
+            <p className="mt-1">{rest}</p>
+          </details>
+        )}
+      </div>
     </div>
   );
 }
