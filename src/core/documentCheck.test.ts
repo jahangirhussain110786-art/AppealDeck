@@ -294,6 +294,9 @@ describe("which matrix fields carry a comparison", () => {
       "registered address matching the account": "account_record",
       // Verification's second document, `address_proof` since 29 Sep 2026 (was `sourcing_doc`).
       "your name and address, matching your seller account": "account_record",
+      // Verification's bank statement (20 Oct 2026). Financial documents are never read, so this
+      // only labels the list a seller sees.
+      "the account holder's name and address, matching your seller account": "account_record",
     });
   });
 });

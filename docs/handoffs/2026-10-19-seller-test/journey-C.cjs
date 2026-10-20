@@ -26,7 +26,10 @@ const REPLY =
 
 (async () => {
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
+  const ctx = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    acceptDownloads: true,
+  });
   const page = await ctx.newPage();
   page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
   const main = async () => (await page.locator("main").innerText()).replace(/\n{2,}/g, NL);
@@ -42,7 +45,10 @@ const REPLY =
   };
   const boxes = () => page.locator("textarea[id^=workspace-answer-]");
   const prepare = async () => {
-    await page.getByRole("button", { name: /prepare (working )?(draft|response)/i }).first().click();
+    await page
+      .getByRole("button", { name: /prepare (working )?(draft|response)/i })
+      .first()
+      .click();
     const t0 = Date.now();
     while (Date.now() - t0 < 150000) {
       if (/Record submission/.test(await main())) break;
@@ -60,7 +66,10 @@ const REPLY =
   await page.getByLabel("Your notice").fill(notice);
   await page.getByRole("button", { name: "Decode", exact: true }).click();
   await page.getByText("The problem").first().waitFor();
-  await page.getByRole("link", { name: /start my case/i }).first().click();
+  await page
+    .getByRole("link", { name: /start my case/i })
+    .first()
+    .click();
   await page.waitForURL(/\/case/);
   await page.getByRole("button", { name: /yes, this is right/i }).click();
   await page.waitForTimeout(1200);
@@ -76,14 +85,20 @@ const REPLY =
   const before = await dump("2-answers");
   log("BEFORE YOU SEND", before.slice(before.indexOf("Before you send")), 1200);
   await tab("Documents");
-  await page.getByRole("checkbox", { name: /i checked the notice and the appeal page/i }).check().catch(() => {});
+  await page
+    .getByRole("checkbox", { name: /i checked the notice and the appeal page/i })
+    .check()
+    .catch(() => {});
   await tab("Response");
   await prepare();
   const r1 = await dump("3-round1");
   log("ROUND 1 RESPONSE", r1.slice(r1.indexOf("Review the exact response")), 4200);
   if (stop === "r1") return browser.close();
   await page.getByLabel(/i reviewed the facts/i).check();
-  await page.getByLabel(/i sent the response exactly/i).check().catch(() => {});
+  await page
+    .getByLabel(/i sent the response exactly/i)
+    .check()
+    .catch(() => {});
   await page.getByLabel(/i have submitted this exact response/i).check();
   await page.getByRole("button", { name: /record submission/i }).click();
   await page.waitForTimeout(1500);
@@ -104,13 +119,16 @@ const REPLY =
   const r2form = await dump("5-round2-form");
   log("ROUND 2 FORM", r2form.slice(0, 3200), 3200);
   const vals = [];
-  for (let i = 0; i < (await boxes().count()); i++) vals.push((await boxes().nth(i).inputValue()).slice(0, 50));
+  for (let i = 0; i < (await boxes().count()); i++)
+    vals.push((await boxes().nth(i).inputValue()).slice(0, 50));
   console.log("ANSWERS KEPT IN ROUND 2:", JSON.stringify(vals));
   if (stop === "r2form") return browser.close();
 
-  await boxes().nth(3).fill(
-    "The business has two owners. Dana Redfern, 70 percent, and Marcus Ibarra, 30 percent, as shown in our registration of 3 March 2021.",
-  );
+  await boxes()
+    .nth(3)
+    .fill(
+      "The business has two owners. Dana Redfern, 70 percent, and Marcus Ibarra, 30 percent, as shown in our registration of 3 March 2021.",
+    );
   await page.getByRole("button", { name: /save my answers/i }).click();
   await page.waitForTimeout(1200);
   await prepare();

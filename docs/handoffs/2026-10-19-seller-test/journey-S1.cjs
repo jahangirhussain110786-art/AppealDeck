@@ -17,7 +17,10 @@ const log = (t, s, n = 2500) => console.log(`${NL}=== ${t} ===${NL}${String(s).s
 
 (async () => {
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
+  const ctx = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    acceptDownloads: true,
+  });
   const page = await ctx.newPage();
   page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
   const main = async () => (await page.locator("main").innerText()).replace(/\n{2,}/g, NL);
@@ -36,8 +39,15 @@ const log = (t, s, n = 2500) => console.log(`${NL}=== ${t} ===${NL}${String(s).s
     const open = card.getByRole("button", { name: /^open$/i });
     if (await open.isVisible().catch(() => false)) await open.click();
     await card.locator("input[type=file]").first().setInputFiles(doc(file));
-    await card.getByRole("button", { name: /check this document/i }).click().catch(() => {});
-    await card.getByText(/Reading finished|Could not check/).first().waitFor({ timeout: 90000 }).catch(() => {});
+    await card
+      .getByRole("button", { name: /check this document/i })
+      .click()
+      .catch(() => {});
+    await card
+      .getByText(/Reading finished|Could not check/)
+      .first()
+      .waitFor({ timeout: 90000 })
+      .catch(() => {});
     await card.getByLabel(/what does this file show/i).fill(note);
     await card.getByLabel(/i checked the file/i).check();
     await card.getByRole("button", { name: /save document/i }).click();
@@ -56,7 +66,10 @@ const log = (t, s, n = 2500) => console.log(`${NL}=== ${t} ===${NL}${String(s).s
   await page.getByText("The problem").first().waitFor();
   const dec = await dump("1-decode");
   log("DECODE", dec.split("Your notice, marked up")[0], 1800);
-  await page.getByRole("link", { name: /start my case/i }).first().click();
+  await page
+    .getByRole("link", { name: /start my case/i })
+    .first()
+    .click();
   await page.waitForURL(/\/case/);
   await page.getByRole("button", { name: /yes, this is right/i }).click();
   await page.waitForTimeout(1200);
@@ -73,14 +86,28 @@ const log = (t, s, n = 2500) => console.log(`${NL}=== ${t} ===${NL}${String(s).s
   log("AFTER FIRST INVOICE: controls", body0.slice(0, 900), 900);
   await page.getByText(/Amazon asked for something else\? Add it/).click();
   await page.waitForTimeout(500);
-  log("ADD-OTHER FORM", (await page.locator("label").allInnerTexts()).filter((t) => t.length < 80).join(" | "), 700);
+  log(
+    "ADD-OTHER FORM",
+    (await page.locator("label").allInnerTexts()).filter((t) => t.length < 80).join(" | "),
+    700,
+  );
   await page.getByLabel("Document name").fill("Supplier invoice, Magnolia Botanicals");
-  await page.getByRole("button", { name: /^add$|add document|add to my list/i }).first().click().catch(async () => {
-    await page.getByRole("button", { name: /add/i }).last().click();
-  });
+  await page
+    .getByRole("button", { name: /^add$|add document|add to my list/i })
+    .first()
+    .click()
+    .catch(async () => {
+      await page.getByRole("button", { name: /add/i }).last().click();
+    });
   await page.waitForTimeout(1200);
   await dump("2-after-add-other");
-  log("CARDS NOW", (await page.getByRole("region").allInnerTexts()).map((t) => t.split(NL).slice(0, 2).join(" / ")).join(NL), 800);
+  log(
+    "CARDS NOW",
+    (await page.getByRole("region").allInnerTexts())
+      .map((t) => t.split(NL).slice(0, 2).join(" / "))
+      .join(NL),
+    800,
+  );
   if (stop === "cards") return browser.close();
   await attach(
     "Supplier invoice, Magnolia Botanicals",
@@ -89,15 +116,30 @@ const log = (t, s, n = 2500) => console.log(`${NL}=== ${t} ===${NL}${String(s).s
   );
 
   // business details: units sold
-  await page.getByText(/^Your business details$/).first().click().catch(() => {});
+  await page
+    .getByText(/^Your business details$/)
+    .first()
+    .click()
+    .catch(() => {});
   await page.getByLabel(/business name, exactly/i).fill("Larkspur & Fern Gifts LLC");
-  await page.getByLabel(/registered business address/i).fill("412 Bull Street, Suite 6, Savannah, GA 31401");
-  await page.getByLabel(/your suppliers/i).fill("Lowcountry Wax & Wick Supply Inc." + NL + "Magnolia Botanicals Wholesale LLC");
+  await page
+    .getByLabel(/registered business address/i)
+    .fill("412 Bull Street, Suite 6, Savannah, GA 31401");
+  await page
+    .getByLabel(/your suppliers/i)
+    .fill("Lowcountry Wax & Wick Supply Inc." + NL + "Magnolia Botanicals Wholesale LLC");
   await page.getByLabel(/units you sold/i).fill("340");
   await page.getByRole("button", { name: /save business details/i }).click();
   await page.waitForTimeout(1500);
   const biz = await dump("3-business");
-  log("COVERAGE", biz.slice(biz.indexOf("Your invoices against what you sold") - 50, biz.indexOf("Your invoices against what you sold") + 500), 700);
+  log(
+    "COVERAGE",
+    biz.slice(
+      biz.indexOf("Your invoices against what you sold") - 50,
+      biz.indexOf("Your invoices against what you sold") + 500,
+    ),
+    700,
+  );
   await page.screenshot({ path: path.join(OUT, "S1-3-business-top.png") });
   await browser.close();
 })().catch((e) => {

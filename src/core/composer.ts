@@ -536,7 +536,10 @@ function checkFutureTenseLanguage(draft: PoaDraft, findings: CriticFinding[]): v
       findings.push({
         severity: "warning",
         code: "FUTURE_TENSE_LANGUAGE",
-        message: `${heading} reads as a future promise ("we will…") rather than something already done. Amazon expects completed remediation — describe what changed, not what's planned.`,
+        message:
+          heading === "Preventive Measures"
+            ? `${heading} reads as a future promise ("we will…"). State each step as the rule you follow now, with the date it began, for example "From 17 Oct we only buy from…". Say who checks it and how often.`
+            : `${heading} reads as a future promise ("we will…") rather than something already done. Amazon expects completed remediation — describe what changed, not what's planned.`,
       });
     }
   }

@@ -330,6 +330,10 @@ export const EVIDENCE_KINDS = Object.keys(EVIDENCE_KIND_LABELS) as [
 const UPSTREAM_INVOICE =
   /\binvoices?\b[^.!?\n]{0,100}\b(?:that|which)\s+(?!you\b)[\w&.' -]{2,60}?\s(?:bought|purchased|sourced|obtained)\b|\b(?:your )?supplier['’]s (?:supplier|source|manufacturer)\b[^.!?\n]{0,40}\binvoices?\b|\binvoices?\b[^.!?\n]{0,40}\bsupplier['’]s (?:supplier|source|manufacturer)\b/i;
 export const UPSTREAM_INVOICE_LABEL = "Invoice from the supplier's own supplier";
+export const VAT_CERTIFICATE_LABEL = "VAT registration certificate";
+export const BUSINESS_REGISTRATION_LABEL = "Business registration or licence";
+export const PATENT_ANALYSIS_LABEL = "Patent attorney's analysis";
+export const RIGHTS_OWNER_LICENCE_LABEL = "Licence from the rights owner";
 
 /**
  * `unless`: the same words can name two different records. "Proof of address, such as a bank
@@ -373,6 +377,20 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
     label: UPSTREAM_INVOICE_LABEL,
   },
   { pattern: /\binvoices?\b/i, evidenceKind: "supplier_invoice", unless: UPSTREAM_INVOICE },
+  // A patent notice lists its own answers (20 Oct 2026): an invoice, an analysis from a patent
+  // attorney, a licence from the rights owner. Only the invoice was ever raised.
+  {
+    pattern:
+      /\b(?:analysis|opinion|assessment)\b[^.!?\n]{0,40}\bpatent (?:attorney|lawyer|agent)\b|\bpatent (?:attorney|lawyer|agent)['’]?s? (?:analysis|opinion|assessment|letter)/i,
+    evidenceKind: "other",
+    label: PATENT_ANALYSIS_LABEL,
+  },
+  {
+    pattern:
+      /\b(?:a |an |the )?licen[cs]e (?:from|granted by|issued by) (?:the )?(?:rights? owner|patent (?:holder|owner)|brand)/i,
+    evidenceKind: "brand_authorization",
+    label: RIGHTS_OWNER_LICENCE_LABEL,
+  },
   {
     // "A letter from the brand confirming the distributor is authorized" (the usual authenticity
     // wording, found in a 19 Oct 2026 walk-through) names the same record as "letter of authorization".
@@ -411,10 +429,19 @@ const CANDIDATE_PATTERNS: ReadonlyArray<{
   // A business licence or registration is not a proof of address. There is no record kind of its
   // own (a bigger change), so it is raised as "Other requested record" with Amazon's sentence quoted,
   // rather than mislabelled "Proof of address". Never fires where an address is also named.
+  // 20 Oct 2026: named for what they are. A UK verification notice raised "Other requested record"
+  // for the VAT certificate, the first thing a UK seller looks for.
+  {
+    pattern: /\bVAT (?:registration )?certificates?\b/i,
+    evidenceKind: "other",
+    label: VAT_CERTIFICATE_LABEL,
+    unless: /\bproof of (?:address|residence)\b|\butility bills?\b/i,
+  },
   {
     pattern:
-      /\b(business licen[cs]es?|business registration(?: documents?| certificates?)?|trade licen[cs]es?|VAT (?:registration )?certificates?|certificates? of (?:incorporation|registration)|company registration)\b/i,
+      /\b(business licen[cs]es?|business registration(?: documents?| certificates?)?|trade licen[cs]es?|certificates? of (?:incorporation|registration)|company registration)\b/i,
     evidenceKind: "other",
+    label: BUSINESS_REGISTRATION_LABEL,
     unless: /\bproof of (?:address|residence)\b|\butility bills?\b/i,
   },
   {
@@ -498,6 +525,10 @@ const KIND_BY_LABEL: ReadonlyMap<string, EvidenceKind> = new Map([
     d.label.toLowerCase(),
     "compliance_report",
   ]),
+  [PATENT_ANALYSIS_LABEL.toLowerCase(), "other"],
+  [VAT_CERTIFICATE_LABEL.toLowerCase(), "other"],
+  [BUSINESS_REGISTRATION_LABEL.toLowerCase(), "other"],
+  [RIGHTS_OWNER_LICENCE_LABEL.toLowerCase(), "brand_authorization"],
 ]);
 
 /**
@@ -1855,11 +1886,34 @@ export function applyWorkspaceReply(w: Workspace, replyId: string): Workspace {
  * test can run the router on the very object that is sent.
  */
 export function composePayloadWorkspace(w: Workspace): Workspace {
+  /*
+    20 Oct 2026: submissions travel empty, and the server's critic asks `rootCauseRewritten` whether a
+    seller has answered a refusal that said the root cause was missing. With no submissions to
+    compare against it can only answer "no", so every second-round Plan of Action came back marked
+    "Amazon says the root cause is missing", whatever the seller had written, while the page beside
+    it said the answer was done. The tab holds the sent wording, so it decides; the server gets one
+    wording-free marker that says a send is on record, which `rootCauseRewritten` already reads as
+    "a substantial explanation of their own is the best available answer". The sent text itself
+    still never leaves the device.
+  */
+  const lastSent = w.submissions.at(-1);
+  const rewritten = lastSent && planFaulted(w) && rootCauseRewritten(w);
   return {
     ...w,
     history: [],
     previousRequests: w.previousRequests.map((p) => ({ ...p, requirements: [] })),
-    submissions: [],
+    submissions: rewritten
+      ? [
+          {
+            ...lastSent,
+            text: "",
+            preparedText: undefined,
+            attachments: [],
+            receipt: "",
+            unresolved: undefined,
+          },
+        ]
+      : [],
     replies: w.replies.filter((r) => !r.applied),
     documentChecks: undefined,
     draft: undefined,

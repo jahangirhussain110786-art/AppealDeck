@@ -267,7 +267,7 @@ describe("19 Oct 2026 walk-through: a UK VAT and business verification", () => {
       .map((r) => r.label);
     expect(labels).toEqual(
       expect.arrayContaining([
-        "Other requested record",
+        "VAT registration certificate",
         "Bank or financial record",
         "Proof of address",
         "Requested identity record",

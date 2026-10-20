@@ -325,6 +325,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
     triage: {
       doNow: [
         "Re-paste the full notice, including the violation section and any stated dates.",
+        "Amazon often names the exact policy and the listings in Account Health, under Performance Notifications or the Policy Compliance section. If your email is vague, open those, paste what they say here, and we read it too.",
         "Check your Account Health dashboard for the exact appeal window and required documents.",
         "If a deadline is not stated, plan on the Account Health dashboard being authoritative.",
       ],

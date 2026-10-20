@@ -63,13 +63,15 @@ const docs = {
     lines: [["TH-T3-GRN", "Trailhead 3-Person Backpacking Tent, green", 60, 71.0]],
     note: "Goods shipped 2025-05-07.",
   }),
-  "A3-brand-letter-trailhead-authorizing-summit-peak.pdf": wrap(`<h1>Trailhead Gear Co.</h1><div class="m">1900 Alder Street, Portland, OR 97209 · +1 (503) 555-0133</div>
+  "A3-brand-letter-trailhead-authorizing-summit-peak.pdf":
+    wrap(`<h1>Trailhead Gear Co.</h1><div class="m">1900 Alder Street, Portland, OR 97209 · +1 (503) 555-0133</div>
 <p style="margin-top:24px">1 July 2026</p><p><b>To whom it may concern</b></p>
 <p>Trailhead Gear Co. confirms that Summit Peak Wholesale Inc., 4120 Industrial Way, Salt Lake City, UT 84104, is an authorized distributor of Trailhead-branded tents and accessories in the United States, effective 1 January 2024 and continuing until further notice.</p>
 <p>Retailers who buy from Summit Peak Wholesale Inc. are buying genuine Trailhead products. Questions can be sent to dealers@trailheadgear.example.</p>
 <p style="margin-top:36px">Dana Whitfield<br>Director of Distribution, Trailhead Gear Co.</p>`),
 
-  "B1-carrier-pickup-delays-summary.pdf": wrap(`<h1>Carrier performance summary</h1><div class="m">Pinecrest Pet Supply Inc. · 15 Sept to 8 Oct 2026 · prepared by the warehouse lead, Tomas Reyes</div>
+  "B1-carrier-pickup-delays-summary.pdf":
+    wrap(`<h1>Carrier performance summary</h1><div class="m">Pinecrest Pet Supply Inc. · 15 Sept to 8 Oct 2026 · prepared by the warehouse lead, Tomas Reyes</div>
 <table><tr><th>Week starting</th><th class="n">Orders</th><th class="n">Shipped late</th><th class="n">Late %</th><th>Main reason</th></tr>
 <tr><td>15 Sep</td><td class="n">212</td><td class="n">9</td><td class="n">4.2%</td><td>Normal</td></tr>
 <tr><td>22 Sep</td><td class="n">248</td><td class="n">21</td><td class="n">8.5%</td><td>Packer on leave, no cover</td></tr>
@@ -90,7 +92,8 @@ const docs = {
     lines: [["VEL-ACA-12", "Vellmore 12-inch Acacia Cutting Board", 96, 14.8]],
     note: "Vellmore Brands LLC authorized dealer account no. VB-7714. Shipped 2026-09-03 from Providence.",
   }),
-  "C2-letter-of-authorization-vellmore.pdf": wrap(`<h1>Vellmore Brands LLC</h1><div class="m">500 Mill Street, Providence, RI 02903 · legal@vellmorebrands.example</div>
+  "C2-letter-of-authorization-vellmore.pdf":
+    wrap(`<h1>Vellmore Brands LLC</h1><div class="m">500 Mill Street, Providence, RI 02903 · legal@vellmorebrands.example</div>
 <p style="margin-top:24px">22 January 2026</p><p><b>Authorized distributor confirmation</b></p>
 <p>Vellmore Brands LLC confirms that Atlantic Kitchen Distribution LLC, 27 Harbor Freight Road, Providence, RI 02905 (dealer account VB-7714), is an authorized distributor of Vellmore-branded kitchenware, including the 12-inch Acacia Cutting Board (item VEL-ACA-12), and may resell to retailers.</p>
 <p>This confirmation is valid until 31 December 2026.</p>

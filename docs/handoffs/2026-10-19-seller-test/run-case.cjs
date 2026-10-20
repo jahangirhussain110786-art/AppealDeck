@@ -12,7 +12,8 @@ const key = process.argv[2];
 const explore = process.argv[3] === "explore";
 const read = (f) => fs.readFileSync(path.join(DIR, f), "utf8");
 const doc = (f) => path.join(DIR, "docs", f);
-const log = (title, text, n = 4000) => console.log(`\n=== ${title} ===\n${String(text).slice(0, n)}`);
+const log = (title, text, n = 4000) =>
+  console.log(`\n=== ${title} ===\n${String(text).slice(0, n)}`);
 
 const CASES = {
   S2: {
@@ -35,7 +36,8 @@ const CASES = {
       "UN38.3 battery test summary": "3B-un38-3-test-summary-voltridge.pdf",
     },
     notes: {
-      "Safety data sheet (SDS)": "SDS for the VR-20K power bank, revision 2 issued 5 February 2025, 16 sections.",
+      "Safety data sheet (SDS)":
+        "SDS for the VR-20K power bank, revision 2 issued 5 February 2025, 16 sections.",
       "UN38.3 battery test summary":
         "UN38.3 test summary for model VR-20K, report ZBS-2025-01877 dated 24 January 2025, 74 Wh, 6 cells, tests T1 to T8 passed.",
     },
@@ -49,12 +51,16 @@ const CASES = {
       "Other requested record": "4A-vat-registration-certificate-hmrc.pdf",
       "Bank or financial record": "4B-bank-statement-cotswold-tea.pdf",
       "Proof of address": "4C-council-tax-bill-or-utility.pdf",
-      "Requested identity record": "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
+      "Requested identity record":
+        "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
     },
     notes: {
-      "Other requested record": "HMRC VAT registration certificate, VAT number GB 412 8830 57, effective 1 February 2022.",
-      "Bank or financial record": "September 2026 statement for Cotswold Tea Merchants Ltd, account ending 6615.",
-      "Proof of address": "Water and power bill dated 14 September 2026 for The Old Maltings, Stow-on-the-Wold.",
+      "Other requested record":
+        "HMRC VAT registration certificate, VAT number GB 412 8830 57, effective 1 February 2022.",
+      "Bank or financial record":
+        "September 2026 statement for Cotswold Tea Merchants Ltd, account ending 6615.",
+      "Proof of address":
+        "Water and power bill dated 14 September 2026 for The Old Maltings, Stow-on-the-Wold.",
       "Requested identity record": "Photo ID of the primary contact on the account.",
     },
     explanation:
@@ -71,7 +77,8 @@ const CASES = {
     notes: {
       "Test report or compliance certificate":
         "Certificate of Analysis from Cascade Analytical Laboratories (ISO/IEC 17025), report date 2 September 2026, batch AM-TUR-0826, for our turmeric and black pepper capsules.",
-      "Product and label photos": "Photo of the label with the Supplement Facts panel, ingredient list and net quantity of 120 capsules.",
+      "Product and label photos":
+        "Photo of the label with the Supplement Facts panel, ingredient list and net quantity of 120 capsules.",
       "Supplier invoice":
         "Invoice EN-70418 from Evergreen Nutraceutical Manufacturing dated 28 August 2026 for 1,200 bottles of AM-TUR-120, batch AM-TUR-0826.",
     },
@@ -93,14 +100,46 @@ const CASES = {
     notice: "notice-I-verification.txt",
     form: "Schedule a video call.",
     files: {
-      "Requested identity record": "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
+      "Requested identity record":
+        "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
       "Bank or financial record": "I1-bank-statement-tidewater-pottery.pdf",
       "Proof of address": "../../2026-09-29-test-documents/11-utility-bill-proof-of-address.jpg",
     },
     notes: {
       "Requested identity record": "Photo ID of the primary contact on the account.",
-      "Bank or financial record": "September 2026 statement for Tidewater Pottery Studio LLC, account ending 3391.",
+      "Bank or financial record":
+        "September 2026 statement for Tidewater Pottery Studio LLC, account ending 3391.",
       "Proof of address": "Utility bill for the business address at 9 Quay Street, Gloucester.",
+    },
+  },
+  // Harder case J (20 Oct 2026): a vague deactivation, and a seller who truly does not know why.
+  J: {
+    notice: "notice-J-vague-deactivation.txt",
+    form: "Appeal text, in the Account Health page.",
+    files: {},
+    wentWrong:
+      "I do not know what activity Amazon means. We sell candles and home decor and I have not changed anything in the last month. Two weeks ago I lowered prices on about 30 listings and added a new supplier's candles. I have had a few customer messages asking where their orders were.",
+    fixed:
+      "Finished: on 17 October I paused all 30 listings whose prices I changed. In progress: I am checking every listing and every customer message from the last 60 days.",
+    prevent:
+      "I will read the seller policies for each category before changing a listing and I will check the Account Health page every day.",
+  },
+  // Harder case I2 (20 Oct 2026): the same verification, but the seller photographs the ID badly
+  // and sends a scan of the utility bill that is a picture with no text.
+  I2: {
+    notice: "notice-I-verification.txt",
+    form: "Schedule a video call.",
+    files: {
+      "Requested identity record":
+        "../../2026-09-29-test-documents/13-id-card-specimen-BAD-photo.jpg",
+      "Bank or financial record": "I1-bank-statement-tidewater-pottery.pdf",
+      "Proof of address":
+        "../../2026-09-29-test-documents/17-supplier-invoice-SCANNED-no-text-layer.pdf",
+    },
+    notes: {
+      "Requested identity record": "Photo of the ID of the primary contact, taken on my phone.",
+      "Bank or financial record": "September 2026 statement for Tidewater Pottery Studio LLC.",
+      "Proof of address": "Scan of a bill for the studio address.",
     },
   },
   D: {
@@ -123,13 +162,15 @@ const CASES = {
     notice: "notice-E-related-account.txt",
     form: "Appeal text and supporting documents.",
     files: {
-      "Requested identity record": "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
+      "Requested identity record":
+        "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
       "Proof of address": "E3-utility-bill-cedar-lane-candles.pdf",
       "Linked-account resolution record": "E1-statement-former-partner-closure.pdf",
     },
     notes: {
       "Requested identity record": "Photo ID of the owner of Cedar Lane Candles LLC.",
-      "Proof of address": "Electricity bill dated 1 October 2026 for Cedar Lane Candles LLC at Unit 4, 31 Hawthorn Road, Asheville.",
+      "Proof of address":
+        "Electricity bill dated 1 October 2026 for Cedar Lane Candles LLC at Unit 4, 31 Hawthorn Road, Asheville.",
       "Linked-account resolution record":
         "Signed statement of Marcus Telford dated 8 October 2026, former co-owner of Wickwood Home Co., saying he left in April 2025 and has no access to our account.",
     },
@@ -141,7 +182,8 @@ const CASES = {
     form: "Email disbursement-appeals@amazon.com with the documents.",
     files: {
       "Bank or financial record": "F1-bank-statement-maple-birch-textiles.pdf",
-      "Requested identity record": "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
+      "Requested identity record":
+        "../../2026-09-29-test-documents/12-id-card-specimen-GOOD-photo.jpg",
     },
     notes: {
       "Bank or financial record":
@@ -220,7 +262,10 @@ async function signIn(page) {
 const snap = (page, name) =>
   page.screenshot({ path: path.join(OUT, `${key}-${name}.png`), fullPage: true });
 const dump = async (page, name) => {
-  const t = await page.locator("main").innerText().catch(() => page.locator("body").innerText());
+  const t = await page
+    .locator("main")
+    .innerText()
+    .catch(() => page.locator("body").innerText());
   fs.writeFileSync(path.join(OUT, `${key}-${name}.txt`), t);
   return t;
 };
@@ -233,7 +278,10 @@ const tab = async (page, name) => {
   const c = CASES[key];
   if (process.env.A_INVOICE) c.files = { "Supplier invoice": process.env.A_INVOICE };
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
+  const ctx = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    acceptDownloads: true,
+  });
   const page = await ctx.newPage();
   page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
   page.on("console", (m) => m.type() === "error" && console.log("CONSOLE", m.text().slice(0, 200)));
@@ -246,14 +294,23 @@ const tab = async (page, name) => {
   await snap(page, "1-decode");
   log("DECODE", await dump(page, "1-decode"), 1500);
 
-  await page.getByRole("link", { name: /start my case/i }).first().click();
+  await page
+    .getByRole("link", { name: /start my case/i })
+    .first()
+    .click();
   await page.waitForURL(/\/case/);
   const form = page.getByLabel("What the response page asks for");
   if (await form.isVisible().catch(() => false)) await form.fill(c.form);
   if (c.dispute) {
-    await page.getByText(/Something wrong\? Change it/).first().click().catch(() => {});
+    await page
+      .getByText(/Something wrong\? Change it/)
+      .first()
+      .click()
+      .catch(() => {});
     await page.waitForTimeout(500);
-    const labelsHere = await page.locator("label, [role=radio], [role=combobox], select").allInnerTexts();
+    const labelsHere = await page
+      .locator("label, [role=radio], [role=combobox], select")
+      .allInnerTexts();
     console.log("FIRST-SCREEN CONTROLS:", labelsHere.filter((t) => t.length < 90).join(" | "));
     const dis = page.getByLabel(/i disagree|dispute|no, i disagree/i).first();
     if (await dis.isVisible().catch(() => false)) await dis.check().catch(() => dis.click());
@@ -269,7 +326,15 @@ const tab = async (page, name) => {
 
   // Upload each file against its card, like a seller would.
   for (const [label, file] of Object.entries(c.files ?? {})) {
-    const card = page.getByRole("region", { name: new RegExp("^" + label.split("").map((ch) => (/[A-Za-z0-9 ,']/.test(ch) ? ch : "." )).join("")) });
+    const card = page.getByRole("region", {
+      name: new RegExp(
+        "^" +
+          label
+            .split("")
+            .map((ch) => (/[A-Za-z0-9 ,']/.test(ch) ? ch : "."))
+            .join(""),
+      ),
+    });
     const openBtn = card.getByRole("button", { name: /^open$/i });
     if (await openBtn.isVisible().catch(() => false)) {
       await openBtn.click();
@@ -282,15 +347,31 @@ const tab = async (page, name) => {
     const check = card.getByRole("button", { name: /check this document/i }).first();
     if (await check.isVisible().catch(() => false)) {
       await check.click();
-      await card.getByText(/Reading finished|Checked d|could not read|Nothing to compare/i).first().waitFor({ timeout: 90000 }).catch(() => {});
+      await card
+        .getByText(/Reading finished|Checked d|could not read|Nothing to compare/i)
+        .first()
+        .waitFor({ timeout: 90000 })
+        .catch(() => {});
       await page.waitForTimeout(1500);
       await snap(page, `5-check-${label.replace(/\W+/g, "-")}`);
-      log(`CHECK RESULT (${label})`, await dump(page, `5-check-${label.replace(/\W+/g, "-")}`), 4500);
+      log(
+        `CHECK RESULT (${label})`,
+        await dump(page, `5-check-${label.replace(/\W+/g, "-")}`),
+        4500,
+      );
     }
     const note = card.getByLabel(/what does this file show/i).first();
-    await note.fill(c.notes?.[label] ?? `This is the ${label.toLowerCase()} for the affected product.`);
-    await card.getByLabel(/i checked the file/i).first().check();
-    await card.getByRole("button", { name: /save document/i }).first().click();
+    await note.fill(
+      c.notes?.[label] ?? `This is the ${label.toLowerCase()} for the affected product.`,
+    );
+    await card
+      .getByLabel(/i checked the file/i)
+      .first()
+      .check();
+    await card
+      .getByRole("button", { name: /save document/i })
+      .first()
+      .click();
     await page.waitForTimeout(1500);
     await page.waitForTimeout(700);
   }
@@ -313,7 +394,10 @@ const tab = async (page, name) => {
     log("BUSINESS DETAILS", await dump(page, "6-business"), 6000);
     console.log(
       "LABELS:",
-      await page.locator("label").allInnerTexts().then((a) => a.filter((t) => t.length < 90)),
+      await page
+        .locator("label")
+        .allInnerTexts()
+        .then((a) => a.filter((t) => t.length < 90)),
     );
   }
   const done = page.getByRole("checkbox", { name: /i checked the notice and the appeal page/i });
@@ -332,20 +416,25 @@ const tab = async (page, name) => {
     await page.getByLabel("How will you stop it happening again?").fill(c.prevent);
     await page.getByRole("checkbox", { name: /every action i describe as done/i }).check();
   }
-  const complete = page.getByRole("checkbox", { name: /i checked the notice and the appeal page/i });
+  const complete = page.getByRole("checkbox", {
+    name: /i checked the notice and the appeal page/i,
+  });
   if (await complete.isVisible().catch(() => false)) await complete.check();
   await page.getByRole("button", { name: /save my answers/i }).click();
   await page.waitForTimeout(1500);
   await snap(page, "8-answers-saved");
   log("BEFORE YOU SEND", await dump(page, "8-answers-saved"), 4000);
-  const prepare = page.getByRole("button", { name: /prepare (working )?(draft|response)/i }).first();
+  const prepare = page
+    .getByRole("button", { name: /prepare (working )?(draft|response)/i })
+    .first();
   console.log("prepare enabled:", await prepare.isEnabled());
   await prepare.click();
   await page.waitForTimeout(500);
   const deadline = Date.now() + 150000;
   while (Date.now() < deadline) {
     const t = await page.locator("main").innerText();
-    if (/Copy (the )?(response|draft|text)|Download|Changes since|Your facts, checked/i.test(t)) break;
+    if (/Copy (the )?(response|draft|text)|Download|Changes since|Your facts, checked/i.test(t))
+      break;
     await page.waitForTimeout(3000);
   }
   await page.waitForTimeout(3000);
@@ -353,7 +442,10 @@ const tab = async (page, name) => {
   log("PREPARED RESPONSE", await dump(page, "9-prepared"), 12000);
   if (process.argv[3] === "reply") {
     await page.getByLabel(/i reviewed the facts/i).check();
-    await page.getByLabel(/i sent the response exactly as prepared/i).check().catch(() => {});
+    await page
+      .getByLabel(/i sent the response exactly as prepared/i)
+      .check()
+      .catch(() => {});
     await page.getByLabel(/i have submitted this exact response/i).check();
     await page.getByRole("button", { name: /record submission/i }).click();
     await page.waitForTimeout(1500);

@@ -107,6 +107,8 @@ export const DRAFT_HARD_RULES: readonly string[] = [
   "9. After a refusal, each section must answer the reasons Amazon gave, using only the seller's facts, and must say in plain words what is different from the earlier response (a date, a record, a step now finished). Do not repeat the earlier wording unchanged.",
   "10. Do not make anything sound stronger than the seller said. Reuse their own verbs and qualifiers. Do not add words such as strict, rigorous, robust, comprehensive, thorough, dedicated, systematic, extensive, physical, fully, completely, permanently or 'every single'. If they said they checked something, write that they checked it, not that they inspected, audited or verified it.",
   "11. Stay close to the seller's own length. Do not pad.",
+  "12. If the seller says they do not know what caused the problem, say that plainly at the start of the root cause, in their own words, then what they have checked, what they found, and what they are doing to find out. Never invent or guess a cause to fill the section. An honest 'we have not found the cause yet' with specific checks is stronger than a made-up one.",
+  "13. If the seller says they disagree with Amazon's finding, or that nothing wrong happened, say that first and plainly, then give their facts in order. Do not admit fault, an error or a policy breach the seller did not state, and do not invent a corrective action to look cooperative: where nothing needed correcting, say what they checked.",
 ];
 
 export const DRAFT_SYSTEM_PROMPT = [

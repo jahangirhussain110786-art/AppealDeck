@@ -105,6 +105,10 @@ const IP: EvidenceRequirement[] = [
   {
     kind: "brand_authorization",
     required: true,
+    // 20 Oct 2026: a design-patent complaint was told its first record was an "Authorization letter".
+    // A patent is answered by showing the product does not infringe, who made it, or a licence, and
+    // the notice itself lists those; a brand's distributor letter is a trademark answer.
+    raisedWhen: /^(?![\s\S]*\b(?:design |utility )?patents?\b)/i,
     fields: ["authorization or license proof", "matching ASIN(s)", "rights-owner name"],
     disqualifiers: ["unverifiable 'we are allowed' statements", "screenshots of listings"],
     whyAmazonWantsIt:
@@ -113,10 +117,10 @@ const IP: EvidenceRequirement[] = [
   {
     kind: "supplier_invoice",
     required: false,
-    fields: ["invoice from an authorized distributor", "matching ASIN(s)", BUYER_FIELD],
+    fields: ["invoice from your supplier or manufacturer", "matching ASIN(s)", BUYER_FIELD],
     disqualifiers: ["invoices from unknown or unauthorized sources"],
     whyAmazonWantsIt:
-      "An invoice from an authorized distributor supports the claim that your inventory is legitimate.",
+      "An invoice shows where your inventory came from. For a brand complaint, that it came through the brand's own channel; for a patent complaint, who made the product and when you bought it.",
   },
   {
     kind: "rights_owner_retraction",
@@ -269,6 +273,23 @@ const VERIFICATION: EvidenceRequirement[] = [
     ],
     whyAmazonWantsIt:
       "A second document from an independent source corroborates the name and address when the identity document alone is not conclusive.",
+  },
+  {
+    // 20 Oct 2026: a verification notice that names a bank statement showed the funds reason
+    // ("before releasing funds") because this list had no entry of its own for it.
+    kind: "financial_instrument_doc",
+    required: false,
+    fields: [
+      "the account holder's name and address, matching your seller account",
+      "a recent statement date, inside the window the notice names",
+      "complete pages rather than a cropped screenshot",
+    ],
+    disqualifiers: [
+      "a statement for a different person or business",
+      "a screenshot or a statement with details covered or edited",
+    ],
+    whyAmazonWantsIt:
+      "Amazon checks that the name and address on the statement match the details registered on the account.",
   },
 ];
 

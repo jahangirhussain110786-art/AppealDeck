@@ -90,7 +90,10 @@ describe("/api/read-document hardening (6 Oct 2026)", () => {
     const body = await res.json();
     expect(body.ok).toBe(true);
     expect(fields.length).toBeGreaterThan(3);
-    expect(body.check.findings).toHaveLength(fields.length);
+    // The enum also holds the document-kind question, which is a pointer and not a row of the list.
+    expect(body.check.findings).toHaveLength(
+      fields.filter((f) => f !== "what kind of document this is").length,
+    );
     expect(body.check.findings[0].observed).toBe("Harbor Goods Ltd");
     // The one with nothing quoted is not "present" with invented text.
     expect(body.check.findings[1].status).not.toBe("present");

@@ -150,6 +150,12 @@ const WEAK_NEGATION =
   /\b(?:rather than|instead of|without(?!\s+(?:any\s+|further\s+|undue\s+)?(?:delay|hesitation)))\b/i;
 /** "invoices that do not show prices" describes a document; it does not tell the seller not to send it. */
 const RELATIVE_NEGATION = /\b(?:that|which|who)\s+(?:do|does|did)\s+not\b/gi;
+/**
+ * "what you will do to make sure it does not happen again" describes the aim of the plan being
+ * asked for; the "not" is not a refusal. Replaced before the negation test (20 Oct 2026).
+ */
+const PREVENTION_AIM =
+  /\b(?:make sure|ensure|so that|to prevent)\s+(?:it|this|that|these|they)\s+(?:do|does|will|would)(?:n't|\s+not)\s+(?:happen|occur|recur)\b/gi;
 
 /**
  * Clauses that describe what has already happened. "Your previous Plan of Action was received" is
@@ -239,6 +245,12 @@ const POA_REQUESTED = new RegExp(
     `^(?!.*\\b(?:we|amazon)\\s+(?:will|may|can|shall|would|might)\\b)[^\\n]*?\\b(?:respond|reply)\\b[^\\n]{0,120}?\\bwith\\s+(?:(?:an?|your|the|updated|new|written)\\s+)*${POA_NOUN}\\b`,
     // "Tell us what caused the issue" is the root-cause half of a plan of action, asked in plain words.
     `\\b(?:tell|let)\\s+us\\b[^\\n]{0,40}?\\bwhat\\s+(?:caused|led\\s+to)\\b`,
+    // 20 Oct 2026: a vague deactivation that asks the seller to "explain the cause of the problem and
+    // what you will do to make sure it does not happen again" never said "plan of action", and the
+    // case was told "we are not going to guess": a seller who did not know why they were suspended
+    // was also not told what to write. Cause and prevention in plain words are a plan of action.
+    `\\bexplain\\b[^\\n]{0,80}?\\b(?:cause|reason)s?\\b[^\\n]{0,120}?\\b(?:again|prevent|recur)`,
+    `\\bwhat\\s+you\\s+(?:will|are\\s+going\\s+to|plan\\s+to)\\s+do\\s+to\\s+(?:make\\s+sure|ensure|prevent|stop)\\b[^\\n]{0,60}?\\b(?:again|recur|happen)`,
     `\\b(?:need|require|request|expect|want)s?\\s+(?:(?:an?|your|the|updated|new|written)\\s+)+${POA_NOUN}\\b`,
     `\\b${POA_NOUN}\\b[^.\\n]{0,40}\\b(?:is|are)\\s+(?:required|needed|requested|due|necessary)\\b`,
   ].join("|"),
@@ -352,7 +364,7 @@ export function determineResponseType(raw: string, formInstructions = ""): Respo
     for (const clause of withListItems(splitClauses(source.text))) {
       // "Providing falsified documents is a serious violation" states a rule; it asks for nothing.
       const past = describesThePast(clause.text) || GERUND_SUBJECT.test(clause.text);
-      const negationText = clause.text.replace(RELATIVE_NEGATION, " ");
+      const negationText = clause.text.replace(RELATIVE_NEGATION, " ").replace(PREVENTION_AIM, " ");
       const negated = NEGATION.test(negationText);
       const weak = WEAK_NEGATION.exec(clause.text);
       for (const [type, basePattern] of PATTERNS) {

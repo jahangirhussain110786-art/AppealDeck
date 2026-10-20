@@ -1217,6 +1217,36 @@ describe("the second review's findings", () => {
         expect(kindOf(heading).f, heading).toBeUndefined();
       }
     });
+
+    it("points at a till receipt, which shows a shop's sale and not a supplier's invoice", () => {
+      const r = check(
+        "QUARTERMILE WAREHOUSE CLUB\nSavannah, GA Member 4417 8820 31\n2026-09-02 14:21\nSoy candle gift set 24 $311.76\nVisa ****2290 Thank you for shopping",
+        "INAUTHENTIC",
+        "supplier_invoice",
+        { asins: [] },
+      );
+      const f = status(r, /what kind of document/);
+      expect(f?.status).toBe("unclear");
+      expect(f?.observed).toMatch(/Member 4417|Visa/);
+      expect(containsBannedConclusion(f?.note ?? "")).toBe(false);
+    });
+
+    it("does not call an invoice a receipt for a thank-you line and a card payment", () => {
+      const r = check(
+        "INVOICE\nFROM\nCrestline Trade Supply Co.\n1450 Industrial Parkway, Columbus, OH 43219\nInvoice date: 3 June 2026\nThank you for your custom.\nPaid by card ending 4417",
+        "INAUTHENTIC",
+        "supplier_invoice",
+        { asins: [] },
+      );
+      expect(status(r, /what kind of document/)).toBeUndefined();
+      const plain = check(
+        "INVOICE\nFROM\nCrestline Trade Supply Co.\n1450 Industrial Parkway, Columbus, OH 43219\nInvoice date: 3 June 2026\nPlease pay within 30 days.",
+        "INAUTHENTIC",
+        "supplier_invoice",
+        { asins: [] },
+      );
+      expect(status(plain, /what kind of document/)).toBeUndefined();
+    });
   });
 
   describe("scans", () => {

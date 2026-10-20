@@ -1178,6 +1178,31 @@ function readField(
 const NOT_AN_INVOICE_HEADING =
   /\b(?:pro[- ]?forma|quotation|quote|estimate|credit note|debit note|purchase order|order confirmation|sales order|packing slip|delivery note|delivery order|remittance advice|statement of account)\b/i;
 
+export const DOCUMENT_KIND_FIELD = "what kind of document this is";
+const NOT_AN_INVOICE_NOTE =
+  "The heading reads as something other than an invoice for goods already bought. Amazon asks for a completed invoice, so check this is a final invoice and not a quotation, an order or a credit note.";
+const RECEIPT_NOTE =
+  "This reads like a store receipt: it shows payment at a shop, not a supplier invoice with a seller and a buyer. If your notice asks for an invoice from a supplier, a store receipt may not answer it. Check what the notice names, and ask the shop whether it can issue an invoice. Amazon decides what it accepts.";
+
+/**
+ * Marks of a till receipt, none of which a supplier's invoice carries: a payment card shown by its
+ * last digits, a shop's member number, "thank you for shopping", a cashier or till. Three or more are
+ * needed, and the line quoted is the first, so one stray "register" in an invoice's body never
+ * reads as a receipt (20 Oct 2026: a warehouse-club receipt read exactly like an invoice, and
+ * retail receipts are the commonest reason a stock-source request is refused).
+ */
+const RECEIPT_SIGNS: readonly RegExp[] = [
+  /\b(?:visa|mastercard|amex|american express|debit|card)\b[^\n]{0,12}(?:\*{2,}|x{3,}|ending(?: in)?\s)\s*\d{4}\b/i,
+  /\bmember(?:ship)?\s*(?:no\.?|number|#|id)?\s*:?\s*\d[\d ]{5,}/i,
+  /\bthank you for (?:shopping|your custom|visiting)\b/i,
+  /\bcashier\b|\bterminal\s*(?:id|#)\b|\bchange due\b|\bstore\s*#\s*\d+/i,
+];
+
+function retailReceiptLine(lines: readonly string[]): string | undefined {
+  const hits = RECEIPT_SIGNS.map((p) => lines.find((l) => l.length <= 120 && p.test(l)));
+  return hits.filter(Boolean).length >= 3 ? hits.find(Boolean) : undefined;
+}
+
 /**
  * A pointer, never a verdict: the heading is quoted, the seller is asked to check it is a final
  * invoice, and nothing says the document is or is not one. Only for the supplier-invoice list.
@@ -1188,13 +1213,44 @@ function documentTypeFinding(
 ): FieldFinding | undefined {
   if (!fields.some((f) => /\bsupplier business name\b|\bissue date\b/i.test(f))) return undefined;
   const heading = lines.slice(0, 8).find((l) => l.length <= 60 && NOT_AN_INVOICE_HEADING.test(l));
-  if (!heading) return undefined;
+  if (!heading) {
+    const receipt = retailReceiptLine(lines);
+    if (!receipt) return undefined;
+    return {
+      field: DOCUMENT_KIND_FIELD,
+      status: "unclear",
+      observed: clip(receipt),
+      note: RECEIPT_NOTE,
+    };
+  }
   return {
-    field: "what kind of document this is",
+    field: DOCUMENT_KIND_FIELD,
     status: "unclear",
     observed: clip(heading),
-    note: "The heading reads as something other than an invoice for goods already bought. Amazon asks for a completed invoice, so check this is a final invoice and not a quotation, an order or a credit note.",
+    note: NOT_AN_INVOICE_NOTE,
   };
+}
+
+/**
+ * The same pointer from a model's few-word name for the document ("retail store receipt",
+ * "quotation"), for the reading that runs on the server. The model is asked only to name the
+ * document; whether the name is worth a pointer is decided here, in code, with the same words as the
+ * reading on the device. Undefined for an invoice, and for anything it cannot place.
+ */
+export function documentKindPointer(named: string | undefined): FieldFinding | undefined {
+  const text = (named ?? "").trim().slice(0, 80);
+  if (!text) return undefined;
+  if (/\binvoice\b/i.test(text) && !NOT_AN_INVOICE_HEADING.test(text)) return undefined;
+  if (NOT_AN_INVOICE_HEADING.test(text))
+    return {
+      field: DOCUMENT_KIND_FIELD,
+      status: "unclear",
+      observed: text,
+      note: NOT_AN_INVOICE_NOTE,
+    };
+  if (/\b(?:retail|store|till|point[- ]of[- ]sale|sales) receipt\b|\breceipt\b/i.test(text))
+    return { field: DOCUMENT_KIND_FIELD, status: "unclear", observed: text, note: RECEIPT_NOTE };
+  return undefined;
 }
 
 /**

@@ -142,3 +142,37 @@ An unchanged resubmission is caught ("the same text, word for word"); "Nothing h
 - The pack file name carries the case's internal id.
 - The free on-device reading finds little on an invoice whose supplier is in the header.
 - The AI's daily free-tier limit ended most drafts in the fallback "built from your own wording", so the AI-written round 2 letters were not exercised today.
+
+# Rounds 6 and 7 (19 to 20 Oct 2026): harder sellers
+
+Round 6 (five new cases) was committed on 20 Oct. Round 7 took the three cases round 6 had not reached and added three harder sellers. Each ran in the real app (dev account, production build); the AI was over its free-tier quota for both models all day, so every draft was built from the seller's own wording and the AI prompts were reviewed, not exercised.
+
+| Case | Seller | What it tests |
+| --- | --- | --- |
+| S2 | Kestrel Desk Co. | Design-patent complaint, seller disputes |
+| S4 | Cotswold Tea Merchants Ltd (UK) | VAT and business verification |
+| S5 | Brindle Hollow Pet Co. | Order Defect Rate, two earlier refusals, then a second-round Plan of Action |
+| H2 | Pinecrest Home and Outdoor | Authenticity notice, **no supplier invoice**, only a warehouse-club receipt |
+| J | Marigold Lane Home | A vague deactivation, and a seller who truly does not know why |
+| I2 | Tidewater Pottery | Verification with a badly photographed ID and a scan with no text |
+
+## Defects found and fixed (each with a test unless noted)
+
+1. **A patent complaint demanded a brand's "Authorization letter"** (a trademark answer) and offered neither of the two answers the notice itself lists: a patent attorney's analysis and a licence from the rights owner. It now raises those two, keeps the invoice, and no longer demands the letter. The invoice's "why Amazon asks" no longer says "authorized distributor" for a patent.
+2. **The UK VAT certificate was raised as "Other requested record"**, and a bank statement on a verification case carried the funds-release reason. The certificate and the business registration now have names of their own, and a verification bank statement has its own reason.
+3. **Every second-round Plan of Action stayed "WORK IN PROGRESS" with "Amazon says the root cause is missing"**, however well the seller had rewritten it. The page beside it said the answer was done. Cause: the compose request sends no earlier submissions, so the server's critic could not tell a rewrite from a resend. The tab, which holds the sent wording, now decides and sends one wording-free marker. The sent text still never leaves the device.
+4. **A warehouse-club receipt read exactly like an invoice** on the free reading (name, date and total all "Found"). It now carries a pointer: it reads like a store receipt, and a store receipt may not answer a request for a supplier invoice. The AI reading is asked to name the document and code decides whether to point; a quotation or pro forma gets the same pointer. Three signs are needed (card digits, member number, "thank you for shopping", cashier), so an invoice that says "thank you" is left alone.
+5. **A vague deactivation was a dead end** ("we could not tell what kind of response Amazon wants, we are not going to guess"). The notice asked the seller to explain the cause and what they will do so it does not happen again, which is a Plan of Action in plain words. It is now read as one. The "not" in "does not happen again" had been read as a refusal.
+6. **An unclassified notice told the seller to "re-paste" and check the dashboard**, without saying where Amazon names the policy. It now points to Performance Notifications and Policy Compliance in Account Health.
+7. **The future-tense warning on Preventive Measures gave advice for corrective actions.** It now says to state each step as the rule followed now, with the date it began.
+8. **Two AI prompt rules added** for the two sellers this round exposed: one who does not know the cause (say so plainly, then what was checked; never invent one) and one who disagrees with Amazon (say so first; admit nothing the seller did not state). The fact check is unchanged.
+
+## Worked as intended
+
+Prior attempts with wording are recorded and compared; the second refusal is read in Amazon's own words; starting round two shows "Change the approach, not only the words" after two responses; "I can't get it" states the missing record in the seller's words and the draft says so under its own heading; a badly photographed ID gets size, focus, lighting and framing notes on the device and is never uploaded; a scanned PDF is not read for identity or address.
+
+## Still open
+
+- Starting a new round returns the seller to "Check how we read your notice". This is intended (the new text must be confirmed) but reads as repetition.
+- The AI reading is untested today for the receipt pointer (quota); the on-device path is tested.
+- AI-written second-round letters and the two new prompt rules need a day with quota or billing on (F-03).

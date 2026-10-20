@@ -26,7 +26,10 @@ const ROUND1 = {
 
 (async () => {
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
+  const ctx = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    acceptDownloads: true,
+  });
   const page = await ctx.newPage();
   page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
   const main = async () => (await page.locator("main").innerText()).replace(/\n{2,}/g, NL);
@@ -41,7 +44,10 @@ const ROUND1 = {
     await page.waitForTimeout(700);
   };
   const prepare = async () => {
-    await page.getByRole("button", { name: /prepare (working )?(draft|response)/i }).first().click();
+    await page
+      .getByRole("button", { name: /prepare (working )?(draft|response)/i })
+      .first()
+      .click();
     const t0 = Date.now();
     while (Date.now() - t0 < 150000) {
       if (/Record submission/.test(await main())) break;
@@ -51,7 +57,10 @@ const ROUND1 = {
   };
   const record = async () => {
     await page.getByLabel(/i reviewed the facts/i).check();
-    await page.getByLabel(/i sent the response exactly/i).check().catch(() => {});
+    await page
+      .getByLabel(/i sent the response exactly/i)
+      .check()
+      .catch(() => {});
     await page.getByLabel(/i have submitted this exact response/i).check();
     await page.getByRole("button", { name: /record submission/i }).click();
     await page.waitForTimeout(1500);
@@ -72,7 +81,10 @@ const ROUND1 = {
   await page.getByLabel("Your notice").fill(read("notice-B-performance.txt"));
   await page.getByRole("button", { name: "Decode", exact: true }).click();
   await page.getByText("The problem").first().waitFor();
-  await page.getByRole("link", { name: /start my case/i }).first().click();
+  await page
+    .getByRole("link", { name: /start my case/i })
+    .first()
+    .click();
   await page.waitForURL(/\/case/);
   await page.getByRole("button", { name: /yes, this is right/i }).click();
   await page.waitForTimeout(1200);
@@ -113,7 +125,10 @@ const ROUND1 = {
   await tab("Response");
   const labels = await page.locator("label").allInnerTexts();
   log("ROUND 2 RESPONSE LABELS", labels.filter((t) => t.length < 90).join(" | "), 800);
-  await page.getByRole("button", { name: /save my answers/i }).click().catch(() => {});
+  await page
+    .getByRole("button", { name: /save my answers/i })
+    .click()
+    .catch(() => {});
   await page.waitForTimeout(800);
   await prepare();
   const same = await dump("5-round2-unchanged");
@@ -123,24 +138,46 @@ const ROUND1 = {
   // ---- ROUND 2, STEP 2: a real revision with the carrier record ----
   await tab("Documents");
   const rec = page.getByRole("region", { name: /^Sales or performance record/ });
-  if (await rec.getByRole("button", { name: /^open$/i }).isVisible().catch(() => false))
+  if (
+    await rec
+      .getByRole("button", { name: /^open$/i })
+      .isVisible()
+      .catch(() => false)
+  )
     await rec.getByRole("button", { name: /^open$/i }).click();
-  await rec.locator("input[type=file]").first().setInputFiles(doc("B1-carrier-pickup-delays-summary.pdf"));
-  await rec.getByRole("button", { name: /check this document/i }).click().catch(() => {});
-  await rec.getByText(/Reading finished/).first().waitFor({ timeout: 90000 }).catch(() => {});
+  await rec
+    .locator("input[type=file]")
+    .first()
+    .setInputFiles(doc("B1-carrier-pickup-delays-summary.pdf"));
+  await rec
+    .getByRole("button", { name: /check this document/i })
+    .click()
+    .catch(() => {});
+  await rec
+    .getByText(/Reading finished/)
+    .first()
+    .waitFor({ timeout: 90000 })
+    .catch(() => {});
   log("CARRIER RECORD CHECK", await rec.innerText(), 2800);
-  await rec.getByLabel(/what does this file show/i).fill(
-    "Warehouse summary of weekly orders and late shipments from 15 Sep to 8 Oct 2026, with the main reason for each week. Weeks of 22 and 29 Sep had 21 and 27 late orders.",
-  );
+  await rec
+    .getByLabel(/what does this file show/i)
+    .fill(
+      "Warehouse summary of weekly orders and late shipments from 15 Sep to 8 Oct 2026, with the main reason for each week. Weeks of 22 and 29 Sep had 21 and 27 late orders.",
+    );
   await rec.getByLabel(/i checked the file/i).check();
   await rec.getByRole("button", { name: /save document/i }).click();
   await page.waitForTimeout(1200);
-  await page.getByRole("checkbox", { name: /i checked the notice and the appeal page/i }).check().catch(() => {});
+  await page
+    .getByRole("checkbox", { name: /i checked the notice and the appeal page/i })
+    .check()
+    .catch(() => {});
   await tab("Response");
-  await page.getByLabel("What went wrong?").fill(
-    ROUND1.wentWrong +
-      " The attached summary shows 21 of 248 orders late in the week of 22 September and 27 of 301 in the week of 29 September, the two weeks with no cover for the packer and the promotion.",
-  );
+  await page
+    .getByLabel("What went wrong?")
+    .fill(
+      ROUND1.wentWrong +
+        " The attached summary shows 21 of 248 orders late in the week of 22 September and 27 of 301 in the week of 29 September, the two weeks with no cover for the packer and the promotion.",
+    );
   await page.getByRole("button", { name: /save my answers/i }).click();
   await page.waitForTimeout(1200);
   await prepare();
@@ -151,7 +188,10 @@ const ROUND1 = {
 
   // ---- FINAL DECISION ----
   await addReply(
-    read("more-notices.json") && JSON.parse(read("more-notices.json")).find((n) => n.id === "T-reply-final").text.replace("Brightline Imports", "Pinecrest Pet Supply"),
+    read("more-notices.json") &&
+      JSON.parse(read("more-notices.json"))
+        .find((n) => n.id === "T-reply-final")
+        .text.replace("Brightline Imports", "Pinecrest Pet Supply"),
   );
   const fin = await dump("7-final");
   log("FINAL DECISION READ", fin.slice(fin.indexOf("Submissions and replies")), 2600);

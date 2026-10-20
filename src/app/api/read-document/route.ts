@@ -38,6 +38,7 @@ import {
   type FieldFinding,
 } from "@/core/documentCheck";
 import type { EvidenceKind } from "@/core/evidenceModel";
+import { DOCUMENT_KIND_FIELD, documentKindPointer } from "@/core/localReading";
 import { MAX_CHECK_BASE64_CHARS } from "@/lib/documentChecks/limits";
 
 export const dynamic = "force-dynamic";
@@ -227,6 +228,8 @@ const SYSTEM_PROMPT = [
   "",
   "Some fields name a comparison — a time window, units sold, matching ASINs, a matching complaint ID or seller account. You are not given the information to make that comparison, so do not make it. Report whether the underlying value is printed, and quote it exactly as printed: the date as written, every ASIN or ID shown, the quantities listed. Mark it 'present' if it is printed; we compare it ourselves.",
   "Write each note as one plain sentence describing the document. Never predict whether Amazon will accept it.",
+  "",
+  `If a field is named "${DOCUMENT_KIND_FIELD}", put in 'observed' what the document is called or plainly is, in a few words (for example "invoice", "retail store receipt", "quotation", "pro forma invoice", "credit note", "packing slip", "purchase order"), and use status 'present'. Name it; do not say whether it is acceptable.`,
 ].join("\n");
 
 export async function handleReadDocument(req: NextRequest): Promise<Response> {
@@ -347,6 +350,14 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
     );
   }
 
+  // A supplier invoice is also asked what kind of document it is: a store receipt reads exactly like an
+  // invoice field by field, and a model that is only asked about the fields reports it as one. The
+  // answer is a name; code decides whether it is worth a pointer (20 Oct 2026).
+  const askedFields =
+    requirement.kind === "supplier_invoice"
+      ? [...requirement.fields, DOCUMENT_KIND_FIELD]
+      : requirement.fields;
+
   const result = await callGemini({
     task: "read-document",
     messages: [
@@ -356,7 +367,7 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
         text: [
           `Document type: ${requirement.kind}.`,
           "Report on exactly these fields, using the field names verbatim:",
-          ...requirement.fields.map((f) =>
+          ...askedFields.map((f) =>
             comparisonFor(f)
               ? `- ${f} (quote the value as printed; do not make the comparison)`
               : `- ${f}`,
@@ -369,7 +380,7 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
     ],
     temperature: 0,
     maxOutputTokens: 2048,
-    responseJsonSchema: responseJsonSchema(requirement.fields),
+    responseJsonSchema: responseJsonSchema(askedFields),
   });
 
   if (!result.ok) {
@@ -406,12 +417,19 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   const validated = ModelResponse.safeParse(json);
   // A finding that cannot be used is left out (its field is then "not checked"), not allowed to
   // fail the whole reading; only a reading with nothing usable in it is a failure.
-  const findings = validated.success
+  const parsedFindings = validated.success
     ? validated.data.findings.flatMap((raw) => {
         const one = FindingSchema.safeParse(cleanFinding(raw));
         return one.success ? [one.data] : [];
       })
     : [];
+  // The document-kind answer becomes a pointer or is dropped; it is never shown as the model wrote it.
+  const named = parsedFindings.find((f) => f.field === DOCUMENT_KIND_FIELD);
+  const pointer = documentKindPointer(named?.observed);
+  const findings = [
+    ...parsedFindings.filter((f) => f.field !== DOCUMENT_KIND_FIELD),
+    ...(pointer ? [pointer] : []),
+  ];
   if (!validated.success || findings.length === 0) {
     return NextResponse.json(
       { ok: false, reason: "unavailable", message: "We could not read that document." },
