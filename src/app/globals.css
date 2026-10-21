@@ -831,6 +831,22 @@
 .dex-hop {
   animation: dex-hop 0.7s ease-out 1;
 }
+/* a small nod: a dip and a rise, for "that step is done" on a page where a seller may be reading bad news */
+@keyframes dex-nod {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  35% {
+    transform: translateY(4px) rotate(-2deg) scale(1.02, 0.97);
+  }
+  70% {
+    transform: translateY(-2px) rotate(1deg);
+  }
+}
+.dex-nod {
+  animation: dex-nod 0.7s ease-in-out 1;
+}
 .dex-swap {
   animation: dex-swap 0.45s ease-out 1;
 }

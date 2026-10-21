@@ -2,10 +2,22 @@ import { existsSync } from "node:fs";
 import { POSE_FOR } from "@/components/dex3d/Dex3D";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CHEERFUL, GUIDE, GUIDE_WIDTHS, SOBER_PREFIXES, guideFor, type GuideMood } from "../guide";
+import {
+  CHEERFUL,
+  GUIDE,
+  GUIDE_WIDTHS,
+  SITUATIONS,
+  SOBER_PREFIXES,
+  guideFor,
+  type GuideMood,
+} from "../guide";
 
 const MOODS: GuideMood[] = ["hello", "happy", "cheering", "explaining", "thinking", "calm"];
-const lines = [...GUIDE.routes.map((r) => r.line), GUIDE.fallback.line];
+const lines = [
+  ...GUIDE.routes.map((r) => r.line),
+  GUIDE.fallback.line,
+  ...Object.values(SITUATIONS).map((s) => s.line),
+];
 
 describe("Dex, the guide in the corner", () => {
   it("says one short line per page: eight words at most, no exclamation marks", () => {
@@ -60,7 +72,11 @@ describe("Dex, the guide in the corner", () => {
   });
 
   it("has a picture, in every width, for every mood it uses", () => {
-    const used = new Set<GuideMood>([...GUIDE.routes.map((r) => r.mood), GUIDE.fallback.mood]);
+    const used = new Set<GuideMood>([
+      ...GUIDE.routes.map((r) => r.mood),
+      GUIDE.fallback.mood,
+      ...Object.values(SITUATIONS).map((s) => s.mood),
+    ]);
     for (const mood of used) {
       expect(MOODS).toContain(mood);
       for (const w of GUIDE_WIDTHS) {
@@ -74,5 +90,64 @@ describe("Dex, the guide in the corner", () => {
 
   it("has a 3D pose for every mood", () => {
     for (const mood of MOODS) expect(POSE_FOR[mood], mood).toBeTruthy();
+  });
+
+  describe("situations: what he says when the page tells him what the visitor is doing", () => {
+    const entries = Object.entries(SITUATIONS) as Array<
+      [string, (typeof SITUATIONS)[keyof typeof SITUATIONS]]
+    >;
+    // the page each kind of situation belongs to
+    const PAGE: Record<string, string> = {
+      home: "/",
+      decode: "/decode",
+      case: "/case",
+      dashboard: "/dashboard",
+      vault: "/vault",
+      pricing: "/pricing",
+    };
+
+    it("belongs to a page, and is found there", () => {
+      for (const [key, entry] of entries) {
+        const page = PAGE[key.split(".")[0] ?? ""];
+        expect(page, key).toBeTruthy();
+        expect(guideFor(page!, key), key).toMatchObject({ mood: entry.mood, line: entry.line });
+      }
+    });
+
+    it("is ignored on any other page, so a stale one can never leak", () => {
+      for (const [key] of entries) {
+        const page = PAGE[key.split(".")[0] ?? ""];
+        const elsewhere = page === "/faq" ? "/support" : "/faq";
+        expect(guideFor(elsewhere, key), key).toEqual(guideFor(elsewhere));
+      }
+      expect(guideFor("/decode", "not.a.situation")).toEqual(guideFor("/decode"));
+    });
+
+    it("is never cheerful, and never hops, where a seller may be reading bad news", () => {
+      for (const [key, entry] of entries) {
+        const page = PAGE[key.split(".")[0] ?? ""]!;
+        const sober = SOBER_PREFIXES.some((p) => page === p || page.startsWith(`${p}/`));
+        if (!sober) continue;
+        expect(CHEERFUL, key).not.toContain(entry.mood);
+        expect("motion" in entry ? entry.motion : undefined, key).not.toBe("hop");
+      }
+    });
+
+    it("covers the decoder, the case, the dashboard and the vault", () => {
+      for (const key of [
+        "decode.reading",
+        "decode.result",
+        "decode.scam",
+        "decode.error",
+        "case.new",
+        "case.confirm",
+        "case.ready",
+        "case.gated",
+        "dashboard.empty",
+        "vault.empty",
+      ]) {
+        expect(key in SITUATIONS, key).toBe(true);
+      }
+    });
   });
 });

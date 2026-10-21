@@ -830,6 +830,8 @@ export type DexController = {
   hop(): void;
   /** A jelly poke: he puffs out and wobbles. */
   boing(): void;
+  /** A small nod with a blink: "that step is done". */
+  nod(): void;
   /** A full turn on the spot, with a bit of overshoot at the end. */
   spin(): void;
   resize(width: number, height: number): void;
@@ -894,7 +896,7 @@ export function createDex(
 
   const camera = new PerspectiveCamera(27, 1, 0.1, 60);
   camera.position.set(0, 2.85, 12.8);
-  camera.lookAt(0, 2.65, 0);
+  camera.lookAt(0, 2.45, 0);
 
   const mats = materials(skin);
   const jelly = makeJelly();
@@ -1666,6 +1668,12 @@ export function createDex(
       }
       if (m === "cheer") hopT = hopT < 0 ? 0 : hopT;
     },
+    nod() {
+      headY.v -= 1.3;
+      puff.v += 1.5;
+      capeY.v += 0.9;
+      nextBlink = 0.05;
+    },
     boing() {
       puff.v += 5.5;
       stretch.v -= 3;
@@ -1696,7 +1704,14 @@ export function createDex(
       camera.aspect = width / height;
       // keep the whole character in view on a tall or a wide box
       if (viewOverride) camera.fov = viewOverride.fov;
-      else camera.fov = camera.aspect < 0.8 ? 27 / Math.max(0.62, camera.aspect / 0.8) : 27;
+      else {
+        // Fit the whole character, boots to raised hand and cape edge to cape edge, in whatever box he is
+        // given, as tightly as that allows: in a small box he fills it instead of floating in it.
+        const distance = 12.8;
+        const fovForHeight = 2 * Math.atan(5.3 / 2 / distance);
+        const fovForWidth = 2 * Math.atan(5.0 / (2 * distance * camera.aspect));
+        camera.fov = clamp((Math.max(fovForHeight, fovForWidth) * 180) / Math.PI, 20, 42);
+      }
       camera.updateProjectionMatrix();
       if (!running) {
         frame(0.016);
@@ -1721,7 +1736,7 @@ export function createDex(
         camera.fov = v.fov;
       } else {
         camera.position.set(0, 2.85, 12.8);
-        camera.lookAt(0, 2.65, 0);
+        camera.lookAt(0, 2.45, 0);
         camera.fov = 27;
       }
       camera.updateProjectionMatrix();

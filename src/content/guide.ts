@@ -12,7 +12,10 @@
 
 export type GuideMood = "hello" | "happy" | "cheering" | "explaining" | "thinking" | "calm";
 
-export type GuideEntry = { mood: GuideMood; line: string };
+/** A small gesture that goes with a line: a nod to say "that step is done", a hop for a happy moment. */
+export type GuideMotion = "nod" | "hop";
+
+export type GuideEntry = { mood: GuideMood; line: string; motion?: GuideMotion };
 
 type Route = GuideEntry & { path: string; exact?: boolean };
 
@@ -65,10 +68,69 @@ export const GUIDE = {
   ] satisfies Route[],
 } as const;
 
+/**
+ * What Dex says when the page tells him what the visitor is doing (see `src/lib/guideSignal.ts`).
+ * The same rules as the page lines hold: eight words at most, no promise, no number or price, and on a
+ * page where a seller may be reading bad news only a calm or explaining mood. A motion is a small
+ * gesture, never a celebration, wherever the page is sober.
+ */
+export const SITUATIONS = {
+  // the home page's paste box
+  "home.typing": { mood: "explaining", line: "Press Decode when it is all pasted." },
+  // the decoder
+  "decode.typing": { mood: "explaining", line: "Press Decode when it is all pasted." },
+  "decode.partial": { mood: "thinking", line: "Paste the whole email, top to bottom." },
+  "decode.reading": { mood: "thinking", line: "Reading it now." },
+  "decode.result": { mood: "calm", line: "Start with what Amazon asks for.", motion: "nod" },
+  "decode.reply": { mood: "calm", line: "This is Amazon's reply. Read it closely.", motion: "nod" },
+  "decode.scam": { mood: "calm", line: "Check this in Account Health first." },
+  "decode.error": { mood: "calm", line: "That did not work. Try again." },
+  // the case
+  "case.new": { mood: "explaining", line: "Paste the notice to begin." },
+  "case.confirm": { mood: "explaining", line: "Check how I read it." },
+  "case.documents": { mood: "explaining", line: "One record at a time." },
+  "case.checking": { mood: "thinking", line: "Reading your document." },
+  "case.response": { mood: "explaining", line: "Say it plainly, in your words." },
+  "case.ready": { mood: "calm", line: "Read it once more, then send.", motion: "nod" },
+  "case.reply": { mood: "explaining", line: "Paste Amazon's reply to continue." },
+  "case.waiting": { mood: "calm", line: "Waiting on Amazon. Take a breath." },
+  "case.gated": { mood: "calm", line: "This one needs professional help." },
+  "case.save_failed": { mood: "calm", line: "Your last change did not save." },
+  // the dashboard and the vault
+  "dashboard.empty": { mood: "explaining", line: "No case yet. Paste a notice." },
+  "vault.empty": { mood: "calm", line: "Nothing here yet. Take your time." },
+  // pricing is not a page of bad news, so a warmer mood is fine once the buyer has agreed to the terms
+  "pricing.ready": { mood: "happy", line: "Ready when you are.", motion: "nod" },
+} satisfies Record<string, GuideEntry>;
+
+export type SituationKey = keyof typeof SITUATIONS;
+
+/** Which page each kind of situation belongs to, so a stale one can never leak onto another page. */
+const SITUATION_PAGE: Record<string, { path: string; exact?: boolean }> = {
+  home: { path: "/", exact: true },
+  decode: { path: "/decode" },
+  case: { path: "/case" },
+  dashboard: { path: "/dashboard" },
+  vault: { path: "/vault" },
+  pricing: { path: "/pricing" },
+};
+
+function situationFor(path: string, key: string | null | undefined): GuideEntry | null {
+  if (!key || !(key in SITUATIONS)) return null;
+  const page = SITUATION_PAGE[key.split(".")[0] ?? ""];
+  if (!page) return null;
+  const onPage = page.exact
+    ? path === page.path
+    : path === page.path || path.startsWith(`${page.path}/`);
+  return onPage ? SITUATIONS[key as SituationKey] : null;
+}
+
 /** The guide for a page, or null where there is none. Longest matching path wins. */
-export function guideFor(pathname: string | null): GuideEntry | null {
+export function guideFor(pathname: string | null, situation?: string | null): GuideEntry | null {
   const path = (pathname ?? "/").split("?")[0] ?? "/";
   if (NONE.some((p) => path === p || path.startsWith(`${p}/`))) return null;
+  const now = situationFor(path, situation);
+  if (now) return now;
   const match = [...GUIDE.routes]
     .sort((a, b) => b.path.length - a.path.length)
     .find((r) =>

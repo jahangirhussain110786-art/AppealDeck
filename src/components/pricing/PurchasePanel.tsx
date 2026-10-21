@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useGuideSituation } from "@/lib/guideSignal";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FileText, Loader2 } from "lucide-react";
@@ -40,6 +41,7 @@ function caseCheckLabel(kind: string, id: string): string {
 
 export function PurchasePanel() {
   const [consent, setConsent] = useState(false);
+  useGuideSituation(consent ? "pricing.ready" : null);
   const [phase, setPhase] = useState<CompletionPhase>("idle");
   const [email, setEmail] = useState<string | undefined>(undefined);
   const [caseCheck, setCaseCheck] = useState<CaseCheck>({ status: "checking" });

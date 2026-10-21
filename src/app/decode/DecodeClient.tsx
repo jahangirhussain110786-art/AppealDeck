@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+import { useGuideSituation } from "@/lib/guideSignal";
 import Link from "next/link";
 import Image from "next/image";
 import { m } from "framer-motion";
@@ -143,6 +144,24 @@ export default function DecodeClient() {
   const likeness = useMemo(() => assessNoticeLikeness(text), [text]);
   const guidance = result ? guidanceFor(result.kind) : null;
   const showHint = text.trim().length >= 40 && Boolean(likeness.hint);
+  // Dex in the corner follows what the seller is doing (see SITUATIONS in src/content/guide.ts).
+  useGuideSituation(
+    status === "loading"
+      ? "decode.reading"
+      : status === "error"
+        ? "decode.error"
+        : status === "result" && result
+          ? (result.authenticity?.length ?? 0) > 0
+            ? "decode.scam"
+            : result.notes?.some((n) => n.id === "looks_like_reply")
+              ? "decode.reply"
+              : "decode.result"
+          : showHint
+            ? "decode.partial"
+            : text.trim()
+              ? "decode.typing"
+              : null,
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

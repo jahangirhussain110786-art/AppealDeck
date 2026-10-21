@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useGuideSituation } from "@/lib/guideSignal";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { useAdoptPrehydration } from "@/lib/useAdoptPrehydration";
 export function HeroTool() {
   const router = useRouter();
   const [text, setText] = useState("");
+  useGuideSituation(text.trim() ? "home.typing" : null);
   const adoptNotice = useAdoptPrehydration(setText);
   const [sample, setSample] = useState(false);
   const t = HOME.tool;

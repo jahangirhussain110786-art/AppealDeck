@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useGuideSituation } from "@/lib/guideSignal";
 import Image from "next/image";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ const S = APP.dashboard.cases;
  * page never claims nothing is due before it knows.
  */
 export function DashboardWelcome({ summaries }: { summaries: CaseSummary[] | null }) {
+  // No case yet is something Dex can say; "still loading" is not, so he stays quiet until the list is known.
+  useGuideSituation(summaries && summaries.every((s) => s.archived) ? "dashboard.empty" : null);
   const headline = summaries ? dashboardHeadline(summaries) : null;
   return (
     <section

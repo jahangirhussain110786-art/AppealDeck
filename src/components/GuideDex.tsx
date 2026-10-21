@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { GUIDE, GUIDE_ASPECT, GUIDE_WIDTHS, guideFor, type GuideMood } from "@/content/guide";
 import { Dex3D } from "@/components/dex3d/Dex3D";
+import { useCurrentSituation } from "@/lib/guideSignal";
 
 const STORAGE_KEY = "appealdeck-guide";
 
@@ -70,7 +71,11 @@ const srcSet = (mood: GuideMood) => GUIDE_WIDTHS.map((w) => `${src(mood, w)} ${w
  */
 export function GuideDex() {
   const pathname = usePathname();
-  const entry = guideFor(pathname);
+  // What the page says the visitor is doing (the decoder reading, a case ready to send...) can change his
+  // line, his mood and give him a small gesture; without one he keeps the page's own line.
+  const situation = useCurrentSituation();
+  const entry = guideFor(pathname, situation);
+  const entryKey = `${pathname}|${situation ?? ""}`;
   // False while rendering on the server and during hydration, true after: Dex only appears in the browser.
   const ready = useSyncExternalStore(
     noSubscribe,
@@ -80,8 +85,11 @@ export function GuideDex() {
   const hidden = useSyncExternalStore(subscribeHidden, readHidden, () => false);
   // The line is open on a new page until its timer runs out; a tap on Dex opens or closes it.
   const [tip, setTip] = useState<{ path: string; open: boolean } | null>(null);
-  const bubble = tip && tip.path === pathname ? tip.open : true;
+  const bubble = tip && tip.path === entryKey ? tip.open : true;
   const [hop, setHop] = useState(false);
+  const [nod, setNod] = useState(false);
+  // A gesture to the 3D model: the id changes every time, so the same gesture can be asked for twice.
+  const [cue, setCue] = useState<{ kind: "nod" | "hop"; id: number } | null>(null);
   // 3D: asked for after the visitor's first move, drawn when ready, and the picture stays as the fallback.
   const [want3d, setWant3d] = useState(false);
   const [ready3d, setReady3d] = useState(false);
@@ -90,11 +98,27 @@ export function GuideDex() {
   const box = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
 
-  // The line shows for a few seconds on each new page.
+  // The line shows for a few seconds on each new page, and again when the situation changes.
   useEffect(() => {
-    const t = window.setTimeout(() => setTip({ path: pathname, open: false }), 7000);
+    const t = window.setTimeout(() => setTip({ path: entryKey, open: false }), 8000);
     return () => window.clearTimeout(t);
-  }, [pathname]);
+  }, [entryKey]);
+
+  // A situation with a gesture: the 3D model does it, and the picture does a small version of it.
+  const motion = entry?.motion;
+  useEffect(() => {
+    if (!motion || !situation) return;
+    // a moment after the line appears, so the gesture lands with it
+    const start = window.setTimeout(() => {
+      setCue((c) => ({ kind: motion, id: (c?.id ?? 0) + 1 }));
+      setNod(true);
+    }, 250);
+    const off = window.setTimeout(() => setNod(false), 1050);
+    return () => {
+      window.clearTimeout(start);
+      window.clearTimeout(off);
+    };
+  }, [motion, situation]);
 
   const active = ready && !hidden && entry !== null;
 
@@ -200,16 +224,18 @@ export function GuideDex() {
       <div
         ref={box}
         className={
+          // The 3D box is the picture's size (118 px wide at most) so that he does not jump when he wakes up.
           live3d
-            ? "relative h-[170px] w-[140px] sm:h-[220px] sm:w-[180px]"
+            ? "relative h-[102px] w-[92px] sm:h-[136px] sm:w-[124px]"
             : "relative w-[88px] sm:w-[118px]"
         }
       >
-        <div className={live3d ? "h-full w-full" : hop ? "dex-hop" : "dex-bob"}>
+        <div className={live3d ? "h-full w-full" : hop ? "dex-hop" : nod ? "dex-nod" : "dex-bob"}>
           <div className={live3d ? "relative h-full w-full" : "relative"}>
             {want3d && !failed3d && (
               <Dex3D
                 mood={entry.mood}
+                cue={cue}
                 onReady={() => setReady3d(true)}
                 onUnavailable={() => setFailed3d(true)}
                 adaptive={!forced3d()}
@@ -249,7 +275,7 @@ export function GuideDex() {
         <div className="pointer-events-auto absolute -top-1 right-0 flex gap-1">
           <button
             type="button"
-            onClick={() => setTip({ path: pathname, open: !bubble })}
+            onClick={() => setTip({ path: entryKey, open: !bubble })}
             aria-label={GUIDE.tipToggle}
             aria-pressed={bubble}
             className={SMALL_BUTTON}

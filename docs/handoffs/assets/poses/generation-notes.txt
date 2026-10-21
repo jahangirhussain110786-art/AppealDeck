@@ -1,0 +1,12 @@
+Dex mascot modes
+Created with built-in image generation from the finalized approved Dex reference.
+
+Shared prompt: Preserve the white rounded layered paper-file body, navy clasp and silver-blue hinge, orange folded corner, orange check mark, lavender document markings, orange dot, navy cape with orange trim, navy boots with orange cuffs and ivory soles, and white gloves. Navy arms meet the middle of the paper side edges smoothly, without sockets, holes or shoulder buttons. Preserve the polished 2.5D style. Single full-body character, centered, real transparent background, no captions or scene background.
+
+Happy: Open glossy eyes, cheerful open smile, one gloved hand waving and the other on hip.
+Thinking: Upward glance, thoughtful brows, tiny closed mouth, one glove at chin and the other arm supporting the elbow.
+Explaining: Open eyes and friendly speaking smile, one index finger pointing up and the other hand presenting with open palm.
+Cheering: Joyful closed eye arcs, open smile, both hands raised, slight lively body tilt.
+Calm: Peacefully closed eyes, relaxed brows, gentle closed smile, relaxed arms and softly upturned palms.
+
+PNGs preserve the generated alpha channel. The preview page's checkerboard and dark background are display surfaces, not part of the PNG images.

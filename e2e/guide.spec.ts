@@ -73,3 +73,32 @@ test("Dex wakes up in 3D once the visitor moves, and draws something", async ({ 
   await page.getByRole("button", { name: "Hide Dex" }).click();
   await expect(canvas).toHaveCount(0);
 });
+
+test("Dex's line follows what the visitor is doing on the decoder", async ({ page }) => {
+  await page.goto("/decode");
+  await expect(page.getByText("Paste your notice. I mark what matters.")).toBeVisible();
+  await page
+    .getByLabel("Your notice")
+    .fill("Subject: your account\n\nPlease send an invoice for ASIN B0DN3Y6RW9.");
+  // once there is text he tells the visitor what to do next
+  await expect(
+    page.getByText(/Press Decode when it is all pasted\.|Paste the whole email, top to bottom\./),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Decode", exact: true }).click();
+  await expect(page.getByText("The problem").first()).toBeVisible();
+  // and when the answer is on screen, where to start
+  await expect(page.getByText("Start with what Amazon asks for.")).toBeVisible();
+});
+
+test("his 3D box is no bigger than his picture, so he does not jump in size", async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.setItem("appealdeck-dex3d", "on"));
+  await page.goto("/pricing");
+  const picture = page.locator("img[src*='/mascot/']").first();
+  await expect(picture).toBeVisible();
+  const pictureBox = await picture.boundingBox();
+  await page.mouse.move(300, 300);
+  await expect(page.locator("canvas").first()).toBeVisible({ timeout: 20_000 });
+  const canvasBox = await page.locator("canvas").first().boundingBox();
+  expect(pictureBox && canvasBox).toBeTruthy();
+  expect(canvasBox!.width).toBeLessThanOrEqual(pictureBox!.width + 8);
+});

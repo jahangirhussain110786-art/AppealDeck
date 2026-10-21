@@ -21,12 +21,15 @@ export const POSE_FOR: Record<GuideMood, DexMood> = {
  */
 export function Dex3D({
   mood,
+  cue,
   onReady,
   onUnavailable,
   adaptive = true,
   className,
 }: {
   mood: GuideMood;
+  /** A small gesture to make now: a nod, or a hop. A new `id` asks for it again. */
+  cue?: { kind: "nod" | "hop"; id: number } | null;
   onReady?: () => void;
   onUnavailable?: () => void;
   /** Fall back to the picture if the animation runs slowly. Off when 3D is asked for by hand. */
@@ -44,6 +47,12 @@ export function Dex3D({
     moodRef.current = mood;
     ctl.current?.setMood(POSE_FOR[mood]);
   }, [mood]);
+
+  useEffect(() => {
+    if (!cue) return;
+    if (cue.kind === "nod") ctl.current?.nod();
+    else ctl.current?.hop();
+  }, [cue]);
 
   useEffect(() => {
     readyRef.current = onReady;

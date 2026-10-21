@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useGuideSituation } from "@/lib/guideSignal";
 import { toast } from "sonner";
 import {
   Lock,
@@ -96,6 +97,7 @@ export default function VaultView({ userId }: { userId: string }) {
   const [fileLoading, setFileLoading] = React.useState(true);
   const [fileError, setFileError] = React.useState(false);
   const [items, setItems] = React.useState<VaultListItem[]>([]);
+  useGuideSituation(!fileLoading && !fileError && items.length === 0 ? "vault.empty" : null);
   const [backupPassphrase, setBackupPassphrase] = React.useState("");
   const [recoveryPassphrase, setRecoveryPassphrase] = React.useState("");
   const [legacyAvailable, setLegacyAvailable] = React.useState(false);

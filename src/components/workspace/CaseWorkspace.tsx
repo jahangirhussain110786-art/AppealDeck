@@ -21,6 +21,7 @@ import Image from "next/image";
 import { AppBarSlot } from "@/components/AppBarSlot";
 import { CaseLabelField } from "./CaseLabelField";
 import { labelOf } from "@/lib/caseLabel";
+import { GuideSignal } from "@/lib/guideSignal";
 import { TabTitle } from "@/components/TabTitle";
 import {
   CaseChecklist,
@@ -95,6 +96,7 @@ import {
   PROTOCOL_LABELS,
   questionnaireQuestions,
   routeWorkspace,
+  workspaceGaps,
   professionalReviewApplies,
   workspaceCanCompose,
   latchD6,
@@ -1570,8 +1572,32 @@ function WorkspaceInner({
       : workspaceCanCompose(w)
         ? C.steps.toAnswers
         : undefined;
+  // What the seller is doing in the case, for Dex in the corner (see SITUATIONS in src/content/guide.ts).
+  const noticeText = String(w.draft?.["request.notice"] ?? w.notice ?? "").trim();
+  const guideSituation: string | null = !noticeText
+    ? "case.new"
+    : saveFailed
+      ? "case.save_failed"
+      : gated
+        ? "case.gated"
+        : checkingIds.size > 0
+          ? "case.checking"
+          : replyPending
+            ? "case.reply"
+            : awaiting
+              ? "case.waiting"
+              : !w.confirmed
+                ? "case.confirm"
+                : workspaceGaps(w).length === 0
+                  ? "case.ready"
+                  : tab === "evidence"
+                    ? "case.documents"
+                    : tab === "response"
+                      ? "case.response"
+                      : null;
   return (
     <div className="space-y-5">
+      <GuideSignal situation={guideSituation} />
       {caseLabel && <TabTitle title={caseTitle} />}
       <AppBarSlot target="title">
         {/* The case's own issue, once we know it: "Your case workspace" told the seller nothing. */}
