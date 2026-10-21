@@ -786,3 +786,51 @@
   border-color: hsl(var(--input));
   background: hsl(var(--surface-1));
 }
+
+/* --- Dex, the guide in the corner (20 Oct 2026). The global reduced-motion rule above stops all of these. --- */
+@keyframes dex-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes dex-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  20% {
+    transform: translateY(0) scale(1.06, 0.92);
+  }
+  55% {
+    transform: translateY(-16px) scale(0.97, 1.05);
+  }
+  85% {
+    transform: translateY(0) scale(1.05, 0.94);
+  }
+}
+@keyframes dex-swap {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.dex-bob {
+  animation: dex-bob 3.6s ease-in-out infinite;
+}
+.dex-hop {
+  animation: dex-hop 0.7s ease-out 1;
+}
+.dex-swap {
+  animation: dex-swap 0.45s ease-out 1;
+}

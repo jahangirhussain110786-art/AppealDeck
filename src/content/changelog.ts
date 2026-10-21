@@ -20,12 +20,18 @@ export const CHANGELOG = {
       "A dated list of what changed in AppealDeck: new features, fixes and wording corrections, newest first.",
   },
   hero: {
-    eyebrow: "Updated 12 Oct 2026",
+    eyebrow: "Updated 20 Oct 2026",
     title: "What changed, and when.",
     accent: "and when.",
     lede: "A dated list of changes to AppealDeck, newest first. We add a line when something a seller can see changes, including fixes and corrections to our own wording.",
   },
   entries: [
+    {
+      date: "20 Oct 2026",
+      items: [
+        "Dex, a small guide character, now sits in the corner of every page with one short line about the page. Once you start using the page he becomes a 3D character who turns to look at your pointer, blinks, waves and hops. On a slow device, or if you ask your device for less motion, he stays a picture or holds still. You can hide him and he stays hidden.",
+      ],
+    },
     {
       date: "12 Oct 2026",
       items: [

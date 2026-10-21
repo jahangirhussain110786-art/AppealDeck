@@ -19,7 +19,7 @@ describe("/api/csp-report", () => {
     );
     expect(res.status).toBe(204);
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0][0])).not.toMatch(/[\r\n]/);
+    expect(String(warn.mock.calls[0]![0])).not.toMatch(/[\r\n]/);
   });
 
   it("refuses a body that declares more than 10 kB without reading it", async () => {

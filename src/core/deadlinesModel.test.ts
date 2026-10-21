@@ -249,8 +249,8 @@ describe("repairStoredDeadlines", () => {
     const old =
       "Stated 17-day window (LEGACY parse pattern — verify, never presented as current policy)";
     const [d] = repairStoredDeadlines([{ kind: "appeal_window", dueAt: null, label: old }])!;
-    expect(d.label).toBe(LEGACY_17_DAY_LABEL);
-    expect(d.label).not.toMatch(/LEGACY|parse pattern/);
+    expect(d!.label).toBe(LEGACY_17_DAY_LABEL);
+    expect(d!.label).not.toMatch(/LEGACY|parse pattern/);
   });
 
   it("keeps a window counted from the notice's own date, and gives it its closing day", () => {

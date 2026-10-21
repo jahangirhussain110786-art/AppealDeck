@@ -211,7 +211,9 @@ function main() {
     const rel = relPosix(f);
     return (
       (/src\/components\//.test(rel) || /src\/app\//.test(rel)) &&
-      !/src\/components\/ui\//.test(rel)
+      !/src\/components\/ui\//.test(rel) &&
+      // Dex's artwork (his face and materials) is drawn in his own colours, not the UI theme's.
+      !/src\/components\/dex3d\//.test(rel)
     );
   });
   for (const f of colourFiles) {
