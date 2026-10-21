@@ -26,6 +26,10 @@ Paste "Now draw the same character:" and then one of these.
 | **Reading** | Holding a brass magnifying glass up to one eye, the eye enlarged behind the glass, a curious expression, a small paper page nearby. |
 | **Done** | Both thumbs up, eyes closed in a happy arc, a gentle smile, a soft warm glow around the orange check mark on his paper. |
 | **Waiting** | A relaxed, patient stance, eyes half closed in a soft calm look, one glove holding a small round clock, a faint "z z" floating above. Patient, never sleepy-silly. |
+| **Confused** | One gloved hand on his chin, one eyebrow raised and one lowered, a small flat mouth, eyes looking up to the side, a small blue question mark floating beside him. Puzzled but friendly. |
+| **Take a breath** | Eyes closed in a soft happy arc, a gentle smile, both gloved hands holding a small red heart against his paper, two tiny pink hearts floating. Warm and reassuring. |
+| **You can do this** | One eye winking, a confident smile, one gloved hand giving a thumbs up in front of him, the other on his hip, small gold shine lines. |
+| **Hey there (large hero)** | Standing tall, a big wink and smile, one thumbs up, the other hand on his hip, a slight three-quarter turn. |
 | **Oops** | A small apologetic shrug, both gloves turned up, eyebrows tilted, a slightly crooked small smile, one small sweat drop. Friendly and sorry, not distressed. |
 
 ## 3. Where each mood is allowed
