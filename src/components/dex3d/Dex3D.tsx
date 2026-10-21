@@ -12,6 +12,10 @@ export const POSE_FOR: Record<GuideMood, DexMood> = {
   explaining: "explain",
   thinking: "think",
   calm: "calm",
+  confused: "think",
+  idea: "hello",
+  reassure: "calm",
+  encourage: "hello",
 };
 
 /**

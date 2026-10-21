@@ -4,13 +4,25 @@
  * Dex is not a chat window and answers nothing: each page gets one fixed line of 8 words at most and
  * one mood. The rules, each there because the opposite would hurt a seller:
  * - He never cheers on a page where a seller may be reading bad news: the case, the decoder's result,
- *   the dashboard, the vault, billing and sign-in. Those pages only ever get calm or explaining.
+ *   the dashboard, the vault, billing and sign-in. Those pages never get happy, cheering, idea or
+ *   encourage. Confused is only for our own failures (a save or a decode that did not work), never
+ *   for anything Amazon decided.
  * - A line never promises, predicts or says what Amazon will decide.
  * - A line states no fact: no price, number, time or policy. A fact in the corner would drift away
  *   from the page that owns it, and would repeat the page's own sentence to a screen reader.
  */
 
-export type GuideMood = "hello" | "happy" | "cheering" | "explaining" | "thinking" | "calm";
+export type GuideMood =
+  | "hello"
+  | "happy"
+  | "cheering"
+  | "explaining"
+  | "thinking"
+  | "calm"
+  | "confused"
+  | "idea"
+  | "reassure"
+  | "encourage";
 
 /** A small gesture that goes with a line: a nod to say "that step is done", a hop for a happy moment. */
 export type GuideMotion = "nod" | "hop";
@@ -33,7 +45,8 @@ export const SOBER_PREFIXES = [
   "/auth",
 ] as const;
 
-export const CHEERFUL: readonly GuideMood[] = ["happy", "cheering"];
+/** Moods that celebrate or push: never on a page where a seller may be reading bad news. */
+export const CHEERFUL: readonly GuideMood[] = ["happy", "cheering", "idea", "encourage"];
 
 /** Paths that never get a guide. */
 const NONE = ["/dev", "/api"] as const;
@@ -53,11 +66,11 @@ export const GUIDE = {
     { path: "/billing", mood: "explaining", line: "Your Pass and receipts are here." },
     { path: "/login", mood: "hello", line: "Welcome back." },
     { path: "/signup", mood: "hello", line: "Let us get you set up." },
-    { path: "/forgot-password", mood: "calm", line: "It happens. Reset it here." },
+    { path: "/forgot-password", mood: "reassure", line: "It happens. Reset it here." },
     { path: "/reset-password", mood: "calm", line: "Choose a new password." },
     { path: "/pricing", mood: "explaining", line: "Compare the plans, then choose." },
     { path: "/faq", mood: "thinking", line: "Looking for an answer?" },
-    { path: "/guides", mood: "thinking", line: "Read one guide at a time." },
+    { path: "/guides", mood: "idea", line: "Read one guide at a time." },
     { path: "/how-we-test", mood: "explaining", line: "Here is how we test." },
     { path: "/check-invoice", mood: "explaining", line: "Check an invoice before you send it." },
     { path: "/support", mood: "calm", line: "Questions? Write to us." },
@@ -84,7 +97,7 @@ export const SITUATIONS = {
   "decode.result": { mood: "calm", line: "Start with what Amazon asks for.", motion: "nod" },
   "decode.reply": { mood: "calm", line: "This is Amazon's reply. Read it closely.", motion: "nod" },
   "decode.scam": { mood: "calm", line: "Check this in Account Health first." },
-  "decode.error": { mood: "calm", line: "That did not work. Try again." },
+  "decode.error": { mood: "confused", line: "That did not work. Try again." },
   // the case
   "case.new": { mood: "explaining", line: "Paste the notice to begin." },
   "case.confirm": { mood: "explaining", line: "Check how I read it." },
@@ -93,14 +106,14 @@ export const SITUATIONS = {
   "case.response": { mood: "explaining", line: "Say it plainly, in your words." },
   "case.ready": { mood: "calm", line: "Read it once more, then send.", motion: "nod" },
   "case.reply": { mood: "explaining", line: "Paste Amazon's reply to continue." },
-  "case.waiting": { mood: "calm", line: "Waiting on Amazon. Take a breath." },
+  "case.waiting": { mood: "reassure", line: "Waiting on Amazon. Take a breath." },
   "case.gated": { mood: "calm", line: "This one needs professional help." },
-  "case.save_failed": { mood: "calm", line: "Your last change did not save." },
+  "case.save_failed": { mood: "confused", line: "Your last change did not save." },
   // the dashboard and the vault
   "dashboard.empty": { mood: "explaining", line: "No case yet. Paste a notice." },
   "vault.empty": { mood: "calm", line: "Nothing here yet. Take your time." },
   // pricing is not a page of bad news, so a warmer mood is fine once the buyer has agreed to the terms
-  "pricing.ready": { mood: "happy", line: "Ready when you are.", motion: "nod" },
+  "pricing.ready": { mood: "encourage", line: "Ready when you are.", motion: "nod" },
 } satisfies Record<string, GuideEntry>;
 
 export type SituationKey = keyof typeof SITUATIONS;
@@ -141,4 +154,4 @@ export function guideFor(pathname: string | null, situation?: string | null): Gu
 
 /** The picture widths we ship for every mood (see scripts/build-mascot-set.mjs). */
 export const GUIDE_WIDTHS = [160, 320, 640] as const;
-export const GUIDE_ASPECT = { width: 1170, height: 1113 } as const;
+export const GUIDE_ASPECT = { width: 1000, height: 979 } as const;

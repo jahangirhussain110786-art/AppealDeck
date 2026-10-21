@@ -11,13 +11,16 @@ import sharp from "sharp";
 
 const OUT = "public/mascot";
 const POSES = [
-  { name: "hello", src: "docs/handoffs/assets/dex-source.webp", studio: true },
-  { name: "happy", src: "docs/handoffs/assets/poses/dex-happy.png" },
-  { name: "cheering", src: "docs/handoffs/assets/poses/dex-cheering.png" },
-  { name: "explaining", src: "docs/handoffs/assets/poses/dex-explaining.png" },
-  // Drawn about 10% larger than the others, so it is scaled down to match their size and footing.
-  { name: "thinking", src: "docs/handoffs/assets/poses/dex-thinking.png", scale: 0.9 },
-  { name: "calm", src: "docs/handoffs/assets/poses/dex-calm.png" },
+  { name: "hello", src: "docs/handoffs/assets/poses2/dex-hey-there.png" },
+  { name: "happy", src: "docs/handoffs/assets/poses2/dex-happy.png" },
+  { name: "cheering", src: "docs/handoffs/assets/poses2/dex-cheering.png" },
+  { name: "explaining", src: "docs/handoffs/assets/poses2/dex-explaining.png" },
+  { name: "thinking", src: "docs/handoffs/assets/poses2/dex-thinking.png" },
+  { name: "calm", src: "docs/handoffs/assets/poses2/dex-calm.png" },
+  { name: "confused", src: "docs/handoffs/assets/poses2/dex-confused.png" },
+  { name: "idea", src: "docs/handoffs/assets/poses2/dex-got-an-idea.png" },
+  { name: "reassure", src: "docs/handoffs/assets/poses2/dex-stressed.png" },
+  { name: "encourage", src: "docs/handoffs/assets/poses2/dex-you-got-this.png" },
 ];
 const WIDTHS = [960, 640, 320, 160];
 const PAD = 16;
@@ -170,6 +173,22 @@ async function cleanAlpha(file) {
       }
     }
     if (comp.length < 400 && mx < 120) for (const i of comp) rgba[i * 4 + 3] = 0;
+    // A wide, flat, faint ellipse is the picture's own floor shadow: the site draws one, so drop it.
+    else if (mx < 190) {
+      let x0 = W,
+        x1 = 0,
+        y0 = H,
+        y1 = 0;
+      for (const i of comp) {
+        const x = i % W,
+          y = (i - x) / W;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+      if (x1 - x0 > W * 0.2 && y1 - y0 < H * 0.12) for (const i of comp) rgba[i * 4 + 3] = 0;
+    }
   }
   return { rgba, W, H };
 }

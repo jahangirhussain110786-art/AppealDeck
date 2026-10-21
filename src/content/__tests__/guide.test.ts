@@ -12,7 +12,18 @@ import {
   type GuideMood,
 } from "../guide";
 
-const MOODS: GuideMood[] = ["hello", "happy", "cheering", "explaining", "thinking", "calm"];
+const MOODS: GuideMood[] = [
+  "hello",
+  "happy",
+  "cheering",
+  "explaining",
+  "thinking",
+  "calm",
+  "confused",
+  "idea",
+  "reassure",
+  "encourage",
+];
 const lines = [
   ...GUIDE.routes.map((r) => r.line),
   GUIDE.fallback.line,
