@@ -38,16 +38,9 @@ const noSubscribe = () => () => {};
 const SMALL_BUTTON =
   "flex size-7 items-center justify-center rounded-full border bg-card/90 text-xs font-semibold text-muted-foreground shadow-sm transition-colors hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-/** 3D is for visitors who have done something on the page, and never in automated browsers (unless asked). */
+/** The flat picture is Dex. The 3D version is off unless switched on by hand (testing). */
 function wants3d(): boolean {
-  try {
-    const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
-    if (nav.connection?.saveData) return false;
-    if (nav.webdriver) return window.localStorage.getItem("appealdeck-dex3d") === "on";
-  } catch {
-    /* fall through: the picture is always there */
-  }
-  return true;
+  return forced3d();
 }
 
 /** 3D was asked for by hand (testing): do not fall back to the picture for being slow. */
