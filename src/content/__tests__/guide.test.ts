@@ -1,5 +1,4 @@
 import { existsSync } from "node:fs";
-import { POSE_FOR } from "@/components/dex3d/Dex3D";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -97,10 +96,6 @@ describe("Dex, the guide in the corner", () => {
         ).toBe(true);
       }
     }
-  });
-
-  it("has a 3D pose for every mood", () => {
-    for (const mood of MOODS) expect(POSE_FOR[mood], mood).toBeTruthy();
   });
 
   describe("situations: what he says when the page tells him what the visitor is doing", () => {

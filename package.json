@@ -55,7 +55,6 @@
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
     "@tesseract.js-data/eng": "^1.0.0",
-    "@types/three": "^0.169.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.3",
     "class-variance-authority": "^0.7.1",
@@ -71,7 +70,6 @@
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.6.0",
     "tesseract.js": "^7.0.0",
-    "three": "^0.169.0",
     "zod": "^4.5.4"
   },
   "devDependencies": {

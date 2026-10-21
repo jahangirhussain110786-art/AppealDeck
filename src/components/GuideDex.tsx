@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { GUIDE, GUIDE_ASPECT, GUIDE_WIDTHS, guideFor, type GuideMood } from "@/content/guide";
-import { Dex3D } from "@/components/dex3d/Dex3D";
 import { useCurrentSituation } from "@/lib/guideSignal";
 
 const STORAGE_KEY = "appealdeck-guide";
@@ -38,20 +37,6 @@ const noSubscribe = () => () => {};
 const SMALL_BUTTON =
   "flex size-7 items-center justify-center rounded-full border bg-card/90 text-xs font-semibold text-muted-foreground shadow-sm transition-colors hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-/** The flat picture is Dex. The 3D version is off unless switched on by hand (testing). */
-function wants3d(): boolean {
-  return forced3d();
-}
-
-/** 3D was asked for by hand (testing): do not fall back to the picture for being slow. */
-function forced3d(): boolean {
-  try {
-    return window.localStorage.getItem("appealdeck-dex3d") === "on";
-  } catch {
-    return false;
-  }
-}
-
 const src = (mood: GuideMood, w: number) => `/mascot/dex-${mood}-${w}.webp`;
 const srcSet = (mood: GuideMood) => GUIDE_WIDTHS.map((w) => `${src(mood, w)} ${w}w`).join(", ");
 
@@ -59,7 +44,7 @@ const srcSet = (mood: GuideMood) => GUIDE_WIDTHS.map((w) => `${src(mood, w)} ${w
  * Dex, the guide in the corner of every page.
  *
  * One fixed line and one mood per page (`src/content/guide.ts`). He is not a chat window. He turns to
- * look at the pointer (a small 3D tilt), bobs, hops now and then, and can be hidden; the choice is kept.
+ * look at the pointer (a small tilt), bobs, hops now and then, and can be hidden; the choice is kept.
  * Everything that moves stops for people who ask for reduced motion.
  */
 export function GuideDex() {
@@ -81,13 +66,6 @@ export function GuideDex() {
   const bubble = tip && tip.path === entryKey ? tip.open : true;
   const [hop, setHop] = useState(false);
   const [nod, setNod] = useState(false);
-  // A gesture to the 3D model: the id changes every time, so the same gesture can be asked for twice.
-  const [cue, setCue] = useState<{ kind: "nod" | "hop"; id: number } | null>(null);
-  // 3D: asked for after the visitor's first move, drawn when ready, and the picture stays as the fallback.
-  const [want3d, setWant3d] = useState(false);
-  const [ready3d, setReady3d] = useState(false);
-  const [failed3d, setFailed3d] = useState(false);
-  const live3d = want3d && ready3d && !failed3d;
   const box = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
 
@@ -97,13 +75,12 @@ export function GuideDex() {
     return () => window.clearTimeout(t);
   }, [entryKey]);
 
-  // A situation with a gesture: the 3D model does it, and the picture does a small version of it.
+  // A situation with a gesture: the picture does a small nod.
   const motion = entry?.motion;
   useEffect(() => {
     if (!motion || !situation) return;
     // a moment after the line appears, so the gesture lands with it
     const start = window.setTimeout(() => {
-      setCue((c) => ({ kind: motion, id: (c?.id ?? 0) + 1 }));
       setNod(true);
     }, 250);
     const off = window.setTimeout(() => setNod(false), 1050);
@@ -115,20 +92,9 @@ export function GuideDex() {
 
   const active = ready && !hidden && entry !== null;
 
-  // Wake the 3D Dex on the first sign of life from the visitor: it is a large download.
-  useEffect(() => {
-    if (!active || want3d || !wants3d()) return;
-    const go = () => setWant3d(true);
-    const events = ["pointerdown", "pointermove", "keydown", "scroll", "touchstart"] as const;
-    for (const e of events) window.addEventListener(e, go, { once: true, passive: true });
-    return () => {
-      for (const e of events) window.removeEventListener(e, go);
-    };
-  }, [active, want3d]);
-
   // Turn toward the pointer; when it has been still, sway slowly so he never freezes.
   useEffect(() => {
-    if (!active || live3d || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!active || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let tx = 0;
     let ty = 0;
     let cx = 0;
@@ -160,11 +126,11 @@ export function GuideDex() {
       window.removeEventListener("pointermove", onMove);
       window.cancelAnimationFrame(raf);
     };
-  }, [active, live3d]);
+  }, [active]);
 
   // A small hop every so often.
   useEffect(() => {
-    if (!active || live3d || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!active || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let off = 0;
     const id = window.setInterval(() => {
       setHop(true);
@@ -174,7 +140,7 @@ export function GuideDex() {
       window.clearInterval(id);
       window.clearTimeout(off);
     };
-  }, [active, live3d]);
+  }, [active]);
 
   if (!ready || entry === null) return null;
 
@@ -214,41 +180,14 @@ export function GuideDex() {
           <p>{entry.line}</p>
         </div>
       )}
-      <div
-        ref={box}
-        className={
-          // The 3D box is the picture's size (118 px wide at most) so that he does not jump when he wakes up.
-          live3d
-            ? "relative h-[102px] w-[92px] sm:h-[136px] sm:w-[124px]"
-            : "relative w-[88px] sm:w-[118px]"
-        }
-      >
-        <div className={live3d ? "h-full w-full" : hop ? "dex-hop" : nod ? "dex-nod" : "dex-bob"}>
-          <div className={live3d ? "relative h-full w-full" : "relative"}>
-            {want3d && !failed3d && (
-              <Dex3D
-                mood={entry.mood}
-                cue={cue}
-                onReady={() => setReady3d(true)}
-                onUnavailable={() => setFailed3d(true)}
-                adaptive={!forced3d()}
-                className="absolute inset-0 h-full w-full"
-              />
-            )}
+      <div ref={box} className="relative w-[88px] sm:w-[118px]">
+        <div className={hop ? "dex-hop" : nod ? "dex-nod" : "dex-bob"}>
+          <div className="relative">
             <span
               aria-hidden
-              className={
-                live3d
-                  ? "hidden"
-                  : "absolute -bottom-0.5 left-[14%] h-2.5 w-[72%] rounded-full bg-foreground/20 blur-[5px] dark:bg-black/50"
-              }
+              className="absolute -bottom-0.5 left-[14%] h-2.5 w-[72%] rounded-full bg-foreground/20 blur-[5px] dark:bg-black/50"
             />
-            <div
-              ref={stage}
-              className={
-                live3d ? "pointer-events-none invisible absolute" : "relative will-change-transform"
-              }
-            >
+            <div ref={stage} className="relative will-change-transform">
               {/* The picture is decoration; the line beside it carries the meaning. */}
               <img
                 key={entry.mood}

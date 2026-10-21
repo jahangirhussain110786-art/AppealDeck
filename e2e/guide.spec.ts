@@ -53,27 +53,6 @@ test("the tip button shows and hides his line, and he is not a chat box", async 
   await expect(corner.getByRole("textbox")).toHaveCount(0);
 });
 
-test("Dex wakes up in 3D once the visitor moves, and draws something", async ({ page }) => {
-  // Automated browsers never get 3D unless asked, so the page's own speed is not changed under test.
-  await page.addInitScript(() => window.localStorage.setItem("appealdeck-dex3d", "on"));
-  await page.goto("/pricing");
-  const hasWebGL = await page.evaluate(() =>
-    Boolean(document.createElement("canvas").getContext("webgl2")),
-  );
-  test.skip(!hasWebGL, "This browser has no WebGL, so the picture stays, which is the fallback.");
-  await page.mouse.move(300, 300);
-  await page.mouse.move(640, 480);
-  const canvas = page.locator("[data-no-print] canvas");
-  await expect(canvas).toBeVisible({ timeout: 45_000 });
-  // an empty canvas is a tiny transparent PNG; a drawn character is much larger
-  await expect
-    .poll(async () => (await canvas.screenshot()).length, { timeout: 30_000 })
-    .toBeGreaterThan(8000);
-  // the hide control still works with 3D on
-  await page.getByRole("button", { name: "Hide Dex" }).click();
-  await expect(canvas).toHaveCount(0);
-});
-
 test("Dex's line follows what the visitor is doing on the decoder", async ({ page }) => {
   await page.goto("/decode");
   await expect(page.getByText("Paste your notice. I mark what matters.")).toBeVisible();
@@ -88,17 +67,4 @@ test("Dex's line follows what the visitor is doing on the decoder", async ({ pag
   await expect(page.getByText("The problem").first()).toBeVisible();
   // and when the answer is on screen, where to start
   await expect(page.getByText("Start with what Amazon asks for.")).toBeVisible();
-});
-
-test("his 3D box is no bigger than his picture, so he does not jump in size", async ({ page }) => {
-  await page.addInitScript(() => window.localStorage.setItem("appealdeck-dex3d", "on"));
-  await page.goto("/pricing");
-  const picture = page.locator("img[src*='/mascot/']").first();
-  await expect(picture).toBeVisible();
-  const pictureBox = await picture.boundingBox();
-  await page.mouse.move(300, 300);
-  await expect(page.locator("canvas").first()).toBeVisible({ timeout: 20_000 });
-  const canvasBox = await page.locator("canvas").first().boundingBox();
-  expect(pictureBox && canvasBox).toBeTruthy();
-  expect(canvasBox!.width).toBeLessThanOrEqual(pictureBox!.width + 8);
 });
