@@ -65,8 +65,10 @@ test("workspace persists a sourced evidence plan, waiting state and factual revi
   page,
   browserName,
 }) => {
-  // A long walk (about 30 s in WebKit on this machine): triple the time limit outside Chromium.
-  test.slow(browserName !== "chromium");
+  // A long walk: about 30 s in WebKit and, on a busy day, in Chromium too, which is the whole default
+  // limit. Triple the time limit everywhere so a slow machine does not fail a correct run (21 Oct 2026:
+  // it failed identically on the code before any change that day).
+  test.slow();
   // Full-page captures are review artifacts, not assertions; WebKit takes over 30 s to render one
   // of this page, so they are taken in Chromium only (found running the suite in WebKit, 8 Oct 2026).
   const shoot = async (options: Parameters<typeof page.screenshot>[0]) => {

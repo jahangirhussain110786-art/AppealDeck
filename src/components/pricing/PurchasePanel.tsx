@@ -43,7 +43,13 @@ export function PurchasePanel() {
   const [consent, setConsent] = useState(false);
   const [phase, setPhase] = useState<CompletionPhase>("idle");
   useGuideSituation(
-    phase === "activating" ? "pricing.activating" : consent ? "pricing.ready" : null,
+    phase === "timeout"
+      ? "pricing.delayed"
+      : phase === "activating"
+        ? "pricing.activating"
+        : consent
+          ? "pricing.ready"
+          : null,
   );
   const [email, setEmail] = useState<string | undefined>(undefined);
   const [caseCheck, setCaseCheck] = useState<CaseCheck>({ status: "checking" });

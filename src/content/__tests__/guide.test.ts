@@ -70,6 +70,33 @@ describe("Dex, the guide in the corner", () => {
     expect(guideFor(null)?.line).toMatch(/Paste a notice/);
   });
 
+  it("gives every real page its own line, so only a missing page says it cannot find one", () => {
+    const pages = [
+      "/",
+      "/billing",
+      "/case",
+      "/dashboard",
+      "/forgot-password",
+      "/login",
+      "/reset-password",
+      "/signup",
+      "/vault",
+      "/changelog",
+      "/check-invoice",
+      "/decode",
+      "/faq",
+      "/guides",
+      "/guides/some-guide",
+      "/how-we-test",
+      "/pricing",
+      "/privacy",
+      "/refund",
+      "/support",
+      "/terms",
+    ];
+    for (const page of pages) expect(guideFor(page), page).not.toEqual(GUIDE.fallback);
+  });
+
   it("has no guide on developer or API paths", () => {
     expect(guideFor("/dev/ui")).toBeNull();
     expect(guideFor("/api/health")).toBeNull();
@@ -111,17 +138,22 @@ describe("Dex, the guide in the corner", () => {
       vault: "/vault",
       pricing: "/pricing",
     };
+    // a crash or a lost connection can happen anywhere, so these belong to every page
+    const ANYWHERE = ["error"];
 
     it("belongs to a page, and is found there", () => {
       for (const [key, entry] of entries) {
-        const page = PAGE[key.split(".")[0] ?? ""];
-        expect(page, key).toBeTruthy();
-        expect(guideFor(page!, key), key).toMatchObject({ mood: entry.mood, line: entry.line });
+        const kind = key.split(".")[0] ?? "";
+        const pages = ANYWHERE.includes(kind) ? Object.values(PAGE) : [PAGE[kind]];
+        expect(pages[0], key).toBeTruthy();
+        for (const page of pages)
+          expect(guideFor(page!, key), key).toMatchObject({ mood: entry.mood, line: entry.line });
       }
     });
 
     it("is ignored on any other page, so a stale one can never leak", () => {
       for (const [key] of entries) {
+        if (ANYWHERE.includes(key.split(".")[0] ?? "")) continue;
         const page = PAGE[key.split(".")[0] ?? ""];
         const elsewhere = page === "/faq" ? "/support" : "/faq";
         expect(guideFor(elsewhere, key), key).toEqual(guideFor(elsewhere));
@@ -131,7 +163,9 @@ describe("Dex, the guide in the corner", () => {
 
     it("is never cheerful, and never hops, where a seller may be reading bad news", () => {
       for (const [key, entry] of entries) {
-        const page = PAGE[key.split(".")[0] ?? ""]!;
+        const kind = key.split(".")[0] ?? "";
+        // a crash or a lost connection can land on a sober page, so it must always be sober
+        const page = ANYWHERE.includes(kind) ? "/case" : PAGE[kind]!;
         const sober = SOBER_PREFIXES.some((p) => page === p || page.startsWith(`${p}/`));
         if (!sober) continue;
         expect(CHEERFUL, key).not.toContain(entry.mood);
@@ -151,6 +185,9 @@ describe("Dex, the guide in the corner", () => {
         "case.gated",
         "dashboard.empty",
         "vault.empty",
+        "error.crashed",
+        "error.offline",
+        "pricing.delayed",
       ]) {
         expect(key in SITUATIONS, key).toBe(true);
       }

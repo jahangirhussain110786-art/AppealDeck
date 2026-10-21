@@ -189,7 +189,7 @@ export const WORKSPACE = {
           "For example: We bought 800 of these stands from the manufacturer, Brightway Metal Products, on 14 June 2026. The attached invoice shows it.",
       },
       RELATED_ACCOUNT: {
-        hint: "Cover the three things Amazon asks: how the other account is connected to you (or that it is not), why the device, address or bank account is shared, and what you have done so the accounts are no longer linked. Give dates.",
+        hint: "Cover three things. How the other account is connected to you, or that it is not. Why a device, address or bank account is shared. What you did so the accounts are no longer linked. Give dates.",
         example:
           "For example: The other account belonged to a former business partner, who left on 30 Apr 2025. We shared an office, which explains the shared address. That company and its account were closed on 22 May 2025; the attached records show it.",
       },

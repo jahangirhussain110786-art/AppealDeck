@@ -68,3 +68,23 @@ test("Dex's line follows what the visitor is doing on the decoder", async ({ pag
   // and when the answer is on screen, where to start
   await expect(page.getByText("Start with what Amazon asks for.")).toBeVisible();
 });
+
+test("Dex says so when the connection is lost, and goes back when it returns", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/pricing");
+  await expect(page.getByText("Compare the plans, then choose.")).toBeVisible();
+  await context.setOffline(true);
+  await expect(page.getByText("You look offline. I will wait.")).toBeVisible();
+  await expect(picture(page)).toHaveAttribute("src", /dex-reassure-/);
+  await context.setOffline(false);
+  await expect(page.getByText("You look offline. I will wait.")).toHaveCount(0);
+  await expect(picture(page)).toHaveAttribute("src", /dex-explaining-/);
+});
+
+test("Dex says so on a page that is not there", async ({ page }) => {
+  await page.goto("/there-is-no-such-page");
+  await expect(page.getByText("I cannot find that page.")).toBeVisible();
+  await expect(picture(page)).toHaveAttribute("src", /dex-confused-/);
+});

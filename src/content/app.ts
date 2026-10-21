@@ -289,7 +289,7 @@ export const APP = {
     },
     outcomeShare: {
       title: "Share this outcome anonymously?",
-      body: "This sends only the case type, marketplace, document type, attempt count, readiness score, the result, and how many days it took — never your notice text, evidence, or any identifying detail. It helps us report honest results instead of invented ones.",
+      body: "This sends only the case type, marketplace, document type, attempt count, readiness score, the result and how many days it took. It never sends your notice text, your evidence or anything that identifies you. It helps us report honest results instead of invented ones.",
       accept: "Share it",
       decline: "Not this time",
       shared: "Outcome shared anonymously. Thank you.",

@@ -115,8 +115,13 @@ export const SITUATIONS = {
   "vault.empty": { mood: "calm", line: "Nothing here yet. Take your time." },
   // pricing is not a page of bad news, so a warmer mood is fine once the buyer has agreed to the terms
   "pricing.ready": { mood: "encourage", line: "Ready when you are.", motion: "nod" },
+  // the Pass is taking longer than usual to switch on
+  "pricing.delayed": { mood: "reassure", line: "This is taking longer than usual." },
   // the payment went through and the Pass is being switched on
   "pricing.activating": { mood: "cheering", line: "Thank you. Setting things up." },
+  // anything that goes wrong, on any page: our own failures, never an Amazon outcome
+  "error.crashed": { mood: "confused", line: "Something broke on our side." },
+  "error.offline": { mood: "reassure", line: "You look offline. I will wait." },
 } satisfies Record<string, GuideEntry>;
 
 export type SituationKey = keyof typeof SITUATIONS;
@@ -131,9 +136,14 @@ const SITUATION_PAGE: Record<string, { path: string; exact?: boolean }> = {
   pricing: { path: "/pricing" },
 };
 
+/** Situations that can happen on any page: a crash or a lost connection. */
+const ANYWHERE = new Set(["error"]);
+
 function situationFor(path: string, key: string | null | undefined): GuideEntry | null {
   if (!key || !(key in SITUATIONS)) return null;
-  const page = SITUATION_PAGE[key.split(".")[0] ?? ""];
+  const kind = key.split(".")[0] ?? "";
+  if (ANYWHERE.has(kind)) return SITUATIONS[key as SituationKey];
+  const page = SITUATION_PAGE[kind];
   if (!page) return null;
   const onPage = page.exact
     ? path === page.path
