@@ -56,7 +56,8 @@ export const GUIDE = {
   tipToggle: "Show Dex's tip",
   show: "Show Dex, your guide",
   hide: "Hide Dex",
-  fallback: { mood: "hello", line: "Need a hand? I am Dex." } satisfies GuideEntry,
+  // the only paths without an entry of their own are ones that do not exist: the 404
+  fallback: { mood: "confused", line: "I cannot find that page." } satisfies GuideEntry,
   routes: [
     { path: "/", exact: true, mood: "hello", line: "Paste a notice and I will mark it." },
     { path: "/decode", mood: "explaining", line: "Paste your notice. I mark what matters." },
@@ -114,6 +115,8 @@ export const SITUATIONS = {
   "vault.empty": { mood: "calm", line: "Nothing here yet. Take your time." },
   // pricing is not a page of bad news, so a warmer mood is fine once the buyer has agreed to the terms
   "pricing.ready": { mood: "encourage", line: "Ready when you are.", motion: "nod" },
+  // the payment went through and the Pass is being switched on
+  "pricing.activating": { mood: "cheering", line: "Thank you. Setting things up." },
 } satisfies Record<string, GuideEntry>;
 
 export type SituationKey = keyof typeof SITUATIONS;

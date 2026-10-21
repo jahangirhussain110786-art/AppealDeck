@@ -41,8 +41,10 @@ function caseCheckLabel(kind: string, id: string): string {
 
 export function PurchasePanel() {
   const [consent, setConsent] = useState(false);
-  useGuideSituation(consent ? "pricing.ready" : null);
   const [phase, setPhase] = useState<CompletionPhase>("idle");
+  useGuideSituation(
+    phase === "activating" ? "pricing.activating" : consent ? "pricing.ready" : null,
+  );
   const [email, setEmail] = useState<string | undefined>(undefined);
   const [caseCheck, setCaseCheck] = useState<CaseCheck>({ status: "checking" });
   const [hasPass, setHasPass] = useState(false);
