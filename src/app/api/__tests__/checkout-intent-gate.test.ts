@@ -37,8 +37,14 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 const fetchLicenseMock = vi.fn();
-vi.mock("@/lib/license", () => ({
+// The real pure helpers (the renewal window) stay; only what reads the database is replaced.
+vi.mock("@/lib/license", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/license")>()),
   fetchLicenseForUser: (...args: unknown[]) => fetchLicenseMock(...args),
+  fetchDocumentReview: () => Promise.resolve(false),
+  fetchAccountCover: () => Promise.resolve(null),
+  fetchProStatus: () =>
+    Promise.resolve({ verified: false, creditsLeft: 0, creditsEndAt: null, proPlanActive: false }),
 }));
 
 process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS = "pri_test123";

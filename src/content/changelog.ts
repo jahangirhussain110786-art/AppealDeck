@@ -11,7 +11,13 @@
  * - Newest first. Do not rewrite an old line: add a new one that corrects it.
  */
 
-import { accountPassEnabled } from "@/lib/plans";
+import {
+  accountPassEnabled,
+  professionalsEnabled,
+  rebateEnabled,
+  renewalEnabled,
+  reviewEnabled,
+} from "@/lib/plans";
 
 export type ChangelogEntry = { date: string; items: readonly string[] };
 
@@ -40,6 +46,26 @@ export const CHANGELOG = {
         ...(accountPassEnabled()
           ? [
               "The Account Pass is on sale: one payment that covers every case on your account for 12 months, beside the one-case Appeal Pass. The first buyers may get it at the Appeal Pass price while the founding offer lasts.",
+            ]
+          : []),
+        ...(reviewEnabled()
+          ? [
+              "A new AI document review: for $49 the AI reads up to five of one case's documents against what Amazon asked, and the $49 comes off the Appeal Pass for the same case.",
+            ]
+          : []),
+        ...(renewalEnabled()
+          ? [
+              "The Account Pass can be renewed for $99, which adds 12 months to the end of the cover you already have.",
+            ]
+          : []),
+        ...(professionalsEnabled()
+          ? [
+              "Case credits for verified professionals: packs of 10 and 30, and a monthly Pro plan. Each credit gives one case an Appeal Pass.",
+            ]
+          : []),
+        ...(rebateEnabled()
+          ? [
+              "Tell us how your case ended, whatever the result, and we refund $25 of what you paid. The report is linked to your account so we know whom to refund, and it is not published.",
             ]
           : []),
         "The Privacy policy now says that your browser also holds a partner’s code for 60 days, if you arrive through one, and your answer to the question above.",

@@ -27,6 +27,7 @@ import { loadCaseFile } from "@/lib/caseStore";
 import { openVaultForVisitor } from "@/lib/vault/visitor";
 import { workspaceCanCompose } from "@/core/workspace";
 import { formatDate } from "@/lib/format";
+import { PRODUCTS } from "@/content/purchases";
 import type { PassPlan } from "@/lib/plans";
 
 type CompletionPhase = "idle" | "activating" | "timeout";
@@ -42,7 +43,14 @@ function caseCheckLabel(kind: string, id: string): string {
   return `${kind.toLowerCase().replaceAll("_", " ")} · #${id.slice(0, 6)}`;
 }
 
-export function PurchasePanel({ plan = "case" }: { plan?: PassPlan }) {
+export function PurchasePanel({
+  plan = "case",
+  onReviewState,
+}: {
+  plan?: PassPlan;
+  /** Told whether the case already has a document review, which takes its price off the Appeal Pass. */
+  onReviewState?: (hasReview: boolean) => void;
+}) {
   const [consent, setConsent] = useState(false);
   const [phase, setPhase] = useState<CompletionPhase>("idle");
   useGuideSituation(
@@ -57,6 +65,8 @@ export function PurchasePanel({ plan = "case" }: { plan?: PassPlan }) {
   const [email, setEmail] = useState<string | undefined>(undefined);
   const [caseCheck, setCaseCheck] = useState<CaseCheck>({ status: "checking" });
   const [hasPass, setHasPass] = useState(false);
+  // Whether this case already has a document review (the AI reading), asked of the same lookup.
+  const [caseHasReview, setCaseHasReview] = useState(false);
   // The case the checkout is for, so activation is asked about THAT case and not any Pass on the account.
   const [checkedCaseId, setCheckedCaseId] = useState<string | undefined>(undefined);
   const pollAbort = useRef<AbortController | null>(null);
@@ -108,11 +118,14 @@ export function PurchasePanel({ plan = "case" }: { plan?: PassPlan }) {
                   status?: string;
                   plan?: string | null;
                   expiresAt?: string | null;
+                  hasReview?: boolean;
                 }>)
               : null,
           )
           .catch(() => null);
         if (!alive) return;
+        setCaseHasReview(license?.hasReview === true);
+        onReviewState?.(license?.hasReview === true);
         if (license?.status === "active") {
           setCaseCheck({
             status: "covered",
@@ -136,7 +149,7 @@ export function PurchasePanel({ plan = "case" }: { plan?: PassPlan }) {
     return () => {
       alive = false;
     };
-  }, [sessionState]);
+  }, [sessionState, onReviewState]);
 
   const activeCase: CaseCheck = sessionState === "signed-in" ? caseCheck : { status: "none" };
 
@@ -147,15 +160,22 @@ export function PurchasePanel({ plan = "case" }: { plan?: PassPlan }) {
     pollAbort.current?.abort();
     const abort = new AbortController();
     pollAbort.current = abort;
-    void pollLicenseStatus({ caseId: checkedCaseId, signal: abort.signal })
+    // A document review is not a Pass: its activation is the AI reading becoming available, and the
+    // seller goes to their documents, not to the response.
+    const review = plan === "review";
+    void pollLicenseStatus({
+      caseId: checkedCaseId,
+      signal: abort.signal,
+      ...(review ? { forDocuments: true } : {}),
+    })
       .then(() => {
         // Not if the seller has left this page meanwhile: the poll must not pull them back out.
-        if (!abort.signal.aborted) router.push("/compose");
+        if (!abort.signal.aborted) router.push(review ? "/case?view=evidence" : "/compose");
       })
       .catch(() => {
         if (!abort.signal.aborted) setPhase("timeout");
       });
-  }, [sessionState, router, checkedCaseId]);
+  }, [sessionState, router, checkedCaseId, plan]);
 
   if (phase === "activating") {
     return (
@@ -187,14 +207,20 @@ export function PurchasePanel({ plan = "case" }: { plan?: PassPlan }) {
 
   // A case Pass covers one case, so its holder may still buy the Account Pass; an Account Pass
   // covers every case, so nothing more is sold to its holder (the server refuses it too).
+  // A document review is bought to read documents, so it asks nothing of whether a response can be
+  // drafted; and a case already covered by any Pass, or already reviewed, has no use for one.
   const coveredAgainstThisPlan =
-    activeCase.status === "covered" && (plan === "case" || activeCase.coveredBy === "account_pass");
+    activeCase.status === "covered" &&
+    (plan === "case" || plan === "review" || activeCase.coveredBy === "account_pass");
+  const reviewAlreadyBought = plan === "review" && caseHasReview && activeCase.status !== "covered";
+  const ineligibleForThis = activeCase.status === "ineligible" && plan !== "review";
   const blocked =
     sessionState === "signed-in" &&
     (activeCase.status === "checking" ||
       activeCase.status === "none" ||
       activeCase.status === "locked" ||
-      activeCase.status === "ineligible" ||
+      ineligibleForThis ||
+      reviewAlreadyBought ||
       coveredAgainstThisPlan);
 
   return (
@@ -214,15 +240,19 @@ export function PurchasePanel({ plan = "case" }: { plan?: PassPlan }) {
         </p>
       )}
 
-      {sessionState === "signed-in" && activeCase.status === "ok" && (
-        <p className="text-xs text-muted-foreground">
-          {plan === "account"
-            ? `This Account Pass will cover your active case, ${activeCase.label}, and every other case on your account for 12 months.`
-            : hasPass
-              ? `Your Appeal Pass is already used on another case. A new Pass would cover this one: ${activeCase.label}.`
-              : `This Pass will cover your active case: ${activeCase.label}.`}
-        </p>
-      )}
+      {sessionState === "signed-in" &&
+        (activeCase.status === "ok" ||
+          (activeCase.status === "ineligible" && plan === "review")) && (
+          <p className="text-xs text-muted-foreground">
+            {plan === "review"
+              ? `The AI reading will cover your active case, ${activeCase.label}: up to five documents. The review's price comes off the Appeal Pass for this case later.`
+              : plan === "account"
+                ? `This Account Pass will cover your active case, ${activeCase.label}, and every other case on your account for 12 months.`
+                : hasPass
+                  ? `Your Appeal Pass is already used on another case. A new Pass would cover this one: ${activeCase.label}.`
+                  : `This Pass will cover your active case: ${activeCase.label}.`}
+          </p>
+        )}
 
       {sessionState === "signed-in" && activeCase.status === "none" && (
         <p className="text-xs text-muted-foreground">
@@ -255,23 +285,34 @@ export function PurchasePanel({ plan = "case" }: { plan?: PassPlan }) {
           </p>
         )}
 
+      {sessionState === "signed-in" && reviewAlreadyBought && (
+        <p className="text-xs text-muted-foreground">
+          This case already has an AI document review.{" "}
+          <Link href="/case?view=evidence" className="text-link underline underline-offset-4">
+            Open your documents
+          </Link>
+        </p>
+      )}
+
       {sessionState === "signed-in" && coveredAgainstThisPlan && (
         <p className="text-xs text-muted-foreground">
-          {activeCase.status === "covered" && activeCase.coveredBy === "account_pass"
-            ? PRICING.account.covered.until.replace(
-                "{date}",
-                activeCase.expiresAt
-                  ? formatDate(activeCase.expiresAt)
-                  : "the end of its 12 months",
-              )
-            : `Your Appeal Pass covers one case: ${activeCase.label}. It covers every revision of that case, so there is nothing more to buy.`}{" "}
+          {plan === "review"
+            ? "This case already has a Pass, which includes the AI reading of your documents."
+            : activeCase.status === "covered" && activeCase.coveredBy === "account_pass"
+              ? PRICING.account.covered.until.replace(
+                  "{date}",
+                  activeCase.expiresAt
+                    ? formatDate(activeCase.expiresAt)
+                    : "the end of its 12 months",
+                )
+              : `Your Appeal Pass covers one case: ${activeCase.label}. It covers every revision of that case, so there is nothing more to buy.`}{" "}
           <Link href="/case" className="text-link underline underline-offset-4">
             Open your case
           </Link>
         </p>
       )}
 
-      {sessionState === "signed-in" && activeCase.status === "ineligible" && (
+      {sessionState === "signed-in" && ineligibleForThis && (
         <p className="text-xs text-muted-foreground">
           Your active case ({activeCase.label}) does not currently need a drafted response — confirm
           its response route in the case workspace first.{" "}
@@ -292,11 +333,13 @@ export function PurchasePanel({ plan = "case" }: { plan?: PassPlan }) {
             customerEmail={email}
             onCompleted={handleCompleted}
           >
-            {plan === "account"
-              ? PRICING.account.cta
-              : hasPass && activeCase.status === "ok"
-                ? "Buy another Pass for another case"
-                : PRICING.cta}
+            {plan === "review"
+              ? PRODUCTS.review.cta
+              : plan === "account"
+                ? PRICING.account.cta
+                : hasPass && activeCase.status === "ok"
+                  ? "Buy another Pass for another case"
+                  : PRICING.cta}
           </CheckoutButton>
         ) : (
           <Button

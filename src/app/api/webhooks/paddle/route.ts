@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { z } from "zod";
-import { accountPassPriceId } from "@/lib/plans";
+import { accountPassPriceId, extraPriceIds } from "@/lib/plans";
 
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -85,14 +85,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Malformed event" }, { status: 400 });
   }
   try {
-    // The second price id is passed only when an Account Pass is configured, so the call is exactly
-    // the one made before the Account Pass existed until the founder has applied migration 0017 and
-    // created the price (a database without 0017 has no such argument and would refuse the call).
+    // The extra price ids are passed only when they are configured, so the call is exactly the one
+    // made before the Account Pass existed until the founder has applied migrations 0017 and 0018 and
+    // created the prices (a database without them has no such arguments and would refuse the call).
     const accountPriceId = accountPassPriceId();
+    const extraPrices = extraPriceIds();
     const { data, error } = await supabaseAdmin.rpc("apply_paddle_event", {
       p_event: event,
       p_price_id: process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS ?? null,
       ...(accountPriceId ? { p_account_price_id: accountPriceId } : {}),
+      ...(Object.keys(extraPrices).length > 0 ? { p_extra_prices: extraPrices } : {}),
     });
     if (error) throw error;
     // Migration 0012: a completed payment that cannot be matched to a checkout is parked in

@@ -4,6 +4,10 @@ import { NextRequest } from "next/server";
 const getApiUserMock = vi.fn();
 const isLicenseActiveMock = vi.fn();
 const claimCasePassMock = vi.fn();
+const claimDocumentReviewMock = vi.fn();
+const hasAnyReviewMock = vi.fn();
+const reviewReadsLeftMock = vi.fn();
+const recordReviewReadMock = vi.fn();
 const rateLimitMock = vi.fn();
 const callGeminiMock = vi.fn();
 
@@ -16,10 +20,14 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/license", () => ({
   isLicenseActive: (...args: unknown[]) => isLicenseActiveMock(...args),
   claimCasePass: (...args: unknown[]) => claimCasePassMock(...args),
+  claimDocumentReview: (...args: unknown[]) => claimDocumentReviewMock(...args),
+  hasAnyDocumentReview: (...args: unknown[]) => hasAnyReviewMock(...args),
 }));
 
 vi.mock("@/lib/ratelimit", () => ({
   rateLimitDocumentRead: (...args: unknown[]) => rateLimitMock(...args),
+  reviewReadsLeft: (...args: unknown[]) => reviewReadsLeftMock(...args),
+  recordReviewRead: (...args: unknown[]) => recordReviewReadMock(...args),
   tooManyRequestsResponse: () =>
     new Response(JSON.stringify({ error: "Slow down" }), { status: 429 }),
 }));
@@ -58,6 +66,13 @@ beforeEach(() => {
   isLicenseActiveMock.mockResolvedValue(true);
   claimCasePassMock.mockReset();
   claimCasePassMock.mockResolvedValue(true);
+  claimDocumentReviewMock.mockReset();
+  claimDocumentReviewMock.mockResolvedValue(false);
+  hasAnyReviewMock.mockReset();
+  hasAnyReviewMock.mockResolvedValue(false);
+  reviewReadsLeftMock.mockReset();
+  reviewReadsLeftMock.mockResolvedValue({ left: 5 });
+  recordReviewReadMock.mockReset();
   rateLimitMock.mockResolvedValue({ success: true });
 });
 
@@ -84,6 +99,69 @@ describe("/api/read-document gates", () => {
     expect((await res.json()).code).toBe("case_pass_required");
     expect(claimCasePassMock).toHaveBeenCalledWith("u1", "case-1");
     expect(callGeminiMock).not.toHaveBeenCalled();
+  });
+
+  describe("a document review (22 Oct 2026): five AI readings for the case it was bought for", () => {
+    beforeEach(() => {
+      isLicenseActiveMock.mockResolvedValue(false);
+      claimCasePassMock.mockResolvedValue(false);
+      hasAnyReviewMock.mockResolvedValue(true);
+      claimDocumentReviewMock.mockResolvedValue(true);
+      callGeminiMock.mockResolvedValue({ ok: false, reason: "busy" });
+    });
+
+    it("opens the reading for its case, and the reading is the model's, not refused", async () => {
+      const res = await handleReadDocument(makeReq(valid));
+      expect(res.status).toBe(200);
+      expect(callGeminiMock).toHaveBeenCalledTimes(1);
+      expect(claimDocumentReviewMock).toHaveBeenCalledWith("u1", "case-1");
+    });
+
+    it("does not open it for an account with no Pass and no review", async () => {
+      hasAnyReviewMock.mockResolvedValue(false);
+      const res = await handleReadDocument(makeReq(valid));
+      expect(res.status).toBe(402);
+      expect(callGeminiMock).not.toHaveBeenCalled();
+    });
+
+    it("does not open it for a different case than the one the review was bought for", async () => {
+      claimDocumentReviewMock.mockResolvedValue(false);
+      const res = await handleReadDocument(makeReq(valid));
+      expect(res.status).toBe(402);
+      expect((await res.json()).code).toBe("case_pass_required");
+      expect(callGeminiMock).not.toHaveBeenCalled();
+    });
+
+    it("stops after its five readings, and says the Appeal Pass has no such limit", async () => {
+      reviewReadsLeftMock.mockResolvedValue({ left: 0 });
+      const res = await handleReadDocument(makeReq(valid));
+      expect(res.status).toBe(402);
+      const body = await res.json();
+      expect(body.code).toBe("review_used");
+      expect(body.error).toMatch(/Appeal Pass includes every document check/);
+      expect(callGeminiMock).not.toHaveBeenCalled();
+    });
+
+    it("refuses rather than guess when the count cannot be read", async () => {
+      reviewReadsLeftMock.mockResolvedValue({ left: 0, unavailable: true });
+      const res = await handleReadDocument(makeReq(valid));
+      expect(res.status).toBe(503);
+      expect(callGeminiMock).not.toHaveBeenCalled();
+    });
+
+    it("counts a reading only when it succeeded", async () => {
+      await handleReadDocument(makeReq(valid)); // the model was busy
+      expect(recordReviewReadMock).not.toHaveBeenCalled();
+    });
+
+    it("never counts or limits a reading made under a Pass", async () => {
+      claimCasePassMock.mockResolvedValue(true);
+      claimDocumentReviewMock.mockResolvedValue(false);
+      isLicenseActiveMock.mockResolvedValue(true);
+      await handleReadDocument(makeReq(valid));
+      expect(reviewReadsLeftMock).not.toHaveBeenCalled();
+      expect(recordReviewReadMock).not.toHaveBeenCalled();
+    });
   });
 
   it("refuses a check that does not say which case it belongs to", async () => {

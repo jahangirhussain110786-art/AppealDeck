@@ -454,3 +454,49 @@ function unlimitedRate(): RateLimitResult {
     reset: 0,
   };
 }
+
+/** A document review includes this many AI readings, for the case it was bought for. */
+export const REVIEW_READS_PER_CASE = 5;
+
+const REVIEW_READS_TTL_SECONDS = 365 * 24 * 60 * 60;
+
+function reviewReadsKey(userId: string, caseId: string): string {
+  return `review-reads:${userId}:${caseId}`;
+}
+
+/**
+ * How many of a document review's readings are left for a case. Counted by successful readings only
+ * (`recordReviewRead`), so a reading that failed costs nothing. `unavailable` means the counter
+ * could not be read: the route then refuses rather than guess, because an unlimited review would
+ * cost real money on the AI.
+ */
+export async function reviewReadsLeft(
+  user: AppUser,
+  caseId: string,
+): Promise<{ left: number; unavailable?: boolean }> {
+  if (isUnlimitedDevUser(user)) return { left: REVIEW_READS_PER_CASE };
+  if (!hasUpstashEnv())
+    return process.env.NODE_ENV === "production"
+      ? { left: 0, unavailable: true }
+      : { left: REVIEW_READS_PER_CASE };
+  try {
+    const redis = new Redis(redisCredentials()!);
+    const used = Number((await redis.get(reviewReadsKey(user.id, caseId))) ?? 0);
+    return { left: Math.max(0, REVIEW_READS_PER_CASE - (Number.isFinite(used) ? used : 0)) };
+  } catch {
+    return { left: 0, unavailable: true };
+  }
+}
+
+/** Counts one successful reading against a document review. Never throws: a missed count is not the seller's problem. */
+export async function recordReviewRead(user: AppUser, caseId: string): Promise<void> {
+  if (isUnlimitedDevUser(user) || !hasUpstashEnv()) return;
+  try {
+    const redis = new Redis(redisCredentials()!);
+    const key = reviewReadsKey(user.id, caseId);
+    const n = await redis.incr(key);
+    if (n === 1) await redis.expire(key, REVIEW_READS_TTL_SECONDS);
+  } catch {
+    // swallowed on purpose
+  }
+}

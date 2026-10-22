@@ -14,6 +14,7 @@
 import { PRICING } from "@/content/marketing";
 import { LEGAL } from "@/content/legal";
 import { formatLongDate } from "@/lib/format";
+import { EMAIL_PRODUCTS, PRODUCTS, type PurchaseKind } from "@/content/purchases";
 
 export interface PurchaseConfirmationInput {
   /** Buyer's email, already validated by the caller. */
@@ -22,8 +23,8 @@ export interface PurchaseConfirmationInput {
   purchasedAt: string | Date;
   consentText?: string;
   idempotencyKey?: string;
-  /** What was bought. Absent or "appeal_pass" is the one-case Appeal Pass. */
-  plan?: "appeal_pass" | "account_pass";
+  /** What was bought, as the database recorded it. Absent is the one-case Appeal Pass. */
+  kind?: PurchaseKind;
 }
 
 export interface BuiltEmail {
@@ -39,8 +40,10 @@ export interface BuiltEmail {
  */
 export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput): BuiltEmail {
   const dateLabel = formatLongDate(input.purchasedAt);
-  const account = input.plan === "account_pass";
-  const passName = account ? PRICING.account.name : PRICING.pass;
+  const kind: PurchaseKind = input.kind ?? "appeal_pass";
+  const account = kind === "account_pass";
+  const other = kind === "appeal_pass" || kind === "account_pass" ? null : EMAIL_PRODUCTS[kind];
+  const passName = other ? other.name : account ? PRICING.account.name : PRICING.pass;
   const subject = `Your ${passName} purchase confirmation and consent copy`;
   const consentLine = input.consentText ?? LEGAL.consent.withdrawalCheckbox.label;
   const refundLine =
@@ -48,9 +51,11 @@ export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput)
 
   const lines = [
     `Thanks for buying the ${passName}${dateLabel ? ` on ${dateLabel}` : ""}.`,
-    account
-      ? `List price: ${PRICING.account.price} (one-time; covers every case on your account for 12 months from the day you bought it)`
-      : `List price: ${PRICING.price} (${PRICING.priceNote})`,
+    other
+      ? other.priceLine
+      : account
+        ? `List price: ${PRICING.account.price} (one-time; covers every case on your account for 12 months from the day you bought it)`
+        : `List price: ${PRICING.price} (${PRICING.priceNote})`,
     "Paddle's receipt shows the amount you paid, including any discount code.",
     "",
     "The consent you gave at checkout:",
@@ -178,5 +183,68 @@ export async function sendCaseReminderEmail(input: CaseReminderInput): Promise<v
     if (!res.ok) throw new Error("Reminder email provider returned " + res.status);
   } catch {
     throw new Error("Reminder email delivery failed");
+  }
+}
+
+export interface AccountPassEndingInput {
+  to: string;
+  /** ISO date the cover ends. */
+  endsOn: string | Date;
+  /** Absolute URL of the Billing page, where a renewal is bought. */
+  billingUrl: string;
+  /** Whether a renewal is on sale, so the email does not offer what cannot be bought. */
+  renewalAvailable: boolean;
+  idempotencyKey?: string;
+}
+
+/**
+ * The "your Account Pass ends soon" email (22 Oct 2026). Pure content builder. It says what the cover
+ * is, when it ends, and what that means in plain words; it offers a renewal only when one can be
+ * bought; it makes no urgency the facts do not carry and no prediction about any case. It is sent
+ * once per account per end date (migration 0018, `account_pass_notices`).
+ */
+export function buildAccountPassEndingEmail(input: AccountPassEndingInput): BuiltEmail {
+  const date = formatLongDate(input.endsOn);
+  const subject = `Your Account Pass ends${date ? ` on ${date}` : " soon"}`;
+  const lines = [
+    `Your Account Pass covers every case on your account${date ? ` until ${date}` : ""}.`,
+    "",
+    "After that, a case that has no Appeal Pass of its own needs one before you can prepare a further response. Everything you already saved stays on your device.",
+    "",
+    input.renewalAvailable
+      ? `You can renew for ${PRODUCTS.renewal.price}. The twelve months are added to the end of this one, so nothing is lost by renewing early.`
+      : "You can buy a new Account Pass, or an Appeal Pass for a single case, when this one ends.",
+    "",
+    `Billing: ${input.billingUrl}`,
+    "",
+    "AppealDeck by Hawlton",
+  ];
+  const text = lines.join("\n");
+  const html = `<div>${lines
+    .map((line) => (line === "" ? "<br />" : `<p>${escapeHtml(line)}</p>`))
+    .join("\n")}</div>`;
+  return { subject, html, text };
+}
+
+/** Sends the Account Pass ending email. Throws on failure so the caller can try again tomorrow. */
+export async function sendAccountPassEndingEmail(input: AccountPassEndingInput): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM ?? "AppealDeck <billing@appealdeck.com>";
+  if (!apiKey) throw new Error("Email is not configured");
+  const { subject, html, text } = buildAccountPassEndingEmail(input);
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      signal: AbortSignal.timeout(5000),
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        ...(input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey } : {}),
+      },
+      body: JSON.stringify({ from, to: input.to, subject, html, text }),
+    });
+    if (!res.ok) throw new Error("Email provider returned " + res.status);
+  } catch {
+    throw new Error("Account Pass email delivery failed");
   }
 }

@@ -39,8 +39,14 @@ vi.mock("@/lib/supabase/server", () => ({
     }),
   },
 }));
-vi.mock("@/lib/license", () => ({
+// The real pure helpers (the renewal window) stay; only what reads the database is replaced.
+vi.mock("@/lib/license", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/license")>()),
   fetchLicenseForUser: (...args: unknown[]) => fetchLicenseMock(...args),
+  fetchDocumentReview: () => Promise.resolve(false),
+  fetchAccountCover: () => Promise.resolve(null),
+  fetchProStatus: () =>
+    Promise.resolve({ verified: false, creditsLeft: 0, creditsEndAt: null, proPlanActive: false }),
 }));
 vi.mock("@/lib/founding", () => ({ foundingSpotsLeft: () => foundingLeftMock() }));
 

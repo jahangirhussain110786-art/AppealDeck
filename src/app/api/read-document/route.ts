@@ -23,11 +23,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
-import { claimCasePass, isLicenseActive } from "@/lib/license";
+import {
+  claimCasePass,
+  claimDocumentReview,
+  hasAnyDocumentReview,
+  isLicenseActive,
+} from "@/lib/license";
 import { serviceUnavailableResponse } from "@/lib/licenseGuard";
 import { PROVIDER_FAILURE_HEADER } from "@/lib/breaker";
 import { CaseIdSchema } from "@/lib/caseSchema";
-import { rateLimitDocumentRead, tooManyRequestsResponse } from "@/lib/ratelimit";
+import {
+  rateLimitDocumentRead,
+  recordReviewRead,
+  reviewReadsLeft,
+  tooManyRequestsResponse,
+} from "@/lib/ratelimit";
 import { callGemini, withGeminiBreaker } from "@/lib/llm/gemini";
 import { extractJsonObject } from "@/lib/llm/extractJson";
 import { VIOLATION_KINDS } from "@/core/violationKinds";
@@ -248,7 +258,9 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   // check that matters, a Pass for *this* case, follows once the body names the case.
   let active: boolean;
   try {
-    active = await isLicenseActive(user.id);
+    // A document review is a smaller purchase that includes this reading (five documents for the case
+    // it was bought for), so it opens the same door; the check for the case itself follows.
+    active = (await isLicenseActive(user.id)) || (await hasAnyDocumentReview(user.id));
   } catch {
     return serviceUnavailableResponse();
   }
@@ -321,8 +333,13 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
     two refusals above, which cost nothing and must answer the same way for everyone.
   */
   let hasCasePass: boolean;
+  let reviewOnly = false;
   try {
     hasCasePass = await claimCasePass(user.id, caseId);
+    if (!hasCasePass && (await claimDocumentReview(user.id, caseId))) {
+      hasCasePass = true;
+      reviewOnly = true;
+    }
   } catch {
     return serviceUnavailableResponse();
   }
@@ -335,6 +352,22 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
       },
       { status: 402 },
     );
+  }
+
+  // A document review includes five readings for its case. A Pass has no such limit (only the daily
+  // one above), so this applies to a review alone.
+  if (reviewOnly) {
+    const reads = await reviewReadsLeft(user, caseId);
+    if (reads.unavailable) return serviceUnavailableResponse();
+    if (reads.left <= 0)
+      return NextResponse.json(
+        {
+          error:
+            "The five documents that came with your document review have been read. The Appeal Pass includes every document check, and the cost of the review comes off it.",
+          code: "review_used",
+        },
+        { status: 402 },
+      );
   }
 
   /*
@@ -468,6 +501,8 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
     variant ? { variant } : undefined,
   );
 
+  // Counted only now, so a reading that failed above did not use up one of the five.
+  if (reviewOnly) await recordReviewRead(user, caseId);
   return NextResponse.json({ ok: true, check });
 }
 

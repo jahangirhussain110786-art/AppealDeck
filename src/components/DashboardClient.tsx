@@ -44,6 +44,7 @@ import {
 } from "@/core";
 import { buildOutcomeRecord, outcomeFromReplyCategory } from "@/core/outcomeModel";
 import { OutcomeShareCard } from "@/components/OutcomeShareCard";
+import { OutcomeReportCard } from "@/components/OutcomeReportCard";
 import type { CaseFile } from "@/core/caseFile";
 import type { CaseState, CaseStateContext, ReplyCategory } from "@/core/caseState";
 import { buildClockBrief, type ClockBrief } from "@/core";
@@ -757,6 +758,8 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
               {/* AA-40: the clock speaks before anything else on the page. */}
               <ClockBriefCard brief={clockBrief} undated={undatedWindows(caseFile.deadlines)} />
               <PassStatusRow license={license} />
+              {/* The $25 outcome-report rebate: shown only while it is on and there is a payment to refund. */}
+              <OutcomeReportCard />
               {cases.length > 1 && (
                 <label className="block text-sm">
                   Current case

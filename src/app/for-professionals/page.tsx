@@ -10,6 +10,8 @@ import { Card } from "@/components/ui/card";
 import { pageMetadata } from "@/content/pageMetadata";
 import { PROS } from "@/content/audiences";
 import { splitAccent } from "@/lib/splitAccent";
+import { ProPurchase } from "@/components/ProPurchase";
+import { professionalsEnabled } from "@/lib/plans";
 
 export const metadata: Metadata = pageMetadata({
   title: PROS.metadata.title,
@@ -88,16 +90,24 @@ export default function ForProfessionalsPage() {
           <p className="max-w-prose text-base leading-relaxed text-foreground/90">
             {PROS.cost.body}
           </p>
-          <Card className="max-w-prose space-y-2 border-primary/30 p-5 sm:p-6">
-            <p className="text-base font-semibold text-foreground">{PROS.cost.open}</p>
-            <p className="text-sm leading-relaxed text-muted-foreground">{PROS.cost.openBody}</p>
-            <Button asChild variant="outline" className="mt-2">
-              <a href={PROS.mailto}>
-                <MailIcon aria-hidden />
-                {PROS.hero.cta}
-              </a>
-            </Button>
-          </Card>
+          {PROS.cost.pro && (
+            <p className="max-w-prose text-base leading-relaxed text-foreground/90">
+              {PROS.cost.pro}
+            </p>
+          )}
+          {PROS.cost.open && (
+            <Card className="max-w-prose space-y-2 border-primary/30 p-5 sm:p-6">
+              <p className="text-base font-semibold text-foreground">{PROS.cost.open}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{PROS.cost.openBody}</p>
+              <Button asChild variant="outline" className="mt-2">
+                <a href={PROS.mailto}>
+                  <MailIcon aria-hidden />
+                  {PROS.hero.cta}
+                </a>
+              </Button>
+            </Card>
+          )}
+          {professionalsEnabled() && <ProPurchase />}
         </section>
 
         <section aria-labelledby="pros-partner" className="space-y-3">

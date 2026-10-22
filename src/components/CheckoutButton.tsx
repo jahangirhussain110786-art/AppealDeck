@@ -12,7 +12,7 @@ import { apiErrorMessage } from "@/lib/apiError";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { buildCheckoutOptions, type CheckoutOptions } from "@/lib/checkoutOptions";
 import { readPartnerCode } from "@/lib/partnerCode";
-import type { PassPlan } from "@/lib/plans";
+import { PLAN_NEEDS_CASE, passAfterReviewPriceId, type PassPlan } from "@/lib/plans";
 
 declare global {
   interface Window {
@@ -67,7 +67,7 @@ export function CheckoutButton({
   plan = "case",
 }: {
   priceId?: string;
-  /** "case" is the Appeal Pass; "account" is the Account Pass (only where it is configured). */
+  /** What is being bought. Every plan but "case" is on sale only where its price is configured. */
   plan?: PassPlan;
   children: React.ReactNode;
   className?: string;
@@ -163,28 +163,32 @@ export function CheckoutButton({
   async function openCheckout() {
     if (opening || !consent || !window.Paddle) return;
     setOpening(true);
-    const vault = sharedVault ?? getBrowserVault();
+    // A Pass, an Account Pass and a document review are bought for a case, so the case is read from
+    // the vault. A renewal, a credit pack and the Pro plan belong to the account and need none.
+    const needsCase = PLAN_NEEDS_CASE[plan];
+    const vault = needsCase ? (sharedVault ?? getBrowserVault()) : null;
     try {
-      if (!(await openVaultForVisitor(vault))) throw new Error("Unlock your case before checkout.");
-      const file = await loadCaseFile(vault);
-      if (!file)
-        throw new Error("Start your case before buying an Appeal Pass. Each Pass covers one case.");
+      let body: Record<string, unknown> = { consent, plan };
+      if (vault) {
+        if (!(await openVaultForVisitor(vault)))
+          throw new Error("Unlock your case before checkout.");
+        const file = await loadCaseFile(vault);
+        if (!file)
+          throw new Error(
+            "Start your case before you buy. A Pass, an Account Pass and a document review are each for a case.",
+          );
+        body = { caseId: file.id, kind: file.kind, consent, workspace: file.workspace, plan };
+      }
       const response = await fetch("/api/checkout/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          caseId: file.id,
-          kind: file.kind,
-          consent,
-          workspace: file.workspace,
-          plan,
-        }),
+        body: JSON.stringify(body),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok)
         throw new Error(
           response.status === 401
-            ? "Sign in before buying your case's Appeal Pass."
+            ? "Sign in before you buy."
             : apiErrorMessage(response.status, data, "Checkout could not open."),
         );
       if (!data?.intentId || !data?.priceId) throw new Error("Checkout could not open.");
@@ -193,14 +197,18 @@ export function CheckoutButton({
       // to reach Paddle (locked vault, no case, intent rejected) is a different problem and must
       // not be counted as an opened checkout.
       trackFunnelEvent(FUNNEL_EVENTS.checkoutOpened);
-      // A partner's code, if the seller arrived through one. Paddle applies it and shows the
-      // discount in its own window; a code Paddle does not know is simply not applied.
+      // A partner's code, if the seller arrived through one. It applies to the Appeal Pass and the
+      // Account Pass only: the partner's discount is made for those two prices, and the Appeal Pass
+      // at its credited price (after a document review) already has the review's price off. Paddle
+      // applies the code and shows the discount in its own window; a code it does not know is not applied.
+      const codeApplies =
+        (plan === "case" || plan === "account") && data.priceId !== passAfterReviewPriceId();
       window.Paddle.Checkout.open(
         buildCheckoutOptions({
           priceId: data.priceId,
           intentId: data.intentId,
           email: customerEmail,
-          partnerCode: readPartnerCode(),
+          partnerCode: codeApplies ? readPartnerCode() : null,
           foundingCode: typeof data.foundingCode === "string" ? data.foundingCode : null,
         }),
       );
@@ -208,7 +216,7 @@ export function CheckoutButton({
       toast.error(error instanceof Error ? error.message : "Checkout could not open.");
     } finally {
       setOpening(false);
-      if (!sharedVault) await vault.close();
+      if (vault && !sharedVault) await vault.close();
     }
   }
 

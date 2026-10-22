@@ -9,6 +9,11 @@ export interface PollLicenseOptions {
   intervalMs?: number;
   timeoutMs?: number;
   sleep?: (ms: number) => Promise<void>;
+  /**
+   * Ask whether the AI may read this case's documents (a document review opens that) instead of whether
+   * a response may be prepared. A document review is not a Pass.
+   */
+  forDocuments?: boolean;
   /** Stops the poll (the seller left the page). It then rejects with an AbortError. */
   signal?: AbortSignal;
 }
@@ -52,7 +57,9 @@ export async function pollLicenseStatus(
     }
   }
   const statusUrl = caseId
-    ? "/api/license/status?caseId=" + encodeURIComponent(caseId)
+    ? "/api/license/status?caseId=" +
+      encodeURIComponent(caseId) +
+      (options.forDocuments ? "&for=documents" : "")
     : "/api/license/status";
   const deadline = Date.now() + timeoutMs;
   for (;;) {

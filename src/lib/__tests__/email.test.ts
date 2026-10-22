@@ -25,7 +25,7 @@ describe("buildPurchaseConfirmationEmail", () => {
     const email = buildPurchaseConfirmationEmail({
       to: "seller@example.com",
       purchasedAt: "2026-10-22T12:00:00.000Z",
-      plan: "account_pass",
+      kind: "account_pass",
     });
     expect(email.subject).toContain(PRICING.account.name);
     expect(email.subject).not.toContain(PRICING.pass);
@@ -33,6 +33,26 @@ describe("buildPurchaseConfirmationEmail", () => {
     expect(email.text).toContain("every case on your account for 12 months");
     expect(email.text).toContain("within 14 days of purchase");
     expect(email.text).toContain(LEGAL.consent.withdrawalCheckbox.label);
+  });
+
+  it.each([
+    ["document_review", "AI document review", "up to five documents for one case"],
+    ["account_renewal", "Account Pass renewal", "adds twelve months to your Account Pass"],
+    ["pack_10", "pack of 10 case credits", "ten case credits"],
+    ["pack_30", "pack of 30 case credits", "thirty case credits"],
+    ["pro_plan", "Pro plan", "renews every month until you cancel it in Billing"],
+  ] as const)("names a %s purchase for what it is", (kind, name, detail) => {
+    const email = buildPurchaseConfirmationEmail({
+      to: "pro@example.com",
+      purchasedAt: "2026-10-22T12:00:00.000Z",
+      kind,
+    });
+    expect(email.subject).toContain(name);
+    expect(email.subject).not.toContain("Appeal Pass");
+    expect(email.text).toContain(detail);
+    expect(email.text).toContain("List price:");
+    expect(email.text).toContain("within 14 days of purchase");
+    expect(email.text).not.toContain("One case.");
   });
 
   it("HTML-escapes the consent text so it renders safely", () => {

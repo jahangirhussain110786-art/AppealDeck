@@ -356,9 +356,12 @@ async function readWithAi(input: RunCheckInput): Promise<CheckOutcome> {
  */
 async function passState(caseId: string): Promise<"yes" | "no" | "signed_out" | "unknown"> {
   try {
-    const res = await fetch(`/api/license/status?caseId=${encodeURIComponent(caseId)}`, {
-      cache: "no-store",
-    });
+    const res = await fetch(
+      `/api/license/status?caseId=${encodeURIComponent(caseId)}&for=documents`,
+      {
+        cache: "no-store",
+      },
+    );
     if (res.status === 401) return "signed_out";
     if (!res.ok) return "unknown";
     const body = (await res.json().catch(() => null)) as { status?: unknown } | null;

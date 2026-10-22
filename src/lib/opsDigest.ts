@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { policyBriefAgeDays, policyBriefIsStale } from "@/core/policyBrief";
+import { rebateEnabled } from "@/lib/plans";
 
 /**
  * What the founder needs to hear about without going looking.
@@ -19,13 +20,19 @@ export interface OpsStatus {
   failedReminders: number;
   /** Days since Amazon's expectations were last re-checked, when that is overdue; otherwise 0. */
   policyBriefOverdueDays: number;
+  /**
+   * Outcome reports waiting for their $25 refund, which is made by hand in Paddle. Always 0 while
+   * the rebate is switched off, so the table is not even asked about before its migration is applied.
+   */
+  pendingRebates: number;
 }
 
 export const isAllClear = (s: OpsStatus) =>
   s.parkedPayments === 0 &&
   s.stuckConfirmations === 0 &&
   s.failedReminders === 0 &&
-  s.policyBriefOverdueDays === 0;
+  s.policyBriefOverdueDays === 0 &&
+  s.pendingRebates === 0;
 
 async function countOf(query: PromiseLike<{ count: number | null; error: unknown }>) {
   const { count, error } = await query;
@@ -54,12 +61,21 @@ export async function collectOpsStatus(client: SupabaseClient): Promise<OpsStatu
         .lte("due_at", new Date().toISOString()),
     ),
   ]);
+  const pendingRebates = rebateEnabled()
+    ? await countOf(
+        client
+          .from("outcome_reports")
+          .select("transaction_id", { count: "exact", head: true })
+          .eq("rebate_status", "pending"),
+      )
+    : 0;
   const now = new Date();
   return {
     parkedPayments,
     stuckConfirmations,
     failedReminders,
     policyBriefOverdueDays: policyBriefIsStale(now) ? policyBriefAgeDays(now) : 0,
+    pendingRebates,
   };
 }
 
@@ -80,6 +96,10 @@ export function buildOpsDigest(status: OpsStatus): { subject: string; text: stri
   if (status.policyBriefOverdueDays)
     lines.push(
       `The Plan of Action policy brief (src/core/policyBrief.ts) was last checked ${status.policyBriefOverdueDays} days ago. The AI writes every appeal against it, so re-check Amazon's current expectations (the sources are listed in that file), update the rules and POLICY_BRIEF_CHECKED_ON.`,
+    );
+  if (status.pendingRebates)
+    lines.push(
+      `${status.pendingRebates} outcome report(s) are waiting for their $25 refund. Find them: select transaction_id, result, created_at from outcome_reports where rebate_status = 'pending'; Refund each in Paddle as a partial refund of $25 on that transaction (type partial, so the Pass stays), then: update outcome_reports set rebate_status = 'refunded', settled_at = now() where transaction_id = '...';`,
     );
   return {
     subject: `AppealDeck needs attention: ${lines.length} thing${lines.length === 1 ? "" : "s"} to look at`,

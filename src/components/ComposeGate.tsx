@@ -10,6 +10,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { ConsentRow } from "@/components/pricing/ConsentRow";
+import { CaseCreditCard } from "@/components/CaseCreditCard";
 import { APP } from "@/content/app";
 import { SHARED } from "@/content/shared";
 import { PRICING } from "@/content/marketing";
@@ -92,6 +93,8 @@ export function ComposeGate({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 pt-5">
+        {/* A verified professional with case credits can activate this case with one. */}
+        <CaseCreditCard caseId={caseId} onUsed={startPolling} />
         <p className="text-sm text-muted-foreground">{APP.access.composeGate.body}</p>
         <p className="font-mono text-xl font-medium tabular-nums text-foreground">
           {APP.access.composeGate.price}

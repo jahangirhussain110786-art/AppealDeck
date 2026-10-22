@@ -25,7 +25,15 @@ export const READ_TERMS = {
   suffix: ".",
 } as const;
 
-import { accountPassEnabled } from "@/lib/plans";
+import {
+  accountPassEnabled,
+  professionalsEnabled,
+  proPlanEnabled,
+  rebateEnabled,
+  renewalEnabled,
+  reviewEnabled,
+  type PassPlan,
+} from "@/lib/plans";
 
 export const LEGAL = {
   lastUpdated: {
@@ -47,6 +55,17 @@ export const LEGAL = {
           "When you create an account or buy the Appeal Pass, Paddle collects the payment and billing information. We receive a licence record (email, plan, status, and the identifier of the case the Pass covers, a random code that carries no case content) via a Paddle webhook.",
           "Evidence contents are encrypted in your browser. If you choose cloud backup, encrypted contents and unencrypted metadata (including file names, tags, types, case references and content hashes) are uploaded to Supabase Storage. A backup passphrase protects the content key; we do not receive that passphrase.",
           "If you choose to share an outcome, we store the case type, the marketplace, the document type, the number of attempts, how complete the case file was, the result and the number of days it took. The record carries no name, email address, account or case identifier, and none of your text. It is sent only when you choose to share.",
+          // 22 Oct 2026: stated only while the product it describes is switched on.
+          ...(rebateEnabled()
+            ? [
+                "If you choose to report how your case ended for the $25 refund, we store the result, the number of days it took if you gave it, and the payment it refers to, linked to your account so we know whom to refund. It is not published and it holds none of your text. This is separate from the anonymous share above.",
+              ]
+            : []),
+          ...(professionalsEnabled()
+            ? [
+                "If you apply to be a verified professional, we keep the public profile link you give us and the date we verified it. If you buy case credits or the Pro plan, we keep a ledger of the credits you were given and the cases you used them on, linked to your account, so a credit cannot be spent twice.",
+              ]
+            : []),
           "If you hold an Appeal Pass, we keep a record of the browsers you use it on: a hashed browser fingerprint (made from your browser's user-agent string and language settings and your account, not your IP address), the browser's user-agent string and a label, and when it was first and last used. An Appeal Pass works on up to 5 browsers, and you can remove one in Billing.",
           "If you turn on email reminders for a case, we store the reminder date you chose, the case type, and an identifier for that case, so we can email you when the date arrives. Nothing else about the case is sent: not your notice, your evidence, your draft, or any note you have written. Turning reminders off for a case, or deleting the case on the dashboard, deletes that record.",
           "Before sign-in, your case is encrypted with a secret held for that tab session. Closing the session or clearing browser data can make it unrecoverable. Signing in on that tab transfers the case into your account vault after it is unlocked, preserving existing cases. Account vaults unlock automatically by default; with an Appeal Pass you can add passphrase protection from the Vault page.",
@@ -191,6 +210,31 @@ export const LEGAL = {
                 "The Account Pass is one licence for one seller's business. It covers every case on your account for twelve months from the day you buy it, with the same 14-day refund window, and then it ends: a case that has no Appeal Pass of its own then needs one to prepare a further response, and what you already saved stays on your device. It cannot be transferred and is not for preparing other sellers' cases. It is not offered where the Appeal Pass is not.",
               ]
             : []),
+          ...(reviewEnabled()
+            ? [
+                "The AI document review is one purchase for one case. It lets the AI read up to five of that case's documents against what Amazon asked. If you then buy the Appeal Pass for the same case, the review's price comes off it. It is not a separate licence, and it does not extend to other cases.",
+              ]
+            : []),
+          ...(renewalEnabled()
+            ? [
+                "An Account Pass renewal adds twelve months to the end of the cover you already have, so the new twelve months start when the last cover ends. It can be bought while the Account Pass runs and for a limited time after it ends.",
+              ]
+            : []),
+          ...(professionalsEnabled()
+            ? [
+                "A case credit gives one case an Appeal Pass, with every round included. Credits are sold only to professionals we have verified by hand, are for preparing other sellers' cases, and cannot be transferred, resold or refunded once used. A credit from a pack lasts twelve months from the day you buy it.",
+              ]
+            : []),
+          ...(proPlanEnabled()
+            ? [
+                "The Pro plan renews every month until you cancel it in Billing, and adds ten case credits each month. A credit you do not use lasts one more month, then ends. Cancelling stops the next payment and keeps the credits you already have until they end.",
+              ]
+            : []),
+          ...(rebateEnabled()
+            ? [
+                "If you report how your case ended within 120 days of paying, we refund $25 of that payment, whatever the result. It is a partial refund of the payment through Paddle; it does not end your Appeal Pass.",
+              ]
+            : []),
         ],
       },
       {
@@ -327,13 +371,38 @@ export const LEGAL = {
 } as const;
 
 /**
+ * What each plan is called in the checkout consent, which says what is delivered immediately.
+ * Everything else in the sentence, including the Terms and Refund links, is the same for all.
+ */
+const CONSENT_THING: Record<PassPlan, string> = {
+  case: "the Appeal Pass",
+  account: "the Account Pass",
+  review: "the AI document review",
+  renewal: "the Account Pass renewal",
+  pack10: "the pack of 10 case credits",
+  pack30: "the pack of 30 case credits",
+  pro: "the Pro plan",
+};
+
+/** A subscription must say, before the card is taken, that it renews and how to stop it. */
+const CONSENT_RENEWAL =
+  "I understand the Pro plan renews every month at the price shown until I cancel it in Billing. ";
+
+/**
  * The checkout consent for the Pass being bought (22 Oct 2026). The stored and displayed words must
  * name what is delivered immediately, so an Account Pass buyer ticks "the Account Pass", not "the
- * Appeal Pass". Everything else in the sentence, including the Terms and Refund links, is unchanged.
+ * Appeal Pass", and a Pro plan buyer also ticks that it renews monthly. Everything else in the
+ * sentence is unchanged, and the sentence still ends in the Terms and Refund links.
  */
-export function consentLabelFor(plan: "case" | "account"): string {
+export function consentLabelFor(plan: PassPlan): string {
   const label = LEGAL.consent.withdrawalCheckbox.label;
-  return plan === "account"
-    ? label.replace("deliver the Appeal Pass immediately", "deliver the Account Pass immediately")
-    : label;
+  if (plan === "case") return label;
+  const read = `${READ_TERMS.prefix}${READ_TERMS.terms}${READ_TERMS.joiner}${READ_TERMS.refund}${READ_TERMS.suffix}`;
+  const named = label.replace(
+    "deliver the Appeal Pass immediately",
+    `deliver ${CONSENT_THING[plan]} immediately`,
+  );
+  return plan === "pro" && named.endsWith(read)
+    ? `${named.slice(0, named.length - read.length)}${CONSENT_RENEWAL}${read}`
+    : named;
 }

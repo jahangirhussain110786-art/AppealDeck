@@ -1,5 +1,22 @@
 import { supabaseAdmin } from "./supabase/server";
 import { sendPurchaseConfirmationEmail } from "./email";
+import type { PurchaseKind } from "@/content/purchases";
+
+const KINDS: readonly PurchaseKind[] = [
+  "appeal_pass",
+  "account_pass",
+  "document_review",
+  "account_renewal",
+  "pack_10",
+  "pack_30",
+  "pro_plan",
+];
+
+export function purchaseKindOf(value: unknown): PurchaseKind {
+  return typeof value === "string" && (KINDS as readonly string[]).includes(value)
+    ? (value as PurchaseKind)
+    : "appeal_pass";
+}
 
 export async function deliverPurchaseEmails(
   userId?: string,
@@ -13,19 +30,14 @@ export async function deliverPurchaseEmails(
     failed = 0;
   for (const row of data ?? []) {
     try {
-      // What was bought, from the licence the same payment created. A failed lookup falls back to the
-      // Appeal Pass wording, which is what every purchase was before the Account Pass existed.
-      const bought = await supabaseAdmin
-        .from("licenses")
-        .select("plan")
-        .eq("provider_transaction_id", row.transaction_id)
-        .maybeSingle();
       await sendPurchaseConfirmationEmail({
         to: row.email,
         purchasedAt: row.purchased_at,
         consentText: row.consent_text,
         idempotencyKey: `purchase/${row.transaction_id}`,
-        plan: bought.data?.plan === "account_pass" ? "account_pass" : "appeal_pass",
+        // What was bought, as the payment function recorded it on this row (migration 0018). A row from
+        // before that migration has no kind and reads as the Appeal Pass, which is what it was.
+        kind: purchaseKindOf(row.kind),
       });
       const { error: updateError } = await supabaseAdmin
         .from("purchase_email_outbox")

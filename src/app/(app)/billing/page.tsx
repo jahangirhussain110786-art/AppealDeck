@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CreditCard, ArrowRight } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { fetchLicenseForUser } from "@/lib/license";
+import { fetchAccountCover, fetchLicenseForUser } from "@/lib/license";
+import { BillingExtras } from "@/components/BillingExtras";
 import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/workspace/CaseOverview";
@@ -37,6 +38,9 @@ export default async function BillingPage() {
     );
   }
   const active = license.status === "active";
+  // The end of the latest Account Pass or renewal, including one that has just ended: a renewal is
+  // still offered for a while after. A failed lookup only hides the renewal card.
+  const cover = await fetchAccountCover(user.id).catch(() => null);
 
   return (
     <div className="max-w-[67.5rem] space-y-6">
@@ -125,6 +129,12 @@ export default async function BillingPage() {
           </div>
         )}
       </section>
+
+      <BillingExtras
+        accountExpiresAt={cover?.expiresAt ?? null}
+        isAccountPass={cover !== null}
+        email={user.email ?? undefined}
+      />
 
       {active ? <DeviceManager /> : null}
 

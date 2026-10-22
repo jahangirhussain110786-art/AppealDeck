@@ -122,7 +122,7 @@ The research said some things the code contradicts. Each correction is a finding
 - Founding counter: a server component counts active licences (fails closed to no counter); the bonus is the Account Pass at the Case Pass price for the first 25.
 - Tests: webhook for both prices, refund of an Account Pass, expiry, intent per plan, the counter at 24, 25 and 26. Founder steps: a Paddle price, the migration paste, the env var.
 
-**Stage 3: professionals. Released by three writers who ran a real case.** The opening position is in §2. Build: verification, case credits in the entitlement model, an all-clients list already exists. A shared case between team members needs cases kept on our server, which changes the privacy promise: decide that separately.
+**Stage 3: professionals. Released by three writers who ran a real case.** _(Update 22 Oct 2026: the founder asked for it to be built now. It is built and switched off; see `docs/DEPLOYMENT.md` §5e and the decision of that date. Release for sale is still best after the first writer conversations.)_ The opening position is in §2. Build: verification, case credits in the entitlement model, an all-clients list already exists. A shared case between team members needs cases kept on our server, which changes the privacy promise: decide that separately.
 
 **Stage 4: price test. Released by 50 paid cases and 30 outcome reports.** Step $249 to $299 then $349 while revenue per 50 cases started keeps rising; step back once if it falls. Refused-in-full cover only if the refusal rate allows.
 

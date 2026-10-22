@@ -16,7 +16,8 @@ import {
 import { FaqAccordion } from "@/components/pricing/FaqAccordion";
 import { PurchaseSection } from "@/components/pricing/PurchaseSection";
 import { PlanCards } from "@/components/pricing/PlanCards";
-import { accountPassEnabled } from "@/lib/plans";
+import { accountPassEnabled, reviewEnabled } from "@/lib/plans";
+import { ReviewTeaser } from "@/components/pricing/ReviewTeaser";
 import { VersusSection } from "@/components/pricing/VersusSection";
 import { AudienceSwitch } from "@/components/AudienceSwitch";
 import { RoleNudge } from "@/components/RoleNudge";
@@ -93,6 +94,7 @@ export default function PricingPage() {
       <div className="mx-auto w-full max-w-marketing px-4 sm:px-8">
         <section className="relative -mt-28 pb-6">
           <PlanCards />
+          {reviewEnabled() && <ReviewTeaser />}
           <p className="mx-auto mt-6 max-w-prose text-center text-base font-medium text-foreground">
             {PRICING.freeVersusPass}
           </p>
@@ -191,7 +193,7 @@ export default function PricingPage() {
               weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
             />
           </div>
-          <PurchaseSection accountEnabled={accountPassEnabled()} />
+          <PurchaseSection accountEnabled={accountPassEnabled()} reviewEnabled={reviewEnabled()} />
         </section>
 
         <section className="grid gap-8 pb-16 sm:pb-20 lg:grid-cols-[18rem_1fr] lg:gap-16">

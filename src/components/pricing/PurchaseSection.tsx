@@ -1,22 +1,46 @@
 "use client";
 
+import { useState } from "react";
 import { PurchasePanel } from "@/components/pricing/PurchasePanel";
 import { PRICING } from "@/content/marketing";
+import { PRODUCTS } from "@/content/purchases";
 import { setPlanChoice, usePlanChoice } from "@/lib/planChoice";
 import type { PassPlan } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
-/**
- * The right-hand side of the purchase section: which Pass, the order summary, and the pay button.
- * With only the Appeal Pass on sale (the Account Pass not configured) it is exactly the summary and
- * button /pricing has always had; the picker appears only when there is a second Pass to choose.
- */
-/** The order summary for a Pass: its title, its three rows and the total. */
-export function orderFor(plan: PassPlan): {
+/** The order summary for a product: its title, its rows and the total. */
+export function orderFor(
+  plan: PassPlan,
+  options: { credited?: boolean } = {},
+): {
   title: string;
   total: string;
   rows: [string, string, boolean][];
 } {
+  if (plan === "review") {
+    const o = PRODUCTS.review;
+    return {
+      title: o.order.title,
+      total: o.amount,
+      rows: [
+        [o.order.line, o.amount, false],
+        [PRICING.order.tax, PRICING.order.taxValue, true],
+        [PRICING.order.expires, o.order.expires, true],
+      ],
+    };
+  }
+  if (plan === "case" && options.credited) {
+    return {
+      title: PRICING.order.title,
+      total: PRODUCTS.review.creditedPassAmount,
+      rows: [
+        [PRICING.order.line, PRICING.order.amount, false],
+        [PRODUCTS.review.creditLine, `−${PRODUCTS.review.amount}`, true],
+        [PRICING.order.tax, PRICING.order.taxValue, true],
+        [PRICING.order.expires, PRICING.order.expiresValue, true],
+      ],
+    };
+  }
   const order = plan === "account" ? PRICING.account.order : PRICING.order;
   return {
     title: order.title,
@@ -33,13 +57,32 @@ export function orderFor(plan: PassPlan): {
   };
 }
 
-export function PurchaseSection({ accountEnabled }: { accountEnabled: boolean }) {
+/**
+ * The right-hand side of the purchase section: which product, the order summary, and the pay
+ * button. With only the Appeal Pass on sale it is exactly the summary and button /pricing has always
+ * had; the picker appears only when there is a second product to choose.
+ */
+export function PurchaseSection({
+  accountEnabled,
+  reviewEnabled = false,
+}: {
+  accountEnabled: boolean;
+  reviewEnabled?: boolean;
+}) {
   const choice = usePlanChoice();
-  const plan: PassPlan = accountEnabled ? choice : "case";
-  const { title, total, rows } = orderFor(plan);
+  // The panel learns from the licence lookup whether this case already has a document review, which
+  // takes the review's price off the Appeal Pass.
+  const [hasReview, setHasReview] = useState(false);
+  const available: PassPlan[] = [
+    "case",
+    ...(accountEnabled ? (["account"] as const) : []),
+    ...(reviewEnabled ? (["review"] as const) : []),
+  ];
+  const plan: PassPlan = available.includes(choice) ? choice : "case";
+  const { title, total, rows } = orderFor(plan, { credited: reviewEnabled && hasReview });
   return (
     <div className="space-y-4">
-      {accountEnabled && <PlanPicker plan={plan} />}
+      {available.length > 1 && <PlanPicker plan={plan} available={available} />}
       <div className="rounded-[20px] bg-card p-6 shadow-lift ring-1 ring-inset ring-border">
         <p className="pb-3 text-lg font-semibold tracking-[-0.02em]">{title}</p>
         <dl className="divide-y divide-border border-t border-border text-[0.9375rem]">
@@ -63,8 +106,11 @@ export function PurchaseSection({ accountEnabled }: { accountEnabled: boolean })
         {plan === "account" && (
           <p className="mt-3 text-xs text-muted-foreground">{PRICING.account.fairUse}</p>
         )}
+        {plan === "review" && (
+          <p className="mt-3 text-xs text-muted-foreground">{PRODUCTS.review.reading}</p>
+        )}
       </div>
-      <PurchasePanel plan={plan} />
+      <PurchasePanel plan={plan} onReviewState={setHasReview} />
       <p className="text-center text-[0.84375rem] text-muted-foreground">
         {PRICING.order.paidThrough}
       </p>
@@ -72,12 +118,18 @@ export function PurchaseSection({ accountEnabled }: { accountEnabled: boolean })
   );
 }
 
-function PlanPicker({ plan }: { plan: PassPlan }) {
+function PlanPicker({ plan, available }: { plan: PassPlan; available: PassPlan[] }) {
   const c = PRICING.account.choice;
-  const options: { value: PassPlan; label: string; detail: string; price: string }[] = [
-    { value: "case", ...c.case },
-    { value: "account", ...c.account },
-  ];
+  const all: Record<string, { label: string; detail: string; price: string }> = {
+    case: c.case,
+    account: c.account,
+    review: {
+      label: PRODUCTS.review.name,
+      detail: PRODUCTS.review.note,
+      price: PRODUCTS.review.price,
+    },
+  };
+  const options = available.map((value) => ({ value, ...all[value]! }));
   return (
     <fieldset className="space-y-2">
       <legend className="text-sm font-medium text-foreground">{c.legend}</legend>

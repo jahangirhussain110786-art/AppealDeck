@@ -100,6 +100,11 @@ export default function PartnersPage() {
               {PARTNERS.earn.accountPass}
             </p>
           )}
+          {PARTNERS.earn.scope && (
+            <p className="max-w-prose text-base leading-relaxed text-foreground/90">
+              {PARTNERS.earn.scope}
+            </p>
+          )}
           <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
             {PARTNERS.earn.refunded}
           </p>

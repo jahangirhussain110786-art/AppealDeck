@@ -8,7 +8,13 @@
 //   (scripts/lint-copy.mjs): "30 percent" is written out because the gate rejects the percent sign.
 
 import { SUPPORT_EMAIL } from "./support";
-import { accountPassEnabled } from "@/lib/plans";
+import {
+  accountPassEnabled,
+  professionalsEnabled,
+  renewalEnabled,
+  reviewEnabled,
+} from "@/lib/plans";
+import { PRODUCTS } from "./purchases";
 
 export const AUDIENCE_SWITCH = {
   label: "Who is this for?",
@@ -91,9 +97,15 @@ export const PROS = {
   cost: {
     title: "What it costs today",
     body: "Everything above except the written response is free. The written response is the Appeal Pass: $249 once for one case, every round included. Each client case is its own case, so each has its own Pass.",
-    open: "Professional pricing is not set yet.",
-    openBody:
-      "We would rather ask than guess. If you handle cases every week, write to us with how you work and what a case should cost you. The first writers help set the price and see it first.",
+    // Said only while there is no professional price on sale; once there is, the prices are on the page.
+    open: professionalsEnabled() ? null : "Professional pricing is not set yet.",
+    openBody: professionalsEnabled()
+      ? null
+      : "We would rather ask than guess. If you handle cases every week, write to us with how you work and what a case should cost you. The first writers help set the price and see it first.",
+    // Said only once professional prices are on sale: what they are, in one sentence.
+    pro: professionalsEnabled()
+      ? `Verified professionals pay less per case: credits come in packs of 10 for ${PRODUCTS.pack10.price} and of 30 for ${PRODUCTS.pack30.price}, or as the Pro plan, ${PRODUCTS.pro.credits} credits a month for ${PRODUCTS.pro.price}. Each credit activates one case with an Appeal Pass.`
+      : null,
   },
   partner: {
     title: "Prefer to keep your own service?",
@@ -155,6 +167,13 @@ export const PARTNERS = {
     accountPass: accountPassEnabled()
       ? "The same 30 percent applies to the Account Pass. A seller using a code on its $329 price pays $304, so that sale earns $91.20."
       : null,
+    // 22 Oct 2026: said only once something other than the two Passes is on sale, because only
+    // then is there anything the code does not cover. The partner discount is made in Paddle for the
+    // two Pass prices alone.
+    scope:
+      reviewEnabled() || renewalEnabled() || professionalsEnabled()
+        ? "A partner's code applies to the Appeal Pass and the Account Pass only. It does not apply to the AI document review, to renewals, to case credits or the Pro plan, or to an Appeal Pass bought after a review, which already has the review's price taken off."
+        : null,
     noDashboard:
       "There is no dashboard yet. Each month we send you a message with your sales and your balance.",
   },

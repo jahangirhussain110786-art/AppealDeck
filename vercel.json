@@ -4,7 +4,9 @@
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "framework": "nextjs",
-  "regions": ["iad1"],
+  "regions": [
+    "iad1"
+  ],
   "headers": [
     {
       "source": "/reader/(.*)",
@@ -66,6 +68,9 @@
     },
     "src/app/api/jobs/ops-digest/route.ts": {
       "maxDuration": 30
+    },
+    "src/app/api/jobs/account-pass-expiry/route.ts": {
+      "maxDuration": 60
     }
   },
   "crons": [
@@ -80,6 +85,10 @@
     {
       "path": "/api/jobs/ops-digest",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/jobs/account-pass-expiry",
+      "schedule": "0 9 * * *"
     }
   ]
 }
