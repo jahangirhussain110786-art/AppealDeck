@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Pricing, the Hormozi way</title>
+<style>
+:root{--bg:#f6f5f0;--card:#ffffff;--ink:#14213a;--muted:#566074;--line:#e3e1d8;--navy:#14213a;--navy-ink:#f4f6fb;--orange:#c2410c;--orange-soft:#fdece3;--green:#166534;--green-soft:#e7f5ec;--amber:#8a5a00;--amber-soft:#fdf3d8;--red:#9f1d1d;--red-soft:#fbe9e9;--blue:#1d4ed8;--blue-soft:#e8effd}
+@media (prefers-color-scheme: dark){:root{--bg:#0d1424;--card:#151f35;--ink:#eef1f8;--muted:#a6b0c5;--line:#26324d;--navy:#0a1020;--navy-ink:#f4f6fb;--orange:#fb923c;--orange-soft:#3a2214;--green:#6ee7a0;--green-soft:#12301f;--amber:#f5c451;--amber-soft:#33290f;--red:#fca5a5;--red-soft:#3a1717;--blue:#93b4ff;--blue-soft:#17233f}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.65;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}a{color:var(--blue)}
+code{font:.9em ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--blue-soft);padding:.1em .35em;border-radius:5px;word-break:break-word}
+.hero{background:var(--navy);color:var(--navy-ink);padding:34px 0 30px}
+.hero .tag{display:inline-block;font-size:13px;font-weight:700;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:999px;margin-bottom:16px}
+.hero h1{font-size:30px;line-height:1.2;margin:0 0 14px;font-weight:800}.hero h1 em{font-style:normal;color:#fdba74}
+.hero p{margin:0;font-size:18px;color:#dbe3f2}.hero .meta{margin-top:18px;font-size:14px;color:#aebad2}
+nav.chips{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.chips .scroll{display:flex;gap:8px;overflow-x:auto;padding:10px 18px;max-width:720px;margin:0 auto;scrollbar-width:none}
+nav.chips .scroll::-webkit-scrollbar{display:none}
+nav.chips a{flex:none;text-decoration:none;font-size:14px;font-weight:600;color:var(--ink);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:999px;white-space:nowrap}
+section{padding:34px 0 6px;scroll-margin-top:64px}h2{font-size:25px;line-height:1.25;margin:0 0 6px;font-weight:800}h3{font-size:19px;line-height:1.3;margin:26px 0 6px;font-weight:700}
+p{margin:0 0 14px}.lead{font-size:18px;color:var(--muted);margin-bottom:18px}.small{font-size:15px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+.callout{border-radius:16px;padding:16px 18px;margin:16px 0;border:1px solid transparent}.callout b.t{display:block;margin-bottom:4px}
+.callout.warn{background:var(--amber-soft);border-color:var(--amber)}.callout.info{background:var(--blue-soft);border-color:var(--blue)}.callout.good{background:var(--green-soft);border-color:var(--green)}.callout.bad{background:var(--red-soft);border-color:var(--red)}
+ul.items{list-style:none;margin:10px 0 0;padding:0}
+ul.items li{background:var(--card);border:1px solid var(--line);border-left-width:5px;border-radius:14px;padding:13px 15px;margin:0 0 10px}
+ul.items li b{display:block;font-size:17px;margin-bottom:2px}ul.items li span{display:block;font-size:15.5px;color:var(--muted);line-height:1.55}
+ul.items.green li{border-left-color:var(--green)}ul.items.amber li{border-left-color:var(--amber)}ul.items.red li{border-left-color:var(--red)}ul.items.blue li{border-left-color:var(--blue)}
+ol.steps{padding-left:0;list-style:none;counter-reset:s;margin:12px 0}ol.steps li{counter-increment:s;position:relative;padding:4px 0 14px 46px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:32px;height:32px;border-radius:50%;background:var(--navy);color:var(--navy-ink);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+.price{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding:10px 0}.price:last-child{border-bottom:0}
+.price b{font-size:17px}.price .amt{font-weight:800;font-size:20px;white-space:nowrap}.price span.d{display:block;font-size:15px;color:var(--muted)}
+footer{padding:34px 0 50px;color:var(--muted);font-size:15px}
+@media (min-width:640px){body{font-size:18px}.hero h1{font-size:40px}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <span class="tag">Research for you, the founder. Nothing is built.</span>
+  <h1>Pricing, the <em>Hormozi</em> way</h1>
+  <p>You asked for pricing worked out from $100M Money Models, $100M Offers and $100M Leads, not from our old rules. Three research agents read the books' chapters, about 30 competitor price lists, and Paddle's and the law's limits. The full file with every number and source is <code>2026-10-22-pricing-strategy-research.md</code>.</p>
+  <div class="meta">Written 22 October 2026 · waiting for your choices in "Only you"</div>
+</div></header>
+<nav class="chips" aria-label="Jump to a part"><div class="scroll">
+  <a href="#answer">The answer</a><a href="#now">What is wrong today</a><a href="#seller">For sellers</a><a href="#pros">For writers and VAs</a><a href="#no">Do not do</a><a href="#order">The order</a><a href="#you">Only you</a>
+</div></nav>
+<main class="wrap">
+
+<section id="answer">
+  <h2>The short answer</h2>
+  <p class="lead">Do not make suspended sellers pay monthly. Sell the same seller in more ways, and get the monthly money from appeal writers and VA agencies.</p>
+  <ul class="items green">
+    <li><b>One offer is not a money model</b><span>Hormozi's model is a chain: something that pulls people in, something bigger, something smaller for those who say no, and something that repeats. Today we have only the $249 Pass.</span></li>
+    <li><b>A one-time need is not a subscription</b><span>Hormozi says it in plain words: someone with a one-time need should not pay forever. A suspended seller buys once, in panic.</span></li>
+    <li><b>The repeat money is professionals</b><span>Writers and VAs handle cases every week. That is where a monthly plan makes sense. No tool for them was found.</span></li>
+    <li><b>Partners, not ads, bring buyers</b><span>A writer who sends a seller gets 30% of the Pass. Each such sale still pays for itself more than twice over in its first month. Ads stay closed at any price software can charge.</span></li>
+  </ul>
+</section>
+
+<section id="now">
+  <h2>What is wrong with the offer today</h2>
+  <p class="lead">Hormozi's value formula: the result the buyer wants, times how sure they are of getting it, divided by how long it takes and how much work it is.</p>
+  <ul class="items amber">
+    <li><b>"How sure they are" is weak</b><span>No reviews, an unknown one-person company, no outcome numbers. Agencies show hundreds of reviews.</span></li>
+    <li><b>"How much work" is high</b><span>The seller gathers, checks, writes and sends. An agency does it for them.</span></li>
+    <li><b>The free part gives away too much</b><span>Free should show the problem and point to the next one. Today it also checks invoices, which is part of the cure. Keep one free document check as a sample; the rest goes in the Pass.</span></li>
+    <li><b>Nothing for the seller who says no, and nothing after</b><span>No cheaper option, no bigger option, no reason to come back.</span></li>
+  </ul>
+</section>
+
+<section id="seller">
+  <h2>The plan for sellers</h2>
+  <h3>1. Pull them in</h3>
+  <ul class="items blue">
+    <li><b>Free decoder stays free</b><span>Plus one free document check, then: "Now each record has to show the right things."</span></li>
+    <li><b>Founding price: $149 for the first 25 paid cases, then $249</b><span>A real, public counter. The buyer agrees to report the outcome. Never tied to a good review (the US bans that).</span></li>
+    <li><b>$25 back for an outcome report</b><span>Within 120 days. It pays for the outcome numbers we have never had.</span></li>
+  </ul>
+  <h3>2. Two passes side by side</h3>
+  <div class="card">
+    <div class="price"><div><b>Case Pass</b><span class="d">This case, every round, until Amazon decides</span></div><div class="amt">$249</div></div>
+    <div class="price"><div><b>Account Pass</b><span class="d">This case plus every new Amazon notice on the same account for 12 months</span></div><div class="amt">$329</div></div>
+  </div>
+  <p>Only $80 more for a year of cover, so most people should pick it. An agency charges about $1,000 for one listing reinstatement. Above the prices, a true dated line: "Writers $50–$600. Agencies $795–$2,500 per case."</p>
+  <p>Give the existing extras names (the evidence pack, the deadline clock, the reply reader, the invoice-against-sales check) and call the 14-day refund a money-back guarantee. The law allows that word because it is a full refund on request. It must never sit next to a promise about reinstatement.</p>
+  <h3>3. For the seller who says no</h3>
+  <ul class="items blue">
+    <li><b>Pay in parts</b><span>Turn on card and PayPal "pay later" where Paddle offers it. Paddle pays us in full; no risk.</span></li>
+    <li><b>Document Check, $59</b><span>Up to five documents checked, no response writing. The full $59 counts toward a Pass within 30 days.</span></li>
+  </ul>
+  <h3>4. After the case</h3>
+  <ul class="items blue">
+    <li><b>Renew the Account Pass for $99 a year</b><span>A seller suspended once is the likeliest to get the next notice.</span></li>
+  </ul>
+</section>
+
+<section id="pros">
+  <h2>The plan for writers and VA agencies</h2>
+  <div class="card">
+    <div class="price"><div><b>Agency</b><span class="d">Unlimited cases, 5 seats, client name on exports</span></div><div class="amt">$399/mo</div></div>
+    <div class="price"><div><b>Studio</b><span class="d">25 active cases</span></div><div class="amt">$149/mo</div></div>
+    <div class="price"><div><b>Solo</b><span class="d">5 active cases (about $10 a case)</span></div><div class="amt">$49/mo</div></div>
+  </div>
+  <p>First month $1. Yearly = ten months' price. We sell only the software; the writer bills the client himself, which keeps us inside Paddle's rules (Paddle bans selling human services like consulting or legal help).</p>
+  <p>Writers who do not want a plan can still send clients: <b>30% of each Pass to the writer, $25 off for the seller</b>, paid by Payoneer at first.</p>
+</section>
+
+<section id="no">
+  <h2>Do not do</h2>
+  <ul class="items red">
+    <li><b>A monthly plan for suspended sellers</b><span>Wrong by Hormozi, and it puts us beside the free AI tools on price.</span></li>
+    <li><b>"Pay 80% after reinstatement"</b><span>Paddle cannot collect it later, we cannot check the result, and the buyer can simply not pay.</span></li>
+    <li><b>Money back if Amazon refuses, for now</b><span>Legal if every condition sits beside it, but card refunds stop after 120 days and we do not know how often Amazon refuses. Revisit after 30 outcome reports, as a $49 add-on.</span></li>
+    <li><b>Fake countdowns or "only 3 left"</b><span>Banned in the US, EU and UK unless true. The founding counter must be real.</span></li>
+    <li><b>Agency prices for software</b><span>Not believable without a human, and we cannot sell the human through Paddle.</span></li>
+  </ul>
+</section>
+
+<section id="order">
+  <h2>The order: one step at a time</h2>
+  <p class="lead">Hormozi: get one offer working before adding the next, and judge each over months, not weeks.</p>
+  <ol class="steps">
+    <li><b>Now:</b> founding price, named extras and guarantee, the market price line, the $25 outcome rebate, one free document check, the 30% partner code.</li>
+    <li><b>After 25 paid cases:</b> price to $249, the Account Pass at $329, pay later, the linked-account add-on ($99).</li>
+    <li><b>When 3 writers ask to pay:</b> the Solo, Studio and Agency plans.</li>
+    <li><b>After 50 paid cases and 30 outcome reports:</b> the $59 Document Check; raise to $299, then $349, while money per 50 started cases keeps rising.</li>
+    <li><b>Month 11 of the first Account Passes:</b> the $99 yearly renewal.</li>
+  </ol>
+  <div class="callout info"><b class="t">Rough effect (an estimate, not a forecast)</b>If 6 in 10 buyers pick the Account Pass, average money per buyer goes from about $236 to about $281 after Paddle's fee, up 19%, before any renewals or writer plans.</div>
+</section>
+
+<section id="you">
+  <h2>Only you can decide</h2>
+  <p class="lead">My default is in brackets. Some of these change old rules (the one $249 price, no "guarantee" word, no subscription for now); you said not to let those decide, so I will record each override when it is built.</p>
+  <ol class="steps">
+    <li>Adopt the seller plan, in the order above? (yes)</li>
+    <li>Founding price $149 for the first 25 paid cases? (yes)</li>
+    <li>Only one free document check? (yes)</li>
+    <li>Account Pass at $329 next to the $249 Case Pass? (yes, at step 2)</li>
+    <li>$25 back for an outcome report? (yes)</li>
+    <li>Call the 14-day refund a money-back guarantee? (yes, never beside a reinstatement claim)</li>
+    <li>30% to partner writers, $25 off for their sellers? (yes)</li>
+    <li>Writer plans $49 / $149 / $399 with a $1 first month? (yes, at step 3)</li>
+    <li>Money back if Amazon refuses? (not yet)</li>
+    <li>Monthly plan for sellers, or pay after reinstatement? (no to both)</li>
+  </ol>
+</section>
+
+</main>
+<footer><div class="wrap">AppealDeck pricing research · 22 October 2026 · nothing changed in the product</div></footer>
+</body>
+</html>
