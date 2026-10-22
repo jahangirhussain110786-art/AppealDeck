@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Growth and pricing blueprint</title>
+<style>
+:root{--bg:#f6f5f0;--card:#ffffff;--ink:#14213a;--muted:#566074;--line:#e3e1d8;--navy:#14213a;--navy-ink:#f4f6fb;--orange:#c2410c;--green:#166534;--green-soft:#e7f5ec;--amber:#8a5a00;--amber-soft:#fdf3d8;--red:#9f1d1d;--red-soft:#fbe9e9;--blue:#1d4ed8;--blue-soft:#e8effd}
+@media (prefers-color-scheme: dark){:root{--bg:#0d1424;--card:#151f35;--ink:#eef1f8;--muted:#a6b0c5;--line:#26324d;--navy:#0a1020;--navy-ink:#f4f6fb;--orange:#fb923c;--green:#6ee7a0;--green-soft:#12301f;--amber:#f5c451;--amber-soft:#33290f;--red:#fca5a5;--red-soft:#3a1717;--blue:#93b4ff;--blue-soft:#17233f}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.65;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}a{color:var(--blue)}
+code{font:.9em ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--blue-soft);padding:.1em .35em;border-radius:5px;word-break:break-word}
+.hero{background:var(--navy);color:var(--navy-ink);padding:34px 0 30px}
+.hero .tag{display:inline-block;font-size:13px;font-weight:700;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:999px;margin-bottom:16px}
+.hero h1{font-size:30px;line-height:1.2;margin:0 0 14px;font-weight:800}.hero h1 em{font-style:normal;color:#fdba74}
+.hero p{margin:0;font-size:18px;color:#dbe3f2}.hero .meta{margin-top:18px;font-size:14px;color:#aebad2}
+nav.chips{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.chips .scroll{display:flex;gap:8px;overflow-x:auto;padding:10px 18px;max-width:720px;margin:0 auto;scrollbar-width:none}
+nav.chips .scroll::-webkit-scrollbar{display:none}
+nav.chips a{flex:none;text-decoration:none;font-size:14px;font-weight:600;color:var(--ink);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:999px;white-space:nowrap}
+section{padding:34px 0 6px;scroll-margin-top:64px}h2{font-size:25px;line-height:1.25;margin:0 0 6px;font-weight:800}
+p{margin:0 0 14px}.lead{font-size:18px;color:var(--muted);margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+.callout{border-radius:16px;padding:16px 18px;margin:16px 0;border:1px solid transparent}.callout b.t{display:block;margin-bottom:4px}
+.callout.info{background:var(--blue-soft);border-color:var(--blue)}
+ul.items{list-style:none;margin:10px 0 0;padding:0}
+ul.items li{background:var(--card);border:1px solid var(--line);border-left-width:5px;border-radius:14px;padding:13px 15px;margin:0 0 10px}
+ul.items li b{display:block;font-size:17px;margin-bottom:2px}ul.items li span{display:block;font-size:15.5px;color:var(--muted);line-height:1.55}
+ul.items.green li{border-left-color:var(--green)}ul.items.amber li{border-left-color:var(--amber)}ul.items.red li{border-left-color:var(--red)}ul.items.blue li{border-left-color:var(--blue)}
+ol.steps{padding-left:0;list-style:none;counter-reset:s;margin:12px 0}ol.steps li{counter-increment:s;position:relative;padding:4px 0 14px 46px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:32px;height:32px;border-radius:50%;background:var(--navy);color:var(--navy-ink);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+.price{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding:10px 0}.price:last-child{border-bottom:0}
+.price b{font-size:17px}.price .amt{font-weight:800;font-size:19px;white-space:nowrap}.price span.d{display:block;font-size:15px;color:var(--muted)}
+footer{padding:34px 0 50px;color:var(--muted);font-size:15px}
+@media (min-width:640px){body{font-size:18px}.hero h1{font-size:40px}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <span class="tag">Research and design for you, the founder. Nothing is built.</span>
+  <h1>Growth and pricing <em>blueprint</em></h1>
+  <p>Hormozi's money model plus the other best books on pricing, marketing and keeping customers, turned into one system: who signs up, what each person buys, why they come back, and how they bring others. The full file is <code>2026-10-22-growth-and-pricing-blueprint.md</code>.</p>
+  <div class="meta">Written 22 October 2026 · replaces parts of this morning's plan</div>
+</div></header>
+<nav class="chips" aria-label="Jump to a part"><div class="scroll">
+  <a href="#idea">The idea</a><a href="#changed">What changed</a><a href="#roles">Roles</a><a href="#sellers">Sellers</a><a href="#pros">Professionals</a><a href="#partners">Partners</a><a href="#back">Coming back</a><a href="#find">Finding buyers</a><a href="#you">Only you</a>
+</div></nav>
+<main class="wrap">
+
+<section id="idea">
+  <h2>The idea</h2>
+  <p class="lead">Three kinds of people, one rule: every case costs about the same, whoever pays.</p>
+  <ul class="items green">
+    <li><b>Sellers</b><span>Buy once, per case. Come back when Amazon replies or a new notice arrives.</span></li>
+    <li><b>Professionals</b><span>Appeal writers, consultants, VA teams. Use it on every client case.</span></li>
+    <li><b>Partners</b><span>Trainers, communities, YouTubers, accountants. Send sellers and earn 30%.</span></li>
+  </ul>
+  <p>The one rule stops a seller pretending to be a "writer" to get a cheap case.</p>
+</section>
+
+<section id="changed">
+  <h2>What changed from this morning</h2>
+  <ul class="items amber">
+    <li><b>No founding discount; a founding bonus instead</b><span>The first 25 buyers get the bigger Account Pass for $249. Hormozi says never cut the main price, add bonuses. Pricing expert Hermann Simon: a scared buyer reads a low price as a weak product.</span></li>
+    <li><b>No cheap monthly writer plans</b><span>A $49 plan would be a $49 case for any seller. Professionals pay per case instead, like they earn.</span></li>
+    <li><b>Fewer, clearer extras</b><span>A panicking buyer needs a few strong reasons, not a long list (Ramanujam).</span></li>
+  </ul>
+</section>
+
+<section id="roles">
+  <h2>Roles at sign-up</h2>
+  <p class="lead">One optional question: "What brings you here?"</p>
+  <ul class="items blue">
+    <li><b>"My Amazon account has a problem"</b><span>Seller prices and the case.</span></li>
+    <li><b>"I write appeals for clients" / "I run a VA team"</b><span>Professional prices and the all-cases list.</span></li>
+    <li><b>"I send sellers to good tools"</b><span>Partner sign-up.</span></li>
+    <li><b>"Just looking"</b><span>Everything.</span></li>
+  </ul>
+  <p>The role only changes what is shown first. "See all plans" is always there, and the role can be changed in settings.</p>
+</section>
+
+<section id="sellers">
+  <h2>For sellers</h2>
+  <div class="card">
+    <div class="price"><div><b>Free</b><span class="d">Decoder, scam check, records list, Amazon's reply read, one document check</span></div><div class="amt">$0</div></div>
+    <div class="price"><div><b>Case Pass</b><span class="d">This case, every round, until Amazon decides</span></div><div class="amt">$249</div></div>
+    <div class="price"><div><b>Account Pass</b><span class="d">The case plus every new Amazon notice for 12 months</span></div><div class="amt">$329</div></div>
+    <div class="price"><div><b>Document Check</b><span class="d">For those who say no; counts toward a Pass within 30 days</span></div><div class="amt">$59</div></div>
+    <div class="price"><div><b>Renewal</b><span class="d">Another year of cover</span></div><div class="amt">$99/yr</div></div>
+  </div>
+  <p>Also: pay in parts (card or PayPal), $99 per linked account, $25 back for reporting the outcome, $25 off for a friend and $25 back for you. The 14-day refund is called a money-back guarantee. No promise about Amazon's decision.</p>
+</section>
+
+<section id="pros">
+  <h2>For professionals</h2>
+  <div class="card">
+    <div class="price"><div><b>Pro workspace</b><span class="d">All cases with client names, client-ready export (verified pros)</span></div><div class="amt">$0</div></div>
+    <div class="price"><div><b>Client pays</b><span class="d">The client pays $249 by your link; you earn 30% (about $75)</span></div><div class="amt">+$75</div></div>
+    <div class="price"><div><b>Case pack of 5</b><span class="d">You bill your client; $174 a case</span></div><div class="amt">$870</div></div>
+    <div class="price"><div><b>Case pack of 20</b><span class="d">$150 a case</span></div><div class="amt">$2,990</div></div>
+    <div class="price"><div><b>Pro plan</b><span class="d">3 cases a month, 5 logins, your logo on exports</span></div><div class="amt">$299/mo</div></div>
+  </div>
+  <p>First, ask 10 writers and VAs what they would pay per case, and count only a real case run through the tool. These prices are a starting point.</p>
+  <div class="callout info"><b class="t">One limit in the code</b>Cases are stored on one device. Team members can each work their own cases, but sharing one case needs cases kept on our server, which changes the privacy promise. Not in the first version.</div>
+</section>
+
+<section id="partners">
+  <h2>Partners (mediators)</h2>
+  <ul class="items green">
+    <li><b>30% of each Pass, 20% of the Pro plan for 12 months</b><span>Their seller gets $25 off. A 60-day window to buy.</span></li>
+    <li><b>At 5 sales</b><span>Their own landing page, a listing in the partner directory, a free Pro workspace.</span></li>
+    <li><b>At 20 sales</b><span>Perks, not a higher rate: early features and a monthly call with you. A higher rate would cost more than half of what we keep.</span></li>
+    <li><b>Run on Tolt</b><span>It works with Paddle and can pay through Payoneer. Not Rewardful (old Paddle only).</span></li>
+    <li><b>Rules</b><span>They must say "I get a commission". No promises of reinstatement, no win rates. We check their posts every three months.</span></li>
+  </ul>
+</section>
+
+<section id="back">
+  <h2>Why people come back</h2>
+  <ul class="items blue">
+    <li><b>Sellers</b><span>Amazon's next reply, the next notice (covered by the Account Pass), the yearly renewal.</span></li>
+    <li><b>Professionals</b><span>Every new client case; case credits each month; all past cases in one place. The best users get answered first, in Urdu if they like.</span></li>
+    <li><b>Partners</b><span>A monthly payout and a page with their name.</span></li>
+  </ul>
+  <p>What we promise and count: "a complete response, every requested record answered or honestly declared". Amazon's decision is not ours to promise.</p>
+</section>
+
+<section id="find">
+  <h2>Finding buyers, first 90 days</h2>
+  <ol class="steps">
+    <li><b>Professionals:</b> 20 personal messages a day in English or Urdu, plus 10 calls asking about their last case.</li>
+    <li><b>Free tools:</b> the decoder and scam check, linked in helpful answers.</li>
+    <li><b>Notice clinic:</b> answer 5 "my account was suspended" posts a day in existing groups.</li>
+  </ol>
+  <p>After 30 days, keep the one that worked. No ads: a buyer from ads costs $490 to $1,970 against about $236 we receive.</p>
+</section>
+
+<section id="you">
+  <h2>Only you can decide</h2>
+  <p class="lead">My default is in brackets.</p>
+  <ol class="steps">
+    <li>Use this blueprint where it changes this morning's plan? (yes)</li>
+    <li>A founding bonus instead of a founding discount? (yes)</li>
+    <li>The role question at sign-up, with "See all plans"? (yes)</li>
+    <li>Professionals pay per case: 30% when the client pays, packs at $174 and $150, Pro at $299 a month? (yes, after 10 interviews)</li>
+    <li>Partners: 30% per Pass, 20% of Pro for 12 months, perks at 20 sales? (yes)</li>
+    <li>Tolt with Payoneer payouts? (yes)</li>
+    <li>No shared cases between team members at first? (yes)</li>
+    <li>Only one free document check? (yes)</li>
+    <li>Account Pass at $329 and the $99 renewal? (yes)</li>
+    <li>Ten interviews with professionals before building anything for them? (yes)</li>
+  </ol>
+</section>
+
+</main>
+<footer><div class="wrap">AppealDeck growth and pricing blueprint · 22 October 2026 · nothing changed in the product</div></footer>
+</body>
+</html>
