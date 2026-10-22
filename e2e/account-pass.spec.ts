@@ -33,7 +33,8 @@ test("the picker starts on the Appeal Pass and the card button moves it to the A
   page,
 }) => {
   await page.goto("/pricing");
-  const picker = page.getByRole("group", { name: "Which Pass?" });
+  // The list is called "What to buy" once the AI document review (not a Pass) is in it too.
+  const picker = page.getByRole("group", { name: /^(Which Pass\?|What to buy)$/ });
   await expect(picker.getByRole("radio", { name: /Appeal Pass/ })).toBeChecked();
   await expect(picker.getByRole("radio", { name: /Account Pass/ })).not.toBeChecked();
   const summary = page.locator("dl").filter({ hasText: "Total, once" });

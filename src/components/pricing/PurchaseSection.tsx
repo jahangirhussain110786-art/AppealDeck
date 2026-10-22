@@ -132,7 +132,9 @@ function PlanPicker({ plan, available }: { plan: PassPlan; available: PassPlan[]
   const options = available.map((value) => ({ value, ...all[value]! }));
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-medium text-foreground">{c.legend}</legend>
+      <legend className="text-sm font-medium text-foreground">
+        {available.includes("review") ? c.legendWithReview : c.legend}
+      </legend>
       <div className="grid gap-2">
         {options.map((o) => (
           <label

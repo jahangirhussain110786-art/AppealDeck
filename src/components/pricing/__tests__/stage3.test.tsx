@@ -63,6 +63,14 @@ describe("the purchase section", () => {
     for (const value of ["case", "account", "review"]) expect(html).toContain(`value="${value}"`);
   });
 
+  it("does not call the list 'Which Pass?' once it holds the review, which is not a Pass", () => {
+    const withReview = renderToStaticMarkup(<PurchaseSection accountEnabled reviewEnabled />);
+    expect(withReview).toContain("What to buy");
+    expect(withReview).not.toContain("Which Pass?");
+    const passesOnly = renderToStaticMarkup(<PurchaseSection accountEnabled />);
+    expect(passesOnly).toContain("Which Pass?");
+  });
+
   it("shows no review when it is not on sale", () => {
     const html = renderToStaticMarkup(<PurchaseSection accountEnabled={false} />);
     expect(html).not.toContain("AI document review");

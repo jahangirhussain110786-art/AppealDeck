@@ -525,6 +525,8 @@ export const PRICING = {
       "One Account Pass covers the cases of one seller's business. It is not for running other sellers' cases.",
     choice: {
       legend: "Which Pass?",
+      // 22 Oct 2026: once the AI document review is on sale it is in the same list, and it is not a Pass.
+      legendWithReview: "What to buy",
       case: { label: "Appeal Pass", detail: "This case, every round", price: "$249" },
       account: {
         label: "Account Pass",

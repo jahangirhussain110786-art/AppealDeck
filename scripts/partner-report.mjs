@@ -27,11 +27,23 @@ import { createClient } from "@supabase/supabase-js";
 
 export const WINDOW_DAYS = 14;
 /** 30 percent of what the buyer pays: ($249 - $25) and ($329 - $25), in cents. */
+/** @type {Record<string, number>} */
 export const COMMISSION_CENTS = { appeal_pass: 6720, account_pass: 9120 };
 
 const DAY = 86_400_000;
 
 /** The commissions due, per partner discount and per month. Pure, so it is tested without a database. */
+/**
+ * @typedef {{ plan: string, status: string, provider_discount_id: string | null, activated_at: string | null }} LicenceRow
+ * @typedef {{ month: string, sales: number, cents: number }} CommissionMonth
+ * @typedef {{ discountId: string, waiting: number, months: CommissionMonth[] }} PartnerCommission
+ */
+
+/**
+ * @param {LicenceRow[]} licences
+ * @param {{ now?: Date, exclude?: string[] }} [options]
+ * @returns {PartnerCommission[]}
+ */
 export function commissionReport(licences, { now = new Date(), exclude = [] } = {}) {
   const skip = new Set(exclude);
   const partners = new Map();
@@ -68,6 +80,10 @@ export function commissionReport(licences, { now = new Date(), exclude = [] } = 
 
 export const dollars = (cents) => `$${(cents / 100).toFixed(2)}`;
 
+/**
+ * @param {PartnerCommission[]} report
+ * @param {string} [onlyMonth]
+ */
 export function formatCommissionReport(report, onlyMonth) {
   if (report.length === 0) return "No partner sales yet.\n";
   const lines = [];

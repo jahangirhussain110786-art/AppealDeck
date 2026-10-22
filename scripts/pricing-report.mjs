@@ -24,7 +24,18 @@ export const ENOUGH_SALES = 20;
 const rate = (part, whole) => (whole === 0 ? "none yet" : `${part} of ${whole}`);
 
 /** Pure summary of the rows, so it is tested without a database. */
+/**
+ * @typedef {{ plan: string, status: string, case_id: string | null, user_id: string | null }} PricingLicence
+ * @typedef {{ result: string, rebate_status: string }} PricingReport
+ * @typedef {{ granted: number, used: number }} PricingCredit
+ * @typedef {{ status: string }} PricingProAccount
+ */
+
+/**
+ * @param {{ licences: PricingLicence[], reports: PricingReport[], credits: PricingCredit[], proAccounts: PricingProAccount[] }} rows
+ */
 export function pricingReport({ licences, reports, credits, proAccounts }) {
+  /** @type {Record<string, { sold: number, active: number }>} */
   const byPlan = {};
   for (const row of licences) {
     const entry = (byPlan[row.plan] ??= { sold: 0, active: 0 });
@@ -41,6 +52,7 @@ export function pricingReport({ licences, reports, credits, proAccounts }) {
   );
   const reviewsThenPass = reviews.filter((l) => passCases.has(`${l.user_id}:${l.case_id}`)).length;
 
+  /** @type {Record<string, number>} */
   const results = {};
   for (const r of reports) results[r.result] = (results[r.result] ?? 0) + 1;
 
@@ -63,6 +75,10 @@ export function pricingReport({ licences, reports, credits, proAccounts }) {
   };
 }
 
+/**
+ * @param {ReturnType<typeof pricingReport>} r
+ * @param {number} days
+ */
 export function formatPricingReport(r, days) {
   const lines = [`Price test, last ${days} days`, `Sales: ${r.sales}`];
   if (!r.enough)

@@ -11,6 +11,10 @@ test("while the Account Pass has no price, nothing about it is shown and the cou
   page,
   request,
 }) => {
+  test.skip(
+    !!process.env.NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS,
+    "this is the switched-off case; the switched-on case is account-pass.spec.ts",
+  );
   await page.goto("/pricing");
   await expect(page.getByText("Account Pass")).toHaveCount(0);
   await expect(page.getByText("Which Pass?")).toHaveCount(0);
@@ -66,6 +70,14 @@ test("the chatbot answer in the FAQ points at that comparison", async ({ page })
 test("the writers' page says what exists today and that professional pricing is not set", async ({
   page,
 }) => {
+  test.skip(
+    !!(
+      process.env.NEXT_PUBLIC_PADDLE_PRICE_PACK_10 ||
+      process.env.NEXT_PUBLIC_PADDLE_PRICE_PACK_30 ||
+      process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_PLAN
+    ),
+    "this is the switched-off case; the switched-on case is more-ways-to-pay.spec.ts",
+  );
   await page.goto("/for-professionals");
   await expect(
     page.getByRole("heading", { name: "Check the proof on every client case.", level: 1 }),

@@ -60,8 +60,8 @@ describe("the partner commission report", () => {
       { now: NOW, exclude: ["dsc_founding"] },
     );
     expect(report).toHaveLength(1);
-    expect(report[0].discountId).toBe("dsc_a");
-    expect(report[0].months.reduce((n: number, m: { sales: number }) => n + m.sales, 0)).toBe(1);
+    expect(report[0]!.discountId).toBe("dsc_a");
+    expect(report[0]!.months.reduce((n: number, m: { sales: number }) => n + m.sales, 0)).toBe(1);
   });
 
   it("holds a sale until its refund window has passed, and says it is waiting", () => {
@@ -72,9 +72,9 @@ describe("the partner commission report", () => {
       activated_at: daysAgo(age),
     });
     const report = commissionReport([row(WINDOW_DAYS - 1), row(WINDOW_DAYS + 1)], { now: NOW });
-    expect(report[0].waiting).toBe(1);
-    expect(report[0].months).toHaveLength(1);
-    expect(report[0].months[0].cents).toBe(COMMISSION_CENTS.account_pass);
+    expect(report[0]!.waiting).toBe(1);
+    expect(report[0]!.months).toHaveLength(1);
+    expect(report[0]!.months[0]!.cents).toBe(COMMISSION_CENTS.account_pass);
   });
 
   it("files a sale under the month its window ended, which is when it is paid", () => {
@@ -97,7 +97,10 @@ describe("the partner commission report", () => {
       ],
       { now: NOW },
     );
-    expect(report[0].months.map((m: { month: string }) => m.month)).toEqual(["2026-11", "2026-12"]);
+    expect(report[0]!.months.map((m: { month: string }) => m.month)).toEqual([
+      "2026-11",
+      "2026-12",
+    ]);
   });
 
   it("reads plainly, and says the amounts are list prices", () => {
