@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Are our prices too high?</title>
+<style>
+:root{--bg:#f6f5f0;--card:#ffffff;--ink:#14213a;--muted:#566074;--line:#e3e1d8;--navy:#14213a;--navy-ink:#f4f6fb;--green:#166534;--amber:#8a5a00;--red:#9f1d1d;--blue:#1d4ed8;--blue-soft:#e8effd}
+@media (prefers-color-scheme: dark){:root{--bg:#0d1424;--card:#151f35;--ink:#eef1f8;--muted:#a6b0c5;--line:#26324d;--navy:#0a1020;--navy-ink:#f4f6fb;--green:#6ee7a0;--amber:#f5c451;--red:#fca5a5;--blue:#93b4ff;--blue-soft:#17233f}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.65;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}
+code{font:.9em ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--blue-soft);padding:.1em .35em;border-radius:5px;word-break:break-word}
+.hero{background:var(--navy);color:var(--navy-ink);padding:34px 0 30px}
+.hero .tag{display:inline-block;font-size:13px;font-weight:700;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:999px;margin-bottom:16px}
+.hero h1{font-size:30px;line-height:1.2;margin:0 0 14px;font-weight:800}.hero h1 em{font-style:normal;color:#fdba74}
+.hero p{margin:0;font-size:18px;color:#dbe3f2}.hero .meta{margin-top:18px;font-size:14px;color:#aebad2}
+section{padding:30px 0 4px}h2{font-size:24px;line-height:1.25;margin:0 0 8px;font-weight:800}
+p{margin:0 0 14px}.lead{font-size:18px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+ul.items{list-style:none;margin:10px 0 0;padding:0}
+ul.items li{background:var(--card);border:1px solid var(--line);border-left-width:5px;border-radius:14px;padding:13px 15px;margin:0 0 10px}
+ul.items li b{display:block;font-size:17px;margin-bottom:2px}ul.items li span{display:block;font-size:15.5px;color:var(--muted);line-height:1.55}
+ul.items.green li{border-left-color:var(--green)}ul.items.amber li{border-left-color:var(--amber)}ul.items.red li{border-left-color:var(--red)}ul.items.blue li{border-left-color:var(--blue)}
+.price{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding:10px 0}.price:last-child{border-bottom:0}
+.price b{font-size:17px}.price .amt{font-weight:800;font-size:19px;white-space:nowrap}.price span.d{display:block;font-size:15px;color:var(--muted)}
+footer{padding:34px 0 50px;color:var(--muted);font-size:15px}
+@media (min-width:640px){body{font-size:18px}.hero h1{font-size:40px}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <span class="tag">Research for you, the founder. Nothing is built.</span>
+  <h1>Are our prices too high <em>in the AI world?</em></h1>
+  <p>Two research agents looked at how sellers use ChatGPT and Claude for appeals, and how AI tools price against free chatbots. Full file: <code>2026-10-22-ai-era-pricing-angle.md</code>.</p>
+  <div class="meta">Written 22 October 2026 · input to the combined plan</div>
+</div></header>
+<main class="wrap">
+
+<section>
+  <h2>The short answer</h2>
+  <ul class="items green">
+    <li><b>$249 is fair for what it does</b><span>Human appeal services charge $500 to $3,000.</span></li>
+    <li><b>$249 is too much as the first payment</b><span>A letter is now free: ChatGPT, AppealsPro's free plan, a free Claude add-on.</span></li>
+    <li><b>So: never charge for "a letter"</b><span>Charge for what a chatbot cannot do: check the seller's documents against what Amazon asked, and remember every round.</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2>What ChatGPT cannot do</h2>
+  <p class="lead">"ChatGPT writes the letter. AppealDeck checks the proof."</p>
+  <ul class="items blue">
+    <li><b>Check each invoice against the notice</b><span>Dated within 365 days? Right supplier and buyer names? Right products?</span></li>
+    <li><b>Add up invoices against units sold</b><span>"Short by 120 units" is what gets appeals refused.</span></li>
+    <li><b>Remember every round</b><span>And warn when a resubmission is the same as last time.</span></li>
+    <li><b>Never invent a fact</b><span>Every date, number and name comes from the seller.</span></li>
+    <li><b>Track deadlines, spot fake notices, build the upload pack</b><span>All already in the product.</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2>The launch prices</h2>
+  <div class="card">
+    <div class="price"><div><b>Free</b><span class="d">Decode, scam check, records list, reply reader, one document check, an outline of your response</span></div><div class="amt">$0</div></div>
+    <div class="price"><div><b>Document Check (new)</b><span class="d">Every document checked against the notice; the $49 counts toward the Pass</span></div><div class="amt">$49</div></div>
+    <div class="price"><div><b>Case Pass</b><span class="d">The full job, every round</span></div><div class="amt">$249</div></div>
+    <div class="price"><div><b>Account Pass (later)</b><span class="d">Plus every new notice for 12 months</span></div><div class="amt">$329</div></div>
+    <div class="price"><div><b>For professionals</b><span class="d">10 cases $390 or 30 cases $870, verified pros only</span></div><div class="amt">$29–39/case</div></div>
+  </div>
+  <p>The first payment ($49) is about what people already pay for AI. The full price comes after they have seen a real problem in their own documents.</p>
+  <p>The professional prices are lower than this morning's plan because writers compare us with AppealsPro at $79.99 a month for about 100 letters. A seller cannot use pro pricing to get one cheap case, because the smallest pack is 10 cases.</p>
+</section>
+
+<section>
+  <h2>Never say</h2>
+  <ul class="items red">
+    <li><b>"Amazon rejects ChatGPT appeals"</b><span>Only consultants claim it; there is no proof.</span></li>
+    <li><b>Any win rate, or "better than a lawyer"</b><span>No data, and the US regulator fines it.</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2>Watch</h2>
+  <ul class="items amber">
+    <li><b>Amazon's own assistant for Claude</b><span>In US beta since 23 September, with live account data. No appeals yet.</span></li>
+    <li><b>AppealsPro</b><span>If it starts checking documents, our main edge narrows.</span></li>
+    <li><b>Your 30 minutes</b><span>Read 20 recent "I used ChatGPT and got refused" posts in Facebook and Reddit groups (the agents could not reach them) and note what went wrong.</span></li>
+  </ul>
+</section>
+
+</main>
+<footer><div class="wrap">AppealDeck · 22 October 2026 · nothing changed in the product</div></footer>
+</body>
+</html>
