@@ -17,6 +17,8 @@ const NONE: Env = {
   NEXT_PUBLIC_PADDLE_PRICE_PACK_30: "",
   NEXT_PUBLIC_PADDLE_PRICE_PRO_PLAN: "",
   NEXT_PUBLIC_REBATE_ENABLED: "",
+  // These tests are about what is on sale; showing what is not on sale yet is `describe("previewing")`.
+  NEXT_PUBLIC_PLANS_PREVIEW: "off",
 };
 
 async function load(env: Env = {}) {
@@ -134,5 +136,59 @@ describe("the rebate", () => {
   it("is not switched on by anything other than the exact word true", async () => {
     const off = await load({ NEXT_PUBLIC_REBATE_ENABLED: "yes" });
     expect(ids(off.marketing)).not.toContain("rebate");
+  });
+});
+
+describe("previewing what is not on sale yet", () => {
+  const PREVIEW = { NEXT_PUBLIC_PLANS_PREVIEW: "on" };
+
+  it("shows the Account Pass, the review and the professional prices, each as opening soon", async () => {
+    const { marketing, audiences } = await load(PREVIEW);
+    for (const id of ["account-pass", "document-review", "credits"]) {
+      const item = marketing.FAQ.items.find((i) => i.id === id);
+      expect(item?.a, id).toMatch(/^Opening soon\. /);
+      expect(
+        marketing.FAQ.groups.flatMap((g) => [...g.items]),
+        id,
+      ).toContain(id);
+    }
+    expect(marketing.FAQ.items.find((i) => i.id === "writers")?.a).toMatch(/^Opening soon\. Yes/);
+    expect(audiences.PROS.cost.open).toBeNull();
+    expect(audiences.PROS.cost.pro).toMatch(/packs of 10 for \$390/);
+    expect(audiences.PROS.cost.pro).toMatch(/Not on sale yet/);
+  });
+
+  it("promises nothing that happens only after a purchase: no renewal, no rebate", async () => {
+    const { marketing } = await load(PREVIEW);
+    expect(marketing.FAQ.items.some((i) => i.id === "renewal")).toBe(false);
+    expect(marketing.FAQ.items.some((i) => i.id === "rebate")).toBe(false);
+  });
+
+  it("says nothing in the Terms, the Privacy policy or the changelog until a product is on sale", async () => {
+    const { legal, changelog } = await load(PREVIEW);
+    expect(terms(legal)).not.toMatch(
+      /case credit|Pro plan|AI document review|Account Pass is one licence/,
+    );
+    expect(privacy(legal)).not.toMatch(/ledger of the credits|\$25/);
+    expect(log(changelog)).not.toMatch(
+      /AI document review|Case credits for verified|The Account Pass is on sale/,
+    );
+  });
+
+  it("drops the 'opening soon' lead once the product is on sale", async () => {
+    const { marketing } = await load({
+      ...PREVIEW,
+      NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS: "pri_account",
+    });
+    expect(marketing.FAQ.items.find((i) => i.id === "account-pass")?.a).not.toMatch(/Opening soon/);
+    // the others are still only previewed
+    expect(marketing.FAQ.items.find((i) => i.id === "document-review")?.a).toMatch(/^Opening soon/);
+  });
+
+  it("is switched off by the word off and by nothing else", async () => {
+    const off = await load({ NEXT_PUBLIC_PLANS_PREVIEW: "off" });
+    expect(off.marketing.FAQ.items.some((i) => i.id === "document-review")).toBe(false);
+    const unset = await load({ NEXT_PUBLIC_PLANS_PREVIEW: "" });
+    expect(unset.marketing.FAQ.items.some((i) => i.id === "document-review")).toBe(true);
   });
 });

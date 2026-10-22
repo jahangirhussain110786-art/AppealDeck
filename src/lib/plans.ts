@@ -104,6 +104,31 @@ export function professionalsEnabled(): boolean {
   return packsEnabled() || proPlanEnabled();
 }
 
+/**
+ * Whether a product that is not on sale yet is still shown, with its price and "Opens soon" and no
+ * way to buy it. On by default so /pricing and /for-professionals show the whole structure before
+ * Paddle is connected; `NEXT_PUBLIC_PLANS_PREVIEW=off` hides it again. Showing is never selling:
+ * every purchase path (the checkout, the intent route, the webhook) still needs its Paddle price.
+ */
+export function previewPlans(): boolean {
+  return process.env.NEXT_PUBLIC_PLANS_PREVIEW !== "off";
+}
+
+/** The Account Pass is shown: on sale, or previewed as "Opens soon". */
+export function accountPassListed(): boolean {
+  return accountPassEnabled() || previewPlans();
+}
+
+/** The AI document review is shown: on sale, or previewed as "Opens soon". */
+export function reviewListed(): boolean {
+  return reviewEnabled() || previewPlans();
+}
+
+/** The professional prices are shown: on sale, or previewed as "Opens soon". */
+export function professionalsListed(): boolean {
+  return professionalsEnabled() || previewPlans();
+}
+
 /** The Paddle price a plan opens, or undefined when it is not on sale. */
 export function priceIdFor(plan: PassPlan): string | undefined {
   switch (plan) {

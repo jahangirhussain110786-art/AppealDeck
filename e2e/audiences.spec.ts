@@ -7,17 +7,23 @@ import { expect, test, type Page } from "@playwright/test";
 const audienceNav = (page: Page) => page.getByRole("navigation", { name: "Who is this for?" });
 const stored = (page: Page, key: string) => page.evaluate((k) => localStorage.getItem(k), key);
 
-test("while the Account Pass has no price, nothing about it is shown and the counter says nothing", async ({
+test("while the Account Pass has no price it is shown as Opens soon, with no way to buy it and no counter", async ({
   page,
   request,
 }) => {
   test.skip(
     !!process.env.NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS,
-    "this is the switched-off case; the switched-on case is account-pass.spec.ts",
+    "this is the preview case; the switched-on case is account-pass.spec.ts",
   );
   await page.goto("/pricing");
-  await expect(page.getByText("Account Pass")).toHaveCount(0);
+  // The card is there, with its price, and its only button is a disabled "Opens soon".
+  await expect(page.getByText("Account Pass").first()).toBeVisible();
+  await expect(page.getByText("$329", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Opens soon" }).first()).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Get the Account Pass" })).toHaveCount(0);
+  // Nothing else on the page can buy it: the picker beside the pay button has only the Appeal Pass.
   await expect(page.getByText("Which Pass?")).toHaveCount(0);
+  await expect(page.getByText("What to buy")).toHaveCount(0);
   await expect(page.getByTestId("founding-note")).toHaveCount(0);
   const res = await request.get("/api/founding");
   expect(res.status()).toBe(200);
@@ -67,7 +73,7 @@ test("the chatbot answer in the FAQ points at that comparison", async ({ page })
   await expect(link).toHaveAttribute("href", "/pricing#versus");
 });
 
-test("the writers' page says what exists today and that professional pricing is not set", async ({
+test("the writers' page shows the professional prices as opening soon, with no way to buy them", async ({
   page,
 }) => {
   test.skip(
@@ -76,13 +82,21 @@ test("the writers' page says what exists today and that professional pricing is 
       process.env.NEXT_PUBLIC_PADDLE_PRICE_PACK_30 ||
       process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_PLAN
     ),
-    "this is the switched-off case; the switched-on case is more-ways-to-pay.spec.ts",
+    "this is the preview case; the switched-on case is more-ways-to-pay.spec.ts",
   );
   await page.goto("/for-professionals");
   await expect(
     page.getByRole("heading", { name: "Check the proof on every client case.", level: 1 }),
   ).toBeVisible();
-  await expect(page.getByText("Professional pricing is not set yet.")).toBeVisible();
+  await expect(page.getByText("Professional pricing is not set yet.")).toHaveCount(0);
+  await expect(page.getByText("10 case credits")).toBeVisible();
+  await expect(page.getByText("$390", { exact: true })).toBeVisible();
+  await expect(page.getByText("$349 a month")).toBeVisible();
+  await expect(page.getByText("Not on sale yet").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /Buy 10 credits|Start the Pro plan/ })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole("link", { name: "Ask to be verified" })).toBeVisible();
   await expect(page.getByText("It is not shared between team members yet")).toBeVisible();
   const write = page.getByRole("link", { name: "Write to us about how you work" }).first();
   await expect(write).toHaveAttribute("href", /^mailto:support@appealdeck\.com\?subject=/);

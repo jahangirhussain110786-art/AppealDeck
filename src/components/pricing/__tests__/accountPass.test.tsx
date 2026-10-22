@@ -11,8 +11,9 @@ import { PurchaseSection, orderFor } from "../PurchaseSection";
 beforeEach(() => vi.unstubAllEnvs());
 
 describe("the plan cards", () => {
-  it("are the three there have always been while the Account Pass has no price", () => {
+  it("are the three there have always been while the Account Pass has no price and the preview is off", () => {
     vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
     const html = renderToStaticMarkup(<PlanCards />);
     expect(html).not.toContain("Account Pass");
     expect(html).toContain("Appeal Pass");
@@ -31,6 +32,23 @@ describe("the plan cards", () => {
     // the Appeal Pass card keeps its own button and price
     expect(html).toContain("Get the Appeal Pass");
     expect(html).toContain("$249");
+  });
+});
+
+describe("the plan cards while the Account Pass is only previewed", () => {
+  it("show its price and a disabled Opens soon button, and nothing that opens a checkout", () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "on");
+    const html = renderToStaticMarkup(<PlanCards />);
+    expect(html).toContain("Account Pass");
+    expect(html).toContain("$329");
+    expect(html).toContain("As many cases as you have, for 12 months");
+    expect(html).toContain("xl:grid-cols-4");
+    const soon = html.match(/<button[^>]*disabled[^>]*>[^<]*Opens soon/);
+    expect(soon).not.toBeNull();
+    expect(html).not.toContain("Get the Account Pass");
+    // the Appeal Pass beside it is unchanged
+    expect(html).toContain("Get the Appeal Pass");
   });
 });
 

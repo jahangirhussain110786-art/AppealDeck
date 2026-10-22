@@ -11,7 +11,7 @@ import { pageMetadata } from "@/content/pageMetadata";
 import { PROS } from "@/content/audiences";
 import { splitAccent } from "@/lib/splitAccent";
 import { ProPurchase } from "@/components/ProPurchase";
-import { professionalsEnabled } from "@/lib/plans";
+import { professionalsListed } from "@/lib/plans";
 
 export const metadata: Metadata = pageMetadata({
   title: PROS.metadata.title,
@@ -107,7 +107,7 @@ export default function ForProfessionalsPage() {
               </Button>
             </Card>
           )}
-          {professionalsEnabled() && <ProPurchase />}
+          {professionalsListed() && <ProPurchase />}
         </section>
 
         <section aria-labelledby="pros-partner" className="space-y-3">

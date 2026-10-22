@@ -92,13 +92,15 @@ describe("the professionals' purchase panel", () => {
       vi.stubEnv(key, "");
   };
 
-  it("renders nothing while no professional price is on sale", () => {
+  it("renders nothing while no professional price is on sale and the preview is off", () => {
     clear();
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
     expect(renderToStaticMarkup(<ProPurchase />)).toBe("");
   });
 
-  it("shows only the products that have a price, each with its cost per case", () => {
+  it("shows only the products that have a price, each with its cost per case, when the preview is off", () => {
     clear();
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
     for (const [k, v] of Object.entries(PACKS)) vi.stubEnv(k, v);
     const html = renderToStaticMarkup(<ProPurchase />);
     expect(html).toContain("10 case credits");
@@ -137,5 +139,38 @@ describe("the professionals' purchase panel", () => {
     const html = renderToStaticMarkup(<ProPurchase />);
     expect(html).not.toContain("<button");
     expect(html).not.toContain("Ask to be verified");
+  });
+});
+
+describe("the preview of what is not on sale yet", () => {
+  it("shows the professional prices as opening soon, with no way to buy and a way to ask", () => {
+    for (const key of [
+      "NEXT_PUBLIC_PADDLE_PRICE_PACK_10",
+      "NEXT_PUBLIC_PADDLE_PRICE_PACK_30",
+      "NEXT_PUBLIC_PADDLE_PRICE_PRO_PLAN",
+    ])
+      vi.stubEnv(key, "");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "on");
+    session = "signed-in";
+    const html = renderToStaticMarkup(<ProPurchase />);
+    for (const shown of ["$390", "$39 a case", "$870", "$29 a case", "$349 a month", "Opens soon"])
+      expect(html).toContain(shown);
+    expect(html).toContain("Not on sale yet");
+    expect(html).toContain("Ask to be verified");
+    // no sign-in prompt, no consent box, no pay button, whoever is looking
+    expect(html).not.toContain("<button");
+    expect(html).not.toContain('type="checkbox"');
+    expect(html).not.toContain("/login?next=");
+  });
+
+  it("marks only the products that are not on sale, when some are", () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PACK_10", "pri_10");
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PACK_30", "");
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PRO_PLAN", "");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "on");
+    const html = renderToStaticMarkup(<ProPurchase />);
+    // the 10-pack can be bought (sign-in link), the other two are marked
+    expect(html).toContain("/login?next=");
+    expect(html.match(/Opens soon/g)).toHaveLength(2);
   });
 });

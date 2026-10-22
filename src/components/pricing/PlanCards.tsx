@@ -5,7 +5,8 @@ import { FoundingNote } from "@/components/pricing/FoundingNote";
 import { PlanCta } from "@/components/pricing/PlanCta";
 import { HOME, PRICING } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
-import { accountPassEnabled, foundingEnabled, type PassPlan } from "@/lib/plans";
+import { accountPassEnabled, accountPassListed, foundingEnabled, type PassPlan } from "@/lib/plans";
+import { OPENS_SOON } from "@/content/purchases";
 import { cn } from "@/lib/utils";
 
 type Card = {
@@ -25,7 +26,7 @@ type Card = {
  */
 export function PlanCards() {
   const [free, freeAccount, pass] = HOME.plans.items;
-  const withAccount = accountPassEnabled();
+  const withAccount = accountPassListed();
   const cards: Card[] = [
     { key: "free", ...free, featured: false },
     { key: "free-account", ...freeAccount, featured: false },
@@ -85,7 +86,11 @@ export function PlanCards() {
           )}
           {/* The action after the features, at the foot of every card, as in the prototype. */}
           <div className="mt-auto">
-            {card.key === "case" || card.key === "account" ? (
+            {card.key === "account" && !accountPassEnabled() ? (
+              <Button size="lg" variant="outline" disabled className="w-full">
+                {OPENS_SOON.label}
+              </Button>
+            ) : card.key === "case" || card.key === "account" ? (
               <PlanCta plan={card.key} featured={card.featured}>
                 {card.key === "account" ? PRICING.account.cta : PRICING.jumpToPurchase}
               </PlanCta>

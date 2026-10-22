@@ -16,7 +16,7 @@ import {
 import { FaqAccordion } from "@/components/pricing/FaqAccordion";
 import { PurchaseSection } from "@/components/pricing/PurchaseSection";
 import { PlanCards } from "@/components/pricing/PlanCards";
-import { accountPassEnabled, reviewEnabled } from "@/lib/plans";
+import { accountPassEnabled, reviewEnabled, reviewListed } from "@/lib/plans";
 import { ReviewTeaser } from "@/components/pricing/ReviewTeaser";
 import { VersusSection } from "@/components/pricing/VersusSection";
 import { AudienceSwitch } from "@/components/AudienceSwitch";
@@ -94,7 +94,7 @@ export default function PricingPage() {
       <div className="mx-auto w-full max-w-marketing px-4 sm:px-8">
         <section className="relative -mt-28 pb-6">
           <PlanCards />
-          {reviewEnabled() && <ReviewTeaser />}
+          {reviewListed() && <ReviewTeaser onSale={reviewEnabled()} />}
           <p className="mx-auto mt-6 max-w-prose text-center text-base font-medium text-foreground">
             {PRICING.freeVersusPass}
           </p>

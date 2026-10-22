@@ -5,12 +5,15 @@
 import { AMAZON_REVIEW_TIME } from "./shared";
 import {
   accountPassEnabled,
+  accountPassListed,
   professionalsEnabled,
+  professionalsListed,
   rebateEnabled,
   renewalEnabled,
   reviewEnabled,
+  reviewListed,
 } from "@/lib/plans";
-import { PRODUCTS } from "./purchases";
+import { OPENS_SOON, PRODUCTS } from "./purchases";
 
 /**
  * The home page tells one story, once, in the order a frightened seller needs it (25 Sep 2026):
@@ -758,10 +761,10 @@ export const FAQ = {
       id: "writers",
       q: "Do you have pricing for appeal writers and VA teams?",
       // 22 Oct 2026: the answer changes once professional prices are on sale.
-      a: professionalsEnabled()
-        ? `Yes, for verified professionals: case credits in packs of ${PRODUCTS.pack10.count} and ${PRODUCTS.pack30.count}, or the Pro plan. The checks are free, and the written response is $249 per case for everyone else.`
+      a: professionalsListed()
+        ? `${professionalsEnabled() ? "" : OPENS_SOON.faqLead}Yes, for verified professionals: case credits in packs of ${PRODUCTS.pack10.count} and ${PRODUCTS.pack30.count}, or the Pro plan. The checks are free, and the written response is $249 per case for everyone else.`
         : "Not yet. The checks are free, and the written response is $249 per case. Professional pricing is being set with the first writers.",
-      detail: professionalsEnabled()
+      detail: professionalsListed()
         ? "Each credit activates one case with an Appeal Pass. We verify professionals by hand first, so a seller cannot buy a professional price for their own case. The page for writers has the prices and how to be verified."
         : "If you handle cases every week, write to us with how you work and what a case should cost you. The page for writers lists what you can use today.",
       link: { label: "For writers and VA teams", href: "/for-professionals" },
@@ -774,14 +777,14 @@ export const FAQ = {
         "The seller gets $25 off with your code. Commission is paid once the 14-day refund window has passed, by bank transfer or Payoneer. Read the rules, then write to us.",
       link: { label: "The partner program", href: "/partners" },
     },
-    // 22 Oct 2026: only while the Account Pass is on sale, so no page answers a question about a
-    // product that cannot be bought.
-    ...(accountPassEnabled()
+    // 22 Oct 2026: shown while the Account Pass is on sale, and while it is only previewed (then the
+    // answer begins "Opening soon."), so no page promises a product the cards do not show.
+    ...(accountPassListed()
       ? ([
           {
             id: "account-pass",
             q: "What is the Account Pass?",
-            a: "One payment that covers every case on your account for 12 months, instead of one Pass per case.",
+            a: `${accountPassEnabled() ? "" : OPENS_SOON.faqLead}One payment that covers every case on your account for 12 months, instead of one Pass per case.`,
             detail:
               "It does everything an Appeal Pass does, for as many cases as you have, and it has the same 14-day refund. It ends 12 months after you buy it; a case with no Appeal Pass of its own then needs one to prepare a further response. It is for one seller's business, not for preparing other sellers' cases.",
             link: { label: "See the plans", href: "/pricing#purchase" },
@@ -790,12 +793,12 @@ export const FAQ = {
       : []),
     // 22 Oct 2026: each of these appears only while its product is on sale (or, for the rebate,
     // while it is switched on), so no page answers a question about something that cannot be had.
-    ...(reviewEnabled()
+    ...(reviewListed()
       ? ([
           {
             id: "document-review",
             q: "What is the AI document review?",
-            a: `For ${PRODUCTS.review.price}, the AI reads up to five of one case's documents against what Amazon asked.`,
+            a: `${reviewEnabled() ? "" : OPENS_SOON.faqLead}For ${PRODUCTS.review.price}, the AI reads up to five of one case's documents against what Amazon asked.`,
             detail:
               "It is for a seller who wants the documents read before paying for the whole Pass. The price comes off the Appeal Pass for the same case, so you pay the difference, not both in full. The free check on your own device stays free either way, and the same 14-day refund applies.",
             link: { label: "See the plans", href: "/pricing#purchase" },
@@ -814,12 +817,12 @@ export const FAQ = {
           },
         ] as const satisfies readonly FaqItem[])
       : []),
-    ...(professionalsEnabled()
+    ...(professionalsListed()
       ? ([
           {
             id: "credits",
             q: "How do case credits and the Pro plan work?",
-            a: `A case credit activates one case with an Appeal Pass. Packs of ${PRODUCTS.pack10.count} cost ${PRODUCTS.pack10.price} and of ${PRODUCTS.pack30.count} cost ${PRODUCTS.pack30.price}; the Pro plan is ${PRODUCTS.pro.price} ${PRODUCTS.pro.per} for ${PRODUCTS.pro.credits} credits.`,
+            a: `${professionalsEnabled() ? "" : OPENS_SOON.faqLead}A case credit activates one case with an Appeal Pass. Packs of ${PRODUCTS.pack10.count} cost ${PRODUCTS.pack10.price} and of ${PRODUCTS.pack30.count} cost ${PRODUCTS.pack30.price}; the Pro plan is ${PRODUCTS.pro.price} ${PRODUCTS.pro.per} for ${PRODUCTS.pro.credits} credits.`,
             detail:
               "Pack credits last 12 months. Pro credits last one more month than the month they arrive. Credits are for verified professionals preparing other sellers' cases; each case still needs its own seller's facts. Cancel the Pro plan any time in Billing.",
             link: { label: "For writers and VA teams", href: "/for-professionals" },
@@ -868,13 +871,13 @@ export const FAQ = {
       hint: "What you pay for, and who else can earn",
       items: [
         "pass",
-        ...(accountPassEnabled() ? (["account-pass"] as const) : []),
+        ...(accountPassListed() ? (["account-pass"] as const) : []),
         ...(renewalEnabled() ? (["renewal"] as const) : []),
-        ...(reviewEnabled() ? (["document-review"] as const) : []),
+        ...(reviewListed() ? (["document-review"] as const) : []),
         "refund",
         ...(rebateEnabled() ? (["rebate"] as const) : []),
         "writers",
-        ...(professionalsEnabled() ? (["credits"] as const) : []),
+        ...(professionalsListed() ? (["credits"] as const) : []),
         "partners",
       ],
     },

@@ -57,13 +57,24 @@ describe("pricing for sellers, writers and partners", () => {
     expect(PARTNERS.rules.items.join(" ")).toMatch(/never ask for a review/i);
   });
 
-  it("never claims what does not exist: no plan, pack, dashboard or shared case is offered", () => {
-    const everything = JSON.stringify(PROS);
-    expect(PROS.cost.open).toMatch(/not set yet/i);
+  it("never claims what does not exist: no plan, pack, dashboard or shared case is offered", async () => {
+    // With the preview off and no professional price set, the writers' page quotes no professional price.
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
+    for (const k of [
+      "NEXT_PUBLIC_PADDLE_PRICE_PACK_10",
+      "NEXT_PUBLIC_PADDLE_PRICE_PACK_30",
+      "NEXT_PUBLIC_PADDLE_PRICE_PRO_PLAN",
+    ])
+      vi.stubEnv(k, "");
+    const { PROS: PROS_OFF } = await import("../audiences");
+    vi.unstubAllEnvs();
+    const everything = JSON.stringify(PROS_OFF);
+    expect(PROS_OFF.cost.open).toMatch(/not set yet/i);
     expect(PARTNERS.earn.noDashboard).toMatch(/no dashboard yet/i);
-    expect(PROS.limits.items.join(" ")).toMatch(/not shared between team members yet/);
+    expect(PROS_OFF.limits.items.join(" ")).toMatch(/not shared between team members yet/);
     // nothing in the pages for professionals quotes a monthly or per-case professional price
-    expect(PROS.cost.body.match(/\$\d+/g)).toEqual([`$${PASS}`]);
+    expect(PROS_OFF.cost.body.match(/\$\d+/g)).toEqual([`$${PASS}`]);
     expect(everything).not.toMatch(/per month|a month|monthly plan|case packs?\b/i);
   });
 

@@ -8,6 +8,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 async function load(accountPrice: string) {
   vi.resetModules();
   vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", accountPrice);
+  // Previewing a product that is not on sale is its own case (stage3Content.test.ts); here it is off.
+  vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
   const [marketing, legal, changelog] = await Promise.all([
     import("../marketing"),
     import("../legal"),

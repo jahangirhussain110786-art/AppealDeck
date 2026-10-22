@@ -7,10 +7,16 @@ import { CheckoutButton } from "@/components/CheckoutButton";
 import { ConsentRow } from "@/components/pricing/ConsentRow";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PRODUCTS, PRO_VERIFICATION } from "@/content/purchases";
+import { OPENS_SOON, PRODUCTS, PRO_VERIFICATION } from "@/content/purchases";
 import { SUPPORT_EMAIL } from "@/content/support";
 import { formatDate } from "@/lib/format";
-import { pack10PriceId, pack30PriceId, proPlanPriceId, type PassPlan } from "@/lib/plans";
+import {
+  pack10PriceId,
+  pack30PriceId,
+  previewPlans,
+  proPlanPriceId,
+  type PassPlan,
+} from "@/lib/plans";
 import { useSessionState } from "@/lib/useSessionState";
 
 type ProStatus = {
@@ -22,10 +28,12 @@ type ProStatus = {
 
 type ProPlan = Extract<PassPlan, "pack10" | "pack30" | "pro">;
 
-const OPTIONS: { plan: ProPlan; on: () => boolean }[] = [
-  { plan: "pack10", on: () => pack10PriceId() !== undefined },
-  { plan: "pack30", on: () => pack30PriceId() !== undefined },
-  { plan: "pro", on: () => proPlanPriceId() !== undefined },
+// `sale`: its Paddle price is set, so it can be bought. A product that is only previewed is shown with
+// its price and "Opens soon" (see `previewPlans()`), and nothing below lets anyone buy it.
+const OPTIONS: { plan: ProPlan; sale: () => boolean }[] = [
+  { plan: "pack10", sale: () => pack10PriceId() !== undefined },
+  { plan: "pack30", sale: () => pack30PriceId() !== undefined },
+  { plan: "pro", sale: () => proPlanPriceId() !== undefined },
 ];
 
 const mailto = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Verify me as a professional")}`;
@@ -43,7 +51,8 @@ export function ProPurchase() {
   const [message, setMessage] = useState<string | null>(null);
   const before = useRef<ProStatus | null>(null);
 
-  const available = OPTIONS.filter((o) => o.on()).map((o) => o.plan);
+  const available = OPTIONS.filter((o) => o.sale()).map((o) => o.plan);
+  const listed = OPTIONS.filter((o) => o.sale() || previewPlans()).map((o) => o.plan);
 
   useEffect(() => {
     if (session !== "signed-in") return;
@@ -61,7 +70,7 @@ export function ProPurchase() {
 
   const selected: ProPlan | null =
     choice && available.includes(choice) ? choice : (available[0] ?? null);
-  if (!selected) return null;
+  if (listed.length === 0) return null;
 
   const details = {
     pack10: {
@@ -129,7 +138,7 @@ export function ProPurchase() {
       </p>
 
       <ul className="grid gap-3 sm:grid-cols-3">
-        {available.map((plan) => {
+        {listed.map((plan) => {
           const d = details[plan];
           return (
             <li key={plan}>
@@ -139,13 +148,25 @@ export function ProPurchase() {
                   {d.price}
                 </p>
                 <p className="text-sm text-muted-foreground">{d.note}</p>
+                {!available.includes(plan) && (
+                  <p className="pt-1 text-sm font-medium text-foreground">{OPENS_SOON.label}</p>
+                )}
               </Card>
             </li>
           );
         })}
       </ul>
 
-      {session === "signed-out" && (
+      {available.length === 0 && (
+        <div className="space-y-2 rounded-xl border border-border bg-surface-1 p-4">
+          <p className="text-sm text-muted-foreground">{OPENS_SOON.professionals}</p>
+          <Button asChild variant="outline">
+            <a href={mailto}>Ask to be verified</a>
+          </Button>
+        </div>
+      )}
+
+      {available.length > 0 && session === "signed-out" && (
         <p className="text-sm text-muted-foreground">
           <Link
             href="/login?next=/for-professionals"
@@ -156,7 +177,7 @@ export function ProPurchase() {
         </p>
       )}
 
-      {session === "signed-in" && pro && !pro.verified && (
+      {available.length > 0 && session === "signed-in" && pro && !pro.verified && (
         <div className="space-y-2 rounded-xl border border-border bg-surface-1 p-4">
           <p className="text-sm font-medium text-foreground">{PRO_VERIFICATION.notVerified}</p>
           <p className="text-sm text-muted-foreground">{PRO_VERIFICATION.how}</p>
@@ -166,7 +187,7 @@ export function ProPurchase() {
         </div>
       )}
 
-      {session === "signed-in" && pro?.verified && (
+      {selected && session === "signed-in" && pro?.verified && (
         <div className="space-y-4">
           <p className="flex items-center gap-2 text-sm text-foreground">
             <Check aria-hidden className="size-4 text-success" />

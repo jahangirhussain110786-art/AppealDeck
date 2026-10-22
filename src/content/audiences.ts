@@ -11,10 +11,11 @@ import { SUPPORT_EMAIL } from "./support";
 import {
   accountPassEnabled,
   professionalsEnabled,
+  professionalsListed,
   renewalEnabled,
   reviewEnabled,
 } from "@/lib/plans";
-import { PRODUCTS } from "./purchases";
+import { OPENS_SOON, PRODUCTS } from "./purchases";
 
 export const AUDIENCE_SWITCH = {
   label: "Who is this for?",
@@ -98,13 +99,13 @@ export const PROS = {
     title: "What it costs today",
     body: "Everything above except the written response is free. The written response is the Appeal Pass: $249 once for one case, every round included. Each client case is its own case, so each has its own Pass.",
     // Said only while there is no professional price on sale; once there is, the prices are on the page.
-    open: professionalsEnabled() ? null : "Professional pricing is not set yet.",
-    openBody: professionalsEnabled()
+    open: professionalsListed() ? null : "Professional pricing is not set yet.",
+    openBody: professionalsListed()
       ? null
       : "We would rather ask than guess. If you handle cases every week, write to us with how you work and what a case should cost you. The first writers help set the price and see it first.",
     // Said only once professional prices are on sale: what they are, in one sentence.
-    pro: professionalsEnabled()
-      ? `Verified professionals pay less per case: credits come in packs of 10 for ${PRODUCTS.pack10.price} and of 30 for ${PRODUCTS.pack30.price}, or as the Pro plan, ${PRODUCTS.pro.credits} credits a month for ${PRODUCTS.pro.price}. Each credit activates one case with an Appeal Pass.`
+    pro: professionalsListed()
+      ? `Verified professionals pay less per case: credits come in packs of 10 for ${PRODUCTS.pack10.price} and of 30 for ${PRODUCTS.pack30.price}, or as the Pro plan, ${PRODUCTS.pro.credits} credits a month for ${PRODUCTS.pro.price}. Each credit activates one case with an Appeal Pass.${professionalsEnabled() ? "" : ` ${OPENS_SOON.professionals}`}`
       : null,
   },
   partner: {

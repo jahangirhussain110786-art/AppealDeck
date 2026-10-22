@@ -16,6 +16,19 @@ export type PurchaseKind =
   | "pack_30"
   | "pro_plan";
 
+/**
+ * What a product shows while it is listed but not on sale (the preview, `previewPlans()` in
+ * `src/lib/plans.ts`): its price and "Opens soon", never a way to buy it.
+ */
+export const OPENS_SOON = {
+  label: "Opens soon",
+  /** Before an FAQ answer about a product that cannot be bought yet. */
+  faqLead: "Opening soon. ",
+  /** On the writers' page, under the prices. */
+  professionals:
+    "Not on sale yet. Write to us if you want to be verified first, and we will tell you when it opens.",
+} as const;
+
 export const PRODUCTS = {
   /** The AI reading of one case's documents, credited toward the Appeal Pass. */
   review: {
