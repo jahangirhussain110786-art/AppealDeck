@@ -171,7 +171,7 @@ describe("previewing what is not on sale yet", () => {
     );
     expect(privacy(legal)).not.toMatch(/ledger of the credits|\$25/);
     expect(log(changelog)).not.toMatch(
-      /AI document review|Case credits for verified|The Account Pass is on sale/,
+      /A new AI document review|Case credits for verified|The Account Pass is on sale/,
     );
   });
 

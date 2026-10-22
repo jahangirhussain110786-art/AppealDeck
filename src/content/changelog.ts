@@ -13,6 +13,7 @@
 
 import {
   accountPassEnabled,
+  previewPlans,
   professionalsEnabled,
   rebateEnabled,
   renewalEnabled,
@@ -43,7 +44,11 @@ export const CHANGELOG = {
         "A new partner program: a partner earns 30 percent of what a seller they send pays for an Appeal Pass, and that seller gets $25 off. The rules, including how a partner must disclose the commission, are on the page.",
         "Sign-up now asks one optional question about what brings you here. It only decides which pricing page is shown first, and it stays on your device.",
         "Three new answers in the FAQ: using a chatbot instead, pricing for writers, and earning as a partner.",
-        "The pricing page now also shows the Account Pass, the AI document review and the professional prices (credit packs and the Pro plan), each marked “Opens soon”. None of them can be bought yet.",
+        ...(previewPlans()
+          ? [
+              "The pricing page now also shows the Account Pass, the AI document review and the professional prices (credit packs and the Pro plan), each marked “Opens soon”. None of them can be bought yet.",
+            ]
+          : []),
         ...(accountPassEnabled()
           ? [
               "The Account Pass is on sale: one payment that covers every case on your account for 12 months, beside the one-case Appeal Pass. The first buyers may get it at the Appeal Pass price while the founding offer lasts.",
