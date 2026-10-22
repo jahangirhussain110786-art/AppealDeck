@@ -1,5 +1,7 @@
 # The AI-era angle: are our prices too high? (22 Oct 2026)
 
+> **SUPERSEDED IN PART (22 Oct 2026, later): the plan to follow is [`2026-10-22-combined-growth-plan.md`](2026-10-22-combined-growth-plan.md).** This file is kept as evidence. Where it differs (the $49 Document Check, the one-free-check limit, the $25 rebate, the founding price, the writer plan prices, a profiles table), the combined plan says what changed and why.
+
 > **What this is.** The founder's third question on 22 Oct 2026: in a world where sellers can ask ChatGPT, Claude or Gemini for free, are the planned prices too high at launch, and what makes a seller choose AppealDeck and stay? Two research agents (how sellers use general AI for appeals; how AI-era vertical tools price against free chatbots) plus a capability-by-capability comparison against `docs/CURRENT-STATE.md`. Research and judgement only; nothing built. This is input to the combined plan the founder asked for next, alongside `2026-10-22-pricing-strategy-research.md` and `2026-10-22-growth-and-pricing-blueprint.md`. Plain-words version: `2026-10-22-ai-era-pricing-angle-plain-mobile.html`.
 >
 > Tags: **V** read on the page today · **S** snippet only · **U** unverified · **E** my estimate. Reddit and Facebook could not be reached, so first-person seller voice is thin; most sources sell the human service, and that bias runs through §1.

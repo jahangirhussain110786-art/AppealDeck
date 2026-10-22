@@ -18,6 +18,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/how-we-test", lastModified: "2026-10-12" },
     { path: "/changelog", lastModified: "2026-10-12" },
     { path: "/pricing" },
+    { path: "/for-professionals" },
+    { path: "/partners" },
     { path: "/faq" },
     { path: "/support" },
     { path: "/privacy", lastModified: LEGAL.lastUpdated.privacy },

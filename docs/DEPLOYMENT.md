@@ -113,6 +113,32 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
      5a. **Default payment link (found 7 Oct 2026, in the sandbox).** Paddle dashboard → Checkout → Checkout settings → **Default payment link**: set it to `https://appealdeck.com/pricing` (the page that opens the checkout), in the sandbox and again in live. Without it the overlay opens and then fails with `transaction_default_checkout_url_not_set`, and no seller can pay. Paddle may also require the domain to be approved before live checkout works; check Paddle dashboard → Checkout → Website approval when you set up live.
 5. Paddle dashboard → Checkout → Live: confirm your business details (Pakistan Individual seller — set country to PK; Paddle will tell you at checkout which countries can't be sold to and handle VAT for the rest).
 
+## 5c. Partner codes (founder action, 22 Oct 2026) — before the first partner is accepted
+
+The partner program (`/partners`) runs on Paddle discount codes made by hand; nothing in our database knows a partner. A seller who opens a link ending in `?ref=CODE` keeps the code on their device for 60 days and the checkout sends it to Paddle as `discountCode`.
+
+1. Paddle dashboard → Catalog → Discounts → create one discount per partner:
+   - **Type:** flat amount, **USD 25.00**. **Applies to:** the Appeal Pass price only (restrict to that price ID). **Recurring:** no.
+   - **Code:** the partner's code, upper case, letters, digits, `-` or `_`, three to thirty-two characters (`src/lib/partnerCode.ts` refuses anything else, so a code the app cannot carry would never reach Paddle).
+   - Turn on **Checkout discount code** so a buyer can also type it in the payment window.
+2. **Test in the sandbox, once, what an unknown or expired code does** in the overlay (Paddle's docs do not say). Open `/pricing?ref=NOTACODE`, tick the box, buy; record in this file whether checkout opens normally and whether it shows an error. The note by the pay button says the discount "shows in the payment window", so it must not mislead when a code is wrong.
+3. Each month, from Paddle's transaction list, filter by discount code: for every completed Pass whose 14-day refund window has passed and which was not refunded or charged back, the partner earns 30 percent of the amount the buyer paid ($67.20 on a $224 sale). Pay by bank transfer or Payoneer and send the partner a message with their sales and balance. The page promises exactly this and says there is no dashboard yet.
+4. The page tells people to write to `support@appealdeck.com` with the subject "Partner program" or "Appeal writer: how I work" (§6a creates the mailbox).
+
+To change a number (the rate, the discount, the window), edit `PARTNERS` in `src/content/audiences.ts`; `src/content/__tests__/audiences.test.ts` recomputes the $67.20 and fails until the page is consistent.
+
+## 5d. The Account Pass and the founding offer (founder action, 22 Oct 2026) — optional, in this order
+
+The Account Pass ($329, every case on the account for 12 months) is built and tested but **switched off**: no page shows it, nothing can buy it, and the app calls the payment database exactly as before, until its Paddle price id is set. The founding offer (the first buyers get the Account Pass at the Appeal Pass price) is off until its code is set. Do these in this order; the order is what keeps today's sales safe.
+
+1. **Database first.** Supabase → SQL editor → paste `supabase/migrations/0017_account_pass.sql` and run it. It is one transaction: if anything is wrong it changes nothing. It adds the `account_pass` plan, a one-active-per-account index, the extended `apply_paddle_event` and the extended `claim_case_pass`. Check with `select proname from pg_proc where proname in ('apply_paddle_event','claim_case_pass');` (two rows) and `select pg_get_constraintdef(oid) from pg_constraint where conname = 'licenses_plan_check';` (it must now name `account_pass`). The same SQL is run against a real Postgres in `src/lib/__tests__/paymentSql.test.ts` on every test run.
+2. **Paddle price.** Catalog → create **Account Pass**, one-time, **USD 329.00** (it must equal `PRICING.account.price` in `src/content/marketing.ts`; change both together). Copy its `pri_...` id into Vercel as `NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS`. The webhook endpoint and events (§5) are unchanged.
+3. **Partner codes (§5c) apply to both Passes.** In each partner's discount, restrict it to **both** price ids, not only the Appeal Pass.
+4. **Founding offer (optional).** Create a Paddle discount: flat **USD 80.00** off, restricted to the **Account Pass price only**, **usage limit 25**, code for example `FOUNDING`. Paddle's usage limit is what ends the offer; the page's counter is only advisory. Set `NEXT_PUBLIC_FOUNDING_CODE=FOUNDING` and, if not 25, `NEXT_PUBLIC_FOUNDING_SPOTS`. A partner's code replaces the founding code on a checkout (Paddle takes one code), so a partner is never cheated of a sale.
+5. **Redeploy.** `NEXT_PUBLIC_*` values are put into the build, so nothing changes until the next build. Then the pricing page shows four cards, a "Which Pass?" picker beside the pay button, the Terms and FAQ gain their Account Pass text, and the changelog gains its line.
+6. **Sandbox first, then live.** Buy the Account Pass in the sandbox with a test card; check the new `licenses` row (`plan = 'account_pass'`, `case_id` null, `expires_at` twelve months out); open a second case and prepare a response without buying anything; refund the payment and check the cover ends; buy it again and check a second purchase while the first is active is refused with "Your Account Pass already covers every case". Check what Paddle shows for an unknown discount code (§5c step 2).
+7. **To switch it off again**, unset `NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS` and redeploy. Passes already sold keep working: the database function and the case claim stay in place, and the licence lookup still honours an unexpired Account Pass.
+
 ## 6. Upstash production setup (founder action)
 
 **Done 28 Sep 2026 through Vercel → Storage → Upstash (Redis).** The integration created the database and injected `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN`, `KV_URL` and `REDIS_URL` into Preview and Production. The app reads `KV_REST_API_URL` / `KV_REST_API_TOKEN` when the `UPSTASH_` names are absent (`src/lib/redisEnv.ts`), so nothing needs copying. Local development keeps its own database in `.env.local` under the `UPSTASH_` names, so local testing never uses up production's rate limits or the Gemini spend cap.

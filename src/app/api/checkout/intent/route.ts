@@ -5,11 +5,13 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { fetchLicenseForUser } from "@/lib/license";
 import { CaseIdSchema, ViolationKindSchema } from "@/lib/caseSchema";
 import { isSeverityGated } from "@/core";
-import { LEGAL } from "@/content/legal";
+import { consentLabelFor } from "@/content/legal";
 import { isPurchaseBlocked, REGION_BLOCKED_MESSAGE } from "@/lib/region";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { WorkspaceSchema } from "@/lib/workspaceSchema";
 import { workspaceCanCompose } from "@/core/workspace";
+import { accountPassPriceId, casePassPriceId, foundingCode, parsePlan } from "@/lib/plans";
+import { foundingSpotsLeft } from "@/lib/founding";
 
 const Body = z.object({
   caseId: CaseIdSchema,
@@ -19,6 +21,8 @@ const Body = z.object({
   // client sends this one case's current workspace so eligibility can be checked before payment,
   // the same way /api/compose already does at draft time.
   workspace: WorkspaceSchema.optional(),
+  // "case" is the Appeal Pass and the default, so a client that never sends it behaves as before.
+  plan: z.enum(["case", "account"]).default("case"),
 });
 export async function POST(req: NextRequest) {
   const user = await getApiUser();
@@ -51,7 +55,8 @@ export async function POST(req: NextRequest) {
       },
       { status: 422 },
     );
-  const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
+  const plan = parsePlan(parsed.data.plan);
+  const priceId = plan === "account" ? accountPassPriceId() : casePassPriceId();
   if (!supabaseAdmin || !priceId)
     return NextResponse.json({ error: "Checkout is not configured." }, { status: 503 });
   // One Pass covers every revision of its case, so a second checkout for a case that already has
@@ -60,9 +65,16 @@ export async function POST(req: NextRequest) {
   const existing = await fetchLicenseForUser(user.id, parsed.data.caseId).catch(() => null);
   if (!existing)
     return NextResponse.json({ error: "Could not prepare checkout." }, { status: 503 });
-  if (existing.status === "active")
+  // An Account Pass covers every case, so nothing more is sold to its holder. A case Pass covers one
+  // case, so its holder may still buy the Account Pass (it covers every other case too).
+  if (existing.status === "active" && (plan === "case" || existing.plan === "account_pass"))
     return NextResponse.json(
-      { error: "This case already has an Appeal Pass. It covers every revision — open your case." },
+      {
+        error:
+          existing.plan === "account_pass"
+            ? "Your Account Pass already covers every case on your account. Open your case."
+            : "This case already has an Appeal Pass. It covers every revision — open your case.",
+      },
       { status: 409 },
     );
   // A second click or a second tab within half an hour gets the same intent back. Two payments made
@@ -79,7 +91,12 @@ export async function POST(req: NextRequest) {
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (recent.data?.id) return NextResponse.json({ intentId: recent.data.id, priceId });
+  if (recent.data?.id)
+    return NextResponse.json({
+      intentId: recent.data.id,
+      priceId,
+      ...(await foundingOffer(plan)),
+    });
   const { data, error } = await supabaseAdmin
     .from("checkout_intents")
     .insert({
@@ -87,11 +104,22 @@ export async function POST(req: NextRequest) {
       email: user.email,
       case_id: parsed.data.caseId,
       price_id: priceId,
-      consent_text: LEGAL.consent.withdrawalCheckbox.label,
+      consent_text: consentLabelFor(plan),
     })
     .select("id")
     .single();
   if (error || !data)
     return NextResponse.json({ error: "Could not prepare checkout." }, { status: 503 });
-  return NextResponse.json({ intentId: data.id, priceId });
+  return NextResponse.json({ intentId: data.id, priceId, ...(await foundingOffer(plan)) });
+}
+
+/**
+ * The founding discount code, only for the Account Pass and only while spots are left. Paddle's
+ * usage limit on the discount is the hard stop; this decides whether to offer the code at all.
+ */
+async function foundingOffer(plan: "case" | "account"): Promise<{ foundingCode?: string }> {
+  const code = foundingCode();
+  if (plan !== "account" || !code) return {};
+  const left = await foundingSpotsLeft().catch(() => null);
+  return left !== null && left > 0 ? { foundingCode: code } : {};
 }

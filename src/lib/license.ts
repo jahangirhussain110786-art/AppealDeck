@@ -7,6 +7,8 @@ export interface LicenseSummary {
   plan: string | null;
   licenseKey: string | null;
   createdAt?: string | null;
+  /** When an Account Pass stops covering new cases; null for a case Pass, which does not expire. */
+  expiresAt?: string | null;
 }
 
 export async function fetchLicenseForUser(
@@ -23,10 +25,12 @@ export async function fetchLicenseForUser(
     .order("created_at", { ascending: false });
   if (error) throw new Error("License lookup unavailable");
   const eligible = caseId ? rows?.filter((row) => row.case_id === caseId || !row.case_id) : rows;
-  const active = eligible?.find(
-    (row) =>
-      row.status === "active" && (!row.expires_at || Date.parse(row.expires_at) > Date.now()),
-  );
+  const isLive = (row: { status: string; expires_at?: string | null }) =>
+    row.status === "active" && (!row.expires_at || Date.parse(row.expires_at) > Date.now());
+  // An Account Pass covers more than a case Pass, so when both are live it is the one reported.
+  const active =
+    eligible?.find((row) => isLive(row) && row.plan === "account_pass") ??
+    eligible?.find((row) => isLive(row));
   const data = active ?? eligible?.[0];
   if (!data) {
     return { status: "none", plan: null, licenseKey: null };
@@ -39,6 +43,7 @@ export async function fetchLicenseForUser(
     plan: (data.plan as string | null) ?? null,
     licenseKey: (data.license_key as string | null) ?? null,
     createdAt: (data.created_at as string | null | undefined) ?? null,
+    expiresAt: (data.expires_at as string | null | undefined) ?? null,
   };
 }
 

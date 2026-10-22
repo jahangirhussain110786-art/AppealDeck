@@ -10,6 +10,9 @@ import type { Vault } from "@/core/vault/vault";
 import { APP } from "@/content/app";
 import { apiErrorMessage } from "@/lib/apiError";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
+import { buildCheckoutOptions, type CheckoutOptions } from "@/lib/checkoutOptions";
+import { readPartnerCode } from "@/lib/partnerCode";
+import type { PassPlan } from "@/lib/plans";
 
 declare global {
   interface Window {
@@ -21,12 +24,9 @@ declare global {
       }) => void;
       Environment: { set: (env: "sandbox" | "production") => void };
       Checkout: {
-        open: (opts: {
-          items: { priceId: string }[];
-          settings?: { displayMode?: "overlay" | "inline" };
-          customer?: { email?: string };
-          customData?: { checkout_intent_id: string };
-        }) => void;
+        open: (
+          opts: CheckoutOptions & { settings?: { displayMode?: "overlay" | "inline" } },
+        ) => void;
       };
     };
   }
@@ -64,8 +64,11 @@ export function CheckoutButton({
   onCompleted,
   consent = false,
   vault: sharedVault,
+  plan = "case",
 }: {
   priceId?: string;
+  /** "case" is the Appeal Pass; "account" is the Account Pass (only where it is configured). */
+  plan?: PassPlan;
   children: React.ReactNode;
   className?: string;
   size?: ButtonProps["size"];
@@ -174,6 +177,7 @@ export function CheckoutButton({
           kind: file.kind,
           consent,
           workspace: file.workspace,
+          plan,
         }),
       });
       const data = await response.json().catch(() => null);
@@ -189,11 +193,17 @@ export function CheckoutButton({
       // to reach Paddle (locked vault, no case, intent rejected) is a different problem and must
       // not be counted as an opened checkout.
       trackFunnelEvent(FUNNEL_EVENTS.checkoutOpened);
-      window.Paddle.Checkout.open({
-        items: [{ priceId: data.priceId }],
-        customer: customerEmail ? { email: customerEmail } : undefined,
-        customData: { checkout_intent_id: data.intentId },
-      });
+      // A partner's code, if the seller arrived through one. Paddle applies it and shows the
+      // discount in its own window; a code Paddle does not know is simply not applied.
+      window.Paddle.Checkout.open(
+        buildCheckoutOptions({
+          priceId: data.priceId,
+          intentId: data.intentId,
+          email: customerEmail,
+          partnerCode: readPartnerCode(),
+          foundingCode: typeof data.foundingCode === "string" ? data.foundingCode : null,
+        }),
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Checkout could not open.");
     } finally {

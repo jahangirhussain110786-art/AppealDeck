@@ -252,6 +252,10 @@ export const APP = {
       // A Pass covers ONE case, so say so wherever its status is shown.
       coversOne: "Your Appeal Pass covers one case.",
       coversOneNoCase: "Your Appeal Pass covers the one case it was bought for.",
+      // The Account Pass (22 Oct 2026) covers every case on the account until its twelve months end.
+      accountHeading: "Account Pass active",
+      coversAccount: "Your Account Pass covers every case on your account until {date}.",
+      coversAccountNoDate: "Your Account Pass covers every case on your account.",
       planLabel: "Plan",
     },
     inactive: {
@@ -473,6 +477,7 @@ export const APP = {
     eyebrow: "Account tools",
     subtitle: "Check your pass, manage browsers and find payment support.",
     planName: "Appeal Pass",
+    accountPlanName: "Account Pass",
     dateUnavailable: "Not recorded",
     continue: "Open your dashboard",
     supportTitle: "Receipts & support",
@@ -481,10 +486,14 @@ export const APP = {
     policyLink: "Privacy & data",
     active: {
       title: "Appeal Pass — active",
+      accountTitle: "Account Pass — active",
       planLabel: "Plan",
       purchasedLabel: "Purchased",
+      validUntilLabel: "Covers new cases until",
       receiptText:
         "Your pass covers one eligible case. Check that case before preparing a response.",
+      accountReceiptText:
+        "Your Account Pass covers every eligible case on your account until the date above. Check each case before preparing a response.",
     },
     inactive: {
       title: "No active Appeal Pass",

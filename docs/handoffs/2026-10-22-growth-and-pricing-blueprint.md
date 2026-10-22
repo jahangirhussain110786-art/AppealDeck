@@ -1,5 +1,7 @@
 # Growth and pricing blueprint: roles, offers, partners, retention (22 Oct 2026)
 
+> **SUPERSEDED IN PART (22 Oct 2026, later): the plan to follow is [`2026-10-22-combined-growth-plan.md`](2026-10-22-combined-growth-plan.md).** This file is kept as evidence. Where it differs (the $49 Document Check, the one-free-check limit, the $25 rebate, the founding price, the writer plan prices, a profiles table), the combined plan says what changed and why.
+
 > **What this is.** The second, deeper pass the founder asked for on 22 Oct 2026: Hormozi's _$100M Money Models_ in detail **plus** the other best books on pricing, marketing and retention, turned into one structured system with role-based sign-up, a partner ("mediator") program and a retention loop for each kind of customer. It builds on and **corrects** `2026-10-22-pricing-strategy-research.md` (same day) where the wider reading changed the answer (§1). Research and design only; nothing is built. Plain-words version: `2026-10-22-growth-and-pricing-blueprint-plain-mobile.html`.
 >
 > As instructed, existing pricing decisions and rules do not limit the design; outside facts do (Paddle's rules, consumer law, what the code can do). Tags as in the research file: **V** read on a source today, **S** snippet, **E** my estimate, **U** unverified.

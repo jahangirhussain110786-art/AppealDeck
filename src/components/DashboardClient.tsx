@@ -157,12 +157,22 @@ function PassStatusRow({
         <CreditCard className="size-4 shrink-0 text-muted-foreground" aria-hidden />
       )}
       <span className="font-medium text-foreground">
-        {active ? APP.dashboard.active.heading : APP.dashboard.inactive.heading}
+        {active
+          ? license.plan === "account_pass"
+            ? APP.dashboard.active.accountHeading
+            : APP.dashboard.active.heading
+          : APP.dashboard.inactive.heading}
       </span>
       {/* The heading already names the Pass; "Plan: appeal_pass" printed an internal key. */}
       {active && (
         <span className="text-xs text-muted-foreground">
-          {hasCase ? APP.dashboard.active.coversOne : APP.dashboard.active.coversOneNoCase}
+          {license.plan === "account_pass"
+            ? license.expiresAt
+              ? APP.dashboard.active.coversAccount.replace("{date}", formatDate(license.expiresAt))
+              : APP.dashboard.active.coversAccountNoDate
+            : hasCase
+              ? APP.dashboard.active.coversOne
+              : APP.dashboard.active.coversOneNoCase}
         </span>
       )}
       {!active && (

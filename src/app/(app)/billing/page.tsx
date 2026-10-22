@@ -67,10 +67,14 @@ export default async function BillingPage() {
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
               <h2 className="text-[0.9375rem] font-semibold text-foreground">
-                {APP.billing.active.title}
+                {license.plan === "account_pass"
+                  ? APP.billing.active.accountTitle
+                  : APP.billing.active.title}
               </h2>
               <StatusPill tone="ok" dot>
-                {APP.billing.planName}
+                {license.plan === "account_pass"
+                  ? APP.billing.accountPlanName
+                  : APP.billing.planName}
               </StatusPill>
             </div>
             <dl className="grid border-b border-border sm:grid-cols-2">
@@ -79,7 +83,9 @@ export default async function BillingPage() {
                 <dd className="mt-1 text-lg font-semibold tracking-[-0.02em]">
                   {license.plan === "appeal_pass"
                     ? APP.billing.planName
-                    : license.plan?.replace(/_/g, " ")}
+                    : license.plan === "account_pass"
+                      ? APP.billing.accountPlanName
+                      : license.plan?.replace(/_/g, " ")}
                 </dd>
               </div>
               <div className="border-t border-border px-6 py-4 sm:border-l sm:border-t-0">
@@ -91,8 +97,20 @@ export default async function BillingPage() {
                 </dd>
               </div>
             </dl>
+            {license.plan === "account_pass" && license.expiresAt && (
+              <div className="border-b border-border px-6 py-4">
+                <p className="text-xs text-muted-foreground">
+                  {APP.billing.active.validUntilLabel}
+                </p>
+                <p className="mt-1 text-lg font-semibold tabular-nums tracking-[-0.02em]">
+                  {formatDate(license.expiresAt)}
+                </p>
+              </div>
+            )}
             <p className="px-6 py-4 text-sm text-muted-foreground">
-              {APP.billing.active.receiptText}
+              {license.plan === "account_pass"
+                ? APP.billing.active.accountReceiptText
+                : APP.billing.active.receiptText}
             </p>
           </>
         ) : (

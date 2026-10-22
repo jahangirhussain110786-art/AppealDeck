@@ -40,7 +40,25 @@ describe("GET /api/license/status", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("no-store");
     const body = await res.json();
-    expect(body).toEqual({ status: "active", plan: "appeal-pass" });
+    expect(body).toEqual({ status: "active", plan: "appeal-pass", expiresAt: null });
+  });
+
+  it("tells the page when an Account Pass ends, and never exposes the licence key", async () => {
+    getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
+    fetchLicenseForUserMock.mockResolvedValue({
+      status: "active",
+      plan: "account_pass",
+      licenseKey: "AD-SECRET",
+      expiresAt: "2027-10-22T10:00:00.000Z",
+    });
+    const res = await GET();
+    const body = await res.json();
+    expect(body).toEqual({
+      status: "active",
+      plan: "account_pass",
+      expiresAt: "2027-10-22T10:00:00.000Z",
+    });
+    expect(JSON.stringify(body)).not.toContain("AD-SECRET");
   });
 
   it("returns status none when signed in with no license", async () => {
@@ -48,7 +66,7 @@ describe("GET /api/license/status", () => {
     fetchLicenseForUserMock.mockResolvedValue({ status: "none", plan: null, licenseKey: null });
     const res = await GET();
     const body = await res.json();
-    expect(body).toEqual({ status: "none", plan: null });
+    expect(body).toEqual({ status: "none", plan: null, expiresAt: null });
   });
 });
 

@@ -7,6 +7,7 @@ import { MotionProviders } from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
 import { AnalyticsScript } from "@/components/AnalyticsScript";
 import { GuideDex } from "@/components/GuideDex";
+import { PartnerCodeCapture } from "@/components/PartnerCodeCapture";
 import { SITE_URL } from "@/lib/urls";
 import { SHARED } from "@/content/shared";
 
@@ -65,6 +66,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {children}
             <Toaster />
             <GuideDex />
+            <PartnerCodeCapture />
           </MotionProviders>
         </ThemeProvider>
         <AnalyticsScript />

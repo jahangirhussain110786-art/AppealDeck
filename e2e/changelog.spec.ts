@@ -8,7 +8,7 @@ test("the changelog lists dated entries, newest first, and is accessible", async
   await page.goto("/changelog");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/what changed/i);
   const dates = page.getByRole("heading", { level: 2 });
-  await expect(dates.first()).toHaveText("20 Oct 2026");
+  await expect(dates.first()).toHaveText("22 Oct 2026");
   await expect(page.getByText(/plain headings, without the double hash marks/)).toBeVisible();
   await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
 });

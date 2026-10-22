@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>The combined plan: what is built, what waits</title>
+<style>
+:root{--bg:#f6f5f0;--card:#ffffff;--ink:#14213a;--muted:#566074;--line:#e3e1d8;--navy:#14213a;--navy-ink:#f4f6fb;--green:#166534;--amber:#8a5a00;--red:#9f1d1d;--blue:#1d4ed8;--blue-soft:#e8effd}
+@media (prefers-color-scheme: dark){:root{--bg:#0d1424;--card:#151f35;--ink:#eef1f8;--muted:#a6b0c5;--line:#26324d;--navy:#0a1020;--navy-ink:#f4f6fb;--green:#6ee7a0;--amber:#f5c451;--red:#fca5a5;--blue:#93b4ff;--blue-soft:#17233f}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.65;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}
+code{font:.9em ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--blue-soft);padding:.1em .35em;border-radius:5px;word-break:break-word}
+.hero{background:var(--navy);color:var(--navy-ink);padding:34px 0 30px}
+.hero .tag{display:inline-block;font-size:13px;font-weight:700;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:999px;margin-bottom:16px}
+.hero h1{font-size:30px;line-height:1.2;margin:0 0 14px;font-weight:800}.hero h1 em{font-style:normal;color:#fdba74}
+.hero p{margin:0;font-size:18px;color:#dbe3f2}.hero .meta{margin-top:18px;font-size:14px;color:#aebad2}
+section{padding:30px 0 4px}h2{font-size:24px;line-height:1.25;margin:0 0 8px;font-weight:800}
+p{margin:0 0 14px}.lead{font-size:18px;color:var(--muted)}
+ul.items{list-style:none;margin:10px 0 0;padding:0}
+ul.items li{background:var(--card);border:1px solid var(--line);border-left-width:5px;border-radius:14px;padding:13px 15px;margin:0 0 10px}
+ul.items li b{display:block;font-size:17px;margin-bottom:2px}ul.items li span{display:block;font-size:15.5px;color:var(--muted);line-height:1.55}
+ul.items.green li{border-left-color:var(--green)}ul.items.amber li{border-left-color:var(--amber)}ul.items.red li{border-left-color:var(--red)}ul.items.blue li{border-left-color:var(--blue)}
+ol.steps{padding-left:0;list-style:none;counter-reset:s;margin:12px 0}ol.steps li{counter-increment:s;position:relative;padding:4px 0 14px 46px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:32px;height:32px;border-radius:50%;background:var(--navy);color:var(--navy-ink);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+footer{padding:34px 0 50px;color:var(--muted);font-size:15px}
+@media (min-width:640px){body{font-size:18px}.hero h1{font-size:40px}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <span class="tag">Stage 1 is built and tested</span>
+  <h1>The combined plan: <em>what is built, what waits</em></h1>
+  <p>You authorized the plan. This is what went live in the code today, what I corrected after reading the code, and what waits for a number. Full file: <code>2026-10-22-combined-growth-plan.md</code>.</p>
+  <div class="meta">22 October 2026 · nothing is deployed or pushed live by this page</div>
+</div></header>
+<main class="wrap">
+
+<section>
+  <h2>Built today</h2>
+  <ul class="items green">
+    <li><b>"Can I ask a chatbot instead?" on the pricing page</b><span>A plain comparison, honest that a chatbot may be enough for a first read. Plus what else people pay, with the date it was read.</span></li>
+    <li><b>Three pricing pages: sellers, writers and VA teams, partners</b><span>Always one click apart. Someone who said they write appeals is pointed to their page.</span></li>
+    <li><b>One optional question at sign-up</b><span>"What brings you here?" Kept on the device only. Not asked when someone signs up in the middle of a case.</span></li>
+    <li><b>Partner codes</b><span>A link ending <code>?ref=CODE</code> keeps the code for 60 days and sends it to checkout as a $25 discount.</span></li>
+    <li><b>The partner program, in full, on a page</b><span>30 percent of what the buyer pays, paid after the 14-day refund window, six rules for partners. It says plainly: codes by hand, no dashboard yet.</span></li>
+    <li><b>The writers' page</b><span>What a writer can use today, what it costs, and "professional pricing is not set yet".</span></li>
+    <li><b>Three new FAQ answers, Dex lines, footer links, sitemap, privacy line, changelog</b><span>All dated 22 October.</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2>Update: the Account Pass is now built, and switched off</h2>
+  <ul class="items blue">
+    <li><b>Account Pass ($329) and the founding offer</b><span>Built and tested. Nothing shows or sells until you set its price in Vercel. Apply the database change first (<code>DEPLOYMENT.md</code> section 5d).</span></li>
+    <li><b>The payment database code is now tested for real</b><span>All 17 database changes are run on a real Postgres inside the tests. Two deliberate breakages were caught.</span></li>
+    <li><b>Still waiting</b><span>Writer packs and a Pro plan (three writers first), the price test, the yearly renewal. A paid AI document review needs Gemini billing first. The $25 rebate stays out while outcome sharing is anonymous.</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2>What I corrected after reading the code</h2>
+  <ul class="items amber">
+    <li><b>The $49 Document Check is struck</b><span>The document checks already run free on the device. We would be selling something free, and the AI reading it could sell cannot run until Gemini billing is on.</span></li>
+    <li><b>"One free check" is struck</b><span>Unlimited free checks are the best thing in the free tier, and they cost us nothing.</span></li>
+    <li><b>The $25 rebate for reporting an outcome is struck</b><span>Outcome sharing is anonymous on purpose, so we cannot know who to pay.</span></li>
+    <li><b>The founding price waits</b><span>Its bonus is the Account Pass, which does not exist yet.</span></li>
+    <li><b>Partner pay is 30 percent of what the buyer pays</b><span>$67.20 on a $224 sale. Of the full $249 it would fall below the 2-times rule.</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2>What waits, and the number that releases it</h2>
+  <ul class="items blue">
+    <li><b>Switching on the Account Pass</b><span>Your choice, when you want it. The plan said after 25 paid cases; the code no longer has to wait.</span></li>
+    <li><b>Writer packs and a Pro plan</b><span>After three writers have run a real case. No price is shown until then.</span></li>
+    <li><b>Price test, $249 to $299 to $349</b><span>After 50 paid cases and 30 outcome reports.</span></li>
+    <li><b>$99 yearly renewal</b><span>When the first Account Passes reach month 11.</span></li>
+  </ul>
+  <p>Each needs a new type of licence and a database change, on a payment path that has never taken a real payment. The plan has the exact build steps ready.</p>
+</section>
+
+<section>
+  <h2>Only you can do</h2>
+  <ol class="steps">
+    <li>In Paddle, make a flat $25 discount for each partner code, and <b>test in the sandbox what an unknown code does</b> (steps in <code>DEPLOYMENT.md</code> section 5c).</li>
+    <li>Have a Payoneer account, and read the support mailbox for "Partner program" and "Appeal writer" messages.</li>
+    <li>Read <code>/partners</code> and <code>/for-professionals</code> before launch. They state a commission and a discount in your name. If you decide not to run the program, remove the page, the footer link, the FAQ entry and the changelog line together.</li>
+    <li>Re-read the going rates on the pricing page every quarter. A test fails when the date is 150 days old.</li>
+    <li>Ten conversations with writers before stage 3.</li>
+  </ol>
+</section>
+
+</main>
+<footer><div class="wrap">AppealDeck · 22 October 2026</div></footer>
+</body>
+</html>

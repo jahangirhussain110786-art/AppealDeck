@@ -20,7 +20,12 @@ test("/faq: every answer is in the page before any click, and questions open by 
   expect(html).toContain('"@type":"FAQPage"');
 
   await page.goto("/faq");
-  for (const topic of ["Getting started", "Your response", "Files & privacy", "Pass & refunds"]) {
+  for (const topic of [
+    "Getting started",
+    "Your response",
+    "Files & privacy",
+    "Pass, refunds & partners",
+  ]) {
     await expect(page.getByRole("heading", { level: 2, name: topic, exact: true })).toBeVisible();
   }
   const processing = page.locator("summary", { hasText: "What leaves my browser?" });

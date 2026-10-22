@@ -48,6 +48,8 @@ export function SiteFooter() {
             { href: "/how-we-test", label: SHARED.footer.nav.howWeTest },
             { href: "/changelog", label: SHARED.footer.nav.changelog },
             { href: "/pricing", label: SHARED.nav.pricing },
+            { href: "/for-professionals", label: SHARED.footer.nav.forProfessionals },
+            { href: "/partners", label: SHARED.footer.nav.partners },
             { href: "/faq", label: SHARED.nav.faq },
             { href: "/privacy#data-flow", label: SHARED.footer.nav.dataFlow },
           ]}

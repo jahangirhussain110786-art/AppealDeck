@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowRight, Check, Info } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
 import { SectionHeading } from "@/components/SectionHeading";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -15,14 +14,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FaqAccordion } from "@/components/pricing/FaqAccordion";
-import { PurchasePanel } from "@/components/pricing/PurchasePanel";
+import { PurchaseSection } from "@/components/pricing/PurchaseSection";
+import { PlanCards } from "@/components/pricing/PlanCards";
+import { accountPassEnabled } from "@/lib/plans";
+import { VersusSection } from "@/components/pricing/VersusSection";
+import { AudienceSwitch } from "@/components/AudienceSwitch";
+import { RoleNudge } from "@/components/RoleNudge";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { GLOBAL_EXPECTATIONS } from "@/core/guidance";
 import { AccentWord } from "@/components/ui/accent-word";
-import { HOME, PRICING } from "@/content/marketing";
+import { PRICING } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { splitAccent } from "@/lib/splitAccent";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = pageMetadata({
   title: SHARED.metadata.titlePricing,
@@ -63,7 +66,6 @@ function ValueCell({ value }: { value: string }) {
  * requires the expectations to be read before the pay button is reached.
  */
 export default function PricingPage() {
-  const plans = HOME.plans.items;
   return (
     <MarketingShell bleed>
       <section className="stage dark text-foreground">
@@ -83,68 +85,14 @@ export default function PricingPage() {
             {PRICING.subline}
           </p>
           <p className="mt-3 text-sm text-muted-foreground">{PRICING.currencyNote}</p>
+          <AudienceSwitch className="mt-8 justify-center" />
+          <RoleNudge />
         </div>
       </section>
 
       <div className="mx-auto w-full max-w-marketing px-4 sm:px-8">
         <section className="relative -mt-28 pb-6">
-          <div className="grid gap-4 lg:grid-cols-3">
-            {plans.map((plan, i) => {
-              const pass = i === plans.length - 1;
-              return (
-                <div
-                  key={plan.name}
-                  className={cn(
-                    "flex flex-col gap-6 rounded-[22px] p-7 sm:p-8",
-                    pass
-                      ? "stage stage-plain dark text-foreground shadow-stage"
-                      : "border border-border/80 bg-card shadow-lift",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p
-                        className={cn(
-                          "text-sm font-semibold",
-                          pass ? "text-primary" : "text-muted-foreground",
-                        )}
-                      >
-                        {plan.name}
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">{plan.note}</p>
-                    </div>
-                  </div>
-                  <p className="text-5xl font-semibold tracking-[-0.045em] text-foreground" data-tn>
-                    {plan.price}
-                  </p>
-                  <ul className="flex flex-col gap-2.5 text-[0.95rem] text-muted-foreground">
-                    {plan.features.map((f) => (
-                      <li key={f} className="grid grid-cols-[1.25rem_1fr] gap-2.5">
-                        <span className="mt-1 grid size-4 place-items-center rounded-full bg-success/15">
-                          <Check aria-hidden className="size-2.5 text-success" strokeWidth={3.5} />
-                        </span>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  {/* The action after the features, at the foot of every card, as in the prototype. */}
-                  <div className="mt-auto">
-                    {pass ? (
-                      <Button asChild size="lg" className="w-full">
-                        <a href="#purchase">{PRICING.jumpToPurchase}</a>
-                      </Button>
-                    ) : (
-                      <Button asChild size="lg" variant="outline" className="w-full">
-                        <Link href={i === 0 ? "/decode" : "/signup"}>
-                          {i === 0 ? SHARED.nav.decodeCta : PRICING.createAccount}
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <PlanCards />
           <p className="mx-auto mt-6 max-w-prose text-center text-base font-medium text-foreground">
             {PRICING.freeVersusPass}
           </p>
@@ -188,6 +136,8 @@ export default function PricingPage() {
             </Card>
           </div>
         </section>
+
+        <VersusSection />
 
         <section
           id="purchase"
@@ -241,37 +191,7 @@ export default function PricingPage() {
               weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
             />
           </div>
-          <div className="space-y-4">
-            <div className="rounded-[20px] bg-card p-6 shadow-lift ring-1 ring-inset ring-border">
-              <p className="pb-3 text-lg font-semibold tracking-[-0.02em]">{PRICING.order.title}</p>
-              <dl className="divide-y divide-border border-t border-border text-[0.9375rem]">
-                {[
-                  [PRICING.order.line, PRICING.order.amount, false],
-                  [PRICING.order.tax, PRICING.order.taxValue, true],
-                  [PRICING.order.expires, PRICING.order.expiresValue, true],
-                ].map(([k, v, quiet]) => (
-                  <div
-                    key={String(k)}
-                    className={cn(
-                      "flex justify-between py-3",
-                      quiet ? "text-muted-foreground" : "text-foreground",
-                    )}
-                  >
-                    <dt>{k}</dt>
-                    <dd className="tabular-nums">{v}</dd>
-                  </div>
-                ))}
-                <div className="flex justify-between py-3 text-lg font-semibold">
-                  <dt>{PRICING.order.total}</dt>
-                  <dd className="tabular-nums">{PRICING.order.amount}</dd>
-                </div>
-              </dl>
-            </div>
-            <PurchasePanel />
-            <p className="text-center text-[0.84375rem] text-muted-foreground">
-              {PRICING.order.paidThrough}
-            </p>
-          </div>
+          <PurchaseSection accountEnabled={accountPassEnabled()} />
         </section>
 
         <section className="grid gap-8 pb-16 sm:pb-20 lg:grid-cols-[18rem_1fr] lg:gap-16">

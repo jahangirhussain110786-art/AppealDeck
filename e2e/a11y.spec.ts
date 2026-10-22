@@ -23,6 +23,12 @@ test.describe("Marketing + auth surfaces (axe-core, serious + critical)", () => 
     await assertNoAxeViolations(page, "/decode");
   });
 
+  for (const path of ["/for-professionals", "/partners"]) {
+    test(`${path} page has no serious or critical a11y violations`, async ({ page }) => {
+      await assertNoAxeViolations(page, path);
+    });
+  }
+
   test("/faq page has no serious or critical a11y violations", async ({ page }) => {
     await assertNoAxeViolations(page, "/faq");
   });

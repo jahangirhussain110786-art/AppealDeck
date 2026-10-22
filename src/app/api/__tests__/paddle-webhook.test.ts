@@ -19,9 +19,28 @@ function request(body = JSON.stringify(event), age = 0, valid = true) {
   });
 }
 beforeEach(() => {
+  vi.unstubAllEnvs();
   vi.stubEnv("PADDLE_WEBHOOK_SECRET", "test-secret");
   rpc.mockReset();
   rpc.mockResolvedValue({ error: null });
+});
+describe("Paddle webhook price arguments", () => {
+  it("makes the same call as before the Account Pass existed while it has no price", async () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "");
+    await POST(request());
+    const args = rpc.mock.calls[0]![1] as Record<string, unknown>;
+    expect(Object.keys(args).sort()).toEqual(["p_event", "p_price_id"]);
+  });
+
+  it("also passes the Account Pass price id once it is configured", async () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "pri_account");
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS", "pri_case");
+    await POST(request());
+    expect(rpc).toHaveBeenCalledWith(
+      "apply_paddle_event",
+      expect.objectContaining({ p_price_id: "pri_case", p_account_price_id: "pri_account" }),
+    );
+  });
 });
 describe("Paddle webhook delivery", () => {
   it("acknowledges only after the database transaction succeeds", async () => {

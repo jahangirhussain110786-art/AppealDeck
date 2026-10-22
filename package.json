@@ -74,6 +74,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@electric-sql/pglite": "^0.5.11",
     "@lhci/cli": "^0.15.1",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@next/bundle-analyzer": "^16.3.4",

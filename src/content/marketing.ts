@@ -3,6 +3,7 @@
 // No banned-pattern / banned-number strings. Banned-list enforced by scripts/lint-copy.mjs.
 
 import { AMAZON_REVIEW_TIME } from "./shared";
+import { accountPassEnabled } from "@/lib/plans";
 
 /**
  * The home page tells one story, once, in the order a frightened seller needs it (25 Sep 2026):
@@ -111,7 +112,7 @@ export const HOME = {
   questions: {
     title: "Questions",
     // Not "independence": its answer repeats the footer's not-affiliated line word for word.
-    ids: ["outcome", "replies", "start-free", "submit"],
+    ids: ["outcome", "chatbot", "replies", "start-free", "submit"],
   },
   plans: {
     eyebrow: "Pricing",
@@ -491,8 +492,122 @@ export const PRICING = {
     title: "Sample Plan of Action",
   },
   cta: "Get the Appeal Pass",
+  /**
+   * The Account Pass (22 Oct 2026, stage 2 of the combined plan): every case on one account for 12
+   * months. None of this appears on any page until its Paddle price is configured
+   * (`accountPassEnabled()` in `src/lib/plans.ts`), so it cannot promise what cannot yet be bought.
+   * The price here must equal the Paddle price (docs/DEPLOYMENT.md section 5d).
+   */
+  account: {
+    name: "Account Pass",
+    note: "Every case, 12 months",
+    price: "$329",
+    features: [
+      "Everything in the Appeal Pass, for every case on your account",
+      "As many cases as you have, for 12 months",
+      "The same 14-day refund, no questions asked",
+    ],
+    cta: "Get the Account Pass",
+    order: {
+      title: "Account Pass",
+      line: "Every case, 12 months",
+      amount: "$329.00",
+      expiresValue: "12 months after you buy",
+    },
+    fairUse:
+      "One Account Pass covers the cases of one seller's business. It is not for running other sellers' cases.",
+    choice: {
+      legend: "Which Pass?",
+      case: { label: "Appeal Pass", detail: "This case, every round", price: "$249" },
+      account: {
+        label: "Account Pass",
+        detail: "Every case on your account, 12 months",
+        price: "$329",
+      },
+    },
+    covered: {
+      until:
+        "Your Account Pass covers this case and every other case on your account until {date}.",
+    },
+    founding: {
+      title: "Founding offer",
+      body: "The first {total} Account Passes cost the same as one Appeal Pass.",
+      left: "{left} of {total} left",
+      price: "$249 instead of $329",
+      partnerNote:
+        "A partner's code takes the place of the founding offer; the two do not combine.",
+    },
+  },
   faqTitle: "About paying",
-  faqIds: ["pass", "outcome", "refund", "files"],
+  faqIds: ["pass", "chatbot", "outcome", "refund", "files"],
+  /**
+   * 22 Oct 2026. A general chatbot now writes a letter for nothing, so a letter is not what is for
+   * sale; checking the proof and keeping the case is. This says so, and says where the chatbot is
+   * enough, because a seller who is told the truth about the alternative believes the rest. Every
+   * row below is true of the product as built (docs/CURRENT-STATE.md) and of general chatbots as a
+   * class; nothing here names a company or claims Amazon treats a chatbot's letter differently.
+   */
+  versus: {
+    id: "versus",
+    title: "Can I ask a chatbot instead?",
+    accent: "chatbot",
+    lead: "You can, and for a first read of a simple notice it may be enough. Here is what changes once the case needs proof.",
+    headings: { job: "What the case needs", chatbot: "A general chatbot", us: "AppealDeck" },
+    rows: [
+      {
+        job: "A draft from what you paste",
+        chatbot: "Yes",
+        us: "Yes, only from facts you confirmed",
+      },
+      {
+        job: "Your invoices read against what Amazon asked",
+        chatbot: "If you paste each one and ask the right question",
+        us: "Dates, ASINs, names and units, on every document",
+      },
+      {
+        job: "A warning when a notice looks fake",
+        chatbot: "Only if you think to ask",
+        us: "On every notice",
+      },
+      {
+        job: "Every round kept together",
+        chatbot: "Usually not across chats",
+        us: "Every reply, document and response in one case",
+      },
+      {
+        job: "A warning when a resubmission has not changed",
+        chatbot: "No",
+        us: "Yes, before you send",
+      },
+      {
+        job: "A reminder before a date you set",
+        chatbot: "No",
+        us: "Yes, by email",
+      },
+      {
+        job: "Where your files go",
+        chatbot: "Usually uploaded to the service",
+        us: "Kept on your device; a file leaves only for a check you ask for",
+      },
+    ],
+    note: "AppealDeck does not claim Amazon treats a chatbot's letter differently. A response that does not answer what the notice asked is a weak response, whoever wrote it.",
+  },
+  /**
+   * The going rates around the Pass, so $249 is read against something. Each figure is from public
+   * price pages and listings read on `checkedOn`; `marketing.test.ts` fails when the date is more
+   * than 150 days old, so the strip is re-read rather than left to go stale.
+   */
+  market: {
+    title: "What else people pay",
+    checkedOn: "2026-10-22",
+    checkedLabel:
+      "Public price pages and listings, read on 22 October 2026. Prices change; check before you decide.",
+    items: [
+      { what: "A general chatbot", price: "$0 to $20 a month" },
+      { what: "A freelance writer", price: "$5 to $600 for a Plan of Action" },
+      { what: "An agency or attorney", price: "$795 to $3,500 for a case" },
+    ],
+  },
 } as const;
 
 /** The founder's own note on the home page (12 Oct 2026, written at his direction from his account of why he built it). It claims no credential, no price comparison and no result. */
@@ -622,6 +737,44 @@ export const FAQ = {
         "Write to the address on the Refund page with your receipt or the email address on your account. Read the full policy and digital-delivery consent before buying.",
       link: { label: "Read the refund policy", href: "/refund" },
     },
+    {
+      id: "chatbot",
+      q: "Can I use ChatGPT or Claude instead?",
+      a: "You can write a draft that way, and for a first read of a simple notice it may be enough.",
+      detail:
+        "A chatbot does not check your invoices against what Amazon asked, keep every round together, tell you when a resubmission has not changed or remind you before a date, and it can add details you never gave it. AppealDeck does those things, builds the response only from facts you confirmed, and keeps your files on your device. Use whichever helps, and check every fact against your own records before you send.",
+      link: { label: "See the comparison", href: "/pricing#versus" },
+    },
+    {
+      id: "writers",
+      q: "Do you have pricing for appeal writers and VA teams?",
+      a: "Not yet. The checks are free, and the written response is $249 per case. Professional pricing is being set with the first writers.",
+      detail:
+        "If you handle cases every week, write to us with how you work and what a case should cost you. The page for writers lists what you can use today.",
+      link: { label: "For writers and VA teams", href: "/for-professionals" },
+    },
+    {
+      id: "partners",
+      q: "Can I earn by sending sellers to AppealDeck?",
+      a: "Yes. A partner earns 30 percent of what a seller they send pays for an Appeal Pass.",
+      detail:
+        "The seller gets $25 off with your code. Commission is paid once the 14-day refund window has passed, by bank transfer or Payoneer. Read the rules, then write to us.",
+      link: { label: "The partner program", href: "/partners" },
+    },
+    // 22 Oct 2026: only while the Account Pass is on sale, so no page answers a question about a
+    // product that cannot be bought.
+    ...(accountPassEnabled()
+      ? ([
+          {
+            id: "account-pass",
+            q: "What is the Account Pass?",
+            a: "One payment that covers every case on your account for 12 months, instead of one Pass per case.",
+            detail:
+              "It does everything an Appeal Pass does, for as many cases as you have, and it has the same 14-day refund. It ends 12 months after you buy it; a case with no Appeal Pass of its own then needs one to prepare a further response. It is for one seller's business, not for preparing other sellers' cases.",
+            link: { label: "See the plans", href: "/pricing#purchase" },
+          },
+        ] as const satisfies readonly FaqItem[])
+      : []),
   ] as const satisfies readonly FaqItem[],
   cta: {
     title: "Start with the notice in front of you.",
@@ -633,7 +786,7 @@ export const FAQ = {
       id: "start",
       name: "Getting started",
       hint: "Your first steps",
-      items: ["start-free", "decode", "time", "independence"],
+      items: ["start-free", "decode", "chatbot", "time", "independence"],
     },
     {
       id: "response",
@@ -647,7 +800,18 @@ export const FAQ = {
       hint: "Storage and processing",
       items: ["files", "processing"],
     },
-    { id: "pass", name: "Pass & refunds", hint: "What you pay for", items: ["pass", "refund"] },
+    {
+      id: "pass",
+      name: "Pass, refunds & partners",
+      hint: "What you pay for, and who else can earn",
+      items: [
+        "pass",
+        ...(accountPassEnabled() ? (["account-pass"] as const) : []),
+        "refund",
+        "writers",
+        "partners",
+      ],
+    },
   ] as const,
 } as const;
 

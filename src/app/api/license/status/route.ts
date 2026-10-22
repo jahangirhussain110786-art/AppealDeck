@@ -14,8 +14,11 @@ export async function GET(request?: Request) {
     ? (new URL(request.url).searchParams.get("caseId") ?? undefined)
     : undefined;
   try {
-    const { status, plan } = await fetchLicenseForUser(user.id, caseId);
-    return NextResponse.json({ status, plan }, { headers: { "Cache-Control": "no-store" } });
+    const { status, plan, expiresAt } = await fetchLicenseForUser(user.id, caseId);
+    return NextResponse.json(
+      { status, plan, expiresAt: expiresAt ?? null },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch {
     return serviceUnavailableResponse();
   }

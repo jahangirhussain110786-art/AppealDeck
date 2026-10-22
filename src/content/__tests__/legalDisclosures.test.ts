@@ -11,7 +11,7 @@
  * render. Only the second one protects anybody, so only the second one is asserted here.
  */
 import { describe, expect, it } from "vitest";
-import { LEGAL } from "../legal";
+import { LEGAL, consentLabelFor } from "../legal";
 import { WORKSPACE } from "../workspace";
 import { DECODE, FAQ, HOME } from "../marketing";
 
@@ -254,12 +254,13 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
     expect(JSON.stringify(FAQ.items)).not.toMatch(/independent service/i);
   });
 
-  it("dates the changed documents (privacy and terms 2026-10-12)", () => {
+  it("dates the changed documents (privacy 2026-10-22, terms and refund 2026-10-12)", () => {
     // 9 Oct 2026: the AI now also writes document-request and questionnaire responses, and reads a
     // notice the decoder cannot place. 10 Oct 2026: privacy says what that reading keeps. 12 Oct
     // 2026: the Terms and privacy say "software" rather than "independent service" and count
-    // browsers, not devices (G-93, G-71).
-    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-12");
+    // browsers, not devices (G-93, G-71). 22 Oct 2026: privacy names the two things local storage
+    // now also holds, a partner's code and the answer to "what brings you here".
+    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-22");
     expect(LEGAL.lastUpdated.terms).toBe("2026-10-12");
     expect(LEGAL.lastUpdated.refund).toBe("2026-10-12");
   });
@@ -352,5 +353,25 @@ describe("what Paddle's reviewer and a buyer both read (12 Oct 2026)", () => {
     expect(LEGAL.consent.withdrawalCheckbox.label).toMatch(
       /I have read the Terms and the Refund policy\.$/,
     );
+  });
+});
+
+describe("the checkout consent names what is bought (22 Oct 2026)", () => {
+  it("is the Appeal Pass sentence for the case plan, unchanged", () => {
+    expect(consentLabelFor("case")).toBe(LEGAL.consent.withdrawalCheckbox.label);
+    expect(consentLabelFor("case")).toContain("deliver the Appeal Pass immediately");
+  });
+
+  it("names the Account Pass for the account plan and keeps every other word", () => {
+    const account = consentLabelFor("account");
+    expect(account).toContain("deliver the Account Pass immediately");
+    expect(account).not.toContain("Appeal Pass immediately");
+    expect(account.replace("Account Pass", "Appeal Pass")).toBe(
+      LEGAL.consent.withdrawalCheckbox.label,
+    );
+    // the 14-day refund and the read-the-Terms sentence are intact
+    expect(account).toContain("statutory 14-day right of withdrawal");
+    expect(account).toContain("voluntary 14-day refund still applies");
+    expect(account.endsWith(LEGAL.consent.withdrawalCheckbox.label.slice(-60))).toBe(true);
   });
 });

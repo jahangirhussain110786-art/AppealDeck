@@ -70,6 +70,9 @@ export const GUIDE = {
     { path: "/forgot-password", mood: "reassure", line: "It happens. Reset it here." },
     { path: "/reset-password", mood: "calm", line: "Choose a new password." },
     { path: "/pricing", mood: "explaining", line: "Compare the plans, then choose." },
+    // 22 Oct 2026: the two other audiences of the pricing pages. Neither is a page of bad news.
+    { path: "/for-professionals", mood: "explaining", line: "Here is what writers can use." },
+    { path: "/partners", mood: "idea", line: "Know a seller who needs help?" },
     { path: "/faq", mood: "thinking", line: "Looking for an answer?" },
     { path: "/guides", mood: "idea", line: "Read one guide at a time." },
     { path: "/how-we-test", mood: "explaining", line: "Here is how we test." },

@@ -11,6 +11,8 @@
  * - Newest first. Do not rewrite an old line: add a new one that corrects it.
  */
 
+import { accountPassEnabled } from "@/lib/plans";
+
 export type ChangelogEntry = { date: string; items: readonly string[] };
 
 export const CHANGELOG = {
@@ -20,12 +22,29 @@ export const CHANGELOG = {
       "A dated list of what changed in AppealDeck: new features, fixes and wording corrections, newest first.",
   },
   hero: {
-    eyebrow: "Updated 20 Oct 2026",
+    eyebrow: "Updated 22 Oct 2026",
     title: "What changed, and when.",
     accent: "and when.",
     lede: "A dated list of changes to AppealDeck, newest first. We add a line when something a seller can see changes, including fixes and corrections to our own wording.",
   },
   entries: [
+    {
+      date: "22 Oct 2026",
+      items: [
+        "Pricing now has a page for each kind of visitor: sellers, appeal writers and VA teams, and partners. All three are always one click apart.",
+        "The pricing page now answers “Can I ask a chatbot instead?” with a plain comparison of what a general chatbot does for an appeal and what it leaves out, and shows what else people pay, read on 22 October 2026.",
+        "A new page for appeal writers and VA teams lists what you can use today, what it costs and that professional pricing is not set yet.",
+        "A new partner program: a partner earns 30 percent of what a seller they send pays for an Appeal Pass, and that seller gets $25 off. The rules, including how a partner must disclose the commission, are on the page.",
+        "Sign-up now asks one optional question about what brings you here. It only decides which pricing page is shown first, and it stays on your device.",
+        "Three new answers in the FAQ: using a chatbot instead, pricing for writers, and earning as a partner.",
+        ...(accountPassEnabled()
+          ? [
+              "The Account Pass is on sale: one payment that covers every case on your account for 12 months, beside the one-case Appeal Pass. The first buyers may get it at the Appeal Pass price while the founding offer lasts.",
+            ]
+          : []),
+        "The Privacy policy now says that your browser also holds a partner’s code for 60 days, if you arrive through one, and your answer to the question above.",
+      ],
+    },
     {
       date: "20 Oct 2026",
       items: [

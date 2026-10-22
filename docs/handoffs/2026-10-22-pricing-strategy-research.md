@@ -1,5 +1,7 @@
 # Pricing strategy research: a Hormozi money model for AppealDeck (22 Oct 2026)
 
+> **SUPERSEDED IN PART (22 Oct 2026, later): the plan to follow is [`2026-10-22-combined-growth-plan.md`](2026-10-22-combined-growth-plan.md).** This file is kept as evidence. Where it differs (the $49 Document Check, the one-free-check limit, the $25 rebate, the founding price, the writer plan prices, a profiles table), the combined plan says what changed and why.
+
 > **What this is.** Research and a recommendation, nothing built. The founder asked (22 Oct 2026) for pricing to be worked out from Alex Hormozi's _$100M Money Models_, _$100M Offers_ and _$100M Leads_, researched "from all perspectives", and **not** bound by the project's existing pricing decisions and rules. So this file judges every option on Hormozi's terms and on outside facts only: the market, Paddle's rules, and the law. Where an option would change a locked decision (D2, D6, D7, D8), §9 names it, so the founder knows what he is overriding. It does not let those decisions veto anything.
 >
 > **Tags.** **V** = read on the cited source today. **S** = search snippet only. **R** = from earlier repo research, not re-fetched. **E** = my estimate. **U** = unverified. Plain-words version: `2026-10-22-pricing-strategy-research-plain-mobile.html`.

@@ -25,9 +25,11 @@ export const READ_TERMS = {
   suffix: ".",
 } as const;
 
+import { accountPassEnabled } from "@/lib/plans";
+
 export const LEGAL = {
   lastUpdated: {
-    privacy: "2026-10-12",
+    privacy: "2026-10-22",
     terms: "2026-10-12",
     refund: "2026-10-12",
   },
@@ -93,7 +95,7 @@ export const LEGAL = {
         id: "cookies",
         title: "Cookies and local storage",
         body: [
-          "While you are signed in, your session is held in a cookie set by our sign-in provider, Supabase; it can be split across several cookies. It is essential, and it is removed when you sign out. Your browser's local storage also holds your colour-theme choice and whether you dismissed the announcement bar. You can delete these at any time. We set no advertising or cross-site cookies.",
+          "While you are signed in, your session is held in a cookie set by our sign-in provider, Supabase; it can be split across several cookies. It is essential, and it is removed when you sign out. Your browser's local storage also holds your colour-theme choice and whether you dismissed the announcement bar. If you arrive through a partner's link, it holds that partner's code for 60 days, so the discount can be added at checkout. Until you buy, the code stays on your device, and the pricing page shows it with a link to remove it. When you buy, it goes to Paddle with your payment so the discount is applied, and Paddle's record of the payment, which we receive, shows which code was used. If you say what brings you here, it holds that answer, which only decides which pricing page is shown first. You can delete these at any time. We set no advertising or cross-site cookies.",
           "The case file is stored encrypted in your browser's IndexedDB vault. Account vaults use a browser-held key by default, with optional passphrase protection. Decoding and response preparation send relevant text to our server. Only a document check or a wording suggestion you ask for sends anything to the AI provider, as described above.",
         ],
       },
@@ -183,6 +185,12 @@ export const LEGAL = {
           "Subject to your compliance, we grant you a limited, non-exclusive, non-transferable right to use the Free decoder and, with an active Appeal Pass, the response preparation features.",
           "The Appeal Pass is not currently offered to buyers in the European Union, the European Economic Area or the United Kingdom. The Free decoder is available to everyone. Appeal Pass features require an active Appeal Pass on your account and an eligible Amazon notice type.",
           "One Appeal Pass licence is tied to one case. It covers every revision you prepare for that case, including a response to a later reply from Amazon, with no additional charge and no expiry date. The Pass is tied to that case, so a case you delete or lose cannot be replaced under the same Pass, and a separate notice or a different case requires its own Appeal Pass. An Appeal Pass can be used on up to 5 browsers at once; you can remove a browser in Billing.",
+          // 22 Oct 2026: stated only while the Account Pass is on sale (its Paddle price is configured).
+          ...(accountPassEnabled()
+            ? [
+                "The Account Pass is one licence for one seller's business. It covers every case on your account for twelve months from the day you buy it, with the same 14-day refund window, and then it ends: a case that has no Appeal Pass of its own then needs one to prepare a further response, and what you already saved stays on your device. It cannot be transferred and is not for preparing other sellers' cases. It is not offered where the Appeal Pass is not.",
+              ]
+            : []),
         ],
       },
       {
@@ -317,3 +325,15 @@ export const LEGAL = {
       "14-day voluntary refund on the Appeal Pass. EU/UK statutory withdrawal with explicit checkout consent.",
   },
 } as const;
+
+/**
+ * The checkout consent for the Pass being bought (22 Oct 2026). The stored and displayed words must
+ * name what is delivered immediately, so an Account Pass buyer ticks "the Account Pass", not "the
+ * Appeal Pass". Everything else in the sentence, including the Terms and Refund links, is unchanged.
+ */
+export function consentLabelFor(plan: "case" | "account"): string {
+  const label = LEGAL.consent.withdrawalCheckbox.label;
+  return plan === "account"
+    ? label.replace("deliver the Appeal Pass immediately", "deliver the Account Pass immediately")
+    : label;
+}

@@ -48,6 +48,8 @@ export const SHARED = {
       checkInvoice: "Free invoice check",
       howWeTest: "How we test",
       changelog: "What changed",
+      forProfessionals: "For writers and VA teams",
+      partners: "Partner program",
     },
     neverSubmits:
       "You submit your appeal yourself in Seller Central. AppealDeck never logs in to your account.",

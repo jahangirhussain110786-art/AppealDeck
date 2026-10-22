@@ -1,12 +1,15 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { LEGAL, READ_TERMS } from "@/content/legal";
+import { LEGAL, READ_TERMS, consentLabelFor } from "@/content/legal";
+import type { PassPlan } from "@/lib/plans";
 
 export interface ConsentRowProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   idPrefix?: string;
+  /** Which Pass is being bought; the consent names it. The Appeal Pass when absent. */
+  plan?: PassPlan;
 }
 
 /**
@@ -15,8 +18,8 @@ export interface ConsentRowProps {
  * on the sentence `READ_TERMS` builds it from; if the label ever stops ending in that sentence the
  * whole label is shown as plain text rather than a half-linked one.
  */
-function ConsentLabel() {
-  const label = LEGAL.consent.withdrawalCheckbox.label;
+function ConsentLabel({ plan }: { plan: PassPlan }) {
+  const label = consentLabelFor(plan);
   const read = `${READ_TERMS.prefix}${READ_TERMS.terms}${READ_TERMS.joiner}${READ_TERMS.refund}${READ_TERMS.suffix}`;
   if (!label.endsWith(read)) return <>{label}</>;
   const link = "font-medium text-link underline underline-offset-2";
@@ -36,7 +39,12 @@ function ConsentLabel() {
   );
 }
 
-export function ConsentRow({ checked, onCheckedChange, idPrefix = "eu-consent" }: ConsentRowProps) {
+export function ConsentRow({
+  checked,
+  onCheckedChange,
+  idPrefix = "eu-consent",
+  plan = "case",
+}: ConsentRowProps) {
   const labelId = `${idPrefix}-label`;
   return (
     <div className="space-y-3">
@@ -49,7 +57,7 @@ export function ConsentRow({ checked, onCheckedChange, idPrefix = "eu-consent" }
           aria-describedby={labelId}
         />
         <label htmlFor={idPrefix} id={labelId} className="text-sm text-muted-foreground">
-          <ConsentLabel />
+          <ConsentLabel plan={plan} />
         </label>
       </div>
       <p className="text-xs text-muted-foreground">{LEGAL.consent.deliveryNote}</p>

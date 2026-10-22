@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { ConsentRow } from "@/components/pricing/ConsentRow";
+import { PartnerCodeNote } from "@/components/pricing/PartnerCodeNote";
 import { PRICING, SAMPLE_POA } from "@/content/marketing";
 import { APP } from "@/content/app";
 import { SHARED } from "@/content/shared";
@@ -25,6 +26,8 @@ import { getBrowserVault } from "@/lib/vault/browser";
 import { loadCaseFile } from "@/lib/caseStore";
 import { openVaultForVisitor } from "@/lib/vault/visitor";
 import { workspaceCanCompose } from "@/core/workspace";
+import { formatDate } from "@/lib/format";
+import type { PassPlan } from "@/lib/plans";
 
 type CompletionPhase = "idle" | "activating" | "timeout";
 type CaseCheck =
@@ -32,14 +35,14 @@ type CaseCheck =
   | { status: "none" }
   | { status: "locked" }
   | { status: "ineligible"; label: string }
-  | { status: "covered"; label: string }
+  | { status: "covered"; label: string; coveredBy: string | null; expiresAt: string | null }
   | { status: "ok"; label: string };
 
 function caseCheckLabel(kind: string, id: string): string {
   return `${kind.toLowerCase().replaceAll("_", " ")} · #${id.slice(0, 6)}`;
 }
 
-export function PurchasePanel() {
+export function PurchasePanel({ plan = "case" }: { plan?: PassPlan }) {
   const [consent, setConsent] = useState(false);
   const [phase, setPhase] = useState<CompletionPhase>("idle");
   useGuideSituation(
@@ -58,7 +61,6 @@ export function PurchasePanel() {
   const [checkedCaseId, setCheckedCaseId] = useState<string | undefined>(undefined);
   const pollAbort = useRef<AbortController | null>(null);
   useEffect(() => () => pollAbort.current?.abort(), []);
-  const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
   const sessionState = useSessionState();
   const router = useRouter();
 
@@ -100,11 +102,24 @@ export function PurchasePanel() {
         // A case that already has its Pass must not be offered a second one (the server refuses it
         // too). A failed lookup falls through to the normal offer, and the server decides.
         const license = await fetch(`/api/license/status?caseId=${encodeURIComponent(file.id)}`)
-          .then((r) => (r.ok ? (r.json() as Promise<{ status?: string }>) : null))
+          .then((r) =>
+            r.ok
+              ? (r.json() as Promise<{
+                  status?: string;
+                  plan?: string | null;
+                  expiresAt?: string | null;
+                }>)
+              : null,
+          )
           .catch(() => null);
         if (!alive) return;
         if (license?.status === "active") {
-          setCaseCheck({ status: "covered", label });
+          setCaseCheck({
+            status: "covered",
+            label,
+            coveredBy: license.plan ?? null,
+            expiresAt: license.expiresAt ?? null,
+          });
           return;
         }
         setCaseCheck(
@@ -170,17 +185,22 @@ export function PurchasePanel() {
     );
   }
 
+  // A case Pass covers one case, so its holder may still buy the Account Pass; an Account Pass
+  // covers every case, so nothing more is sold to its holder (the server refuses it too).
+  const coveredAgainstThisPlan =
+    activeCase.status === "covered" && (plan === "case" || activeCase.coveredBy === "account_pass");
   const blocked =
     sessionState === "signed-in" &&
     (activeCase.status === "checking" ||
       activeCase.status === "none" ||
       activeCase.status === "locked" ||
       activeCase.status === "ineligible" ||
-      activeCase.status === "covered");
+      coveredAgainstThisPlan);
 
   return (
     <div className="space-y-6">
-      <ConsentRow checked={consent} onCheckedChange={setConsent} />
+      <ConsentRow checked={consent} onCheckedChange={setConsent} plan={plan} />
+      <PartnerCodeNote />
 
       {sessionState === "signed-out" && (
         <p className="text-xs text-muted-foreground">
@@ -196,9 +216,11 @@ export function PurchasePanel() {
 
       {sessionState === "signed-in" && activeCase.status === "ok" && (
         <p className="text-xs text-muted-foreground">
-          {hasPass
-            ? `Your Appeal Pass is already used on another case. A new Pass would cover this one: ${activeCase.label}.`
-            : `This Pass will cover your active case: ${activeCase.label}.`}
+          {plan === "account"
+            ? `This Account Pass will cover your active case, ${activeCase.label}, and every other case on your account for 12 months.`
+            : hasPass
+              ? `Your Appeal Pass is already used on another case. A new Pass would cover this one: ${activeCase.label}.`
+              : `This Pass will cover your active case: ${activeCase.label}.`}
         </p>
       )}
 
@@ -223,10 +245,26 @@ export function PurchasePanel() {
         </p>
       )}
 
-      {sessionState === "signed-in" && activeCase.status === "covered" && (
+      {sessionState === "signed-in" &&
+        activeCase.status === "covered" &&
+        plan === "account" &&
+        activeCase.coveredBy !== "account_pass" && (
+          <p className="text-xs text-muted-foreground">
+            Your Appeal Pass covers one case: {activeCase.label}. The Account Pass would cover every
+            other case on your account too.
+          </p>
+        )}
+
+      {sessionState === "signed-in" && coveredAgainstThisPlan && (
         <p className="text-xs text-muted-foreground">
-          Your Appeal Pass covers one case: {activeCase.label}. It covers every revision of that
-          case, so there is nothing more to buy.{" "}
+          {activeCase.status === "covered" && activeCase.coveredBy === "account_pass"
+            ? PRICING.account.covered.until.replace(
+                "{date}",
+                activeCase.expiresAt
+                  ? formatDate(activeCase.expiresAt)
+                  : "the end of its 12 months",
+              )
+            : `Your Appeal Pass covers one case: ${activeCase.label}. It covers every revision of that case, so there is nothing more to buy.`}{" "}
           <Link href="/case" className="text-link underline underline-offset-4">
             Open your case
           </Link>
@@ -247,16 +285,18 @@ export function PurchasePanel() {
         {consent && !blocked ? (
           <CheckoutButton
             consent={consent}
-            priceId={priceId}
+            plan={plan}
             size="lg"
             className="h-auto min-h-11 flex-1 whitespace-normal py-2"
             variant="default"
             customerEmail={email}
             onCompleted={handleCompleted}
           >
-            {hasPass && activeCase.status === "ok"
-              ? "Buy another Pass for another case"
-              : PRICING.cta}
+            {plan === "account"
+              ? PRICING.account.cta
+              : hasPass && activeCase.status === "ok"
+                ? "Buy another Pass for another case"
+                : PRICING.cta}
           </CheckoutButton>
         ) : (
           <Button
@@ -268,8 +308,10 @@ export function PurchasePanel() {
             aria-disabled="true"
             onClick={(e) => e.preventDefault()}
           >
-            {activeCase.status === "covered"
-              ? "Appeal Pass active — covers one case"
+            {coveredAgainstThisPlan
+              ? activeCase.status === "covered" && activeCase.coveredBy === "account_pass"
+                ? "Account Pass active — covers every case"
+                : "Appeal Pass active — covers one case"
               : blocked && consent
                 ? "Resolve your case first"
                 : SHARED.consentPrompt}

@@ -22,6 +22,8 @@ export interface PurchaseConfirmationInput {
   purchasedAt: string | Date;
   consentText?: string;
   idempotencyKey?: string;
+  /** What was bought. Absent or "appeal_pass" is the one-case Appeal Pass. */
+  plan?: "appeal_pass" | "account_pass";
 }
 
 export interface BuiltEmail {
@@ -37,14 +39,19 @@ export interface BuiltEmail {
  */
 export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput): BuiltEmail {
   const dateLabel = formatLongDate(input.purchasedAt);
-  const subject = `Your ${PRICING.pass} purchase confirmation and consent copy`;
+  const account = input.plan === "account_pass";
+  const passName = account ? PRICING.account.name : PRICING.pass;
+  const subject = `Your ${passName} purchase confirmation and consent copy`;
   const consentLine = input.consentText ?? LEGAL.consent.withdrawalCheckbox.label;
   const refundLine =
     "You can request a full refund within 14 days of purchase, no questions asked, by replying to this email or writing to billing@appealdeck.com.";
 
   const lines = [
-    `Thanks for buying the ${PRICING.pass}${dateLabel ? ` on ${dateLabel}` : ""}.`,
-    `Price: ${PRICING.price} (${PRICING.priceNote})`,
+    `Thanks for buying the ${passName}${dateLabel ? ` on ${dateLabel}` : ""}.`,
+    account
+      ? `List price: ${PRICING.account.price} (one-time; covers every case on your account for 12 months from the day you bought it)`
+      : `List price: ${PRICING.price} (${PRICING.priceNote})`,
+    "Paddle's receipt shows the amount you paid, including any discount code.",
     "",
     "The consent you gave at checkout:",
     `"${consentLine}"`,

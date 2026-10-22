@@ -74,6 +74,64 @@ describe("fetchLicenseForUser", () => {
     expect(summary.status).toBe("none");
   });
 
+  describe("the Account Pass", () => {
+    const account = (over: Partial<(typeof rows)[number]> = {}) => ({
+      status: "active",
+      plan: "account_pass",
+      license_key: "acct-key",
+      created_at: "2026-10-01T00:00:00.000Z",
+      expires_at: "2099-01-01T00:00:00.000Z",
+      case_id: null,
+      ...over,
+    });
+    const casePass = (over: Partial<(typeof rows)[number]> = {}) => ({
+      status: "active",
+      plan: "appeal_pass",
+      license_key: "case-key",
+      created_at: "2026-10-10T00:00:00.000Z",
+      expires_at: null,
+      case_id: "case-1",
+      ...over,
+    });
+
+    it("covers a case it was never bought for, and says when it ends", async () => {
+      rows = [account()];
+      const summary = await fetchLicenseForUser("user-1", "some-other-case");
+      expect(summary).toMatchObject({
+        status: "active",
+        plan: "account_pass",
+        expiresAt: "2099-01-01T00:00:00.000Z",
+      });
+    });
+
+    it("is the one reported when a newer Appeal Pass is also active, because it covers more", async () => {
+      rows = [casePass(), account()];
+      expect((await fetchLicenseForUser("user-1", "case-1")).plan).toBe("account_pass");
+    });
+
+    it("reports an Appeal Pass, with no end date, when there is no Account Pass", async () => {
+      rows = [casePass()];
+      const summary = await fetchLicenseForUser("user-1", "case-1");
+      expect(summary.plan).toBe("appeal_pass");
+      expect(summary.expiresAt).toBeNull();
+    });
+
+    it("covers nothing once its twelve months have ended", async () => {
+      rows = [account({ expires_at: "2020-01-01T00:00:00.000Z" })];
+      expect((await fetchLicenseForUser("user-1", "case-1")).status).toBe("none");
+    });
+
+    it("covers nothing once it has been refunded", async () => {
+      rows = [account({ status: "canceled" })];
+      expect((await fetchLicenseForUser("user-1", "case-1")).status).toBe("canceled");
+    });
+
+    it("leaves an expired Account Pass out of the way of a live Appeal Pass", async () => {
+      rows = [account({ expires_at: "2020-01-01T00:00:00.000Z" }), casePass()];
+      expect((await fetchLicenseForUser("user-1", "case-1")).plan).toBe("appeal_pass");
+    });
+  });
+
   it("prefers an active row over a newer but canceled row", async () => {
     rows = [
       {

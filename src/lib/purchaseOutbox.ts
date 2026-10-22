@@ -13,11 +13,19 @@ export async function deliverPurchaseEmails(
     failed = 0;
   for (const row of data ?? []) {
     try {
+      // What was bought, from the licence the same payment created. A failed lookup falls back to the
+      // Appeal Pass wording, which is what every purchase was before the Account Pass existed.
+      const bought = await supabaseAdmin
+        .from("licenses")
+        .select("plan")
+        .eq("provider_transaction_id", row.transaction_id)
+        .maybeSingle();
       await sendPurchaseConfirmationEmail({
         to: row.email,
         purchasedAt: row.purchased_at,
         consentText: row.consent_text,
         idempotencyKey: `purchase/${row.transaction_id}`,
+        plan: bought.data?.plan === "account_pass" ? "account_pass" : "appeal_pass",
       });
       const { error: updateError } = await supabaseAdmin
         .from("purchase_email_outbox")

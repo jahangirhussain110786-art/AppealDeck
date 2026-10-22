@@ -21,6 +21,8 @@ import { safeNext } from "@/lib/safeNext";
 import { AUTH } from "@/content/auth";
 import type { AuthStatus } from "@/components/AuthCard";
 import { useAdoptPrehydration } from "@/lib/useAdoptPrehydration";
+import { RolePicker } from "@/components/RolePicker";
+import { parseRole, writeRole } from "@/lib/role";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -51,6 +53,12 @@ export default function SignupPage() {
   const handlePasswordBlur = () => {
     setPasswordError(validatePasswordLength(password));
   };
+
+  // A link such as /signup?role=pro pre-selects the role question (stored on this device only).
+  const roleParam = parseRole(searchParams.get("role"));
+  useEffect(() => {
+    if (roleParam) writeRole(roleParam);
+  }, [roleParam]);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -126,6 +134,13 @@ export default function SignupPage() {
       footerHref={nextParam ? `/login?next=${encodeURIComponent(next)}` : "/login"}
     >
       <div className="w-full">
+        {/* Not asked of someone who is signing up in the middle of a case: that is a bad moment for
+            a question that changes nothing about the case. */}
+        {!showContinue && status !== "sent" && (
+          <div className="mb-6">
+            <RolePicker />
+          </div>
+        )}
         <GoogleButton
           onClick={handleGoogle}
           disabled={status === "loading"}
