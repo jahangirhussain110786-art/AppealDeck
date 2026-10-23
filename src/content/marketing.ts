@@ -21,6 +21,36 @@ import { OPENS_SOON, PRODUCTS } from "./purchases";
  * what happens to their case → start. Each point is made in one section only; the refund and the
  * pass details belong to /pricing, and the full questions list to /faq.
  */
+/**
+ * The Free card in two parts (23 Oct 2026): what anyone gets with no account, and what a free
+ * account adds. Nothing here is paid, and nothing in the second part leaves the device unless the
+ * seller chooses an encrypted backup. `HOME.plans.items[0].features` is these two lists joined, for
+ * the home page strip, which has room for one list.
+ */
+export const FREE_PLAN_GROUPS = [
+  {
+    label: "No account",
+    features: [
+      "Decode any notice",
+      "Scam signals, quoted from the message",
+      "Deadlines and the records list",
+      "Do-now and do-not cards",
+      // G-07: the free layer already does this; a rival's free tier is a gated teaser.
+      "Amazon's reply read in plain words, with its own sentence quoted",
+      "Supplier invoice check, read on your device",
+    ],
+  },
+  {
+    label: "With a free account",
+    features: [
+      "Your case saved, encrypted, on your device",
+      "Deadlines, and who you are waiting on",
+      "Amazon's replies applied: reopened, added, carried",
+      "Every round kept: what you sent, what Amazon said",
+    ],
+  },
+] as const;
+
 export const HOME = {
   hero: {
     badge: "Free",
@@ -133,20 +163,11 @@ export const HOME = {
     items: [
       {
         name: "Free",
-        // 23 Oct 2026: the old "Free" and "Free account" cards are one card. The account is not a
-        // plan; it is how the free case is saved, so it is a line here, not a column.
+        // 23 Oct 2026: the old "Free" and "Free account" cards are one card, in two parts (`groups`).
         note: "No account needed",
         price: "$0",
-        features: [
-          "Decode any notice",
-          "Scam signals, quoted from the message",
-          "Deadlines and the records list",
-          "Do-now and do-not cards",
-          // G-07: the free layer already does this; a rival's free tier is a gated teaser.
-          "Amazon's reply read in plain words, with its own sentence quoted",
-          "Supplier invoice check, read on your device",
-          "A free account saves your case, encrypted on your device, and tracks who you are waiting on",
-        ],
+        features: FREE_PLAN_GROUPS.flatMap((g) => g.features),
+        groups: FREE_PLAN_GROUPS,
       },
       {
         // 23 Oct 2026: the smallest paid plan. One case, one prepared response, nothing after it.

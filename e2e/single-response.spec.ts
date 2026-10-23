@@ -21,14 +21,16 @@ test("before it is on sale, the second card is One Response at $99 and says Open
   test.skip(ON_SALE, "needs a build made without the One Response price");
   await page.goto("/pricing");
   const cards = page.getByRole("list", { name: "Plans for sellers" }).locator("> li");
-  await expect(cards.nth(0)).toContainText("Free");
+  await expect(cards.nth(0)).toContainText("For everyone");
+  await expect(cards.nth(0).getByRole("heading", { name: "No account" })).toBeVisible();
+  await expect(cards.nth(0).getByRole("heading", { name: "With a free account" })).toBeVisible();
   await expect(cards.nth(1)).toContainText("One Response");
   await expect(cards.nth(1)).toContainText("$99");
   await expect(cards.nth(1)).toContainText("No further responses");
   await expect(cards.nth(1).getByRole("button", { name: "Opens soon" })).toBeDisabled();
   await expect(cards.nth(2)).toContainText("Appeal Pass");
-  // The free account is a line on the Free card, not a card of its own.
-  await expect(cards.nth(0)).toContainText("A free account saves your case");
+  // The free account is the second part of the Free card, not a card of its own.
+  await expect(cards.nth(0)).toContainText("Your case saved, encrypted, on your device");
   await expect(page.getByRole("columnheader", { name: "One Response", exact: true })).toBeVisible();
   await expect(page.getByRole("radio", { name: /One Response/ })).toHaveCount(0);
   await expectNoAxeViolations(page, { impacts: ["serious", "critical"] });

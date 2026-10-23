@@ -35,6 +35,10 @@ export function PlanCards() {
     {
       key: "free",
       ...free,
+      // Name and note read like the other cards ("One Response" / "One case, one appeal"); the two
+      // parts below say what needs an account and what does not.
+      name: "Free",
+      note: "For everyone",
       cta: (
         <Button asChild size="lg" variant="outline" className="w-full">
           <Link href="/decode">{SHARED.nav.decodeCta}</Link>

@@ -27,7 +27,10 @@ describe("the plan cards", () => {
     vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "on");
     const html = renderToStaticMarkup(<PlanCards />);
     expect(html).not.toContain("Free account</p>");
-    expect(html).toContain("A free account saves your case");
+    expect(html).toContain("For everyone");
+    expect(html).toContain("No account");
+    expect(html).toContain("With a free account");
+    expect(html).toContain("Your case saved, encrypted, on your device");
     expect(html).toContain("One Response");
     expect(html).toContain("$99");
     expect(html).toContain("No further responses");
