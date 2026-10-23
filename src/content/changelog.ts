@@ -19,6 +19,7 @@ import {
   renewalEnabled,
   reviewEnabled,
   singleEnabled,
+  singleListed,
   upgradeEnabled,
 } from "@/lib/plans";
 
@@ -31,12 +32,37 @@ export const CHANGELOG = {
       "A dated list of what changed in AppealDeck: new features, fixes and wording corrections, newest first.",
   },
   hero: {
-    eyebrow: "Updated 22 Oct 2026",
+    eyebrow: "Updated 23 Oct 2026",
     title: "What changed, and when.",
     accent: "and when.",
     lede: "A dated list of changes to AppealDeck, newest first. We add a line when something a seller can see changes, including fixes and corrections to our own wording.",
   },
   entries: [
+    {
+      date: "23 Oct 2026",
+      items: [
+        "Two new pages compare AppealDeck with a general chatbot such as ChatGPT and with AppealsPro, each written from the other side's own pages on 23 October 2026 and saying where the other option is enough.",
+        "The pricing page shows the free plan in two parts: what you get with no account, and what a free account adds.",
+        "When you are about to buy, the purchase screen now shows the deadline from your own notice, while it is still ahead, beside the button.",
+        ...(singleListed()
+          ? [
+              "The pricing page now also shows One Response, $99 for one case and one response, and the purchase screen says which plan covers what your notice asks for.",
+            ]
+          : []),
+        "A purchase confirmation email now ends with the next step and where to do it.",
+        "The Appeal Pass card is now the highlighted one, with a Recommended note.",
+        ...(singleEnabled()
+          ? [
+              "One Response is on sale: $99 for one case and the first response to Amazon, with every revision of it and your documents read against the notice. A further response, after Amazon replies, needs the Appeal Pass.",
+            ]
+          : []),
+        ...(upgradeEnabled()
+          ? [
+              "A One Response now upgrades to the Appeal Pass at a credited price: the $99 you paid comes off, so a further response costs $150 for that case.",
+            ]
+          : []),
+      ],
+    },
     {
       date: "22 Oct 2026",
       items: [
@@ -54,16 +80,6 @@ export const CHANGELOG = {
         ...(accountPassEnabled()
           ? [
               "The Account Pass is on sale: one payment that covers every case on your account for 12 months, beside the one-case Appeal Pass. The first buyers may get it at the Appeal Pass price while the founding offer lasts.",
-            ]
-          : []),
-        ...(singleEnabled()
-          ? [
-              "One Response is on sale: $99 for one case and the first response to Amazon, with every revision of it and your documents read against the notice. A further response, after Amazon replies, needs the Appeal Pass.",
-            ]
-          : []),
-        ...(upgradeEnabled()
-          ? [
-              "A One Response now upgrades to the Appeal Pass at a credited price: the $99 you paid comes off, so a further response costs $150 for that case.",
             ]
           : []),
         ...(reviewEnabled()

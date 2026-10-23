@@ -79,6 +79,35 @@ describe("buildPurchaseConfirmationEmail", () => {
     expect(email.text).toContain("within 14 days of purchase");
   });
 
+  it("ends every case purchase with the next step and where to do it", () => {
+    for (const kind of [
+      "appeal_pass",
+      "single_response",
+      "pass_after_single",
+      "account_pass",
+    ] as const) {
+      const email = buildPurchaseConfirmationEmail({
+        to: "seller@example.com",
+        purchasedAt: "2026-10-23T12:00:00.000Z",
+        kind,
+      });
+      expect(email.text, kind).toContain("Next step: open your case and prepare your response:");
+      expect(email.text, kind).toContain("/case");
+    }
+    const credits = buildPurchaseConfirmationEmail({
+      to: "pro@example.com",
+      purchasedAt: "2026-10-23T12:00:00.000Z",
+      kind: "pack_10",
+    });
+    expect(credits.text).toContain("see your case credits in Billing");
+    const renewal = buildPurchaseConfirmationEmail({
+      to: "seller@example.com",
+      purchasedAt: "2026-10-23T12:00:00.000Z",
+      kind: "account_renewal",
+    });
+    expect(renewal.text).not.toContain("Next step:");
+  });
+
   it("HTML-escapes the consent text so it renders safely", () => {
     const email = buildPurchaseConfirmationEmail({
       to: "seller@example.com",

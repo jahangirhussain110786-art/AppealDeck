@@ -30,7 +30,8 @@ import { openVaultForVisitor } from "@/lib/vault/visitor";
 import { workspaceCanCompose } from "@/core/workspace";
 import { formatDate } from "@/lib/format";
 import { PRODUCTS } from "@/content/purchases";
-import type { PassPlan } from "@/lib/plans";
+import { planAdvice, type PlanAdvice } from "@/lib/planAdvice";
+import { singleListed, upgradeEnabled, type PassPlan } from "@/lib/plans";
 
 type CompletionPhase = "idle" | "activating" | "timeout";
 type CaseCheck =
@@ -78,6 +79,8 @@ export function PurchasePanel({
   const [checkedCaseId, setCheckedCaseId] = useState<string | undefined>(undefined);
   // The case's own Amazon deadline, while it is still ahead (null when the notice stated none).
   const [deadline, setDeadline] = useState<{ label: string; day: string } | null>(null);
+  // Which plan fits this case, in the seller's own terms (null when the case does not say).
+  const [advice, setAdvice] = useState<PlanAdvice | null>(null);
   const pollAbort = useRef<AbortController | null>(null);
   useEffect(() => () => pollAbort.current?.abort(), []);
   const sessionState = useSessionState();
@@ -118,6 +121,7 @@ export function PurchasePanel({
         }
         setCheckedCaseId(file.id);
         setDeadline(upcomingDeadline(file, new Date()));
+        setAdvice(planAdvice(file.workspace, { upgrade: upgradeEnabled() }));
         const label = caseCheckLabel(file.kind, file.id);
         // A case that already has its Pass must not be offered a second one (the server refuses it
         // too). A failed lookup falls through to the normal offer, and the server decides.
@@ -180,7 +184,10 @@ export function PurchasePanel({
           await vault.unlockWithDeviceKey();
         else if (status.state !== "unlocked") return;
         const file = await loadCaseFile(vault);
-        if (alive) setDeadline(upcomingDeadline(file, new Date()));
+        if (alive) {
+          setDeadline(upcomingDeadline(file, new Date()));
+          setAdvice(planAdvice(file?.workspace, { upgrade: upgradeEnabled() }));
+        }
       } catch {
         // no clock is better than a wrong one
       } finally {
@@ -381,6 +388,15 @@ export function PurchasePanel({
         </p>
       )}
 
+      {advice && singleListed() && (
+        <p
+          className="rounded-xl border border-border bg-surface-1 px-3 py-2 text-sm text-foreground"
+          data-testid="plan-advice"
+        >
+          <span className="font-medium">For your case: </span>
+          {advice.text}
+        </p>
+      )}
       <PurchaseClock deadline={deadline} />
 
       <div className="flex flex-col gap-3 sm:flex-row">

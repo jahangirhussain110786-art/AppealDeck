@@ -464,3 +464,13 @@ The founder asked for the day's work to be refined. A review of it found, and th
 - **The deadline clock appeared only for signed-in buyers.** A visitor with a case on this device now sees it too (read without creating anything).
 - **Considered and rejected: a server-side "highest round seen" memory for the One Response limit.** It would stop a seller who strips their history after a refusal, but would also lock out a paying seller who pasted a reply by mistake and then deleted it, which is the worse harm; the cheat gets only revisions of round one. The limit stays as decided on 23 Oct.
 - **Deliberately unchanged:** every "Opens soon" preview.
+
+## 23 Oct 2026 (second refinement): which plan fits, a next step in the email, two comparison pages
+
+- **Founder:** asked what more the book and the studies suggest; and said not to count the founder's own pending steps against anything. Everything below is judged as if Paddle, the mailbox and the keys were done.
+- **Which plan fits my case:** the book's menu upsell says to tell a buyer what they do not need before what they do. The purchase screen now reads the seller's case (its protocol and whether Amazon has replied) and says what each plan covers for it, in plain words and without predicting anything. It follows the case, names the $150 credit only where it exists, and a test fails on "likely", "usually" or "most cases".
+- **Next step in the purchase email:** a customer should know the next step before they leave. Case purchases end with "open your case and prepare your response" and a link; credits point to Billing.
+- **Two comparison pages** (ChatGPT; an AppealsPro alternative), from the keyword research and the early-stage research: buyers already comparing options are the ones nearest to buying. Each competitor statement is attributed to its own site and dated, nothing quotes a success rate or claims Amazon detects AI, and each says where the other option is enough.
+- **Pro annual prepay: not needed.** The 30-pack ($29 a case, 12 months) already is the twelve-months-paid-up-front option; a separate annual plan would add nothing. Dropped from the list.
+- **Checked and found fine:** the proof page `/how-we-test` is linked from the footer and the sitemap; no page still says a 7-day refund.
+- **Decider:** the founder (to keep improving); AI assistant (what to build and what to drop).

@@ -24,7 +24,7 @@ export default function DecodePage() {
           {DECODE.guidesTitle}
         </h2>
         <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm">
-          {GUIDES.map((g) => (
+          {GUIDES.filter((g) => !g.compare).map((g) => (
             <li key={g.slug}>
               <Link
                 href={`/guides/${g.slug}`}

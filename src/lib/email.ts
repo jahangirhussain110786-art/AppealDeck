@@ -15,6 +15,7 @@ import { PRICING } from "@/content/marketing";
 import { LEGAL } from "@/content/legal";
 import { formatLongDate } from "@/lib/format";
 import { EMAIL_PRODUCTS, PRODUCTS, type PurchaseKind } from "@/content/purchases";
+import { APP_URL } from "@/lib/urls";
 
 export interface PurchaseConfirmationInput {
   /** Buyer's email, already validated by the caller. */
@@ -25,6 +26,29 @@ export interface PurchaseConfirmationInput {
   idempotencyKey?: string;
   /** What was bought, as the database recorded it. Absent is the one-case Appeal Pass. */
   kind?: PurchaseKind;
+}
+
+/**
+ * One line telling the buyer what to do next, with where to do it (23 Oct 2026). A purchase that ends
+ * at a receipt leaves the buyer to work out the next step alone; the book's rule is that a customer
+ * should always know the next step before they leave. States an action and a place, never an outcome.
+ */
+export function nextStepLine(kind: PurchaseKind): string | null {
+  switch (kind) {
+    case "appeal_pass":
+    case "pass_after_single":
+    case "single_response":
+    case "account_pass":
+      return `Next step: open your case and prepare your response: ${APP_URL}/case`;
+    case "document_review":
+      return `Next step: open your case and add the documents to be read: ${APP_URL}/case?view=evidence`;
+    case "pack_10":
+    case "pack_30":
+    case "pro_plan":
+      return `Next step: see your case credits in Billing: ${APP_URL}/billing`;
+    default:
+      return null;
+  }
 }
 
 export interface BuiltEmail {
@@ -57,6 +81,7 @@ export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput)
         ? `List price: ${PRICING.account.price} (one-time; covers every case on your account for 12 months from the day you bought it)`
         : `List price: ${PRICING.price} (${PRICING.priceNote})`,
     "Paddle's receipt shows the amount you paid, including any discount code.",
+    ...(nextStepLine(kind) ? ["", nextStepLine(kind)!] : []),
     "",
     "The consent you gave at checkout:",
     `"${consentLine}"`,

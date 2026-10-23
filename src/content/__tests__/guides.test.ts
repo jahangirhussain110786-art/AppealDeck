@@ -50,3 +50,45 @@ describe("guides (B-25)", () => {
       expect(d.length, d).toBeLessThanOrEqual(160);
   });
 });
+
+describe("comparison pages (23 Oct 2026)", () => {
+  const compare = GUIDES.filter((g) => g.compare);
+  const text = (g: (typeof compare)[number]) => JSON.stringify(g);
+
+  it("has the two pages a buyer weighing options searches for", () => {
+    expect(compare.map((g) => g.slug)).toEqual([
+      "chatgpt-for-amazon-appeals",
+      "appealspro-alternative",
+    ]);
+  });
+
+  it("promises no outcome, quotes no success rate and makes no claim about Amazon detecting AI", () => {
+    for (const g of compare) {
+      expect(text(g), g.slug).not.toMatch(
+        /guarantee|success rate|win rate|reinstatement rate|will be (approved|reinstated)|undetectable/i,
+      );
+      expect(text(g), g.slug).not.toMatch(/amazon (detects|rejects|flags)/i);
+    }
+  });
+
+  it("states what a competitor does only as read on its own site, with the date", () => {
+    const pro = compare.find((g) => g.slug === "appealspro-alternative")!;
+    expect(pro.intro).toMatch(/written from AppealsPro's own site on the date shown/);
+    expect(pro.lastVerified).toBe("2026-10-23");
+    expect(text(pro)).toMatch(/As read on its home page on 23 October 2026/);
+    expect(text(pro)).toMatch(/We did not find document checking described/);
+    // the one price named is the one read from its site
+    expect(text(pro)).toContain("$79.99");
+  });
+
+  it("says where the other option is enough", () => {
+    expect(text(compare[0]!)).toMatch(/may be all you need/);
+    expect(text(compare[1]!)).toMatch(/may suit you better/);
+  });
+
+  it("is kept off the decoder's list of guides to kinds of notice", () => {
+    expect(GUIDES.filter((g) => !g.compare).map((g) => g.slug)).not.toContain(
+      "appealspro-alternative",
+    );
+  });
+});

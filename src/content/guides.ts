@@ -1,4 +1,5 @@
 import { planOfActionExamples } from "./guideExamples";
+import { compareGuides } from "./guideCompare";
 
 /**
  * B-25: the four guide pages, chosen and ordered by `docs/handoffs/2026-09-25-keyword-research.md`.
@@ -23,6 +24,8 @@ export type GuideSection = {
 
 export type Guide = {
   slug: string;
+  /** A comparison page (a buyer weighing options), not a guide to a kind of notice. Not listed on /decode. */
+  compare?: boolean;
   title: string;
   /** Short link text where the full title is too long (the decoder's guide links). */
   navLabel: string;
@@ -302,6 +305,7 @@ export const GUIDES: Guide[] = [
     cta: "Paste your IP complaint notice to pull out the IDs, ASINs and what it asks for.",
   },
   planOfActionExamples,
+  ...compareGuides,
 ];
 
 export function guideBySlug(slug: string): Guide | undefined {
