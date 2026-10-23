@@ -24,6 +24,31 @@ import { labelOf } from "@/lib/caseLabel";
  * own case. A date appears only when the notice or the seller supplied it; a window with no start
  * date is described, never counted down.
  */
+/** The soonest entry that has a calendar day, whoever set it. Undated and indefinite ones are skipped. */
+function soonestDated<T extends { dueOn?: string | null; isIndefinite?: boolean }>(
+  shown: readonly T[],
+): T | undefined {
+  return shown
+    .filter((d) => d.dueOn && !d.isIndefinite)
+    .sort((a, b) => (a.dueOn! < b.dueOn! ? -1 : a.dueOn! > b.dueOn! ? 1 : 0))[0];
+}
+
+/**
+ * The seller's own Amazon deadline for the purchase screens (23 Oct 2026): the soonest dated entry
+ * on the case, counted on the calendar, and only while it is still ahead. A window with no stated date
+ * returns null, because a countdown to a guessed date would be the fake urgency this exists to avoid.
+ */
+export function upcomingDeadline(
+  file: Pick<CaseFile, "deadlines"> | null | undefined,
+  now: Date,
+): { label: string; day: string; days: number } | null {
+  const shown = file?.deadlines?.length ? deadlinesForDisplay(file.deadlines) : [];
+  const d = soonestDated(shown);
+  if (!d?.dueOn) return null;
+  const days = daysUntilDay(d.dueOn, now);
+  return days < 0 ? null : { label: d.label, day: d.dueOn, days };
+}
+
 export interface CaseSummary {
   id: string;
   title: string;
@@ -90,9 +115,7 @@ export function summarizeCase(
   const shown = file?.deadlines?.length ? deadlinesForDisplay(file.deadlines) : [];
   // The soonest dated entry, whoever set it: a date the seller entered that is sooner than the
   // notice's window is the one to work to.
-  const dated = shown
-    .filter((d) => d.dueOn && !d.isIndefinite)
-    .sort((a, b) => (a.dueOn! < b.dueOn! ? -1 : a.dueOn! > b.dueOn! ? 1 : 0))[0];
+  const dated = soonestDated(shown);
   const due = dated?.dueOn
     ? { label: dated.label, day: dated.dueOn, days: daysUntilDay(dated.dueOn, now) }
     : shown[0]

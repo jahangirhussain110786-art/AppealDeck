@@ -13,6 +13,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { toast } from "sonner";
 import { downloadResponseDocx, printResponse } from "@/lib/responseDocument";
 import { ComposeGate } from "@/components/ComposeGate";
+import { upcomingDeadline } from "@/lib/caseSummary";
 import {
   answerFor,
   questionnaireQuestions,
@@ -621,6 +622,7 @@ ${text}`
                   caseId={file.id}
                   onActivated={onGenerate}
                   note={purchaseNote}
+                  deadline={upcomingDeadline(file, new Date())}
                 />
               ) : (
                 <>

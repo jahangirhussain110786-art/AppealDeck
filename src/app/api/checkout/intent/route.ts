@@ -22,6 +22,8 @@ import {
   PLAN_NEEDS_CASE,
   foundingCode,
   passAfterReviewPriceId,
+  passAfterSinglePriceId,
+  upgradeEnabled,
   priceIdFor,
   type PassPlan,
 } from "@/lib/plans";
@@ -88,6 +90,8 @@ export async function POST(req: NextRequest) {
 
   // ---- what this account already holds, and whether this purchase makes sense -------------------
   let creditedPass = false;
+  // The Appeal Pass for a case that already has a One Response, with its price taken off.
+  let creditedFromSingle = false;
   if (needsCase && caseId) {
     // One Pass covers every revision of its case, so a second checkout for a case that already has
     // one would only take the seller's money twice. Nothing checked this until 24 Sep 2026.
@@ -125,6 +129,17 @@ export async function POST(req: NextRequest) {
       // The review's price comes off the Appeal Pass for the case it was bought for.
       creditedPass = plan === "case" && reviewed && passAfterReviewPriceId() !== undefined;
     }
+    /*
+      23 Oct 2026: a One Response's price comes off the Appeal Pass for its case, so a seller who
+      reaches round two does not pay for the first response twice. Only one credit applies to a
+      purchase: the One Response's is the larger, so it wins over a document review's. Offered only
+      where its own Paddle price exists (`upgradeEnabled`), or the credit would be a promise.
+    */
+    if (plan === "case" && upgradeEnabled()) {
+      const hasSingle = await fetchSingleResponse(userId, caseId).catch(() => null);
+      if (hasSingle === null) return refuse("Could not prepare checkout.", 503);
+      creditedFromSingle = hasSingle;
+    }
   }
 
   if (plan === "renewal") {
@@ -158,7 +173,11 @@ export async function POST(req: NextRequest) {
       return refuse("You already have a Pro plan. Manage it in Billing.", 409);
   }
 
-  const priceId = creditedPass ? passAfterReviewPriceId() : priceIdFor(plan);
+  const priceId = creditedFromSingle
+    ? passAfterSinglePriceId()
+    : creditedPass
+      ? passAfterReviewPriceId()
+      : priceIdFor(plan);
   if (!priceId) return refuse("Checkout is not configured.", 503);
   const scope = caseId ?? ACCOUNT_SCOPE;
 

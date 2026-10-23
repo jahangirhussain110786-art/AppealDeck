@@ -130,6 +130,7 @@ export const PRICES = {
     pack_30: "pri_p30",
     pro_plan: "pri_pro",
     single_response: "pri_single",
+    pass_after_single: "pri_after_single",
   },
 } as const;
 

@@ -5,7 +5,7 @@ import { composePoa, critiquePoa, renderPoaText, isSeverityGated } from "@/core"
 import type { CaseFileData, PoaDraft } from "@/core";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive, claimCasePass, claimSingleResponse } from "@/lib/license";
-import { SINGLE_RESPONSE_USED } from "@/content/purchases";
+import { singleUsedMessage } from "@/content/purchases";
 import { serviceUnavailableResponse } from "@/lib/licenseGuard";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { rateLimitCompose, rateLimitDraft, tooManyRequestsResponse } from "@/lib/ratelimit";
@@ -136,7 +136,7 @@ async function handleCompose(req: NextRequest) {
     );
     if (round > 1)
       return NextResponse.json(
-        { error: SINGLE_RESPONSE_USED, code: "single_response_used" },
+        { error: singleUsedMessage(), code: "single_response_used" },
         { status: 403 },
       );
   }

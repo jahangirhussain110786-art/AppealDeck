@@ -16,6 +16,8 @@ import {
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { ConsentRow } from "@/components/pricing/ConsentRow";
 import { PartnerCodeNote } from "@/components/pricing/PartnerCodeNote";
+import { PurchaseClock } from "@/components/pricing/PurchaseClock";
+import { upcomingDeadline } from "@/lib/caseSummary";
 import { PRICING, SAMPLE_POA } from "@/content/marketing";
 import { APP } from "@/content/app";
 import { SHARED } from "@/content/shared";
@@ -46,10 +48,13 @@ function caseCheckLabel(kind: string, id: string): string {
 export function PurchasePanel({
   plan = "case",
   onReviewState,
+  onSingleState,
 }: {
   plan?: PassPlan;
   /** Told whether the case already has a document review, which takes its price off the Appeal Pass. */
   onReviewState?: (hasReview: boolean) => void;
+  /** Told whether the case already has a One Response, whose price also comes off the Appeal Pass. */
+  onSingleState?: (hasSingle: boolean) => void;
 }) {
   const [consent, setConsent] = useState(false);
   const [phase, setPhase] = useState<CompletionPhase>("idle");
@@ -71,6 +76,8 @@ export function PurchasePanel({
   const [caseHasSingle, setCaseHasSingle] = useState(false);
   // The case the checkout is for, so activation is asked about THAT case and not any Pass on the account.
   const [checkedCaseId, setCheckedCaseId] = useState<string | undefined>(undefined);
+  // The case's own Amazon deadline, while it is still ahead (null when the notice stated none).
+  const [deadline, setDeadline] = useState<{ label: string; day: string } | null>(null);
   const pollAbort = useRef<AbortController | null>(null);
   useEffect(() => () => pollAbort.current?.abort(), []);
   const sessionState = useSessionState();
@@ -110,6 +117,7 @@ export function PurchasePanel({
           return;
         }
         setCheckedCaseId(file.id);
+        setDeadline(upcomingDeadline(file, new Date()));
         const label = caseCheckLabel(file.kind, file.id);
         // A case that already has its Pass must not be offered a second one (the server refuses it
         // too). A failed lookup falls through to the normal offer, and the server decides.
@@ -128,6 +136,7 @@ export function PurchasePanel({
           .catch(() => null);
         if (!alive) return;
         setCaseHasSingle(license?.single === true);
+        onSingleState?.(license?.single === true);
         setCaseHasReview(license?.hasReview === true);
         onReviewState?.(license?.hasReview === true);
         if (license?.status === "active") {
@@ -153,7 +162,7 @@ export function PurchasePanel({
     return () => {
       alive = false;
     };
-  }, [sessionState, onReviewState]);
+  }, [sessionState, onReviewState, onSingleState]);
 
   const activeCase: CaseCheck = sessionState === "signed-in" ? caseCheck : { status: "none" };
 
@@ -343,6 +352,8 @@ export function PurchasePanel({
           </Link>
         </p>
       )}
+
+      {sessionState === "signed-in" && <PurchaseClock deadline={deadline} />}
 
       <div className="flex flex-col gap-3 sm:flex-row">
         {consent && !blocked ? (

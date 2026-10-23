@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { EMAIL_PRODUCTS, PRODUCTS, SINGLE_RESPONSE_USED } from "../purchases";
 import { HOME } from "../marketing";
 
@@ -95,6 +95,30 @@ describe("the wording stays honest", () => {
   it("says a credit is for one case, and the rebate is paid whatever the result", () => {
     expect(PRODUCTS.credits.what).toMatch(/activates one case/);
     expect(PRODUCTS.rebate.body).toMatch(/Whatever the result/);
+  });
+});
+
+describe("the Appeal Pass credited for a One Response (23 Oct 2026)", () => {
+  it("is the Appeal Pass price less the One Response price", () => {
+    expect(249 - dollars(PRODUCTS.single.price)).toBe(dollars(PRODUCTS.single.creditedPassPrice));
+    expect(PRODUCTS.single.creditedPassAmount).toBe(`${PRODUCTS.single.creditedPassPrice}.00`);
+    expect(PRODUCTS.single.creditLine).toContain(PRODUCTS.single.price);
+  });
+
+  it("is named in the round-two message only where the credit exists", async () => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_SINGLE", "");
+    const off = await import("../purchases");
+    expect(off.singleUsedMessage()).toBe(off.SINGLE_RESPONSE_USED);
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "pri_s");
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_SINGLE", "pri_a");
+    const on = await import("../purchases");
+    expect(on.singleUsedMessage()).toContain("$99 you paid comes off");
+    expect(on.singleUsedMessage()).toContain("$150");
+    vi.unstubAllEnvs();
+    vi.resetModules();
   });
 });
 

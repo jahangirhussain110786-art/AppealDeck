@@ -11,6 +11,7 @@ type Env = Record<string, string>;
 const NONE: Env = {
   NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS: "",
   NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE: "",
+  NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_SINGLE: "",
   NEXT_PUBLIC_PADDLE_PRICE_DOCUMENT_REVIEW: "",
   NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_REVIEW: "",
   NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_RENEWAL: "",
@@ -73,6 +74,15 @@ describe("One Response", () => {
     expect(terms(on.legal)).toMatch(/does not cover a response to a later reply from Amazon/);
     expect(terms(on.legal)).toMatch(/14-day refund window/);
     expect(log(on.changelog)).toContain("One Response is on sale: $99");
+    // The credit is promised only once its own price exists.
+    expect(terms(on.legal)).not.toMatch(/price of the One Response comes off/);
+    expect(log(on.changelog)).not.toContain("upgrades to the Appeal Pass");
+    const up = await load({
+      NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE: "pri_single",
+      NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_SINGLE: "pri_after",
+    });
+    expect(terms(up.legal)).toMatch(/price of the One Response comes off/);
+    expect(log(up.changelog)).toContain("upgrades to the Appeal Pass at a credited price");
   });
 });
 

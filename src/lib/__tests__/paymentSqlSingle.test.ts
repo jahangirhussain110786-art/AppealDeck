@@ -162,3 +162,68 @@ describe("a One Response", () => {
     expect(await claimSingle(db, user, "case-s13")).toBe(false);
   });
 });
+
+describe("the Appeal Pass credited for a One Response (migration 0021)", () => {
+  const CREDITED = P.extras.pass_after_single;
+
+  it("is parked when the case has no One Response, and grants nothing", async () => {
+    const user = await newUser(db);
+    expect(await buy(user, "case-u1", "txn_u1", CREDITED)).toMatch(
+      /^unmatched:credited Appeal Pass without an active One Response/,
+    );
+    expect(await licences(db, user)).toHaveLength(0);
+  });
+
+  it("is an Appeal Pass for the case once it has a One Response, and both stay on the record", async () => {
+    const user = await newUser(db);
+    await buy(user, "case-u2", "txn_u2s");
+    expect(await buy(user, "case-u2", "txn_u2", CREDITED)).toBe("ok");
+    expect(await claim(db, user, "case-u2")).toBe(true);
+    const rows = await licences(db, user);
+    expect(rows.map((l) => l.plan)).toEqual(["single_response", "appeal_pass"]);
+    expect(rows[1]).toMatchObject({ case_id: "case-u2", status: "active", expires_at: null });
+  });
+
+  it("queues a confirmation email for an Appeal Pass, not a One Response", async () => {
+    const user = await newUser(db);
+    await buy(user, "case-u3", "txn_u3s");
+    await buy(user, "case-u3", "txn_u3", CREDITED);
+    const r = await db.query<{ kind: string }>(
+      "select kind from purchase_email_outbox where transaction_id = 'txn_u3'",
+    );
+    expect(r.rows[0]!.kind).toBe("appeal_pass");
+  });
+
+  it("is parked when the case already has an Appeal Pass, and when the One Response was refunded", async () => {
+    const withPass = await newUser(db);
+    await buy(withPass, "case-u4", "txn_u4s");
+    await buy(withPass, "case-u4", "txn_u4a", CREDITED);
+    expect(await buy(withPass, "case-u4", "txn_u4b", CREDITED)).toMatch(
+      /^unmatched:duplicate Pass/,
+    );
+    const refunded = await newUser(db);
+    await buy(refunded, "case-u5", "txn_u5s");
+    await apply(db, adjustment("adj_u5", "txn_u5s", "approved", "2026-10-23T10:00:00Z"));
+    expect(await buy(refunded, "case-u5", "txn_u5", CREDITED)).toMatch(
+      /^unmatched:credited Appeal Pass without an active One Response/,
+    );
+  });
+
+  it("is parked when its price is not configured, and a One Response is not an Appeal Pass until then", async () => {
+    const user = await newUser(db);
+    await buy(user, "case-u6", "txn_u6s");
+    const intent = await newIntent(db, user, "case-u6", CREDITED);
+    expect(await apply(db, completed("txn_u6", CREDITED, intent), { extras: null })).toMatch(
+      /^unmatched:no item matches/,
+    );
+    expect(await claim(db, user, "case-u6")).toBe(false);
+  });
+
+  it("leaves the plain Appeal Pass and the document review\x27s credit as they were", async () => {
+    const user = await newUser(db);
+    expect(await buy(user, "case-u7", "txn_u7", P.case)).toBe("ok");
+    const reviewed = await newUser(db);
+    await buy(reviewed, "case-u8", "txn_u8r", P.extras.document_review);
+    expect(await buy(reviewed, "case-u8", "txn_u8", P.extras.pass_after_review)).toBe("ok");
+  });
+});

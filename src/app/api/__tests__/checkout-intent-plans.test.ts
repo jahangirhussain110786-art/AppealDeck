@@ -10,6 +10,7 @@ const getApiUserMock = vi.fn();
 const insertSpy = vi.fn();
 const fetchLicenseMock = vi.fn();
 const reviewMock = vi.fn();
+const singleMock = vi.fn();
 const coverMock = vi.fn();
 const proMock = vi.fn();
 
@@ -45,6 +46,7 @@ vi.mock("@/lib/license", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/license")>()),
   fetchLicenseForUser: (...args: unknown[]) => fetchLicenseMock(...args),
   fetchDocumentReview: (...args: unknown[]) => reviewMock(...args),
+  fetchSingleResponse: (...args: unknown[]) => singleMock(...args),
   fetchAccountCover: (...args: unknown[]) => coverMock(...args),
   fetchProStatus: (...args: unknown[]) => proMock(...args),
 }));
@@ -70,6 +72,8 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "pri_account");
   vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_DOCUMENT_REVIEW", "pri_review");
   vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_REVIEW", "pri_credited");
+  vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "pri_single");
+  vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_SINGLE", "pri_after_single");
   vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_RENEWAL", "pri_renew");
   vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PACK_10", "pri_p10");
   vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PACK_30", "pri_p30");
@@ -81,6 +85,8 @@ beforeEach(() => {
   fetchLicenseMock.mockResolvedValue({ status: "none", plan: null, licenseKey: null });
   reviewMock.mockReset();
   reviewMock.mockResolvedValue(false);
+  singleMock.mockReset();
+  singleMock.mockResolvedValue(false);
   coverMock.mockReset();
   coverMock.mockResolvedValue(null);
   proMock.mockReset();
@@ -159,6 +165,61 @@ describe("the Appeal Pass credited for a document review", () => {
     reviewMock.mockResolvedValue(true);
     vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_REVIEW", "");
     expect((await (await POST(req(withCase))).json()).priceId).toBe("pri_case");
+  });
+});
+
+describe("One Response (23 Oct 2026)", () => {
+  it("opens its own price, for the case, with a consent that names it", async () => {
+    const res = await POST(req({ ...withCase, plan: "single" }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).priceId).toBe("pri_single");
+    expect(stored()).toMatchObject({ case_id: "c1", price_id: "pri_single" });
+    expect(stored().consent_text).toContain("deliver the One Response immediately");
+  });
+
+  it("is refused for a case that already has one, and for one that already has an Appeal Pass", async () => {
+    singleMock.mockResolvedValue(true);
+    expect((await POST(req({ ...withCase, plan: "single" }))).status).toBe(409);
+    singleMock.mockResolvedValue(false);
+    fetchLicenseMock.mockResolvedValue({ status: "active", plan: "appeal_pass", licenseKey: "k" });
+    expect((await POST(req({ ...withCase, plan: "single" }))).status).toBe(409);
+  });
+
+  it("is not on sale without its price", async () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
+    expect((await POST(req({ ...withCase, plan: "single" }))).status).toBe(503);
+  });
+});
+
+describe("the Appeal Pass credited for a One Response", () => {
+  it("is offered at the credited price once the case has a One Response", async () => {
+    singleMock.mockResolvedValue(true);
+    const res = await POST(req(withCase));
+    expect((await res.json()).priceId).toBe("pri_after_single");
+    expect(stored().price_id).toBe("pri_after_single");
+  });
+
+  it("is the ordinary price when the case has no One Response", async () => {
+    expect((await (await POST(req(withCase))).json()).priceId).toBe("pri_case");
+  });
+
+  it("is the ordinary price when the credited price is not configured", async () => {
+    singleMock.mockResolvedValue(true);
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_SINGLE", "");
+    expect((await (await POST(req(withCase))).json()).priceId).toBe("pri_case");
+  });
+
+  it("wins over a document review's credit, being the larger", async () => {
+    singleMock.mockResolvedValue(true);
+    reviewMock.mockResolvedValue(true);
+    expect((await (await POST(req(withCase))).json()).priceId).toBe("pri_after_single");
+  });
+
+  it("does not change the Account Pass", async () => {
+    singleMock.mockResolvedValue(true);
+    expect((await (await POST(req({ ...withCase, plan: "account" }))).json()).priceId).toBe(
+      "pri_account",
+    );
   });
 });
 

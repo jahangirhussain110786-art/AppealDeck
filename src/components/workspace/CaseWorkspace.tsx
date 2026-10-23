@@ -71,7 +71,7 @@ import {
 import { runDocumentCheck, type CheckOutcome } from "@/lib/documentChecks/runCheck";
 import { analyzeReply } from "@/core/responseAnalyzer";
 import { STORES } from "@/content/stores";
-import { SINGLE_RESPONSE_USED } from "@/content/purchases";
+import { singleUsedMessage } from "@/content/purchases";
 import { replyCriticisms } from "@/core/replyFeedback";
 import { checkCaseDataForWorkspace } from "@/lib/documentChecks/context";
 import { invoiceCoverage } from "@/core/invoiceCoverage";
@@ -1169,7 +1169,7 @@ function WorkspaceInner({
         return;
       }
       if (response.status === 403 && data?.code === "single_response_used") {
-        setPurchaseNote(SINGLE_RESPONSE_USED);
+        setPurchaseNote(singleUsedMessage());
         setPurchase(true);
         return;
       }

@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 /** The order summary for a product: its title, its rows and the total. */
 export function orderFor(
   plan: PassPlan,
-  options: { credited?: boolean } = {},
+  options: { credited?: boolean; creditedFromSingle?: boolean } = {},
 ): {
   title: string;
   total: string;
@@ -38,6 +38,18 @@ export function orderFor(
         [o.order.line, o.amount, false],
         [PRICING.order.tax, PRICING.order.taxValue, true],
         [PRICING.order.expires, o.order.expires, true],
+      ],
+    };
+  }
+  if (plan === "case" && options.creditedFromSingle) {
+    return {
+      title: PRICING.order.title,
+      total: PRODUCTS.single.creditedPassAmount,
+      rows: [
+        [PRICING.order.line, PRICING.order.amount, false],
+        [PRODUCTS.single.creditLine, `−${PRODUCTS.single.amount}`, true],
+        [PRICING.order.tax, PRICING.order.taxValue, true],
+        [PRICING.order.expires, PRICING.order.expiresValue, true],
       ],
     };
   }
@@ -78,15 +90,20 @@ export function PurchaseSection({
   accountEnabled,
   reviewEnabled = false,
   singleEnabled = false,
+  upgradeOn = false,
 }: {
   accountEnabled: boolean;
   reviewEnabled?: boolean;
   singleEnabled?: boolean;
+  /** The credited upgrade from One Response is on sale (its own Paddle price is set). */
+  upgradeOn?: boolean;
 }) {
   const choice = usePlanChoice();
   // The panel learns from the licence lookup whether this case already has a document review, which
   // takes the review's price off the Appeal Pass.
   const [hasReview, setHasReview] = useState(false);
+  // Likewise whether it already has a One Response, whose price also comes off (the larger credit).
+  const [hasSingle, setHasSingle] = useState(false);
   const available: PassPlan[] = [
     "case",
     ...(singleEnabled ? (["single"] as const) : []),
@@ -94,7 +111,10 @@ export function PurchaseSection({
     ...(reviewEnabled ? (["review"] as const) : []),
   ];
   const plan: PassPlan = available.includes(choice) ? choice : "case";
-  const { title, total, rows } = orderFor(plan, { credited: reviewEnabled && hasReview });
+  const { title, total, rows } = orderFor(plan, {
+    credited: reviewEnabled && hasReview,
+    creditedFromSingle: upgradeOn && hasSingle,
+  });
   return (
     <div className="space-y-4">
       {available.length > 1 && <PlanPicker plan={plan} available={available} />}
@@ -128,7 +148,7 @@ export function PurchaseSection({
           <p className="mt-3 text-xs text-muted-foreground">{PRODUCTS.single.summary}</p>
         )}
       </div>
-      <PurchasePanel plan={plan} onReviewState={setHasReview} />
+      <PurchasePanel plan={plan} onReviewState={setHasReview} onSingleState={setHasSingle} />
       <p className="text-center text-[0.84375rem] text-muted-foreground">
         {PRICING.order.paidThrough}
       </p>

@@ -28,6 +28,8 @@ describe("the plan cards", () => {
     const html = renderToStaticMarkup(<PlanCards />);
     expect(html).not.toContain("Free account</p>");
     expect(html).toContain("For everyone");
+    // The Appeal Pass carries our recommendation as a pill, not as a claim about what others buy.
+    expect(html).toContain("Recommended");
     expect(html).toContain("No account");
     expect(html).toContain("With a free account");
     expect(html).toContain("Case saved on your device");

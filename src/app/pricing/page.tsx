@@ -16,7 +16,13 @@ import {
 import { FaqAccordion } from "@/components/pricing/FaqAccordion";
 import { PurchaseSection } from "@/components/pricing/PurchaseSection";
 import { PlanCards } from "@/components/pricing/PlanCards";
-import { accountPassEnabled, reviewEnabled, reviewListed, singleEnabled } from "@/lib/plans";
+import {
+  accountPassEnabled,
+  reviewEnabled,
+  reviewListed,
+  singleEnabled,
+  upgradeEnabled,
+} from "@/lib/plans";
 import { ReviewTeaser } from "@/components/pricing/ReviewTeaser";
 import { VersusSection } from "@/components/pricing/VersusSection";
 import { PricingStage } from "@/components/pricing/PricingStage";
@@ -183,6 +189,7 @@ export default function PricingPage() {
             accountEnabled={accountPassEnabled()}
             reviewEnabled={reviewEnabled()}
             singleEnabled={singleEnabled()}
+            upgradeOn={upgradeEnabled()}
           />
         </section>
 

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckoutButton } from "@/components/CheckoutButton";
+import { PurchaseClock } from "@/components/pricing/PurchaseClock";
 import { ConsentRow } from "@/components/pricing/ConsentRow";
 import { CaseCreditCard } from "@/components/CaseCreditCard";
 import { APP } from "@/content/app";
@@ -25,6 +26,7 @@ export function ComposeGate({
   caseId,
   onActivated,
   note,
+  deadline,
 }: {
   email?: string | null;
   vault?: Vault;
@@ -32,6 +34,8 @@ export function ComposeGate({
   onActivated?: () => void;
   /** Shown first: why the Pass is asked for now (a One Response that has covered its response). */
   note?: string;
+  /** The case's own Amazon deadline while it is still ahead, shown beside the pay button. */
+  deadline?: { label: string; day: string } | null;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [consent, setConsent] = useState(false);
@@ -107,6 +111,7 @@ export function ComposeGate({
         <p className="font-mono text-xl font-medium tabular-nums text-foreground">
           {APP.access.composeGate.price}
         </p>
+        <PurchaseClock deadline={deadline} />
         <ConsentRow checked={consent} onCheckedChange={setConsent} idPrefix="compose-eu-consent" />
         {consent ? (
           <CheckoutButton

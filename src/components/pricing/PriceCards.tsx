@@ -22,6 +22,8 @@ export type PriceCardData = {
    * they are shown instead of `features`, which stays the flat list other pages use.
    */
   groups?: readonly { label: string; features: readonly string[] }[];
+  /** A short pill beside the name: the plan we recommend for the commonest case (an opinion, not a count). */
+  badge?: string;
   /** The card on the inverted panel. At most one per page. */
   featured?: boolean;
   /** Anything that belongs between the features and the button (the founding-offer counter). */
@@ -68,6 +70,11 @@ export function PriceCardGrid({
               </p>
               {card.note && <p className="mt-1 text-sm text-muted-foreground">{card.note}</p>}
             </div>
+            {card.badge && (
+              <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary-ink">
+                {card.badge}
+              </span>
+            )}
           </div>
           <p className="flex items-baseline gap-2 text-foreground" data-tn>
             <span className="text-5xl font-semibold tracking-[-0.045em]">{card.price}</span>

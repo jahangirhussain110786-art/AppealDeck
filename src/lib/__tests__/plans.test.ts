@@ -22,6 +22,8 @@ import {
   priceIdFor,
   singleEnabled,
   singleListed,
+  upgradeEnabled,
+  passAfterSinglePriceId,
   extraPriceIds,
   PLAN_NEEDS_CASE,
 } from "../plans";
@@ -138,5 +140,25 @@ describe("One Response (23 Oct 2026)", () => {
   it("does not appear in what the webhook is told while it has no price", () => {
     vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
     expect(extraPriceIds()).not.toHaveProperty("single_response");
+  });
+});
+
+describe("the credited upgrade from One Response (23 Oct 2026)", () => {
+  it("exists only where both the One Response and its credited Appeal Pass price are set", () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "pri_single");
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_SINGLE", "");
+    expect(upgradeEnabled()).toBe(false);
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_SINGLE", "pri_after");
+    expect(upgradeEnabled()).toBe(true);
+    expect(passAfterSinglePriceId()).toBe("pri_after");
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
+    expect(upgradeEnabled()).toBe(false);
+  });
+
+  it("is handed to the webhook only when configured", () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_SINGLE", "pri_after");
+    expect(extraPriceIds()).toMatchObject({ pass_after_single: "pri_after" });
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_SINGLE", "");
+    expect(extraPriceIds()).not.toHaveProperty("pass_after_single");
   });
 });

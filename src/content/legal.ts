@@ -33,6 +33,7 @@ import {
   renewalEnabled,
   reviewEnabled,
   singleEnabled,
+  upgradeEnabled,
   type PassPlan,
 } from "@/lib/plans";
 
@@ -215,6 +216,12 @@ export const LEGAL = {
           ...(singleEnabled()
             ? [
                 "One Response is one purchase for one case. It covers the first response you prepare for that case, with every revision of it, and it includes the AI reading of that case's documents. It does not cover a response to a later reply from Amazon, or a further attempt: once Amazon has replied, or you have recorded a response as sent, the next response needs the Appeal Pass, which is bought separately. It is tied to that case and cannot be moved to another. It has the same 14-day refund window.",
+              ]
+            : []),
+          // 23 Oct 2026: stated only while the credited Appeal Pass price is configured.
+          ...(upgradeEnabled()
+            ? [
+                "If you then buy the Appeal Pass for the same case, the price of the One Response comes off it, so the first response is not paid for twice. The credit applies to that case only and does not combine with a partner's code.",
               ]
             : []),
           ...(reviewEnabled()

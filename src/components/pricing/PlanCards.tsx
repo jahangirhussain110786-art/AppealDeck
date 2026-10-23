@@ -64,6 +64,8 @@ export function PlanCards() {
   cards.push({
     key: "case",
     ...pass,
+    // Our recommendation for the commonest case, one notice and one case; said as advice, not as a count.
+    badge: PRODUCTS.recommended,
     featured: !withAccount,
     cta: (
       <PlanCta plan="case" featured={!withAccount}>

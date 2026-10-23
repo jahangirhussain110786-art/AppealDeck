@@ -12,7 +12,12 @@ import { apiErrorMessage } from "@/lib/apiError";
 import { trackFunnelEvent, FUNNEL_EVENTS } from "@/lib/analytics";
 import { buildCheckoutOptions, type CheckoutOptions } from "@/lib/checkoutOptions";
 import { readPartnerCode } from "@/lib/partnerCode";
-import { PLAN_NEEDS_CASE, passAfterReviewPriceId, type PassPlan } from "@/lib/plans";
+import {
+  PLAN_NEEDS_CASE,
+  passAfterReviewPriceId,
+  passAfterSinglePriceId,
+  type PassPlan,
+} from "@/lib/plans";
 
 declare global {
   interface Window {
@@ -202,7 +207,9 @@ export function CheckoutButton({
       // at its credited price (after a document review) already has the review's price off. Paddle
       // applies the code and shows the discount in its own window; a code it does not know is not applied.
       const codeApplies =
-        (plan === "case" || plan === "account") && data.priceId !== passAfterReviewPriceId();
+        (plan === "case" || plan === "account") &&
+        data.priceId !== passAfterReviewPriceId() &&
+        data.priceId !== passAfterSinglePriceId();
       window.Paddle.Checkout.open(
         buildCheckoutOptions({
           priceId: data.priceId,

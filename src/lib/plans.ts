@@ -56,6 +56,14 @@ export function singlePriceId(): string | undefined {
   return process.env.NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE || undefined;
 }
 
+/**
+ * The Appeal Pass price for a case that has a One Response: the One Response's price comes off.
+ * Offered only with its own price configured, or the credit would be a promise nobody can keep.
+ */
+export function passAfterSinglePriceId(): string | undefined {
+  return process.env.NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_SINGLE || undefined;
+}
+
 export function accountPassPriceId(): string | undefined {
   return process.env.NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS || undefined;
 }
@@ -132,6 +140,11 @@ export function singleEnabled(): boolean {
   return singlePriceId() !== undefined;
 }
 
+/** The credited upgrade from One Response to the Appeal Pass exists only where both prices do. */
+export function upgradeEnabled(): boolean {
+  return singleEnabled() && passAfterSinglePriceId() !== undefined;
+}
+
 /** One Response is shown: on sale, or previewed as "Opens soon". */
 export function singleListed(): boolean {
   return singleEnabled() || previewPlans();
@@ -183,6 +196,7 @@ export function extraPriceIds(): Record<string, string> {
     pack_30: pack30PriceId(),
     pro_plan: proPlanPriceId(),
     single_response: singlePriceId(),
+    pass_after_single: passAfterSinglePriceId(),
   };
   return Object.fromEntries(
     Object.entries(candidates).filter((entry): entry is [string, string] => Boolean(entry[1])),

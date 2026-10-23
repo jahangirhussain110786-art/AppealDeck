@@ -7,6 +7,8 @@
 // - The banned-pattern and banned-number rules apply (scripts/lint-copy.mjs): no percent sign, no
 //   "N hours".
 
+import { upgradeEnabled } from "@/lib/plans";
+
 export type PurchaseKind =
   | "appeal_pass"
   | "account_pass"
@@ -37,7 +39,19 @@ export const OPENS_SOON = {
 export const SINGLE_RESPONSE_USED =
   "Your One Response covers the first response for this case. Amazon has replied, or you have recorded a response as sent, so a further response needs the Appeal Pass.";
 
+/**
+ * The same message, with the credit named where the upgrade exists: the One Response's price comes off
+ * the Appeal Pass for its case. Said only while the credited price is configured (`upgradeEnabled`).
+ */
+export function singleUsedMessage(): string {
+  return upgradeEnabled()
+    ? `${SINGLE_RESPONSE_USED} The ${PRODUCTS.single.price} you paid comes off: it is ${PRODUCTS.single.creditedPassPrice} for this case.`
+    : SINGLE_RESPONSE_USED;
+}
+
 export const PRODUCTS = {
+  /** The pill on the Appeal Pass card. An opinion about one case, never a claim about what others buy. */
+  recommended: "Recommended",
   /**
    * One Response (23 Oct 2026): one case, the first response and every revision of it, no further
    * responses. The price must equal the Paddle price (docs/DEPLOYMENT.md section 5f); the card on
@@ -57,6 +71,11 @@ export const PRODUCTS = {
       "This One Response covers the first response for your active case. A further response needs the Appeal Pass.",
     /** On the case page, when the seller holds only a One Response and the next response is not covered. */
     upgrade: "Get the Appeal Pass for a further response",
+    /** What the Appeal Pass costs for a case that has a One Response: the One Response's price comes off. */
+    creditedPassPrice: "$150",
+    creditedPassAmount: "$150.00",
+    /** Shown on the Appeal Pass's order summary for a case that already has a One Response. */
+    creditLine: "The One Response's $99 is already taken off",
     /** On the billing page. */
     billing: {
       one: "You have a One Response. It covers the first response for the case it was bought for.",

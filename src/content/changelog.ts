@@ -19,6 +19,7 @@ import {
   renewalEnabled,
   reviewEnabled,
   singleEnabled,
+  upgradeEnabled,
 } from "@/lib/plans";
 
 export type ChangelogEntry = { date: string; items: readonly string[] };
@@ -58,6 +59,11 @@ export const CHANGELOG = {
         ...(singleEnabled()
           ? [
               "One Response is on sale: $99 for one case and the first response to Amazon, with every revision of it and your documents read against the notice. A further response, after Amazon replies, needs the Appeal Pass.",
+            ]
+          : []),
+        ...(upgradeEnabled()
+          ? [
+              "A One Response now upgrades to the Appeal Pass at a credited price: the $99 you paid comes off, so a further response costs $150 for that case.",
             ]
           : []),
         ...(reviewEnabled()
