@@ -1,6 +1,8 @@
 **Every AI session must read this file at the start and must mention every row below, with its status, whenever the founder asks what is open, what is left, or where things stand.** Do not summarise it away, do not drop a row because it looks unimportant, and do not build anything on it unprompted.
 
-Last updated: 22 Oct 2026.
+**Before launch, and when the founder buys the domain, show him [`docs/LAUNCH-CHECKLIST.md`](LAUNCH-CHECKLIST.md): one ordered list of everything that is his turn (domain, mail, migrations, secrets, Paddle, backups, tests). Keep it current in the same commit as any change that adds or removes a step.**
+
+Last updated: 23 Oct 2026.
 
 ## 0. START HERE: the founder's review list from 9 Oct 2026 (kept at the top on purpose)
 
