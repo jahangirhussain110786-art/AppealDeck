@@ -4,6 +4,7 @@ import { CreditCard, ArrowRight } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { countSingleResponses, fetchAccountCover, fetchLicenseForUser } from "@/lib/license";
 import { PRODUCTS } from "@/content/purchases";
+import { upgradeEnabled } from "@/lib/plans";
 import { BillingExtras } from "@/components/BillingExtras";
 import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -127,6 +128,17 @@ export default async function BillingPage() {
                 {singles === 1
                   ? PRODUCTS.single.billing.one
                   : PRODUCTS.single.billing.many.replace("{n}", String(singles))}
+                {upgradeEnabled() && (
+                  <>
+                    {" "}
+                    <Link
+                      href="/pricing#purchase"
+                      className="font-medium text-link underline-offset-4 hover:underline"
+                    >
+                      {PRODUCTS.single.billing.upgrade}
+                    </Link>
+                  </>
+                )}
               </p>
             )}
             <h2 className="text-lg font-semibold text-foreground">{APP.billing.inactive.title}</h2>

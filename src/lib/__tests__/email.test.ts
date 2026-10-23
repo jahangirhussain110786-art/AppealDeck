@@ -55,6 +55,30 @@ describe("buildPurchaseConfirmationEmail", () => {
     expect(email.text).not.toContain("One case.");
   });
 
+  it("names a One Response purchase, and says a further response needs the Appeal Pass", () => {
+    const email = buildPurchaseConfirmationEmail({
+      to: "seller@example.com",
+      purchasedAt: "2026-10-23T12:00:00.000Z",
+      kind: "single_response",
+    });
+    expect(email.subject).toContain("One Response");
+    expect(email.text).toContain("List price: $99");
+    expect(email.text).toContain("a further response needs the Appeal Pass");
+    expect(email.text).toContain("within 14 days of purchase");
+  });
+
+  it("names the credited Appeal Pass for what it is: the Pass, less the One Response already paid", () => {
+    const email = buildPurchaseConfirmationEmail({
+      to: "seller@example.com",
+      purchasedAt: "2026-10-23T12:00:00.000Z",
+      kind: "pass_after_single",
+    });
+    expect(email.subject).toContain("Appeal Pass");
+    expect(email.text).toContain("less the $99 you paid for the One Response");
+    expect(email.text).toContain("$150");
+    expect(email.text).toContain("within 14 days of purchase");
+  });
+
   it("HTML-escapes the consent text so it renders safely", () => {
     const email = buildPurchaseConfirmationEmail({
       to: "seller@example.com",

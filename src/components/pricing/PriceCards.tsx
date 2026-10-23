@@ -52,7 +52,7 @@ export function PriceCardGrid({
         <li
           key={card.key}
           className={cn(
-            "flex flex-col gap-6 rounded-[22px] p-7 sm:p-8",
+            "relative flex flex-col gap-6 rounded-[22px] p-7 sm:p-8",
             card.featured
               ? "stage stage-plain dark text-foreground shadow-stage"
               : "border border-border/80 bg-card shadow-lift",
@@ -71,7 +71,9 @@ export function PriceCardGrid({
               {card.note && <p className="mt-1 text-sm text-muted-foreground">{card.note}</p>}
             </div>
             {card.badge && (
-              <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary-ink">
+              // Out of the flow, so the pill never narrows the name and note beside it (it made "Per case,
+              // one time" wrap and pushed this card's price below its neighbours').
+              <span className="absolute right-6 top-6 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary-ink sm:right-7 sm:top-7">
                 {card.badge}
               </span>
             )}

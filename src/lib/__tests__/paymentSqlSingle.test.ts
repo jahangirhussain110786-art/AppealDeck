@@ -184,14 +184,14 @@ describe("the Appeal Pass credited for a One Response (migration 0021)", () => {
     expect(rows[1]).toMatchObject({ case_id: "case-u2", status: "active", expires_at: null });
   });
 
-  it("queues a confirmation email for an Appeal Pass, not a One Response", async () => {
+  it("queues a confirmation email of its own kind, which names the credit", async () => {
     const user = await newUser(db);
     await buy(user, "case-u3", "txn_u3s");
     await buy(user, "case-u3", "txn_u3", CREDITED);
     const r = await db.query<{ kind: string }>(
       "select kind from purchase_email_outbox where transaction_id = 'txn_u3'",
     );
-    expect(r.rows[0]!.kind).toBe("appeal_pass");
+    expect(r.rows[0]!.kind).toBe("pass_after_single");
   });
 
   it("is parked when the case already has an Appeal Pass, and when the One Response was refunded", async () => {

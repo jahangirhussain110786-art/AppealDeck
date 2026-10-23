@@ -164,6 +164,34 @@ export function PurchasePanel({
     };
   }, [sessionState, onReviewState, onSingleState]);
 
+  // A visitor who has not signed in yet may still hold a case on this device (the guest vault), and its
+  // deadline is as real for them as for anyone. Read it without creating anything: a vault that does not
+  // exist, or is under a passphrase, simply shows no clock.
+  useEffect(() => {
+    if (sessionState !== "signed-out") return;
+    let alive = true;
+    void (async () => {
+      const vault = getBrowserVault();
+      try {
+        await vault.open();
+        if (!(await vault.isInitialized())) return;
+        const status = await vault.status();
+        if (status.state === "locked" && status.mode === "device")
+          await vault.unlockWithDeviceKey();
+        else if (status.state !== "unlocked") return;
+        const file = await loadCaseFile(vault);
+        if (alive) setDeadline(upcomingDeadline(file, new Date()));
+      } catch {
+        // no clock is better than a wrong one
+      } finally {
+        await vault.close();
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [sessionState]);
+
   const activeCase: CaseCheck = sessionState === "signed-in" ? caseCheck : { status: "none" };
 
   const handleCompleted = useCallback(() => {
@@ -353,7 +381,7 @@ export function PurchasePanel({
         </p>
       )}
 
-      {sessionState === "signed-in" && <PurchaseClock deadline={deadline} />}
+      <PurchaseClock deadline={deadline} />
 
       <div className="flex flex-col gap-3 sm:flex-row">
         {consent && !blocked ? (

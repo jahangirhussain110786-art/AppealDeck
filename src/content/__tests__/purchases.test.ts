@@ -103,6 +103,9 @@ describe("the Appeal Pass credited for a One Response (23 Oct 2026)", () => {
     expect(249 - dollars(PRODUCTS.single.price)).toBe(dollars(PRODUCTS.single.creditedPassPrice));
     expect(PRODUCTS.single.creditedPassAmount).toBe(`${PRODUCTS.single.creditedPassPrice}.00`);
     expect(PRODUCTS.single.creditLine).toContain(PRODUCTS.single.price);
+    // the billing link states the same two figures
+    expect(PRODUCTS.single.billing.upgrade).toContain(PRODUCTS.single.creditedPassPrice);
+    expect(PRODUCTS.single.billing.upgrade).toContain(PRODUCTS.single.price);
   });
 
   it("is named in the round-two message only where the credit exists", async () => {

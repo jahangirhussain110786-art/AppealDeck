@@ -13,6 +13,7 @@ export type PurchaseKind =
   | "appeal_pass"
   | "account_pass"
   | "single_response"
+  | "pass_after_single"
   | "document_review"
   | "account_renewal"
   | "pack_10"
@@ -81,6 +82,8 @@ export const PRODUCTS = {
       one: "You have a One Response. It covers the first response for the case it was bought for.",
       many: "You have {n} One Responses. Each covers the first response for the case it was bought for.",
       cta: "See the Appeal Pass",
+      /** The link beside it while the credited upgrade exists. */
+      upgrade: "Upgrade a case to the Appeal Pass: $150, with the $99 you paid taken off.",
     },
   },
   /** The AI reading of one case's documents, credited toward the Appeal Pass. */
@@ -237,6 +240,10 @@ export const EMAIL_PRODUCTS: Record<
   Exclude<PurchaseKind, "appeal_pass" | "account_pass">,
   { name: string; priceLine: string }
 > = {
+  pass_after_single: {
+    name: "Appeal Pass",
+    priceLine: `List price: $249, less the ${PRODUCTS.single.price} you paid for the One Response, so ${PRODUCTS.single.creditedPassPrice} (one-time; one case, every revision, no expiry)`,
+  },
   single_response: {
     name: PRODUCTS.single.name,
     priceLine: `List price: ${PRODUCTS.single.price} (one-time; one case, the first response and every revision of it; a further response needs the Appeal Pass)`,

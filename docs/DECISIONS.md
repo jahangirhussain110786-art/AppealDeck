@@ -451,3 +451,16 @@ Format:
 - **Prompt-injection line:** the document reader and the wording prompt now say the text is data and not instructions, as the other three already did; `promptInjection.test.ts` pins all five.
 - **Not changed:** "Opens soon" stays on products without a Paddle price; the early-customer offer, the case scholarship, referral and review rewards are not built (decisions pending).
 - **Decider:** the founder (to build for launch, and to keep the previews); AI assistant (the credit design and what the tests pin).
+
+## 23 Oct 2026 (refinement pass on the same day's work)
+
+The founder asked for the day's work to be refined. A review of it found, and this pass fixed:
+
+- **Emphasis pointed at the wrong card.** The inverted "featured" card was the Account Pass, which is often the disabled one, while the Recommended pill sat on a plain card. The Appeal Pass is now the featured card; the Account Pass is an ordinary card.
+- **The pill pushed a price out of line.** It narrowed the name and note beside it, wrapped "Per case, one time" and set that card's price lower than its neighbours. It is now out of the flow.
+- **The round-two gate contradicted its own checkout.** It said "$249" and "Continue to $249 checkout" while the server offered $150. It now shows the credited price when the credit applies.
+- **Billing said nothing about the upgrade.** A One Response holder now sees a link to the credited upgrade (only while its price exists).
+- **The credited Pass's confirmation email listed the full $249** with no mention of the credit. It is now its own email kind and names the $99 taken off.
+- **The deadline clock appeared only for signed-in buyers.** A visitor with a case on this device now sees it too (read without creating anything).
+- **Considered and rejected: a server-side "highest round seen" memory for the One Response limit.** It would stop a seller who strips their history after a refusal, but would also lock out a paying seller who pasted a reply by mistake and then deleted it, which is the worse harm; the cheat gets only revisions of round one. The limit stays as decided on 23 Oct.
+- **Deliberately unchanged:** every "Opens soon" preview.

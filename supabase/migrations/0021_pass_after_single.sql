@@ -12,7 +12,7 @@
 --   apply_paddle_event: the 0020 function with one more kind, 'pass_after_single'. It makes an Appeal
 --   Pass for the case, exactly like 'appeal_pass' and 'pass_after_review', and parks the payment (for a
 --   refund of the difference by hand) when the case has no live One Response, or already has an Appeal
---   Pass. Every other path is unchanged on purpose and is tested against a real Postgres.
+--   Pass. Its confirmation email is its own kind (it names the credit), unlike the document review's. Every other path is unchanged on purpose and is tested against a real Postgres.
 --
 -- Apply after 0020. It is one transaction: if anything is wrong it changes nothing.
 
@@ -215,7 +215,7 @@ begin
       update checkout_intents set transaction_id = txn where id = intent.id;
       insert into purchase_email_outbox(transaction_id, user_id, email, purchased_at, consent_text, kind)
       values(txn, pass_user, pass_email, occurred, intent.consent_text,
-        case pass_kind when 'pass_after_review' then 'appeal_pass' when 'pass_after_single' then 'appeal_pass' else pass_kind end)
+        case pass_kind when 'pass_after_review' then 'appeal_pass' else pass_kind end)
       on conflict do nothing;
     end if;
   elsif t in ('adjustment.created', 'adjustment.updated') then

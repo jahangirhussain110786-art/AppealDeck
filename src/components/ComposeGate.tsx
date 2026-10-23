@@ -15,6 +15,8 @@ import { CaseCreditCard } from "@/components/CaseCreditCard";
 import { APP } from "@/content/app";
 import { SHARED } from "@/content/shared";
 import { PRICING } from "@/content/marketing";
+import { PRODUCTS } from "@/content/purchases";
+import { upgradeEnabled } from "@/lib/plans";
 import type { Vault } from "@/core/vault/vault";
 import { pollLicenseStatus } from "@/lib/licensePoll";
 
@@ -39,6 +41,9 @@ export function ComposeGate({
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [consent, setConsent] = useState(false);
+  // The gate is shown with a note only when a One Response has covered its one response; the server then
+  // offers the credited price (if it exists), so the price shown here must say so too.
+  const credited = Boolean(note) && upgradeEnabled();
   const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
 
   const startPolling = useCallback(() => {
@@ -109,7 +114,9 @@ export function ComposeGate({
         )}
         <p className="text-sm text-muted-foreground">{APP.access.composeGate.body}</p>
         <p className="font-mono text-xl font-medium tabular-nums text-foreground">
-          {APP.access.composeGate.price}
+          {credited
+            ? `${PRODUCTS.single.creditedPassPrice}, once, for this case (the ${PRODUCTS.single.price} you paid is taken off)`
+            : APP.access.composeGate.price}
         </p>
         <PurchaseClock deadline={deadline} />
         <ConsentRow checked={consent} onCheckedChange={setConsent} idPrefix="compose-eu-consent" />
@@ -132,7 +139,9 @@ export function ComposeGate({
             className="h-auto min-h-11 whitespace-normal py-3"
             disabled
           >
-            {APP.access.composeGate.continueToCheckout}
+            {credited
+              ? `Continue to ${PRODUCTS.single.creditedPassPrice} checkout`
+              : APP.access.composeGate.continueToCheckout}
           </Button>
         )}
       </CardContent>

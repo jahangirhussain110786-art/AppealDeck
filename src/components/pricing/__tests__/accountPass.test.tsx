@@ -45,7 +45,7 @@ describe("the plan cards", () => {
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
-  it("add the Account Pass as a fourth, featured card once it has a price", () => {
+  it("add the Account Pass as a fourth card once it has a price, with the Appeal Pass still the featured one", () => {
     vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "pri_account");
     const html = renderToStaticMarkup(<PlanCards />);
     expect(html).toContain("Account Pass");
@@ -56,6 +56,11 @@ describe("the plan cards", () => {
     // the Appeal Pass card keeps its own button and price
     expect(html).toContain("Get the Appeal Pass");
     expect(html).toContain("$249");
+    // exactly one card is on the inverted panel, and it is the Appeal Pass
+    expect(html.match(/stage-plain/g)).toHaveLength(1);
+    const featured = html.slice(html.indexOf("stage-plain"));
+    expect(featured.slice(0, featured.indexOf("</li>"))).toContain("Appeal Pass");
+    expect(featured.slice(0, featured.indexOf("</li>"))).not.toContain("Account Pass");
   });
 });
 

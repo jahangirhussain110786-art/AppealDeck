@@ -19,7 +19,8 @@ import {
  * case, one prepared response), the Appeal Pass and the Account Pass. The free account is a line on
  * the Free card, not a card of its own. The Account Pass is a card while it is listed: with a
  * working button once its Paddle price is configured, and a disabled "Opens soon" until then (see
- * `previewPlans()`); it is the featured one, because it covers the most. One Response is the same:
+ * `previewPlans()`). The Appeal Pass is the featured card and carries the Recommended pill: it is the
+ * plan we recommend for one case and it is on sale. One Response is the same:
  * a working button once its Paddle price is configured (`singleEnabled()`), "Opens soon" until
  * then. Which Pass is chosen starts as the Appeal Pass and only a click changes it.
  */
@@ -66,9 +67,11 @@ export function PlanCards() {
     ...pass,
     // Our recommendation for the commonest case, one notice and one case; said as advice, not as a count.
     badge: PRODUCTS.recommended,
-    featured: !withAccount,
+    // The highlighted card is the one we recommend and that can be bought, whether or not the Account
+    // Pass beside it is on sale yet (23 Oct 2026; it was the Account Pass, which is often the disabled one).
+    featured: true,
     cta: (
-      <PlanCta plan="case" featured={!withAccount}>
+      <PlanCta plan="case" featured>
         {PRICING.jumpToPurchase}
       </PlanCta>
     ),
@@ -80,12 +83,11 @@ export function PlanCards() {
       note: PRICING.account.note,
       price: PRICING.account.price,
       features: PRICING.account.features,
-      featured: true,
       extra: foundingEnabled() ? (
-        <FoundingNote className="rounded-2xl bg-white/[0.06] p-4 ring-1 ring-inset ring-white/[0.1]" />
+        <FoundingNote className="rounded-2xl bg-muted/60 p-4 ring-1 ring-inset ring-border" />
       ) : undefined,
       cta: accountPassEnabled() ? (
-        <PlanCta plan="account" featured>
+        <PlanCta plan="account" featured={false}>
           {PRICING.account.cta}
         </PlanCta>
       ) : (

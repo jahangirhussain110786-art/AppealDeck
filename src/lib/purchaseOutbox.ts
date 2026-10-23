@@ -6,6 +6,7 @@ const KINDS: readonly PurchaseKind[] = [
   "appeal_pass",
   "account_pass",
   "single_response",
+  "pass_after_single",
   "document_review",
   "account_renewal",
   "pack_10",
