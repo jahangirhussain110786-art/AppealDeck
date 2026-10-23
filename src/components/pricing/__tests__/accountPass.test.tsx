@@ -30,7 +30,7 @@ describe("the plan cards", () => {
     expect(html).toContain("For everyone");
     expect(html).toContain("No account");
     expect(html).toContain("With a free account");
-    expect(html).toContain("Your case saved, encrypted, on your device");
+    expect(html).toContain("Case saved on your device");
     expect(html).toContain("One Response");
     expect(html).toContain("$99");
     expect(html).toContain("No further responses");

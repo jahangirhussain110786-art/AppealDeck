@@ -32,22 +32,15 @@ export const FREE_PLAN_GROUPS = [
     label: "No account",
     features: [
       "Decode any notice",
-      "Scam signals, quoted from the message",
-      "Deadlines and the records list",
-      "Do-now and do-not cards",
+      "Scam signals, quoted",
+      "Deadlines and records list",
       // G-07: the free layer already does this; a rival's free tier is a gated teaser.
-      "Amazon's reply read in plain words, with its own sentence quoted",
-      "Supplier invoice check, read on your device",
+      "Amazon's reply explained",
     ],
   },
   {
     label: "With a free account",
-    features: [
-      "Your case saved, encrypted, on your device",
-      "Deadlines, and who you are waiting on",
-      "Amazon's replies applied: reopened, added, carried",
-      "Every round kept: what you sent, what Amazon said",
-    ],
+    features: ["Case saved on your device", "Replies added to the case", "Every round kept"],
   },
 ] as const;
 

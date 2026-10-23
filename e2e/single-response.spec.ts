@@ -30,7 +30,7 @@ test("before it is on sale, the second card is One Response at $99 and says Open
   await expect(cards.nth(1).getByRole("button", { name: "Opens soon" })).toBeDisabled();
   await expect(cards.nth(2)).toContainText("Appeal Pass");
   // The free account is the second part of the Free card, not a card of its own.
-  await expect(cards.nth(0)).toContainText("Your case saved, encrypted, on your device");
+  await expect(cards.nth(0)).toContainText("Case saved on your device");
   await expect(page.getByRole("columnheader", { name: "One Response", exact: true })).toBeVisible();
   await expect(page.getByRole("radio", { name: /One Response/ })).toHaveCount(0);
   await expectNoAxeViolations(page, { impacts: ["serious", "critical"] });
