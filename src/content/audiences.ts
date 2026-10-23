@@ -120,15 +120,34 @@ export const PROS = {
   cards: {
     title: "Prices for writers and VA teams",
     free: {
-      name: "Free tools",
+      name: "Free",
       note: "For every client case",
       price: "$0",
+      // Two parts, as on the sellers' Free card (23 Oct 2026): what needs no account, then what a free
+      // account adds. `features` is the two joined, for anything that wants one list.
+      groups: [
+        {
+          label: "No account",
+          features: [
+            "Each client's notice decoded, with scam signals quoted",
+            "Documents read against the notice, on your device",
+            "No access to the client's Amazon account",
+          ],
+        },
+        {
+          label: "With a free account",
+          features: [
+            "One list for every client, saved to a spreadsheet",
+            "Every round kept, Amazon's replies applied",
+          ],
+        },
+      ],
       features: [
-        "One list for every client, saved to a spreadsheet",
         "Each client's notice decoded, with scam signals quoted",
         "Documents read against the notice, on your device",
-        "Every round kept, Amazon's replies applied",
         "No access to the client's Amazon account",
+        "One list for every client, saved to a spreadsheet",
+        "Every round kept, Amazon's replies applied",
       ],
       cta: "Start with a free decode",
     },

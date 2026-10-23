@@ -183,7 +183,7 @@ describe("the writers' price cards", () => {
     clearPro();
     vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "on");
     const html = renderToStaticMarkup(<ProfessionalCards />);
-    const order = ["Free tools", "Appeal Pass", "Case credits", "Pro plan"].map((n) =>
+    const order = ["For every client case", "Appeal Pass", "Case credits", "Pro plan"].map((n) =>
       html.indexOf(n),
     );
     expect(order.every((i) => i >= 0)).toBe(true);
@@ -224,7 +224,9 @@ describe("the writers' price cards", () => {
     clearPro();
     vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
     const html = renderToStaticMarkup(<ProfessionalCards />);
-    expect(html).toContain("Free tools");
+    expect(html).toContain("For every client case");
+    expect(html).toContain("No account");
+    expect(html).toContain("With a free account");
     expect(html).toContain("Appeal Pass");
     expect(html).not.toContain("Case credits");
     expect(html).not.toContain("Pro plan");

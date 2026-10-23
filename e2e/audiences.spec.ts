@@ -93,7 +93,8 @@ test("the writers' page shows the professional prices as opening soon, with no w
   await expect(page.getByText("Professional pricing is not set yet.")).toHaveCount(0);
   // The prices are cards under the hero, as on the sellers page; credits and the Pro plan are previewed.
   const cards = page.getByRole("list", { name: "Prices for writers and VA teams" });
-  await expect(cards.getByText("Free tools")).toBeVisible();
+  await expect(cards.getByText("For every client case")).toBeVisible();
+  await expect(cards.getByRole("heading", { name: "With a free account" })).toBeVisible();
   await expect(cards.getByText("10 credits for $390 ($39 a case)")).toBeVisible();
   await expect(cards.getByText("$349", { exact: true })).toBeVisible();
   await expect(cards.getByRole("button", { name: "Opens soon" })).toHaveCount(2);
