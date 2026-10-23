@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { EMAIL_PRODUCTS, PRODUCTS } from "../purchases";
+import { EMAIL_PRODUCTS, PRODUCTS, SINGLE_RESPONSE_USED } from "../purchases";
+import { HOME } from "../marketing";
 
 const dollars = (text: string) => Number(text.replace(/[$,]/g, ""));
 const migration = (name: string) =>
@@ -94,5 +95,31 @@ describe("the wording stays honest", () => {
   it("says a credit is for one case, and the rebate is paid whatever the result", () => {
     expect(PRODUCTS.credits.what).toMatch(/activates one case/);
     expect(PRODUCTS.rebate.body).toMatch(/Whatever the result/);
+  });
+});
+
+describe("One Response (23 Oct 2026)", () => {
+  it("costs what its card says, and less than the Appeal Pass", () => {
+    const card = HOME.plans.items.find((p) => p.name === PRODUCTS.single.name);
+    expect(card?.price).toBe(PRODUCTS.single.price);
+    expect(dollars(PRODUCTS.single.price)).toBe(99);
+    expect(`${dollars(PRODUCTS.single.price)}.00`).toBe(PRODUCTS.single.amount.replace("$", ""));
+    expect(dollars(PRODUCTS.single.price)).toBeLessThan(249);
+  });
+
+  it("says what it does not include everywhere it is described", () => {
+    const card = HOME.plans.items.find((p) => p.name === PRODUCTS.single.name)!;
+    expect(card.features.join(" ")).toMatch(/No further responses/);
+    expect(EMAIL_PRODUCTS.single_response.priceLine).toContain(
+      "a further response needs the Appeal Pass",
+    );
+    expect(SINGLE_RESPONSE_USED).toContain("Appeal Pass");
+    expect(SINGLE_RESPONSE_USED).not.toMatch(/guarantee|approve/i);
+  });
+
+  it("is a plan the database accepts and a kind the payment function knows", () => {
+    const sql = migration("0020_single_response.sql");
+    expect(sql).toContain("'single_response'");
+    expect(sql).toContain("claim_single_response");
   });
 });

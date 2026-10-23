@@ -4,13 +4,19 @@ import { z } from "zod";
 import { composePoa, critiquePoa, renderPoaText, isSeverityGated } from "@/core";
 import type { CaseFileData, PoaDraft } from "@/core";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
-import { isLicenseActive, claimCasePass } from "@/lib/license";
+import { isLicenseActive, claimCasePass, claimSingleResponse } from "@/lib/license";
+import { SINGLE_RESPONSE_USED } from "@/content/purchases";
 import { serviceUnavailableResponse } from "@/lib/licenseGuard";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { rateLimitCompose, rateLimitDraft, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { recordActivation, deviceErrorResponse, deriveFingerprintFromRequest } from "@/lib/devices";
 import { CaseDataSchema } from "@/lib/caseSchema";
-import { workspaceCanCompose, professionalReviewApplies, routeWorkspace } from "@/core/workspace";
+import {
+  workspaceCanCompose,
+  professionalReviewApplies,
+  responseRound,
+  routeWorkspace,
+} from "@/core/workspace";
 import { hasD6Allegation } from "@/core/violationKinds";
 import { STORES } from "@/content/stores";
 import { isGeminiConfigured } from "@/lib/llm/gemini";
@@ -95,24 +101,45 @@ async function handleCompose(req: NextRequest) {
   } catch {
     return serviceUnavailableResponse();
   }
-  if (!active) {
-    return NextResponse.json(
-      { error: "Appeal Pass required.", code: "case_pass_required" },
-      { status: 403 },
-    );
-  }
-
-  let hasCasePass: boolean;
+  let hasCasePass = false;
   try {
-    hasCasePass = await claimCasePass(user.id, caseData.id);
+    hasCasePass = active && (await claimCasePass(user.id, caseData.id));
   } catch {
     return serviceUnavailableResponse();
   }
-  if (!hasCasePass)
-    return NextResponse.json(
-      { error: "An Appeal Pass is required for this case.", code: "case_pass_required" },
-      { status: 403 },
+  if (!hasCasePass) {
+    /*
+      A One Response covers the first response of its case and every revision of it, and nothing
+      after: once Amazon has replied, or a response has been recorded as sent here, the next one is
+      the Appeal Pass's. The round is read from the workspace that was posted, the only record of it
+      the server ever sees (the same trust the rest of this route places in it). A seller with no
+      Pass at all is asked about it too, because a One Response is not an Appeal Pass and so does
+      not make `active` true.
+    */
+    let single: boolean;
+    try {
+      single = await claimSingleResponse(user.id, caseData.id);
+    } catch {
+      return serviceUnavailableResponse();
+    }
+    if (!single)
+      return NextResponse.json(
+        {
+          error: active ? "An Appeal Pass is required for this case." : "Appeal Pass required.",
+          code: "case_pass_required",
+        },
+        { status: 403 },
+      );
+    const round = Math.max(
+      attemptNumber,
+      caseData.workspace ? responseRound(caseData.workspace) : 1,
     );
+    if (round > 1)
+      return NextResponse.json(
+        { error: SINGLE_RESPONSE_USED, code: "single_response_used" },
+        { status: 403 },
+      );
+  }
 
   // The device cap is applied after the Pass check, so a request for a case with no Pass cannot use
   // up one of the seller's device slots.

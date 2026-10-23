@@ -300,7 +300,7 @@ export const WORKSPACE = {
     // B2: the price is said at the start, not met at the last step. Free is everything but the
     // prepared response.
     priceNote:
-      "Free: understand the notice, gather documents, write your answers. $249 once, only if you want us to prepare the response.",
+      "Free: understand the notice, gather documents, write your answers. Pay once, only if you want us to prepare the response.",
     checklist: "Checklist",
     done: "{done} of {total} done",
     noFile: "No file linked yet",

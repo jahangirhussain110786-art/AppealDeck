@@ -52,10 +52,14 @@ test("the professionals' page shows the packs and the Pro plan, and asks a visit
   page,
 }) => {
   await page.goto("/for-professionals");
-  await expect(page.getByText("10 case credits")).toBeVisible();
-  await expect(page.getByText("$390", { exact: true })).toBeVisible();
-  await expect(page.getByText("$39 a case")).toBeVisible();
-  await expect(page.getByText("$349 a month")).toBeVisible();
+  const cards = page.getByRole("list", { name: "Prices for writers and VA teams" });
+  await expect(cards.getByText("10 credits for $390 ($39 a case)")).toBeVisible();
+  await expect(cards.getByText("$349", { exact: true })).toBeVisible();
+  await expect(cards.getByRole("link", { name: "Start the Pro plan" })).toHaveAttribute(
+    "href",
+    "#buy",
+  );
+  await expect(cards.getByRole("button", { name: "Opens soon" })).toHaveCount(0);
   await expect(page.getByText("Professional pricing is not set yet.")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Sign in to buy" })).toBeVisible();
   // no pay button until the account is known to be verified

@@ -22,6 +22,7 @@ import {
   EVIDENCE_KIND_LABELS,
   MATRIX_SOURCE_NOTE,
   SELLER_SOURCE_NOTE,
+  responseRound,
   totalAttempts,
   workspaceCanCompose,
   workspaceGaps,
@@ -1312,5 +1313,55 @@ describe("rootCauseRewritten, new facts count as a revision (19 Oct 2026)", () =
     const explanation =
       "Our only packer was on leave and we ran a promotion, so many orders missed the cutoff.";
     expect(rootCauseRewritten({ ...base, explanation })).toBe(false);
+  });
+});
+
+describe("responseRound (23 Oct 2026): which response this would be, through AppealDeck", () => {
+  const sent = (id: string, source?: "prior") => ({
+    id,
+    at: "2026-10-01T00:00:00Z",
+    revision: source ? 0 : 1,
+    protocol: "documents" as const,
+    text: "x",
+    receipt: "",
+    attachments: [],
+    ...(source ? { source } : {}),
+  });
+
+  it("is the first response for a new case", () => {
+    expect(responseRound(newWorkspace())).toBe(1);
+  });
+
+  it("is the first response after attempts made before the seller found AppealDeck", () => {
+    const w = { ...newWorkspace(), submissions: [sent("a", "prior"), sent("b", "prior")] };
+    expect(totalAttempts(w)).toBe(2);
+    expect(responseRound(w)).toBe(1);
+  });
+
+  it("is the second response once one has been recorded as sent here", () => {
+    expect(responseRound({ ...newWorkspace(), submissions: [sent("a")] })).toBe(2);
+    expect(responseRound({ ...newWorkspace(), submissions: [sent("p", "prior"), sent("a")] })).toBe(
+      2,
+    );
+  });
+
+  it("is the second response once Amazon has replied, applied or not, even if nothing was recorded as sent", () => {
+    const reply = (applied: boolean) => ({
+      id: "r",
+      at: "2026-10-02T00:00:00Z",
+      text: "t",
+      applied,
+    });
+    expect(responseRound({ ...newWorkspace(), replies: [reply(false)] })).toBe(2);
+    expect(responseRound({ ...newWorkspace(), replies: [reply(true)] })).toBe(2);
+  });
+
+  it("counts rounds, not the two lists added together", () => {
+    const w = {
+      ...newWorkspace(),
+      submissions: [sent("a"), sent("b")],
+      replies: [{ id: "r", at: "2026-10-02T00:00:00Z", text: "t", applied: true }],
+    };
+    expect(responseRound(w)).toBe(3);
   });
 });

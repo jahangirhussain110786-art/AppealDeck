@@ -194,7 +194,7 @@ function LoginPageInner() {
                       ? `/forgot-password?next=${encodeURIComponent(next)}`
                       : "/forgot-password"
                   }
-                  className="text-xs text-muted-foreground underline underline-offset-4 hover:text-link"
+                  className="inline-flex min-h-8 items-center text-xs text-muted-foreground underline underline-offset-4 hover:text-link max-sm:min-h-11 [@media(pointer:coarse)]:min-h-11"
                 >
                   {AUTH.login.fields.forgot}
                 </a>

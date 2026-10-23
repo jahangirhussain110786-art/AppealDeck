@@ -32,13 +32,14 @@ import {
   rebateEnabled,
   renewalEnabled,
   reviewEnabled,
+  singleEnabled,
   type PassPlan,
 } from "@/lib/plans";
 
 export const LEGAL = {
   lastUpdated: {
     privacy: "2026-10-22",
-    terms: "2026-10-12",
+    terms: "2026-10-23",
     refund: "2026-10-12",
   },
   privacy: {
@@ -210,6 +211,12 @@ export const LEGAL = {
                 "The Account Pass is one licence for one seller's business. It covers every case on your account for twelve months from the day you buy it, with the same 14-day refund window, and then it ends: a case that has no Appeal Pass of its own then needs one to prepare a further response, and what you already saved stays on your device. It cannot be transferred and is not for preparing other sellers' cases. It is not offered where the Appeal Pass is not.",
               ]
             : []),
+          // 23 Oct 2026: stated only while One Response is on sale (its Paddle price is configured).
+          ...(singleEnabled()
+            ? [
+                "One Response is one purchase for one case. It covers the first response you prepare for that case, with every revision of it, and it includes the AI reading of that case's documents. It does not cover a response to a later reply from Amazon, or a further attempt: once Amazon has replied, or you have recorded a response as sent, the next response needs the Appeal Pass, which is bought separately. It is tied to that case and cannot be moved to another. It has the same 14-day refund window.",
+              ]
+            : []),
           ...(reviewEnabled()
             ? [
                 "The AI document review is one purchase for one case. It lets the AI read up to five of that case's documents against what Amazon asked. If you then buy the Appeal Pass for the same case, the review's price comes off it. It is not a separate licence, and it does not extend to other cases.",
@@ -376,6 +383,7 @@ export const LEGAL = {
  */
 const CONSENT_THING: Record<PassPlan, string> = {
   case: "the Appeal Pass",
+  single: "the One Response",
   account: "the Account Pass",
   review: "the AI document review",
   renewal: "the Account Pass renewal",

@@ -133,7 +133,9 @@ export const HOME = {
     items: [
       {
         name: "Free",
-        note: "No account",
+        // 23 Oct 2026: the old "Free" and "Free account" cards are one card. The account is not a
+        // plan; it is how the free case is saved, so it is a line here, not a column.
+        note: "No account needed",
         price: "$0",
         features: [
           "Decode any notice",
@@ -143,18 +145,24 @@ export const HOME = {
           // G-07: the free layer already does this; a rival's free tier is a gated teaser.
           "Amazon's reply read in plain words, with its own sentence quoted",
           "Supplier invoice check, read on your device",
+          "A free account saves your case, encrypted on your device, and tracks who you are waiting on",
         ],
       },
       {
-        name: "Free account",
-        note: "Saved and tracked",
-        price: "$0",
+        // 23 Oct 2026: the smallest paid plan. One case, one prepared response, nothing after it.
+        // Shown as "Opens soon" until it has a Paddle price and a one-response limit behind it
+        // (`singleListed()` in src/lib/plans.ts); `soon` is what the home page checks.
+        name: "One Response",
+        note: "One case, one appeal",
+        price: "$99",
+        soon: true,
         features: [
-          "Everything in Free, saved to your case",
-          "Case saved encrypted on your device",
-          "Deadlines, and who you are waiting on",
-          "Amazon's replies applied: reopened, added, carried",
+          "One response, prepared from your confirmed facts",
+          "Your business documents read against the notice",
+          "No further responses: a reply from Amazon, or a second try, needs the Appeal Pass",
+          "14-day refund, no questions asked",
         ],
+        cta: "See the plans",
       },
       {
         name: "Appeal Pass",
@@ -410,10 +418,12 @@ export const DECODE = {
 } as const;
 
 export const PRICING = {
-  // v5 (26 Sep 2026, prototype pricing.html). "Every round included" is the Terms' licence clause:
-  // one Pass covers every revision of its case, with no expiry (see legal.ts).
-  headline: "One price per case. Every round included.",
-  accent: "included.",
+  // v5 (26 Sep 2026, prototype pricing.html). The old headline, "One price per case. Every round
+  // included.", stopped being true of the whole page on 23 Oct 2026 when One Response (one case, one
+  // response, no further responses) joined the cards; "every round" is now said on the Appeal Pass
+  // card, which is the Terms' licence clause (one Pass covers every revision of its case, see legal.ts).
+  headline: "Start free. Pay only for the response.",
+  accent: "response.",
   // G-91: one sentence under the subtitle; on a phone it was a three-line pill above the headline.
   currencyNote: "Same price everywhere. Written for Amazon US; English notices.",
   compareTitle: "What each one includes",
@@ -458,7 +468,7 @@ export const PRICING = {
   subline: "Decoding is free. Pay once, only when you want the full response.",
   // 6 Oct 2026: the one plain sentence about what costs money, beside the plans and the checkout.
   freeVersusPass:
-    "Free: understand the notice, gather documents, write your answers. $249 once, only if you want us to prepare the response.",
+    "Free: understand the notice, gather documents, write your answers. Pay once, only if you want us to prepare the response.",
   price: "$249",
   priceNote: "One-time. One case.",
   included: "Included",
@@ -466,10 +476,11 @@ export const PRICING = {
   jumpToPurchase: "Get the Appeal Pass",
   free: "Free",
   pass: "Appeal Pass",
+  // 23 Oct 2026: Free (the free account folded in), One Response (opens soon), Appeal Pass.
   tableHeadings: {
     feature: "What you get",
     free: "Free",
-    account: "Free account",
+    account: "One Response",
     pass: "Appeal Pass",
   },
   rows: {
@@ -477,21 +488,26 @@ export const PRICING = {
     preview: { feature: "Request and evidence plan", free: "Yes", account: "Yes", pass: "Yes" },
     vault: {
       feature: "Encrypted files & case notes",
-      free: "This session",
+      free: "On this device, with a free account",
       account: "On this device",
       pass: "On this device",
     },
     readiness: {
       feature: "Submission & reply history",
-      free: "This session",
+      free: "With a free account",
       account: "Yes",
       pass: "Yes",
     },
-    poa: { feature: "Response from your confirmed facts", free: "—", account: "—", pass: "Yes" },
+    poa: {
+      feature: "Response from your confirmed facts",
+      free: "—",
+      account: "One response",
+      pass: "Every round",
+    },
     critic: {
       feature: "Draft checks for missing information",
       free: "—",
-      account: "—",
+      account: "Yes",
       pass: "Yes",
     },
     devices: { feature: "Encrypted backup & restore", free: "—", account: "—", pass: "Yes" },

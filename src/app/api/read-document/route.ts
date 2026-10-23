@@ -26,6 +26,7 @@ import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import {
   claimCasePass,
   claimDocumentReview,
+  claimSingleResponse,
   hasAnyDocumentReview,
   isLicenseActive,
 } from "@/lib/license";
@@ -336,6 +337,8 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   let reviewOnly = false;
   try {
     hasCasePass = await claimCasePass(user.id, caseId);
+    // A One Response includes the reading of its case's documents without the review's limit of five.
+    if (!hasCasePass && (await claimSingleResponse(user.id, caseId))) hasCasePass = true;
     if (!hasCasePass && (await claimDocumentReview(user.id, caseId))) {
       hasCasePass = true;
       reviewOnly = true;

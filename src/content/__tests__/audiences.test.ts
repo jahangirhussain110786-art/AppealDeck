@@ -69,7 +69,11 @@ describe("pricing for sellers, writers and partners", () => {
       vi.stubEnv(k, "");
     const { PROS: PROS_OFF } = await import("../audiences");
     vi.unstubAllEnvs();
-    const everything = JSON.stringify(PROS_OFF);
+    // The cards are drawn only while a product is listed; with the preview off none is, so the guard
+    // is about the copy the page would show, which leaves the cards' text out.
+    const everything = JSON.stringify(PROS_OFF, (key, value) =>
+      key === "cards" ? undefined : value,
+    );
     expect(PROS_OFF.cost.open).toMatch(/not set yet/i);
     expect(PARTNERS.earn.noDashboard).toMatch(/no dashboard yet/i);
     expect(PROS_OFF.limits.items.join(" ")).toMatch(/not shared between team members yet/);
@@ -130,5 +134,19 @@ describe("the chatbot comparison and the going rates", () => {
   it("links the chatbot answer to the comparison it refers to", () => {
     const chatbot = (FAQ.items as readonly FaqItem[]).find((i) => i.id === "chatbot");
     expect(chatbot?.link?.href).toBe(`/pricing#${PRICING.versus.id}`);
+  });
+});
+
+describe("the partner arithmetic behind the price cards", () => {
+  it("uses the prices that /pricing shows, so the two cannot drift", async () => {
+    const { PARTNER_SALES } = await import("../audiences");
+    expect(`$${PARTNER_SALES.passPrice}`).toBe(HOME.plans.items[2]!.price);
+    expect(`$${PARTNER_SALES.accountPrice}`).toBe(PRICING.account.price);
+  });
+
+  it("works out what the seller pays and what the partner earns from them", async () => {
+    const { PARTNER_SALES } = await import("../audiences");
+    expect(PARTNER_SALES.pass).toEqual({ pays: "$224.00", earns: "$67.20" });
+    expect(PARTNER_SALES.account).toEqual({ pays: "$304.00", earns: "$91.20" });
   });
 });

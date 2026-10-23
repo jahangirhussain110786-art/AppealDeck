@@ -19,6 +19,11 @@ import {
   foundingEnabled,
   foundingSpots,
   parsePlan,
+  priceIdFor,
+  singleEnabled,
+  singleListed,
+  extraPriceIds,
+  PLAN_NEEDS_CASE,
 } from "../plans";
 import { foundingSpotsLeft } from "../founding";
 
@@ -103,5 +108,35 @@ describe("founding spots left", () => {
   it("is off when the offer is not configured", async () => {
     vi.stubEnv("NEXT_PUBLIC_FOUNDING_CODE", "");
     expect(await foundingSpotsLeft()).toBeNull();
+  });
+});
+
+describe("One Response (23 Oct 2026)", () => {
+  it("is on sale only when its price is set, and listed when on sale or previewed", () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
+    expect(singleEnabled()).toBe(false);
+    expect(singleListed()).toBe(false);
+    expect(priceIdFor("single")).toBeUndefined();
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "on");
+    expect(singleListed()).toBe(true);
+    expect(singleEnabled()).toBe(false);
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "pri_single");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
+    expect(singleEnabled()).toBe(true);
+    expect(singleListed()).toBe(true);
+    expect(priceIdFor("single")).toBe("pri_single");
+  });
+
+  it("is bought for a case, is known to the webhook by its kind, and is a plan a client may send", () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "pri_single");
+    expect(PLAN_NEEDS_CASE.single).toBe(true);
+    expect(extraPriceIds()).toMatchObject({ single_response: "pri_single" });
+    expect(parsePlan("single")).toBe("single");
+  });
+
+  it("does not appear in what the webhook is told while it has no price", () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
+    expect(extraPriceIds()).not.toHaveProperty("single_response");
   });
 });

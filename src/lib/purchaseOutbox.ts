@@ -5,6 +5,7 @@ import type { PurchaseKind } from "@/content/purchases";
 const KINDS: readonly PurchaseKind[] = [
   "appeal_pass",
   "account_pass",
+  "single_response",
   "document_review",
   "account_renewal",
   "pack_10",

@@ -129,6 +129,7 @@ export const PRICES = {
     pack_10: "pri_p10",
     pack_30: "pri_p30",
     pro_plan: "pri_pro",
+    single_response: "pri_single",
   },
 } as const;
 
@@ -156,6 +157,14 @@ export async function claim(db: PGlite, userId: string, caseId: string): Promise
 
 export async function claimReview(db: PGlite, userId: string, caseId: string): Promise<boolean> {
   const r = await db.query<{ r: boolean }>("select claim_document_review($1::uuid, $2) as r", [
+    userId,
+    caseId,
+  ]);
+  return r.rows[0]!.r;
+}
+
+export async function claimSingle(db: PGlite, userId: string, caseId: string): Promise<boolean> {
+  const r = await db.query<{ r: boolean }>("select claim_single_response($1::uuid, $2) as r", [
     userId,
     caseId,
   ]);

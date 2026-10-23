@@ -17,6 +17,18 @@ export function orderFor(
   total: string;
   rows: [string, string, boolean][];
 } {
+  if (plan === "single") {
+    const o = PRODUCTS.single;
+    return {
+      title: o.order.title,
+      total: o.amount,
+      rows: [
+        [o.order.line, o.amount, false],
+        [PRICING.order.tax, PRICING.order.taxValue, true],
+        [PRICING.order.expires, o.order.expires, true],
+      ],
+    };
+  }
   if (plan === "review") {
     const o = PRODUCTS.review;
     return {
@@ -65,9 +77,11 @@ export function orderFor(
 export function PurchaseSection({
   accountEnabled,
   reviewEnabled = false,
+  singleEnabled = false,
 }: {
   accountEnabled: boolean;
   reviewEnabled?: boolean;
+  singleEnabled?: boolean;
 }) {
   const choice = usePlanChoice();
   // The panel learns from the licence lookup whether this case already has a document review, which
@@ -75,6 +89,7 @@ export function PurchaseSection({
   const [hasReview, setHasReview] = useState(false);
   const available: PassPlan[] = [
     "case",
+    ...(singleEnabled ? (["single"] as const) : []),
     ...(accountEnabled ? (["account"] as const) : []),
     ...(reviewEnabled ? (["review"] as const) : []),
   ];
@@ -109,6 +124,9 @@ export function PurchaseSection({
         {plan === "review" && (
           <p className="mt-3 text-xs text-muted-foreground">{PRODUCTS.review.reading}</p>
         )}
+        {plan === "single" && (
+          <p className="mt-3 text-xs text-muted-foreground">{PRODUCTS.single.summary}</p>
+        )}
       </div>
       <PurchasePanel plan={plan} onReviewState={setHasReview} />
       <p className="text-center text-[0.84375rem] text-muted-foreground">
@@ -122,6 +140,11 @@ function PlanPicker({ plan, available }: { plan: PassPlan; available: PassPlan[]
   const c = PRICING.account.choice;
   const all: Record<string, { label: string; detail: string; price: string }> = {
     case: c.case,
+    single: {
+      label: PRODUCTS.single.name,
+      detail: PRODUCTS.single.note,
+      price: PRODUCTS.single.price,
+    },
     account: c.account,
     review: {
       label: PRODUCTS.review.name,
@@ -133,7 +156,9 @@ function PlanPicker({ plan, available }: { plan: PassPlan; available: PassPlan[]
   return (
     <fieldset className="space-y-2">
       <legend className="text-sm font-medium text-foreground">
-        {available.includes("review") ? c.legendWithReview : c.legend}
+        {available.includes("review") || available.includes("single")
+          ? c.legendWithReview
+          : c.legend}
       </legend>
       <div className="grid gap-2">
         {options.map((o) => (

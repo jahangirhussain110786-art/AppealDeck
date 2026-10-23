@@ -71,6 +71,7 @@ import {
 import { runDocumentCheck, type CheckOutcome } from "@/lib/documentChecks/runCheck";
 import { analyzeReply } from "@/core/responseAnalyzer";
 import { STORES } from "@/content/stores";
+import { SINGLE_RESPONSE_USED } from "@/content/purchases";
 import { replyCriticisms } from "@/core/replyFeedback";
 import { checkCaseDataForWorkspace } from "@/lib/documentChecks/context";
 import { invoiceCoverage } from "@/core/invoiceCoverage";
@@ -354,6 +355,9 @@ function WorkspaceInner({
   const [releaseError, setReleaseError] = useState("");
   const [result, setResult] = useState<WorkspaceResponse | null>(null);
   const [purchase, setPurchase] = useState(false);
+  // Why the purchase card is showing, when it is not the plain "this case has no Pass" (a One
+  // Response that has covered its one response). Shown only while `purchase` is.
+  const [purchaseNote, setPurchaseNote] = useState("");
   const [newLabel, setNewLabel] = useState("");
   const [newSource, setNewSource] = useState("");
   const [replyText, setReplyText] = useState("");
@@ -1125,8 +1129,18 @@ function WorkspaceInner({
           cache: "no-store",
         });
         if (licence.ok) {
-          const body = (await licence.json().catch(() => null)) as { status?: unknown } | null;
-          if (body && typeof body.status === "string" && body.status !== "active") {
+          const body = (await licence.json().catch(() => null)) as {
+            status?: unknown;
+            single?: unknown;
+          } | null;
+          // A One Response is not a Pass but covers the first response: compose counts the rounds.
+          if (
+            body &&
+            typeof body.status === "string" &&
+            body.status !== "active" &&
+            body.single !== true
+          ) {
+            setPurchaseNote("");
             setPurchase(true);
             return;
           }
@@ -1150,6 +1164,12 @@ function WorkspaceInner({
       });
       const data = await response.json().catch(() => null);
       if (response.status === 403 && data?.code === "case_pass_required") {
+        setPurchaseNote("");
+        setPurchase(true);
+        return;
+      }
+      if (response.status === 403 && data?.code === "single_response_used") {
+        setPurchaseNote(SINGLE_RESPONSE_USED);
         setPurchase(true);
         return;
       }
@@ -2292,6 +2312,7 @@ function WorkspaceInner({
                   busy={busy}
                   result={result}
                   purchase={purchase}
+                  purchaseNote={purchaseNote}
                   draft={w.draft}
                   onDraftChange={setDraftField}
                   signInHref={signInHref}

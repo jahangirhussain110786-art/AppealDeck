@@ -28,7 +28,7 @@ export default function DecodePage() {
             <li key={g.slug}>
               <Link
                 href={`/guides/${g.slug}`}
-                className="text-link underline-offset-4 hover:underline"
+                className="inline-flex min-h-8 items-center max-sm:min-h-11 [@media(pointer:coarse)]:min-h-11 text-link underline-offset-4 hover:underline"
               >
                 {g.navLabel}
               </Link>

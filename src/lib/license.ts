@@ -17,9 +17,13 @@ const ACCOUNT_COVER_PLANS = ["account_pass", "account_renewal"];
 /**
  * Plans that are not cover for a case. A document review covers only the AI reading of one case's
  * documents, and a Pro plan only grants case credits; neither lets a seller prepare a response, so
- * neither may make the Pass look bought.
+ * neither may make the Pass look bought. A One Response covers the first response of one case and
+ * not a later one, so it is not the Pass either: `claimSingleResponse` answers for it, and the
+ * routes that need it ask it by name (compose and the document reading), so a seller who holds only
+ * a One Response never looks like a Pass holder to the rest of the app (backup, reply reading,
+ * wording help, outcome sharing).
  */
-const NOT_COVER_PLANS = ["document_review", "pro_plan"];
+const NOT_COVER_PLANS = ["document_review", "pro_plan", "single_response"];
 
 type Row = {
   status: string;
@@ -100,6 +104,45 @@ export async function claimDocumentReview(userId: string, caseId: string): Promi
   return data === true;
 }
 
+/**
+ * Whether the case has a live One Response: the first response of this case, with its documents
+ * read. It is not an Appeal Pass, so it is never an answer to `claimCasePass`.
+ */
+export async function claimSingleResponse(userId: string, caseId: string): Promise<boolean> {
+  if (!supabaseAdmin) return false;
+  const { data, error } = await supabaseAdmin.rpc("claim_single_response", {
+    p_user_id: userId,
+    p_case_id: caseId,
+  });
+  if (error) throw new Error("Case entitlement lookup unavailable");
+  return data === true;
+}
+
+/** Whether the case has a live One Response, read from the table (for the status route's answer). */
+export async function fetchSingleResponse(userId: string, caseId: string): Promise<boolean> {
+  if (!supabaseAdmin) return false;
+  const { data, error } = await supabaseAdmin
+    .from("licenses")
+    .select("status, expires_at, case_id")
+    .eq("user_id", userId)
+    .eq("plan", "single_response")
+    .eq("case_id", caseId);
+  if (error) throw new Error("License lookup unavailable");
+  return ((data as Row[] | null) ?? []).some((row) => isLive(row));
+}
+
+/** How many live One Responses the account holds, for the billing page. */
+export async function countSingleResponses(userId: string): Promise<number> {
+  if (!supabaseAdmin) return 0;
+  const { data, error } = await supabaseAdmin
+    .from("licenses")
+    .select("status, expires_at, case_id")
+    .eq("user_id", userId)
+    .eq("plan", "single_response");
+  if (error) throw new Error("License lookup unavailable");
+  return ((data as Row[] | null) ?? []).filter((row) => isLive(row)).length;
+}
+
 /** Whether the case has a live document review (not a Pass: it covers only the AI reading). */
 export async function fetchDocumentReview(userId: string, caseId: string): Promise<boolean> {
   if (!supabaseAdmin) return false;
@@ -113,14 +156,17 @@ export async function fetchDocumentReview(userId: string, caseId: string): Promi
   return ((data as Row[] | null) ?? []).some((row) => isLive(row));
 }
 
-/** Whether the account holds any live document review, for the route's cheap first check. */
+/**
+ * Whether the account holds any live document review or One Response (both include the AI reading
+ * of documents), for the route's cheap first check.
+ */
 export async function hasAnyDocumentReview(userId: string): Promise<boolean> {
   if (!supabaseAdmin) return false;
   const { data, error } = await supabaseAdmin
     .from("licenses")
     .select("status, expires_at, case_id")
     .eq("user_id", userId)
-    .eq("plan", "document_review");
+    .in("plan", ["document_review", "single_response"]);
   if (error) throw new Error("License lookup unavailable");
   return ((data as Row[] | null) ?? []).some((row) => isLive(row));
 }

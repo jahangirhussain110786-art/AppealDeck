@@ -22,12 +22,12 @@ test.describe("Marketing site (public)", () => {
     await expect(page.getByText(/part of amazon/i)).toBeVisible();
   });
 
-  test("pricing page renders the Free, Free account and Appeal Pass columns", async ({ page }) => {
+  test("pricing page renders the Free, One Response and Appeal Pass columns", async ({ page }) => {
     await page.goto("/pricing");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Free", exact: true })).toBeVisible();
     await expect(
-      page.getByRole("columnheader", { name: "Free account", exact: true }),
+      page.getByRole("columnheader", { name: "One Response", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("columnheader", { name: "Appeal Pass", exact: true }),

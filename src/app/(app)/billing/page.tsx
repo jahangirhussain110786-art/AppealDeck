@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CreditCard, ArrowRight } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { fetchAccountCover, fetchLicenseForUser } from "@/lib/license";
+import { countSingleResponses, fetchAccountCover, fetchLicenseForUser } from "@/lib/license";
+import { PRODUCTS } from "@/content/purchases";
 import { BillingExtras } from "@/components/BillingExtras";
 import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,8 @@ export default async function BillingPage() {
   // The end of the latest Account Pass or renewal, including one that has just ended: a renewal is
   // still offered for a while after. A failed lookup only hides the renewal card.
   const cover = await fetchAccountCover(user.id).catch(() => null);
+  // A One Response is not a Pass, so it is not what `license` reports; say that the seller has one.
+  const singles = active ? 0 : await countSingleResponses(user.id).catch(() => 0);
 
   return (
     <div className="max-w-[67.5rem] space-y-6">
@@ -119,6 +122,13 @@ export default async function BillingPage() {
           </>
         ) : (
           <div className="px-6 py-6">
+            {singles > 0 && (
+              <p className="mb-4 rounded-xl bg-muted/60 p-4 text-sm text-foreground">
+                {singles === 1
+                  ? PRODUCTS.single.billing.one
+                  : PRODUCTS.single.billing.many.replace("{n}", String(singles))}
+              </p>
+            )}
             <h2 className="text-lg font-semibold text-foreground">{APP.billing.inactive.title}</h2>
             <p className="mt-1 text-sm text-muted-foreground">{APP.billing.inactive.desc}</p>
             <Button asChild className="mt-4">

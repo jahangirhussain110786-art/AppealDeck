@@ -10,6 +10,7 @@ type Env = Record<string, string>;
 
 const NONE: Env = {
   NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS: "",
+  NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE: "",
   NEXT_PUBLIC_PADDLE_PRICE_DOCUMENT_REVIEW: "",
   NEXT_PUBLIC_PADDLE_PRICE_PASS_AFTER_REVIEW: "",
   NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_RENEWAL: "",
@@ -52,13 +53,26 @@ describe("with nothing configured", () => {
       expect(JSON.stringify(marketing.FAQ.groups)).not.toContain(id);
     }
     for (const text of [terms(legal), privacy(legal), log(changelog)]) {
-      expect(text).not.toMatch(/case credit|Pro plan|AI document review|renewal adds/);
+      expect(text).not.toMatch(/case credit|Pro plan|AI document review|renewal adds|One Response/);
     }
     // The partner code's own $25 is in the changelog already, so the rebate is checked where it is new.
     for (const text of [terms(legal), privacy(legal)]) expect(text).not.toContain("$25");
     expect(audiences.PROS.cost.open).toBe("Professional pricing is not set yet.");
     expect(audiences.PROS.cost.pro).toBeNull();
     expect(marketing.FAQ.items.find((i) => i.id === "writers")?.a).toMatch(/^Not yet/);
+  });
+});
+
+describe("One Response", () => {
+  it("is described in the Terms and the changelog only once it is on sale, and says what it does not cover", async () => {
+    const off = await load();
+    expect(terms(off.legal)).not.toContain("One Response");
+    expect(log(off.changelog)).not.toContain("One Response");
+    const on = await load({ NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE: "pri_single" });
+    expect(terms(on.legal)).toMatch(/One Response is one purchase for one case/);
+    expect(terms(on.legal)).toMatch(/does not cover a response to a later reply from Amazon/);
+    expect(terms(on.legal)).toMatch(/14-day refund window/);
+    expect(log(on.changelog)).toContain("One Response is on sale: $99");
   });
 });
 

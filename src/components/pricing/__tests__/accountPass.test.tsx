@@ -11,14 +11,33 @@ import { PurchaseSection, orderFor } from "../PurchaseSection";
 beforeEach(() => vi.unstubAllEnvs());
 
 describe("the plan cards", () => {
-  it("are the three there have always been while the Account Pass has no price and the preview is off", () => {
+  it("are Free and the Appeal Pass while nothing else has a price and the preview is off", () => {
     vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "");
     vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
     const html = renderToStaticMarkup(<PlanCards />);
     expect(html).not.toContain("Account Pass");
+    expect(html).not.toContain("One Response");
     expect(html).toContain("Appeal Pass");
     expect(html).toContain("Get the Appeal Pass");
-    expect(html).toContain("lg:grid-cols-3");
+    expect(html).toContain("sm:grid-cols-2");
+  });
+
+  it("merge the free account into the Free card and list One Response as the smallest paid plan", () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "on");
+    const html = renderToStaticMarkup(<PlanCards />);
+    expect(html).not.toContain("Free account</p>");
+    expect(html).toContain("A free account saves your case");
+    expect(html).toContain("One Response");
+    expect(html).toContain("$99");
+    expect(html).toContain("No further responses");
+    // it cannot be bought yet: Opens soon, never a checkout button
+    expect(html).not.toContain("Get the One Response");
+    // order on the page: Free, One Response, Appeal Pass, Account Pass
+    const order = ["Decode a notice", "One Response", "Get the Appeal Pass", "Account Pass"].map(
+      (s) => html.indexOf(s),
+    );
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
   it("add the Account Pass as a fourth, featured card once it has a price", () => {

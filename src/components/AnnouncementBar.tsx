@@ -79,7 +79,7 @@ function Message({ item, inert = false }: { item: Announcement; inert?: boolean 
     <Link
       href={item.href}
       tabIndex={inert ? -1 : undefined}
-      className="group flex min-w-0 items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-announce-accent"
+      className="group flex min-h-6 min-w-0 items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-announce-accent"
     >
       {body}
     </Link>

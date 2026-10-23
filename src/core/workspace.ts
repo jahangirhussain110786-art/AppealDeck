@@ -1377,6 +1377,19 @@ export function totalAttempts(w: Workspace): number {
   return w.submissions.length;
 }
 
+/**
+ * Which response this would be through AppealDeck: 1 until the seller records one as sent here, 2
+ * after that. An attempt made before the seller found AppealDeck does not count, so a seller on
+ * their third try is still preparing their first response with us. This is what a One Response
+ * covers: round 1, with every revision of it, and nothing after (`/api/compose` refuses round 2).
+ */
+export function responseRound(w: Pick<Workspace, "submissions" | "replies">): number {
+  const sent = w.submissions.filter((s) => s.source !== "prior").length;
+  // A reply from Amazon means a response was answered, whether or not it was recorded as sent here;
+  // a response to it is the next round.
+  return Math.max(sent, w.replies.length) + 1;
+}
+
 /** The questions this case's questionnaire asks, response page first. Empty for any other protocol. */
 export function questionnaireQuestions(
   w: Pick<Workspace, "protocol" | "formInstructions" | "notice"> &

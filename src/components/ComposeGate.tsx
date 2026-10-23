@@ -24,11 +24,14 @@ export function ComposeGate({
   vault,
   caseId,
   onActivated,
+  note,
 }: {
   email?: string | null;
   vault?: Vault;
   caseId?: string;
   onActivated?: () => void;
+  /** Shown first: why the Pass is asked for now (a One Response that has covered its response). */
+  note?: string;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [consent, setConsent] = useState(false);
@@ -95,6 +98,11 @@ export function ComposeGate({
       <CardContent className="space-y-4 pt-5">
         {/* A verified professional with case credits can activate this case with one. */}
         <CaseCreditCard caseId={caseId} onUsed={startPolling} />
+        {note && (
+          <p role="status" className="text-sm font-medium text-foreground">
+            {note}
+          </p>
+        )}
         <p className="text-sm text-muted-foreground">{APP.access.composeGate.body}</p>
         <p className="font-mono text-xl font-medium tabular-nums text-foreground">
           {APP.access.composeGate.price}

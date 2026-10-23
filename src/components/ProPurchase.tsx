@@ -6,7 +6,6 @@ import { Check } from "lucide-react";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { ConsentRow } from "@/components/pricing/ConsentRow";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { OPENS_SOON, PRODUCTS, PRO_VERIFICATION } from "@/content/purchases";
 import { SUPPORT_EMAIL } from "@/content/support";
 import { formatDate } from "@/lib/format";
@@ -136,26 +135,6 @@ export function ProPurchase() {
       <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
         {PRODUCTS.credits.what}
       </p>
-
-      <ul className="grid gap-3 sm:grid-cols-3">
-        {listed.map((plan) => {
-          const d = details[plan];
-          return (
-            <li key={plan}>
-              <Card className="h-full space-y-1 p-5">
-                <p className="text-sm text-muted-foreground">{d.name}</p>
-                <p className="text-2xl font-semibold tabular-nums tracking-[-0.03em] text-foreground">
-                  {d.price}
-                </p>
-                <p className="text-sm text-muted-foreground">{d.note}</p>
-                {!available.includes(plan) && (
-                  <p className="pt-1 text-sm font-medium text-foreground">{OPENS_SOON.label}</p>
-                )}
-              </Card>
-            </li>
-          );
-        })}
-      </ul>
 
       {available.length === 0 && (
         <div className="space-y-2 rounded-xl border border-border bg-surface-1 p-4">

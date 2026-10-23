@@ -169,6 +169,16 @@ Each price must equal the figure in `src/content/purchases.ts`; `src/content/__t
 
 **Not advised yet:** packs and the Pro plan before you have talked to the first writers, as the plan said. They are built so that the first conversation can end with a link, not so that they are on sale on day one. The rebate and the review can wait for fifty paid cases.
 
+## 5f. One Response (founder action, 23 Oct 2026) — optional
+
+One Response is **USD 99.00, one-time**: one case, the first response and every revision of it, the case's documents read against the notice, no further responses (a response to Amazon's reply needs the Appeal Pass). It is **switched off**: until its price is set the pricing card says "Opens soon" and the Terms and changelog do not mention it.
+
+1. **Database first.** Supabase → SQL editor → paste `supabase/migrations/0020_single_response.sql` and run it (after 0018 and 0019; one transaction). Check: `select pg_get_constraintdef(oid) from pg_constraint where conname = 'licenses_plan_check';` names `single_response`, and `select proname from pg_proc where proname = 'claim_single_response';` returns a row. **Apply it before setting the price**: the webhook starts passing the price to the database the moment it is set.
+2. **Paddle → Catalog:** a one-time price of **USD 99.00** named "One Response". Copy its `pri_...` id into Vercel as `NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE` and redeploy (`NEXT_PUBLIC_*` values are put into the build). No webhook change: it already sends `transaction.completed` and the adjustment events.
+3. **Partner codes do not apply to it** (§5c): do not add this price to a partner's discount. The checkout withholds the code from it.
+4. **Sandbox first:** buy it on a case, prepare the first response (it works), record it as sent or paste an Amazon reply, and prepare again (refused with "a further response needs the Appeal Pass"); buy the Appeal Pass for the same case and check the next response works; refund a One Response and check its case stops being covered. A second One Response for one case, or one for a case that already has an Appeal Pass, is refused at checkout and parked (not granted) by the webhook if it arrives anyway.
+5. **To switch it off again,** unset the variable and redeploy: what was sold keeps working.
+
 ## 6. Upstash production setup (founder action)
 
 **Done 28 Sep 2026 through Vercel → Storage → Upstash (Redis).** The integration created the database and injected `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN`, `KV_URL` and `REDIS_URL` into Preview and Production. The app reads `KV_REST_API_URL` / `KV_REST_API_TOKEN` when the `UPSTASH_` names are absent (`src/lib/redisEnv.ts`), so nothing needs copying. Local development keeps its own database in `.env.local` under the `UPSTASH_` names, so local testing never uses up production's rate limits or the Gemini spend cap.

@@ -10,7 +10,7 @@ import type { PassPlan } from "@/lib/plans";
  * it. A link may start it on another product (`/pricing?plan=review`, used from inside a case); the
  * page still offers it only if that product is on sale.
  */
-const FROM_LINK: readonly PassPlan[] = ["case", "account", "review"];
+const FROM_LINK: readonly PassPlan[] = ["case", "single", "account", "review"];
 
 let current: PassPlan | null = null;
 // undefined: not read yet. Read once, on the client, so the server and the first paint agree.

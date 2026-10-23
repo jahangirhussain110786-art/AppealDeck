@@ -19,6 +19,7 @@ import { HOME, FOUNDER_NOTE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { SITE_URL } from "@/lib/urls";
 import { AccentWord } from "@/components/ui/accent-word";
+import { singleListed } from "@/lib/plans";
 import { splitAccent } from "@/lib/splitAccent";
 import { cn } from "@/lib/utils";
 
@@ -212,7 +213,7 @@ function QuestionsSection() {
         <FaqAccordion ids={HOME.questions.ids} />
         <Link
           href="/faq"
-          className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-link underline-offset-4 hover:underline"
+          className="mt-4 inline-flex min-h-8 items-center gap-1 max-sm:min-h-11 [@media(pointer:coarse)]:min-h-11 text-sm font-medium text-link underline-offset-4 hover:underline"
         >
           {SHARED.nav.faq}
           <ArrowRight aria-hidden className="size-3.5" />
@@ -223,6 +224,8 @@ function QuestionsSection() {
 }
 
 function PlansSection() {
+  // A plan that is only "opens soon" is hidden here when the preview is switched off, as on /pricing.
+  const items = HOME.plans.items.filter((plan) => !("soon" in plan && plan.soon) || singleListed());
   return (
     <section className={cn(WRAP, "pb-24 pt-28 sm:pb-28 sm:pt-32")}>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -234,15 +237,15 @@ function PlansSection() {
         </div>
         <Link
           href="/pricing"
-          className="inline-flex items-center gap-1 text-base font-medium text-link underline-offset-4 hover:underline"
+          className="inline-flex min-h-8 items-center gap-1 max-sm:min-h-11 [@media(pointer:coarse)]:min-h-11 text-base font-medium text-link underline-offset-4 hover:underline"
         >
           {HOME.plans.link}
           <ArrowRight aria-hidden className="size-4" />
         </Link>
       </div>
       <ul className="mt-12 grid gap-4 lg:grid-cols-3">
-        {HOME.plans.items.map((plan, i) => {
-          const featured = i === HOME.plans.items.length - 1;
+        {items.map((plan, i) => {
+          const featured = i === items.length - 1;
           return (
             <li
               key={plan.name}
@@ -285,12 +288,8 @@ function PlansSection() {
                 // page 2 px past a 320 px screen on CI (Linux scrollbars) and 12 px at 305 px.
                 className="mt-auto h-auto min-h-[3.25rem] w-full whitespace-normal py-2.5 text-center"
               >
-                <Link href={featured ? "/pricing" : i === 0 ? "/decode" : "/signup"}>
-                  {"cta" in plan && plan.cta
-                    ? plan.cta
-                    : i === 0
-                      ? HOME.demo.primaryCta
-                      : HOME.plans.accountCta}
+                <Link href={i === 0 ? "/decode" : "/pricing"}>
+                  {"cta" in plan && plan.cta ? plan.cta : HOME.demo.primaryCta}
                 </Link>
               </Button>
             </li>

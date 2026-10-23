@@ -18,6 +18,7 @@ import {
   rebateEnabled,
   renewalEnabled,
   reviewEnabled,
+  singleEnabled,
 } from "@/lib/plans";
 
 export type ChangelogEntry = { date: string; items: readonly string[] };
@@ -52,6 +53,11 @@ export const CHANGELOG = {
         ...(accountPassEnabled()
           ? [
               "The Account Pass is on sale: one payment that covers every case on your account for 12 months, beside the one-case Appeal Pass. The first buyers may get it at the Appeal Pass price while the founding offer lasts.",
+            ]
+          : []),
+        ...(singleEnabled()
+          ? [
+              "One Response is on sale: $99 for one case and the first response to Amazon, with every revision of it and your documents read against the notice. A further response, after Amazon replies, needs the Appeal Pass.",
             ]
           : []),
         ...(reviewEnabled()

@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 
 const getApiUserMock = vi.fn();
 const isLicenseActiveMock = vi.fn();
+const claimSingleMock = vi.fn();
 const rateLimitComposeMock = vi.fn();
 const recordActivationMock = vi.fn();
 
@@ -14,6 +15,7 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/license", () => ({
   claimCasePass: () => Promise.resolve(true),
+  claimSingleResponse: (...args: unknown[]) => claimSingleMock(...args),
   isLicenseActive: (email: string) => isLicenseActiveMock(email),
 }));
 
@@ -49,6 +51,7 @@ vi.mock("@/lib/devices", () => ({
 
 import { POST } from "../compose/route";
 import { newWorkspace } from "@/core/workspace";
+import { documentWorkspace } from "@/core/workspace.fixture";
 
 function makeReq(body: unknown): NextRequest {
   return new Request("http://localhost:3000/api/compose", {
@@ -61,6 +64,8 @@ function makeReq(body: unknown): NextRequest {
 beforeEach(() => {
   getApiUserMock.mockReset();
   isLicenseActiveMock.mockReset();
+  claimSingleMock.mockReset();
+  claimSingleMock.mockResolvedValue(false);
   rateLimitComposeMock.mockReset();
   recordActivationMock.mockReset();
 });
@@ -131,5 +136,78 @@ describe("/api/compose failure handling (6 Oct 2026)", () => {
       makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
     );
     expect(res.status).toBe(503);
+  });
+});
+
+describe("/api/compose for a One Response (23 Oct 2026): the first response of one case, and no more", () => {
+  const post = (attemptNumber: number, workspace?: unknown) =>
+    POST(
+      makeReq({
+        caseData: { id: "test-case", kind: "POLICY", ...(workspace ? { workspace } : {}) },
+        attemptNumber,
+      }),
+    );
+
+  beforeEach(() => {
+    getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
+    isLicenseActiveMock.mockResolvedValue(false);
+    claimSingleMock.mockResolvedValue(true);
+  });
+
+  it("prepares the first response, although the account holds no Appeal Pass", async () => {
+    const res = await post(1);
+    expect(res.status).toBe(200);
+    expect(claimSingleMock).toHaveBeenCalledWith("u1", "test-case");
+  });
+
+  it("refuses the next response, and says it is the Appeal Pass's", async () => {
+    const res = await post(2);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.code).toBe("single_response_used");
+    expect(body.error).toMatch(/Appeal Pass/);
+  });
+
+  it("refuses the next response when the client claims round one but Amazon has replied", async () => {
+    const res = await post(1, {
+      ...documentWorkspace(),
+      replies: [{ id: "r1", at: "2026-10-01T00:00:00Z", text: "We need more.", applied: true }],
+    });
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe("single_response_used");
+  });
+
+  it("refuses the next response when one was recorded as sent here, but not one sent before", async () => {
+    const sent = {
+      id: "s1",
+      at: "2026-10-01T00:00:00Z",
+      revision: 1,
+      protocol: "documents" as const,
+      text: "x",
+      receipt: "",
+      attachments: [],
+      unresolved: [],
+    };
+    const second = await post(1, { ...documentWorkspace(), submissions: [sent] });
+    expect(second.status).toBe(403);
+    const prior = await post(1, {
+      ...documentWorkspace(),
+      submissions: [{ ...sent, id: "p1", revision: 0, source: "prior" }],
+    });
+    expect(prior.status).toBe(200);
+  });
+
+  it("does not let a One Response on another case through", async () => {
+    claimSingleMock.mockResolvedValue(false);
+    const res = await post(1);
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe("case_pass_required");
+  });
+
+  it("does not limit a seller who holds the Appeal Pass for the case", async () => {
+    isLicenseActiveMock.mockResolvedValue(true);
+    const res = await post(7);
+    expect(res.status).toBe(200);
+    expect(claimSingleMock).not.toHaveBeenCalled();
   });
 });

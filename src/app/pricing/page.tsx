@@ -16,14 +16,14 @@ import {
 import { FaqAccordion } from "@/components/pricing/FaqAccordion";
 import { PurchaseSection } from "@/components/pricing/PurchaseSection";
 import { PlanCards } from "@/components/pricing/PlanCards";
-import { accountPassEnabled, reviewEnabled, reviewListed } from "@/lib/plans";
+import { accountPassEnabled, reviewEnabled, reviewListed, singleEnabled } from "@/lib/plans";
 import { ReviewTeaser } from "@/components/pricing/ReviewTeaser";
 import { VersusSection } from "@/components/pricing/VersusSection";
-import { AudienceSwitch } from "@/components/AudienceSwitch";
+import { PricingStage } from "@/components/pricing/PricingStage";
 import { RoleNudge } from "@/components/RoleNudge";
+import { AccentWord } from "@/components/ui/accent-word";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { GLOBAL_EXPECTATIONS } from "@/core/guidance";
-import { AccentWord } from "@/components/ui/accent-word";
 import { PRICING } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { splitAccent } from "@/lib/splitAccent";
@@ -34,7 +34,6 @@ export const metadata: Metadata = pageMetadata({
   canonical: "/pricing",
 });
 
-const HEADLINE = splitAccent(PRICING.headline, PRICING.accent);
 const READ_FIRST = splitAccent(PRICING.readFirstTitle, PRICING.readFirstAccent);
 
 function ValueCell({ value }: { value: string }) {
@@ -69,27 +68,14 @@ function ValueCell({ value }: { value: string }) {
 export default function PricingPage() {
   return (
     <MarketingShell bleed>
-      <section className="stage dark text-foreground">
-        <div className="mx-auto flex max-w-[56rem] flex-col items-center px-4 pb-40 pt-16 text-center sm:px-8 sm:pt-20">
-          <h1 className="text-balance text-[clamp(2.4rem,1.3rem+3.6vw,4.4rem)] font-semibold leading-[1.02] tracking-[-0.045em] text-foreground">
-            {HEADLINE ? (
-              <>
-                {HEADLINE.pre}
-                <AccentWord className="text-primary">{HEADLINE.accent}</AccentWord>
-                {HEADLINE.post}
-              </>
-            ) : (
-              PRICING.headline
-            )}
-          </h1>
-          <p className="mt-6 max-w-[56ch] text-lg leading-relaxed text-muted-foreground">
-            {PRICING.subline}
-          </p>
-          <p className="mt-3 text-sm text-muted-foreground">{PRICING.currencyNote}</p>
-          <AudienceSwitch className="mt-8 justify-center" />
-          <RoleNudge />
-        </div>
-      </section>
+      <PricingStage
+        title={PRICING.headline}
+        accent={PRICING.accent}
+        subline={PRICING.subline}
+        note={PRICING.currencyNote}
+      >
+        <RoleNudge />
+      </PricingStage>
 
       <div className="mx-auto w-full max-w-marketing px-4 sm:px-8">
         <section className="relative -mt-28 pb-6">
@@ -193,7 +179,11 @@ export default function PricingPage() {
               weDoNot={GLOBAL_EXPECTATIONS.whatWeDoNot}
             />
           </div>
-          <PurchaseSection accountEnabled={accountPassEnabled()} reviewEnabled={reviewEnabled()} />
+          <PurchaseSection
+            accountEnabled={accountPassEnabled()}
+            reviewEnabled={reviewEnabled()}
+            singleEnabled={singleEnabled()}
+          />
         </section>
 
         <section className="grid gap-8 pb-16 sm:pb-20 lg:grid-cols-[18rem_1fr] lg:gap-16">
@@ -202,7 +192,7 @@ export default function PricingPage() {
             <FaqAccordion ids={PRICING.faqIds} />
             <Link
               href="/faq"
-              className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-link underline-offset-4 hover:underline"
+              className="mt-4 inline-flex min-h-8 items-center gap-1 max-sm:min-h-11 [@media(pointer:coarse)]:min-h-11 text-sm font-medium text-link underline-offset-4 hover:underline"
             >
               {SHARED.nav.faq}
               <ArrowRight aria-hidden className="size-3.5" />

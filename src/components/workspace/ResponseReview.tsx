@@ -110,6 +110,7 @@ export function ResponseReview({
   busy,
   result,
   purchase,
+  purchaseNote,
   draft,
   onDraftChange,
   signInHref,
@@ -127,6 +128,8 @@ export function ResponseReview({
   busy: boolean;
   result: WorkspaceResponse | null;
   purchase: boolean;
+  /** Why the purchase card shows, when it is more than "no Pass" (a One Response already used). */
+  purchaseNote?: string;
   draft?: Record<string, string>;
   onDraftChange: (key: string, value: string | undefined) => void;
   signInHref: string;
@@ -613,7 +616,12 @@ ${text}`
                   <p className="text-sm text-muted-foreground">{F.guestPrice}</p>
                 </div>
               ) : purchase ? (
-                <ComposeGate vault={vault} caseId={file.id} onActivated={onGenerate} />
+                <ComposeGate
+                  vault={vault}
+                  caseId={file.id}
+                  onActivated={onGenerate}
+                  note={purchaseNote}
+                />
               ) : (
                 <>
                   <Button disabled={busy} onClick={() => void prepare()}>

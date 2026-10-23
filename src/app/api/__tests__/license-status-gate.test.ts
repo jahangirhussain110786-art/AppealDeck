@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 const getApiUserMock = vi.fn();
 const fetchLicenseForUserMock = vi.fn();
 const fetchDocumentReviewMock = vi.fn();
+const fetchSingleResponseMock = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   getApiUser: () => getApiUserMock(),
@@ -13,6 +14,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/license", () => ({
   fetchLicenseForUser: (...args: unknown[]) => fetchLicenseForUserMock(...args),
   fetchDocumentReview: (...args: unknown[]) => fetchDocumentReviewMock(...args),
+  fetchSingleResponse: (...args: unknown[]) => fetchSingleResponseMock(...args),
 }));
 
 import { GET } from "../license/status/route";
@@ -22,6 +24,8 @@ beforeEach(() => {
   fetchLicenseForUserMock.mockReset();
   fetchDocumentReviewMock.mockReset();
   fetchDocumentReviewMock.mockResolvedValue(false);
+  fetchSingleResponseMock.mockReset();
+  fetchSingleResponseMock.mockResolvedValue(false);
 });
 
 describe("GET /api/license/status", () => {
@@ -49,6 +53,7 @@ describe("GET /api/license/status", () => {
       plan: "appeal-pass",
       expiresAt: null,
       hasReview: false,
+      single: false,
     });
   });
 
@@ -67,6 +72,7 @@ describe("GET /api/license/status", () => {
       plan: "account_pass",
       expiresAt: "2027-10-22T10:00:00.000Z",
       hasReview: false,
+      single: false,
     });
     expect(JSON.stringify(body)).not.toContain("AD-SECRET");
   });
@@ -76,7 +82,13 @@ describe("GET /api/license/status", () => {
     fetchLicenseForUserMock.mockResolvedValue({ status: "none", plan: null, licenseKey: null });
     const res = await GET();
     const body = await res.json();
-    expect(body).toEqual({ status: "none", plan: null, expiresAt: null, hasReview: false });
+    expect(body).toEqual({
+      status: "none",
+      plan: null,
+      expiresAt: null,
+      hasReview: false,
+      single: false,
+    });
   });
 });
 
@@ -91,7 +103,13 @@ describe("GET /api/license/status for a case's document review (22 Oct 2026)", (
     fetchLicenseForUserMock.mockResolvedValue({ status: "none", plan: null });
     fetchDocumentReviewMock.mockResolvedValue(true);
     const body = await (await get("?caseId=c1")).json();
-    expect(body).toEqual({ status: "none", plan: null, expiresAt: null, hasReview: true });
+    expect(body).toEqual({
+      status: "none",
+      plan: null,
+      expiresAt: null,
+      hasReview: true,
+      single: false,
+    });
     expect(fetchDocumentReviewMock).toHaveBeenCalledWith("u1", "c1");
   });
 
@@ -148,5 +166,34 @@ describe("GET /api/license/status failure handling (6 Oct 2026)", () => {
     fetchLicenseForUserMock.mockRejectedValue(new Error("License lookup unavailable"));
     const res = await GET();
     expect(res.status).toBe(503);
+  });
+});
+
+describe("GET /api/license/status for a case's One Response (23 Oct 2026)", () => {
+  it("reports it as its own flag and never as a Pass", async () => {
+    getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
+    fetchLicenseForUserMock.mockResolvedValue({ status: "none", plan: null });
+    fetchSingleResponseMock.mockResolvedValue(true);
+    const body = await (await GET(new Request("http://x/api/license/status?caseId=c1"))).json();
+    expect(body).toMatchObject({ status: "none", single: true });
+    expect(fetchSingleResponseMock).toHaveBeenCalledWith("u1", "c1");
+  });
+
+  it("lets the AI read the case's documents, which it includes", async () => {
+    getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
+    fetchLicenseForUserMock.mockResolvedValue({ status: "none", plan: null });
+    fetchSingleResponseMock.mockResolvedValue(true);
+    const body = await (
+      await GET(new Request("http://x/api/license/status?caseId=c1&for=documents"))
+    ).json();
+    expect(body).toMatchObject({ status: "active", plan: "single_response", single: true });
+  });
+
+  it("asks about no case when none is named", async () => {
+    getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
+    fetchLicenseForUserMock.mockResolvedValue({ status: "none", plan: null });
+    const body = await (await GET(new Request("http://x/api/license/status"))).json();
+    expect(body.single).toBe(false);
+    expect(fetchSingleResponseMock).not.toHaveBeenCalled();
   });
 });

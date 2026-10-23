@@ -53,12 +53,17 @@ async function reviewEvidence(page: Page) {
       .getByRole("tabpanel", { name: "Documents", exact: true })
       .getByText("Reviewed by you", { exact: true }),
   ).toBeVisible();
-  await page
-    .getByLabel("I checked the notice and the appeal page. Amazon asked for nothing else.")
-    .click();
-  await expect(
-    page.getByLabel("I checked the notice and the appeal page. Amazon asked for nothing else."),
-  ).toBeChecked();
+  const tick = page.getByLabel(
+    "I checked the notice and the appeal page. Amazon asked for nothing else.",
+  );
+  await tick.click();
+  await expect(tick).toBeChecked();
+  // The tick shows at once (G-103) and is saved after: the box is disabled while the save runs. A
+  // test that moves on, or signs in (a full page load), before that ends loses the tick, and the
+  // response then reads "Prepare working draft" instead of "Prepare response". Under load this was
+  // the whole of the flake in the signed-in workspace tests (found 22 Oct 2026, 4 repeats on 3 workers).
+  await expect(tick).toBeEnabled();
+  await expect(tick).toBeChecked();
 }
 
 test("workspace persists a sourced evidence plan, waiting state and factual review", async ({

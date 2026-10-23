@@ -10,6 +10,7 @@
 export type PurchaseKind =
   | "appeal_pass"
   | "account_pass"
+  | "single_response"
   | "document_review"
   | "account_renewal"
   | "pack_10"
@@ -29,7 +30,40 @@ export const OPENS_SOON = {
     "Not on sale yet. Write to us if you want to be verified first, and we will tell you when it opens.",
 } as const;
 
+/**
+ * What `/api/compose` says when a One Response has been used up: Amazon has replied, or a response
+ * has been recorded as sent, so the next response is the Appeal Pass's.
+ */
+export const SINGLE_RESPONSE_USED =
+  "Your One Response covers the first response for this case. Amazon has replied, or you have recorded a response as sent, so a further response needs the Appeal Pass.";
+
 export const PRODUCTS = {
+  /**
+   * One Response (23 Oct 2026): one case, the first response and every revision of it, no further
+   * responses. The price must equal the Paddle price (docs/DEPLOYMENT.md section 5f); the card on
+   * /pricing takes its features from `HOME.plans.items`.
+   */
+  single: {
+    name: "One Response",
+    price: "$99",
+    amount: "$99.00",
+    note: "One case, one appeal",
+    cta: "Get One Response",
+    order: { title: "One Response", line: "One case, one response", expires: "Never" },
+    summary:
+      "One case, one prepared response. Every revision of it is yours; a response to Amazon's reply, or a second try, needs the Appeal Pass.",
+    /** On the checkout, once the case is known. */
+    covers:
+      "This One Response covers the first response for your active case. A further response needs the Appeal Pass.",
+    /** On the case page, when the seller holds only a One Response and the next response is not covered. */
+    upgrade: "Get the Appeal Pass for a further response",
+    /** On the billing page. */
+    billing: {
+      one: "You have a One Response. It covers the first response for the case it was bought for.",
+      many: "You have {n} One Responses. Each covers the first response for the case it was bought for.",
+      cta: "See the Appeal Pass",
+    },
+  },
   /** The AI reading of one case's documents, credited toward the Appeal Pass. */
   review: {
     name: "AI document review",
@@ -184,6 +218,10 @@ export const EMAIL_PRODUCTS: Record<
   Exclude<PurchaseKind, "appeal_pass" | "account_pass">,
   { name: string; priceLine: string }
 > = {
+  single_response: {
+    name: PRODUCTS.single.name,
+    priceLine: `List price: ${PRODUCTS.single.price} (one-time; one case, the first response and every revision of it; a further response needs the Appeal Pass)`,
+  },
   document_review: {
     name: PRODUCTS.review.name,
     priceLine: `List price: ${PRODUCTS.review.price} (one-time; the AI reads up to five documents for one case, and the ${PRODUCTS.review.price} comes off the Appeal Pass price for that case)`,

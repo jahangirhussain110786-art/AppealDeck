@@ -3,6 +3,7 @@
  *
  * Sellers:
  * - "case": the Appeal Pass, one case, every round, no expiry. Always on sale.
+ * - "single": One Response, one case and the first response only, no expiry.
  * - "account": the Account Pass, every case on the account for 12 months.
  * - "review": an AI reading of the documents of one case ($49), credited toward the Appeal Pass.
  * - "renewal": twelve more months on an Account Pass that is ending ($99).
@@ -18,10 +19,12 @@
  * deploy) sees the value it set. Each `process.env.NEXT_PUBLIC_*` below is written out in full so
  * the build can inline it for the browser.
  */
-export type PassPlan = "case" | "account" | "review" | "renewal" | "pack10" | "pack30" | "pro";
+export type PassPlan =
+  "case" | "single" | "account" | "review" | "renewal" | "pack10" | "pack30" | "pro";
 
 export const PASS_PLANS: readonly PassPlan[] = [
   "case",
+  "single",
   "account",
   "review",
   "renewal",
@@ -33,6 +36,7 @@ export const PASS_PLANS: readonly PassPlan[] = [
 /** The plans bought from inside a case. The rest belong to the account, so they need no case. */
 export const PLAN_NEEDS_CASE: Record<PassPlan, boolean> = {
   case: true,
+  single: true,
   account: true,
   review: true,
   renewal: false,
@@ -46,6 +50,10 @@ export const ACCOUNT_SCOPE = "account";
 
 export function casePassPriceId(): string | undefined {
   return process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS || undefined;
+}
+
+export function singlePriceId(): string | undefined {
+  return process.env.NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE || undefined;
 }
 
 export function accountPassPriceId(): string | undefined {
@@ -119,6 +127,16 @@ export function accountPassListed(): boolean {
   return accountPassEnabled() || previewPlans();
 }
 
+/** One Response is on sale only when its Paddle price is configured (docs/DEPLOYMENT.md section 5f). */
+export function singleEnabled(): boolean {
+  return singlePriceId() !== undefined;
+}
+
+/** One Response is shown: on sale, or previewed as "Opens soon". */
+export function singleListed(): boolean {
+  return singleEnabled() || previewPlans();
+}
+
 /** The AI document review is shown: on sale, or previewed as "Opens soon". */
 export function reviewListed(): boolean {
   return reviewEnabled() || previewPlans();
@@ -134,6 +152,8 @@ export function priceIdFor(plan: PassPlan): string | undefined {
   switch (plan) {
     case "case":
       return casePassPriceId();
+    case "single":
+      return singlePriceId();
     case "account":
       return accountPassPriceId();
     case "review":
@@ -162,6 +182,7 @@ export function extraPriceIds(): Record<string, string> {
     pack_10: pack10PriceId(),
     pack_30: pack30PriceId(),
     pro_plan: proPlanPriceId(),
+    single_response: singlePriceId(),
   };
   return Object.fromEntries(
     Object.entries(candidates).filter((entry): entry is [string, string] => Boolean(entry[1])),

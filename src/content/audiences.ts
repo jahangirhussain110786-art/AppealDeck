@@ -49,6 +49,23 @@ export const ROLE_PICKER = {
   ],
 } as const;
 
+/**
+ * The partner arithmetic, in one place. The Appeal Pass and Account Pass prices are the ones on
+ * /pricing (a test checks they still are), the discount is the Paddle discount a partner's code
+ * gives, and the rate is what a partner earns of what the seller then pays.
+ */
+const SALE = { passPrice: 249, accountPrice: 329, discount: 25, ratePercent: 30 } as const;
+const dollars = (n: number) => `$${n.toFixed(2)}`;
+function earning(price: number) {
+  const pays = price - SALE.discount;
+  return { pays: dollars(pays), earns: dollars((pays * SALE.ratePercent) / 100) };
+}
+export const PARTNER_SALES = {
+  ...SALE,
+  pass: earning(SALE.passPrice),
+  account: earning(SALE.accountPrice),
+};
+
 const WRITERS_SUBJECT = "Appeal writer: how I work";
 const PARTNER_SUBJECT = "Partner program";
 
@@ -95,6 +112,68 @@ export const PROS = {
       },
     ],
   },
+  /**
+   * The cards of the writers' page, in the same design as the sellers' plan cards. Free tools first,
+   * then the Appeal Pass (the price of one client case), then the two professional ways to pay less
+   * per case, which are previewed as "Opens soon" until their Paddle prices are set.
+   */
+  cards: {
+    title: "Prices for writers and VA teams",
+    free: {
+      name: "Free tools",
+      note: "For every client case",
+      price: "$0",
+      features: [
+        "One list for every client, saved to a spreadsheet",
+        "Each client's notice decoded, with scam signals quoted",
+        "Documents read against the notice, on your device",
+        "Every round kept, Amazon's replies applied",
+        "No access to the client's Amazon account",
+      ],
+      cta: "Start with a free decode",
+    },
+    pass: {
+      name: "Appeal Pass",
+      note: "One client case, every round",
+      price: "$249",
+      unit: "a case",
+      features: [
+        "The response prepared from the facts you confirmed, every revision",
+        "An upload-ready pack of the reviewed files",
+        "The same 14-day refund, no questions asked",
+      ],
+      cta: "Get an Appeal Pass",
+    },
+    credits: {
+      name: "Case credits",
+      note: "For verified professionals",
+      price: PRODUCTS.pack30.each,
+      unit: "a case, from",
+      features: [
+        `${PRODUCTS.pack10.count} credits for ${PRODUCTS.pack10.price} (${PRODUCTS.pack10.each} a case)`,
+        `${PRODUCTS.pack30.count} credits for ${PRODUCTS.pack30.price} (${PRODUCTS.pack30.each} a case)`,
+        "A credit gives one case an Appeal Pass, every round included",
+        "Credits last 12 months",
+      ],
+      cta: "Buy credits",
+    },
+    pro: {
+      name: "Pro plan",
+      note: "A monthly plan for teams",
+      price: PRODUCTS.pro.price,
+      unit: PRODUCTS.pro.per,
+      features: [
+        `${PRODUCTS.pro.credits} case credits every month (${PRODUCTS.pro.each} a case)`,
+        "A credit you do not use lasts one more month",
+        "Cancel any time in Billing",
+        "Verified by hand, like the credits",
+      ],
+      cta: PRODUCTS.pro.cta,
+    },
+    welcome:
+      "Writers, consultants, VA teams and agencies are welcome. Write to us with a link to your public profile and we will verify you.",
+    note: "Without credits, each client case is its own Appeal Pass: $249 once, every round included.",
+  },
   cost: {
     title: "What it costs today",
     body: "Everything above except the written response is free. The written response is the Appeal Pass: $249 once for one case, every round included. Each client case is its own case, so each has its own Pass.",
@@ -137,6 +216,51 @@ export const PARTNERS = {
     accent: "checks the proof.",
     lede: "If you teach, advise or help Amazon sellers, you earn 30 percent of what a seller you send pays for an Appeal Pass, and the seller gets $25 off.",
     cta: "Write to us to apply",
+  },
+  /** The cards of the partners' page, in the same design as the sellers' plan cards. */
+  cards: {
+    title: "What a partner earns",
+    join: {
+      name: "Join",
+      note: "By application, issued by hand",
+      price: "$0",
+      unit: "to join",
+      features: [
+        "A code and a link that ends in ?ref=",
+        "Your code stays on the seller's device for 60 days",
+        "Paid once a month, by bank transfer or Payoneer",
+        "No minimum, and either side can stop at any time",
+      ],
+      cta: "Write to us to apply",
+    },
+    pass: {
+      name: "An Appeal Pass sale",
+      note: "One seller, one case",
+      price: PARTNER_SALES.pass.earns,
+      unit: "per sale",
+      features: [
+        "Thirty percent of what the seller pays",
+        `The seller pays ${PARTNER_SALES.pass.pays}: $${SALE.passPrice} less your $${SALE.discount} discount`,
+        "Paid after the 14-day refund window",
+        "Nothing if the Pass is refunded",
+      ],
+      cta: "Read the rules",
+    },
+    account: {
+      name: "An Account Pass sale",
+      note: "One seller, every case for 12 months",
+      price: PARTNER_SALES.account.earns,
+      unit: "per sale",
+      features: [
+        "The same thirty percent of what the seller pays",
+        `The seller pays ${PARTNER_SALES.account.pays}: $${SALE.accountPrice} less your $${SALE.discount} discount`,
+        "Paid after the 14-day refund window",
+        "Nothing if the Pass is refunded",
+      ],
+      cta: "Read the rules",
+    },
+    welcome:
+      "Teachers, advisors, agencies and communities are welcome. Write to us and tell us where you share with sellers.",
   },
   how: {
     title: "How it works",

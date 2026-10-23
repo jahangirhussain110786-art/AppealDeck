@@ -5,6 +5,7 @@ const getApiUserMock = vi.fn();
 const isLicenseActiveMock = vi.fn();
 const claimCasePassMock = vi.fn();
 const claimDocumentReviewMock = vi.fn();
+const claimSingleResponseMock = vi.fn();
 const hasAnyReviewMock = vi.fn();
 const reviewReadsLeftMock = vi.fn();
 const recordReviewReadMock = vi.fn();
@@ -21,6 +22,7 @@ vi.mock("@/lib/license", () => ({
   isLicenseActive: (...args: unknown[]) => isLicenseActiveMock(...args),
   claimCasePass: (...args: unknown[]) => claimCasePassMock(...args),
   claimDocumentReview: (...args: unknown[]) => claimDocumentReviewMock(...args),
+  claimSingleResponse: (...args: unknown[]) => claimSingleResponseMock(...args),
   hasAnyDocumentReview: (...args: unknown[]) => hasAnyReviewMock(...args),
 }));
 
@@ -66,6 +68,8 @@ beforeEach(() => {
   isLicenseActiveMock.mockResolvedValue(true);
   claimCasePassMock.mockReset();
   claimCasePassMock.mockResolvedValue(true);
+  claimSingleResponseMock.mockReset();
+  claimSingleResponseMock.mockResolvedValue(false);
   claimDocumentReviewMock.mockReset();
   claimDocumentReviewMock.mockResolvedValue(false);
   hasAnyReviewMock.mockReset();
@@ -99,6 +103,37 @@ describe("/api/read-document gates", () => {
     expect((await res.json()).code).toBe("case_pass_required");
     expect(claimCasePassMock).toHaveBeenCalledWith("u1", "case-1");
     expect(callGeminiMock).not.toHaveBeenCalled();
+  });
+
+  describe("a One Response (23 Oct 2026): the case's documents are read, without the review's limit of five", () => {
+    beforeEach(() => {
+      isLicenseActiveMock.mockResolvedValue(false);
+      claimCasePassMock.mockResolvedValue(false);
+      hasAnyReviewMock.mockResolvedValue(true);
+      claimSingleResponseMock.mockResolvedValue(true);
+      callGeminiMock.mockResolvedValue({ ok: false, reason: "busy" });
+    });
+
+    it("opens the reading for its case", async () => {
+      const res = await handleReadDocument(makeReq(valid));
+      expect(res.status).toBe(200);
+      expect(callGeminiMock).toHaveBeenCalledTimes(1);
+      expect(claimSingleResponseMock).toHaveBeenCalledWith("u1", "case-1");
+    });
+
+    it("is not stopped by the review's five readings", async () => {
+      reviewReadsLeftMock.mockResolvedValue({ left: 0 });
+      const res = await handleReadDocument(makeReq(valid));
+      expect(res.status).toBe(200);
+      expect(reviewReadsLeftMock).not.toHaveBeenCalled();
+    });
+
+    it("does not open it for another case", async () => {
+      claimSingleResponseMock.mockResolvedValue(false);
+      const res = await handleReadDocument(makeReq(valid));
+      expect(res.status).toBe(402);
+      expect(callGeminiMock).not.toHaveBeenCalled();
+    });
   });
 
   describe("a document review (22 Oct 2026): five AI readings for the case it was bought for", () => {

@@ -12,7 +12,9 @@ test("while the Account Pass has no price it is shown as Opens soon, with no way
   request,
 }) => {
   test.skip(
-    !!process.env.NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS,
+    !!process.env.NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS ||
+      // One Response on sale puts a second product in the picker, which this case says is absent.
+      !!process.env.NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE,
     "this is the preview case; the switched-on case is account-pass.spec.ts",
   );
   await page.goto("/pricing");
@@ -89,9 +91,13 @@ test("the writers' page shows the professional prices as opening soon, with no w
     page.getByRole("heading", { name: "Check the proof on every client case.", level: 1 }),
   ).toBeVisible();
   await expect(page.getByText("Professional pricing is not set yet.")).toHaveCount(0);
-  await expect(page.getByText("10 case credits")).toBeVisible();
-  await expect(page.getByText("$390", { exact: true })).toBeVisible();
-  await expect(page.getByText("$349 a month")).toBeVisible();
+  // The prices are cards under the hero, as on the sellers page; credits and the Pro plan are previewed.
+  const cards = page.getByRole("list", { name: "Prices for writers and VA teams" });
+  await expect(cards.getByText("Free tools")).toBeVisible();
+  await expect(cards.getByText("10 credits for $390 ($39 a case)")).toBeVisible();
+  await expect(cards.getByText("$349", { exact: true })).toBeVisible();
+  await expect(cards.getByRole("button", { name: "Opens soon" })).toHaveCount(2);
+  await expect(cards.getByRole("button", { name: "Opens soon" }).first()).toBeDisabled();
   await expect(page.getByText("Not on sale yet").first()).toBeVisible();
   await expect(page.getByRole("button", { name: /Buy 10 credits|Start the Pro plan/ })).toHaveCount(
     0,
@@ -118,7 +124,7 @@ test("the partner page states the commission, the discount, the payout and the r
   await expect(page.getByText("There is no dashboard yet.")).toBeVisible();
   await expect(page.getByText("in writing that you earn it before they buy")).toBeVisible();
   await expect(page.getByText(/I earn a commission if you buy/)).toBeVisible();
-  await expect(page.getByRole("link", { name: "Write to us to apply" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Write to us to apply" }).first()).toHaveAttribute(
     "href",
     /^mailto:support@appealdeck\.com\?subject=Partner/,
   );
@@ -216,4 +222,50 @@ test.describe("partner codes", () => {
     expect(await stored(page, "appealdeck.partnerCode")).toContain("FIRST");
     expect(await stored(page, "appealdeck.partnerCode")).not.toContain("SECOND");
   });
+});
+
+test("sellers, writers and partners all open on the same pricing layout, with their prices as cards", async ({
+  page,
+}) => {
+  for (const [path, list] of [
+    ["/pricing", "Plans for sellers"],
+    ["/for-professionals", "Prices for writers and VA teams"],
+    ["/partners", "What a partner earns"],
+  ] as const) {
+    await page.goto(path);
+    // one h1, the audience switch with the current page marked, then the cards
+    await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(audienceNav(page).getByRole("link")).toHaveCount(3);
+    await expect(audienceNav(page).locator("[aria-current=page]")).toHaveCount(1);
+    const cards = page.getByRole("list", { name: list });
+    await expect(cards).toBeVisible();
+    expect(await cards.locator("> li").count()).toBeGreaterThanOrEqual(2);
+    // the first card sits on the hero's lower edge: the cards overlap it, as on the sellers' page
+    const hero = await page.locator("section.stage").first().boundingBox();
+    const first = await cards.locator("> li").first().boundingBox();
+    expect(first!.y).toBeLessThan(hero!.y + hero!.height);
+  }
+});
+
+test("the partner cards show what a partner earns, worked out from the prices", async ({
+  page,
+}) => {
+  test.skip(
+    !!process.env.NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS,
+    "this is the preview case; the switched-on case shows no Opens soon",
+  );
+  await page.goto("/partners");
+  const cards = page.getByRole("list", { name: "What a partner earns" });
+  await expect(cards.getByText("$67.20")).toBeVisible();
+  await expect(
+    cards.getByText("The seller pays $224.00: $249 less your $25 discount"),
+  ).toBeVisible();
+  await expect(cards.getByText("$91.20")).toBeVisible();
+  await expect(cards.getByRole("button", { name: "Opens soon" })).toBeDisabled();
+  await expect(cards.getByRole("link", { name: /Write to us to apply/ })).toHaveAttribute(
+    "href",
+    /^mailto:/,
+  );
+  await cards.getByRole("link", { name: "Read the rules" }).first().click();
+  await expect(page.locator("#partners-rules")).toBeInViewport();
 });

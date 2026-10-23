@@ -7,6 +7,7 @@ import {
   fetchDocumentReview,
   fetchLicenseForUser,
   fetchProStatus,
+  fetchSingleResponse,
 } from "@/lib/license";
 import { renewalWindow } from "@/lib/renewal";
 import { CaseIdSchema, ViolationKindSchema } from "@/lib/caseSchema";
@@ -40,7 +41,7 @@ const Body = z
     workspace: WorkspaceSchema.optional(),
     // "case" is the Appeal Pass and the default, so a client that never sends it behaves as before.
     plan: z
-      .enum(["case", "account", "review", "renewal", "pack10", "pack30", "pro"])
+      .enum(["case", "single", "account", "review", "renewal", "pack10", "pack30", "pro"])
       .default("case"),
   })
   .refine((b) => !PLAN_NEEDS_CASE[b.plan] || (b.caseId !== undefined && b.kind !== undefined), {
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
   // Whether a response can be drafted matters for the Passes that pay for drafting, not for a
   // document review, which only reads documents.
   if (
-    (plan === "case" || plan === "account") &&
+    (plan === "case" || plan === "single" || plan === "account") &&
     parsed.data.workspace &&
     !workspaceCanCompose(parsed.data.workspace)
   )
@@ -95,15 +96,27 @@ export async function POST(req: NextRequest) {
     const covered = existing.status === "active";
     // An Account Pass covers every case, so nothing more is sold to its holder. A case Pass covers
     // one case, so its holder may still buy the Account Pass (it covers every other case too).
-    if (covered && (plan === "case" || plan === "review" || existing.plan === "account_pass"))
+    if (
+      covered &&
+      (plan === "case" ||
+        plan === "single" ||
+        plan === "review" ||
+        existing.plan === "account_pass")
+    )
       return refuse(
         existing.plan === "account_pass"
           ? "Your Account Pass already covers every case on your account. Open your case."
-          : plan === "review"
-            ? "This case already has an Appeal Pass, which includes reading your documents. Open your case."
+          : plan === "review" || plan === "single"
+            ? "This case already has an Appeal Pass, which includes everything this would. Open your case."
             : "This case already has an Appeal Pass. It covers every revision — open your case.",
         409,
       );
+    // One One Response per case: a second would only take the seller's money twice.
+    if (plan === "single") {
+      const has = await fetchSingleResponse(userId, caseId).catch(() => null);
+      if (has === null) return refuse("Could not prepare checkout.", 503);
+      if (has) return refuse("This case already has a One Response. Open your case.", 409);
+    }
     if (plan === "review" || plan === "case") {
       const reviewed = await fetchDocumentReview(userId, caseId).catch(() => null);
       if (reviewed === null) return refuse("Could not prepare checkout.", 503);
