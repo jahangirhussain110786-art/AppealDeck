@@ -76,7 +76,7 @@ See `.env.example` "NOT USED BY THE APP" section. The old plan added ~10 unused 
 
 **First deploy needs no custom domain.** Ship on the Vercel-provided `https://<project>.vercel.app` URL with `NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_MARKETING_HOST` set to it and `NEXT_PUBLIC_APP_HOST` / `NEXT_PUBLIC_APP_URL` **unset** — marketing, auth, and the app all serve from that one origin (single-host mode in `src/proxy.ts`).
 
-When you are ready to move to `appealdeck.com` (buy the domain first if you have not), follow `AGENTS.md` → "Domain topology" (Vercel apex + `www` → env vars → Supabase redirect URL → Paddle webhook → smoke test). Do **not** add `app.appealdeck.com` unless a concrete need appears; the split is an env-var switch documented there.
+When you are ready to move to `appealdeck.com` (buy the domain first if you have not), follow `AGENTS.md` → "Domain topology" (Vercel apex + `www` → env vars → Supabase redirect URL → Paddle webhook → smoke test). **Still pending when you switch domain (PARKED-ITEMS F-19, F-20):** the guest reminder needs migration `0022`, `RESEND_API_KEY` (sending address verified on the new domain) and Upstash, and its email links are built from `NEXT_PUBLIC_SITE_URL`; One Response needs migrations `0020` and `0021` and its two Paddle prices. Do **not** add `app.appealdeck.com` unless a concrete need appears; the split is an env-var switch documented there.
 
 ## 4. Supabase production setup (founder action)
 
@@ -318,7 +318,9 @@ After first deployment:
 
 16. **Device reading** (30 Sep 2026): signed out (a private window), start a case, attach a PDF invoice and press **Check this document**. The result should say "Read on this device, without AI", and DevTools → Network should show **no** request to /api/read-document and none to any other host. Also open `https://appealdeck.com/reader/pdf.worker.compat.mjs` and `/reader/pdf.worker.min.mjs`: both should load, not 404. Checked on the test deployment (appealdeck.vercel.app, 30 Sep): every reader file answers with the right type, and the guest PDF, scanned and JPEG 2000 tests pass against it. Repeat with an image or a scanned PDF: the first one loads about 7 MB of language data from `/reader/` and takes a few seconds.
 
-If all 16 pass, and §6a's restore drill and §6b's billing check are done, you're live.
+17. **Guest reminder** (23 Oct 2026; PARKED-ITEMS F-19): needs migration `0022`, `RESEND_API_KEY` (sending address verified on the final domain) and Upstash. On `/decode`, decode a notice that states a date ahead, ask for a reminder with an inbox you own, press the button in the confirmation email (the link in it must be on the final domain, from `NEXT_PUBLIC_SITE_URL`), and confirm a `guest_reminders` row with `confirmed_at` set. Then confirm the stop link in an email works. Without Redis the form must say reminders are unavailable.
+
+If all 17 pass, and §6a's restore drill and §6b's billing check are done, you're live.
 
 ## 10. Which Vercel plan
 
