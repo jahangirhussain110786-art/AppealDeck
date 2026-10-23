@@ -273,3 +273,44 @@ export async function sendAccountPassEndingEmail(input: AccountPassEndingInput):
     throw new Error("Account Pass email delivery failed");
   }
 }
+
+/**
+ * Sends one prepared email through Resend. Throws when `RESEND_API_KEY` is unset or delivery fails,
+ * so a caller can record the failure and retry rather than treat a message that never went out as
+ * sent. The purchase and case-reminder senders above each carry their own copy of this call; new
+ * senders use this one.
+ */
+export async function sendRawEmail(input: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  idempotencyKey?: string;
+}): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM ?? "AppealDeck <billing@appealdeck.com>";
+  if (!apiKey) throw new Error("Email is not configured");
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      signal: AbortSignal.timeout(5000),
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        ...(input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey } : {}),
+      },
+      body: JSON.stringify({
+        from,
+        to: input.to,
+        subject: input.subject,
+        html: input.html,
+        text: input.text,
+      }),
+    });
+    if (!res.ok) throw new Error("Email provider returned " + res.status);
+  } catch {
+    throw new Error("Email delivery failed");
+  }
+}
+
+export { escapeHtml };

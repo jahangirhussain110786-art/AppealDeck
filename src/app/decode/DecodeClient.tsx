@@ -54,6 +54,7 @@ import {
 } from "@/core";
 import type { DeadlineLike } from "@/components/DeadlineChip";
 import { useAdoptPrehydration } from "@/lib/useAdoptPrehydration";
+import { ReminderSignup } from "@/components/ReminderSignup";
 
 /** Wire shape of `/api/decode`: `dueAt` arrives as an ISO string, not a `Date`. */
 type DecodeResponse = {
@@ -1312,6 +1313,7 @@ function ResultView({
                   ) : (
                     <p className="text-sm text-muted-foreground">{r.noDeadline}</p>
                   )}
+                  <ReminderSignup deadlines={result.deadlines} kind={result.kind} />
                 </div>
                 {details.length > 0 && (
                   <div className="mt-4 space-y-2 border-t border-border pt-4">

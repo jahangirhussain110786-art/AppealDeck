@@ -500,3 +500,39 @@ export async function recordReviewRead(user: AppUser, caseId: string): Promise<v
     // swallowed on purpose
   }
 }
+
+let _guestReminder: Ratelimit | null = null;
+let _guestReminderAll: Ratelimit | null = null;
+
+/**
+ * The guest deadline reminder (23 Oct 2026): a public form that makes us send an email to whatever
+ * address is typed, so it is capped twice, a few requests per address of the visitor a day and a daily
+ * ceiling for everyone, and it FAILS CLOSED. Without Redis in production, or when either cap is
+ * reached, no email is sent and the visitor is told reminders are unavailable. The decoder itself is
+ * unaffected. (The double opt-in in `guestReminders.ts` is what stops a typed address being spammed;
+ * this is what stops the form being used to burn the email allowance.)
+ */
+export async function rateLimitGuestReminder(ip: string): Promise<boolean> {
+  if (hasUnlimitedDevUsage()) return true;
+  if (!hasUpstashEnv()) return process.env.NODE_ENV !== "production";
+  try {
+    if (!_guestReminder || !_guestReminderAll) {
+      const redis = new Redis(redisCredentials()!);
+      _guestReminder = new Ratelimit({
+        redis,
+        limiter: Ratelimit.fixedWindow(5, "1 d"),
+        prefix: "ratelimit:guest-reminder",
+      });
+      _guestReminderAll = new Ratelimit({
+        redis,
+        limiter: Ratelimit.fixedWindow(300, "1 d"),
+        prefix: "ratelimit:guest-reminder-all",
+      });
+    }
+    const perIp = await _guestReminder.limit(ip);
+    if (!perIp.success) return false;
+    return (await _guestReminderAll.limit("all")).success;
+  } catch {
+    return false;
+  }
+}

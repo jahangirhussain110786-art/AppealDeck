@@ -474,3 +474,13 @@ The founder asked for the day's work to be refined. A review of it found, and th
 - **Pro annual prepay: not needed.** The 30-pack ($29 a case, 12 months) already is the twelve-months-paid-up-front option; a separate annual plan would add nothing. Dropped from the list.
 - **Checked and found fine:** the proof page `/how-we-test` is linked from the footer and the sitemap; no page still says a 7-day refund.
 - **Decider:** the founder (to keep improving); AI assistant (what to build and what to drop).
+
+## 23 Oct 2026 (third batch): the guest deadline reminder
+
+- **Decision (the founder's, from the approved list and "do whatever is required"):** build the opt-in email reminder after a decode, the one list the free decoder can build and the one that gives something first.
+- **Design:** double opt-in, because the form takes an address from a stranger (a confirmation email first, nothing else until the owner clicks); one reminder, three days before the date or the next day if that has passed; a date that is today or past is never offered one; at most three open reminders per address and no second confirmation within the hour; one link in every email stops everything to that address; rows deleted 30 days after the date. The confirm and stop pages act only when a button is pressed, because mail systems open links to scan them and that must not confirm an address nobody asked for or stop one the owner wanted.
+- **What is stored:** the address, the date, the kind of notice, a label that is ours (the form accepts no text from the caller to store or email), and the dates of what we did. Never the notice. The first draft of the copy said the notice "stays on your device", which is false (the decoder reads it on our server and keeps no copy); corrected before shipping.
+- **Abuse limits:** the public form is limited per address of the visitor and for everyone, and fails closed without Redis in production.
+- **Disclosed:** the Privacy policy (dated 23 Oct) says what is kept, for how long, that nothing follows the first email until confirmed, and how to stop; `legalDisclosures.test.ts` pins it.
+- **Alternatives considered:** single opt-in (cheaper, but anyone could sign up another person's address), and reusing `case_reminders` (it is keyed to an account the visitor does not have).
+- **Decider:** the founder (the feature); AI assistant (the double opt-in, the stop-all link, and the corrected copy).

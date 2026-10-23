@@ -7,7 +7,8 @@ import sitemap from "../sitemap";
  * 24 Sep 2026: a crawl found /support missing from the sitemap, added a day after the sitemap was
  * last touched. Every public page is a top-level folder of `src/app` with a `page.tsx` (the
  * signed-in and auth pages live under the `(app)` group, and `dev` is the dev-only gallery), so the
- * list is checked against the folders rather than remembered.
+ * list is checked against the folders rather than remembered. `reminder` is the page an email link
+ * opens (noindex, one-time token in the address), so it is deliberately not listed.
  */
 describe("sitemap", () => {
   it("lists every public page", () => {
@@ -19,13 +20,14 @@ describe("sitemap", () => {
           d.isDirectory() &&
           !d.name.startsWith("(") &&
           !d.name.startsWith("_") &&
-          !["api", "dev"].includes(d.name) &&
+          !["api", "dev", "reminder"].includes(d.name) &&
           fs.existsSync(path.join(appDir, d.name, "page.tsx")),
       )
       .map((d) => `/${d.name}`);
 
     const listed = sitemap().map((entry) => new URL(entry.url).pathname.replace(/\/$/, "") || "/");
     expect(listed).toContain("/");
+    expect(listed).not.toContain("/reminder");
     for (const page of publicPages) expect(listed, `${page} is missing`).toContain(page);
   });
 

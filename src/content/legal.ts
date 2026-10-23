@@ -39,7 +39,7 @@ import {
 
 export const LEGAL = {
   lastUpdated: {
-    privacy: "2026-10-22",
+    privacy: "2026-10-23",
     terms: "2026-10-23",
     refund: "2026-10-12",
   },
@@ -70,6 +70,8 @@ export const LEGAL = {
             : []),
           "If you hold an Appeal Pass, we keep a record of the browsers you use it on: a hashed browser fingerprint (made from your browser's user-agent string and language settings and your account, not your IP address), the browser's user-agent string and a label, and when it was first and last used. An Appeal Pass works on up to 5 browsers, and you can remove one in Billing.",
           "If you turn on email reminders for a case, we store the reminder date you chose, the case type, and an identifier for that case, so we can email you when the date arrives. Nothing else about the case is sent: not your notice, your evidence, your draft, or any note you have written. Turning reminders off for a case, or deleting the case on the dashboard, deletes that record.",
+          // 23 Oct 2026: the reminder a visitor can ask for on the free decoder, without an account.
+          "If you ask, on the free decoder, for an email reminder before the date in a notice, we keep your email address, that date, the kind of notice and the dates of our emails to you, until 30 days after the date. We send one email to confirm and then one reminder, and nothing else, and nothing is sent after the first until you confirm. The notice itself is not kept for this. Every email has a link that stops all reminders to your address.",
           "Before sign-in, your case is encrypted with a secret held for that tab session. Closing the session or clearing browser data can make it unrecoverable. Signing in on that tab transfers the case into your account vault after it is unlocked, preserving existing cases. Account vaults unlock automatically by default; with an Appeal Pass you can add passphrase protection from the Vault page.",
         ],
       },

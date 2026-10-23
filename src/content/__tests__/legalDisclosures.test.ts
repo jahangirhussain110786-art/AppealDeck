@@ -254,15 +254,24 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
     expect(JSON.stringify(FAQ.items)).not.toMatch(/independent service/i);
   });
 
-  it("dates the changed documents (privacy 2026-10-22, terms 2026-10-23, refund 2026-10-12)", () => {
+  it("dates the changed documents (privacy 2026-10-23, terms 2026-10-23, refund 2026-10-12)", () => {
     // 9 Oct 2026: the AI now also writes document-request and questionnaire responses, and reads a
     // notice the decoder cannot place. 10 Oct 2026: privacy says what that reading keeps. 12 Oct
     // 2026: the Terms and privacy say "software" rather than "independent service" and count
     // browsers, not devices (G-93, G-71). 22 Oct 2026: privacy names the two things local storage
     // now also holds, a partner's code and the answer to "what brings you here".
-    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-22");
+    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-23");
     expect(LEGAL.lastUpdated.terms).toBe("2026-10-23");
     expect(LEGAL.lastUpdated.refund).toBe("2026-10-12");
+  });
+
+  it("discloses the guest deadline reminder: what is kept, for how long, that it needs a confirmation, and how to stop", () => {
+    const privacy = JSON.stringify(LEGAL.privacy);
+    expect(privacy).toMatch(/email reminder before the date in a notice/);
+    expect(privacy).toMatch(/until 30 days after the date/);
+    expect(privacy).toMatch(/nothing is sent after the first until you confirm/);
+    expect(privacy).toMatch(/notice itself is not kept for this/);
+    expect(privacy).toMatch(/stops all reminders to your address/);
   });
 });
 

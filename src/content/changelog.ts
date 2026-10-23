@@ -50,6 +50,7 @@ export const CHANGELOG = {
             ]
           : []),
         "A purchase confirmation email now ends with the next step and where to do it.",
+        "The free decoder can now email you one reminder before the date in your notice. You confirm your address first, we keep only the address, the date and the kind of notice until 30 days after the date, and every email has a link that stops it.",
         "The Appeal Pass card is now the highlighted one, with a Recommended note.",
         ...(singleEnabled()
           ? [
