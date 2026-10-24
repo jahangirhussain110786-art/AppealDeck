@@ -7,7 +7,13 @@ const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableE
     // `relative` so the sr-only (absolutely positioned) labels inside cells scrolled out of view are
     // clipped by this wrapper. Without it they belong to the page and add 11 px of horizontal
     // scroll to /pricing at 320 px wide (7 Oct 2026).
-    <div className="relative w-full overflow-auto" role="region" aria-label="Table" tabIndex={0}>
+    <div
+      className="relative w-full overflow-auto"
+      role="region"
+      aria-label={props["aria-label"] ?? "Table"}
+      aria-labelledby={props["aria-labelledby"]}
+      tabIndex={0}
+    >
       <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
     </div>
   ),

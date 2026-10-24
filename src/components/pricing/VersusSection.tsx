@@ -39,7 +39,7 @@ export function VersusSection() {
       <p className="mt-3 max-w-prose text-lg text-muted-foreground">{v.lead}</p>
       <div className="mt-8 overflow-x-auto">
         <Card className="overflow-hidden rounded-[20px] p-0 shadow-lift">
-          <Table>
+          <Table aria-label={`${v.headings.chatbot} and ${v.headings.us}`}>
             <TableHeader>
               <TableRow>
                 <TableHead>{v.headings.job}</TableHead>
@@ -68,7 +68,16 @@ export function VersusSection() {
         <dl className="mt-4 grid gap-4 sm:grid-cols-3">
           {m.items.map((item) => (
             <div key={item.what} className="rounded-2xl border border-border bg-card p-5">
-              <dt className="text-sm text-muted-foreground">{item.what}</dt>
+              <dt className="text-sm text-muted-foreground">
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-link underline underline-offset-4"
+                >
+                  {item.what}
+                </a>
+              </dt>
               <dd className="mt-1 text-xl font-semibold tracking-[-0.02em] text-foreground tabular-nums">
                 {item.price}
               </dd>

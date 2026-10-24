@@ -26,7 +26,16 @@ export function GuideView({ guide }: { guide: Guide }) {
       headline: guide.title,
       description: guide.description,
       dateModified: guide.lastVerified,
-      author: { "@type": "Organization", name: "AppealDeck" },
+      mainEntityOfPage: `${SITE_URL}/guides/${guide.slug}`,
+      image: `${SITE_URL}/brand/og-1200x630.png`,
+      inLanguage: "en",
+      author: { "@type": "Organization", name: "AppealDeck", url: SITE_URL },
+      publisher: {
+        "@type": "Organization",
+        name: "AppealDeck",
+        url: SITE_URL,
+        logo: { "@type": "ImageObject", url: `${SITE_URL}/icon.svg` },
+      },
     },
     {
       "@context": "https://schema.org",

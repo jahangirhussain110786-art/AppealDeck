@@ -122,12 +122,11 @@ export function professionalsEnabled(): boolean {
 
 /**
  * Whether a product that is not on sale yet is still shown, with its price and "Opens soon" and no
- * way to buy it. On by default so /pricing and /for-professionals show the whole structure before
- * Paddle is connected; `NEXT_PUBLIC_PLANS_PREVIEW=off` hides it again. Showing is never selling:
+ * way to buy it. Opt in with `NEXT_PUBLIC_PLANS_PREVIEW=on` for a deliberate preview. Showing is never selling:
  * every purchase path (the checkout, the intent route, the webhook) still needs its Paddle price.
  */
 export function previewPlans(): boolean {
-  return process.env.NEXT_PUBLIC_PLANS_PREVIEW !== "off";
+  return process.env.NEXT_PUBLIC_PLANS_PREVIEW === "on";
 }
 
 /** The Account Pass is shown: on sale, or previewed as "Opens soon". */

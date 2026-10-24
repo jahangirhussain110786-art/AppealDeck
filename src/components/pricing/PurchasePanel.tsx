@@ -281,13 +281,15 @@ export function PurchasePanel({
   return (
     <div className="space-y-6">
       <ConsentRow checked={consent} onCheckedChange={setConsent} plan={plan} />
-      <PartnerCodeNote />
+      <PartnerCodeNote
+        eligible={(plan === "case" && !caseHasReview && !caseHasSingle) || plan === "account"}
+      />
 
       {sessionState === "signed-out" && (
         <p className="text-xs text-muted-foreground">
           {APP.access.composeGate.signInToActivate}{" "}
           <Link
-            href="/login?next=/compose"
+            href={`/login?next=${encodeURIComponent(`/pricing?plan=${plan}#purchase`)}`}
             className="text-link underline underline-offset-4 hover:text-link/80"
           >
             {SHARED.nav.signIn}

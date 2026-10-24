@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { setPlanChoice } from "@/lib/planChoice";
 import type { PassPlan } from "@/lib/plans";
+import { FUNNEL_EVENTS, trackFunnelEvent } from "@/lib/analytics";
 
 /**
  * A plan card's button for a paid Pass. It is a plain link to the purchase section, so it works
@@ -21,7 +22,13 @@ export function PlanCta({
 }) {
   return (
     <Button asChild size="lg" variant={featured ? "default" : "outline"} className="w-full">
-      <a href="#purchase" onClick={() => setPlanChoice(plan)}>
+      <a
+        href="#purchase"
+        onClick={() => {
+          setPlanChoice(plan);
+          trackFunnelEvent(FUNNEL_EVENTS.planSelected, { plan, where: "card" });
+        }}
+      >
         {children}
       </a>
     </Button>

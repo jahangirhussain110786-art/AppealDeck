@@ -16,6 +16,7 @@ import {
 import { FaqAccordion } from "@/components/pricing/FaqAccordion";
 import { PurchaseSection } from "@/components/pricing/PurchaseSection";
 import { PlanCards } from "@/components/pricing/PlanCards";
+import { PlanFit } from "@/components/pricing/PlanFit";
 import {
   accountPassEnabled,
   reviewEnabled,
@@ -93,45 +94,7 @@ export default function PricingPage() {
           <p className="mt-3 text-center text-sm text-muted-foreground">{PRICING.checkoutNote}</p>
         </section>
 
-        <section className="py-16">
-          <h2 className="mb-6 text-[clamp(1.75rem,1.2rem+1.6vw,2.5rem)] font-semibold tracking-[-0.035em] text-foreground">
-            {PRICING.compareTitle}
-          </h2>
-          <div className="overflow-x-auto">
-            <Card className="overflow-hidden rounded-[20px] p-0 shadow-lift">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{PRICING.tableHeadings.feature}</TableHead>
-                    <TableHead className="text-center">{PRICING.tableHeadings.free}</TableHead>
-                    <TableHead className="text-center">{PRICING.tableHeadings.account}</TableHead>
-                    <TableHead className="bg-[hsl(var(--stage-2))] text-center text-white">
-                      {PRICING.tableHeadings.pass}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Object.values(PRICING.rows).map((row) => (
-                    <TableRow key={row.feature}>
-                      <TableCell className="font-medium">{row.feature}</TableCell>
-                      <TableCell className="text-center">
-                        <ValueCell value={row.free} />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <ValueCell value={row.account} />
-                      </TableCell>
-                      <TableCell className="bg-primary/[0.05] text-center">
-                        <ValueCell value={row.pass} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </div>
-        </section>
-
-        <VersusSection />
+        <PlanFit singleOn={singleEnabled()} />
 
         <section
           id="purchase"
@@ -192,6 +155,46 @@ export default function PricingPage() {
             upgradeOn={upgradeEnabled()}
           />
         </section>
+
+        <section className="py-16">
+          <h2 className="mb-6 text-[clamp(1.75rem,1.2rem+1.6vw,2.5rem)] font-semibold tracking-[-0.035em] text-foreground">
+            {PRICING.compareTitle}
+          </h2>
+          <div className="overflow-x-auto">
+            <Card className="overflow-hidden rounded-[20px] p-0 shadow-lift">
+              <Table aria-label={PRICING.compareTitle}>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{PRICING.tableHeadings.feature}</TableHead>
+                    <TableHead className="text-center">{PRICING.tableHeadings.free}</TableHead>
+                    <TableHead className="text-center">{PRICING.tableHeadings.account}</TableHead>
+                    <TableHead className="bg-[hsl(var(--stage-2))] text-center text-white">
+                      {PRICING.tableHeadings.pass}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.values(PRICING.rows).map((row) => (
+                    <TableRow key={row.feature}>
+                      <TableCell className="font-medium">{row.feature}</TableCell>
+                      <TableCell className="text-center">
+                        <ValueCell value={row.free} />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <ValueCell value={row.account} />
+                      </TableCell>
+                      <TableCell className="bg-primary/[0.05] text-center">
+                        <ValueCell value={row.pass} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          </div>
+        </section>
+
+        <VersusSection />
 
         <section className="grid gap-8 pb-16 sm:pb-20 lg:grid-cols-[18rem_1fr] lg:gap-16">
           <SectionHeading title={PRICING.faqTitle} />

@@ -60,14 +60,14 @@ export function PriceCardGrid({
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p
+              <h2
                 className={cn(
                   "text-sm font-semibold",
                   card.featured ? "text-primary" : "text-muted-foreground",
                 )}
               >
                 {card.name}
-              </p>
+              </h2>
               {card.note && <p className="mt-1 text-sm text-muted-foreground">{card.note}</p>}
             </div>
             {card.badge && (

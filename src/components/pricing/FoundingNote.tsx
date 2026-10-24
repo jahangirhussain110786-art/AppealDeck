@@ -6,8 +6,8 @@ import { PRICING } from "@/content/marketing";
 type Count = { spotsLeft: number | null; total: number | null };
 
 /**
- * The founding offer on the Account Pass: "N of 25 left", read from /api/founding, which counts the
- * Passes really sold. It shows nothing until the count has arrived and nothing at all when the offer
+ * The founding offer on the Account Pass: "N of 25 left", read from /api/founding using the configured
+ * discount's actual redemption count. It shows nothing until the count has arrived and nothing at all when the offer
  * is off, sold out or the count cannot be read, so it never claims a spot that may not exist.
  */
 export function FoundingNote({ className }: { className?: string }) {

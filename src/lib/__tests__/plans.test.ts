@@ -1,15 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const supabaseState: { count: number | null; error: unknown } = { count: 0, error: null };
-vi.mock("@/lib/supabase/server", () => ({
-  supabaseAdmin: {
-    from: () => ({
-      select: () => ({
-        eq: () => Promise.resolve({ count: supabaseState.count, error: supabaseState.error }),
-      }),
-    }),
-  },
-}));
+const discount = {
+  code: "FOUNDING",
+  status: "active",
+  enabled_for_checkout: true,
+  type: "flat",
+  amount: "8000",
+  currency_code: "USD",
+  recur: false,
+  usage_limit: 25,
+  times_used: 0,
+  restrict_to: ["pri_account"],
+  expires_at: null,
+};
 
 import {
   accountPassEnabled,
@@ -31,8 +34,9 @@ import { foundingSpotsLeft } from "../founding";
 
 beforeEach(() => {
   vi.unstubAllEnvs();
-  supabaseState.count = 0;
-  supabaseState.error = null;
+  vi.unstubAllGlobals();
+  vi.stubEnv("PADDLE_API_KEY", "test-key");
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ data: [{ ...discount }] })));
 });
 
 describe("plans read the environment when asked, not when imported", () => {
@@ -89,21 +93,29 @@ describe("founding spots left", () => {
     vi.stubEnv("NEXT_PUBLIC_FOUNDING_CODE", "FOUNDING");
   });
 
-  it("counts down from the total by the Passes sold", async () => {
-    supabaseState.count = 7;
+  it("counts this discount's redemptions, not unrelated Pass sales", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({ data: [{ ...discount, times_used: 7 }] })),
+    );
     expect(await foundingSpotsLeft()).toBe(18);
   });
 
   it("never goes below none", async () => {
-    supabaseState.count = 400;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({ data: [{ ...discount, times_used: 400 }] })),
+    );
     expect(await foundingSpotsLeft()).toBe(0);
   });
 
   it("says nothing rather than guessing when the count cannot be read", async () => {
-    supabaseState.count = null;
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 503 })));
     expect(await foundingSpotsLeft()).toBeNull();
-    supabaseState.count = 3;
-    supabaseState.error = { message: "down" };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({ data: [{ ...discount, usage_limit: 100 }] })),
+    );
     expect(await foundingSpotsLeft()).toBeNull();
   });
 

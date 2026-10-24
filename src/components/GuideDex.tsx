@@ -254,6 +254,8 @@ export function GuideDex() {
   return (
     <div
       data-no-print
+      role="complementary"
+      aria-label="Page guide"
       className="pointer-events-none fixed bottom-2 right-2 z-30 flex items-end gap-1 sm:bottom-4 sm:right-4 print:hidden"
     >
       {/* Nothing here catches the pointer except the two small buttons: Dex is a picture on top of the

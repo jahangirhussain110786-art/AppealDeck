@@ -18,6 +18,15 @@ test("while the Account Pass has no price it is shown as Opens soon, with no way
     "this is the preview case; the switched-on case is account-pass.spec.ts",
   );
   await page.goto("/pricing");
+  if (process.env.NEXT_PUBLIC_PLANS_PREVIEW !== "on") {
+    await expect(
+      page
+        .getByRole("list", { name: "Plans for sellers" })
+        .getByText("Account Pass", { exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Opens soon" })).toHaveCount(0);
+    return;
+  }
   // The card is there, with its price, and its only button is a disabled "Opens soon".
   await expect(page.getByText("Account Pass").first()).toBeVisible();
   await expect(page.getByText("$329", { exact: true }).first()).toBeVisible();
@@ -58,7 +67,7 @@ test("pricing answers 'Can I ask a chatbot instead?' and dates the going rates",
   await expect(
     table.getByRole("cell", { name: "A warning when a resubmission has not changed" }),
   ).toBeVisible();
-  await expect(page.getByText("read on 22 October 2026")).toBeVisible();
+  await expect(page.getByText("read on 24 October 2026")).toBeVisible();
   // It says plainly where the alternative is enough, and claims nothing about Amazon.
   await expect(
     page.getByText("for a first read of a simple notice it may be enough").first(),
@@ -90,6 +99,11 @@ test("the writers' page shows the professional prices as opening soon, with no w
   await expect(
     page.getByRole("heading", { name: "Check the proof on every client case.", level: 1 }),
   ).toBeVisible();
+  if (process.env.NEXT_PUBLIC_PLANS_PREVIEW !== "on") {
+    await expect(page.getByText("Professional pricing is not set yet.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Opens soon" })).toHaveCount(0);
+    return;
+  }
   await expect(page.getByText("Professional pricing is not set yet.")).toHaveCount(0);
   // The prices are cards under the hero, as on the sellers page; credits and the Pro plan are previewed.
   const cards = page.getByRole("list", { name: "Prices for writers and VA teams" });
@@ -122,7 +136,7 @@ test("the partner page states the commission, the discount, the payout and the r
   await page.goto("/partners");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("checks the proof");
   await expect(page.getByText("a sale earns $67.20")).toBeVisible();
-  await expect(page.getByText("There is no dashboard yet.")).toBeVisible();
+  await expect(page.getByText("Codes are issued individually.")).toBeVisible();
   await expect(page.getByText("in writing that you earn it before they buy")).toBeVisible();
   await expect(page.getByText(/I earn a commission if you buy/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Write to us to apply" }).first()).toHaveAttribute(
@@ -261,6 +275,10 @@ test("the partner cards show what a partner earns, worked out from the prices", 
   await expect(
     cards.getByText("The seller pays $224.00: $249 less your $25 discount"),
   ).toBeVisible();
+  if (process.env.NEXT_PUBLIC_PLANS_PREVIEW !== "on") {
+    await expect(cards.getByText("$91.20")).toHaveCount(0);
+    return;
+  }
   await expect(cards.getByText("$91.20")).toBeVisible();
   await expect(cards.getByRole("button", { name: "Opens soon" })).toBeDisabled();
   await expect(cards.getByRole("link", { name: /Write to us to apply/ })).toHaveAttribute(

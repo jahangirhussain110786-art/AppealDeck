@@ -29,6 +29,7 @@ import {
 } from "@/lib/plans";
 import { foundingSpotsLeft } from "@/lib/founding";
 import { formatDate } from "@/lib/format";
+import { referralsEnabled, validateReferral, type ReferralOffer } from "@/lib/referrals";
 
 const Body = z
   .object({
@@ -37,6 +38,7 @@ const Body = z
     caseId: CaseIdSchema.optional(),
     kind: ViolationKindSchema.optional(),
     consent: z.literal(true),
+    partnerCode: z.string().max(32).optional(),
     // The vault-held case is browser-only — the server never otherwise sees its content, so the
     // client sends this one case's current workspace so eligibility can be checked before payment,
     // the same way /api/compose already does at draft time.
@@ -180,11 +182,25 @@ export async function POST(req: NextRequest) {
       : priceIdFor(plan);
   if (!priceId) return refuse("Checkout is not configured.", 503);
   const scope = caseId ?? ACCOUNT_SCOPE;
+  let referral: ReferralOffer | null = null;
+  if (
+    referralsEnabled() &&
+    parsed.data.partnerCode &&
+    (plan === "case" || plan === "account") &&
+    !creditedPass &&
+    !creditedFromSingle
+  ) {
+    try {
+      referral = await validateReferral(parsed.data.partnerCode, userId);
+    } catch (error) {
+      return refuse(error instanceof Error ? error.message : "Could not check the code.", 422);
+    }
+  }
 
   // A second click or a second tab within half an hour gets the same intent back. Two payments made
   // through one intent cannot both become a Pass: the second is parked by the webhook as "already
   // bound to a different transaction" and refunded by hand, instead of becoming a second licence.
-  const recent = await supabaseAdmin
+  let recentQuery = supabaseAdmin
     .from("checkout_intents")
     .select("id")
     .eq("user_id", userId)
@@ -193,13 +209,17 @@ export async function POST(req: NextRequest) {
     .is("transaction_id", null)
     .gt("created_at", new Date(Date.now() - 30 * 60_000).toISOString())
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+  if (referralsEnabled())
+    recentQuery = referral
+      ? recentQuery.eq("referral_code_id", referral.id)
+      : recentQuery.is("referral_code_id", null);
+  const recent = await recentQuery.maybeSingle();
   if (recent.data?.id)
     return NextResponse.json({
       intentId: recent.data.id,
       priceId,
-      ...(await foundingOffer(plan)),
+      ...(referral ? { partnerCode: referral.code } : await foundingOffer(plan)),
     });
   const { data, error } = await supabaseAdmin
     .from("checkout_intents")
@@ -209,11 +229,16 @@ export async function POST(req: NextRequest) {
       case_id: scope,
       price_id: priceId,
       consent_text: consentLabelFor(plan),
+      ...(referral ? { referral_code_id: referral.id } : {}),
     })
     .select("id")
     .single();
   if (error || !data) return refuse("Could not prepare checkout.", 503);
-  return NextResponse.json({ intentId: data.id, priceId, ...(await foundingOffer(plan)) });
+  return NextResponse.json({
+    intentId: data.id,
+    priceId,
+    ...(referral ? { partnerCode: referral.code } : await foundingOffer(plan)),
+  });
 }
 
 /**

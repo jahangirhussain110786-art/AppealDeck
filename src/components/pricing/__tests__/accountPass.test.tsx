@@ -45,14 +45,17 @@ describe("the plan cards", () => {
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
-  it("add the Account Pass as a fourth card once it has a price, with the Appeal Pass still the featured one", () => {
+  it("adds the Account Pass when on sale and leaves an unavailable One Response out by default", () => {
     vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "pri_account");
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "");
     const html = renderToStaticMarkup(<PlanCards />);
     expect(html).toContain("Account Pass");
     expect(html).toContain("$329");
     expect(html).toContain("Get the Account Pass");
     expect(html).toContain("As many cases as you have, for 12 months");
-    expect(html).toContain("xl:grid-cols-4");
+    expect(html).not.toContain("One Response");
+    expect(html).toContain("lg:grid-cols-3");
     // the Appeal Pass card keeps its own button and price
     expect(html).toContain("Get the Appeal Pass");
     expect(html).toContain("$249");

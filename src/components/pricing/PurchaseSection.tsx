@@ -7,6 +7,7 @@ import { PRODUCTS } from "@/content/purchases";
 import { setPlanChoice, usePlanChoice } from "@/lib/planChoice";
 import type { PassPlan } from "@/lib/plans";
 import { cn } from "@/lib/utils";
+import { FUNNEL_EVENTS, trackFunnelEvent } from "@/lib/analytics";
 
 /** The order summary for a product: its title, its rows and the total. */
 export function orderFor(
@@ -191,7 +192,10 @@ function PlanPicker({ plan, available }: { plan: PassPlan; available: PassPlan[]
               name="pass-plan"
               value={o.value}
               checked={plan === o.value}
-              onChange={() => setPlanChoice(o.value)}
+              onChange={() => {
+                setPlanChoice(o.value);
+                trackFunnelEvent(FUNNEL_EVENTS.planSelected, { plan: o.value, where: "checkout" });
+              }}
               className="size-4 accent-[hsl(var(--primary))]"
             />
             <span className="flex flex-1 flex-wrap items-baseline justify-between gap-x-3">

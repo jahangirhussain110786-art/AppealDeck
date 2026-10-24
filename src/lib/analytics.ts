@@ -47,6 +47,10 @@ export const FUNNEL_EVENTS = {
   secondReadingShown: "second_reading_shown",
   secondReadingUsed: "second_reading_used",
   secondReadingConfirmed: "second_reading_confirmed",
+  planSelected: "plan_selected",
+  checkoutFailed: "checkout_failed",
+  partnerCodeChecked: "partner_code_checked",
+  toolShared: "tool_shared",
 } as const;
 
 export type FunnelEventName = (typeof FUNNEL_EVENTS)[keyof typeof FUNNEL_EVENTS];

@@ -42,7 +42,15 @@ this whole list first, then update it in the same commit as anything that adds o
 - [ ] After approval: run `scripts/setup-paddle-live.mjs`, then redeploy (checkout settings are fixed at build).
 - [ ] Webhook has the `adjustment.*` events (a refund must end the Pass).
 - [ ] Optional, each on its own: prices for **One Response** ($99, and the $150 credited Pass), Account Pass ($329), AI review ($49 and $200), renewal, credits, Pro plan. A price set means that plan appears on the site; leave unset to keep it off. Sandbox-test every one first.
-- [ ] Partner program (F-16) only if you run it: discount per code, sandbox test, Payoneer.
+- [ ] Partner program (F-16/R-17), optional: apply missing migrations through `0023`, configure `PADDLE_API_KEY` with discount-read access, register approved partners/codes, then set `NEXT_PUBLIC_REFERRALS_ENABLED=true` and rebuild. Sandbox-test purchase, invalid code, refund and the private statement. Follow `handoffs/2026-10-24-referral-activation.md`; payouts remain reviewed bank/Payoneer transfers.
+- [ ] Founding offer only if used: the Paddle key can read its actual discount; USD 80, Account Pass price only, and usage limit equals `NEXT_PUBLIC_FOUNDING_SPOTS`. A count/configuration failure must hide the offer.
+
+## 5b. Be found in search (the day the real domain is live)
+
+- [ ] Google Search Console: add the domain as a property, verify it (DNS record), submit `https://<domain>/sitemap.xml`, then request indexing for `/`, `/decode`, `/pricing` and each `/guides/...` page.
+- [ ] Bing Webmaster Tools: import the property from Search Console and submit the same sitemap (Bing also feeds several other search engines).
+- [ ] Set `NEXT_PUBLIC_SITE_URL` to the real domain before the production build, so every canonical link, sitemap entry and social card names it (the fallback is `appealdeck.com`).
+- [ ] After a week, in Search Console look at Performance, Queries: the searches that already show the site tell you which guide to write next (`docs/handoffs/2026-10-24-seo-pass.md`).
 
 ## 6. Backups
 
@@ -70,6 +78,6 @@ this whole list first, then update it in the same commit as anything that adds o
 ## 10. Decisions waiting on you (not blocking launch)
 
 - Reviews page and review cashback (amount, and whether it merges with the outcome form).
-- Referral system for partners (R-17; brief in `docs/handoffs/2026-10-22-referral-system-brief.md`).
+- Referral system for partners (R-17): built locally 24 Oct; activation and real sandbox verification remain in step 5 above.
 - Case scholarship, and any early-customer offer (my advice: no price cut, launch on proof).
 - Parked product items need their exact `EXECUTE PARKED P-xx <name>` phrase (`docs/PARKED-ITEMS.md`).

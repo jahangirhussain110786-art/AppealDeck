@@ -1,5 +1,6 @@
 import { planOfActionExamples } from "./guideExamples";
 import { compareGuides } from "./guideCompare";
+import { searchGuides } from "./guidesSearch";
 
 /**
  * B-25: the four guide pages, chosen and ordered by `docs/handoffs/2026-09-25-keyword-research.md`.
@@ -45,7 +46,7 @@ export const GUIDES_COMMON = {
     "Plain explanations of the notices sellers search for most, written for the hour after the email arrives. Each one ends where your notice's own wording starts to matter.",
   indexMetaTitle: "Amazon seller appeal guides",
   indexDescription:
-    "Plain guides to Section 3 deactivations, Plans of Action, identity verification and IP complaints on Amazon.",
+    "Plain guides to Section 3 deactivations, denied appeals, authenticity complaints, Plans of Action, verification and IP complaints.",
   lastVerifiedLabel: "Last verified",
   ctaButton: "Paste your notice — free",
   ctaNote:
@@ -304,6 +305,7 @@ export const GUIDES: Guide[] = [
     },
     cta: "Paste your IP complaint notice to pull out the IDs, ASINs and what it asks for.",
   },
+  ...searchGuides,
   planOfActionExamples,
   ...compareGuides,
 ];

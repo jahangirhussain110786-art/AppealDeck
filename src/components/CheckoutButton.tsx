@@ -184,6 +184,11 @@ export function CheckoutButton({
           );
         body = { caseId: file.id, kind: file.kind, consent, workspace: file.workspace, plan };
       }
+      const referralOn = process.env.NEXT_PUBLIC_REFERRALS_ENABLED === "true";
+      if (referralOn && (plan === "case" || plan === "account")) {
+        const code = readPartnerCode();
+        if (code) body.partnerCode = code;
+      }
       const response = await fetch("/api/checkout/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -215,11 +220,18 @@ export function CheckoutButton({
           priceId: data.priceId,
           intentId: data.intentId,
           email: customerEmail,
-          partnerCode: codeApplies ? readPartnerCode() : null,
+          partnerCode: codeApplies
+            ? referralOn
+              ? typeof data.partnerCode === "string"
+                ? data.partnerCode
+                : null
+              : readPartnerCode()
+            : null,
           foundingCode: typeof data.foundingCode === "string" ? data.foundingCode : null,
         }),
       );
     } catch (error) {
+      trackFunnelEvent(FUNNEL_EVENTS.checkoutFailed, { plan });
       toast.error(error instanceof Error ? error.message : "Checkout could not open.");
     } finally {
       setOpening(false);

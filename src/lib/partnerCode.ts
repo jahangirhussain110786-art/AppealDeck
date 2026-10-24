@@ -3,9 +3,9 @@
  *
  * A partner (a writer, a trainer, a community) is given a code and a link, `?ref=CODE`. A seller who
  * arrives by it keeps the code on their own device for 60 days, and it goes to Paddle's checkout as
- * a discount code. Nothing about the seller is sent anywhere, and the code is never stored on our
- * server: Paddle's own transaction record carries the discount code, which is how the partner's
- * commission is worked out.
+ * a discount code. With the referral system enabled, the server validates the code and records it
+ * against the signed-in checkout intent. Commission uses the signed Paddle transaction and its
+ * adjustments; it is never granted by this browser record alone.
  *
  * First click wins until it expires, so a later link cannot take a sale from the partner who
  * introduced the seller. The code is only ever held as a plain string a seller can see and remove.

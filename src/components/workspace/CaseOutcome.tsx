@@ -1,4 +1,5 @@
 "use client";
+import { PostCaseActions } from "@/components/PostCaseActions";
 import { useState } from "react";
 import { Archive, ClipboardCheck } from "lucide-react";
 import { ReminderControl } from "@/components/ReminderControl";
@@ -220,6 +221,7 @@ export function CaseOutcome({
             onSaveLog={onSaveLog}
           />
         )}
+        {resolution && <PostCaseActions />}
       </CardContent>
     </Card>
   );

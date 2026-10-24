@@ -573,11 +573,11 @@ export const PRICING = {
     },
     founding: {
       title: "Founding offer",
-      body: "The first {total} Account Passes cost the same as one Appeal Pass.",
+      body: "Get 12 months of account cover at the Appeal Pass price while this offer is available.",
       left: "{left} of {total} left",
       price: "$249 instead of $329",
       partnerNote:
-        "A partner's code takes the place of the founding offer; the two do not combine.",
+        "A partner's code takes the place of the founding offer; the two do not combine. Availability is checked with Paddle and can change before payment.",
     },
   },
   faqTitle: "About paying",
@@ -640,14 +640,22 @@ export const PRICING = {
    * than 150 days old, so the strip is re-read rather than left to go stale.
    */
   market: {
-    title: "What else people pay",
-    checkedOn: "2026-10-22",
+    title: "Compare the kind of help",
+    checkedOn: "2026-10-24",
     checkedLabel:
-      "Public price pages and listings, read on 22 October 2026. Prices change; check before you decide.",
+      "Examples read on 24 October 2026. Software and human services differ in scope. Open the source for current prices and terms.",
     items: [
-      { what: "A general chatbot", price: "$0 to $20 a month" },
-      { what: "A freelance writer", price: "$5 to $600 for a Plan of Action" },
-      { what: "An agency or attorney", price: "$795 to $3,500 for a case" },
+      { what: "ChatGPT Free", price: "$0", href: "https://chatgpt.com/pricing/" },
+      {
+        what: "PlatformAppeal software",
+        price: "€29.99 a month",
+        href: "https://www.platformappeal.com/",
+      },
+      {
+        what: "Markify account appeal service",
+        price: "From $399 a case",
+        href: "https://markifyecommerce.com/services/amazon-suspension-reinstatement/",
+      },
     ],
   },
 } as const;

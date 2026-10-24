@@ -75,6 +75,14 @@ export default function PartnersPage() {
             <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
               {PARTNERS.earn.noDashboard}
             </p>
+            {process.env.NEXT_PUBLIC_REFERRALS_ENABLED === "true" && (
+              <Link
+                href="/partners/account"
+                className="inline-flex min-h-11 items-center text-link underline underline-offset-4"
+              >
+                Open your partner account
+              </Link>
+            )}
           </section>
 
           <section aria-labelledby="partners-how">

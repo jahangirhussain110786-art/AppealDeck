@@ -39,6 +39,13 @@ const STRUCTURED_DATA = [
   },
   {
     "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "AppealDeck",
+    url: SITE_URL,
+    inLanguage: "en",
+  },
+  {
+    "@context": "https://schema.org",
     "@type": "WebApplication",
     name: "AppealDeck",
     url: SITE_URL,

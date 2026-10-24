@@ -209,10 +209,10 @@ describe("previewing what is not on sale yet", () => {
     expect(marketing.FAQ.items.find((i) => i.id === "document-review")?.a).toMatch(/^Opening soon/);
   });
 
-  it("is switched off by the word off and by nothing else", async () => {
+  it("requires an explicit on to preview unavailable products", async () => {
     const off = await load({ NEXT_PUBLIC_PLANS_PREVIEW: "off" });
     expect(off.marketing.FAQ.items.some((i) => i.id === "document-review")).toBe(false);
     const unset = await load({ NEXT_PUBLIC_PLANS_PREVIEW: "" });
-    expect(unset.marketing.FAQ.items.some((i) => i.id === "document-review")).toBe(true);
+    expect(unset.marketing.FAQ.items.some((i) => i.id === "document-review")).toBe(false);
   });
 });

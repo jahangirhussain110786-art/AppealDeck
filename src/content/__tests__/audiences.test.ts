@@ -48,7 +48,7 @@ describe("pricing for sellers, writers and partners", () => {
 
   it("pays a partner only after the refund window, and says so", () => {
     expect(PARTNERS.how.steps.map((s) => s.body).join(" ")).toMatch(/14-day refund window/);
-    expect(PARTNERS.earn.refunded).toMatch(/refunded or charged back pays nothing/i);
+    expect(PARTNERS.earn.refunded).toMatch(/fully refunded or charged-back Pass pays nothing/i);
   });
 
   it("tells a partner who advises sellers to disclose the fee, in writing", () => {
@@ -75,7 +75,7 @@ describe("pricing for sellers, writers and partners", () => {
       key === "cards" ? undefined : value,
     );
     expect(PROS_OFF.cost.open).toMatch(/not set yet/i);
-    expect(PARTNERS.earn.noDashboard).toMatch(/no dashboard yet/i);
+    expect(PARTNERS.earn.noDashboard).toMatch(/Codes are issued individually/i);
     expect(PROS_OFF.limits.items.join(" ")).toMatch(/not shared between team members yet/);
     // nothing in the pages for professionals quotes a monthly or per-case professional price
     expect(PROS_OFF.cost.body.match(/\$\d+/g)).toEqual([`$${PASS}`]);
@@ -97,14 +97,15 @@ describe("the chatbot comparison and the going rates", () => {
       ageDays,
       `PRICING.market was read on ${PRICING.market.checkedOn}; read the price pages again and change the date`,
     ).toBeLessThan(150);
-    expect(PRICING.market.checkedLabel).toContain("22 October 2026");
+    expect(PRICING.market.checkedLabel).toContain("24 October 2026");
   });
 
-  it("names no company, and promises nothing about Amazon's decision", () => {
-    const text = JSON.stringify({ v: PRICING.versus, m: PRICING.market });
-    expect(text).not.toMatch(
-      /appealspro|sellerforge|chatgpt|claude|gemini|riverbend|appeal guru|openai|anthropic/i,
-    );
+  it("links each named price to its primary source and promises no outcome", () => {
+    const text = JSON.stringify({
+      v: PRICING.versus,
+      m: PRICING.market.items.map(({ what, price }) => ({ what, price })),
+    });
+    for (const item of PRICING.market.items) expect(item.href).toMatch(/^https:\/\//);
     expect(text).not.toMatch(/reinstat|approv|will win|win rate|odds|guarantee/i);
     expect(PRICING.versus.note).toMatch(
       /does not claim Amazon treats a chatbot's letter differently/,

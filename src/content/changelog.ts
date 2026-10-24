@@ -32,12 +32,25 @@ export const CHANGELOG = {
       "A dated list of what changed in AppealDeck: new features, fixes and wording corrections, newest first.",
   },
   hero: {
-    eyebrow: "Updated 23 Oct 2026",
+    eyebrow: "Updated 24 Oct 2026",
     title: "What changed, and when.",
     accent: "and when.",
     lede: "A dated list of changes to AppealDeck, newest first. We add a line when something a seller can see changes, including fixes and corrections to our own wording.",
   },
   entries: [
+    {
+      date: "24 Oct 2026",
+      items: [
+        "Three new guides: what to do after an appeal is denied, which supplier invoices Amazon accepts after an authenticity complaint, and what an account-at-risk warning means.",
+        "The pricing page now helps you choose by the work you need to do and puts checkout before the longer comparisons. Plans that are not yet available are hidden unless a preview is deliberately enabled.",
+        "After recording a case outcome, you can open its history, send feedback or copy a link to the free decoder. The shared link contains no case details.",
+        ...(process.env.NEXT_PUBLIC_REFERRALS_ENABLED === "true"
+          ? [
+              "You can check a partner code before paying. Approved partners can sign in to see their links and refund-aware commission balance, without seeing buyer identities or cases.",
+            ]
+          : []),
+      ],
+    },
     {
       date: "23 Oct 2026",
       items: [

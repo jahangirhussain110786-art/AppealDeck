@@ -13,6 +13,11 @@ const reviewMock = vi.fn();
 const singleMock = vi.fn();
 const coverMock = vi.fn();
 const proMock = vi.fn();
+const referralMock = vi.fn();
+vi.mock("@/lib/referrals", () => ({
+  referralsEnabled: () => process.env.NEXT_PUBLIC_REFERRALS_ENABLED === "true",
+  validateReferral: (...args: unknown[]) => referralMock(...args),
+}));
 
 vi.mock("@/lib/auth", () => ({
   getApiUser: () => getApiUserMock(),
@@ -79,6 +84,8 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PACK_30", "pri_p30");
   vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PRO_PLAN", "pri_pro");
   insertSpy.mockReset();
+  referralMock.mockReset();
+  referralMock.mockResolvedValue({ id: "code-id", code: "PARTNER25", discountId: "dsc_partner" });
   getApiUserMock.mockReset();
   getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
   fetchLicenseMock.mockReset();
@@ -100,6 +107,39 @@ beforeEach(() => {
 
 const stored = () =>
   insertSpy.mock.calls.at(-1)![0] as { case_id: string; price_id: string; consent_text: string };
+
+describe("a validated referral on the checkout intent", () => {
+  beforeEach(() => vi.stubEnv("NEXT_PUBLIC_REFERRALS_ENABLED", "true"));
+  it("stores the server's code id and returns the server's normalized code", async () => {
+    const response = await POST(req({ ...withCase, partnerCode: "partner25" }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ partnerCode: "PARTNER25" });
+    expect(stored()).toMatchObject({ referral_code_id: "code-id" });
+    expect(referralMock).toHaveBeenCalledWith("partner25", "u1");
+  });
+  it("does not create an intent when code validation fails", async () => {
+    referralMock.mockRejectedValue(new Error("Code unavailable"));
+    expect((await POST(req({ ...withCase, partnerCode: "INVALID" }))).status).toBe(422);
+    expect(insertSpy).not.toHaveBeenCalled();
+  });
+  it("does not attach the saved code to a credited upgrade, a One Response, or a review", async () => {
+    for (const plan of ["single", "review"]) {
+      await POST(req({ ...withCase, plan, partnerCode: "PARTNER25" }));
+      expect(stored()).not.toHaveProperty("referral_code_id");
+    }
+    singleMock.mockResolvedValue(true);
+    const response = await POST(req({ ...withCase, partnerCode: "PARTNER25" }));
+    expect(await response.json()).toMatchObject({ priceId: "pri_after_single" });
+    expect(stored()).not.toHaveProperty("referral_code_id");
+    expect(referralMock).not.toHaveBeenCalled();
+  });
+  it("keeps the old database schema usable until the switch is enabled", async () => {
+    vi.stubEnv("NEXT_PUBLIC_REFERRALS_ENABLED", "false");
+    await POST(req({ ...withCase, partnerCode: "PARTNER25" }));
+    expect(stored()).not.toHaveProperty("referral_code_id");
+    expect(referralMock).not.toHaveBeenCalled();
+  });
+});
 
 describe("the AI document review", () => {
   it("opens the review price, for the case, with a consent that names the review", async () => {

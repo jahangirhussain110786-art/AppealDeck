@@ -298,15 +298,15 @@ export const PARTNERS = {
       },
       {
         title: "You are paid after the refund window",
-        body: "When the Pass has been paid for and its 14-day refund window has passed, 30 percent of what the seller paid is added to your balance. We pay once a month, by bank transfer or Payoneer.",
+        body: "After payment and the 14-day refund window, 30 percent of the discounted price before tax becomes eligible for payment. We pay once a month, by bank transfer or Payoneer.",
       },
     ],
   },
   earn: {
     title: "What you earn",
-    body: "Thirty percent of the price the seller pays, once, for each Pass. The Pass is $249 and a seller using a code pays $224, so a sale earns $67.20.",
+    body: "Thirty percent of the discounted price before tax, once, for each Pass. The Pass is $249 and a seller using a code pays $224 before tax, so a sale earns $67.20.",
     refunded:
-      "A Pass that is refunded or charged back pays nothing. If it was already paid out, it comes off your next payment.",
+      "Refunds reduce the commission by the refunded amount before tax. A fully refunded or charged-back Pass pays nothing. If commission was already paid out, the adjustment comes off your next payment.",
     // 22 Oct 2026: only while the Account Pass is on sale, so the page names no price that cannot be paid.
     accountPass: accountPassEnabled()
       ? "The same 30 percent applies to the Account Pass. A seller using a code on its $329 price pays $304, so that sale earns $91.20."
@@ -319,7 +319,9 @@ export const PARTNERS = {
         ? "A partner's code applies to the Appeal Pass and the Account Pass only. It does not apply to the AI document review, to renewals, to case credits or the Pro plan, or to an Appeal Pass bought after a review, which already has the review's price taken off."
         : null,
     noDashboard:
-      "There is no dashboard yet. Each month we send you a message with your sales and your balance.",
+      process.env.NEXT_PUBLIC_REFERRALS_ENABLED === "true"
+        ? "Sign in to your partner account to see your codes, refund-window holds, balance and payments. Buyer identities and case details stay private."
+        : "Codes are issued individually. Contact us for a statement of your sales and balance.",
   },
   rules: {
     title: "What we ask of you",

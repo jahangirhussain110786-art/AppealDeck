@@ -114,19 +114,21 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
      5a. **Default payment link (found 7 Oct 2026, in the sandbox).** Paddle dashboard → Checkout → Checkout settings → **Default payment link**: set it to `https://appealdeck.com/pricing` (the page that opens the checkout), in the sandbox and again in live. Without it the overlay opens and then fails with `transaction_default_checkout_url_not_set`, and no seller can pay. Paddle may also require the domain to be approved before live checkout works; check Paddle dashboard → Checkout → Website approval when you set up live.
 5. Paddle dashboard → Checkout → Live: confirm your business details (Pakistan Individual seller — set country to PK; Paddle will tell you at checkout which countries can't be sold to and handle VAT for the rest).
 
-## 5c. Partner codes (founder action, 22 Oct 2026) — before the first partner is accepted
+## 5c. Partner codes and commission ledger (24 Oct 2026)
 
-The partner program (`/partners`) runs on Paddle discount codes made by hand; nothing in our database knows a partner. A seller who opens a link ending in `?ref=CODE` keeps the code on their device for 60 days and the checkout sends it to Paddle as `discountCode`.
+The complete referral implementation is built locally, **off until configured**. Follow [the activation and payout runbook](handoffs/2026-10-24-referral-activation.md) before the first automated attribution. The older manual program remains available with the switch off; it does not become a verified commission ledger by itself.
 
-1. Paddle dashboard → Catalog → Discounts → create one discount per partner:
-   - **Type:** flat amount, **USD 25.00**. **Applies to:** the Appeal Pass price only (restrict to that price ID). **Recurring:** no.
-   - **Code:** the partner's code, upper case, letters, digits, `-` or `_`, three to thirty-two characters (`src/lib/partnerCode.ts` refuses anything else, so a code the app cannot carry would never reach Paddle).
-   - Turn on **Checkout discount code** so a buyer can also type it in the payment window.
-2. **Test in the sandbox, once, what an unknown or expired code does** in the overlay (Paddle's docs do not say). Open `/pricing?ref=NOTACODE`, tick the box, buy; record in this file whether checkout opens normally and whether it shows an error. The note by the pay button says the discount "shows in the payment window", so it must not mislead when a code is wrong.
-3. Each month, from Paddle's transaction list, filter by discount code: for every completed Pass whose 14-day refund window has passed and which was not refunded or charged back, the partner earns 30 percent of the amount the buyer paid ($67.20 on a $224 sale). Pay by bank transfer or Payoneer and send the partner a message with their sales and balance. The page promises exactly this and says there is no dashboard yet.
-4. The page tells people to write to `support@appealdeck.com` with the subject "Partner program" or "Appeal writer: how I work" (§6a creates the mailbox).
+1. Identify applied migrations; apply missing numbered migrations through `0023_referral_ledger.sql` in order, before enabling the switch. This extends the tested payment function without removing the earlier entitlement checks.
+2. Create a one-time flat **USD 25.00** Paddle discount per approved partner. Checkout enabled; code **3–32 upper-case letters/digits**. Restrict to exactly the configured base Appeal Pass and Account Pass price IDs. The Paddle API does not accept the hyphens/underscores our older local parser allowed. No upgrade, review, renewal, credit-pack, One Response or Pro prices.
+3. Set server-only `PADDLE_API_KEY` with `discount.read`; retain any other permissions required by configured billing features. Register the existing approved user's partner row and code/discount mapping using the runbook.
+4. Set `NEXT_PUBLIC_REFERRALS_ENABLED=true` and rebuild. The code field checks the discount before intent creation. A payment earns commission only when the signed Paddle discount agrees with that intent. No stacking or same-account self-referrals.
+5. Subscribe to `adjustment.created` and `adjustment.updated`. Test a valid and invalid code, an eligible payment, duplicates, a partial/full refund and the private statement in the sandbox. Test invalid codes entered directly inside the Paddle overlay too.
+6. Read `scripts/referral-report.mjs` before each monthly payout. Commission is 30 percent of actual discounted revenue **before tax**, held for 14 days. Missing totals, pending refunds, foreign currencies and ambiguous reversals stay held for review. Record confirmed transfers with a unique reference in `referral_payouts`. Payouts remain manual bank/Payoneer transfers.
+7. `/partners/account` requires sign-in and reveals only the partner's own codes and aggregate balances. No buyer identity or case data is exposed. Keep the support mailbox and payout records operational.
 
-To change a number (the rate, the discount, the window), edit `PARTNERS` in `src/content/audiences.ts`; `src/content/__tests__/audiences.test.ts` recomputes the $67.20 and fails until the page is consistent.
+`NEXT_PUBLIC_REFERRALS_ENABLED=false` reverts the new UI to the earlier manual behavior; it does not erase the ledger or cancel earned commission. To suspend the whole program, stop promotion and disable discounts in Paddle as well. Reconcile late events/open checkouts. Financial history starts with migration 0023 and does not backfill old payments.
+
+The Account Pass founding counter now also requires the Paddle key with discount-read access. It reads the configured discount's redemption count and checks its amount, scope and usage limit against the displayed offer. Invalid/unavailable data hides the offer. The counter is advisory: Paddle documents that simultaneous checkouts can exceed a discount usage limit.
 
 ## 5d. The Account Pass and the founding offer (founder action, 22 Oct 2026) — optional, in this order
 

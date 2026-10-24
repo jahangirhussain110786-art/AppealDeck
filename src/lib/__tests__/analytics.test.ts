@@ -35,6 +35,10 @@ describe("funnel events", () => {
       "second_reading_shown",
       "second_reading_used",
       "second_reading_confirmed",
+      "plan_selected",
+      "checkout_failed",
+      "partner_code_checked",
+      "tool_shared",
     ]);
   });
 
