@@ -44,6 +44,59 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build
       - run: npm run test:e2e
+      # A failed run that leaves no trace is only a red total. The report and every retry trace are
+      # kept for 14 days so the failure can be read on a machine that is not the runner.
+      - name: Upload the Playwright report and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-chromium
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # The signed-in journey — a seller on a phone, the document reader with and without a Pass, and the
+  # response errors. Those specs skip when no account is configured, which is why they never ran in
+  # CI. They do run here, against a dedicated Supabase project and never production: they sign in and
+  # use the account's allowances. The job is skipped until that project exists; see
+  # docs/DEPLOYMENT.md §11a for the five secrets, the variable and the fixture account.
+  e2e-signed-in:
+    if: ${{ vars.E2E_SIGNED_IN == 'true' }}
+    runs-on: ubuntu-latest
+    env:
+      # Inlined into the build, so they must be present before `npm run build`, not only at runtime.
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SERVICE_ROLE_KEY }}
+      DEV_LOGIN_EMAIL: ${{ secrets.E2E_DEV_LOGIN_EMAIL }}
+      DEV_LOGIN_PASSWORD: ${{ secrets.E2E_DEV_LOGIN_PASSWORD }}
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: >-
+          npx playwright test
+          e2e/case-mobile.spec.ts e2e/compose-errors.spec.ts e2e/device-reader.spec.ts
+          --project=chromium --retries=1
+      - name: Upload the Playwright report and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-signed-in
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14
+          if-no-files-found: ignore
 
   lighthouse:
     runs-on: ubuntu-latest

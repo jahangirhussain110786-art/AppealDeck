@@ -67,6 +67,13 @@ skills-lock.json
 # Stray workspace artifacts
 .mcp-bridge-*.cmd
 appealdeck.md
+# Build snapshots and files that must never reach the public repository (26 Oct 2026). The NDA
+# drafts are real business documents, and Book.pdf is a third-party book; neither belongs in git.
+/.next.stale/
+/Book.pdf
+/Claude outputs/
+/tmp/
+/docs/handoffs/nda/
 
 
 # Local compatibility junctions; canonical skills live in .agents/skills.
