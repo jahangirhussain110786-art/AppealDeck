@@ -19,18 +19,16 @@ step. A parked item is still built only on its exact `EXECUTE PARKED P-xx <name>
 
 If one is false, fix that one first and say so. Nothing below pretends a missing service works.
 
-## 1. Database (Supabase SQL editor, in number order, one paste each) — before the first deploy
+## 1. Database — **DONE 26 Oct 2026** (migrations `0001`–`0026` applied to the live project)
 
-- [ ] Baseline `0001`–`0015` present (on an existing project they are; on a fresh one apply them first). The register's three baseline checks confirm it.
-- [ ] `0016` (optional defence in depth; the app does not depend on it).
-- [ ] `0017` (Account Pass), `0018` (renewal, review, packs, Pro), `0019` (rebate) — **before** setting any of their prices.
-- [ ] `0020`, `0021` (One Response and its $150 credited Pass) — **before** setting either price.
-- [ ] `0022` (guest email reminder) — before anyone can use the reminder form.
-- [ ] `0023` (referral ledger) — **required before `0024`**, even if you never switch referrals on.
-- [ ] `0024` (expired Account Pass replacement; linked refunds — a full refund of the earlier purchase now also records the upgrade's own payment as owed back, reported in the daily email) — after `0023`.
-- [ ] **`0025` (case rounds) — required before deploying this build**: `/api/compose` calls `record_case_round`, and without it a One Response holder's response is a 503. Required even if One Response is never sold, because one may already be sold.
-- [ ] `0026` (malformed Paddle webhook diagnostics) — needed by the daily ops digest.
-- [ ] Check six functions: `apply_paddle_event`, `claim_case_pass`, `claim_document_review`, `use_case_credit`, `claim_single_response`, `record_case_round`; then `case_rounds` = 0 and `malformed_webhook_events` = 0 (the exact queries are in the register, step 0).
+Applied in number order with the Supabase CLI through the session pooler, after recording the hand-applied `0001`–`0015` with `supabase migration repair --status applied`; remote history now holds all 26. The checks below were run against the live project and passed (details in the register, step 0).
+
+- [x] Baseline `0001`–`0015` present.
+- [x] `0016` (defence in depth), `0017` (Account Pass), `0018` (renewal, review, packs, Pro), `0019` (rebate), `0020` + `0021` (One Response and its $150 credited Pass) — applied, so no price can now arrive before its function.
+- [x] `0022` (guest email reminder) — applied; the form no longer has a reason to say it is unavailable.
+- [x] `0023` + `0024` (referral ledger, then expired Account Pass replacement and the linked refund rule).
+- [x] `0025` (case rounds — `/api/compose` calls `record_case_round`) and `0026` (malformed webhook diagnostics).
+- [x] Six functions present; `case_rounds` = 0; `malformed_webhook_events` = 0; `anon` still cannot read `licences`.
 - [ ] Delete the development fixture if this is the same Supabase project: user `dev@appealdeck.com` **and** `delete from public.licenses where email = 'dev@appealdeck.com';`.
 
 ## 2. Hosting, domain and app configuration (Vercel Pro)

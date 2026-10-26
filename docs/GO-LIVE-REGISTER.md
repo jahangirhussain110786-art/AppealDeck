@@ -36,15 +36,23 @@ missing paid feature: the code deliberately switches a feature off rather than p
 
 ## 1. The only remaining work, in this order
 
-### Step 0 — Database: paste migrations `0016` → `0026`, one at a time (15 minutes, before the first deploy)
+### Step 0 — Database: migrations `0016` → `0026` — **DONE 26 Oct 2026**
 
-The baseline is `0001`–`0015`: the licence and event tables, the payment function, the device cap, the
-case reminders and the purchase-email outbox. Everything below builds on them. If the project has
-never been migrated, start at `0001`; the three baseline checks at the end of this step say whether
-they are there.
+Applied to the live project on 26 Oct 2026, in number order, with the Supabase CLI through the
+session pooler (`supabase db push --db-url …`, `aws-1-eu-west-1.pooler.supabase.com:5432`; the direct
+`db.<ref>.supabase.co` host does not resolve from this machine). The remote migration history now
+holds `0001`–`0026`: `0001`–`0015` had been applied by hand in the SQL editor, so they were recorded
+with `supabase migration repair --status applied` first, and the CLI then applied `0016`–`0026`, one
+transaction each. Verified against the live project afterwards, not assumed: the six functions below,
+`case_rounds` = 0, `malformed_webhook_events` = 0, `licenses_plan_check` naming all seven plans,
+`licenses.refund_owed_at` present, RLS on every public table, and `anon` still unable to read
+`licenses` or `license_events`.
 
-Supabase → SQL editor. Each file is one transaction and safe to re-run. Apply them **in number
-order**; the dependencies that matter are called out.
+On a fresh project, apply them the same way, or paste each file in the SQL editor: each file is one
+transaction and safe to re-run. Apply them **in number order**; the dependencies that matter are
+called out below. The baseline is `0001`–`0015` (licence and event tables, the payment function, the
+device cap, the case reminders and the purchase-email outbox), and the three baseline checks at the
+end of this step say whether it is there.
 
 | File                             | Needed for                                                                                                                                                                                                                                                                                                                                        | If skipped                                                                                                                                                               |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -85,11 +93,11 @@ select count(*) from pg_indexes where indexname = 'licenses_one_active_pass_per_
 select count(*) from pg_proc where proname = 'enforce_device_cap';                      -- 1
 ```
 
-**Day one sells the $249 Appeal Pass only.** That needs `0016` (hardening), `0022` (the guest
+**Day one sells the $249 Appeal Pass only.** That needed `0016` (hardening), `0022` (the guest
 reminder, public), `0023` + `0024` (referral ledger and the refund rules, so nothing granted later
-contradicts what a buyer was told), `0025` (this build calls it) and `0026` (the digest). `0017`–`0021`
-are inert until their prices exist; applying them now is harmless and stops a later price from
-arriving before its function.
+contradicts what a buyer was told), `0025` (this build calls it) and `0026` (the digest) — all applied
+on 26 Oct 2026. `0017`–`0021` are inert until their prices exist; they are applied too, so no later
+price can arrive before its function.
 
 **Before the first sale, remove the development fixture.** If this is the same Supabase project used
 for local development, delete `dev@appealdeck.com` in Authentication → Users **and** its licence
