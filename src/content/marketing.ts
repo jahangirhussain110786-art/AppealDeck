@@ -25,8 +25,8 @@ import { SCOPE } from "./scope";
 /**
  * The Free card in two parts (23 Oct 2026): what anyone gets with no account, and what a free
  * account adds. Nothing here is paid, and nothing in the second part leaves the device unless the
- * seller chooses an encrypted backup. `HOME.plans.items[0].features` is these two lists joined, for
- * the home page strip, which has room for one list.
+ * seller chooses an encrypted backup. The home page and /pricing both draw this card through
+ * `planCards()` in src/components/pricing/PlanCards.tsx, so the two cannot show different versions.
  */
 export const FREE_PLAN_GROUPS = [
   {
@@ -158,7 +158,7 @@ export const HOME = {
       {
         name: "Free",
         // 23 Oct 2026: the old "Free" and "Free account" cards are one card, in two parts (`groups`).
-        note: "No account needed",
+        // Its note ("For everyone") is set by `planCards()`, beside the other cards' notes.
         price: "$0",
         features: FREE_PLAN_GROUPS.flatMap((g) => g.features),
         groups: FREE_PLAN_GROUPS,

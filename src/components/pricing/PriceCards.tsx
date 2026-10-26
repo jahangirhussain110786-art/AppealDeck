@@ -40,65 +40,71 @@ export function gridClassFor(count: number): string {
 export function PriceCardGrid({
   cards,
   className,
+  titleAs = "h2",
   "aria-label": ariaLabel,
 }: {
   cards: readonly PriceCardData[];
   className?: string;
+  /** `h3` where the grid sits under the page's own section heading (the home page strip). */
+  titleAs?: "h2" | "h3";
   "aria-label"?: string;
 }) {
   return (
     <ul aria-label={ariaLabel} className={cn("grid gap-4", gridClassFor(cards.length), className)}>
-      {cards.map((card) => (
-        <li
-          key={card.key}
-          className={cn(
-            "relative flex flex-col gap-6 rounded-[22px] p-7 sm:p-8",
-            card.featured
-              ? "stage stage-plain dark text-foreground shadow-stage"
-              : "border border-border/80 bg-card shadow-lift",
-          )}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2
-                className={cn(
-                  "text-sm font-semibold",
-                  card.featured ? "text-primary" : "text-muted-foreground",
-                )}
-              >
-                {card.name}
-              </h2>
-              {card.note && <p className="mt-1 text-sm text-muted-foreground">{card.note}</p>}
-            </div>
-            {card.badge && (
-              // Out of the flow, so the pill never narrows the name and note beside it (it made "Per case,
-              // one time" wrap and pushed this card's price below its neighbours').
-              <span className="absolute right-6 top-6 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary-ink sm:right-7 sm:top-7">
-                {card.badge}
-              </span>
+      {cards.map((card) => {
+        const titleClass = cn(
+          "text-sm font-semibold",
+          card.featured ? "text-primary" : "text-muted-foreground",
+        );
+        return (
+          <li
+            key={card.key}
+            className={cn(
+              "relative flex flex-col gap-6 rounded-[22px] p-7 sm:p-8",
+              card.featured
+                ? "stage stage-plain dark text-foreground shadow-stage"
+                : "border border-border/80 bg-card shadow-lift",
             )}
-          </div>
-          <p className="flex items-baseline gap-2 text-foreground" data-tn>
-            <span className="text-5xl font-semibold tracking-[-0.045em]">{card.price}</span>
-            {card.unit && <span className="text-sm text-muted-foreground">{card.unit}</span>}
-          </p>
-          {card.groups ? (
-            <div className="flex flex-col gap-5">
-              {card.groups.map((g) => (
-                <section key={g.label} aria-label={g.label} className="flex flex-col gap-2.5">
-                  <h3 className="text-sm font-semibold text-foreground">{g.label}</h3>
-                  <FeatureList features={g.features} />
-                </section>
-              ))}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                {titleAs === "h3" ? (
+                  <h3 className={titleClass}>{card.name}</h3>
+                ) : (
+                  <h2 className={titleClass}>{card.name}</h2>
+                )}
+                {card.note && <p className="mt-1 text-sm text-muted-foreground">{card.note}</p>}
+              </div>
+              {card.badge && (
+                // Out of the flow, so the pill never narrows the name and note beside it (it made "Per case,
+                // one time" wrap and pushed this card's price below its neighbours').
+                <span className="absolute right-6 top-6 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary-ink sm:right-7 sm:top-7">
+                  {card.badge}
+                </span>
+              )}
             </div>
-          ) : (
-            <FeatureList features={card.features} />
-          )}
-          {card.extra}
-          {/* The action after the features, at the foot of every card, as in the prototype. */}
-          <div className="mt-auto">{card.cta}</div>
-        </li>
-      ))}
+            <p className="flex items-baseline gap-2 text-foreground" data-tn>
+              <span className="text-5xl font-semibold tracking-[-0.045em]">{card.price}</span>
+              {card.unit && <span className="text-sm text-muted-foreground">{card.unit}</span>}
+            </p>
+            {card.groups ? (
+              <div className="flex flex-col gap-5">
+                {card.groups.map((g) => (
+                  <section key={g.label} aria-label={g.label} className="flex flex-col gap-2.5">
+                    <h3 className="text-sm font-semibold text-foreground">{g.label}</h3>
+                    <FeatureList features={g.features} />
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <FeatureList features={card.features} />
+            )}
+            {card.extra}
+            {/* The action after the features, at the foot of every card, as in the prototype. */}
+            <div className="mt-auto">{card.cta}</div>
+          </li>
+        );
+      })}
     </ul>
   );
 }

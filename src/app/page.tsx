@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/content/pageMetadata";
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
 import { HeroTool } from "@/components/marketing/HeroTool";
 import { FeatureSwitcher } from "@/components/marketing/FeatureSwitcher";
@@ -13,14 +13,13 @@ import {
   HeroComposition,
   RepliesPanel,
 } from "@/components/marketing/ProductPanels";
-import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/JsonLd";
 import { FaqAccordion } from "@/components/pricing/FaqAccordion";
+import { PlanCards } from "@/components/pricing/PlanCards";
 import { HOME, FOUNDER_NOTE } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
 import { SITE_URL } from "@/lib/urls";
 import { AccentWord } from "@/components/ui/accent-word";
-import { singleListed } from "@/lib/plans";
 import { splitAccent } from "@/lib/splitAccent";
 import { cn } from "@/lib/utils";
 
@@ -233,8 +232,6 @@ function QuestionsSection() {
 }
 
 function PlansSection() {
-  // A plan that is only "opens soon" is hidden here when the preview is switched off, as on /pricing.
-  const items = HOME.plans.items.filter((plan) => !("soon" in plan && plan.soon) || singleListed());
   return (
     <section className={cn(WRAP, "pb-24 pt-28 sm:pb-28 sm:pt-32")}>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -252,59 +249,12 @@ function PlansSection() {
           <ArrowRight aria-hidden className="size-4" />
         </Link>
       </div>
-      <ul className="mt-12 grid gap-4 lg:grid-cols-3">
-        {items.map((plan, i) => {
-          const featured = i === items.length - 1;
-          return (
-            <li
-              key={plan.name}
-              className={cn(
-                "flex flex-col gap-5 rounded-[22px] p-7",
-                featured
-                  ? "stage stage-plain dark text-foreground shadow-stage"
-                  : "border border-border/80 bg-card shadow-card",
-              )}
-            >
-              <div className="flex items-baseline justify-between gap-3">
-                <span
-                  className={cn(
-                    "font-semibold",
-                    featured ? "text-primary" : "text-muted-foreground",
-                  )}
-                >
-                  {plan.name}
-                </span>
-                <span className="text-xs text-muted-foreground">{plan.note}</span>
-              </div>
-              <span className="text-5xl font-semibold tracking-[-0.045em] text-foreground" data-tn>
-                {plan.price}
-              </span>
-              <ul className="flex flex-col gap-2.5 text-[0.95rem] text-muted-foreground">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="grid grid-cols-[1.25rem_1fr] gap-2.5">
-                    <span className="mt-1 grid size-4 place-items-center rounded-full bg-success/15">
-                      <Check aria-hidden className="size-2.5 text-success" strokeWidth={3.5} />
-                    </span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Button
-                asChild
-                size="lg"
-                variant={featured ? "default" : "outline"}
-                // Fills the card and may wrap: a nowrap button wider than its card pushed the home
-                // page 2 px past a 320 px screen on CI (Linux scrollbars) and 12 px at 305 px.
-                className="mt-auto h-auto min-h-[3.25rem] w-full whitespace-normal py-2.5 text-center"
-              >
-                <Link href={i === 0 ? "/decode" : "/pricing"}>
-                  {"cta" in plan && plan.cta ? plan.cta : HOME.demo.primaryCta}
-                </Link>
-              </Button>
-            </li>
-          );
-        })}
-      </ul>
+      {/* The same cards /pricing renders, from the same builder (26 Oct 2026): the free card had gone
+          stale here, and a second hand-built copy would go stale again. A paid button names its plan
+          in the link, since this page has no purchase section and the choice is kept in memory. */}
+      <div className="mt-12">
+        <PlanCards purchaseHrefFor={(plan) => `/pricing?plan=${plan}#purchase`} titleAs="h3" />
+      </div>
     </section>
   );
 }

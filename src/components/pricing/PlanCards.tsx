@@ -6,7 +6,13 @@ import { PriceCardGrid, type PriceCardData } from "@/components/pricing/PriceCar
 import { OPENS_SOON, PRODUCTS } from "@/content/purchases";
 import { HOME, PRICING } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
-import { accountPassEnabled, foundingEnabled, listedPaidPlans, singleEnabled } from "@/lib/plans";
+import {
+  accountPassEnabled,
+  foundingEnabled,
+  listedPaidPlans,
+  singleEnabled,
+  type PassPlan,
+} from "@/lib/plans";
 
 /**
  * The sellers' plans, side by side (23 Oct 2026): Free, One Response (the smallest paid plan: one
@@ -17,8 +23,16 @@ import { accountPassEnabled, foundingEnabled, listedPaidPlans, singleEnabled } f
  * plan we recommend for one case and it is on sale. One Response is the same:
  * a working button once its Paddle price is configured (`singleEnabled()`), "Opens soon" until
  * then. Which Pass is chosen starts as the Appeal Pass and only a click changes it.
+ *
+ * `planCards()` is the one place the seller-facing cards are built. /pricing and the home page both
+ * render it, so a price, a note, a feature or a plan's arrival on sale cannot be current on one page
+ * and old on the other (26 Oct 2026). Only where a paid button points differs: the home page has no
+ * purchase section of its own, and the plan it names must travel in the link, because the choice is
+ * kept in memory and a page load would drop it (`?plan=`, read by src/lib/planChoice.ts).
  */
-export function PlanCards() {
+export function planCards(
+  purchaseHrefFor: (plan: PassPlan) => string = () => "#purchase",
+): PriceCardData[] {
   const [free, single, pass] = HOME.plans.items;
   // The same list the fit strip and the comparison columns read, so a plan cannot appear on one
   // surface and be missing from another (24 Oct 2026).
@@ -51,7 +65,7 @@ export function PlanCards() {
       price: single.price,
       features: single.features,
       cta: singleEnabled() ? (
-        <PlanCta plan="single" featured={false}>
+        <PlanCta plan="single" featured={false} href={purchaseHrefFor("single")}>
           {PRODUCTS.single.cta}
         </PlanCta>
       ) : (
@@ -67,7 +81,7 @@ export function PlanCards() {
     // Pass beside it is on sale yet (23 Oct 2026; it was the Account Pass, which is often the disabled one).
     featured: true,
     cta: (
-      <PlanCta plan="case" featured>
+      <PlanCta plan="case" featured href={purchaseHrefFor("case")}>
         {PRICING.jumpToPurchase}
       </PlanCta>
     ),
@@ -83,12 +97,28 @@ export function PlanCards() {
         <FoundingNote className="rounded-2xl bg-muted/60 p-4 ring-1 ring-inset ring-border" />
       ) : undefined,
       cta: accountPassEnabled() ? (
-        <PlanCta plan="account" featured={false}>
+        <PlanCta plan="account" featured={false} href={purchaseHrefFor("account")}>
           {PRICING.account.cta}
         </PlanCta>
       ) : (
         soon
       ),
     });
-  return <PriceCardGrid cards={cards} aria-label="Plans for sellers" />;
+  return cards;
+}
+
+export function PlanCards({
+  purchaseHrefFor,
+  titleAs,
+}: {
+  purchaseHrefFor?: (plan: PassPlan) => string;
+  titleAs?: "h2" | "h3";
+} = {}) {
+  return (
+    <PriceCardGrid
+      cards={planCards(purchaseHrefFor)}
+      titleAs={titleAs}
+      aria-label="Plans for sellers"
+    />
+  );
 }
