@@ -13,7 +13,7 @@
 
 import { PRICING } from "@/content/marketing";
 import { LEGAL } from "@/content/legal";
-import { formatLongDate } from "@/lib/format";
+import { formatLongDate, formatMoney } from "@/lib/format";
 import { EMAIL_PRODUCTS, PRODUCTS, type PurchaseKind } from "@/content/purchases";
 import { APP_URL } from "@/lib/urls";
 
@@ -26,6 +26,8 @@ export interface PurchaseConfirmationInput {
   idempotencyKey?: string;
   /** What was bought, as the database recorded it. Absent is the one-case Appeal Pass. */
   kind?: PurchaseKind;
+  /** What Paddle actually charged, when the delivery job could read it. Absent is not a guess. */
+  paid?: { amountCents: number; currency: string };
 }
 
 /**
@@ -57,6 +59,60 @@ export interface BuiltEmail {
   text: string;
 }
 
+/** One sender and one reply address for every message, so a reply reaches a person. */
+const emailFrom = () => process.env.EMAIL_FROM ?? "AppealDeck <billing@appealdeck.com>";
+const emailReplyTo = () => process.env.EMAIL_REPLY_TO ?? "billing@appealdeck.com";
+
+/**
+ * The shared frame for every email (24 Oct 2026): one narrow column, the wordmark, readable type,
+ * and a footer with the address a reader can reply to. Inline styles only, because mail clients
+ * strip style blocks. URLs already in a line become links, so a stop link is clickable even in a
+ * client that ignores the List-Unsubscribe header.
+ */
+export function renderEmailHtml(lines: string[], options: { stopUrl?: string } = {}): string {
+  const body = lines
+    .map((line) =>
+      line === ""
+        ? '<div style="height:12px;line-height:12px">&nbsp;</div>'
+        : `<p style="margin:0 0 12px;font-size:15px;line-height:1.65;color:#1f2933">${linkify(escapeHtml(line))}</p>`,
+    )
+    .join("\n");
+  const stop = options.stopUrl
+    ? `<p style="margin:16px 0 0;font-size:13px;line-height:1.65;color:#6b6459">Stop all reminders to this address: <a href="${escapeHtml(options.stopUrl)}" style="color:#6b6459">${escapeHtml(options.stopUrl)}</a></p>`
+    : "";
+  return `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#f5f3ef">
+    <div style="padding:24px 12px">
+      <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e4e0d8;border-radius:12px;padding:28px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+        <p style="margin:0 0 22px;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#6b6459;font-weight:600">AppealDeck</p>
+        ${body}
+        ${stop}
+        <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e4e0d8;font-size:12px;line-height:1.6;color:#6b6459">
+          <p style="margin:0">AppealDeck by Hawlton · <a href="mailto:billing@appealdeck.com" style="color:#6b6459">billing@appealdeck.com</a></p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`;
+}
+
+function linkify(html: string): string {
+  return html.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    (url) => `<a href="${url}" style="color:#1f2933;text-decoration:underline">${url}</a>`,
+  );
+}
+
+/** Builds both the branded HTML and the plain-text alternative from one set of lines. */
+function builtEmail(subject: string, lines: string[]): BuiltEmail {
+  return {
+    subject,
+    html: renderEmailHtml(lines),
+    text: [...lines, "", "AppealDeck by Hawlton"].join("\n"),
+  };
+}
+
 /**
  * Pure content builder — no network, fully unit-testable. Echoes what D8 / the checkout-consent
  * spec (legal/withdrawal-consent.md item 4) requires: what was bought, the price, the consent
@@ -72,6 +128,7 @@ export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput)
   const consentLine = input.consentText ?? LEGAL.consent.withdrawalCheckbox.label;
   const refundLine =
     "You can request a full refund within 14 days of purchase, no questions asked, by replying to this email or writing to billing@appealdeck.com.";
+  const paidLabel = input.paid ? formatMoney(input.paid.amountCents, input.paid.currency) : "";
 
   const lines = [
     `Thanks for buying the ${passName}${dateLabel ? ` on ${dateLabel}` : ""}.`,
@@ -80,7 +137,9 @@ export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput)
       : account
         ? `List price: ${PRICING.account.price} (one-time; covers every case on your account for 12 months from the day you bought it)`
         : `List price: ${PRICING.price} (${PRICING.priceNote})`,
-    "Paddle's receipt shows the amount you paid, including any discount code.",
+    paidLabel
+      ? `Amount paid: ${paidLabel} (includes any discount code). Paddle's receipt shows the same amount.`
+      : "Paddle's receipt shows the amount you paid, including any discount code.",
     ...(nextStepLine(kind) ? ["", nextStepLine(kind)!] : []),
     "",
     "The consent you gave at checkout:",
@@ -90,16 +149,9 @@ export function buildPurchaseConfirmationEmail(input: PurchaseConfirmationInput)
     "",
     "This email is your permanent record of this purchase and the consent above — keep it for your records.",
     "Paddle, our payment provider, sends the tax receipt separately.",
-    "",
-    "AppealDeck by Hawlton",
   ];
 
-  const text = lines.join("\n");
-  const html = `<div>${lines
-    .map((line) => (line === "" ? "<br />" : `<p>${escapeHtml(line)}</p>`))
-    .join("\n")}</div>`;
-
-  return { subject, html, text };
+  return builtEmail(subject, lines);
 }
 
 function escapeHtml(s: string): string {
@@ -118,7 +170,6 @@ export async function sendPurchaseConfirmationEmail(
   input: PurchaseConfirmationInput,
 ): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? "AppealDeck <billing@appealdeck.com>";
   if (!apiKey) throw new Error("Confirmation email is not configured");
 
   const { subject, html, text } = buildPurchaseConfirmationEmail(input);
@@ -132,7 +183,14 @@ export async function sendPurchaseConfirmationEmail(
         "Content-Type": "application/json",
         ...(input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey } : {}),
       },
-      body: JSON.stringify({ from, to: input.to, subject, html, text }),
+      body: JSON.stringify({
+        from: emailFrom(),
+        to: input.to,
+        reply_to: emailReplyTo(),
+        subject,
+        html,
+        text,
+      }),
     });
     if (!res.ok) throw new Error("Confirmation email provider returned " + res.status);
   } catch {
@@ -174,22 +232,14 @@ export function buildCaseReminderEmail(input: CaseReminderInput): BuiltEmail {
     `Open your case: ${input.dashboardUrl}`,
     "",
     "To stop these, turn off email reminders for this case on your dashboard.",
-    "",
-    "AppealDeck by Hawlton",
   ];
 
-  const text = lines.join("\n");
-  const html = `<div>${lines
-    .map((line) => (line === "" ? "<br />" : `<p>${escapeHtml(line)}</p>`))
-    .join("\n")}</div>`;
-
-  return { subject, html, text };
+  return builtEmail(subject, lines);
 }
 
 /** Sends a case reminder. Throws on failure so the caller can record it and retry. */
 export async function sendCaseReminderEmail(input: CaseReminderInput): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? "AppealDeck <billing@appealdeck.com>";
   if (!apiKey) throw new Error("Reminder email is not configured");
 
   const { subject, html, text } = buildCaseReminderEmail(input);
@@ -203,7 +253,14 @@ export async function sendCaseReminderEmail(input: CaseReminderInput): Promise<v
         "Content-Type": "application/json",
         ...(input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey } : {}),
       },
-      body: JSON.stringify({ from, to: input.to, subject, html, text }),
+      body: JSON.stringify({
+        from: emailFrom(),
+        to: input.to,
+        reply_to: emailReplyTo(),
+        subject,
+        html,
+        text,
+      }),
     });
     if (!res.ok) throw new Error("Reminder email provider returned " + res.status);
   } catch {
@@ -241,20 +298,13 @@ export function buildAccountPassEndingEmail(input: AccountPassEndingInput): Buil
       : "You can buy a new Account Pass, or an Appeal Pass for a single case, when this one ends.",
     "",
     `Billing: ${input.billingUrl}`,
-    "",
-    "AppealDeck by Hawlton",
   ];
-  const text = lines.join("\n");
-  const html = `<div>${lines
-    .map((line) => (line === "" ? "<br />" : `<p>${escapeHtml(line)}</p>`))
-    .join("\n")}</div>`;
-  return { subject, html, text };
+  return builtEmail(subject, lines);
 }
 
 /** Sends the Account Pass ending email. Throws on failure so the caller can try again tomorrow. */
 export async function sendAccountPassEndingEmail(input: AccountPassEndingInput): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? "AppealDeck <billing@appealdeck.com>";
   if (!apiKey) throw new Error("Email is not configured");
   const { subject, html, text } = buildAccountPassEndingEmail(input);
   try {
@@ -266,7 +316,14 @@ export async function sendAccountPassEndingEmail(input: AccountPassEndingInput):
         "Content-Type": "application/json",
         ...(input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey } : {}),
       },
-      body: JSON.stringify({ from, to: input.to, subject, html, text }),
+      body: JSON.stringify({
+        from: emailFrom(),
+        to: input.to,
+        reply_to: emailReplyTo(),
+        subject,
+        html,
+        text,
+      }),
     });
     if (!res.ok) throw new Error("Email provider returned " + res.status);
   } catch {
@@ -286,9 +343,10 @@ export async function sendRawEmail(input: {
   html: string;
   text: string;
   idempotencyKey?: string;
+  /** Extra provider headers, e.g. List-Unsubscribe for a message a reader can stop. */
+  headers?: Record<string, string>;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? "AppealDeck <billing@appealdeck.com>";
   if (!apiKey) throw new Error("Email is not configured");
   try {
     const res = await fetch("https://api.resend.com/emails", {
@@ -300,11 +358,13 @@ export async function sendRawEmail(input: {
         ...(input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey } : {}),
       },
       body: JSON.stringify({
-        from,
+        from: emailFrom(),
         to: input.to,
+        reply_to: emailReplyTo(),
         subject: input.subject,
         html: input.html,
         text: input.text,
+        ...(input.headers ? { headers: input.headers } : {}),
       }),
     });
     if (!res.ok) throw new Error("Email provider returned " + res.status);

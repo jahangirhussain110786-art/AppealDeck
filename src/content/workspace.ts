@@ -16,27 +16,27 @@ export const WORKSPACE = {
         "Read your notice again and check that every question or request in it has its own answer.",
         "Check each document: is it the one Amazon named, complete, readable, and from the period it asked about?",
         "Check that your root cause names a specific cause in your business, not only the symptom Amazon reported.",
-        "Do not send the same text or files again. Change something real: a new document, a corrected fact, or something you have since done.",
+        "Send something real that is new: a document, a corrected fact, or something you have since done.",
         "From the Account Health page, use Contact Us and ask what specifically was insufficient.",
       ],
       note: "This comes from guidance by appeal consultants and from Amazon’s seller forums, not from Amazon.",
     },
     categories: {
       needs_more_information:
-        "Amazon did not reinstate the account this time and wants a better answer or more information.",
+        "Amazon asks for a better answer or more information before it decides again.",
       document_request: "Amazon is asking for documents before it decides.",
       identity_verification: "Amazon wants you to verify your identity or business details.",
       final_decision_negative:
         "Amazon says this decision is final. Read the whole reply before deciding what to do next.",
       reinstated: "Amazon says the account is reinstated. Check Account Health to confirm it.",
       funds_decision: "This reply is about your funds.",
-      unrecognized: "We could not tell what this reply decides. Read it in full.",
+      unrecognized: "This reply does not match a kind we can name. Read it in full.",
     },
   },
   // A saved, unread Amazon reply outranks every other next step (25 Sep 2026).
   replyPending: {
     title: "Amazon replied. Read what it changes",
-    body: "Nothing in your case has changed yet. The reply is in History with what it asks for again, what is new, and what you can keep. Start the next round from there.",
+    body: "Your case is unchanged so far. The reply is in History with what it asks for again, what is new, and what you can keep. Start the next round from there.",
     cta: "Read Amazon's reply",
   },
   subtitle: "One case. Every record, response and reply.",
@@ -45,10 +45,10 @@ export const WORKSPACE = {
     title: "Documents Amazon wants",
     // G-63: said here, where the files are gathered, as well as on the copy step. "Some Amazon
     // notices say" because the origin of the rule is a notice's own wording, not a policy we cite.
-    lead: "Add each file and say what it shows. Nothing goes to Amazon from here. Attach files on the response page in Seller Central, not in a Seller Support case: some notices say case attachments are not reviewed.",
+    lead: "Add each file and say what it shows. Your files stay with you; you attach them on the response page in Seller Central, not in a Seller Support case: some notices say case attachments are not reviewed.",
     // When the notice itself says to email documents to an Amazon address (a funds request does).
     leadEmail:
-      "Add each file and say what it shows. Nothing is sent to Amazon from here. Your notice says to send the request by email to {email}: attach these files to that email, from the address on your seller account.",
+      "Add each file and say what it shows. Your files stay with you until you send the email. Your notice says to send the request by email to {email}: attach these files to that email, from the address on your seller account.",
     seeNotice: "See your notice",
     addOther: "Amazon asked for something else? Add it",
     addLabel: "Document name",
@@ -72,7 +72,7 @@ export const WORKSPACE = {
     waiting: "I'm waiting for it",
     draftRequest: "Draft a request",
     requestTitle: "Request to the record issuer",
-    requestNote: "Add the recipient and send it yourself. AppealDeck does not send messages.",
+    requestNote: "Add the recipient and send it yourself; you keep control of every message.",
     copyRequest: "Copy request draft",
     standards: "What a good {label} shows",
     standardsPlural: "What good {label} show",
@@ -81,7 +81,7 @@ export const WORKSPACE = {
     correct: "It doesn't apply, or Amazon asked for it differently",
     correctLabel: "Amazon's exact words for this document",
     correctButton: "Update and check it again",
-    removeLabel: "Why doesn't Amazon need this any more?",
+    removeLabel: "Why does Amazon no longer need this?",
     removeNote:
       "Removing it keeps the file and anything you already sent. Tick the list again afterwards.",
     removeButton: "Remove from my list",
@@ -106,9 +106,9 @@ export const WORKSPACE = {
     finish:
       "Read it, then copy it into Amazon's appeal page and attach your files. Come back and record what you sent.",
     attachFromEmail:
-      "Download the linked files from Documents and attach them to your email to {email}, sent from your seller-account address. Copying does not record a submission.",
+      "Download the linked files from Documents and attach them to your email to {email}, sent from your seller-account address. Copying is preparation; record the submission once you have sent it.",
     attachFrom:
-      "Download the linked files from Documents and attach each on the response page in Seller Central, not in a Seller Support case. Copying does not record a submission.",
+      "Download the linked files from Documents and attach each on the response page in Seller Central, not in a Seller Support case. Copying is preparation; record the submission once you have sent it.",
   },
   // The Response tab (29 Sep 2026): plain questions, a one-line hint, and an example in every box.
   // 10 Oct 2026: the root-cause coach. Appeal writers advise naming one failure point, so the copy
@@ -138,7 +138,7 @@ export const WORKSPACE = {
     briefTitle: "Your response brief",
     lead: "Short, true and specific. We use your words, not ours.",
     rootCause: "What went wrong?",
-    rootCauseHint: "Say what caused it and name the product. Don't blame Amazon or buyers.",
+    rootCauseHint: "Say what caused it and name the product. Keep the focus on your own process.",
     rootCausePlaceholder:
       "For example: We listed returned items as new. Nobody checked returns before they went back on sale.",
     corrective: "What have you fixed already?",
@@ -252,7 +252,7 @@ export const WORKSPACE = {
         // question needs. A reminder, never a block and never a prediction about the answer.
         needs:
           /\b(?:from|supplier|distributor|manufactur\w+|wholesale\w*|bought|purchas\w+|source[ds]?)\b/i,
-        nudge: "This does not yet say where you buy the products or from whom.",
+        nudge: "Add where you buy the products and from whom.",
       },
       {
         pattern: /other (?:amazon )?(?:seller )?accounts|ever operated|multiple accounts/i,
@@ -276,7 +276,7 @@ export const WORKSPACE = {
         example: "For example: Jane Smith, sole owner, as shown on our registration.",
         needs: /\b\d{1,3}\s?(?:%|percent)|\b(?:sole|only|single)\s+owner\b/i,
         nudge:
-          "This does not give each owner's full legal name and ownership share, or say who the sole owner is.",
+          "Add each owner's full legal name and ownership share, or say who the sole owner is.",
       },
     ] as Array<{
       pattern: RegExp;
@@ -302,10 +302,16 @@ export const WORKSPACE = {
     priceNote:
       "Free: understand the notice, gather documents, write your answers. Pay once, only if you want us to prepare the response.",
     checklist: "Checklist",
+    deadlines: "Deadlines",
     done: "{done} of {total} done",
     noFile: "No file linked yet",
     confirmTitle: "Check how we read your notice",
     confirmBody: "It takes a minute. Then we list the documents to gather.",
+    // An empty case has nothing to check yet, so the first step is the paste itself (24 Oct 2026).
+    startTitle: "Paste your notice",
+    startBody:
+      "Paste Amazon's message in the box below. We read it and show what Amazon asks for before you write anything.",
+    startCta: "Go to the notice box",
     reviewBody: "Add the file and note what it shows. If you can't get it, say so there.",
     toDocuments: "Go to your documents",
     toResponse: "Go to your response",
@@ -333,7 +339,7 @@ export const WORKSPACE = {
       sent: "You sent response {n}",
       prior: "A response you sent before this case",
       started: "Case started",
-      noDeadline: "No confirmed deadline recorded. Check your current notice.",
+      noDeadline: "Check your current notice for its date; none is recorded here yet.",
     },
     files: "{n} files in this case",
     oneFile: "1 file in this case",
@@ -349,7 +355,7 @@ export const WORKSPACE = {
   local: "Saved in this browser",
   // B1: the first-time seller does not know a guest case lives in one tab. Said where it is saved.
   guestWarning: {
-    text: "Your work is saved only in this tab. If you close it, it is gone. Sign in to keep it.",
+    text: "Your work stays in this tab. Closing the tab clears it, so sign in to keep it.",
     signIn: "Sign in",
   },
   loading: "Opening your case…",
@@ -362,7 +368,7 @@ export const WORKSPACE = {
     // A-02/A-03. Named for what the seller told us, not for a judgement about them: the product
     // does not decide whether a record is obtainable, and a seller in this state has done
     // something honest, not failed at something.
-    cannot_obtain: "You cannot obtain this",
+    cannot_obtain: "You reported it unavailable",
   },
   routeIntro: "Start with your notice",
   routeHelp: "Paste Amazon's message. We read it and show what Amazon wants.",
@@ -410,12 +416,12 @@ export const WORKSPACE = {
   },
   sourceLabel: "Amazon's words, if it asked for this (optional)",
   sourceHelp:
-    "Paste Amazon's exact sentence. If Amazon didn't ask but you know the case needs it, leave this empty: we record it as yours, not Amazon's.",
+    "Paste Amazon's exact sentence. If Amazon did not name it but the case needs it, leave this empty: it is recorded as yours, not as Amazon's.",
   manualReview:
     "Open the original and note what it shows. This is your own check, not a test of whether the document is genuine. With an Appeal Pass we can also check a business document against what Amazon asked for, using AI. Without one, the check reads it on this device, without AI. Identity, bank and proof-of-address documents are checked on this device only.",
   check: {
     unnamed:
-      "This record is not one of the document types we know how to check, so we have not read it. Review it yourself and note what it shows. Your file is unchanged and stayed on this device.",
+      "This record is outside the document types we check, so review it yourself and note what it shows. Your file is unchanged and stayed on this device.",
   },
   submitConfirm:
     "I have submitted this exact response and its selected files through the official channel.",
@@ -445,8 +451,8 @@ export const WORKSPACE = {
     label: "The writing itself",
     strong: "Nothing flagged in how this draft reads.",
     needs_work:
-      "Parts of this draft need work. The notes below are about the writing, not your records.",
-    weak: "This draft is thin. Work through the notes below before you copy it.",
+      "Parts of this draft can be stronger. The notes below are about the writing, not your records.",
+    weak: "This draft is still thin. The notes below show where to strengthen it.",
   },
   // A3: an earlier response is recorded with no wording. "Looks like what you already sent" would
   // say something we cannot know, so the alert says what we cannot do and what to do about it.
@@ -458,7 +464,7 @@ export const WORKSPACE = {
     button: "Download upload-ready pack",
     building: "Building the pack…",
     help: "A zip of the files you reviewed, numbered and named by what they answer, each under 5 MB where we can make it so, with an index page. Built on this device. You still upload the files to Amazon yourself.",
-    none: "No reviewed files yet. Add a file to a record on Documents and mark it reviewed, and it goes in the pack.",
+    none: "Reviewed files go in the pack. Add a file to a record on Documents and mark it reviewed.",
     ready: "Pack ready: {n} files.",
     reduced: "{n} re-saved smaller.",
     over: "{n} still over 5 MB: see For your records inside the pack.",
@@ -474,9 +480,9 @@ export const WORKSPACE = {
     newOrReworded: "New or reworded",
     changedTitle: "What has changed since your last response",
     changedIntro: "Compared with the response you recorded on {date}.",
-    priorTitle: "We cannot fully compare with your earlier attempt",
+    priorTitle: "Your earlier attempt was made before AppealDeck",
     priorBody:
-      "You made it before using AppealDeck, so we do not have its wording or its files. Change something Amazon has not already seen: a document you now hold or an action you have since finished.",
+      "The comparison starts with this response. Change something Amazon has not already seen: a document you now hold or an action you have since finished.",
     newSentences: "New in this response",
     moreSentences: "and {n} more",
     sameWording:
@@ -486,11 +492,12 @@ export const WORKSPACE = {
     resolved: "Open then, finished now",
     stillOpen: "Still open from last time",
     documentsUnknown:
-      "We do not know which files that attempt included, so documents are not compared.",
+      "That attempt's files were not recorded, so this comparison covers the wording only.",
   },
   novelty: {
-    cannotCompareTitle: "We cannot compare this with what you sent before.",
-    cannotCompareBody: "The earlier text was not recorded. Change something before you send.",
+    cannotCompareTitle: "The earlier text was not recorded",
+    cannotCompareBody:
+      "Change something before you send, so the next attempt carries something new.",
   },
   waitingHelp: "Ask for it, then carry on with the other steps while you wait.",
   // B-04, reduced (24 Sep 2026). Shown after two responses have been sent and Amazon has replied
@@ -498,9 +505,9 @@ export const WORKSPACE = {
   // its own seller forums and appeal consultants describe, checked on the date given, and the copy
   // says so rather than presenting them as Amazon's procedure. Nothing here predicts an outcome.
   changeOfApproach: {
-    title: "Two responses have not resolved this. Change the approach, not only the words.",
+    title: "Two responses in, the next step is a change of approach.",
     intro:
-      "A resubmission that has not changed gives Amazon nothing new to decide on. Before you send again, work through these in order.",
+      "The next attempt needs something new in it. Work through these in order before you send again.",
     steps: [
       {
         title: "Find the one thing Amazon's latest reply objects to",
@@ -516,7 +523,7 @@ export const WORKSPACE = {
       },
       {
         title: "Know when to bring in someone else",
-        body: "An experienced appeal consultant can review what you have sent. If your case is heading towards arbitration, a demand letter or court, you need a lawyer: AppealDeck does not help with those, and nothing you tell it is legally privileged.",
+        body: "An experienced appeal consultant can review what you have sent. If your case is heading towards arbitration, a demand letter or court, it needs a lawyer: AppealDeck works on the case record, and nothing you tell it is legally privileged.",
       },
     ],
     sourcesNote:
@@ -627,11 +634,11 @@ export const WORKSPACE = {
   // that promise on screen, so it says who raised it and stops.
   inferred: {
     badge: "We added this",
-    help: "Your notice does not name this record. Cases like yours are usually refused without it. Remove it if it does not apply.",
+    help: "Your notice does not name this record, though cases like yours usually need it. Remove it if it does not apply.",
   },
   sellerAdded: {
     badge: "You added this",
-    help: "Neither your notice nor our records named this one. It stays on your plan and is never described as something Amazon asked for.",
+    help: "Neither your notice nor our records named this one. It stays on your plan, labelled as yours.",
   },
   guidance: {
     why: "Why Amazon asks for this",
@@ -644,23 +651,23 @@ export const WORKSPACE = {
   // seller could otherwise read the tick as the product having checked something.
   attestation: {
     label:
-      "I confirm every action I describe as done above is really done. AppealDeck cannot check this.",
+      "I confirm every action I describe as done above is really done. AppealDeck records this confirmation rather than verifying it.",
     recorded: "Confirmed by you on {date}. Editing this section clears the confirmation.",
   },
   cannotObtain: {
     trigger: "I can't get it",
-    title: "You cannot obtain this record",
+    title: "This record is not available",
     help: "Say why in your own words. The response states it as you write it, and does not claim a record you do not have.",
-    reasonLabel: "Why can you not obtain it?",
+    reasonLabel: "Why is it not available?",
     reasonPlaceholder: "For example: the supplier has closed and no longer issues invoices…",
     alternatives: "What you can do instead",
-    consequence: "What this costs you",
+    consequence: "What this means for the response",
     choose: "Choose this path",
     chosen: "Chosen",
-    confirm: "Record that you cannot obtain this",
+    confirm: "Record that this record is not available",
     reopen: "I can obtain it after all",
     recorded:
-      "Recorded. Your response names this record as missing, in your words. The draft stays a working draft while evidence is missing.",
+      "Recorded. Your response names this record as missing, in your words. The draft stays a working draft until the evidence is complete.",
   },
   // B-03. Until 23 Sep 2026 a reply reset every requirement, so the seller redid the whole
   // evidence review each round. This is what they now see before confirming. Each line describes
@@ -719,7 +726,7 @@ export const WORKSPACE = {
     useAi: "Use the AI draft",
     fallback: {
       fact_check_failed:
-        "The AI draft added details you did not give, so it was discarded. This draft is built from your own wording.",
+        "Our check found details you did not give in the AI draft, so this draft is built from your own wording.",
       not_configured:
         "AI drafting is switched off right now. This draft is built from your own wording.",
       daily_limit:
@@ -742,7 +749,7 @@ export const WORKSPACE = {
     body: "On the Overview tab, check how we read your notice and press “Yes, this is right”. Then this page can prepare your response. You can write your answers here in the meantime.",
   },
   unsupported:
-    "You can organize and export your case notes. We cannot prepare a response for this kind of notice here. No purchase is needed for these notes.",
+    "You can organize and export your case notes for this kind of notice; the prepared response is not part of this route. No purchase is needed for the notes.",
   /**
    * #91. Neutral wording throughout: a seller who already appealed and was refused is often
    * embarrassed about it, and nothing here should read as a reprimand. It also never claims what
@@ -761,7 +768,7 @@ export const WORKSPACE = {
   priorAttemptTextLabel: "What did you send? (optional)",
   priorAttemptTextPlaceholder: "Paste what you sent, if you still have it…",
   priorAttemptTextHelp:
-    "If you no longer have the wording, leave this empty. The attempt still counts; there is then nothing for us to compare against.",
+    "If you no longer have the wording, leave this empty. The attempt still counts, and the comparison starts from your next response.",
   priorAttemptSave: "Record this response",
   // B8, 6 Oct 2026: a count first, because "how many" is what the duplicate guard depends on and
   // is the part a seller can always answer. One attempt without wording is recorded per count.
@@ -789,8 +796,7 @@ export const WORKSPACE = {
    * overlook.
    */
   issuesTitle: "This notice raises more than one issue",
-  issuesLead:
-    "Each one is judged separately. A response that covers one and not the other is refused for the one it missed.",
+  issuesLead: "Each one is judged separately, so the response has to answer every issue named.",
   issuesSourceLabel: "Where we read that",
   issuesConfirm: "My response addresses every issue listed above.",
   saved: "Saved",

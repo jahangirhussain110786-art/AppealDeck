@@ -95,7 +95,7 @@ export const PRODUCTS = {
     creditedPassAmount: "$200.00",
     note: "One case, five documents",
     teaser:
-      "Not ready for the whole Pass? Have the AI read up to five of one case's documents for $49. The $49 comes off the Appeal Pass if you buy it for that case.",
+      "A focused start: have the AI read up to five of one case's documents for $49. The $49 comes off the Appeal Pass if you buy it for that case.",
     summary:
       "The AI reads up to five of this case's documents against what Amazon asked, and the $49 comes off the Appeal Pass for the same case.",
     features: [

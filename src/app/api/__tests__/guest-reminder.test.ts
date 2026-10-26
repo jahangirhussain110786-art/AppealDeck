@@ -124,6 +124,18 @@ describe("the confirm and stop routes", () => {
     });
   });
 
+  it("stops from a mail client's one-click form post, with the token in the URL", async () => {
+    const res = await stop(
+      new Request(`http://localhost:3000/api/guest-reminder/stop?token=${TOKEN}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "List-Unsubscribe=One-Click",
+      }) as unknown as NextRequest,
+    );
+    expect(await res.json()).toEqual({ status: "stopped" });
+    expect(stopMock).toHaveBeenCalledWith(TOKEN);
+  });
+
   it("both say not available, not done, when the store fails", async () => {
     confirmMock.mockRejectedValue(new Error("down"));
     stopMock.mockRejectedValue(new Error("down"));

@@ -52,7 +52,7 @@ export const STORES = {
     "If nothing needed correcting, say so and say why, for example: “Nothing needed correcting because the linked account is a family member's and we do not share a device or payment method.”",
   /** Hint for the one record a related-account or wrong-claim case can answer in words. */
   relationshipHint:
-    "No file is needed for this record. Say in your own words how the accounts are or are not related, or why the claim is wrong, and keep it factual.",
+    "A file is optional for this record. Say in your own words how the accounts are or are not related, or why the claim is wrong, and keep it factual.",
 
   /**
    * The D6 latch. A case held for qualified help stays held when the words that triggered it are
@@ -80,7 +80,7 @@ export const STORES = {
     rejected: "You recorded this case as rejected or denied. Nothing is due on it.",
     withdrawn: "You recorded this case as withdrawn. Nothing is due on it.",
     takeBack: "Take the outcome back",
-    note: "This is your own record; AppealDeck does not check with Amazon.",
+    note: "This is your own record, kept as you set it.",
   },
   /** Offered when saving is refused because another tab changed the case. */
   copyUnsaved: "Copy my unsaved text",

@@ -44,7 +44,7 @@ export const CHECK_INVOICE = {
     lead: "Amazon's rule for an authenticity notice comes down to two numbers: how old the invoice is, and whether the invoices cover what you sold. Here is each one with its working.",
     daysTitle: "How old is the invoice?",
     unitsTitle: "Does it cover what you sold?",
-    note: "These are sums on what was read from the invoice. They do not tell you whether Amazon will accept it, and Amazon may phone your supplier.",
+    note: "These are sums on what was read from the invoice. Whether Amazon accepts it stays with Amazon, and Amazon may phone your supplier.",
   },
   covers: {
     title: "What it looks at",
@@ -56,11 +56,11 @@ export const CHECK_INVOICE = {
     ],
   },
   limits: {
-    title: "What it does not do",
+    title: "Where this check stops",
     items: [
-      "It does not tell you whether Amazon will accept the invoice. Amazon decides, and it may contact your supplier.",
-      "It does not check that the invoice is genuine. Only your supplier can confirm that.",
-      "It reads printed text. A photo of a handwritten page cannot be read, and Amazon may not accept one either.",
+      "Amazon decides whether the invoice is accepted, and may contact your supplier. The check gives you a clearer file to send.",
+      "Genuineness is your supplier's to confirm; the check reads what the document shows.",
+      "It reads printed text. A typed or printed copy of a handwritten page gives both you and Amazon a document that can be read.",
     ],
   },
   next: {

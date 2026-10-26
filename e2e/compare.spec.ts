@@ -18,7 +18,7 @@ for (const p of PAGES) {
     await page.goto(`/guides/${p.slug}`);
     await expect(page.getByRole("heading", { level: 1, name: p.h1 })).toBeVisible();
     await expect(page.getByText("Last verified")).toBeVisible();
-    await expect(page.getByText("What it does not do")).toBeVisible();
+    await expect(page.getByText("What stays in your hands")).toBeVisible();
     await expect(page.getByRole("link", { name: "Paste your notice — free" })).toBeVisible();
     await expectNoAxeViolations(page, { impacts: ["serious", "critical"] });
   });

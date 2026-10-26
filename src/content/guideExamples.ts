@@ -35,12 +35,12 @@ export const planOfActionExamples: Guide = {
   sections: [
     {
       heading: "How to use these",
-      body: "Read one for its shape, then write yours from your facts. Do not copy the sentences: reviewers see the same templates again and again, and a Plan of Action that could belong to any seller is the one most often refused.",
+      body: "Read one for its shape, then write yours from your facts. Write it in your own words rather than copying these sentences: reviewers see the same templates again and again, and a Plan of Action that could belong to any seller is the one most often refused.",
       points: [
         "Each part answers one question: what went wrong in your operation, what you have already done, and what now stops it happening again.",
         "Specific beats polished. A date, a count and the name of the step that failed are worth more than a paragraph of good intentions.",
         "Say only what is true and finished as done. Anything in progress should say so.",
-        "Each one lists what to attach. If you cannot attach it, do not describe it.",
+        "Describe only what you can attach.",
       ],
     },
     {
@@ -120,12 +120,12 @@ export const planOfActionExamples: Guide = {
       ],
     },
     {
-      heading: "Before you adapt one",
+      heading: "Before you make one yours",
       points: [
         "Replace every name, ID, date and number with your own, from your own records. If you cannot, leave that detail out rather than guess.",
         "If Amazon has refused a Plan of Action already, answer the reasons it gave. Resending the same text is a common cause of repeated refusal.",
         "Attach only documents that support a claim, named so the reviewer can find them.",
-        "Keep it short: about one to two pages in all, plain sentences, no flattery of Amazon and no blame of anyone else.",
+        "Keep it short: about one to two pages in all, plain sentences, and attention on your own process rather than on Amazon or anyone else.",
         "These examples show how a Plan of Action reads. They do not predict what Amazon will do with yours.",
       ],
     },
@@ -138,9 +138,9 @@ export const planOfActionExamples: Guide = {
       "Lists the records your notice names and the ones cases like yours usually need.",
     ],
     doesNot: [
-      "Use these examples to fill in your answers. Their details are made up and never reach your draft.",
-      "Submit anything for you or touch your Amazon account.",
-      "Predict what Amazon will decide.",
+      "These examples stay on the page. Their details are made up and never reach your draft; your answers come from your own facts.",
+      "Your Seller Central login stays yours: you submit, and we never touch your account.",
+      "Amazon decides the outcome. We predict nothing.",
     ],
   },
   cta: "Start from your own notice: paste it and see what Amazon is asking for.",

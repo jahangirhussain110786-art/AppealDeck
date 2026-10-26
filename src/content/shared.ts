@@ -1,5 +1,7 @@
 // Copy source for shared strings (footer, common labels, metadata).
 
+import { POSITIONING } from "./positioning";
+
 /**
  * G-69 (12 Oct 2026): what Amazon itself has said about review time, said once and reused on the
  * decode result, the waiting card and the FAQ. It quotes Amazon with its source and the day we read
@@ -37,7 +39,7 @@ export const SHARED = {
     statusGuestBody: "Your case is kept in this browser tab.",
   },
   footer: {
-    tagline: "Understand the notice. Organize the evidence. Prepare your response.",
+    tagline: "Know what the notice asks. Build the record. Prepare the response.",
     nav: {
       privacy: "Privacy",
       terms: "Terms",
@@ -51,8 +53,7 @@ export const SHARED = {
       forProfessionals: "For writers and VA teams",
       partners: "Partner program",
     },
-    neverSubmits:
-      "You submit your appeal yourself in Seller Central. AppealDeck never logs in to your account.",
+    neverSubmits: "You submit every appeal yourself in Seller Central. Your login stays with you.",
     independence:
       "AppealDeck is software and is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon and Seller Central are trademarks of Amazon.com, Inc. or its affiliates.",
     groups: {
@@ -60,7 +61,7 @@ export const SHARED = {
       guides: "Guides",
       legal: "Legal",
     },
-    notLegalAdvice: "Software, not legal advice.",
+    category: POSITIONING.category,
     copyright: "© {year} Jhangir Hussain, trading as Hawlton",
   },
   expectations: {
@@ -81,7 +82,7 @@ export const SHARED = {
       "Decoding and building your case are free. The Appeal Pass adds response preparation and draft checks for one case, every revision included. $249 once.",
     titleSupport: "Support and contact",
     descriptionSupport:
-      "Who operates AppealDeck, how to reach them, how long a reply takes, and what support can and cannot do during an appeal.",
+      "Who operates AppealDeck, how to reach them, how quickly they reply, and where your own judgment leads an appeal.",
     titleFaq: "FAQ: privacy, pricing and appeals",
     descriptionFaq:
       "How the decoder works, what leaves your browser, who submits the response, what the Appeal Pass covers and how refunds work.",
@@ -90,8 +91,12 @@ export const SHARED = {
   navSkip: "Skip to main content",
   tocHeading: "Contents",
   lastUpdated: "Last updated:",
-  // G-92: plain words for the disabled button. The consent wording itself (D8) is unchanged.
+  // G-92: plain words for the button that takes the buyer to the consent box. The consent wording
+  // itself (D8) is unchanged.
   consentPrompt: "Tick the box above to continue",
+  // The pay button a signed-out visitor sees: a sign-in link, not a checkout that refuses after a
+  // request (24 Oct 2026).
+  signInToBuy: "Sign in to buy",
   offline: {
     title: "You are offline",
     desc: "Your unlocked local vault is available. Decoding, response preparation and cloud backup need an internet connection.",

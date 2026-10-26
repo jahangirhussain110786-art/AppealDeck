@@ -44,6 +44,11 @@ export const GROWTH = {
       body: "The Appeal Pass covers every round, including responses to Amazon's replies.",
       cta: "Choose the Appeal Pass",
     },
+    account: {
+      title: "Cover every case",
+      body: "The Account Pass covers every case on your account for 12 months, same terms.",
+      cta: "Choose the Account Pass",
+    },
     refund: "14-day refund, no questions asked. One-time Passes do not renew automatically.",
     refundCta: "Refund terms",
   },

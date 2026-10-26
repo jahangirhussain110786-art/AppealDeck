@@ -127,7 +127,7 @@ describe("the change report", () => {
     expect(little).toContain("New or reworded");
   });
 
-  it("says it cannot compare with an attempt made before AppealDeck, and does not predict anything", () => {
+  it("starts the comparison at the current response when the earlier attempt predates AppealDeck, and does not predict anything", () => {
     const html = renderToStaticMarkup(
       <ChangesSinceLastTry
         report={report({
@@ -142,7 +142,7 @@ describe("the change report", () => {
         })}
       />,
     );
-    expect(html).toContain("We cannot fully compare with your earlier attempt");
+    expect(html).toContain("The comparison starts with this response");
     expect(html).not.toMatch(/\b(?:will be accepted|approved|guarantee|likely to)\b/i);
   });
 });

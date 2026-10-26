@@ -17,6 +17,7 @@ import { VaultGate } from "@/components/VaultGate";
 import { VerificationChecklistCard } from "@/components/VerificationChecklistCard";
 import { FactsLedgerCard } from "@/components/FactsLedgerCard";
 import { CaseFactsCard } from "./CaseFactsCard";
+import { CaseMobileContext } from "./CaseMobileContext";
 import Image from "next/image";
 import { AppBarSlot } from "@/components/AppBarSlot";
 import { CaseLabelField } from "./CaseLabelField";
@@ -1498,6 +1499,8 @@ function WorkspaceInner({
                     : `${d.label} · confirm the date in Account Health`,
         }))
       : [];
+  // A decoded or typed notice is there to be checked; an empty case is there to be started.
+  const noticeStarted = Boolean(w.decodedNoticeHash) || w.notice.trim().length > 0;
   const caseKindTitle = file.kind === "UNKNOWN" ? C.title : APP.violationKinds[file.kind];
   // G-60: the seller's own name leads when they gave one.
   const caseLabel = labelOf(w);
@@ -1770,6 +1773,13 @@ function WorkspaceInner({
       )}
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_21.25rem]">
         <div className="min-w-0 space-y-5">
+          <CaseMobileContext
+            deadlines={deadlineLines}
+            signedIn={signedIn}
+            signInHref={signInHref}
+            busy={busy}
+            onNewCase={() => setNewCasePrompt(true)}
+          />
           <Tabs ref={tabsRef} value={tab} onValueChange={setTab} className="scroll-mt-24">
             {/* An underlined row, the way the public header marks the current page: the case reads
                 as one page with four views, not as a control panel. */}
@@ -1844,8 +1854,22 @@ function WorkspaceInner({
                   {!w.confirmed && (
                     <NextStepCard
                       due={deadlineLines.find((d) => d.hot)?.text}
-                      title={C.overview.confirmTitle}
-                      body={C.overview.confirmBody}
+                      title={noticeStarted ? C.overview.confirmTitle : C.overview.startTitle}
+                      body={noticeStarted ? C.overview.confirmBody : C.overview.startBody}
+                      actions={
+                        noticeStarted ? undefined : (
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const box = document.getElementById("workspace-notice");
+                              box?.scrollIntoView({ block: "center", behavior: "smooth" });
+                              box?.focus({ preventScroll: true });
+                            }}
+                          >
+                            {C.overview.startCta}
+                          </Button>
+                        )
+                      }
                       note={C.overview.priceNote}
                     />
                   )}
@@ -2391,7 +2415,7 @@ function WorkspaceInner({
                           No submission recorded
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Copying or exporting does not submit a response.
+                          Copying or exporting is preparation; the submission is yours to record.
                         </p>
                       </div>
                     </div>
@@ -2690,6 +2714,7 @@ function WorkspaceInner({
             workspace={w}
             createdAt={file.createdAt}
             deadlines={deadlineLines}
+            deadlinesClassName="max-xl:hidden"
             action={
               w.confirmed && !gated ? (
                 <Button size="sm" variant="outline" onClick={() => setTab("history")}>
@@ -2761,10 +2786,11 @@ function WorkspaceInner({
               {C.privacy}
             </DetailDisclosure>
             {!signedIn && (
-              // B1: the one place a guest is told, in view and not folded, that closing the tab ends it.
+              // B1: the one place a guest is told, in view and not folded, that closing the tab ends
+              // it. Below xl the same notice sits above the tabs, where it is read before them.
               <div
                 role="note"
-                className="mt-3 space-y-2.5 rounded-lg border border-warning/40 bg-warning/5 p-3"
+                className="mt-3 hidden space-y-2.5 rounded-lg border border-warning/40 bg-warning/5 p-3 xl:block"
               >
                 <p className="text-sm font-medium text-foreground">{C.guestWarning.text}</p>
                 <Button asChild size="sm">
@@ -2775,17 +2801,6 @@ function WorkspaceInner({
             <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
               <Button asChild size="sm" variant="outline">
                 <Link href="/dashboard">{C.overview.allCases}</Link>
-              </Button>
-              {/* The bar's "New case" is hidden on a phone, where the bar has no room for it. */}
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={busy}
-                onClick={() => setNewCasePrompt(true)}
-                className="sm:hidden"
-              >
-                <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-                New case
               </Button>
             </div>
           </div>

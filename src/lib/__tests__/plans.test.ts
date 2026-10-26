@@ -21,6 +21,7 @@ import {
   foundingCode,
   foundingEnabled,
   foundingSpots,
+  listedPaidPlans,
   parsePlan,
   priceIdFor,
   singleEnabled,
@@ -152,6 +153,29 @@ describe("One Response (23 Oct 2026)", () => {
   it("does not appear in what the webhook is told while it has no price", () => {
     vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
     expect(extraPriceIds()).not.toHaveProperty("single_response");
+  });
+});
+
+describe("the plans every seller-facing surface shows (24 Oct 2026)", () => {
+  it("is the Appeal Pass alone when nothing else is listed", () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
+    expect(listedPaidPlans()).toEqual(["case"]);
+  });
+
+  it("adds One Response and the Account Pass on sale, in display order", () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "pri_single");
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "pri_account");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
+    expect(listedPaidPlans()).toEqual(["single", "case", "account"]);
+  });
+
+  it("treats a previewed plan as listed, exactly as the cards and table do", () => {
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
+    vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "on");
+    expect(listedPaidPlans()).toEqual(["single", "case", "account"]);
   });
 });
 

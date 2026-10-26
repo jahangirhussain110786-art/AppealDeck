@@ -1,21 +1,13 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/content/pageMetadata";
 import Link from "next/link";
-import { ArrowRight, Check, Info } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
 import { SectionHeading } from "@/components/SectionHeading";
-import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { FaqAccordion } from "@/components/pricing/FaqAccordion";
 import { PurchaseSection } from "@/components/pricing/PurchaseSection";
 import { PlanCards } from "@/components/pricing/PlanCards";
+import { PlanComparison } from "@/components/pricing/PlanComparison";
 import { PlanFit } from "@/components/pricing/PlanFit";
 import {
   accountPassEnabled,
@@ -28,6 +20,7 @@ import { ReviewTeaser } from "@/components/pricing/ReviewTeaser";
 import { VersusSection } from "@/components/pricing/VersusSection";
 import { PricingStage } from "@/components/pricing/PricingStage";
 import { RoleNudge } from "@/components/RoleNudge";
+import { PromiseBand } from "@/components/marketing/PromiseBand";
 import { AccentWord } from "@/components/ui/accent-word";
 import { HonestExpectationsCard } from "@/components/HonestExpectationsCard";
 import { GLOBAL_EXPECTATIONS } from "@/core/guidance";
@@ -43,34 +36,12 @@ export const metadata: Metadata = pageMetadata({
 
 const READ_FIRST = splitAccent(PRICING.readFirstTitle, PRICING.readFirstAccent);
 
-function ValueCell({ value }: { value: string }) {
-  // v5: a tick disc and a dash, each with its meaning spoken to a screen reader.
-  if (value === "Yes") {
-    return (
-      <span className="inline-flex size-[22px] items-center justify-center rounded-full bg-success/15">
-        <Check aria-hidden className="size-3 text-success" strokeWidth={3.5} />
-        <span className="sr-only">{PRICING.included}</span>
-      </span>
-    );
-  }
-  if (value === "—") {
-    return (
-      <>
-        <span aria-hidden className="text-muted-foreground/60">
-          {value}
-        </span>
-        <span className="sr-only">{PRICING.notIncluded}</span>
-      </>
-    );
-  }
-  return <span className="text-sm text-foreground">{value}</span>;
-}
-
 /**
  * 26 Sep 2026 (the prototype pass): the three plans lead, side by side, with the Pass on the
- * inverted panel; the comparison table follows for the detail; the expectations card and the
- * checkout keep their order, because the consent spec (legal/withdrawal-consent.md item 1)
- * requires the expectations to be read before the pay button is reached.
+ * inverted panel; the grouped comparison follows for the detail (24 Oct 2026); the expectations
+ * card and the checkout keep their order, because the consent spec
+ * (legal/withdrawal-consent.md item 1) requires the expectations to be read before the pay button
+ * is reached.
  */
 export default function PricingPage() {
   return (
@@ -94,7 +65,10 @@ export default function PricingPage() {
           <p className="mt-3 text-center text-sm text-muted-foreground">{PRICING.checkoutNote}</p>
         </section>
 
-        <PlanFit singleOn={singleEnabled()} />
+        <PlanFit />
+
+        {/* The promises are read before the pay button: each is a mechanism the buyer can check. */}
+        <PromiseBand variant="inline" />
 
         <section
           id="purchase"
@@ -102,7 +76,7 @@ export default function PricingPage() {
           className="grid gap-10 py-16 lg:grid-cols-2 lg:items-start lg:gap-12"
         >
           {/* The honest-expectations disclosure comes before the pay button, per the checkout-
-            consent spec (legal/withdrawal-consent.md item 1) and D8: software and not legal advice,
+            consent spec (legal/withdrawal-consent.md item 1) and D8: software and legal scope,
             no promised outcome, here; the price once per case and the refund route on the order
             summary beside it. Order fixed 11 Sep 2026 (audit guidebook §F3); v5 look 26 Sep 2026. */}
           <div>
@@ -156,43 +130,7 @@ export default function PricingPage() {
           />
         </section>
 
-        <section className="py-16">
-          <h2 className="mb-6 text-[clamp(1.75rem,1.2rem+1.6vw,2.5rem)] font-semibold tracking-[-0.035em] text-foreground">
-            {PRICING.compareTitle}
-          </h2>
-          <div className="overflow-x-auto">
-            <Card className="overflow-hidden rounded-[20px] p-0 shadow-lift">
-              <Table aria-label={PRICING.compareTitle}>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{PRICING.tableHeadings.feature}</TableHead>
-                    <TableHead className="text-center">{PRICING.tableHeadings.free}</TableHead>
-                    <TableHead className="text-center">{PRICING.tableHeadings.account}</TableHead>
-                    <TableHead className="bg-[hsl(var(--stage-2))] text-center text-white">
-                      {PRICING.tableHeadings.pass}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Object.values(PRICING.rows).map((row) => (
-                    <TableRow key={row.feature}>
-                      <TableCell className="font-medium">{row.feature}</TableCell>
-                      <TableCell className="text-center">
-                        <ValueCell value={row.free} />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <ValueCell value={row.account} />
-                      </TableCell>
-                      <TableCell className="bg-primary/[0.05] text-center">
-                        <ValueCell value={row.pass} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </div>
-        </section>
+        <PlanComparison />
 
         <VersusSection />
 

@@ -22,8 +22,8 @@ export function VerificationChecklistCard({ notice }: { notice: string }) {
         <div className="min-w-0 space-y-1">
           <CardTitle className="text-base">Preparing your verification</CardTitle>
           <p className="text-sm text-muted-foreground">
-            {VERIFICATION_FLAVOUR_LABELS[flavour]}. There is nothing to draft here — Amazon wants a
-            document or a step, not an argument.
+            {VERIFICATION_FLAVOUR_LABELS[flavour]}. This one is a document or a step, not an
+            argument, so there is no response to draft.
           </p>
         </div>
       </CardHeader>

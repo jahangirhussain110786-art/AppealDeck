@@ -220,7 +220,9 @@ test("when the AI draft is discarded the seller is told why", async ({ page }) =
       ai: { status: "fallback", reason: "fact_check_failed" },
     }),
   });
-  await expect(page.getByText(/added details you did not give, so it was discarded/)).toBeVisible();
+  await expect(
+    page.getByText(/found details you did not give in the AI draft.*built from your own wording/),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Use my own wording" })).toHaveCount(0);
 });
 

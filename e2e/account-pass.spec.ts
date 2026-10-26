@@ -45,12 +45,12 @@ test("the picker starts on the Appeal Pass and the card button moves it to the A
   await expect(picker.getByRole("radio", { name: /Account Pass/ })).toBeChecked();
   await expect(summary.getByText("$329.00").first()).toBeVisible();
   await expect(summary.getByText("12 months after you buy")).toBeVisible();
-  await expect(page.getByText("is not for running other sellers' cases")).toBeVisible();
+  await expect(page.getByText("Other sellers' cases need their own cover")).toBeVisible();
 
   // and back: choosing the Appeal Pass again restores its summary
   await picker.getByRole("radio", { name: /Appeal Pass/ }).check();
   await expect(summary.getByText("$249.00").first()).toBeVisible();
-  await expect(page.getByText("is not for running other sellers' cases")).toHaveCount(0);
+  await expect(page.getByText("Other sellers' cases need their own cover")).toHaveCount(0);
 });
 
 test("with no database the founding counter says nothing instead of guessing", async ({

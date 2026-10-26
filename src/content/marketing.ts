@@ -14,6 +14,7 @@ import {
   reviewListed,
 } from "@/lib/plans";
 import { OPENS_SOON, PRODUCTS } from "./purchases";
+import { SCOPE } from "./scope";
 
 /**
  * The home page tells one story, once, in the order a frightened seller needs it (25 Sep 2026):
@@ -53,7 +54,7 @@ export const HOME = {
     subline:
       "Paste your deactivation or policy notice. See what Amazon is asking for, the deadline it states and the records to gather. Free, with no sign-up.",
     primaryCta: "Decode my notice — free",
-    reassuranceLine: "AppealDeck never logs in to your Amazon account. You decide what gets sent.",
+    reassuranceLine: "You stay signed in to Seller Central, and you decide what gets sent.",
   },
   /**
    * The decoder demo under the hero (26 Sep 2026). The sample notice is decoded by the real engine
@@ -76,7 +77,7 @@ export const HOME = {
     sample: "Use a sample",
     // G-51: "Not stored" was untrue once a reading is remembered for seven days (R-5). The server
     // reads the text and keeps no copy of it; the fingerprint kept is not the notice (legal.ts).
-    note: "No Amazon login. Read on our server; we keep no copy.",
+    note: "Your login stays with you. We read the notice on our server and keep no copy.",
     // G-01: the same door on the home page.
     replyDoor: "Already appealed? Paste Amazon's reply instead.",
     submit: "Decode",
@@ -128,11 +129,11 @@ export const HOME = {
     {
       value: "0",
       title: "logins to Seller Central",
-      body: "We never touch your Amazon account. Amazon's rules bind you, so we stay out.",
+      body: "Your credentials stay with you. We work from the notice you paste and never sign in.",
     },
     {
       value: "1",
-      title: "copy of your files, on your device",
+      title: "encrypted copy of your files, kept on your device",
       body: "Encrypted in your browser. A file leaves it only for a check you ask for, or an encrypted backup you choose.",
       link: { href: "/privacy", label: "Where your data goes" },
     },
@@ -171,9 +172,9 @@ export const HOME = {
         price: "$99",
         soon: true,
         features: [
-          "One response, prepared from your confirmed facts",
+          "One response, prepared from your confirmed facts, with every revision included",
           "Your business documents read against the notice",
-          "No further responses: a reply from Amazon, or a second try, needs the Appeal Pass",
+          "A reply from Amazon, or a second try, continues on the Appeal Pass",
           "14-day refund, no questions asked",
         ],
         cta: "See the plans",
@@ -212,7 +213,7 @@ export const DECODE = {
     hint: "Include the subject line and the date at the top. With them, we can count the deadline from the notice's own date.",
     // G-70: some sellers have only a banner, or the email never arrived. Says where to look.
     cannotFind:
-      "Cannot find the notice? Look in Seller Central under Account Health and Performance Notifications, and in your spam folder. If all you have is a banner, open it and paste the text it shows.",
+      "If the email is missing, look in Seller Central under Account Health and Performance Notifications, and in your spam folder. If all you have is a banner, open it and paste the text it shows.",
     // G-01: the free reply reader has no page of its own; this is its door.
     replyDoor:
       "Already appealed? Paste Amazon's reply here instead. We will say whether it refused, asked for documents or reinstated, and show the sentence that says so.",
@@ -226,11 +227,11 @@ export const DECODE = {
   // G-77: the sample now decodes at once; its result says whose it is.
   sampleResultBadge: "Sample result",
   sampleResultNote:
-    "Made from a made-up notice, not yours: its 90 days are the sample's own window. Paste your own to decode it.",
+    "A made-up notice for this demo: its 90 days are its own window. Paste yours to decode it.",
   submitButton: "Decode",
   noticeLikenessTitle: "Before you decode",
   likenessHint:
-    "This doesn't look like an Amazon notice yet. Paste the full email, including the subject line.",
+    "This does not yet read like an Amazon notice. Paste the full email, including the subject line.",
   result: {
     // v5 (26 Sep 2026): the result's headline is the answer. The accent is the part a seller acts on.
     headline: {
@@ -299,8 +300,7 @@ export const DECODE = {
     // Reply-due tile when the notice gives a date or a length we cannot count from (7 Oct 2026).
     factAmbiguous: "Date written {date}: could be {a} or {b}. Check your notice.",
     factAmbiguousShort: "Date unclear",
-    errorNotNotice:
-      "If this is a letter you wrote to Amazon, it is not a notice. Paste the message Amazon sent you.",
+    errorNotNotice: "This looks like a letter you wrote. Paste the message Amazon sent you.",
     factProblem: "The problem",
     // A notice can raise more than one issue; the tile names the first and this names the rest.
     factAlso: "Also in this notice: {kinds}. A response has to answer each.",
@@ -316,10 +316,10 @@ export const DECODE = {
     recordNamed: "Named in the notice you pasted",
     recordInferred: "Usually needed in cases like this",
     saveTitle: "Turn this into a checklist you can finish.",
-    saveNote: "Free. Kept in this browser tab until you close it. Sign in to keep it.",
+    saveNote: "Free. Kept in this browser tab; sign in to keep it after you close the tab.",
     triageTitle: "Do now, and what to avoid",
     howRead: "How we read it",
-    notAdvice: "Software, not legal advice. Amazon decides.",
+    notAdvice: "Read from your notice. Amazon decides.",
     factDue: "Reply due",
     factNoDate: "No date stated",
     // 29 Sep 2026: a notice saying "within 90 days" showed "No date stated" here, so the one fact a
@@ -332,11 +332,11 @@ export const DECODE = {
     // its date, and promises nothing about the money. The 60 days matches the funds clock.
     moneyTitle: "Your money",
     moneyBody:
-      "Your notice says Amazon is holding your funds. If the account is not reinstated, Amazon's Funds Disbursement Eligibility policy lets you ask for them about 60 days after deactivation (the policy is dated 9 Oct 2024, and some sellers are still told 90). That is when you can ask, not a promise it is paid. Confirm the dates in your own account.",
+      "Your notice says Amazon is holding your funds. If the account is not reinstated, Amazon's Funds Disbursement Eligibility policy lets you ask for them about 60 days after deactivation (the policy is dated 9 Oct 2024, and some sellers are still told 90). That is the earliest you can ask; whether and when they are paid stays with Amazon. Confirm the dates in your own account.",
     // G-100: first sub-line of a verification result. It used to sit lower, under "How we read it".
     verificationNotAppeal:
-      "This is not an appeal. A Plan of Action is usually the wrong reply to a verification request.",
-    couldNotPlace: "We could not place this notice. Nothing below is guessed.",
+      "This is a verification request. The answer is the document or step it names, and a Plan of Action is usually the wrong reply.",
+    couldNotPlace: "This notice needs a closer reading. Nothing below is guessed.",
     looksPartial:
       "This looks like only part of your notice. The body of the email says what Amazon wants and by when, so paste all of it, from the subject line to the signature. What is below comes from the lines you pasted.",
     factScam: "Scam check",
@@ -349,10 +349,10 @@ export const DECODE = {
     factScamInsider:
       "Offers of inside help from someone at Amazon, on WhatsApp, Telegram or WeChat, are a documented scam pattern, most of all around Prime Day and the holidays. And a notice missing from Seller Central is a signal, not proof: in one April 2026 case the email was real.",
     factScamLooked:
-      "Looked for: a payment or gift-card demand, a password or code request, a move to WhatsApp or a phone, remote access or QR codes, and non-Amazon links or senders. It cannot prove a message is real; Account Health settles that.",
+      "Looked for: a payment or gift-card demand, a password or code request, a move to WhatsApp or a phone, remote access or QR codes, and non-Amazon links or senders. Only Account Health can confirm a message is real.",
     deadlinesTitle: "When it is due",
     noDeadline:
-      "We could not read a deadline in this text. Check the date on your Account Health page in Seller Central.",
+      "This text states no deadline we can read. Check the date on your Account Health page in Seller Central.",
     recordsTitle: "What to gather",
     // G-13: a notice about a product that names no ASIN. Writing a root cause for a complaint nobody
     // has named is how sellers end up inventing one.
@@ -364,7 +364,8 @@ export const DECODE = {
     noRecords:
       "This notice names no specific records. Check the response page in Seller Central before gathering anything.",
     gatedTitle: "This case needs professional help",
-    gatedFallback: "This case needs professional help. A self-serve draft is not available.",
+    gatedFallback:
+      "This case needs professional help. We leave the response to a qualified professional.",
     jumpTo: "Or go straight to",
     wordingTitle: "What the wording in your notice means",
     markedTitle: "Your notice, marked up",
@@ -405,7 +406,7 @@ export const DECODE = {
      */
     authenticityTitle: "Check this message before you act on it",
     authenticityLead:
-      "We cannot tell you whether a message really came from Amazon. These are the things in it worth checking first.",
+      "Seller Central is the one place that can confirm a message came from Amazon. Start with what is worth checking here.",
     authenticityAction:
       "Open Seller Central yourself and look at Account Health. A genuine notice appears in your account — you never have to trust the message to find it.",
     authenticityFound: "What we noticed",
@@ -440,8 +441,14 @@ export const PRICING = {
   accent: "response.",
   // G-91: one sentence under the subtitle; on a phone it was a three-line pill above the headline.
   currencyNote: "Same price everywhere. Written for Amazon US; English notices.",
-  compareTitle: "What each one includes",
-  readFirstTitle: "Read this before you pay.",
+  // 24 Oct 2026: the old heading named a table and nothing else. The section now leads with the
+  // work each plan takes off the seller, and every value states exactly what the product does
+  // (`docs/CURRENT-STATE.md`); the comparison itself is grouped by stage in `PlanComparison`.
+  compareTitle: "What each plan handles",
+  compareAccent: "handles",
+  compareLead:
+    "Free takes you from the notice to a clear plan of the proof. A paid plan prepares the response from facts you confirmed, checks it, and keeps every round together.",
+  readFirstTitle: "The deal, before you pay.",
   readFirstAccent: "pay.",
   // The honest-expectations disclosure the checkout spec requires before the pay button
   // (legal/withdrawal-consent.md item 1): software, not legal advice; no promised outcome; the
@@ -449,20 +456,19 @@ export const PRICING = {
   limits: [
     {
       title: "Amazon decides.",
-      body: "No outcome is promised, and nobody here can predict one.",
+      body: "We make the record, the documents and the wording as complete as your facts allow, so the case is ready for the decision.",
     },
     {
-      title: "Software, not a law firm.",
-      body: "Nothing here is legal advice, and nothing you tell us is legally privileged.",
+      title: "Preparation stays preparation.",
+      body: "It reads, organises and drafts from facts you confirm. Legal judgement belongs to a qualified professional, and the workspace says so on the first screen.",
     },
     {
-      title: "Your files are kept on your device.",
-      // Hedged like every other "on your device" line: an encrypted backup is a second copy.
-      body: "Clearing your browser removes them, unless you made an encrypted backup. Keep a copy of anything you need.",
+      title: "Your files stay encrypted on your device.",
+      body: "Make an encrypted backup for a second copy you can restore. Clearing your browser removes the local copy, so keep anything you need.",
     },
     {
-      title: "Some cases we do not take.",
-      body: "Allegations of fraud, forged documents or child safety go to a professional instead.",
+      title: "Cases that need a professional.",
+      body: "Fraud, forged documents and child safety call for qualified help. The workspace says so on the free decode, before you pay, and leaves the response to a professional.",
     },
   ],
   order: {
@@ -478,7 +484,7 @@ export const PRICING = {
   },
   createAccount: "Create an account",
   checkoutNote:
-    "Payment is handled by Paddle, which also sends the tax receipt. A case that already has its Pass is not charged again. The Pass is not on sale to buyers in the EU, the EEA or the United Kingdom yet; the free decoder works everywhere.",
+    "The free decoder works everywhere. Payment is handled by Paddle, which also sends the tax receipt, and a case that already has its Pass is not charged again. The paid plans are not yet on sale to buyers in the EU, the EEA or the United Kingdom.",
   subline: "Decoding is free. Pay once, only when you want the full response.",
   // 6 Oct 2026: the one plain sentence about what costs money, beside the plans and the checkout.
   freeVersusPass:
@@ -494,38 +500,111 @@ export const PRICING = {
   tableHeadings: {
     feature: "What you get",
     free: "Free",
-    account: "One Response",
+    single: "One Response",
     pass: "Appeal Pass",
+    accountPass: "Account Pass",
   },
-  rows: {
-    decode: { feature: "Notice brief & next steps", free: "Yes", account: "Yes", pass: "Yes" },
-    preview: { feature: "Request and evidence plan", free: "Yes", account: "Yes", pass: "Yes" },
-    vault: {
-      feature: "Encrypted files & case notes",
-      free: "On this device, with a free account",
-      account: "On this device",
-      pass: "On this device",
-    },
-    readiness: {
-      feature: "Submission & reply history",
-      free: "With a free account",
-      account: "Yes",
-      pass: "Yes",
-    },
-    poa: {
-      feature: "Response from your confirmed facts",
-      free: "—",
-      account: "One response",
-      pass: "Every round",
-    },
-    critic: {
-      feature: "Draft checks for missing information",
-      free: "—",
-      account: "Yes",
-      pass: "Yes",
-    },
-    devices: { feature: "Encrypted backup & restore", free: "—", account: "—", pass: "Yes" },
+  /**
+   * The four things no plan withholds. They sit above the table so the free column can be read as a
+   * real starting point, not a teaser, and the table below can spend its rows on what changes.
+   */
+  compareEveryPlan: {
+    label: "In every plan, including free",
+    items: [
+      "The deciding phrase, quoted from your notice",
+      "The records this case needs",
+      "Amazon's reply in plain words",
+      "Checks for impersonation signals",
+    ],
   },
+  /**
+   * Grouped by the work a case moves through, not by feature name. Each row says what the seller
+   * ends up with; the detail says how it is done. Values are exact: a free account keeps files and
+   * reminders with the case, the AI reading belongs to a paid plan, and a One Response does not
+   * reach a further round. `PlanComparison` reads this list, in order.
+   */
+  compareGroups: [
+    {
+      label: "Build the proof",
+      rows: [
+        {
+          feature: "Files and case notes kept on your device",
+          detail: "Encrypted there, and kept with the case once you have a free account.",
+          free: "With a free account",
+          single: "Yes",
+          pass: "Yes",
+          accountPass: "Yes",
+        },
+        {
+          feature: "Documents read against the notice",
+          detail:
+            "Every plan reads on your device. A paid plan adds the AI reading when it is available.",
+          free: "On your device",
+          single: "AI when available",
+          pass: "AI when available",
+          accountPass: "AI when available",
+        },
+      ],
+    },
+    {
+      label: "Prepare the response",
+      rows: [
+        {
+          feature: "The response, from facts you confirmed",
+          detail: "Dates, names and numbers come from what you entered, in your own words.",
+          free: "—",
+          single: "One response",
+          pass: "Every round",
+          accountPass: "Every round, every case",
+        },
+        {
+          feature: "A gap check before you send",
+          detail: "Missing records and unanswered reasons, listed while they can still be fixed.",
+          free: "—",
+          single: "Yes",
+          pass: "Yes",
+          accountPass: "Yes",
+        },
+        {
+          feature: "A warning when a new round adds nothing",
+          detail: "The case compares this round with what you already sent.",
+          free: "—",
+          single: "—",
+          pass: "Yes",
+          accountPass: "Yes",
+        },
+      ],
+    },
+    {
+      label: "Keep the case",
+      rows: [
+        {
+          feature: "A reminder before the date you choose",
+          detail: "By email, from the follow-up date set in the case.",
+          free: "With a free account",
+          single: "Yes",
+          pass: "Yes",
+          accountPass: "Yes",
+        },
+        {
+          feature: "Every round in one timeline",
+          detail: "What you sent, what Amazon replied, and what changed next.",
+          free: "With a free account",
+          single: "Yes",
+          pass: "Yes",
+          accountPass: "Yes",
+        },
+        {
+          feature: "An encrypted backup you can restore",
+          detail: "The backup stays encrypted; your passphrase never leaves your device.",
+          free: "—",
+          single: "—",
+          pass: "Yes",
+          accountPass: "Yes",
+        },
+      ],
+    },
+  ],
   samplePoa: {
     trigger: "View a sample Plan of Action",
     watermark: "ILLUSTRATIVE — not a real appeal",
@@ -555,7 +634,7 @@ export const PRICING = {
       expiresValue: "12 months after you buy",
     },
     fairUse:
-      "One Account Pass covers the cases of one seller's business. It is not for running other sellers' cases.",
+      "One Account Pass covers the cases of one seller's business. Other sellers' cases need their own cover.",
     choice: {
       legend: "Which Pass?",
       // 22 Oct 2026: once the AI document review is on sale it is in the same list, and it is not a Pass.
@@ -591,38 +670,44 @@ export const PRICING = {
    */
   versus: {
     id: "versus",
-    title: "Can I ask a chatbot instead?",
-    accent: "chatbot",
-    lead: "You can, and for a first read of a simple notice it may be enough. Here is what changes once the case needs proof.",
+    // 24 Oct 2026: the section was headed with the alternative, which read as a concession before
+    // the comparison began. The question stays as the eyebrow (it is what sellers ask), and the
+    // heading now states the division of labour the product is built on. Every row is true of the
+    // product as built; the impersonation row no longer says "on every notice", because the notice
+    // is checked every time but the warning appears only when it finds signs.
+    eyebrow: "Can I ask a chatbot instead?",
+    title: "A chatbot writes the letter. AppealDeck builds the case.",
+    accent: "builds the case.",
+    lead: "For a first read of a simple notice, a general chatbot can be enough. The difference starts once the case needs proof: the exact ask, the documents behind it, what changed since the last round, and a record that is still there when Amazon replies.",
     headings: { job: "What the case needs", chatbot: "A general chatbot", us: "AppealDeck" },
     rows: [
       {
-        job: "A draft from what you paste",
-        chatbot: "Yes",
-        us: "Yes, only from facts you confirmed",
+        job: "A response in clear words",
+        chatbot: "Yes, from what you paste",
+        us: "Yes, from facts you confirmed",
       },
       {
-        job: "Your invoices read against what Amazon asked",
-        chatbot: "If you paste each one and ask the right question",
-        us: "Dates, ASINs, names and units, on every document",
+        job: "Your documents checked against the notice",
+        chatbot: "Only the files you paste, if you ask the right question",
+        us: "Names, dates, ASINs and units, with a plain note when a file cannot be read",
       },
       {
-        job: "A warning when a notice looks fake",
+        job: "A check for impersonation signals",
         chatbot: "Only if you think to ask",
-        us: "On every notice",
+        us: "On every notice, flagged when the signs are there",
       },
       {
-        job: "Every round kept together",
-        chatbot: "Usually not across chats",
-        us: "Every reply, document and response in one case",
-      },
-      {
-        job: "A warning when a resubmission has not changed",
+        job: "A warning when a new round adds nothing",
         chatbot: "No",
-        us: "Yes, before you send",
+        us: "Yes, before you send it again",
       },
       {
-        job: "A reminder before a date you set",
+        job: "Every round in one case",
+        chatbot: "Usually not across chats",
+        us: "Every reply, document and revision in one place",
+      },
+      {
+        job: "A reminder before the date you choose",
         chatbot: "No",
         us: "Yes, by email",
       },
@@ -632,7 +717,7 @@ export const PRICING = {
         us: "Kept on your device; a file leaves only for a check you ask for",
       },
     ],
-    note: "AppealDeck does not claim Amazon treats a chatbot's letter differently. A response that does not answer what the notice asked is a weak response, whoever wrote it.",
+    note: "What matters in a response is whether it answers what the notice asked, whoever wrote it.",
   },
   /**
    * The going rates around the Pass, so $249 is read against something. Each figure is from public
@@ -643,7 +728,15 @@ export const PRICING = {
     title: "Compare the kind of help",
     checkedOn: "2026-10-24",
     checkedLabel:
-      "Examples read on 24 October 2026. Software and human services differ in scope. Open the source for current prices and terms.",
+      "The other prices are examples read on 24 October 2026. Software and human services differ in scope. Open the source for current prices and terms.",
+    // The strip used to list three alternatives and leave the reader to find our price from the
+    // cards above. Ours is now in the same row, first, so the comparison starts from the Pass.
+    own: {
+      what: "AppealDeck Appeal Pass",
+      price: "$249 once",
+      detail: "One case, every round, the same 14-day refund",
+      href: "#purchase",
+    },
     items: [
       { what: "ChatGPT Free", price: "$0", href: "https://chatgpt.com/pricing/" },
       {
@@ -664,7 +757,7 @@ export const PRICING = {
 export const FOUNDER_NOTE: { name: string; location: string; text: string } | null = {
   name: "Jhangir Hussain",
   location: "Pakistan",
-  text: "I build software, and I am an Amazon seller myself. When I saw how much sellers were being asked to pay to be heard after a suspension, often in a panic and on a deadline, I wanted a calmer way through. So I built one: it reads your notice, shows what Amazon is really asking for, checks the documents you already have, and helps you write a clear, honest answer in your own words. It is software, not a law firm, and no one can promise what Amazon will decide. But getting your case in order should not cost a fortune.",
+  text: "I build software, and I am an Amazon seller myself. When I saw how much sellers were being asked to pay to be heard after a suspension, often in a panic and on a deadline, I wanted a calmer way through. So I built one: it reads your notice, shows what Amazon is really asking for, checks the documents you already have, and helps you write a clear, honest answer in your own words. It is case-preparation software, and Amazon alone decides the outcome. Getting your case in order should be within reach.",
 };
 
 export type FaqItem = {
@@ -683,15 +776,15 @@ export const FAQ = {
     {
       id: "start-free",
       q: "What can I do for free?",
-      a: "Decode your notice and organize your case before you decide to pay.",
+      a: "Decode the notice, build the record and write your answers — all free. Pay only if you want the response prepared.",
       detail:
-        "Keep the request, files, notes and replies together. Guest work stays in this browser session. Sign in to move it to your account vault on this device.",
+        "Keep the request, files, notes and replies together. Guest work stays in this browser session. Sign in to keep it in your account vault on this device.",
       link: { label: "Try the free decoder", href: "/decode" },
     },
     {
       id: "decode",
       q: "How does the decoder work?",
-      a: "It turns the notice into a short brief: the likely issue, stated time windows and next steps.",
+      a: "It turns the notice into a short brief: the issue it raises, the time window it states and the next steps.",
       detail:
         "Your notice is sent to AppealDeck for analysis. Check the result against your current notice and response page; you can correct the case before confirming it.",
     },
@@ -705,9 +798,9 @@ export const FAQ = {
     {
       id: "independence",
       q: "Is AppealDeck part of Amazon?",
-      a: "No. AppealDeck is software, operated by Jhangir Hussain, trading as Hawlton, in Pakistan.",
+      a: "AppealDeck is independent software, operated by Jhangir Hussain, trading as Hawlton, in Pakistan.",
       detail:
-        "We are not affiliated with or endorsed by Amazon. We do not access your Seller Central account or submit appeals for you.",
+        "We are not affiliated with or endorsed by Amazon. Your Seller Central account stays yours: you sign in and submit every response yourself.",
       link: { label: "About the service", href: "/terms#independence" },
     },
     {
@@ -722,15 +815,14 @@ export const FAQ = {
       q: "Will this get my account reinstated?",
       // G-52: the second sentence says what the buyer does get, with no outcome word in it.
       a: "Amazon decides the outcome and the review time. What you get is the record, the document checks and a response built only from your facts, every round.",
-      detail:
-        "AppealDeck helps you organize evidence and prepare a factual response. An Appeal Pass pays for that preparation. We do not promise reinstatement.",
+      detail: `An Appeal Pass pays for the preparation, not the decision. ${SCOPE.outcome}`,
     },
     {
       id: "review-time",
       q: "How long does Amazon take to answer?",
       a: AMAZON_REVIEW_TIME,
       detail:
-        "Nobody outside Amazon can say how long your case will take, and we do not guess. While you wait, you can keep the next reply with this attempt, and set a follow-up date so the case tells you when to look again.",
+        "The pace is Amazon's to set. While you wait, keep the next reply with this attempt, and set a follow-up date so the case tells you when to look again.",
     },
     {
       id: "deadlines",
@@ -744,7 +836,7 @@ export const FAQ = {
       q: "Who submits the response?",
       a: "You review and submit through the official channel in the current request.",
       detail:
-        "AppealDeck never signs in or submits for you. Record what you sent in History so it stays with that attempt.",
+        "Your Seller Central account stays yours: you sign in and submit, and History keeps exactly what you sent with that attempt.",
     },
     {
       id: "replies",
@@ -769,7 +861,7 @@ export const FAQ = {
       // drafting flow) and left out the one thing that does reach an AI provider. Now says what
       // the privacy policy says, and legalDisclosures.test.ts holds the two together.
       detail:
-        "The only things sent to an AI provider (Google Gemini) are what it needs to write a Plan of Action, a document-request response or questionnaire answers (your notice, your written answers and the names and notes of your records, never the files), a business document you ask us to check, a section of your response you ask us to improve the wording of, and the text of a notice our own rules cannot place (for a second reading you confirm). We do not keep a copy of any of them. Identity, bank and proof-of-address documents are checked on your device and never uploaded.",
+        "The only things sent to an AI provider (Google Gemini) are what it needs to write a Plan of Action, a document-request response or questionnaire answers (your notice, your written answers and the names and notes of your records, never the files), a business document you ask us to check, a section of your response you ask us to improve the wording of, and the text of a notice our own rules cannot place (for a second reading you confirm). We keep no copy of any of them. Identity, bank and proof-of-address documents are checked on your device and never uploaded.",
       link: { label: "How processing works", href: "/privacy#how-we-use" },
     },
     {
@@ -790,9 +882,9 @@ export const FAQ = {
     {
       id: "chatbot",
       q: "Can I use ChatGPT or Claude instead?",
-      a: "You can write a draft that way, and for a first read of a simple notice it may be enough.",
+      a: "A chatbot can draft the letter, and for a first read of a simple notice it may be enough.",
       detail:
-        "A chatbot does not check your invoices against what Amazon asked, keep every round together, tell you when a resubmission has not changed or remind you before a date, and it can add details you never gave it. AppealDeck does those things, builds the response only from facts you confirmed, and keeps your files on your device. Use whichever helps, and check every fact against your own records before you send.",
+        "A chatbot sees only what you paste. It can miss which invoice Amazon asked about, repeat a round that adds nothing, or fill a gap with a detail you never supplied. AppealDeck reads the notice, checks the documents it can against it, keeps every round in one case, warns you before a round that adds nothing, and builds the response only from facts you confirmed. Your files stay on your device. Use a chatbot for wording if it helps, and check every fact against your own records before you send.",
       link: { label: "See the comparison", href: "/pricing#versus" },
     },
     {
@@ -801,7 +893,7 @@ export const FAQ = {
       // 22 Oct 2026: the answer changes once professional prices are on sale.
       a: professionalsListed()
         ? `${professionalsEnabled() ? "" : OPENS_SOON.faqLead}Yes, for verified professionals: case credits in packs of ${PRODUCTS.pack10.count} and ${PRODUCTS.pack30.count}, or the Pro plan. The checks are free, and the written response is $249 per case for everyone else.`
-        : "Not yet. The checks are free, and the written response is $249 per case. Professional pricing is being set with the first writers.",
+        : "Professional pricing is being shaped with the first writers. The checks are free today, and the written response is $249 per case.",
       detail: professionalsListed()
         ? "Each credit activates one case with an Appeal Pass. We verify professionals by hand first, so a seller cannot buy a professional price for their own case. The page for writers has the prices and how to be verified."
         : "If you handle cases every week, write to us with how you work and what a case should cost you. The page for writers lists what you can use today.",

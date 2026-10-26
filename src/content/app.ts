@@ -24,10 +24,10 @@ export const APP = {
     dashboardSignedOut: {
       title: "Your case, at a glance",
       draftNote:
-        "This draft is kept in this browser tab until you close it. Sign in to keep it and continue.",
-      emptyTitle: "No case in this browser tab yet",
+        "Your draft stays in this browser tab while you work. Sign in to keep it when you close the tab.",
+      emptyTitle: "Your first case starts here",
       emptyDesc:
-        "Decode a notice, then start your case. Everything you enter is kept in this browser tab until you close it. Sign in to keep it.",
+        "Decode a notice, then start your case. Everything you enter stays in this browser tab until you close it; sign in to keep it.",
       decode: "Decode a notice",
       start: "Start your case",
     },
@@ -52,7 +52,7 @@ export const APP = {
       // Was "Sign in when the interview reaches your documents" — there has been no interview since
       // 22 Sep 2026, and a guest can attach documents without signing in.
       startNote:
-        "Kept in this browser tab as you go, with no account needed, until you close it. Sign in to keep it with your account.",
+        "Your work stays in this browser tab as you go, with no account needed, until you close it. Sign in to keep it with your account.",
     },
     composeGate: {
       title: "Unlock the drafted plan",
@@ -265,7 +265,7 @@ export const APP = {
     },
     activity: {
       title: "Evidence uploaded",
-      empty: "No files uploaded yet.",
+      empty: "Files you attach will appear here.",
       viewAll: "View all in Vault",
     },
     caseSummary: {
@@ -276,7 +276,7 @@ export const APP = {
           "Decode your notice on the free decoder, or start a case and paste it in. Everything is saved in this browser as you go; signed out, only until you close the tab.",
         // Signed in, nothing here: the likely reason is a case started on another device (B1).
         descriptionSignedIn:
-          "Your cases are stored on the device where you started them, not on our servers. Open AppealDeck on that device to continue, or start the case again here.",
+          "Your cases stay encrypted on the device where you started them. Open AppealDeck on that device to continue, or start the case again here.",
         cta: "Start your case",
         // G-71: a seller who started on another device has a backup to bring across, not a lost case.
         restore: "Restore an encrypted backup",
@@ -306,9 +306,9 @@ export const APP = {
       continueCase: "Continue case",
     },
     novelty: {
-      title: "Resubmission requires novelty",
+      title: "Show what the next attempt adds",
       description:
-        "Resubmissions must include new information or changed framing. Show what you changed since your last submission.",
+        "New information or a changed framing gives the reviewer something new to decide on. This shows what you changed since your last submission.",
     },
     stateLabels: {
       DECODED: "Notice decoded",
@@ -387,12 +387,11 @@ export const APP = {
         scheduled:
           "We will email you on or soon after {date}, once a day at about 08:00 UTC, if your email address is confirmed.",
         sent: "Email sent on {date}.",
-        retrying:
-          "We could not deliver the email yet. We will try again at the next daily run — check your spam folder too.",
+        retrying: "The next daily run will try the email again — check your spam folder too.",
         failed:
-          "We could not deliver the email after several tries. Check the email address on your account, then turn reminders off and on again.",
+          "The email did not go through after several tries. Check the email address on your account, then turn reminders off and on again.",
         missing:
-          "Your reminder is not scheduled on our side. Turn email reminders off and on again to set it.",
+          "This reminder needs setting again on our side. Turn email reminders off and on again to schedule it.",
       },
     },
     replyCard: {
@@ -406,7 +405,7 @@ export const APP = {
       markedAs: "Amazon marked this as:",
       updateButton: "Update case",
       cancelButton: "Cancel",
-      empty: "No evidence attached yet.",
+      empty: "Evidence you attach will appear here.",
     },
     submitCard: {
       title: "You submitted this in Seller Central",
@@ -453,7 +452,7 @@ export const APP = {
       noTemplatePhrases: "No placeholders detected",
       noveltyFirst: "First attempt, nothing to compare",
       sellerCentral: "Open Seller Central",
-      submitDetail: "AppealDeck never submits to Amazon.",
+      submitDetail: "You send it, and your login stays yours.",
       evidenceMissingDetail: "Missing: {kinds}",
       evidenceDisqualifiedDetail: "Not accepted: {kinds}",
       items: {
@@ -535,7 +534,7 @@ export const APP = {
     // second copy, so "only on this device" would not be true for everyone.
     heroTitle: "Encrypted, and kept on this device.",
     heroBody:
-      "If this browser's data is cleared, the files go with it, unless you make an encrypted backup.",
+      "Make an encrypted backup and your files have a second copy. Without one, clearing this browser's data clears the files with it.",
     heroLink: "Where your data goes",
     addTitle: "Add a file",
     addDescription:
@@ -545,7 +544,7 @@ export const APP = {
     backup: {
       title: "Keep a recovery copy",
       description:
-        "Create an encrypted cloud backup for this account. It includes all cases and files in this vault, up to about 7 MB of files in total. A larger vault cannot be backed up; download the largest files separately.",
+        "Create an encrypted cloud backup for this account. It includes all cases and files in this vault, up to about 7 MB of files in total. For a larger vault, download the largest files separately.",
       disclosure:
         "File contents are encrypted. Filenames, tags, file types and case references are included as visible metadata.",
       restoredTitle: "Your vault was restored",

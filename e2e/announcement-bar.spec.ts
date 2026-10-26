@@ -37,6 +37,21 @@ test.describe("Announcement bar", () => {
     ).toBeVisible();
   });
 
+  test("keeps the message inside the bar rather than clipping it behind the controls", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    // The rotate bar keeps an invisible copy of every message to size the row, so take the
+    // visible one (found when the sizer was added, 24 Oct 2026).
+    const message = bar(page).getByText(first.text).filter({ visible: true }).first();
+    await expect(message).toHaveCount(1);
+    const barBox = (await bar(page).boundingBox())!;
+    const textBox = (await message.boundingBox())!;
+    expect(textBox.y).toBeGreaterThanOrEqual(barBox.y);
+    expect(textBox.y + textBox.height).toBeLessThanOrEqual(barBox.y + barBox.height + 1);
+  });
+
   test("with reduced motion nothing moves on its own, and the arrows step through", async ({
     page,
   }) => {

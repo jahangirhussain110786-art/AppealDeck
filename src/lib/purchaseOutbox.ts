@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "./supabase/server";
 import { sendPurchaseConfirmationEmail } from "./email";
+import { fetchPaidAmount } from "./paddleTransaction";
 import type { PurchaseKind } from "@/content/purchases";
 
 const KINDS: readonly PurchaseKind[] = [
@@ -37,6 +38,9 @@ export async function deliverPurchaseEmails(
         purchasedAt: row.purchased_at,
         consentText: row.consent_text,
         idempotencyKey: `purchase/${row.transaction_id}`,
+        // Read-only, and null on any failure: the email then says only that Paddle's receipt
+        // carries the amount, rather than stating a number we could not verify.
+        paid: (await fetchPaidAmount(row.transaction_id)) ?? undefined,
         // What was bought, as the payment function recorded it on this row (migration 0018). A row from
         // before that migration has no kind and reads as the Appeal Pass, which is what it was.
         kind: purchaseKindOf(row.kind),

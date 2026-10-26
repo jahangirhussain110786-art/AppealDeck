@@ -134,9 +134,9 @@ describe("One Response (23 Oct 2026)", () => {
     expect(dollars(PRODUCTS.single.price)).toBeLessThan(249);
   });
 
-  it("says what it does not include everywhere it is described", () => {
+  it("says where it stops everywhere it is described", () => {
     const card = HOME.plans.items.find((p) => p.name === PRODUCTS.single.name)!;
-    expect(card.features.join(" ")).toMatch(/No further responses/);
+    expect(card.features.join(" ")).toMatch(/continues on the Appeal Pass/);
     expect(EMAIL_PRODUCTS.single_response.priceLine).toContain(
       "a further response needs the Appeal Pass",
     );

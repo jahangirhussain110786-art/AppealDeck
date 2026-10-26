@@ -36,8 +36,8 @@ test("an invoice is checked on the device, with nothing sent anywhere", async ({
 
 test("the page is findable, honest about its limits, and accessible", async ({ page }) => {
   await page.goto("/check-invoice");
-  await expect(page.getByText("What it does not do")).toBeVisible();
-  await expect(page.getByText(/does not tell you whether Amazon will accept/i)).toBeVisible();
+  await expect(page.getByText("Where this check stops")).toBeVisible();
+  await expect(page.getByText(/Amazon decides whether the invoice is accepted/i)).toBeVisible();
   await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
 
   // Linked from the footer, and listed for search engines.
@@ -76,5 +76,5 @@ test("the invoice's two sums are worked out with the working (G-02)", async ({ p
   await expect(sums.getByText("Does it cover what you sold?")).toBeVisible();
   await expect(sums).toContainText(/You sold 5\.|the 5 units you sold/);
   // And it still says what it cannot know.
-  await expect(sums).toContainText(/do not tell you whether Amazon will accept it/);
+  await expect(sums).toContainText(/Whether Amazon accepts it stays with Amazon/);
 });

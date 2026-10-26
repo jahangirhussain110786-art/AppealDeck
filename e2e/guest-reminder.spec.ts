@@ -53,7 +53,7 @@ test("a notice with a date ahead offers one reminder, asks for consent, and says
   await submit.click();
 
   await expect(box.getByText(/Check your inbox/)).toBeVisible();
-  await expect(box.getByText(/Nothing more is sent until you click it/)).toBeVisible();
+  await expect(box.getByText(/The reminder is set once you click it/)).toBeVisible();
   // Only the address, the kind and the day travel; the notice does not.
   expect(sent).toMatchObject({ email: "seller@example.com", dueOn: "2036-01-15", consent: true });
   expect(JSON.stringify(sent)).not.toContain("supplier invoices");

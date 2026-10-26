@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
+import { PRICING } from "../src/content/marketing";
+import { listedPaidPlans } from "../src/lib/plans";
 
 test.describe("Marketing site (public)", () => {
   test("home page loads with hero and pricing CTA", async ({ page }) => {
@@ -22,16 +24,23 @@ test.describe("Marketing site (public)", () => {
     await expect(page.getByText(/part of amazon/i)).toBeVisible();
   });
 
-  test("pricing page renders the Free, One Response and Appeal Pass columns", async ({ page }) => {
+  test("pricing page renders a column for every listed plan", async ({ page }) => {
     await page.goto("/pricing");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByRole("columnheader", { name: "Free", exact: true })).toBeVisible();
-    await expect(
-      page.getByRole("columnheader", { name: "One Response", exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("columnheader", { name: "Appeal Pass", exact: true }),
-    ).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Free" })).toBeVisible();
+    // The table reads the same availability list as the cards, so a plan that is not on sale
+    // (no Paddle price) is absent here too (24 Oct 2026).
+    const headings = {
+      single: PRICING.tableHeadings.single,
+      case: PRICING.tableHeadings.pass,
+      account: PRICING.tableHeadings.accountPass,
+    } as const;
+    for (const plan of listedPaidPlans()) {
+      await expect(
+        // The header also carries the price and, on the Pass, the Recommended pill.
+        page.getByRole("columnheader", { name: headings[plan] }),
+      ).toBeVisible();
+    }
   });
 
   test("decode page accepts pasted notice text", async ({ page }) => {
@@ -137,7 +146,7 @@ test.describe("Marketing site (public)", () => {
     await expect(main.getByText("Sample result", { exact: true })).toBeVisible();
     // The sample says funds are on hold, so the money line is shown, quoting no promise.
     await expect(main.getByText("Your money", { exact: true })).toBeVisible();
-    await expect(main.getByText(/not a promise it is paid/)).toBeVisible();
+    await expect(main.getByText(/whether and when they are paid stays with Amazon/)).toBeVisible();
     // The scam check says what it looked for.
     await expect(main.getByText(/Looked for: a payment or gift-card demand/)).toBeVisible();
     // The sample names an ASIN, so the term is explained once.
@@ -198,7 +207,7 @@ test.describe("Marketing site (public)", () => {
     await expect(page.getByRole("link", { name: "support@appealdeck.com" })).toBeVisible();
     // The limits are the point, not the disclaimer: a seller must not wait on a reply here while
     // their own deadline runs out.
-    await expect(page.getByText(/cannot extend, pause or appeal an Amazon deadline/)).toBeVisible();
+    await expect(page.getByText(/Amazon sets the clock/)).toBeVisible();
     await expect(page.getByText(/passwords, one-time codes or payment card details/)).toBeVisible();
   });
 });

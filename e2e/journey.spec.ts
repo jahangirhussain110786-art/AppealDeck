@@ -45,7 +45,7 @@ test("an outcome is recorded, survives a reload, and can be taken back", async (
   await startCase(page, invoiceNotice, "Upload the invoice.");
   await page.goto("/dashboard");
   const outcome = page.getByLabel("What happened with this case?");
-  await expect(page.getByText(/^Nothing recorded yet/)).toBeVisible();
+  await expect(page.getByText(/^Your outcome will appear here once you record it/)).toBeVisible();
 
   await outcome.selectOption("reinstated");
   await expect(page.getByText(/^Recorded by you on .* not independently verified$/)).toBeVisible();
@@ -55,7 +55,7 @@ test("an outcome is recorded, survives a reload, and can be taken back", async (
 
   // "Still waiting" must clear the record, not merge it back (audit item P).
   await page.getByLabel("What happened with this case?").selectOption("pending");
-  await expect(page.getByText(/^Nothing recorded yet/)).toBeVisible();
+  await expect(page.getByText(/^Your outcome will appear here once you record it/)).toBeVisible();
   await page.reload();
   await expect(page.getByLabel("What happened with this case?")).toHaveValue("pending");
 });
@@ -256,10 +256,12 @@ test("a response date entered from Account Health is kept and counted down to", 
   await page.getByLabel("Your reply-by date").fill("2027-01-15");
   await page.getByRole("button", { name: "Save date" }).click();
   await expect(page.getByText("You entered this date from Account Health.")).toBeVisible();
-  await expect(page.getByText(/Respond by 15 Jan 2027/).first()).toBeVisible();
+  // The first screen repeats the deadline for phones; at this viewport that copy is hidden.
+  const dueLine = page.getByText(/Respond by 15 Jan 2027/).filter({ visible: true });
+  await expect(dueLine.first()).toBeVisible();
 
   await page.reload();
-  await expect(page.getByText(/Respond by 15 Jan 2027/).first()).toBeVisible();
+  await expect(dueLine.first()).toBeVisible();
 
   await page.goto("/dashboard");
   // The dashboard's "Coming up" list counts down to it, which is what the date is for.
@@ -299,7 +301,7 @@ test("after two responses and another refusal, the case offers a change of appro
     await page.getByRole("button", { name: "Record this response" }).click();
     await expect(page.getByText(text).first()).toBeVisible();
   }
-  const title = "Two responses have not resolved this. Change the approach, not only the words.";
+  const title = "Two responses in, the next step is a change of approach.";
   await expect(page.getByText(title)).toHaveCount(0);
 
   await page.getByLabel("What the response page asks for").fill("Submit your Plan of Action.");

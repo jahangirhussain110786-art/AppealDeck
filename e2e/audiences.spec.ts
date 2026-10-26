@@ -59,22 +59,33 @@ test("pricing answers 'Can I ask a chatbot instead?' and dates the going rates",
   page,
 }) => {
   await page.goto("/pricing");
+  // The question is the eyebrow; the heading answers it with the division of labour.
+  await expect(page.getByText("Can I ask a chatbot instead?", { exact: true })).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Can I ask a chatbot instead?", level: 2 }),
+    page.getByRole("heading", {
+      name: "A chatbot writes the letter. AppealDeck builds the case.",
+      level: 2,
+    }),
   ).toBeVisible();
   const table = page.getByRole("table").filter({ hasText: "A general chatbot" });
   await expect(table.getByRole("row")).toHaveCount(8); // heading row + seven jobs
   await expect(
-    table.getByRole("cell", { name: "A warning when a resubmission has not changed" }),
+    table.getByRole("rowheader", { name: "A warning when a new round adds nothing" }),
   ).toBeVisible();
   await expect(page.getByText("read on 24 October 2026")).toBeVisible();
   // It says plainly where the alternative is enough, and claims nothing about Amazon.
   await expect(
-    page.getByText("for a first read of a simple notice it may be enough").first(),
+    page
+      .locator("#versus")
+      .getByText("For a first read of a simple notice, a general chatbot can be enough."),
   ).toBeVisible();
   await expect(
-    page.getByText("does not claim Amazon treats a chatbot's letter differently"),
+    page.getByText("whether it answers what the notice asked, whoever wrote it"),
   ).toBeVisible();
+  // The Pass sits in the same price strip as the alternatives, at the price the page charges.
+  const versus = page.locator("#versus");
+  await expect(versus.getByText("AppealDeck Appeal Pass")).toBeVisible();
+  await expect(versus.getByText("$249 once", { exact: true })).toBeVisible();
 });
 
 test("the chatbot answer in the FAQ points at that comparison", async ({ page }) => {
@@ -100,11 +111,15 @@ test("the writers' page shows the professional prices as opening soon, with no w
     page.getByRole("heading", { name: "Check the proof on every client case.", level: 1 }),
   ).toBeVisible();
   if (process.env.NEXT_PUBLIC_PLANS_PREVIEW !== "on") {
-    await expect(page.getByText("Professional pricing is not set yet.")).toBeVisible();
+    await expect(
+      page.getByText("Professional pricing is being shaped with the first writers."),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Opens soon" })).toHaveCount(0);
     return;
   }
-  await expect(page.getByText("Professional pricing is not set yet.")).toHaveCount(0);
+  await expect(
+    page.getByText("Professional pricing is being shaped with the first writers."),
+  ).toHaveCount(0);
   // The prices are cards under the hero, as on the sellers page; credits and the Pro plan are previewed.
   const cards = page.getByRole("list", { name: "Prices for writers and VA teams" });
   await expect(cards.getByText("For every client case")).toBeVisible();
@@ -118,7 +133,7 @@ test("the writers' page shows the professional prices as opening soon, with no w
     0,
   );
   await expect(page.getByRole("link", { name: "Ask to be verified" })).toBeVisible();
-  await expect(page.getByText("It is not shared between team members yet")).toBeVisible();
+  await expect(page.getByText("Hand it to a colleague with an export")).toBeVisible();
   const write = page.getByRole("link", { name: "Write to us about how you work" }).first();
   await expect(write).toHaveAttribute("href", /^mailto:support@appealdeck\.com\?subject=/);
   await expect(page.getByRole("link", { name: "See the partner program" })).toHaveAttribute(

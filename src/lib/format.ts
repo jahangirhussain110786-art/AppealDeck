@@ -78,3 +78,15 @@ export function formatBytes(n: number): string {
   if (n < 1_048_576) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / 1_048_576).toFixed(1)} MB`;
 }
+
+/**
+ * A lowest-unit amount, as Paddle reports it (`totals.grand_total`), read as money. The currency's
+ * own minor-unit count sets the divisor, so a zero-decimal currency does not show a false fraction.
+ * Returns an empty string rather than a guess when the amount or currency is not usable.
+ */
+export function formatMoney(amount: number, currency: string): string {
+  if (!Number.isInteger(amount) || amount < 0 || !/^[A-Z]{3}$/.test(currency)) return "";
+  const format = new Intl.NumberFormat("en-US", { style: "currency", currency });
+  const digits = format.resolvedOptions().maximumFractionDigits ?? 2;
+  return format.format(amount / 10 ** digits);
+}

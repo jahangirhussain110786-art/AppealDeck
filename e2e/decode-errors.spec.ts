@@ -18,7 +18,9 @@ test("a paste that is not a notice is refused once, and Edit what I pasted focus
   await expect(alert).toContainText("whole message");
   // Not repeated: the old page appended "Paste the full Amazon notice and try again." to it.
   await expect(alert).not.toContainText("try again");
-  await expect(alert).toContainText("If this is a letter you wrote to Amazon, it is not a notice.");
+  await expect(alert).toContainText(
+    "This looks like a letter you wrote. Paste the message Amazon sent you.",
+  );
   await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(0);
   await page.getByRole("button", { name: "Edit what I pasted" }).click();
   await expect(box).toBeFocused();

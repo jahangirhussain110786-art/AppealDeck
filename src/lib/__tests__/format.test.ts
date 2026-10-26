@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatLongDate, formatRelativeDays, formatBytes } from "@/lib/format";
+import {
+  formatDate,
+  formatLongDate,
+  formatRelativeDays,
+  formatBytes,
+  formatMoney,
+} from "@/lib/format";
 
 describe("formatDate", () => {
   it("formats a Date as 14 Sep 2026", () => {
@@ -44,6 +50,20 @@ describe("formatRelativeDays", () => {
   });
   it("shows verify message for null", () => {
     expect(formatRelativeDays(null, now)).toBe("verify in your Account Health dashboard");
+  });
+});
+
+describe("formatMoney", () => {
+  it("formats Paddle's lowest-unit total as the buyer's currency", () => {
+    expect(formatMoney(16_900, "USD")).toBe("$169.00");
+  });
+  it("honours a currency with no minor unit", () => {
+    expect(formatMoney(16_900, "JPY")).toBe("¥16,900");
+  });
+  it("returns empty rather than a guess for an unusable amount or currency", () => {
+    expect(formatMoney(-1, "USD")).toBe("");
+    expect(formatMoney(1.5, "USD")).toBe("");
+    expect(formatMoney(100, "usd")).toBe("");
   });
 });
 

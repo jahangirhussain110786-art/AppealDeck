@@ -239,12 +239,15 @@ export function CaseTimeline({
   workspace,
   createdAt,
   deadlines,
+  deadlinesClassName,
   action,
   children,
 }: {
   workspace: Workspace;
   createdAt?: string;
   deadlines: TimelineDeadline[];
+  /** Hides the due-date lines on a width where they are shown above the tabs instead. */
+  deadlinesClassName?: string;
   action?: ReactNode;
   children?: ReactNode;
 }) {
@@ -305,11 +308,16 @@ export function CaseTimeline({
       </div>
       <ol className="case-timeline px-5 pb-4 pt-2">
         {deadlines.length === 0 ? (
-          <Item icon={<CircleDot className="size-2.5" />} title={C.overview.timeline.noDeadline} />
+          <Item
+            className={deadlinesClassName}
+            icon={<CircleDot className="size-2.5" />}
+            title={C.overview.timeline.noDeadline}
+          />
         ) : (
           deadlines.map((d) => (
             <Item
               key={d.text}
+              className={deadlinesClassName}
               hot={d.hot}
               icon={<CircleDot className="size-2.5" />}
               title={d.text}
@@ -334,15 +342,22 @@ function Item({
   icon,
   title,
   hot = false,
+  className,
   children,
 }: {
   icon: ReactNode;
   title: string;
   hot?: boolean;
+  className?: string;
   children?: ReactNode;
 }) {
   return (
-    <li className="grid grid-cols-[1.125rem_minmax(0,1fr)] gap-3 py-2.5 text-[0.84375rem]">
+    <li
+      className={cn(
+        "grid grid-cols-[1.125rem_minmax(0,1fr)] gap-3 py-2.5 text-[0.84375rem]",
+        className,
+      )}
+    >
       <span
         aria-hidden
         className={cn(

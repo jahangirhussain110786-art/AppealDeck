@@ -3,7 +3,8 @@ import { expect, test, type Page } from "@playwright/test";
 // Dex, the guide in the corner of every page: one line, a picture that never catches a click, two small
 // buttons, and a "hide" choice that is remembered.
 const tip = (page: Page) => page.getByRole("button", { name: "Show Dex's tip" });
-const picture = (page: Page) => page.locator("[data-no-print] img").first();
+const picture = (page: Page) =>
+  page.getByRole("complementary", { name: "Page guide" }).locator("img");
 
 test("Dex greets on the home page, can be hidden, and stays hidden after a reload", async ({
   page,
@@ -87,4 +88,17 @@ test("Dex says so on a page that is not there", async ({ page }) => {
   await page.goto("/there-is-no-such-page");
   await expect(page.getByText("I cannot find that page.")).toBeVisible();
   await expect(picture(page)).toHaveAttribute("src", /dex-confused-/);
+});
+
+test("the phone guide stays open while its controls have keyboard focus", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/");
+  const show = page.getByRole("button", { name: "Show Dex, your guide" });
+  await show.click();
+  await tip(page).focus();
+  await page.waitForTimeout(8500);
+  await expect(tip(page)).toBeFocused();
+  const dock = page.getByRole("button", { name: "Tuck Dex back into the corner" });
+  await dock.click();
+  await expect(show).toBeFocused();
 });

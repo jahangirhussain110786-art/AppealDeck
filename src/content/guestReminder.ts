@@ -16,8 +16,7 @@ export const GUEST_REMINDER = {
     privacyLink: "How this is kept",
     submit: "Email me a reminder",
     sending: "Sending…",
-    pending:
-      "Check your inbox. We sent a link to confirm. Nothing more is sent until you click it.",
+    pending: "Check your inbox for a link to confirm. The reminder is set once you click it.",
     already: "You already have a reminder for this date.",
     tooLate: "That date is today or has passed, so there is nothing to remind you of.",
     limit: "That address already has the most reminders we send.",

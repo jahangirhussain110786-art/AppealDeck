@@ -58,7 +58,7 @@ export const ANNOUNCEMENT_BAR = {
     },
     {
       id: "one-pass",
-      text: "One Appeal Pass covers every revision of its case. $249, one time, no subscription.",
+      text: "One Appeal Pass covers every revision. $249 once, no subscription.",
       href: "/pricing",
       linkLabel: "See pricing",
     },

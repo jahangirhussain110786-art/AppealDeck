@@ -10,7 +10,7 @@ import { isOfferLevelNotice, OFFER_LEVEL_DEADLINE_LABEL } from "./noticeScope";
  * sentence, and the date Account Health shows is the one that counts.
  */
 export const NO_DEADLINE_LABEL =
-  "No deadline is written in this notice. Open the Appeal button in Account Health: if Amazon set a date, it shows there and that date wins.";
+  "This notice states no deadline. Open the Appeal button in Account Health: if Amazon set a date, it shows there and that date wins.";
 
 export type DeadlineKind =
   | "appeal_window"

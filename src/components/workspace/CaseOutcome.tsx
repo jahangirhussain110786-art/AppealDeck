@@ -161,7 +161,8 @@ export function CaseOutcome({
           </div>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Nothing recorded yet. This is your own record — AppealDeck does not check with Amazon.
+            Your outcome will appear here once you record it. This is your own record, kept as you
+            set it.
           </p>
         )}
         <div className="flex flex-wrap items-center gap-3">

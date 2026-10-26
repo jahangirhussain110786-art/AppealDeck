@@ -278,6 +278,27 @@ export function PurchasePanel({
       singleAlreadyBought ||
       coveredAgainstThisPlan);
 
+  // What stands between this buyer and paying, as a step they can take (24 Oct 2026). The button
+  // used to say "Resolve your case first" and do nothing; now each blocked state names its own next
+  // page. `busy` is the brief lookup, where the honest next step is to wait.
+  const resolve: { label: string; href?: string; busy?: boolean } | null = !blocked
+    ? null
+    : activeCase.status === "checking"
+      ? { label: "Checking your case…", busy: true }
+      : activeCase.status === "none"
+        ? { label: "Start your case", href: "/case" }
+        : activeCase.status === "locked"
+          ? { label: "Unlock your case", href: "/case" }
+          : reviewAlreadyBought
+            ? { label: "Open your documents", href: "/case?view=evidence" }
+            : { label: "Open your case", href: "/case" };
+
+  const showConsentBox = () => {
+    const box = document.getElementById("eu-consent");
+    box?.scrollIntoView({ block: "center", behavior: "smooth" });
+    box?.focus({ preventScroll: true });
+  };
+
   return (
     <div className="space-y-6">
       <ConsentRow checked={consent} onCheckedChange={setConsent} plan={plan} />
@@ -286,15 +307,7 @@ export function PurchasePanel({
       />
 
       {sessionState === "signed-out" && (
-        <p className="text-xs text-muted-foreground">
-          {APP.access.composeGate.signInToActivate}{" "}
-          <Link
-            href={`/login?next=${encodeURIComponent(`/pricing?plan=${plan}#purchase`)}`}
-            className="text-link underline underline-offset-4 hover:text-link/80"
-          >
-            {SHARED.nav.signIn}
-          </Link>
-        </p>
+        <p className="text-xs text-muted-foreground">{APP.access.composeGate.signInToActivate}</p>
       )}
 
       {sessionState === "signed-in" &&
@@ -316,7 +329,7 @@ export function PurchasePanel({
       {sessionState === "signed-in" && activeCase.status === "none" && (
         <p className="text-xs text-muted-foreground">
           {hasPass
-            ? "Your Appeal Pass is tied to the case it was bought for. If you deleted that case or cleared your browser without a backup, a new case needs its own Pass."
+            ? "Your Appeal Pass stays with the case it was bought for. A new case needs its own Pass, unless you restore that case from a backup."
             : "Start your case before buying a Pass — each Pass covers one case."}{" "}
           <Link href="/case" className="text-link underline underline-offset-4">
             Start your case
@@ -402,7 +415,52 @@ export function PurchasePanel({
       <PurchaseClock deadline={deadline} />
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        {consent && !blocked ? (
+        {sessionState === "signed-out" ? (
+          // A buyer who is not signed in cannot complete this checkout, so the first action is the
+          // sign-in that returns them here, not a pay button that fails after the request.
+          <Button asChild size="lg" className="h-auto min-h-11 flex-1 whitespace-normal py-2">
+            <Link href={`/login?next=${encodeURIComponent(`/pricing?plan=${plan}#purchase`)}`}>
+              {SHARED.signInToBuy}
+            </Link>
+          </Button>
+        ) : blocked ? (
+          resolve?.href ? (
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="h-auto min-h-11 flex-1 whitespace-normal py-2"
+            >
+              <Link href={resolve.href}>{resolve.label}</Link>
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-auto min-h-11 flex-1 whitespace-normal py-2"
+              disabled
+              aria-busy="true"
+            >
+              <Loader2
+                className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none"
+                aria-hidden
+              />
+              {resolve?.label ?? "Checking your case…"}
+            </Button>
+          )
+        ) : !consent ? (
+          // Not a dead grey button: pressing it takes the buyer to the sentence they must tick, and
+          // the label says exactly that.
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-auto min-h-11 flex-1 whitespace-normal py-2"
+            onClick={showConsentBox}
+          >
+            {SHARED.consentPrompt}
+          </Button>
+        ) : (
           <CheckoutButton
             consent={consent}
             plan={plan}
@@ -422,24 +480,6 @@ export function PurchasePanel({
                     ? "Buy another Pass for another case"
                     : PRICING.cta}
           </CheckoutButton>
-        ) : (
-          <Button
-            variant="outline"
-            size="lg"
-            className="h-auto min-h-11 flex-1 cursor-not-allowed whitespace-normal py-2 opacity-60"
-            // aria-disabled rather than disabled: the button stays reachable by keyboard, so its
-            // label (which says what is missing) is read instead of being skipped.
-            aria-disabled="true"
-            onClick={(e) => e.preventDefault()}
-          >
-            {coveredAgainstThisPlan
-              ? activeCase.status === "covered" && activeCase.coveredBy === "account_pass"
-                ? "Account Pass active — covers every case"
-                : "Appeal Pass active — covers one case"
-              : blocked && consent
-                ? "Resolve your case first"
-                : SHARED.consentPrompt}
-          </Button>
         )}
 
         <Dialog>

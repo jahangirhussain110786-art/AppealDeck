@@ -119,13 +119,13 @@ function caveatFor(deadline: DeadlineLike): string | null {
     return "The date your notice gives. If Account Health shows a different one, go by Account Health.";
   }
   if (kind === "funds_review") {
-    return "Do not assume funds are released on a fixed date. They come back with reinstatement, or after Amazon's separate funds review.";
+    return "Funds come back with reinstatement, or after Amazon's separate funds review. There is no fixed date until then.";
   }
   if (kind === "funds_appeal_eligible") {
     return "Funds appeal becomes available at this point. Submit when you can include evidence.";
   }
   if (kind === "indefinite_hold") {
-    return "Severity-gated - no countdown. Routed to professional help rather than self-serve.";
+    return "This one goes to professional help, so there is no countdown here.";
   }
   if (kind === "seller_challenge") {
     return "Account Health Assurance only: 3 uses per 180 days, ~48h decision.";

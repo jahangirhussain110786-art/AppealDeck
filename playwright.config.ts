@@ -1,5 +1,13 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// The signed-in fixture reads DEV_LOGIN_EMAIL/PASSWORD. Next loads .env.local for the server only,
+// so without this the signed-in checks skip on the very machine that has the account (24 Oct 2026).
+try {
+  process.loadEnvFile(".env.local");
+} catch {
+  // No local file: the signed-in checks skip.
+}
+
 const PORT = process.env.PLAYWRIGHT_PORT ?? "3000";
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${PORT}`;
 

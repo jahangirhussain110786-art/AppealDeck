@@ -64,10 +64,10 @@ describe("administrative notices that state a seller deadline", () => {
 
   it("still ignores update windows that are not the seller's own account", () => {
     expect(labels("Customers may update their order within 30 days of purchase.")).toEqual([
-      expect.stringContaining("No deadline is written"),
+      expect.stringContaining("states no deadline"),
     ]);
     expect(labels("We will update your listing within 5 days of review.")).toEqual([
-      expect.stringContaining("No deadline is written"),
+      expect.stringContaining("states no deadline"),
     ]);
   });
 });

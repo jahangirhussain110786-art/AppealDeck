@@ -58,9 +58,13 @@ describe("with nothing configured", () => {
     }
     // The partner code's own $25 is in the changelog already, so the rebate is checked where it is new.
     for (const text of [terms(legal), privacy(legal)]) expect(text).not.toContain("$25");
-    expect(audiences.PROS.cost.open).toBe("Professional pricing is not set yet.");
+    expect(audiences.PROS.cost.open).toBe(
+      "Professional pricing is being shaped with the first writers.",
+    );
     expect(audiences.PROS.cost.pro).toBeNull();
-    expect(marketing.FAQ.items.find((i) => i.id === "writers")?.a).toMatch(/^Not yet/);
+    expect(marketing.FAQ.items.find((i) => i.id === "writers")?.a).toMatch(
+      /^Professional pricing is being shaped with the first writers/,
+    );
   });
 });
 

@@ -610,14 +610,16 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
               title={APP.access.dashboardSignedOut.emptyTitle}
               description={APP.access.dashboardSignedOut.emptyDesc}
               action={
-                <div className="flex flex-wrap justify-center gap-3">
-                  <Button asChild variant="outline">
+                // One hierarchy: the free decode is the action, starting a case is the alternative,
+                // and signing in is the quiet route that keeps the work (24 Oct 2026).
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3">
+                  <Button asChild>
                     <Link href="/decode">{APP.access.dashboardSignedOut.decode}</Link>
                   </Button>
                   <Button asChild variant="outline">
                     <Link href="/case">{APP.access.dashboardSignedOut.start}</Link>
                   </Button>
-                  <Button asChild variant="outline">
+                  <Button asChild variant="link" className="min-h-11 px-0">
                     <Link href="/login?next=/dashboard">{SHARED.nav.signIn}</Link>
                   </Button>
                 </div>

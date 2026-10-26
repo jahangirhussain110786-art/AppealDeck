@@ -23,11 +23,11 @@ test("a notice with no date and no window says so instead of calling it ambiguou
     "Amazon Seller Performance. Your listing for ASIN B0EXAMPLE2 was removed because the detail page violates our product policy. Please submit a Plan of Action in Account Health.",
   );
   const main = page.locator("main");
-  await expect(main.getByText(/No deadline is written in this notice/).first()).toBeVisible();
+  await expect(main.getByText(/This notice states no deadline/).first()).toBeVisible();
   await expect(main.getByText(/ambiguous/i)).toHaveCount(0);
 });
 
-test("a verification notice says first that it is not an appeal (G-100)", async ({ page }) => {
+test("a verification notice says first what the reply is (G-100)", async ({ page }) => {
   await decode(
     page,
     "Amazon Seller Support. We do not have sufficient information to complete your identity verification. Please schedule a video call and have your government ID ready. Your selling account is deactivated until verification is complete.",
@@ -35,7 +35,7 @@ test("a verification notice says first that it is not an appeal (G-100)", async 
   await expect(
     page
       .locator("main")
-      .getByText(/This is not an appeal\. A Plan of Action is usually the wrong reply/),
+      .getByText(/This is a verification request\. The answer is the document or step it names/),
   ).toBeVisible();
 });
 

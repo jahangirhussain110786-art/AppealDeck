@@ -45,7 +45,7 @@ export const SURFACES = {
     navigation: "Policy navigation",
     related: "Related policies",
     privacy: "See how your case text, files and account information are handled.",
-    terms: "Understand the service, your responsibilities and the limits of our support.",
+    terms: "Understand the service, your responsibilities and the scope of our support.",
     refund: "Find the refund process, time window and contact details in one place.",
   },
   loading: "Loading your workspace…",

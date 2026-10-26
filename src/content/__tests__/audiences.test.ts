@@ -74,9 +74,9 @@ describe("pricing for sellers, writers and partners", () => {
     const everything = JSON.stringify(PROS_OFF, (key, value) =>
       key === "cards" ? undefined : value,
     );
-    expect(PROS_OFF.cost.open).toMatch(/not set yet/i);
+    expect(PROS_OFF.cost.open).toMatch(/being shaped with the first writers/i);
     expect(PARTNERS.earn.noDashboard).toMatch(/Codes are issued individually/i);
-    expect(PROS_OFF.limits.items.join(" ")).toMatch(/not shared between team members yet/);
+    expect(PROS_OFF.limits.items.join(" ")).toMatch(/hand it to a colleague with an export/i);
     // nothing in the pages for professionals quotes a monthly or per-case professional price
     expect(PROS_OFF.cost.body.match(/\$\d+/g)).toEqual([`$${PASS}`]);
     expect(everything).not.toMatch(/per month|a month|monthly plan|case packs?\b/i);
@@ -108,7 +108,7 @@ describe("the chatbot comparison and the going rates", () => {
     for (const item of PRICING.market.items) expect(item.href).toMatch(/^https:\/\//);
     expect(text).not.toMatch(/reinstat|approv|will win|win rate|odds|guarantee/i);
     expect(PRICING.versus.note).toMatch(
-      /does not claim Amazon treats a chatbot's letter differently/,
+      /whether it answers what the notice asked, whoever wrote it/,
     );
   });
 
@@ -135,6 +135,57 @@ describe("the chatbot comparison and the going rates", () => {
   it("links the chatbot answer to the comparison it refers to", () => {
     const chatbot = (FAQ.items as readonly FaqItem[]).find((i) => i.id === "chatbot");
     expect(chatbot?.link?.href).toBe(`/pricing#${PRICING.versus.id}`);
+  });
+
+  it("puts the Pass in the same price strip as the alternatives, at the page's own price", () => {
+    expect(PRICING.market.own.price).toContain(PRICING.price);
+    expect(PRICING.market.own.href).toBe("#purchase");
+    expect(PRICING.market.checkedLabel).toMatch(/other prices are examples/i);
+  });
+
+  it("claims the impersonation check, not a warning on every notice", () => {
+    const row = PRICING.versus.rows.find((r) => r.job === "A check for impersonation signals");
+    expect(row?.us).toMatch(/flagged when the signs are there/);
+    expect(row?.us).not.toMatch(/^on every notice$/i);
+  });
+});
+
+describe("the plan comparison", () => {
+  it("gives every row a value for every plan, and groups the rows by the work", () => {
+    expect(PRICING.compareGroups.length).toBeGreaterThanOrEqual(3);
+    for (const group of PRICING.compareGroups) {
+      expect(group.label.trim()).not.toBe("");
+      expect(group.rows.length).toBeGreaterThan(0);
+      for (const row of group.rows) {
+        expect(row.feature.trim()).not.toBe("");
+        expect(row.detail.trim()).not.toBe("");
+        for (const value of [row.free, row.single, row.pass, row.accountPass])
+          expect(value.trim()).not.toBe("");
+      }
+    }
+  });
+
+  it("leads with what free gives, before it compares what paid adds", () => {
+    expect(PRICING.compareEveryPlan.label).toMatch(/every plan, including free/i);
+    expect(PRICING.compareEveryPlan.items.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("does not give the free plan a response, and does not give One Response a further round", () => {
+    type Row = {
+      feature: string;
+      free: string;
+      single: string;
+      pass: string;
+    };
+    const rows: Row[] = PRICING.compareGroups.flatMap((group) =>
+      group.rows.map(({ feature, free, single, pass }) => ({ feature, free, single, pass })),
+    );
+    const response = rows.find((row) => row.feature.startsWith("The response,"));
+    const round = rows.find((row) => row.feature.startsWith("A warning when a new round"));
+    expect(response?.free).toBe("—");
+    expect(response?.single).toBe("One response");
+    expect(round?.single).toBe("—");
+    expect(round?.pass).toBe("Yes");
   });
 });
 

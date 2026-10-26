@@ -6,13 +6,7 @@ import { PriceCardGrid, type PriceCardData } from "@/components/pricing/PriceCar
 import { OPENS_SOON, PRODUCTS } from "@/content/purchases";
 import { HOME, PRICING } from "@/content/marketing";
 import { SHARED } from "@/content/shared";
-import {
-  accountPassEnabled,
-  accountPassListed,
-  foundingEnabled,
-  singleEnabled,
-  singleListed,
-} from "@/lib/plans";
+import { accountPassEnabled, foundingEnabled, listedPaidPlans, singleEnabled } from "@/lib/plans";
 
 /**
  * The sellers' plans, side by side (23 Oct 2026): Free, One Response (the smallest paid plan: one
@@ -26,7 +20,9 @@ import {
  */
 export function PlanCards() {
   const [free, single, pass] = HOME.plans.items;
-  const withAccount = accountPassListed();
+  // The same list the fit strip and the comparison columns read, so a plan cannot appear on one
+  // surface and be missing from another (24 Oct 2026).
+  const listed = listedPaidPlans();
   const soon = (
     <Button size="lg" variant="outline" disabled className="w-full">
       {OPENS_SOON.label}
@@ -47,7 +43,7 @@ export function PlanCards() {
       ),
     },
   ];
-  if (singleListed())
+  if (listed.includes("single"))
     cards.push({
       key: "single",
       name: single.name,
@@ -76,7 +72,7 @@ export function PlanCards() {
       </PlanCta>
     ),
   });
-  if (withAccount)
+  if (listed.includes("account"))
     cards.push({
       key: "account",
       name: PRICING.account.name,

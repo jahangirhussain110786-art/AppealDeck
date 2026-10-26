@@ -77,7 +77,7 @@ export function SiteFooter() {
             <p>{SHARED.footer.independence}</p>
           </div>
           <div className="flex shrink-0 flex-col gap-1.5 md:items-end">
-            <p>{SHARED.footer.notLegalAdvice}</p>
+            <p>{SHARED.footer.category}</p>
             <p className="tabular-nums">
               {SHARED.footer.copyright.replace("{year}", String(year))}
             </p>

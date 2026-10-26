@@ -6,8 +6,8 @@ import { expectNoAxeViolations, WCAG_AA_TAGS } from "./axe";
 
 test("the page leads with the misses, gives the counts, and is accessible", async ({ page }) => {
   await page.goto("/how-we-test");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(/where it was wrong/i);
-  await expect(page.getByText("5 of 12 were read right at first.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/what the tests found/i);
+  await expect(page.getByText(/At first, 5 of 12 were read right/)).toBeVisible();
   await expect(page.getByText(/2 to 4 misses in every ten/)).toBeVisible();
   await expect(page.getByText(/measures how often appeals succeed/)).toBeVisible();
   await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
@@ -23,6 +23,6 @@ test("the thirteen notices download as data and the page is findable", async ({ 
   expect(notices).toHaveLength(13);
 
   await page.goto("/");
-  await expect(page.getByRole("link", { name: "How we test" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "How we test" }).first()).toBeVisible();
   expect(await (await page.request.get("/sitemap.xml")).text()).toContain("/how-we-test");
 });

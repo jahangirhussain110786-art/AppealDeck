@@ -108,6 +108,36 @@ describe("buildPurchaseConfirmationEmail", () => {
     expect(renewal.text).not.toContain("Next step:");
   });
 
+  it("states the amount Paddle actually charged when the delivery job could read it", () => {
+    const email = buildPurchaseConfirmationEmail({
+      to: "seller@example.com",
+      purchasedAt: "2026-10-24T12:00:00.000Z",
+      paid: { amountCents: 16_900, currency: "USD" },
+    });
+    expect(email.text).toContain("List price:");
+    expect(email.text).toContain("Amount paid: $169.00 (includes any discount code)");
+  });
+
+  it("does not guess an amount when Paddle could not be read, and points at the receipt", () => {
+    const email = buildPurchaseConfirmationEmail({
+      to: "seller@example.com",
+      purchasedAt: "2026-10-24T12:00:00.000Z",
+    });
+    expect(email.text).not.toContain("Amount paid:");
+    expect(email.text).toContain("Paddle's receipt shows the amount you paid");
+  });
+
+  it("renders one branded, clickable document rather than bare paragraphs", () => {
+    const email = buildPurchaseConfirmationEmail({
+      to: "seller@example.com",
+      purchasedAt: "2026-10-24T12:00:00.000Z",
+    });
+    expect(email.html).toContain("<!doctype html>");
+    expect(email.html).toContain("AppealDeck by Hawlton");
+    expect(email.html).toContain('<a href="https://');
+    expect(email.html).not.toContain("<style");
+  });
+
   it("HTML-escapes the consent text so it renders safely", () => {
     const email = buildPurchaseConfirmationEmail({
       to: "seller@example.com",

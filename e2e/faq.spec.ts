@@ -11,7 +11,7 @@ test("/faq: every answer is in the page before any click, and questions open by 
 }) => {
   const html = await (await request.get("/faq")).text();
   for (const answer of [
-    "Decode your notice and organize your case before you decide to pay.",
+    "Decode the notice, build the record and write your answers — all free.",
     "Original files are encrypted in your vault on this device.",
     "You can request a refund within 14 days of purchase.",
   ]) {
@@ -65,9 +65,12 @@ test("pricing keeps the expectations visible before an unchecked delivery consen
     expectations.getByText(/An Appeal Pass is required for eligible cases/),
   ).toBeVisible();
   await expect(page.getByRole("checkbox")).not.toBeChecked();
-  await expect(
-    page.getByRole("button", { name: "Tick the box above to continue", exact: true }),
-  ).toBeDisabled();
+  // Signed out, the page asks for the sign-in that returns here instead of offering a pay button
+  // that cannot finish (24 Oct 2026).
+  await expect(page.getByRole("link", { name: "Sign in to buy", exact: true })).toHaveAttribute(
+    "href",
+    "/login?next=%2Fpricing%3Fplan%3Dcase%23purchase",
+  );
   expect(
     await expectations.evaluate((el) =>
       Boolean(

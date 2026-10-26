@@ -60,7 +60,9 @@ test("the professionals' page shows the packs and the Pro plan, and asks a visit
     "#buy",
   );
   await expect(cards.getByRole("button", { name: "Opens soon" })).toHaveCount(0);
-  await expect(page.getByText("Professional pricing is not set yet.")).toHaveCount(0);
+  await expect(
+    page.getByText("Professional pricing is being shaped with the first writers."),
+  ).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Sign in to buy" })).toBeVisible();
   // no pay button until the account is known to be verified
   await expect(page.getByRole("button", { name: /Buy 10 credits|Start the Pro plan/ })).toHaveCount(

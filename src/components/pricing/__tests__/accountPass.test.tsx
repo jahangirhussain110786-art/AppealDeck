@@ -35,7 +35,7 @@ describe("the plan cards", () => {
     expect(html).toContain("Case saved on your device");
     expect(html).toContain("One Response");
     expect(html).toContain("$99");
-    expect(html).toContain("No further responses");
+    expect(html).toContain("continues on the Appeal Pass");
     // it cannot be bought yet: Opens soon, never a checkout button
     expect(html).not.toContain("Get the One Response");
     // order on the page: Free, One Response, Appeal Pass, Account Pass

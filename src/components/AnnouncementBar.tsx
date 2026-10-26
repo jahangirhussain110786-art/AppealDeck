@@ -62,16 +62,21 @@ const EFFECTS: Record<
 function Message({ item, inert = false }: { item: Announcement; inert?: boolean }) {
   const body = (
     <>
-      {item.tag && (
-        <span className="mr-2 shrink-0 font-semibold text-announce-accent">{item.tag}</span>
-      )}
-      <span className="truncate">{item.text}</span>
+      {/* The tag sits inline so the wrapped lines use the full width of the row; as a separate
+          flex column it starved the text on a narrow phone ("New guide" took five lines). */}
+      <span className="min-w-0 leading-snug">
+        {item.tag && <span className="mr-2 font-semibold text-announce-accent">{item.tag}</span>}
+        {item.text}
+      </span>
       {item.href && item.linkLabel && (
         <span className="ml-2 hidden shrink-0 items-center gap-1 font-medium underline decoration-announce-foreground/40 underline-offset-4 group-hover:decoration-announce-foreground sm:inline-flex">
           {item.linkLabel}
           <ArrowRight className="size-3.5" aria-hidden />
         </span>
       )}
+      {/* On a phone the label is dropped to keep the sentence readable, but the whole message is the
+          link, so a small arrow still says it can be opened. */}
+      {item.href && <ArrowRight className="ml-1.5 size-3.5 shrink-0 sm:hidden" aria-hidden />}
     </>
   );
   if (!item.href) return <span className="flex min-w-0 items-center">{body}</span>;
@@ -103,7 +108,7 @@ function IconButton({
       aria-label={label}
       onClick={onClick}
       className={cn(
-        "relative grid size-7 shrink-0 place-items-center rounded-md before:absolute before:-inset-2 before:content-[''] text-announce-foreground/80 transition-colors hover:bg-announce-foreground/10 hover:text-announce-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-announce-accent",
+        "relative grid size-6 shrink-0 place-items-center rounded-md before:absolute before:-inset-2 before:content-[''] text-announce-foreground/80 transition-colors hover:bg-announce-foreground/10 hover:text-announce-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-announce-accent sm:size-7",
         className,
       )}
     >
@@ -186,9 +191,9 @@ export function AnnouncementBar() {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHeld(false);
       }}
     >
-      <div className="mx-auto flex h-9 max-w-marketing items-center gap-2 px-4 sm:px-6">
+      <div className="mx-auto flex min-h-9 max-w-marketing items-center gap-1 px-3 py-1.5 sm:gap-2 sm:px-6">
         {mode === "manual" || mode === "rotate" ? (
-          <IconButton label={labels.previous} onClick={() => step(-1)} className="hidden sm:grid">
+          <IconButton label={labels.previous} onClick={() => step(-1)}>
             <ChevronLeft className="size-4" aria-hidden />
           </IconButton>
         ) : (
@@ -196,9 +201,25 @@ export function AnnouncementBar() {
         )}
 
         <div
-          className="relative flex h-full min-w-0 flex-1 items-center justify-center overflow-hidden"
+          className="relative grid min-h-6 min-w-0 flex-1 place-items-center overflow-hidden"
           aria-live={mode === "manual" ? "polite" : "off"}
         >
+          {/* In rotate mode every message is absolutely positioned, so the row has nothing in flow
+              to size it. These invisible copies reserve the height the tallest message needs once
+              it wraps on a phone; without them the bar clipped the text to fragments (found in the
+              browser, 24 Oct 2026). */}
+          {mode === "rotate" && (
+            <div className="invisible col-start-1 row-start-1 grid w-full" aria-hidden>
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  className="col-start-1 row-start-1 flex items-center justify-center"
+                >
+                  <Message item={item} inert />
+                </div>
+              ))}
+            </div>
+          )}
           {mode === "ticker" ? (
             <div
               className="announce-ticker flex w-max items-center"
@@ -235,7 +256,7 @@ export function AnnouncementBar() {
 
         <div className="flex shrink-0 items-center gap-0.5">
           {mode === "manual" || mode === "rotate" ? (
-            <IconButton label={labels.next} onClick={() => step(1)} className="hidden sm:grid">
+            <IconButton label={labels.next} onClick={() => step(1)}>
               <ChevronRight className="size-4" aria-hidden />
             </IconButton>
           ) : null}

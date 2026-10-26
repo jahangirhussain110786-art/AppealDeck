@@ -17,10 +17,10 @@ export const appealDenied: Guide = {
   title: "Your Amazon appeal was denied or rejected. What to do before you write again",
   metaTitle: "Amazon appeal denied: what to do next",
   description:
-    "Why an Amazon appeal gets refused, how to read the reply, and what to change before you submit again. No templates, no promises.",
+    "Why an Amazon appeal is refused, how to read the reply, and what to change before you submit again, with a clear answer for each point.",
   lastVerified: "2026-10-24",
   intro:
-    "A refusal feels final, and it is often not. Amazon's own forum guidance says that after a rejection you address the reasons and resubmit. The difficulty is that the reply often does not say what the reasons were. This guide is about reading what you were told, and about not sending the same thing twice.",
+    "A refusal feels final, and it is often not. Amazon's own forum guidance says that after a rejection you address the reasons and resubmit. The difficulty is that the reply often does not say what the reasons were. This guide is about reading what you were told, then sending something stronger the next time.",
   sections: [
     {
       heading: "First, work out what kind of reply you got",
@@ -54,12 +54,12 @@ export const appealDenied: Guide = {
       ],
     },
     {
-      heading: "What not to do",
+      heading: "What protects your next attempt",
       points: [
-        "Do not resubmit the same text with a few words changed.",
-        "Do not open a second seller account. Amazon's related-account rules may link it to the first.",
-        "Do not pay anyone who promises a reinstatement. Amazon does not charge a fee to reinstate an account, and no outsider controls the decision.",
-        "Do not argue that the decision is unfair. Show that the cause is fixed.",
+        "Send changed text, not the same text with a few words moved around.",
+        "Keep one seller account. Amazon's related-account rules can link a second one to the first.",
+        "Keep the decision with Amazon, and keep your money: Amazon charges no fee to reinstate an account, and no outsider controls the outcome.",
+        "Show that the cause is fixed; an argument that the decision was unfair gives the reviewer nothing to act on.",
       ],
     },
     {
@@ -76,9 +76,9 @@ export const appealDenied: Guide = {
       "Suggests a different approach after two responses and another refusal.",
     ],
     doesNot: [
-      "Log in to Seller Central, submit anything or contact Amazon for you.",
-      "Tell you why Amazon refused when the reply does not say.",
-      "Predict how Amazon will decide, or promise a different result.",
+      "Your Seller Central login stays yours: we never sign in, submit or contact Amazon for you.",
+      "Where the reply gives no reason, Amazon has not told us either. We help you find the gap in your own record.",
+      "Amazon decides the outcome. We predict nothing and promise no result.",
     ],
   },
   cta: "Paste Amazon's reply and see what it is actually asking for.",
@@ -90,10 +90,10 @@ export const inauthenticComplaint: Guide = {
   title: "Amazon says your product is not authentic: supplier invoices Amazon accepts",
   metaTitle: "Amazon authenticity complaint: invoices needed",
   description:
-    "What Amazon asks for after an inauthentic or counterfeit complaint, what makes a supplier invoice acceptable, and the mistakes that fail it.",
+    "What Amazon asks for after an inauthentic or counterfeit complaint, what makes a supplier invoice acceptable, and the checks that help it hold up.",
   lastVerified: "2026-10-24",
   intro:
-    "A buyer complaint that an item was not authentic can remove a listing, or put an account at risk if complaints repeat. In most of these notices Amazon asks for one thing above all: supplier invoices or receipts that prove where the stock came from. Most refusals come from the invoice, not from the letter around it.",
+    "A buyer complaint that an item was not authentic can remove a listing, or put an account at risk if complaints repeat. In most of these notices Amazon asks for one thing above all: supplier invoices or receipts that prove where the stock came from. The invoice carries most of the answer; the letter around it matters less.",
   sections: [
     {
       heading: "What Amazon usually asks for",
@@ -111,16 +111,16 @@ export const inauthenticComplaint: Guide = {
       ],
     },
     {
-      heading: "If you cannot get a proper invoice",
-      body: "If a supplier will not issue one, or the stock came through a chain that cannot be documented, do not fill the gap with something made up. Say what you have and what you cannot get. Amazon may decide that the listing should not be sold, and it is better to know that than to send a document that does not stand up. If the notice alleges forged documents, get qualified professional help before replying.",
+      heading: "If a proper invoice is out of reach",
+      body: "If a supplier will not issue one, or the stock came through a chain that cannot be documented, say what you have and what you cannot get. Amazon may decide that the listing should not be sold, and knowing that is better than sending a document that does not stand up. If the notice alleges forged documents, get qualified professional help before replying.",
     },
     {
-      heading: "What not to do",
+      heading: "What protects your documents",
       points: [
-        "Do not send an invoice you made, edited or reconstructed.",
-        "Do not send receipts from a retail store when the notice asks for a supplier's invoice.",
-        "Do not send invoices for a different product because they are the only ones you have.",
-        "Do not rely on a letter to carry a weak document. The invoice is the answer.",
+        "Send the original invoice, never one you made, edited or reconstructed.",
+        "Match the document to the request: a supplier invoice when the notice asks for one, not a retail receipt.",
+        "Keep the invoice for the product in the complaint; a different product's invoice answers a different question.",
+        "Let the invoice carry the proof; a letter cannot make a weak document strong.",
       ],
     },
   ],
@@ -132,10 +132,10 @@ export const inauthenticComplaint: Guide = {
       "Adds up your invoices against the units you say you sold, and says whether they cover the total.",
     ],
     doesNot: [
-      "Verify that a supplier is genuine or that an invoice is real.",
-      "Log in to Seller Central, submit anything or contact Amazon for you.",
-      "Predict whether Amazon will accept your documents.",
-      "Prepare a reply to a complaint that alleges forged documents.",
+      "Whether a supplier is genuine, or a document is real, stays for Amazon to decide. We check what the document shows and mark anything we cannot read as not checked.",
+      "Your Seller Central login stays yours: we never sign in, submit or contact Amazon for you.",
+      "Amazon decides whether to accept the documents. We make them easier to review.",
+      "A complaint alleging forged documents goes to a qualified professional, and the workspace says so before you rely on it.",
     ],
   },
   cta: "Paste your authenticity notice and see which records it needs.",
@@ -171,11 +171,11 @@ export const accountAtRisk: Guide = {
       ],
     },
     {
-      heading: "What not to do",
+      heading: "What protects your account",
       points: [
-        "Do not ignore it because the account still works. The warning exists because the next step is a suspension.",
-        "Do not describe plans as if they were done. Amazon's guidance asks for finished corrective actions.",
-        "Do not blame customers. Show what you changed.",
+        "Act while the account still works: the warning exists because the next step is a suspension.",
+        "Describe fixes as finished when they are finished; Amazon's guidance asks for completed corrective actions.",
+        "Keep the focus on what you changed, not on the customer.",
       ],
     },
   ],
@@ -187,9 +187,9 @@ export const accountAtRisk: Guide = {
       "Keeps a dated record of what you sent and what changed.",
     ],
     doesNot: [
-      "Log in to Seller Central, submit anything or contact Amazon for you.",
-      "Remove or dispute reviews and claims for you.",
-      "Tell you how Amazon will decide.",
+      "Your Seller Central login stays yours: we never sign in, submit or contact Amazon for you.",
+      "Review removals and disputes stay with Amazon's own routes; we point you to them and keep your dated record.",
+      "Amazon decides the outcome. We predict nothing.",
     ],
   },
   cta: "Paste your account-health warning and see what it asks for.",

@@ -67,6 +67,23 @@ const SOFT_PATTERNS = [
   /\bjust\b/i,
 ];
 
+/**
+ * Legal-scope placement (24 Oct 2026). The sentences that say what AppealDeck is *not* belong in the
+ * Terms and in `src/content/scope.ts`, where surfaces that need one import it. Everywhere else the
+ * division of labour carries the honesty: you know your business, we build the record, Amazon
+ * decides. Without this gate the old "software, not a law firm" framing comes back the next time a
+ * page is written, because it is the easiest sentence to reach for.
+ */
+const HEDGE_PATTERNS = [
+  /\bnot a law firm\b/i,
+  /\bnot legal advice\b/i,
+  /\bno outcome is promised\b/i,
+  /\bwe do not promise\b/i,
+  /\bnot a substitute\b/i,
+  /\bnot a lawyer\b/i,
+];
+const HEDGE_HOME = /^src\/content\/(?:legal|scope)\.ts$/;
+
 const BANNED_NUMBERS = [/\d+\s?%/i, /win\s*rate/i, /success\s*rate/i, /\d+\s*(hours?|hrs)\b/i];
 // banned punctuation — exclamation marks in copy (content modules only). A letter, digit or
 // closing bracket followed by "!" and then a quote, whitespace, "." or ",".
@@ -179,6 +196,13 @@ function main() {
   console.error("lint-copy: banned strings");
   for (const f of files) {
     const hits = scanFile(f, BANNED_PATTERNS, allow, {});
+    if (hits.length) errors += hits.length;
+  }
+
+  console.error("lint-copy: legal-scope placement");
+  for (const f of files) {
+    if (HEDGE_HOME.test(relPosix(f))) continue;
+    const hits = scanFile(f, HEDGE_PATTERNS, allow, {});
     if (hits.length) errors += hits.length;
   }
 

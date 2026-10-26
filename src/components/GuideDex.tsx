@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import {
   GUIDE,
   GUIDE_ASPECT,
@@ -109,6 +110,10 @@ export function GuideDex() {
   // What is on screen: the picture comes first, and the line and the two buttons appear with it, never before.
   const [shown, setShown] = useState<{ entry: GuideEntry; key: string } | null>(null);
   const [smallReady, setSmallReady] = useState(false);
+  // Phones start with Dex tucked into a corner button: he must never sit over a pay button or the
+  // bottom of a form. Opening him is a tap; the line timer tucks him back, and so does the chevron.
+  const [docked, setDocked] = useState(true);
+  const dockButton = useRef<HTMLButtonElement>(null);
   const shownKey = shown?.key ?? entryKey;
   const bubble = tip && tip.path === shownKey ? tip.open : true;
   const [hop, setHop] = useState(false);
@@ -153,6 +158,24 @@ export function GuideDex() {
     const t = window.setTimeout(() => setTip({ path: lineKey, open: false }), 8000);
     return () => window.clearTimeout(t);
   }, [lineKey]);
+
+  // A phone only lends Dex the screen for a moment: once opened, he tucks himself back into the
+  // corner so he is never left sitting over the page. The check runs when the timer fires rather
+  // than from a focus flag, because a control that still holds keyboard focus must keep him open;
+  // the chevron is always there to tuck him by hand. The desktop ignores `docked` entirely.
+  useEffect(() => {
+    if (docked) return;
+    let timer = 0;
+    const check = () => {
+      if (box.current?.contains(document.activeElement)) {
+        timer = window.setTimeout(check, 8000);
+        return;
+      }
+      setDocked(true);
+    };
+    timer = window.setTimeout(check, 8000);
+    return () => window.clearTimeout(timer);
+  }, [docked]);
 
   // A situation with a gesture: the picture does a small nod.
   const motion = entry?.motion;
@@ -252,63 +275,104 @@ export function GuideDex() {
   const view = shown.entry;
 
   return (
-    <div
-      data-no-print
-      role="complementary"
-      aria-label="Page guide"
-      className="pointer-events-none fixed bottom-2 right-2 z-30 flex items-end gap-1 sm:bottom-4 sm:right-4 print:hidden"
-    >
-      {/* Nothing here catches the pointer except the two small buttons: Dex is a picture on top of the
-          page, and a click on him goes to whatever is underneath. */}
-      {bubble && (
-        <div className="relative mb-9 max-w-[190px] rounded-2xl rounded-br-sm border bg-card px-3 py-2 text-sm leading-snug text-foreground shadow-lg sm:max-w-[230px]">
-          <p>{view.line}</p>
+    <>
+      {/* On a phone Dex waits as a 48px button in the corner; tapping it brings the picture and the
+          line out, and the chevron or the line timer puts them away again. A desktop is wide enough
+          for him to stay out, so the button is hidden there. */}
+      {docked && (
+        <div className="fixed bottom-3 right-3 z-30 sm:hidden" data-no-print>
+          <button
+            ref={dockButton}
+            type="button"
+            onClick={() => {
+              setDocked(false);
+              setTip({ path: shown.key, open: true });
+            }}
+            aria-label={GUIDE.show}
+            aria-expanded={false}
+            className="block size-12 overflow-hidden rounded-full border bg-card shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <img
+              src={src(view.mood, 160)}
+              alt=""
+              width={48}
+              height={48}
+              className="size-full object-cover object-top"
+            />
+          </button>
         </div>
       )}
-      <div ref={box} className="relative w-[88px] sm:w-[118px]">
-        <div className={hop ? "dex-hop" : nod ? "dex-nod" : "dex-bob"}>
-          <div className="relative">
-            <span
-              aria-hidden
-              className="absolute -bottom-0.5 left-[14%] h-2.5 w-[72%] rounded-full bg-foreground/20 blur-[5px] dark:bg-black/50"
-            />
-            <div ref={stage} className="relative will-change-transform">
-              {/* The picture is decoration; the line beside it carries the meaning. */}
-              <img
-                key={view.mood}
-                src={src(view.mood, 320)}
-                srcSet={srcSet(view.mood)}
-                sizes={SIZES}
-                alt=""
-                width={GUIDE_ASPECT.width}
-                height={GUIDE_ASPECT.height}
-                draggable={false}
-                decoding="async"
-                className="dex-swap block h-auto w-full select-none drop-shadow-[0_8px_8px_rgba(19,33,63,0.28)]"
+      <div
+        data-no-print
+        role="complementary"
+        aria-label="Page guide"
+        className={`pointer-events-none fixed bottom-2 right-2 z-30 items-end gap-1 sm:bottom-4 sm:right-4 sm:flex print:hidden ${
+          docked ? "hidden" : "flex"
+        }`}
+      >
+        {/* Nothing here catches the pointer except the two small buttons: Dex is a picture on top of the
+            page, and a click on him goes to whatever is underneath. */}
+        {bubble && (
+          <div className="relative mb-9 max-w-[190px] rounded-2xl rounded-br-sm border bg-card px-3 py-2 text-sm leading-snug text-foreground shadow-lg sm:max-w-[230px]">
+            <p>{view.line}</p>
+          </div>
+        )}
+        <div ref={box} className="relative w-[88px] sm:w-[118px]">
+          <div className={hop ? "dex-hop" : nod ? "dex-nod" : "dex-bob"}>
+            <div className="relative">
+              <span
+                aria-hidden
+                className="absolute -bottom-0.5 left-[14%] h-2.5 w-[72%] rounded-full bg-foreground/20 blur-[5px] dark:bg-black/50"
               />
+              <div ref={stage} className="relative will-change-transform">
+                {/* The picture is decoration; the line beside it carries the meaning. */}
+                <img
+                  key={view.mood}
+                  src={src(view.mood, 320)}
+                  srcSet={srcSet(view.mood)}
+                  sizes={SIZES}
+                  alt=""
+                  width={GUIDE_ASPECT.width}
+                  height={GUIDE_ASPECT.height}
+                  draggable={false}
+                  decoding="async"
+                  className="dex-swap block h-auto w-full select-none drop-shadow-[0_8px_8px_rgba(19,33,63,0.28)]"
+                />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="pointer-events-auto absolute -top-1 right-0 flex gap-1">
-          <button
-            type="button"
-            onClick={() => setTip({ path: shown.key, open: !bubble })}
-            aria-label={GUIDE.tipToggle}
-            aria-pressed={bubble}
-            className={SMALL_BUTTON}
-          >
-            ?
-          </button>
-          <button
-            type="button"
-            onClick={() => setAway(true)}
-            aria-label={GUIDE.hide}
-            className={SMALL_BUTTON}
-          >
-            <span aria-hidden>&times;</span>
-          </button>
+          <div className="pointer-events-auto absolute -top-1 right-0 flex gap-1">
+            <button
+              type="button"
+              onClick={() => setTip({ path: shown.key, open: !bubble })}
+              aria-label={GUIDE.tipToggle}
+              aria-pressed={bubble}
+              className={SMALL_BUTTON}
+            >
+              ?
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDocked(true);
+                requestAnimationFrame(() => dockButton.current?.focus());
+              }}
+              aria-label={GUIDE.dock}
+              className={`${SMALL_BUTTON} sm:hidden`}
+            >
+              <ChevronDown className="size-3.5" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => setAway(true)}
+              aria-label={GUIDE.hide}
+              className={SMALL_BUTTON}
+            >
+              <span aria-hidden>&times;</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

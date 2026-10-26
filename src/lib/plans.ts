@@ -159,6 +159,22 @@ export function professionalsListed(): boolean {
   return professionalsEnabled() || previewPlans();
 }
 
+/** The paid plans side by side, in display order. */
+export type ListedPlan = "single" | "case" | "account";
+
+/**
+ * The one source for which plans the seller-facing surfaces show, and in what order: the cards,
+ * the "choose for the work ahead" strip and the comparison columns all read this (24 Oct 2026).
+ * A plan that is not listed here is not on any of them, so the three can no longer drift apart.
+ */
+export function listedPaidPlans(): readonly ListedPlan[] {
+  return [
+    ...(singleListed() ? (["single"] as const) : []),
+    "case" as const,
+    ...(accountPassListed() ? (["account"] as const) : []),
+  ];
+}
+
 /** The Paddle price a plan opens, or undefined when it is not on sale. */
 export function priceIdFor(plan: PassPlan): string | undefined {
   switch (plan) {

@@ -56,6 +56,7 @@ export const GUIDE = {
   tipToggle: "Show Dex's tip",
   show: "Show Dex, your guide",
   hide: "Hide Dex",
+  dock: "Tuck Dex back into the corner",
   // the only paths without an entry of their own are ones that do not exist: the 404
   fallback: { mood: "confused", line: "I cannot find that page." } satisfies GuideEntry,
   routes: [

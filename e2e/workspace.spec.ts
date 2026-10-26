@@ -657,7 +657,7 @@ test("a refusal that names no reason offers a checklist for finding what was mis
   );
   await expect(summary).toBeVisible();
   await summary.click();
-  await expect(page.getByText(/Do not send the same text or files again/)).toBeVisible();
+  await expect(page.getByText(/Send something real that is new/)).toBeVisible();
   await expect(page.getByText(/not from Amazon./)).toBeVisible();
 });
 
@@ -779,20 +779,22 @@ test("a seller can see why a record is wanted, ask for it, and say when they can
   // A-02/A-03: the objection path. Before this there was no way to say "I can't get this".
   await evidence.getByRole("button", { name: "I can't get it" }).click();
   await expect(evidence.getByText("Change sourcing, and say so", { exact: true })).toBeVisible();
-  await expect(evidence.getByText("What this costs you", { exact: false }).first()).toBeVisible();
+  await expect(
+    evidence.getByText("What this means for the response", { exact: false }).first(),
+  ).toBeVisible();
   await evidence
-    .getByLabel("Why can you not obtain it?")
+    .getByLabel("Why is it not available?")
     .fill("The supplier closed in 2025 and no longer issues invoices of any kind.");
   await evidence.getByRole("button", { name: "Choose this path" }).first().click();
-  await evidence.getByRole("button", { name: "Record that you cannot obtain this" }).click();
-  await expect(evidence.getByText("You cannot obtain this", { exact: true })).toBeVisible();
+  await evidence.getByRole("button", { name: "Record that this record is not available" }).click();
+  await expect(evidence.getByText("You reported it unavailable", { exact: true })).toBeVisible();
 
   // The schema that guards every save strips keys it does not know, and has silently dropped two
   // fields in this codebase before. A decline that does not survive a reload is a decline the
   // seller has to make again.
   await page.reload();
   await page.getByRole("tab", { name: "Documents", exact: true }).click();
-  await expect(evidence.getByText("You cannot obtain this", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("You reported it unavailable", { exact: true })).toBeVisible();
   // A settled card stays closed until opened (29 Sep 2026); the reason is kept inside it.
   await evidence.getByRole("button", { name: "Supplier invoice: show or hide" }).click();
   await expect(evidence.getByText(/supplier closed in 2025/)).toBeVisible();

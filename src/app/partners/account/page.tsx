@@ -92,7 +92,9 @@ export default async function PartnerAccountPage() {
             </div>
           ))}
           {!statement.codes.length && (
-            <p>Your code has not been issued yet. Contact support before sharing a link.</p>
+            <p>
+              Your code will appear here once it is issued. Contact support before sharing a link.
+            </p>
           )}
         </section>
         <p className="text-sm">

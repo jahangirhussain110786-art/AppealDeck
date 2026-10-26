@@ -18,33 +18,33 @@
 
 export const HOW_WE_TEST = {
   metadata: {
-    title: "How we test the decoder, and where it was wrong",
+    title: "How we test the decoder, and what the tests found",
     description:
-      "How AppealDeck checks that it reads an Amazon notice the way a person would: the misses we found first, what we fixed, and the notices we test with, free to download.",
+      "How AppealDeck checks that it reads an Amazon notice the way a person would: the misses we report first, what we fixed, and the notices we test with, free to download.",
   },
   hero: {
     eyebrow: "Updated 12 Oct 2026",
-    title: "How we test the decoder, and where it was wrong.",
-    accent: "where it was wrong.",
-    lede: "A decoder is only worth trusting if you can see how it was checked. This page says what we test, shows the misses first, and gives you the notices we use, so you can run your own.",
+    title: "How we test the decoder, and what the tests found.",
+    accent: "what the tests found.",
+    lede: "A decoder earns trust by showing its work. This page sets out what we test, reports the misses first, and gives you the notices we use, so you can run your own comparison.",
   },
   scope: {
-    title: "What we test, and what we do not",
+    title: "What we test, and what stays with Amazon",
     items: [
       "We test whether the decoder reads a notice the way a person would: what kind of case it is, what Amazon is asking for, the deadline the notice states, the records it names, and whether the message shows signs of a scam.",
-      "We do not test, and cannot know, what Amazon decides. Nothing on this page measures how often appeals succeed, and none of it says an appeal will work.",
-      "Every count below has its denominator and its date. When we cannot give one, we say so.",
+      "What Amazon decides stays with Amazon. Nothing on this page measures how often appeals succeed, and none of it says an appeal will work.",
+      "Every count below carries its denominator and its date. Where we cannot give one, we say so.",
     ],
   },
   misses: {
-    title: "The misses, first",
+    title: "The misses we found, and the fixes",
     intro:
-      "The decoder was first written against notices its author had in mind, which proves little. So we wrote notices in Amazon's own wording, from seller forums and consultants' write-ups, after the decoder existed, and counted what it got wrong.",
+      "A decoder written only against notices its author had in mind proves little, so we tested ours the harder way: notices written in Amazon's own wording, from seller forums and consultants' write-ups, after the decoder existed, and counted what it got wrong.",
     rows: [
       {
         when: "29 Sep 2026",
         what: "Twelve researched notices, one per kind of case.",
-        result: "5 of 12 were read right at first. 7 were wrong.",
+        result: "At first, 5 of 12 were read right; 7 missed.",
         detail:
           "The most common case, an authenticity complaint answered with supplier invoices, was read as unclear, with no documents listed. Documents Amazon listed on their own lines were never picked up. A product-safety deadline was missed. A numbered appeal form got one box instead of one per question. A genuine trademark notice was flagged as a possible scam. A short falsified-documents notice was refused as not an Amazon notice. Amazon's refusal of an appeal was read as a request for documents.",
         fixed:
@@ -57,11 +57,11 @@ export const HOW_WE_TEST = {
         detail:
           "The reply reader also missed four plain wordings Amazon uses. Each miss took about an hour to fix, and nobody finds them by reading the code.",
         fixed:
-          "Each was fixed and pinned. Some notices still decode as not clearly classified: tax-information, payment-method, inactivity and selling-limit notices. They are administrative, not appeals, and the decoder says so rather than guessing.",
+          "Each was fixed and pinned. A few kinds still come back as not clearly classified — tax-information, payment-method, inactivity and selling-limit notices. They are administrative, not appeals, and the decoder tells you so instead of guessing.",
       },
     ],
     closing:
-      'So expect the decoder to be wrong on some notices it has not seen: in our fresh rounds, 2 to 4 of every 10. That is why every result quotes the sentence it read, marks it in your own notice, and says "We could not place this notice" when it cannot.',
+      "No decoder is right on every notice it has never seen: in our fresh rounds, 2 to 4 of every 10 missed. That is why every result quotes the sentence it read, marks it in your own notice, and says so plainly when it cannot place one.",
   },
   ai: {
     title: "The part written by AI",
@@ -69,7 +69,7 @@ export const HOW_WE_TEST = {
     rows: [
       "Before we changed the prompt: 3 of 4 first drafts failed the check, so 7 model calls were needed for 4 drafts, and only 2 of 4 named the record Amazon had asked for.",
       "After: 3 of 4 first drafts passed, 5 calls for 4 drafts, and 4 of 4 named the record by its label.",
-      "Two filler phrases still slipped through on one draft. They are not errors of fact, and we left them rather than tighten the check until good drafts fail.",
+      "Two filler phrases still slipped through on one draft. Neither changes a fact, and we chose not to tighten the check until good drafts start failing.",
     ],
   },
   corpus: {

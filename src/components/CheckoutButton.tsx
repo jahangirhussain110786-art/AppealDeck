@@ -50,15 +50,22 @@ const countedTransactions = new Set<string>();
  * the one place both paths pass through. Revenue itself is reported from the Paddle webhook; this
  * event is only the funnel step.
  */
-let paddleInitialised = false;
-let paddleCompleted: (() => void) | undefined;
-
 function countPurchaseOnce(transactionId: string | undefined): void {
   const key = transactionId ?? "unidentified";
   if (countedTransactions.has(key)) return;
   countedTransactions.add(key);
   trackFunnelEvent(FUNNEL_EVENTS.passPurchased);
 }
+
+/**
+ * Paddle is initialised once per page, so its callback cannot belong to one button. These listeners
+ * are the buttons mounted now; each answers only when it is the one that opened the checkout
+ * (`openedRef`). A single module-level callback meant a second mounted button silently stole the
+ * first one's completion, and a button that unmounted left nothing listening at all (fixed 24 Oct
+ * 2026).
+ */
+let paddleInitialised = false;
+const checkoutListeners = new Set<(event: "checkout.completed" | "checkout.closed") => void>();
 
 export function CheckoutButton({
   children,
@@ -88,12 +95,22 @@ export function CheckoutButton({
   useEffect(() => {
     completedRef.current = onCompleted;
   }, [onCompleted]);
-  // Paddle is initialised once, so its callback reaches whichever button is mounted now.
+  // Whether THIS button opened the checkout. The Paddle event is page-wide, so a completion only
+  // belongs to the button that opened it; a close resets the claim for the next attempt.
+  const openedRef = useRef(false);
   useEffect(() => {
-    const mine = () => completedRef.current?.();
-    paddleCompleted = mine;
+    const mine = (event: "checkout.completed" | "checkout.closed") => {
+      if (event === "checkout.closed") {
+        openedRef.current = false;
+        return;
+      }
+      if (!openedRef.current) return;
+      openedRef.current = false;
+      completedRef.current?.();
+    };
+    checkoutListeners.add(mine);
     return () => {
-      if (paddleCompleted === mine) paddleCompleted = undefined;
+      checkoutListeners.delete(mine);
     };
   }, []);
   const [opening, setOpening] = useState(false);
@@ -121,10 +138,11 @@ export function CheckoutButton({
       window.Paddle.Initialize({
         token: tk,
         eventCallback: (event) => {
-          if (event.name === "checkout.completed") {
-            countPurchaseOnce(event.data?.transaction_id);
-            paddleCompleted?.();
-          }
+          if (event.name === "checkout.completed") countPurchaseOnce(event.data?.transaction_id);
+          if (event.name === "checkout.completed" || event.name === "checkout.closed")
+            checkoutListeners.forEach((listener) =>
+              listener(event.name as "checkout.completed" | "checkout.closed"),
+            );
         },
       });
       setReady(true);
@@ -215,6 +233,7 @@ export function CheckoutButton({
         (plan === "case" || plan === "account") &&
         data.priceId !== passAfterReviewPriceId() &&
         data.priceId !== passAfterSinglePriceId();
+      openedRef.current = true;
       window.Paddle.Checkout.open(
         buildCheckoutOptions({
           priceId: data.priceId,
@@ -231,6 +250,8 @@ export function CheckoutButton({
         }),
       );
     } catch (error) {
+      // The overlay never opened, so no completion is owed to this button.
+      openedRef.current = false;
       trackFunnelEvent(FUNNEL_EVENTS.checkoutFailed, { plan });
       toast.error(error instanceof Error ? error.message : "Checkout could not open.");
     } finally {

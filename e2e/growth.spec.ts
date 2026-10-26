@@ -34,7 +34,10 @@ test("the referral validation endpoint refuses anonymous requests", async ({ req
 
 test("pricing sign-in preserves the selected plan through account creation", async ({ page }) => {
   await page.goto("/pricing");
-  await page.locator("#purchase").getByRole("link", { name: "Sign in", exact: true }).click();
+  await page
+    .locator("#purchase")
+    .getByRole("link", { name: "Sign in to buy", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/login\?next=%2Fpricing%3Fplan%3Dcase%23purchase/);
   const signup = page.locator('a[href^="/signup?next="]');
   await expect(signup).toHaveAttribute("href", "/signup?next=%2Fpricing%3Fplan%3Dcase%23purchase");

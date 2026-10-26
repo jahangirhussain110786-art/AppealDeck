@@ -9,7 +9,7 @@
  */
 import { formatLongDate } from "@/lib/format";
 import { SITE_URL } from "@/lib/urls";
-import { escapeHtml, sendRawEmail, type BuiltEmail } from "@/lib/email";
+import { renderEmailHtml, sendRawEmail, type BuiltEmail } from "@/lib/email";
 
 export interface GuestConfirmInput {
   to: string;
@@ -25,8 +25,16 @@ export interface GuestReminderInput extends GuestConfirmInput {
 const confirmUrl = (token: string) => `${SITE_URL}/reminder?do=confirm&token=${token}`;
 const stopUrl = (token: string) => `${SITE_URL}/reminder?do=stop&token=${token}`;
 
-function toHtml(lines: string[]): string {
-  return `<div>${lines.map((l) => (l === "" ? "<br />" : `<p>${escapeHtml(l)}</p>`)).join("\n")}</div>`;
+/**
+ * RFC 8058 one-click stop. The URL is the API route, not the page: a mail client posts to it
+ * directly without opening a browser, and the token in the URL is the credential. The page link in
+ * the body stays, for clients that show it.
+ */
+function stopHeaders(token: string): Record<string, string> {
+  return {
+    "List-Unsubscribe": `<${SITE_URL}/api/guest-reminder/stop?token=${token}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  };
 }
 
 export function buildGuestConfirmEmail(input: GuestConfirmInput): BuiltEmail {
@@ -46,7 +54,7 @@ export function buildGuestConfirmEmail(input: GuestConfirmInput): BuiltEmail {
   ];
   return {
     subject: `Confirm your reminder before ${date}`,
-    html: toHtml(lines),
+    html: renderEmailHtml(lines),
     text: lines.join("\n"),
   };
 }
@@ -72,7 +80,7 @@ export function buildGuestReminderEmail(input: GuestReminderInput): BuiltEmail {
   ];
   return {
     subject: `Your date ${when}: ${input.label}`,
-    html: toHtml(lines),
+    html: renderEmailHtml(lines),
     text: lines.join("\n"),
   };
 }
@@ -83,12 +91,18 @@ export async function sendGuestReminderConfirmEmail(input: GuestConfirmInput): P
     to: input.to,
     ...built,
     idempotencyKey: `guest-confirm/${input.token}/${hourKey()}`,
+    headers: stopHeaders(input.token),
   });
 }
 
 export async function sendGuestReminderEmail(input: GuestReminderInput): Promise<void> {
   const built = buildGuestReminderEmail(input);
-  await sendRawEmail({ to: input.to, ...built, idempotencyKey: `guest-reminder/${input.token}` });
+  await sendRawEmail({
+    to: input.to,
+    ...built,
+    idempotencyKey: `guest-reminder/${input.token}`,
+    headers: stopHeaders(input.token),
+  });
 }
 
 /** Keyed on the hour so a deliberate re-request an hour later is not swallowed as a duplicate. */

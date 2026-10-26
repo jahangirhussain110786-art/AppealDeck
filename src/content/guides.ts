@@ -1,6 +1,7 @@
 import { planOfActionExamples } from "./guideExamples";
 import { compareGuides } from "./guideCompare";
 import { searchGuides } from "./guidesSearch";
+import { SCOPE } from "./scope";
 
 /**
  * B-25: the four guide pages, chosen and ordered by `docs/handoffs/2026-09-25-keyword-research.md`.
@@ -50,12 +51,11 @@ export const GUIDES_COMMON = {
   lastVerifiedLabel: "Last verified",
   ctaButton: "Paste your notice — free",
   ctaNote:
-    "No account needed to decode. Nothing is sent to Amazon, and AppealDeck never touches your account.",
+    "No account needed to decode. Nothing is sent to Amazon, and your Seller Central account stays yours.",
   appealDeckDoes: "What AppealDeck does here",
-  appealDeckDoesNot: "What it does not do",
+  appealDeckDoesNot: "What stays in your hands",
   related: "Other guides",
-  disclaimer:
-    "This guide is general information, not legal advice, and AppealDeck is not affiliated with Amazon. Amazon decides every appeal, and nothing here predicts how yours will go. Amazon changes its policies; check the date above. These steps describe the US store. Use your own marketplace's Seller Central and addresses.",
+  disclaimer: SCOPE.guide,
 } as const;
 
 export const GUIDES: Guide[] = [
@@ -65,7 +65,7 @@ export const GUIDES: Guide[] = [
     title: "Your Amazon account was deactivated under Section 3. What it means and what to do",
     metaTitle: "Amazon Section 3 deactivation: what to do",
     description:
-      "What a Section 3 deactivation notice actually says, why the response depends on its wording, and the mistakes that cost sellers an appeal.",
+      "What a Section 3 deactivation notice actually says, why the response depends on its wording, and the checks that keep an appeal on point.",
     lastVerified: "2026-10-06",
     intro:
       "Section 3 is the part of the Amazon Services Business Solutions Agreement that covers term and termination. Amazon cites it for many different problems, so the section number alone tells you very little. The rest of the notice tells you what Amazon actually wants.",
@@ -108,13 +108,13 @@ export const GUIDES: Guide[] = [
         ],
       },
       {
-        heading: "What not to do",
+        heading: "What protects your case",
         points: [
-          "Do not open a new seller account. Amazon's related-account rules may link it to this one.",
-          "Do not send a quick one-line appeal to see what happens. Amazon says nothing about a limit on appeals, but practitioners advise against sending a hurried one.",
-          "Do not resubmit the same text after a refusal. Change what you sent, or explain what is new.",
-          "Do not argue that the decision is unfair. Amazon looks for evidence that the risk is fixed.",
-          "Do not give anyone your Seller Central login.",
+          "Keep one seller account. Amazon's related-account rules can link a new account to this one.",
+          "Send a considered first appeal. Amazon states no limit on appeals, and practitioners advise against sending a hurried one.",
+          "After a refusal, change what you send or explain what is new.",
+          "Lead with evidence that the risk is fixed; an argument about fairness carries less weight.",
+          "Keep your Seller Central login to yourself.",
         ],
       },
     ],
@@ -126,9 +126,9 @@ export const GUIDES: Guide[] = [
         "Tracks the deadline the notice states and checks the message for signs of a fake.",
       ],
       doesNot: [
-        "Log in to Seller Central, submit anything or contact Amazon for you.",
-        "Tell you how Amazon will decide.",
-        "Prepare responses to allegations of forged documents, fraud or child safety.",
+        "Your Seller Central login stays yours: we never sign in, submit or contact Amazon for you.",
+        "Amazon decides the outcome. We make the record and the response as complete as your facts allow.",
+        "Cases alleging forged documents, fraud or child safety go to a qualified professional, and the workspace says so before you pay.",
       ],
     },
     cta: "Paste your Section 3 notice and see which response it actually asks for.",
@@ -153,7 +153,7 @@ export const GUIDES: Guide[] = [
         ],
       },
       {
-        heading: "Why templates fail",
+        heading: "Why a template falls short",
         body: "A template is written before your notice existed. The same templates circulate widely, and an answer that is not about the case in front of the reviewer is easy to spot.",
         points: [
           "It names a root cause that is not yours, so the fixes do not follow from it.",
@@ -178,7 +178,7 @@ export const GUIDES: Guide[] = [
         points: [
           "Read the notice again and check every request in it has an answer.",
           "Check that each fix follows from the root cause you named.",
-          "Cut anything that blames Amazon, a buyer or a competitor.",
+          "Keep the focus on your own process, not on Amazon, a buyer or a competitor.",
           "Keep a copy of exactly what you sent, with the date.",
         ],
       },
@@ -191,8 +191,8 @@ export const GUIDES: Guide[] = [
         "Keeps what you sent each time, and flags a resubmission that has not changed.",
       ],
       doesNot: [
-        "Invent a root cause or corrective actions. Those have to be true and come from you.",
-        "Submit the plan for you, or tell you how Amazon will decide.",
+        "The root cause and the corrective actions have to be true and yours. We build them only from what you confirm.",
+        "You submit the plan yourself, and Amazon decides the outcome.",
       ],
     },
     cta: "Paste your notice to start a Plan of Action built on what it actually asks.",
@@ -231,11 +231,11 @@ export const GUIDES: Guide[] = [
         ],
       },
       {
-        heading: "What not to do",
+        heading: "What protects your case",
         points: [
-          "Do not write an apology letter. There is nothing to apologise for, and it does not answer the request.",
-          "Do not edit or recreate a document to make it match. Altered documents are a far more serious problem than a mismatch.",
-          "Do not send ID documents to anyone who contacts you on WhatsApp, Telegram or a personal email.",
+          "Answer the request itself. There is nothing to apologise for, and a letter does not replace the document or step Amazon names.",
+          "Send the original as a full-page colour scan. An edited or recreated document is a far more serious problem than a mismatch.",
+          "Send ID documents only inside Seller Central, never to anyone who contacts you on WhatsApp, Telegram or a personal email.",
         ],
       },
     ],
@@ -247,8 +247,8 @@ export const GUIDES: Guide[] = [
         "Checks on this device that an ID or proof-of-address photo is large enough, sharp and fully in frame. It does not read the document or compare it with your details, so compare every field with Seller Central yourself.",
       ],
       doesNot: [
-        "Verify your documents or say whether Amazon will accept them.",
-        "Upload anything to Amazon for you.",
+        "Amazon decides whether the documents are accepted. Our part is to list what the notice names and check that a photo is clear.",
+        "You upload the documents yourself in Seller Central.",
       ],
     },
     cta: "Paste your verification notice to see exactly what it asks you to provide.",
@@ -283,11 +283,11 @@ export const GUIDES: Guide[] = [
         ],
       },
       {
-        heading: "What not to do",
+        heading: "What protects your case",
         points: [
-          "Do not relist the same item under a new listing.",
-          "Do not send an angry or threatening message to the rights owner.",
-          "Do not ignore the complaint. Amazon can act on an account with repeated IP complaints.",
+          "Keep the disputed item off sale, and do not relist it under a new listing.",
+          "Write to the rights owner calmly and factually; a threatening message works against you.",
+          "Treat the complaint as live: Amazon can act on an account with repeated IP complaints.",
         ],
       },
     ],
@@ -299,8 +299,8 @@ export const GUIDES: Guide[] = [
         "Helps you write a calm, factual message to the rights owner.",
       ],
       doesNot: [
-        "Draft a counter-notice or legal dispute. Those need a lawyer.",
-        "Tell you whether the complaint is valid, or how Amazon will decide.",
+        "A counter-notice or formal legal dispute needs a lawyer, and the workspace leaves that work to one.",
+        "Whether the complaint is valid, and how Amazon decides, stays with Amazon and the rights owner.",
       ],
     },
     cta: "Paste your IP complaint notice to pull out the IDs, ASINs and what it asks for.",

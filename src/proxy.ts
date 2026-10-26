@@ -10,7 +10,6 @@ const SINGLE_HOST = APP_HOST === MARKETING_HOST;
 
 // Split mode only. Must list the real app routes (no `/app` prefix since 882ed39).
 const APP_PREFIXES = [
-  "/app",
   "/auth",
   "/dashboard",
   "/case",
@@ -32,8 +31,18 @@ const MARKETING_PATHS = [
   "/faq",
   "/support",
   "/guides",
+  "/how-we-test",
+  "/for-professionals",
+  "/partners",
+  "/changelog",
+  "/reminder",
   "/check-invoice",
 ];
+
+/** True for a marketing page and its subpaths (`/guides/...`), including the home page. */
+function isMarketingPath(pathname: string): boolean {
+  return MARKETING_PATHS.some((p) => p === pathname || (p !== "/" && pathname.startsWith(`${p}/`)));
+}
 
 function hostOf(req: NextRequest): string {
   return (req.headers.get("host") ?? "").split(":")[0]?.toLowerCase() ?? "";
@@ -59,7 +68,7 @@ function redirectToOtherHost(req: NextRequest): NextResponse | null {
 
   if (isAppHost) {
     const isAppPath = APP_PREFIXES.some((p) => pathname.startsWith(p));
-    if (!isAppPath && MARKETING_PATHS.includes(pathname) && !isLocalDev) {
+    if (!isAppPath && isMarketingPath(pathname) && !isLocalDev) {
       url.host = MARKETING_HOST;
       url.port = "";
       return NextResponse.redirect(url);

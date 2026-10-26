@@ -16,6 +16,7 @@ import {
   reviewEnabled,
 } from "@/lib/plans";
 import { OPENS_SOON, PRODUCTS } from "./purchases";
+import { SCOPE } from "./scope";
 
 export const AUDIENCE_SWITCH = {
   label: "Who is this for?",
@@ -79,7 +80,7 @@ export const PROS = {
     eyebrow: "For appeal writers, consultants and VA teams",
     title: "Check the proof on every client case.",
     accent: "every client case.",
-    lede: "AppealDeck reads each client's documents against what Amazon asked, keeps every round in one place and writes only from facts you confirmed. It never logs in to a client's Amazon account.",
+    lede: "AppealDeck reads each client's documents against what Amazon asked, keeps every round in one place and writes only from facts you confirmed. Your client's Seller Central account stays theirs; we never sign in.",
     cta: "Write to us about how you work",
     ctaSecondary: "Start with a free decode",
   },
@@ -107,8 +108,8 @@ export const PROS = {
         body: "Reviewed files numbered and named by what they answer, with an index a reviewer can read.",
       },
       {
-        title: "No access to the client's account",
-        body: "AppealDeck never logs in to Seller Central and never reads it, so it cannot touch a client's account.",
+        title: "The client's account stays theirs",
+        body: "AppealDeck never signs in to Seller Central or reads it, so your client's account stays untouched.",
       },
     ],
   },
@@ -131,7 +132,7 @@ export const PROS = {
           features: [
             "Each client's notice decoded, with scam signals quoted",
             "Documents read against the notice, on your device",
-            "No access to the client's Amazon account",
+            "The client's Amazon account stays theirs",
           ],
         },
         {
@@ -145,7 +146,7 @@ export const PROS = {
       features: [
         "Each client's notice decoded, with scam signals quoted",
         "Documents read against the notice, on your device",
-        "No access to the client's Amazon account",
+        "The client's Amazon account stays theirs",
         "One list for every client, saved to a spreadsheet",
         "Every round kept, Amazon's replies applied",
       ],
@@ -197,7 +198,9 @@ export const PROS = {
     title: "What it costs today",
     body: "Everything above except the written response is free. The written response is the Appeal Pass: $249 once for one case, every round included. Each client case is its own case, so each has its own Pass.",
     // Said only while there is no professional price on sale; once there is, the prices are on the page.
-    open: professionalsListed() ? null : "Professional pricing is not set yet.",
+    open: professionalsListed()
+      ? null
+      : "Professional pricing is being shaped with the first writers.",
     openBody: professionalsListed()
       ? null
       : "We would rather ask than guess. If you handle cases every week, write to us with how you work and what a case should cost you. The first writers help set the price and see it first.",
@@ -212,12 +215,12 @@ export const PROS = {
     link: "See the partner program",
   },
   limits: {
-    title: "Limits, said plainly",
+    title: "What we promise, and what stays with you",
     items: [
-      "AppealDeck is software, not a law firm. Nothing in it is legal advice, and nothing a client tells it is legally privileged.",
-      "A case is kept on the device it was made on. It is not shared between team members yet; hand a case over with an export.",
-      "One person answers support, normally within two business days.",
-      "Amazon decides every outcome. Nothing here predicts one.",
+      SCOPE.professional,
+      "A case lives on the device it was made on. Hand it to a colleague with an export, and restore it where the work continues.",
+      "You write to the person who builds it, normally with a reply within two business days.",
+      "Amazon decides every outcome. The work here is to make the record complete before it does.",
     ],
   },
   mailto: `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(WRITERS_SUBJECT)}`,
@@ -286,7 +289,7 @@ export const PARTNERS = {
     steps: [
       {
         title: "Write to us",
-        body: "Tell us who you are and where you share with sellers. Codes and links are issued by hand while the program is small, so there is no sign-up form.",
+        body: "Tell us who you are and where you share with sellers. Codes and links are issued by hand while the program is small, so writing to us is the sign-up.",
       },
       {
         title: "We reply and give you a code",
