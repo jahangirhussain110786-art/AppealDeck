@@ -100,6 +100,35 @@ describe("the rendered Privacy page", () => {
     expect(privacy).not.toMatch(/interview drafts/i);
   });
 
+  /*
+    26 Oct 2026: checkout posted the whole workspace — notice, writing, file names, unsaved draft —
+    to ask three questions about the case. It now posts the answers. The policy has to say what
+    does travel, or a seller who reads it would believe less or more leaves the device than does.
+  */
+  it("says what a purchase sends about the case, and that the case stays on the device", () => {
+    expect(privacy).toMatch(
+      /three facts about it from your browser[\s\S]*never the notice, your writing or your files/i,
+    );
+  });
+
+  /*
+    26 Oct 2026 (audit correction): the sentence said those three answers were "kept with the
+    purchase". They are not — `checkout_intents` stores the case code, the product and the consent
+    text, and the answers are dropped after the check. A policy that overstates retention is still
+    wrong, and a refund matches on the intent's case code, not on the answers. The old assertion
+    stopped before this clause, so nothing caught it; these two do.
+  */
+  it("does not claim the checkout answers are kept", () => {
+    expect(privacy).toMatch(/used to decide what can be sold for that case and are not kept/i);
+    expect(privacy).not.toMatch(/Those facts are kept with the purchase/i);
+  });
+
+  it("names the one round record the server keeps for a case", () => {
+    expect(privacy).toMatch(/highest response round reached/i);
+    // The product is not named: the policy must read the same whether or not that plan is on sale.
+    expect(privacy).toMatch(/a paid response is not sold for a round already used/i);
+  });
+
   it("still says identity documents are never uploaded", () => {
     expect(privacy).toMatch(/never uploaded for checking/i);
   });
@@ -211,6 +240,7 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
       "Resend",
       "Paddle",
       "Google Gemini",
+      "Groq",
       "Plausible",
     ]) {
       expect(privacy, name).toContain(name);
@@ -254,15 +284,54 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
     expect(JSON.stringify(FAQ.items)).not.toMatch(/independent service/i);
   });
 
-  it("dates the changed documents (privacy 2026-10-23, terms 2026-10-23, refund 2026-10-12)", () => {
+  it("dates the changed documents (privacy 2026-10-26, terms 2026-10-23, refund 2026-10-26)", () => {
     // 9 Oct 2026: the AI now also writes document-request and questionnaire responses, and reads a
     // notice the decoder cannot place. 10 Oct 2026: privacy says what that reading keeps. 12 Oct
     // 2026: the Terms and privacy say "software" rather than "independent service" and count
     // browsers, not devices (G-93, G-71). 22 Oct 2026: privacy names the two things local storage
-    // now also holds, a partner's code and the answer to "what brings you here".
-    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-23");
+    // now also holds, a partner's code and the answer to "what brings you here". 26 Oct 2026: the
+    // refund policy states how a credited upgrade follows a refund of the purchase it was credited
+    // against (migration 0024), and privacy names Groq and the 24-hour memory of AI-written text.
+    expect(LEGAL.lastUpdated.privacy).toBe("2026-10-26");
     expect(LEGAL.lastUpdated.terms).toBe("2026-10-23");
-    expect(LEGAL.lastUpdated.refund).toBe("2026-10-12");
+    expect(LEGAL.lastUpdated.refund).toBe("2026-10-26");
+  });
+
+  /**
+   * 26 Oct 2026: the policy named one AI provider and one place AI text could be kept. The code
+   * sends text to Groq when Gemini cannot answer, and keeps a finished draft for 24 hours in
+   * Upstash so unchanged material is not sent twice. Both are facts a seller weighs before
+   * uploading an invoice, so both are stated.
+   */
+  it("names Groq as the text fallback, and the 24-hour memory of an AI-written response", () => {
+    expect(privacy).toMatch(
+      /Google Gemini and Groq \(the AI steps described under How we use it; Groq only for text, never a document you ask us to check\)/,
+    );
+    expect(privacy).toMatch(
+      /AI-written text is kept for one day in Upstash[^.]*holds only that text/,
+    );
+    expect(privacy).toMatch(
+      /a key made from your account and a one-way fingerprint of the material/,
+    );
+    // The line beside the paste boxes no longer implies a document check and wording help are the
+    // only AI steps.
+    expect(privacy).toMatch(/an AI-written response, or the second reading of a notice/);
+  });
+
+  it("says the server keeps a case's response round, and nothing of the case itself", () => {
+    expect(privacy).toMatch(/the highest response round that case has reached/);
+    expect(privacy).toMatch(/the notice, your answers and your files are not part of it/);
+  });
+
+  it("states the linked-refund rule for a credited upgrade in both directions", () => {
+    const refund = text("refund");
+    expect(refund).toMatch(
+      /earlier purchase is fully refunded or charged back, the Appeal Pass bought with its credit is cancelled and its own payment is refunded as well/i,
+    );
+    expect(refund).toMatch(/Refunding only the upgrade does not affect the earlier purchase/);
+    // The old rule kept the $150 while removing the Pass. That is the sentence a chargeback argues
+    // with, so the opposite must stay said.
+    expect(refund).not.toMatch(/even though that payment itself was not refunded/i);
   });
 
   it("discloses the guest deadline reminder: what is kept, for how long, that it needs a confirmation, and how to stop", () => {

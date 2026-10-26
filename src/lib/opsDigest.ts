@@ -25,6 +25,17 @@ export interface OpsStatus {
    * the rebate is switched off, so the table is not even asked about before its migration is applied.
    */
   pendingRebates: number;
+  /**
+   * Paddle webhooks that passed HMAC but failed the event schema in the last 7 days. Any number
+   * here means Paddle changed a field and provisioning is refusing events (26 Oct 2026).
+   */
+  malformedWebhooks: number;
+  /**
+   * Credited upgrades cancelled because the purchase they were discounted against was refunded,
+   * whose own payment is still owed back. Refunded by hand in Paddle; the row clears when that
+   * refund's event arrives (26 Oct 2026, rule a in migration 0024).
+   */
+  refundOwed: number;
 }
 
 export const isAllClear = (s: OpsStatus) =>
@@ -32,7 +43,9 @@ export const isAllClear = (s: OpsStatus) =>
   s.stuckConfirmations === 0 &&
   s.failedReminders === 0 &&
   s.policyBriefOverdueDays === 0 &&
-  s.pendingRebates === 0;
+  s.pendingRebates === 0 &&
+  s.malformedWebhooks === 0 &&
+  s.refundOwed === 0;
 
 async function countOf(query: PromiseLike<{ count: number | null; error: unknown }>) {
   const { count, error } = await query;
@@ -69,6 +82,29 @@ export async function collectOpsStatus(client: SupabaseClient): Promise<OpsStatu
           .eq("rebate_status", "pending"),
       )
     : 0;
+  /*
+    Migration 0026 is new (26 Oct 2026). Read separately and tolerantly so a database that has not
+    applied it yet still produces every other alert; the log line is the instruction.
+  */
+  const malformedWebhooks = await countOf(
+    client
+      .from("malformed_webhook_events")
+      .select("id", { count: "exact", head: true })
+      .gte("received_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+  ).catch(() => {
+    console.error("Ops digest could not read malformed_webhook_events; apply migration 0026");
+    return 0;
+  });
+  // 0024 adds the column; a database that has not applied it still gets every other alert.
+  const refundOwed = await countOf(
+    client
+      .from("licenses")
+      .select("id", { count: "exact", head: true })
+      .not("refund_owed_at", "is", null),
+  ).catch(() => {
+    console.error("Ops digest could not read licenses.refund_owed_at; apply migration 0024");
+    return 0;
+  });
   const now = new Date();
   return {
     parkedPayments,
@@ -76,6 +112,8 @@ export async function collectOpsStatus(client: SupabaseClient): Promise<OpsStatu
     failedReminders,
     policyBriefOverdueDays: policyBriefIsStale(now) ? policyBriefAgeDays(now) : 0,
     pendingRebates,
+    malformedWebhooks,
+    refundOwed,
   };
 }
 
@@ -100,6 +138,14 @@ export function buildOpsDigest(status: OpsStatus): { subject: string; text: stri
   if (status.pendingRebates)
     lines.push(
       `${status.pendingRebates} outcome report(s) are waiting for their $25 refund. Find them: select transaction_id, result, created_at from outcome_reports where rebate_status = 'pending'; Refund each in Paddle as a partial refund of $25 on that transaction (type partial, so the Pass stays), then: update outcome_reports set rebate_status = 'refunded', settled_at = now() where transaction_id = '...';`,
+    );
+  if (status.malformedWebhooks)
+    lines.push(
+      `${status.malformedWebhooks} Paddle webhook(s) in the last 7 days passed the signature check but not our event schema, so nothing was provisioned for them. Paddle has most likely changed a field. Find them: select received_at, event_type, event_id, issue from malformed_webhook_events order by received_at desc; Fix the schema in src/app/api/webhooks/paddle/route.ts, then replay the events from Paddle (Dashboard → Notifications → your destination → past deliveries).`,
+    );
+  if (status.refundOwed)
+    lines.push(
+      `${status.refundOwed} credited upgrade(s) were cancelled because the purchase they were discounted against was refunded, and their own payment is still owed back. Find them: select provider_transaction_id, email, activated_at, refund_owed_at from licenses where refund_owed_at is not null; Refund each in Paddle as a full refund of that transaction. The row clears when Paddle's refund event arrives.`,
     );
   return {
     subject: `AppealDeck needs attention: ${lines.length} thing${lines.length === 1 ? "" : "s"} to look at`,

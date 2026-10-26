@@ -13,6 +13,8 @@ describe("ops digest", () => {
         failedReminders: 0,
         policyBriefOverdueDays: 0,
         pendingRebates: 0,
+        malformedWebhooks: 0,
+        refundOwed: 0,
       }),
     ).toBe(true);
     expect(
@@ -22,6 +24,8 @@ describe("ops digest", () => {
         failedReminders: 0,
         policyBriefOverdueDays: 0,
         pendingRebates: 0,
+        malformedWebhooks: 0,
+        refundOwed: 0,
       }),
     ).toBe(false);
   });
@@ -33,6 +37,8 @@ describe("ops digest", () => {
       failedReminders: 1,
       policyBriefOverdueDays: 0,
       pendingRebates: 0,
+      malformedWebhooks: 0,
+      refundOwed: 0,
     });
     expect(subject).toContain("2 things");
     expect(text).toContain("2 paid checkout(s)");
@@ -49,6 +55,8 @@ describe("ops digest", () => {
         failedReminders: 0,
         policyBriefOverdueDays: 0,
         pendingRebates: 0,
+        malformedWebhooks: 0,
+        refundOwed: 0,
       }).subject,
     ).toContain("1 thing to");
   });
@@ -60,6 +68,8 @@ describe("ops digest", () => {
       failedReminders: 0,
       policyBriefOverdueDays: 120,
       pendingRebates: 0,
+      malformedWebhooks: 0,
+      refundOwed: 0,
     };
     expect(isAllClear(status)).toBe(false);
     expect(buildOpsDigest(status).text).toContain("120 days ago");
@@ -72,12 +82,60 @@ describe("ops digest", () => {
       failedReminders: 0,
       policyBriefOverdueDays: 0,
       pendingRebates: 3,
+      malformedWebhooks: 0,
+      refundOwed: 0,
     };
     expect(isAllClear(status)).toBe(false);
     const { text } = buildOpsDigest(status);
     expect(text).toContain("3 outcome report(s)");
     expect(text).toContain("partial refund");
     expect(text).toContain("rebate_status = 'refunded'");
+  });
+
+  /**
+   * F16 (26 Oct 2026): a webhook that passed HMAC but failed the event schema used to be a bare
+   * 400. A field rename on Paddle's side would stop provisioning with no signal at all.
+   */
+  it("reports Paddle events that failed the schema, with how to replay them", () => {
+    const status = {
+      parkedPayments: 0,
+      stuckConfirmations: 0,
+      failedReminders: 0,
+      policyBriefOverdueDays: 0,
+      pendingRebates: 0,
+      malformedWebhooks: 2,
+      refundOwed: 0,
+    };
+    expect(isAllClear(status)).toBe(false);
+    const { text } = buildOpsDigest(status);
+    expect(text).toContain("2 Paddle webhook(s)");
+    expect(text).toContain(
+      "select received_at, event_type, event_id, issue from malformed_webhook_events",
+    );
+    expect(text).toContain("replay the events from Paddle");
+  });
+
+  /**
+   * Refund rule (b), 26 Oct 2026: a full refund of the purchase a credited upgrade was discounted
+   * against cancels that upgrade too, so its own payment has to go back. Nothing talks to Paddle, so
+   * the digest is what stops the buyer being left out of pocket without anyone noticing.
+   */
+  it("names credited upgrades whose own payment is owed back, and how to find them", () => {
+    const status = {
+      parkedPayments: 0,
+      stuckConfirmations: 0,
+      failedReminders: 0,
+      policyBriefOverdueDays: 0,
+      pendingRebates: 0,
+      malformedWebhooks: 0,
+      refundOwed: 1,
+    };
+    expect(isAllClear(status)).toBe(false);
+    const { text } = buildOpsDigest(status);
+    expect(text).toContain("1 credited upgrade(s)");
+    expect(text).toContain("select provider_transaction_id, email, activated_at, refund_owed_at");
+    expect(text).toContain("full refund of that transaction");
+    expect(text).toContain("The row clears when Paddle's refund event arrives");
   });
 });
 
@@ -113,5 +171,13 @@ describe("collectOpsStatus and the rebate", () => {
     const status = await collectOpsStatus(client);
     expect(tables).toContain("outcome_reports");
     expect(status.pendingRebates).toBe(4);
+  });
+
+  it("asks about owed refunds on licenses, which every database has", async () => {
+    vi.stubEnv("NEXT_PUBLIC_REBATE_ENABLED", "");
+    const { client, tables } = fakeClient(2);
+    const status = await collectOpsStatus(client);
+    expect(tables).toContain("licenses");
+    expect(status.refundOwed).toBe(2);
   });
 });

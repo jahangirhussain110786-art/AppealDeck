@@ -133,6 +133,24 @@ function getRemindersLimiter(): Ratelimit | null {
   return _reminders;
 }
 
+let _referral: Ratelimit | null = null;
+function getReferralLimiter(): Ratelimit | null {
+  if (!hasUpstashEnv()) return null;
+  if (!_referral) {
+    const redis = new Redis(redisCredentials()!);
+    // Checking a partner code used to be counted against the compose cap, so a seller who mistyped a
+    // code while writing a response could use up the allowance they needed to draft it, and Upstash
+    // showed the attempts as drafts (26 Oct 2026). Ten a minute is far more than a real retry.
+    _referral = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(10, "1 m"),
+      analytics: true,
+      prefix: "ratelimit:referral",
+    });
+  }
+  return _referral;
+}
+
 let _decode: Ratelimit | null = null;
 function getDecodeLimiter(): Ratelimit | null {
   if (!hasUpstashEnv()) return null;
@@ -380,6 +398,34 @@ export async function rateLimitReminders(user: AppUser): Promise<RateLimitResult
       limit: 60,
       remaining: 60,
       reset: Date.now() + 86_400_000,
+    };
+  }
+  let r;
+  try {
+    r = await limiter.limit(user.id);
+  } catch {
+    return {
+      success: false,
+      limit: 0,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+      unavailable: true,
+    };
+  }
+  return { success: r.success, limit: r.limit, remaining: r.remaining, reset: r.reset };
+}
+
+/** A partner code typed at checkout: its own cap, so a mistyped one costs nothing else. */
+export async function rateLimitReferral(user: AppUser): Promise<RateLimitResult> {
+  if (isUnlimitedDevUser(user)) return unlimitedRate();
+  const limiter = getReferralLimiter();
+  if (!limiter) {
+    return {
+      success: process.env.NODE_ENV !== "production",
+      unavailable: process.env.NODE_ENV === "production",
+      limit: 10,
+      remaining: 10,
+      reset: Date.now() + 60_000,
     };
   }
   let r;
