@@ -1,3 +1,5 @@
+> **26 Oct 2026 — read [`GO-LIVE-REGISTER.md`](GO-LIVE-REGISTER.md) first.** It records the founder's assumption set (domain, paid Gemini, paid Supabase, Paddle approved) and the only remaining steps: migrations `0016`→`0026`, hosting, Paddle's catalog, and domain email. This guide remains the long explanation; where the two differ, the register is newer.
+>
 > **18 Sep 2026 update:** Before deployment, follow the current requirements in [the integrity handoff](handoffs/2026-09-18-integrity-fixes.md#deployment-requirements-and-remaining-external-limits). Apply migrations 0009 and 0010; configure the checkout price/webhook and durable email worker. Production rate limiting now fails closed. Historical setup details below must be read with this update.
 
 # AppealDeck — Vercel Deployment Guide
@@ -68,15 +70,17 @@ Added 24 Sep 2026. These were missing from this guide, so following it would hav
 
 Overrides exist only for tasks the app calls. The three earlier listed here (`CRITIQUE_POA`, `PHRASE_ENGINE_OUTPUT`, `TRIAGE_ROUTER`) belonged to tasks that were never called, and setting them did nothing; removed 24 Sep 2026.
 
+**The optional product prices (26 Oct 2026).** `NEXT_PUBLIC_PADDLE_PRICE_*` exists for every product that can be sold: Account Pass, renewal, document review, Pass after a review, 10 and 30 credits, Pro plan, One Response, and the Pass after One Response, plus `NEXT_PUBLIC_FOUNDING_CODE`/`_SPOTS` and `NEXT_PUBLIC_REBATE_ENABLED`. Every name is listed, blank, in `.env.example`. Unset means that product is not sold (its card shows "Opens soon" or disappears); set means it appears after the next build. Prices and steps are in §5d–§5f.
+
 ### Never set in Vercel
 
 See `.env.example` "NOT USED BY THE APP" section. The old plan added ~10 unused env vars (Polar, MCP, `PADDLE_API_KEY`, etc.; analytics is used now — `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` above). Setting them in Vercel is noise — do not set them.
 
 ## 3. Domain setup (founder action) — single host, apex only
 
-**First deploy needs no custom domain.** Ship on the Vercel-provided `https://<project>.vercel.app` URL with `NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_MARKETING_HOST` set to it and `NEXT_PUBLIC_APP_HOST` / `NEXT_PUBLIC_APP_URL` **unset** — marketing, auth, and the app all serve from that one origin (single-host mode in `src/proxy.ts`).
+**Use `appealdeck.com` from the first deploy (26 Oct 2026).** The domain is assumed bought. Do not launch on the `vercel.app` address: Paddle's live checkout normally needs its own approved domain, and every receipt, reminder and magic link is built from `NEXT_PUBLIC_SITE_URL`. Set `NEXT_PUBLIC_SITE_URL=https://appealdeck.com` and `NEXT_PUBLIC_MARKETING_HOST=appealdeck.com`, leave `NEXT_PUBLIC_APP_HOST` / `NEXT_PUBLIC_APP_URL` **unset**, and add the apex plus `www` (redirect to apex) in Vercel — marketing, auth, and the app all serve from that one origin (single-host mode in `src/proxy.ts`).
 
-When you are ready to move to `appealdeck.com` (buy the domain first if you have not), follow `AGENTS.md` → "Domain topology" (Vercel apex + `www` → env vars → Supabase redirect URL → Paddle webhook → smoke test). **Still pending when you switch domain (PARKED-ITEMS F-19, F-20):** the guest reminder needs migration `0022`, `RESEND_API_KEY` (sending address verified on the new domain) and Upstash, and its email links are built from `NEXT_PUBLIC_SITE_URL`; One Response needs migrations `0020` and `0021` and its two Paddle prices. Do **not** add `app.appealdeck.com` unless a concrete need appears; the split is an env-var switch documented there.
+Then follow `AGENTS.md` → "Domain topology" (env vars → Supabase redirect URL → Paddle webhook → smoke test). **Still pending when the domain goes live (PARKED-ITEMS F-19, F-20):** the guest reminder needs migration `0022`, `RESEND_API_KEY` (sending address verified on the new domain) and Upstash, and its email links are built from `NEXT_PUBLIC_SITE_URL`; One Response needs migrations `0020` and `0021` and its two Paddle prices. Do **not** add `app.appealdeck.com` unless a concrete need appears; the split is an env-var switch documented there.
 
 ## 4. Supabase production setup (founder action)
 
@@ -84,8 +88,8 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
 
 1. Supabase dashboard → Authentication → URL Configuration
    - Site URL: `https://appealdeck.com`
-   - Redirect URLs: `<origin>/auth/callback` for the current single host (the `vercel.app` URL now, the apex later) + `http://localhost:3000/auth/callback` (dev only). No `app.` entry unless the split is switched on.
-2. Supabase dashboard → SQL Editor: migrations `0001` through `0015` are **all applied**; **`0016_revoke_anon_licence_reads.sql` (7 Oct 2026) is written and not yet applied** — optional defence in depth, paste it into the SQL Editor when convenient (it only removes anonymous read access to `licenses` and `license_events`, which RLS already empties) (`0012` on 6 Oct 2026; `0013`, `0014` and `0015` on 7 Oct 2026, from this machine through the session pooler, each followed by a rolled-back smoke test; `0014` makes a second payment for a case that already has a Pass park in `payment_events_unmatched` so you can refund it, and `0015` hardens the follow-ups). Through `0011` they were applied by hand as of 22 Sep 2026. The founder applied `0008_outcome_events.sql` and `0011_case_reminders.sql` by hand that day, the last two outstanding; every migration is manual copy-paste, because no AI session has direct SQL access to this project — only the REST API, which cannot execute DDL.
+   - Redirect URLs: `https://appealdeck.com/auth/callback` + `http://localhost:3000/auth/callback` (dev only). No `app.` entry unless the split is switched on.
+2. Supabase dashboard → SQL Editor: apply `0016` through `0026` in number order — [`GO-LIVE-REGISTER.md`](GO-LIVE-REGISTER.md) step 0 lists each, its dependency and what breaks without it. **Do not assume any is applied.** The baseline `0001`–`0015` (licence tables, payment function, device cap, reminders, purchase-email outbox) must be there first; the register's three baseline checks confirm it on a fresh project. The last confirmed remote state is through `0023`, and only if you ran it; nothing from the 26 Oct 2026 change set (`0024`–`0026`) exists remotely. `0025` must be applied before this build deploys, or a One Response holder's response is a 503. Every migration is manual copy-paste, because no AI session has direct SQL access to this project — only the REST API, which cannot execute DDL. (Historical: through `0011` were applied by hand by 22 Sep 2026; `0012`–`0015` on 6–7 Oct 2026, each followed by a rolled-back smoke test.)
 
    Verified the same day against the live project by REST probe, not by assumption: every column present with no drift, RLS on with anon reads empty and anon inserts refused (401), the `CHECK` constraints rejecting an out-of-range `readiness_at_submit` and an unknown `outcome`, the `(user_id, case_ref)` unique index collapsing a re-set reminder into one row instead of duplicating it, and the cron's own due-row query returning what it should. Every row written by that check was deleted again; both tables hold 0 rows.
 
@@ -97,8 +101,12 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
 
 ## 5. Paddle production setup (founder action)
 
+**Approval is assumed done (26 Oct 2026); the catalog is not.** Paddle's approval creates no product, price, client token or webhook — nothing can be bought until the steps here run, and the site says so rather than pretending. Step 0 is `GO-LIVE-REGISTER.md` step 2.
+
 **Quick way (10 Oct 2026):** steps 1–4 below are done by one command you run yourself, with your live key (never give the key to an AI):
 `PADDLE_LIVE_KEY=<live key> SITE_URL=https://appealdeck.com node scripts/setup-paddle-live.mjs`. It creates the $249 product and price, the client token and the webhook, and saves the four settings to Vercel production. Then redeploy. Steps 5, 5a and 5b (business details, default payment link, blocked countries) and website approval still need the Paddle dashboard.
+
+**If the script stops partway,** re-run it: it is idempotent and creates nothing twice. It removes each Vercel variable before adding the replacement, so a failure between the two leaves that one variable unset until the re-run; the site then shows the Pass as not buyable rather than charging anyone. The Paddle product, price, token and webhook already created are reused.
 
 1. Paddle dashboard → Catalog → create 1 product:
    - **Appeal Pass** (one-time, $249 — flat, worldwide, no country tiering; 21 Sep 2026 commercial reset)
@@ -118,7 +126,7 @@ Already done if you ran the migrations from `AGENTS.md`. Verify:
 
 The complete referral implementation is built locally, **off until configured**. Follow [the activation and payout runbook](handoffs/2026-10-24-referral-activation.md) before the first automated attribution. The older manual program remains available with the switch off; it does not become a verified commission ledger by itself.
 
-1. Identify applied migrations; apply missing numbered migrations through `0023_referral_ledger.sql` in order, before enabling the switch. This extends the tested payment function without removing the earlier entitlement checks.
+1. Identify applied migrations; apply missing numbered migrations through `0026_malformed_webhook_events.sql` in order, before enabling the switch. This extends the tested payment function without removing the earlier entitlement checks.
 2. Create a one-time flat **USD 25.00** Paddle discount per approved partner. Checkout enabled; code **3–32 upper-case letters/digits**. Restrict to exactly the configured base Appeal Pass and Account Pass price IDs. The Paddle API does not accept the hyphens/underscores our older local parser allowed. No upgrade, review, renewal, credit-pack, One Response or Pro prices.
 3. Set server-only `PADDLE_API_KEY` with `discount.read`; retain any other permissions required by configured billing features. Register the existing approved user's partner row and code/discount mapping using the runbook.
 4. Set `NEXT_PUBLIC_REFERRALS_ENABLED=true` and rebuild. The code field checks the discount before intent creation. A payment earns commission only when the signed Paddle discount agrees with that intent. No stacking or same-account self-referrals.
@@ -158,7 +166,7 @@ Stage 3 of the pricing plan adds five more products and a refund promise. **All 
 
 Each price must equal the figure in `src/content/purchases.ts`; `src/content/__tests__/purchases.test.ts` recomputes every derived one ($249 less $49 is $200; ten at $39 is $390; thirty at $29 is $870; $349 for ten credits is $34.90 each) and fails until they agree. Change a number there and in Paddle together.
 
-1. **Database first, always.** Supabase → SQL editor → paste `supabase/migrations/0018_more_ways_to_pay.sql` and run it (one transaction; it changes nothing if anything is wrong). Then `0019_outcome_reports.sql` if you will run the rebate. **Apply them before setting any price above**: the webhook starts passing the new price ids to the database the moment one is set, and a database function that does not take them yet would fail that call and the payment would not be granted. Check: `select proname from pg_proc where proname in ('apply_paddle_event','claim_case_pass','claim_document_review','use_case_credit');` (four rows) and `select pg_get_constraintdef(oid) from pg_constraint where conname = 'licenses_plan_check';` (it names `document_review`, `account_renewal` and `pro_plan`). The same SQL runs against a real Postgres on every test run (`paymentSqlStage3.test.ts`, `outcomeReportsSql.test.ts`), with deliberate breakages each caught.
+1. **Database first, always.** Supabase → SQL editor → paste `supabase/migrations/0018_more_ways_to_pay.sql` and run it (one transaction; it changes nothing if anything is wrong). Then `0019_outcome_reports.sql` if you will run the rebate, and `0024_entitlement_lifecycle.sql` (after 0023) for the review row: it records which purchase a credited Pass was discounted against, so a full refund of the review also ends the Pass bought on its credit. **Apply them before setting any price above**: the webhook starts passing the new price ids to the database the moment one is set, and a database function that does not take them yet would fail that call and the payment would not be granted. Check: `select proname from pg_proc where proname in ('apply_paddle_event','claim_case_pass','claim_document_review','use_case_credit');` (four rows) and `select pg_get_constraintdef(oid) from pg_constraint where conname = 'licenses_plan_check';` (it names `document_review`, `account_renewal` and `pro_plan`). The same SQL runs against a real Postgres on every test run (`paymentSqlStage3.test.ts`, `outcomeReportsSql.test.ts`, `entitlementLifecycleSql.test.ts`), with deliberate breakages each caught.
 2. **Create the prices in Paddle** (Catalog). The Pro plan is a **subscription, billed monthly**; the others are one-time. Copy each `pri_...` id into the variable above.
 3. **The webhook must also send the subscription events.** Notifications → your endpoint → add `subscription.activated`, `subscription.updated`, `subscription.paused`, `subscription.canceled`, `subscription.past_due` and `subscription.resumed` to the events already listed in §5 (`transaction.completed`, `adjustment.created`, `adjustment.updated`). Without them a cancelled Pro plan would stay active here.
 4. **`PADDLE_API_KEY`.** Paddle → Developer tools → Authentication → create a key with the narrowest permissions Paddle offers that still let it create customer portal sessions (check the permission list in the dashboard; do not give it write access to anything else). Set it in Vercel as `PADDLE_API_KEY`. It is read by `/api/billing/portal` and nowhere else. Without it the Billing page tells a Pro subscriber to write to `billing@appealdeck.com` and you cancel it the same day, so the Pro plan can be sold without it, but you should not.
@@ -176,6 +184,7 @@ Each price must equal the figure in `src/content/purchases.ts`; `src/content/__t
 One Response is **USD 99.00, one-time**: one case, the first response and every revision of it, the case's documents read against the notice, no further responses (a response to Amazon's reply needs the Appeal Pass). It is **switched off**: until its price is set the pricing card says "Opens soon" and the Terms and changelog do not mention it.
 
 1. **Database first.** Supabase → SQL editor → paste `supabase/migrations/0020_single_response.sql` and run it (after 0018 and 0019; one transaction). Check: `select pg_get_constraintdef(oid) from pg_constraint where conname = 'licenses_plan_check';` names `single_response`, and `select proname from pg_proc where proname = 'claim_single_response';` returns a row. **Apply it before setting the price**: the webhook starts passing the price to the database the moment it is set.
+   Then apply `0024_entitlement_lifecycle.sql` (after 0023), `0025_case_rounds.sql` and `0026_malformed_webhook_events.sql`, in that order. 0024 links the credited upgrade to the One Response it was discounted against, so refunding the One Response also ends the upgrade. 0025 keeps one integer per account and case — the highest response round the server has seen — and **must be applied before deploying the app**: `/api/compose` calls `record_case_round` for a One Response holder, and until the function exists that response returns 503. Check `select proname from pg_proc where proname = 'record_case_round';` returns a row and `select count(*) from case_rounds;` returns 0. 0025 is required even if the price is never set: an already-sold One Response still needs it.
 2. **Paddle → Catalog:** a one-time price of **USD 99.00** named "One Response". Copy its `pri_...` id into Vercel as `NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE` and redeploy (`NEXT_PUBLIC_*` values are put into the build). No webhook change: it already sends `transaction.completed` and the adjustment events.
 3. **Partner codes do not apply to it** (§5c): do not add this price to a partner's discount. The checkout withholds the code from it.
 4. **Sandbox first:** buy it on a case, prepare the first response (it works), record it as sent or paste an Amazon reply, and prepare again (refused with "a further response needs the Appeal Pass"); buy the Appeal Pass for the same case and check the next response works; refund a One Response and check its case stops being covered. A second One Response for one case, or one for a case that already has an Appeal Pass, is refused at checkout and parked (not granted) by the webhook if it arrives anyway.
@@ -245,7 +254,9 @@ commands above, and confirm that `licenses` (which carries each per-case entitle
 `case_reminders` hold the same row counts as production. Write the date and the counts here. Then
 delete the scratch project.
 
-## 6b. The AI provider's billing tier (founder action) — before the first real document
+## 6b. The AI provider's billing tier (founder action) — assumed done 26 Oct 2026; confirm before the first real document
+
+**The assumption:** production uses a paid-tier Google Cloud project and `GEMINI_PAID_TIER_CONFIRMED=true` on Vercel. The gate stays in code — a key cannot prove its tier — so this is still the one written confirmation, and R-1 is its first live check.
 
 The privacy policy tells sellers that Google does not use what we send to improve its products and
 keeps it for up to 55 days only to detect abuse. **That is true of the Gemini API's paid tier only.**
@@ -277,6 +288,10 @@ Groq answers text tasks when Gemini is over quota, down or rejects its key, so a
 git push origin master
 ```
 
+Run this yourself: no AI session pushes or deploys without your explicit words, and Vercel builds from
+GitHub, so the launch commits must be pushed before the import in §1 can build them. CI (build, e2e,
+lighthouse) runs on the push.
+
 Vercel will build and deploy automatically. The build takes ~60-90s.
 
 **The on-device document reader (30 Sep 2026).** `npm run build` first runs `scripts/copy-reader-assets.mjs` (the `prebuild` hook; `npm run dev` does the same through `predev`). It copies about 16 MB of pdf.js (the legacy build) and Tesseract.js files from `node_modules` into `public/reader/`, which is not committed, and writes two small files beside them: `promise-with-resolvers.mjs` and `pdf.worker.compat.mjs`, the wrapper the page actually loads as pdf.js's worker, which adds `Promise.withResolvers` (missing before Safari 17.4 and Chrome 119) inside the worker before pdf.js starts. The site serves all of it itself and a reading contacts no other service. Nothing to configure. If a build ever skips that hook, `/reader/pdf.worker.compat.mjs` answers 404 and every device reading falls back to "we could not make out its text"; §9 step 16 checks for it. A reading that stalls is stopped after 45 seconds (a PDF step) or 2 minutes (OCR) and the seller is told; nothing waits forever.
@@ -304,7 +319,7 @@ After first deployment:
 
 1. Visit `https://appealdeck.com/` — should show marketing home.
 2. Visit `https://appealdeck.com/decode` — paste a real Amazon notice, click decode, should return classification.
-3. Visit `https://appealdeck.com/login` — sign in with dev account.
+3. Visit `https://appealdeck.com/login` — sign in with **your own** account (create it at `/signup`). Never use the `dev@appealdeck.com` fixture in production: delete that user and its licence row first (GO-LIVE-REGISTER step 0).
 4. Visit `https://appealdeck.com/case` — should show the case workspace. (The guided interview and its "Suggest fields (AI)" button were retired on 22 Sep 2026, and the app runs on a single host, so there is no `app.` subdomain to check.)
 5. In the workspace, confirm a request whose notice gives a dated deadline (for example "submit your appeal by 1 October 2026"), then open the dashboard: that date should appear in the card at the top, along with any follow-up date you set.
 6. Open browser DevTools → Network → attach a business document under 3 MB to a record in the case workspace, then press **Check this document** to trigger /api/read-document. (Attaching alone sends nothing.) Response should be 200, not 503/429 (Upstash breaker is engaged but the spend cap is 240/day). The result should list each field with what was read, and a date field should say "Compared with: Today's date, …". A file over 3 MB should be refused in the page with its size and the limit, and make no request. Attach an identity photo to an identity record and check it: there should be **no** request to /api/read-document at all.
@@ -322,11 +337,15 @@ After first deployment:
 
 17. **Guest reminder** (23 Oct 2026; PARKED-ITEMS F-19): needs migration `0022`, `RESEND_API_KEY` (sending address verified on the final domain) and Upstash. On `/decode`, decode a notice that states a date ahead, ask for a reminder with an inbox you own, press the button in the confirmation email (the link in it must be on the final domain, from `NEXT_PUBLIC_SITE_URL`), and confirm a `guest_reminders` row with `confirmed_at` set. Then confirm the stop link in an email works. Without Redis the form must say reminders are unavailable.
 
-If all 17 pass, and §6a's restore drill and §6b's billing check are done, you're live.
+18. **Country block** (F-08): with a VPN or a browser reporting Germany, the checkout must refuse a purchase from the EU, EEA or UK (`BLOCKED_PURCHASE_COUNTRIES`). The pricing page still loads and the free decoder stays open everywhere. Confirm the same countries are restricted in Paddle too (Checkout settings or the product's country availability), because the app's refusal is by request location and a direct overlay call must not get round it.
+
+**Not day one:** the One Response and credited-upgrade checks in §5f, and the credited-refund rules in §5e (migration `0024`), run when those prices are switched on. Day one sells the $249 Appeal Pass only; the linked-refund behaviour is covered by the SQL tests until then.
+
+If all 18 pass, and §6a's restore drill and §6b's billing check are done, you're live.
 
 ## 10. Which Vercel plan
 
-**Pro ($20 per developer seat per month, checked 23 Sep 2026), from before the first paying customer.** The previous version of this section said Vercel's terms "permit it technically" to run a paid product on Hobby. They do not: Vercel's Hobby page states the plan is for non-commercial, personal use only. Hobby is fine for a private preview nobody pays for; the switch has to happen before checkout is live, not after the first sale.
+**Pro ($20 per developer seat per month, checked 23 Sep 2026), assumed chosen on 26 Oct 2026.** The previous version of this section said Vercel's terms "permit it technically" to run a paid product on Hobby. They do not: Vercel's Hobby page states the plan is for non-commercial, personal use only. Hobby is fine for a private preview nobody pays for; the switch has to happen before checkout is live, not after the first sale.
 
 ## 10a. Framework version
 
@@ -358,6 +377,17 @@ Vercel keeps every deployment. If a release breaks:
 1. Vercel dashboard → Deployments → find the last green one.
 2. Click ⋯ → "Promote to Production" — instant rollback.
 3. Revert the breaking commit on `master` and push.
+
+## 11a. The signed-in checks in CI (optional, isolated test project)
+
+CI's normal `e2e` job walks the public pages without an account. Three specs — a signed-in seller on a phone, the document reader with and without a Pass, and the response errors — skip when `DEV_LOGIN_EMAIL` and `DEV_LOGIN_PASSWORD` are absent, so nothing proved the signed-in journey in CI. `e2e-signed-in` runs them when, and only when, you give it a **separate Supabase project**. Never point it at production: the checks sign in and use the account's allowances.
+
+1. **Create the project.** Supabase → New project, named `appealdeck-e2e`. In SQL editor, apply migrations `0001` through `0026` in order (each file is one transaction). This project holds no seller data and can be deleted at any time.
+2. **Create the fixture account** from this machine, with `.env.local` temporarily pointing at the test project: `DEV_LOGIN_EMAIL=e2e@appealdeck.com node scripts/seed-dev-user.mjs`. Copy the password it prints — it is generated fresh on every run and shown only there.
+3. **GitHub → Settings → Secrets and variables → Actions.** Add secrets `E2E_SUPABASE_URL`, `E2E_SUPABASE_ANON_KEY`, `E2E_SERVICE_ROLE_KEY`, `E2E_DEV_LOGIN_EMAIL`, `E2E_DEV_LOGIN_PASSWORD`. Add the variable `E2E_SIGNED_IN=true`. The build inlines the two `NEXT_PUBLIC_` values, so they are passed before `npm run build`, not only to the tests.
+4. **Push, then open the run.** `e2e-signed-in` should be green. Every failed run keeps its HTML report and each retry's trace for 14 days under the run's artifacts, in both e2e jobs — so a failure can be read afterwards instead of being remembered as a red total.
+
+To turn it off, delete the `E2E_SIGNED_IN` variable; the job is skipped. Deleting the credentials instead makes the specs skip themselves, so a half-finished setup cannot fail the build. Rotating the fixture password means updating the secret — nothing else changes.
 
 ## 12. What this guide does NOT cover
 

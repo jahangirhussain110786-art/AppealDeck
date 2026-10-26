@@ -4,7 +4,7 @@
 
 ## Configuration in order
 
-1. Identify the last migration actually applied to the target database. Apply missing migrations in numeric order. `0023_referral_ledger.sql` assumes the four-argument payment function from 0021; apply through 0023 in the tested sequence. Do not set the feature switch before the tables, views and functions exist. Keep the normal backup/restore safeguards from `docs/DEPLOYMENT.md`.
+1. Identify the last migration actually applied to the target database. Apply missing migrations in numeric order. `0023_referral_ledger.sql` assumes the four-argument payment function from 0021; apply through `0026` in the tested sequence (`0024` adds the linked-refund rules, `0025` the round record, `0026` the webhook diagnostics). Do not set the feature switch before the tables, views and functions exist. Keep the normal backup/restore safeguards from `docs/DEPLOYMENT.md`.
 2. Keep the existing full-price Appeal Pass price. Optionally configure the Account Pass only after its own migration and sandbox checks. Do not configure extra plans just to enable referrals.
 3. In the same Paddle environment as the client token, create a **one-time flat USD 25.00 discount** per approved partner. Enable the checkout code. Use 3–32 upper-case letters and digits. Restrict to exactly the configured base Appeal Pass and, if configured, Account Pass **price IDs**. No product-wide scope, upgrade price, renewal, review, One Response, pack or subscription. Set expiry/usage limits deliberately.
 4. Give the server `PADDLE_API_KEY` with `discount.read`. Preserve any separate permissions already needed by the Pro cancellation flow. Never use a public variable for the key.
