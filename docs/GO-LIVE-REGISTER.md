@@ -189,8 +189,9 @@ learn whether it behaves like the mocks.
 ## 2. Built, but off until its own number exists (no code debt)
 
 Nothing below needs an AI. Each is one Paddle price (or one discount) plus a variable, then a
-redeploy. Full steps: `DEPLOYMENT.md` §5d–§5f and §5c. If a variable is unset, the plan shows
-"Opens soon" or is hidden, and no copy claims it is for sale.
+redeploy. Full steps: `DEPLOYMENT.md` §5d–§5f and §5c. If a variable is unset, the plan is shown
+with its price and "Opens soon" and cannot be bought, and no copy claims it is for sale (set
+`NEXT_PUBLIC_PLANS_PREVIEW=off` to hide those cards instead).
 
 | Product                        | Paddle price                  | Variable                                     | Notes                                               |
 | ------------------------------ | ----------------------------- | -------------------------------------------- | --------------------------------------------------- |

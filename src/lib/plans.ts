@@ -122,11 +122,14 @@ export function professionalsEnabled(): boolean {
 
 /**
  * Whether a product that is not on sale yet is still shown, with its price and "Opens soon" and no
- * way to buy it. Opt in with `NEXT_PUBLIC_PLANS_PREVIEW=on` for a deliberate preview. Showing is never selling:
- * every purchase path (the checkout, the intent route, the webhook) still needs its Paddle price.
+ * way to buy it. On unless `NEXT_PUBLIC_PLANS_PREVIEW=off`: the founder asked on 26 Oct 2026 that the
+ * strategies they had designed be visible rather than silently missing, and asked in October that the
+ * cards be ready before the payment connection is. Showing is never selling: every purchase path (the
+ * checkout, the intent route, the webhook) still needs its Paddle price, so an unsold plan has no
+ * button that can charge anyone.
  */
 export function previewPlans(): boolean {
-  return process.env.NEXT_PUBLIC_PLANS_PREVIEW === "on";
+  return process.env.NEXT_PUBLIC_PLANS_PREVIEW !== "off";
 }
 
 /** The Account Pass is shown: on sale, or previewed as "Opens soon". */

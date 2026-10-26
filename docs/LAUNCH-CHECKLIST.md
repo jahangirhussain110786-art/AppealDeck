@@ -49,7 +49,7 @@ If one is false, fix that one first and say so. Nothing below pretends a missing
 - [ ] Block the **EU, EEA and UK** in checkout settings or product availability (the app also refuses them by request location).
 - [ ] Confirm Website approval shows approved; confirm the webhook has `transaction.completed`, `adjustment.created`, `adjustment.updated` (a refund must end the Pass).
 - [ ] Redeploy, then buy one Pass with your own card: receipt, unlock, licence row; refund yourself and confirm the Pass ends.
-- [ ] Optional, each on its own, **database migration first**: One Response ($99 + $150), Account Pass ($329), AI review ($49 + $200), renewal ($99), 10/30 credits ($390/$870), Pro plan ($349/month, plus the six `subscription.*` events and `PADDLE_API_KEY`). A price set means that plan appears on the site; unset keeps it off. Sandbox-test each first.
+- [ ] Optional, each on its own, **database migration first**: One Response ($99 + $150), Account Pass ($329), AI review ($49 + $200), renewal ($99), 10/30 credits ($390/$870), Pro plan ($349/month, plus the six `subscription.*` events and `PADDLE_API_KEY`). A price set means that plan becomes buyable on the site; unset keeps it at "Opens soon" — shown, priced, not on sale (or hidden with `NEXT_PUBLIC_PLANS_PREVIEW=off`). Sandbox-test each first.
 - [ ] Partner program (optional): migrations through `0023`, `PADDLE_API_KEY` with discount-read, approved partners/codes, `NEXT_PUBLIC_REFERRALS_ENABLED=true`, rebuild. Follow `handoffs/2026-10-24-referral-activation.md`; payouts stay manual.
 - [ ] Founding offer (optional, Account Pass only): USD 80 off, usage limit **equal to** `NEXT_PUBLIC_FOUNDING_SPOTS` (default 25). A mismatch hides the offer and now logs one reason in Vercel.
 

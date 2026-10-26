@@ -45,10 +45,10 @@ describe("the plan cards", () => {
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
-  it("adds the Account Pass when on sale and leaves an unavailable One Response out by default", () => {
+  it("adds the Account Pass when on sale and hides an unavailable One Response when previews are off", () => {
     vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_ACCOUNT_PASS", "pri_account");
     vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
-    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "");
+    vi.stubEnv("NEXT_PUBLIC_PLANS_PREVIEW", "off");
     const html = renderToStaticMarkup(<PlanCards />);
     expect(html).toContain("Account Pass");
     expect(html).toContain("$329");

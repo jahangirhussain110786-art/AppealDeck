@@ -18,7 +18,7 @@ test("while the Account Pass has no price it is shown as Opens soon, with no way
     "this is the preview case; the switched-on case is account-pass.spec.ts",
   );
   await page.goto("/pricing");
-  if (process.env.NEXT_PUBLIC_PLANS_PREVIEW !== "on") {
+  if (process.env.NEXT_PUBLIC_PLANS_PREVIEW === "off") {
     await expect(
       page
         .getByRole("list", { name: "Plans for sellers" })
@@ -110,7 +110,7 @@ test("the writers' page shows the professional prices as opening soon, with no w
   await expect(
     page.getByRole("heading", { name: "Check the proof on every client case.", level: 1 }),
   ).toBeVisible();
-  if (process.env.NEXT_PUBLIC_PLANS_PREVIEW !== "on") {
+  if (process.env.NEXT_PUBLIC_PLANS_PREVIEW === "off") {
     await expect(
       page.getByText("Professional pricing is being shaped with the first writers."),
     ).toBeVisible();
@@ -290,7 +290,7 @@ test("the partner cards show what a partner earns, worked out from the prices", 
   await expect(
     cards.getByText("The seller pays $224.00: $249 less your $25 discount"),
   ).toBeVisible();
-  if (process.env.NEXT_PUBLIC_PLANS_PREVIEW !== "on") {
+  if (process.env.NEXT_PUBLIC_PLANS_PREVIEW === "off") {
     await expect(cards.getByText("$91.20")).toHaveCount(0);
     return;
   }

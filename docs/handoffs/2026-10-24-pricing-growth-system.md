@@ -1,6 +1,6 @@
 # AppealDeck pricing and growth system
 
-24 October 2026. Local implementation and operating strategy for Jhangir Hussain. This is the current recommendation for the commercial journey; it supersedes earlier advice to preview every unavailable plan by default. It does not release parked product items or authorize a push or production deployment.
+24 October 2026. Local implementation and operating strategy for Jhangir Hussain. This is the current recommendation for the commercial journey; it supersedes earlier advice to preview every unavailable plan by default (reversed on 26 Oct 2026: previews are the default again, `off` hides them — see `docs/DECISIONS.md`, 26 Oct entry). It does not release parked product items or authorize a push or production deployment.
 
 ## The decision
 
@@ -14,7 +14,7 @@ A pricing consultant is optional at this stage. Ten observed buying decisions, p
 
 | Area | Implemented behavior |
 | --- | --- |
-| Choice | Unavailable products are hidden by default. `NEXT_PUBLIC_PLANS_PREVIEW=on` retains an intentional preview. Configured prices still control what can actually be bought. |
+| Choice | SUPERSEDED 26 Oct 2026: unavailable products are shown again by default, with price and "Opens soon". (`NEXT_PUBLIC_PLANS_PREVIEW=off` hides them.) Configured prices still control what can actually be bought. |
 | Pricing journey | A short guide connects the seller's job to the free tools, One Response when available, or the Appeal Pass. Checkout and required disclosures now precede the long comparisons. |
 | Market comparison | Replaced generic high-price anchors with dated, linked examples: ChatGPT Free, PlatformAppeal software, and Markify's account-appeal service. Different scopes and billing periods are explicit. |
 | Purchase continuity | The pricing sign-in link returns to the selected plan and purchase section. |

@@ -21,8 +21,8 @@ test("before it is on sale, the second card is One Response at $99 and says Open
   test.skip(ON_SALE, "needs a build made without the One Response price");
   await page.goto("/pricing");
   const cards = page.getByRole("list", { name: "Plans for sellers" }).locator("> li");
-  if (process.env.NEXT_PUBLIC_PLANS_PREVIEW !== "on") {
-    // Unavailable products are hidden unless a preview is switched on deliberately.
+  if (process.env.NEXT_PUBLIC_PLANS_PREVIEW === "off") {
+    // Unavailable products are shown as "Opens soon" unless previews are switched off.
     await expect(cards.filter({ hasText: "One Response" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Opens soon" })).toHaveCount(0);
     return;
