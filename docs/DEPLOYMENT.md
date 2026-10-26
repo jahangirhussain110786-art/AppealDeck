@@ -339,7 +339,7 @@ After first deployment:
 
 18. **Country block** (F-08): with a VPN or a browser reporting Germany, the checkout must refuse a purchase from the EU, EEA or UK (`BLOCKED_PURCHASE_COUNTRIES`). The pricing page still loads and the free decoder stays open everywhere. Confirm the same countries are restricted in Paddle too (Checkout settings or the product's country availability), because the app's refusal is by request location and a direct overlay call must not get round it.
 
-**Not day one:** the One Response and credited-upgrade checks in §5f, and the credited-refund rules in §5e (migration `0024`), run when those prices are switched on. Day one sells the $249 Appeal Pass only; the linked-refund behaviour is covered by the SQL tests until then.
+**Not day one:** the One Response and credited-upgrade checks in §5f, and the credited-refund sandbox checks in §5e step 9, run when those prices are switched on. Day one sells the $249 Appeal Pass only. Migration `0024` still runs in step 0 — its refund rules are live from the first deploy; they simply have no credited purchase to act on until those prices exist, and the SQL tests cover them until then.
 
 If all 18 pass, and §6a's restore drill and §6b's billing check are done, you're live.
 
