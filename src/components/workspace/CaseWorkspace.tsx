@@ -106,7 +106,6 @@ import {
   mergePriorAttempts,
   attemptDateRecorded,
   validView,
-  composePayloadWorkspace,
   type Requirement,
   type Workspace,
   submissionEmail,
@@ -133,7 +132,8 @@ import { logWithOutcome } from "./CaseOutcome";
 import { loadCaseSummaries, type CaseSummary } from "@/lib/caseSummary";
 import { usePublishCases } from "@/components/CaseListContext";
 import { WorkspaceSchema } from "@/lib/workspaceSchema";
-import { proposedIssues, totalAttempts } from "@/core/workspace";
+import { proposedIssues } from "@/core/workspace";
+import { composeRequestBody } from "@/lib/composeRequest";
 import { buildCaseExport, unsavedText } from "@/lib/workspaceExport";
 import { buildSubmission, submissionHistoryMessage } from "@/lib/submissionRecord";
 import { buildEvidenceManifest, manifestFilename } from "@/lib/evidencePack";
@@ -351,6 +351,9 @@ function WorkspaceInner({
   // What a refused (conflicting) save was about to write, offered as text to copy before a reload.
   const [unsavedCopy, setUnsavedCopy] = useState<string | null>(null);
   const lastAttempt = useRef<Workspace | null>(null);
+  // The workspace a save was trying to write when it failed. Kept so the retry button can write the
+  // same text again, and so leaving the case can be refused while it is unsaved (26 Oct 2026).
+  const failedAttempt = useRef<Workspace | null>(null);
   // The "this was the wrong notice" form, shown only while the D6 latch holds the case.
   const [releaseText, setReleaseText] = useState("");
   const [releaseError, setReleaseError] = useState("");
@@ -409,10 +412,15 @@ function WorkspaceInner({
   // Set once the draft flusher exists (it is defined further down). Switching case reloads the page,
   // and a reload runs no unmount cleanup, so what the seller typed in the last moments must be
   // written before the switch, not left to the unmount flush.
-  const flushPendingRef = useRef<() => Promise<void>>(async () => {});
+  const flushPendingRef = useRef<() => Promise<boolean>>(async () => true);
   const openCase = useCallback(
     async (id: string) => {
-      await flushPendingRef.current();
+      // A failed save leaves the seller's text in this case. Switching now would load another case
+      // over it, so it is refused until the text is on disk (26 Oct 2026).
+      if (!(await flushPendingRef.current())) {
+        setSaveFailed(C.saveBlocked);
+        return;
+      }
       await setActiveCaseId(vault, id);
     },
     [vault],
@@ -571,6 +579,7 @@ function WorkspaceInner({
     saving.current = true;
     if (!opts?.silent) setBusy(true);
     setError("");
+    let attempted: Workspace | null = null;
     try {
       const current = fileRef.current;
       let next = update(
@@ -587,6 +596,7 @@ function WorkspaceInner({
       next = latchD6(current.workspace, next, opts?.releaseD6Latch ? { release: true } : undefined);
       WorkspaceSchema.parse(next);
       lastAttempt.current = next;
+      attempted = next;
       // `keepState` says this change is bookkeeping about a case that has already moved on, so the
       // state a caller named is not applied (a marketplace change on a waiting case).
       const nextState = opts?.keepState ? undefined : state;
@@ -643,6 +653,7 @@ function WorkspaceInner({
         }
       });
       persisted.current = JSON.stringify(next);
+      failedAttempt.current = null;
       setCurrent(updated);
       setSaved(true);
       setSaveFailed(null);
@@ -651,6 +662,7 @@ function WorkspaceInner({
       setPurchase(false);
       return true;
     } catch (e) {
+      failedAttempt.current = attempted;
       setError(e instanceof Error ? e.message : C.error);
       // Never leave "Saved" showing after a failed save. What the seller typed stays in the form.
       setSaved(false);
@@ -753,8 +765,11 @@ function WorkspaceInner({
    * started one save and queued the rest behind it. With the drop-guard gone none are lost any
    * more, but a run of separate vault writes during teardown is still the wrong shape: each one
    * re-reads the case, and the seller is already navigating. One write says the same thing.
+   *
+   * Returns whether everything is now on disk. A caller that switches case or starts a new one must
+   * treat `false` as "stop": the text is still pending, and leaving would discard it (26 Oct 2026).
    */
-  const flushAllDraftKeys = useCallback((): Promise<void> => {
+  const flushAllDraftKeys = useCallback((): Promise<boolean> => {
     for (const timer of draftTimers.current.values()) clearTimeout(timer);
     draftTimers.current.clear();
 
@@ -767,7 +782,7 @@ function WorkspaceInner({
       if (scopedId !== undefined && caseId !== scopedId) continue;
       entries.push([key, value]);
     }
-    if (entries.length === 0) return commitQueue.current.then(() => undefined);
+    if (entries.length === 0) return commitQueue.current.then(() => failedAttempt.current === null);
 
     return commit(
       (w) => ({
@@ -778,18 +793,48 @@ function WorkspaceInner({
       undefined,
       { silent: true },
     ).then((ok) => {
-      if (!ok) return;
+      if (!ok) return false;
+      const written: string[] = [];
       for (const [key, value] of entries) {
+        // A newer value typed while this save ran stays pending; the next flush owes that write.
         if (draftPending.current.get(key) === value) {
           draftPending.current.delete(key);
           draftCaseId.current.delete(key);
+          written.push(key);
         }
       }
+      // The status row reads this set. Leaving it populated after a successful retry would show
+      // "Saving…" indefinitely on a case that is fully on disk (26 Oct 2026).
+      setDirtyKeys((s) => {
+        const next = new Set(s);
+        for (const key of written) next.delete(key);
+        return next.size === s.size ? s : next;
+      });
+      return true;
     });
     // commit is ref-driven and stable across renders; see its definition.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   flushPendingRef.current = flushAllDraftKeys;
+
+  /**
+   * The retry the save-failure message offers. It writes the workspace the failed save was trying
+   * to write, not whatever the form holds now, so the seller's text is what gets saved.
+   */
+  const retryFailedSave = useCallback(async () => {
+    // Field text still pending is the most recent words the seller typed. Retrying through the
+    // flush writes it and clears the pending and dirty state together; a direct commit of the
+    // failed attempt would leave both behind and the status stuck on "Saving…".
+    if (draftPending.current.size > 0) {
+      await flushAllDraftKeys();
+      return;
+    }
+    const attempt = failedAttempt.current;
+    if (attempt) {
+      await commit(() => attempt, undefined, undefined, { silent: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const setDraftField = useCallback(
     (key: string, value: string | undefined) => {
@@ -1149,19 +1194,14 @@ function WorkspaceInner({
       } catch {
         // Offline or blocked: compose answers for itself.
       }
+      // The router must see what this tab sees: earlier requests (which keep a Plan of Action a
+      // Plan of Action) and the D6 latch travel with it. Saved document readings, unsaved drafts and
+      // the sent wording do not; the round facts are read off the full workspace here, before
+      // `composePayloadWorkspace` trims it. See `composeRequestBody`.
       const response = await fetch("/api/compose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          caseData: {
-            ...fresh,
-            // The router must see what this tab sees: earlier requests (which keep a Plan of Action a
-            // Plan of Action) and the D6 latch travel with it. Saved document readings and unsaved
-            // drafts do not; see `composePayloadWorkspace`.
-            workspace: composePayloadWorkspace(w),
-          },
-          attemptNumber: Math.min(99, totalAttempts(w) + 1),
-        }),
+        body: JSON.stringify(composeRequestBody(fresh, w)),
       });
       const data = await response.json().catch(() => null);
       if (response.status === 403 && data?.code === "case_pass_required") {
@@ -1651,6 +1691,11 @@ function WorkspaceInner({
                   ? C.saved
                   : C.saveEach}
         </p>
+        {saveFailed && !busy && !unsavedCopy && (
+          <Button size="sm" variant="outline" onClick={() => void retryFailedSave()}>
+            {C.saveRetry}
+          </Button>
+        )}
         <Button
           size="sm"
           variant="outline"
@@ -1697,7 +1742,11 @@ function WorkspaceInner({
                 if (saving.current || uploading.current) return;
                 // The prompt tells the seller to save unfinished edits; do it for them, so words
                 // typed in the last moments are written to this case before it is left behind.
-                await flushPendingRef.current();
+                // If that write fails, starting a new case would throw those words away.
+                if (!(await flushPendingRef.current())) {
+                  setSaveFailed(C.saveBlocked);
+                  return;
+                }
                 if (saving.current || uploading.current) return;
                 saving.current = true;
                 setBusy(true);

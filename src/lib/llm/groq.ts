@@ -2,6 +2,9 @@ import { reserveSpend } from "@/lib/breaker";
 import { hasUnlimitedDevUsage } from "@/lib/devUsage";
 import type { GeminiCallInput, GeminiCallResult } from "./gemini";
 
+/** A request is not started with less time than this left in the caller's budget. */
+const MIN_REQUEST_MS = 1_000;
+
 /**
  * Groq is a second processor of the seller's text. Locally it is on whenever a key is present; in
  * production it also needs `GROQ_PRODUCTION_CONFIRMED=true`, set only after the privacy policy
@@ -31,6 +34,15 @@ export function canUseGroq(input: GeminiCallInput): boolean {
 export async function callGroq(input: GeminiCallInput): Promise<GeminiCallResult> {
   if (!canUseGroq(input)) {
     return { ok: false, reason: "not_configured", message: "Groq text fallback is unavailable." };
+  }
+  // The caller's deadline covers the fallback too: an answer that arrives after it is no answer,
+  // and a reserved request would be spent on it (26 Oct 2026).
+  if (input.deadline !== undefined && input.deadline - Date.now() < MIN_REQUEST_MS) {
+    return {
+      ok: false,
+      reason: "timeout",
+      message: "No time remained in the caller's budget for the text fallback.",
+    };
   }
   if (
     !hasUnlimitedDevUsage() &&
@@ -67,6 +79,15 @@ export async function callGroq(input: GeminiCallInput): Promise<GeminiCallResult
     message: "Groq could not complete the request.",
   };
   for (const model of groqModels()) {
+    // Between models, spend only what the caller's budget has left; the second model must not get
+    // a fresh full timeout after the first has used the time.
+    if (input.deadline !== undefined && input.deadline - Date.now() < MIN_REQUEST_MS) {
+      return {
+        ok: false,
+        reason: "timeout",
+        message: "The caller's budget ran out before the text fallback could finish.",
+      };
+    }
     last = await callGroqModel(input, messages, model);
     // Another model only for a limit or an outage; an answer, or a request it cannot take, ends it.
     if (last.ok || (last.reason !== "busy" && last.reason !== "upstream_error")) return last;
@@ -80,10 +101,12 @@ async function callGroqModel(
   model: string,
 ): Promise<GeminiCallResult> {
   const controller = new AbortController();
-  const timer = setTimeout(
-    () => controller.abort(),
-    input.task === "classify-notice" ? 9_000 : 25_000,
-  );
+  const baseTimeoutMs = input.task === "classify-notice" ? 9_000 : 25_000;
+  const timeoutMs =
+    input.deadline === undefined
+      ? baseTimeoutMs
+      : Math.min(baseTimeoutMs, Math.max(1, input.deadline - Date.now()));
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",

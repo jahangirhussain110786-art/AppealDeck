@@ -1,6 +1,11 @@
 import { supabaseAdmin } from "./supabase/server";
 
-export type LicenseStatus = "active" | "past_due" | "canceled" | "paused" | "none";
+/**
+ * `expired` is a real lifecycle state, not just a past `expires_at`: the database retires a lapsed
+ * row when its replacement is bought, so the partial unique indexes stop counting dead cover while
+ * the purchase history stays intact (migration 0024). Reads still treat `expires_at` as the truth.
+ */
+export type LicenseStatus = "active" | "past_due" | "canceled" | "paused" | "expired" | "none";
 
 export interface LicenseSummary {
   status: LicenseStatus;
@@ -65,11 +70,13 @@ export async function fetchLicenseForUser(
     return { status: "none", plan: null, licenseKey: null };
   }
   const accountCover = active !== undefined && ACCOUNT_COVER_PLANS.includes(active.plan ?? "");
+  const lapsed =
+    picked.status === "expired" ||
+    (picked.status === "active" &&
+      Boolean(picked.expires_at) &&
+      Date.parse(picked.expires_at as string) <= Date.now());
   return {
-    status:
-      picked.status === "active" && picked.expires_at && Date.parse(picked.expires_at) <= Date.now()
-        ? "none"
-        : ((picked.status as LicenseStatus) ?? "none"),
+    status: lapsed ? "none" : ((picked.status as LicenseStatus) ?? "none"),
     // A renewal is reported as the Account Pass it extends: a seller has one cover, not two.
     plan: accountCover ? "account_pass" : ((picked.plan as string | null) ?? null),
     licenseKey: picked.license_key ?? null,
@@ -173,7 +180,9 @@ export async function hasAnyDocumentReview(userId: string): Promise<boolean> {
 
 /**
  * The end of the latest Account Pass or renewal that has not been refunded, whether or not it has
- * ended yet: a renewal is offered shortly before it ends and for a while after.
+ * ended yet: a renewal is offered shortly before it ends and for a while after. A retired (`expired`)
+ * row still counts here: it was paid for, and its end date is what the renewal window is measured
+ * from (migration 0024).
  */
 export async function fetchAccountCover(userId: string): Promise<{ expiresAt: string } | null> {
   if (!supabaseAdmin) return null;
@@ -182,7 +191,7 @@ export async function fetchAccountCover(userId: string): Promise<{ expiresAt: st
     .select("status, plan, expires_at")
     .eq("user_id", userId)
     .in("plan", ACCOUNT_COVER_PLANS)
-    .eq("status", "active");
+    .in("status", ["active", "expired"]);
   if (error) throw new Error("License lookup unavailable");
   const ends = ((data as Row[] | null) ?? [])
     .map((row) => row.expires_at)

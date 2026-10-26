@@ -8,8 +8,9 @@ import { detectIssues } from "@/core/noticeIssues";
 /**
  * Live evaluation of the AI drafting path against researched notices and realistic seller answers.
  *
- * Skipped unless AI_EVAL=1, because it calls Google with the real key (the free tier allows about
- * 20 requests a day per model). Run with:
+ * Skipped unless AI_EVAL=1, because it calls Google with the real key and spends money. Production
+ * is on the paid tier (assumed 26 Oct 2026); keep this harness on the development key's project. Run
+ * with:
  *
  *   AI_EVAL=1 AI_EVAL_LABEL=baseline node --env-file=.env.local node_modules/vitest/vitest.mjs run src/lib/llm/__tests__/aiPipeline.eval.test.ts
  *

@@ -121,6 +121,11 @@ describe("fetchLicenseForUser", () => {
       expect((await fetchLicenseForUser("user-1", "case-1")).status).toBe("none");
     });
 
+    it("reports a retired Account Pass as 'none', not as its raw lifecycle status", async () => {
+      rows = [account({ status: "expired", expires_at: "2020-01-01T00:00:00.000Z" })];
+      expect((await fetchLicenseForUser("user-1", "case-1")).status).toBe("none");
+    });
+
     it("covers nothing once it has been refunded", async () => {
       rows = [account({ status: "canceled" })];
       expect((await fetchLicenseForUser("user-1", "case-1")).status).toBe("canceled");

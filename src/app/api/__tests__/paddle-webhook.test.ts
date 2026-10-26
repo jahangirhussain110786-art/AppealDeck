@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createHmac } from "node:crypto";
-const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
-vi.mock("@/lib/supabase/server", () => ({ supabaseAdmin: { rpc } }));
+const { rpc, insert } = vi.hoisted(() => ({ rpc: vi.fn(), insert: vi.fn() }));
+vi.mock("@/lib/supabase/server", () => ({
+  supabaseAdmin: { rpc, from: () => ({ insert }) },
+}));
 import { POST } from "../webhooks/paddle/route";
 const event = {
   event_id: "evt_test123",
@@ -23,6 +25,8 @@ beforeEach(() => {
   vi.stubEnv("PADDLE_WEBHOOK_SECRET", "test-secret");
   rpc.mockReset();
   rpc.mockResolvedValue({ error: null });
+  insert.mockReset();
+  insert.mockResolvedValue({ error: null });
 });
 describe("Paddle webhook price arguments", () => {
   it("makes the same call as before the Account Pass existed while it has no price", async () => {
@@ -81,5 +85,33 @@ describe("Paddle webhook delivery", () => {
   it("does not acknowledge malformed signed payloads", async () => {
     expect((await POST(request("{}"))).status).toBe(400);
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  /**
+   * F16 (26 Oct 2026): a field change on Paddle's side used to end as a bare 400, so provisioning
+   * stopped silently. The shape is parked for the ops digest — never the body, which carries the
+   * buyer's email — and the response to Paddle is unchanged.
+   */
+  it("parks the shape of a signed payload that fails the schema", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const body = JSON.stringify({ event_id: "evt_x1", event_type: "transaction.completed" });
+    expect((await POST(request(body))).status).toBe(400);
+    expect(insert).toHaveBeenCalledTimes(1);
+    const parked = insert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(parked).toMatchObject({ event_id: "evt_x1", event_type: "transaction.completed" });
+    expect(String(parked.issue)).toContain("occurred_at");
+    expect(parked).not.toHaveProperty("data");
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining("malformed"),
+      expect.objectContaining({ issue: expect.stringContaining("occurred_at") }),
+    );
+    spy.mockRestore();
+  });
+
+  it("still answers 400 when parking the malformed event fails", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    insert.mockRejectedValue(new Error("db down"));
+    expect((await POST(request("{}"))).status).toBe(400);
+    spy.mockRestore();
   });
 });

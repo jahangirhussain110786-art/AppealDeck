@@ -167,6 +167,40 @@ describe("Groq local text fallback", () => {
     expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body)).reasoning_effort).toBeUndefined();
   });
 
+  it("stays inside the caller's deadline instead of giving each Groq model a full timeout", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.fn(
+        (_url: unknown, init?: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () =>
+              reject(Object.assign(new Error("aborted"), { name: "AbortError" })),
+            );
+          }),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      const pending = callGroq({ ...request, deadline: Date.now() + 2_000 });
+      await vi.runAllTimersAsync();
+      const result = await pending;
+      expect(result).toMatchObject({ ok: false, reason: "timeout" });
+      // The second model is not started: the caller's budget was spent on the first.
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("sends nothing, and reserves nothing, once the caller's deadline has passed", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await callGroq({ ...request, deadline: Date.now() - 1 })).toMatchObject({
+      ok: false,
+      reason: "timeout",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(budget.reserve).not.toHaveBeenCalled();
+  });
+
   it("is switched on in production only by the confirmation switch", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("GROQ_PRODUCTION_CONFIRMED", "");

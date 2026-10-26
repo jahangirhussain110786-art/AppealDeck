@@ -326,6 +326,59 @@ describe("callGemini retries Google's 'not now' answers", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  /**
+   * 26 Oct 2026: a caller that makes more than one model call (a draft and its retry) passes one
+   * absolute deadline. Every attempt, retry, alternate model and provider fallback must fit in it,
+   * or a route killed at 60 s can still be waiting on a request that started after its budget ended.
+   */
+  describe("the caller's deadline", () => {
+    function hangingFetch() {
+      // Rejects the way a real fetch does when its signal aborts, so the request ends on time.
+      const fetchMock = vi.fn(
+        (_input: RequestInfo | URL, init?: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () =>
+              reject(Object.assign(new Error("aborted"), { name: "AbortError" })),
+            );
+          }),
+      );
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+      return fetchMock;
+    }
+
+    it("caps the request at the time left, not at the task's full timeout", async () => {
+      vi.useFakeTimers();
+      vi.stubEnv("GEMINI_API_KEY", "test-key");
+      vi.stubEnv("GROQ_API_KEY", "");
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const fetchMock = hangingFetch();
+      const pending = callGemini({
+        task: "read-document",
+        messages: [{ role: "user", text: "hi" }],
+        deadline: Date.now() + 1_500,
+      });
+      await vi.runAllTimersAsync();
+      const result = await pending;
+      expect(result).toMatchObject({ ok: false, reason: "timeout" });
+      if (!result.ok) expect(result.message).toContain("1500ms");
+      // Nothing is retried, swapped to the other model, or re-asked in plain JSON mode.
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("sends nothing when the deadline has already passed", async () => {
+      vi.stubEnv("GEMINI_API_KEY", "test-key");
+      vi.stubEnv("GROQ_API_KEY", "");
+      const fetchMock = vi.fn();
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+      const result = await callGemini({
+        messages: [{ role: "user", text: "hi" }],
+        deadline: Date.now() - 1,
+      });
+      expect(result).toMatchObject({ ok: false, reason: "timeout" });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
   /** 25 Sep 2026: schema-constrained requests hung while plain JSON mode answered in seconds. */
   it("falls back to plain JSON mode, with the schema in the instructions, when schema mode stalls", async () => {
     const fetchMock = respond([503, 503, 503]);

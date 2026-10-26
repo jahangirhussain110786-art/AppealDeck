@@ -51,6 +51,8 @@ vi.mock("@/lib/license", async (importOriginal) => ({
 vi.mock("@/lib/founding", () => ({ foundingSpotsLeft: () => foundingLeftMock() }));
 
 import { POST } from "../checkout/intent/route";
+import { newWorkspace } from "@/core/workspace";
+import { checkoutEligibility } from "@/lib/checkoutRequest";
 
 function req(body: unknown): NextRequest {
   return new Request("http://localhost:3000/api/checkout/intent", {
@@ -59,7 +61,21 @@ function req(body: unknown): NextRequest {
     body: JSON.stringify(body),
   }) as unknown as NextRequest;
 }
-const base = { caseId: "c1", kind: "POLICY", consent: true };
+// Case-bought plans need the case facts since 26 Oct 2026: they are the only statement of the case
+// the server can check for a response route. The device sends three answers, never the case.
+const caseWorkspace = {
+  ...newWorkspace(),
+  notice: "Please provide the supplier invoice for the affected product.",
+  formInstructions: "Upload the invoice.",
+  confirmed: true,
+  protocol: "documents" as const,
+};
+const base = {
+  caseId: "c1",
+  kind: "POLICY",
+  consent: true,
+  eligibility: checkoutEligibility(caseWorkspace),
+};
 
 beforeEach(() => {
   vi.unstubAllEnvs();

@@ -1,4 +1,4 @@
-import { responseRound, type Workspace } from "@/core/workspace";
+import { caseNeedsProfessionalReview, responseRound, type Workspace } from "@/core/workspace";
 import { PRODUCTS } from "@/content/purchases";
 
 /**
@@ -18,10 +18,26 @@ export type PlanAdvice = {
 };
 
 export function planAdvice(
-  w: Pick<Workspace, "protocol" | "submissions" | "replies"> | null | undefined,
+  w:
+    | (Pick<Workspace, "protocol" | "submissions" | "replies"> &
+        Partial<
+          Pick<
+            Workspace,
+            | "notice"
+            | "formInstructions"
+            | "professionalReviewRequired"
+            | "previousRequests"
+            | "d6Latch"
+          >
+        >)
+    | null
+    | undefined,
   options: { upgrade: boolean },
 ): PlanAdvice | null {
   if (!w) return null;
+  // D6: no plan is sold for a case that needs professional help, so none is recommended. Checkout
+  // and compose refuse the same cases through the same predicate.
+  if (caseNeedsProfessionalReview(w)) return null;
   const upgrade = options.upgrade
     ? ` If Amazon asks again, the Appeal Pass is ${PRODUCTS.single.creditedPassPrice} for this case, with the ${PRODUCTS.single.price} taken off.`
     : " If Amazon asks again, the Appeal Pass covers the next response.";

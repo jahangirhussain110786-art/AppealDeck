@@ -127,4 +127,26 @@ describe("/auth/callback route", () => {
     );
     expect(res.headers.get("location")).toBe("http://localhost/vault");
   });
+
+  /**
+   * F8 (26 Oct 2026): the redirect base is the configured host, not the Host header. With the
+   * request's own origin, a request naming another host redirected the seller there and `safeNext`
+   * measured `next` against that same origin, so its checks agreed with the spoof.
+   */
+  it("ignores a spoofed request host and lands on the configured origin", async () => {
+    const res = await GET(
+      makeReq("http://evil.example/auth/callback?code=abc&next=/case") as unknown as Request,
+    );
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("https://appealdeck.com/case");
+  });
+
+  it("refuses a next that matches the spoofed host rather than the configured origin", async () => {
+    const res = await GET(
+      makeReq(
+        "http://evil.example/auth/callback?code=abc&next=https://evil.example/case",
+      ) as unknown as Request,
+    );
+    expect(res.headers.get("location")).toBe("https://appealdeck.com/dashboard");
+  });
 });

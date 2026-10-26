@@ -12,11 +12,12 @@ import {
 import { renewalWindow } from "@/lib/renewal";
 import { CaseIdSchema, ViolationKindSchema } from "@/lib/caseSchema";
 import { isSeverityGated } from "@/core";
+import { STORES } from "@/content/stores";
 import { consentLabelFor } from "@/content/legal";
 import { isPurchaseBlocked, REGION_BLOCKED_MESSAGE } from "@/lib/region";
 import { rateLimitCompose, tooManyRequestsResponse } from "@/lib/ratelimit";
-import { WorkspaceSchema } from "@/lib/workspaceSchema";
-import { workspaceCanCompose } from "@/core/workspace";
+import { roundFromFacts } from "@/core/workspace";
+import { fetchHighestRound } from "@/lib/caseRounds";
 import {
   ACCOUNT_SCOPE,
   PLAN_NEEDS_CASE,
@@ -31,6 +32,21 @@ import { foundingSpotsLeft } from "@/lib/founding";
 import { formatDate } from "@/lib/format";
 import { referralsEnabled, validateReferral, type ReferralOffer } from "@/lib/referrals";
 
+const RoundSchema = z.object({
+  sentHere: z.number().int().min(0).max(99),
+  repliesReceived: z.number().int().min(0).max(99),
+});
+
+/**
+ * The three answers checkout needs about a case, built on the device by `checkoutEligibility`. The
+ * case itself — notice, writing, file names, draft — never leaves the browser for a purchase.
+ */
+const EligibilitySchema = z.object({
+  composable: z.boolean(),
+  professionalReview: z.boolean(),
+  round: RoundSchema,
+});
+
 const Body = z
   .object({
     // A case is needed to buy a Pass, an Account Pass or a document review. A renewal, a credit pack
@@ -39,10 +55,10 @@ const Body = z
     kind: ViolationKindSchema.optional(),
     consent: z.literal(true),
     partnerCode: z.string().max(32).optional(),
-    // The vault-held case is browser-only — the server never otherwise sees its content, so the
-    // client sends this one case's current workspace so eligibility can be checked before payment,
-    // the same way /api/compose already does at draft time.
-    workspace: WorkspaceSchema.optional(),
+    // Required to buy anything tied to a case (26 Oct 2026). While this was the whole workspace,
+    // the server saw the seller's notice and writing at checkout; it never needed to. See
+    // `src/lib/checkoutRequest.ts`.
+    eligibility: EligibilitySchema.optional(),
     // "case" is the Appeal Pass and the default, so a client that never sends it behaves as before.
     plan: z
       .enum(["case", "single", "account", "review", "renewal", "pack10", "pack30", "pro"])
@@ -67,7 +83,20 @@ export async function POST(req: NextRequest) {
     );
   const rate = await rateLimitCompose(user);
   if (!rate.success) return tooManyRequestsResponse(rate);
-  const parsed = Body.safeParse(await req.json().catch(() => null));
+  /*
+    The body is a handful of booleans, a case id and a code, so anything of size is not a checkout
+    this app makes. Read as text first, like `/api/compose`, so the cap applies before parsing.
+  */
+  let raw: unknown;
+  try {
+    const text = await req.text();
+    if (new TextEncoder().encode(text).length > 8_000)
+      return refuse("Checkout request is too large.", 413);
+    raw = JSON.parse(text);
+  } catch {
+    return refuse("Invalid JSON body.", 400);
+  }
+  const parsed = Body.safeParse(raw);
   if (!parsed.success)
     return refuse("Choose what to buy, and accept the checkout consent first.", 400);
   const { plan, caseId, kind } = parsed.data;
@@ -75,17 +104,37 @@ export async function POST(req: NextRequest) {
 
   if (needsCase && kind && isSeverityGated(kind))
     return refuse("This case requires professional help; an Appeal Pass is not offered.", 403);
-  // Whether a response can be drafted matters for the Passes that pay for drafting, not for a
-  // document review, which only reads documents.
-  if (
-    (plan === "case" || plan === "single" || plan === "account") &&
-    parsed.data.workspace &&
-    !workspaceCanCompose(parsed.data.workspace)
-  )
-    return refuse(
-      "This case does not currently need a drafted response. Confirm its response route in the case workspace before buying a Pass for it.",
-      422,
-    );
+  // Whether a response can be drafted matters for the three plans that pay for drafting, not for a
+  // document review, which only reads documents. The case lives in the seller's browser, so the
+  // device sends the three facts checkout needs — and they are required, not optional (26 Oct
+  // 2026): while the workspace was optional, omitting it skipped the check entirely and a seller
+  // could pay for a case that cannot produce a response.
+  const eligibility = parsed.data.eligibility;
+  if (plan === "case" || plan === "single" || plan === "account") {
+    if (!eligibility)
+      return refuse(
+        "Open your case before buying — checkout needs to confirm a response can be drafted for it.",
+        422,
+      );
+    /*
+      D6 first, and with its own reason (26 Oct 2026). The composability check below would also
+      refuse this case, but it would say "this case does not currently need a drafted response",
+      which reads as a defect in the case rather than as the one refusal this product makes on
+      purpose. An unapplied reply that carries an allegation counts too: it is part of the case the
+      seller is buying for, even though it is not part of the request text yet.
+    */
+    if (eligibility.professionalReview)
+      return refuse(
+        `${STORES.d6Release.why} A Pass is not offered for this case.`,
+        422,
+        "professional_review",
+      );
+    if (!eligibility.composable)
+      return refuse(
+        "This case does not currently need a drafted response. Confirm its response route in the case workspace before buying a Pass for it.",
+        422,
+      );
+  }
 
   if (!supabaseAdmin) return refuse("Checkout is not configured.", 503);
   const userId = user.id;
@@ -122,6 +171,22 @@ export async function POST(req: NextRequest) {
       const has = await fetchSingleResponse(userId, caseId).catch(() => null);
       if (has === null) return refuse("Could not prepare checkout.", 503);
       if (has) return refuse("This case already has a One Response. Open your case.", 409);
+      /*
+        One Response covers the first response only, so it is not sold for a case that is already
+        past it: the licence could not cover the response the seller would prepare next, and they
+        would have paid for nothing. The round the device reports and the server's own high-water
+        mark are both consulted, because the workspace can be reset (26 Oct 2026). Drafting reads
+        the same facts through the same function, so the two cannot disagree about the round.
+      */
+      const stored = await fetchHighestRound(userId, caseId).catch(() => null);
+      if (stored === null) return refuse("Could not prepare checkout.", 503);
+      const round = Math.max(eligibility ? roundFromFacts(eligibility.round) : 1, stored);
+      if (round > 1)
+        return refuse(
+          "One Response covers the first response only. This case already has Amazon's reply or a response sent, so the next one is round two — the Appeal Pass covers every round.",
+          409,
+          "single_round_passed",
+        );
     }
     if (plan === "review" || plan === "case") {
       const reviewed = await fetchDocumentReview(userId, caseId).catch(() => null);

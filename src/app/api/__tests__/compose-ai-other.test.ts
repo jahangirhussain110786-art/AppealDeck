@@ -58,7 +58,10 @@ function documentsBody() {
       "The charger was tested by Sentinel Labs on 3 Sep 2026 and passed UL 62368-1. We stopped selling it on 1 Oct 2026.",
   };
   const workspace = { ...w0, requirements: proposedRequirements(w0, "PRODUCT_SAFETY") };
-  return { caseData: { id: "case-2", kind: "PRODUCT_SAFETY", workspace }, attemptNumber: 1 };
+  return {
+    caseData: { id: "case-2", kind: "PRODUCT_SAFETY", workspace },
+    round: { sentHere: 0, repliesReceived: 0 },
+  };
 }
 
 function questionnaireBody() {
@@ -81,7 +84,10 @@ function questionnaireBody() {
     ],
   };
   const workspace = { ...w0, requirements: proposedRequirements(w0, "PERFORMANCE_METRIC") };
-  return { caseData: { id: "case-3", kind: "PERFORMANCE_METRIC", workspace }, attemptNumber: 1 };
+  return {
+    caseData: { id: "case-3", kind: "PERFORMANCE_METRIC", workspace },
+    round: { sentHere: 0, repliesReceived: 0 },
+  };
 }
 
 const post = (b: unknown) =>

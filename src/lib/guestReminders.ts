@@ -8,7 +8,8 @@
  * - at most three open reminders per address, and the confirmation is not re-sent within an hour;
  * - one link in every email stops every reminder to that address;
  * - a date that is today or past is never offered a reminder;
- * - rows are deleted 30 days after the date they refer to.
+ * - rows are deleted 30 days after the date they refer to;
+ * - two overlapping delivery runs cannot both send one row: the claim is conditional.
  * Nothing about the notice, only its date, a short label of ours and its coarse kind, is stored.
  */
 import { randomBytes } from "node:crypto";
@@ -51,6 +52,16 @@ export interface GuestReminderStore {
   stopAll(email: string, at: string): Promise<void>;
   /** Confirmed, not stopped, not sent, due to send today or before, date not past, retries left. */
   due(today: string, staleBefore: string, limit: number): Promise<GuestReminderRow[]>;
+  /**
+   * Takes the row for this run only if it is still one `due()` would select — the same conditions,
+   * including that no live run holds it. False means another run owns it or it changed under us.
+   *
+   * `due()` can hand the same row to two overlapping runs (a cron and a manual call, say). While
+   * the claim was an unconditional update, both then sent; Resend's idempotency key kept that from
+   * becoming two emails, but the second run still wrote `sent_at` over the first's state and could
+   * count an attempt against a delivery that did happen. Fixed 26 Oct 2026.
+   */
+  claim(id: string, at: string, staleBefore: string, today: string): Promise<boolean>;
   purge(beforeDay: string): Promise<void>;
 }
 
@@ -205,11 +216,13 @@ export async function deliverGuestReminders(
   const store = deps.store ?? supabaseStore();
   const now = deps.now ?? new Date();
   const today = todayOf(now);
-  const rows = await store.due(today, new Date(now.getTime() - CLAIM_LEASE_MS).toISOString(), 200);
+  const staleBefore = new Date(now.getTime() - CLAIM_LEASE_MS).toISOString();
+  const rows = await store.due(today, staleBefore, 200);
   let sent = 0;
   let failed = 0;
   for (const row of rows) {
-    await store.update(row.id, { claimed_at: now.toISOString() });
+    // The claim is what decides who sends: skip a row another run took after `due()` returned it.
+    if (!(await store.claim(row.id, now.toISOString(), staleBefore, today))) continue;
     try {
       await (deps.sendReminder ?? sendGuestReminderEmail)({
         to: row.email,
@@ -304,6 +317,24 @@ function supabaseStore(): GuestReminderStore {
         .limit(limit);
       fail(error);
       return (data as GuestReminderRow[]) ?? [];
+    },
+    async claim(id, at, staleBefore, today) {
+      // The same conditions as `due()`, so a row that stopped being due between the two calls is
+      // not sent. The update returns the row it changed, which is the only reliable affected count.
+      const { data, error } = await db
+        .from(T)
+        .update({ claimed_at: at })
+        .eq("id", id)
+        .not("confirmed_at", "is", null)
+        .is("sent_at", null)
+        .is("unsubscribed_at", null)
+        .lte("remind_on", today)
+        .gte("due_on", today)
+        .lt("attempts", MAX_ATTEMPTS)
+        .or(`claimed_at.is.null,claimed_at.lt.${staleBefore}`)
+        .select("id");
+      fail(error);
+      return (data?.length ?? 0) > 0;
     },
     async purge(beforeDay) {
       const { error } = await db.from(T).delete().lt("due_on", beforeDay);

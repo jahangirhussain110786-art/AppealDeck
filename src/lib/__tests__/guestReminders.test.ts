@@ -72,6 +72,14 @@ function memoryStore() {
         )
         .slice(0, limit);
     },
+    async claim(id, at, staleBefore, today) {
+      const r = rows.find((x) => x.id === id);
+      if (!r?.confirmed_at || r.sent_at || r.unsubscribed_at) return false;
+      if (r.remind_on > today || r.due_on < today || r.attempts >= MAX_ATTEMPTS) return false;
+      if (r.claimed_at && r.claimed_at >= staleBefore) return false;
+      r.claimed_at = at;
+      return true;
+    },
     async purge(beforeDay) {
       purged = beforeDay;
     },
@@ -243,6 +251,23 @@ describe("delivering", () => {
     );
     expect((await deliverGuestReminders(onDay(x, "2026-11-08"))).sent).toBe(0);
     expect(x.sendReminder).toHaveBeenCalledTimes(1);
+  });
+
+  // 26 Oct 2026: `due()` can hand one row to two overlapping runs. While the claim was an
+  // unconditional update both runs sent; Resend's idempotency key stopped the second email, but the
+  // second run still overwrote the first's state. The claim must decide who sends.
+  it("sends a row once when two delivery runs overlap", async () => {
+    const x = await confirmed();
+    const day = onDay(x, "2026-11-07");
+    const [a, b] = await Promise.all([deliverGuestReminders(day), deliverGuestReminders(day)]);
+    expect(a.sent + b.sent).toBe(1);
+    expect(x.sendReminder).toHaveBeenCalledTimes(1);
+  });
+
+  it("takes a row whose claim went stale, so a crashed run does not strand it", async () => {
+    const x = await confirmed();
+    x.m.rows[0]!.claimed_at = new Date(NOW.getTime() - 11 * 60_000).toISOString();
+    expect((await deliverGuestReminders(onDay(x, "2026-11-07"))).sent).toBe(1);
   });
 
   it("sends nothing to an address that was never confirmed or that was stopped", async () => {

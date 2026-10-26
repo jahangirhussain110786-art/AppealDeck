@@ -53,6 +53,21 @@ describe("positioning", () => {
     expect(promises).not.toMatch(OUTCOME);
   });
 
+  it("describes the drafting check as a flag plus your review, not as proof of no invented detail", () => {
+    // 26 Oct 2026 audit: "no date, number or name added" is not supportable — the fact lock and the
+    // evidence check flag what they can recognise, and a model can still change meaning. The promise
+    // may only claim the mechanism that exists.
+    const promise = POSITIONING.promises.items.find((p) => p.href === "/how-we-test");
+    expect(promise?.body).toBe(
+      "The response is built from your answers and the records you supply. Automated checks flag unsupported details, and you review the response before submission.",
+    );
+    const all = POSITIONING.promises.items.map((p) => `${p.title} ${p.body} ${p.short}`).join(" ");
+    expect(all).not.toMatch(
+      /\bnothing is added\b|\bno (?:ASIN|date|number|name|detail)[^.]*added\b/i,
+    );
+    expect(all).toMatch(/automated checks flag unsupported details/i);
+  });
+
   it("keeps legal-scope wording out of the prominent buying surfaces", () => {
     const prominent = [
       HOME.hero.headline,

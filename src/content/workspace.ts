@@ -551,7 +551,7 @@ export const WORKSPACE = {
     action: "Improve the wording",
     working: "Suggesting clearer wording…",
     sendsNote:
-      "Sends this section to Google Gemini for a suggestion. Nothing changes unless you choose it.",
+      "Sends this section to an AI service (Google Gemini, or Groq when Google cannot answer) for a suggestion. Nothing changes unless you choose it.",
     tooShort: "Write a few sentences first. Wording help can only improve what you have written.",
     yours: "Your wording",
     suggested: "Suggested wording",
@@ -567,7 +567,7 @@ export const WORKSPACE = {
     needsPass: "Wording help comes with the Appeal Pass for this case.",
     signIn: "Sign in to use wording help.",
     unavailable: "Wording help is not available right now. Your wording is unchanged.",
-    busy: "Google's AI service is busy right now. Try again in a minute. Your wording is unchanged.",
+    busy: "The AI service is busy right now. Try again in a minute. Your wording is unchanged.",
     tooMany: "You have asked for a lot of suggestions today. Try again tomorrow.",
   },
   // 24 Sep 2026. When a notice states no date we send the seller to Account Health, and until now
@@ -611,7 +611,7 @@ export const WORKSPACE = {
     save: "Save business details",
     saved: "Updated your business details.",
     privacy:
-      "Saved in your encrypted vault. Sent to AppealDeck's server with a document check, and with the response and checkout steps, to compare and to prepare the response. Never sent to Google Gemini and not kept.",
+      "Saved in your encrypted vault. Sent to AppealDeck's server with a document check, and with the response and checkout steps, to compare and to prepare the response. Never sent to an AI provider and not kept.",
   },
   // A-05/A-06/A-02, wired 23 Sep 2026. All three existed in `src/core` and were reachable by no
   // seller. Each string below describes the record or the seller's own choice, and none of them
@@ -803,5 +803,7 @@ export const WORKSPACE = {
   saving: "Saving…",
   working: "Working…",
   saveEach: "Save each part to keep it.",
+  saveRetry: "Try saving again",
+  saveBlocked: "Not saved. Your text is still here, so save it before leaving this case.",
   error: "Could not save these changes. Your previously saved case is preserved. Try again.",
 } as const;

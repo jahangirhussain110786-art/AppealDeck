@@ -1,6 +1,19 @@
 import { accountPassPriceId, foundingCode, foundingEnabled, foundingSpots } from "@/lib/plans";
 
 /**
+ * The offer can be hidden for a dozen reasons, and every one of them used to be silent: the
+ * pricing page simply showed no founding spots. A mismatch between Paddle's `usage_limit` and
+ * `NEXT_PUBLIC_FOUNDING_SPOTS` is the likeliest (it is set in two places), and it is invisible
+ * from the outside. One line, once per process, names the reason (F15, 26 Oct 2026).
+ */
+let warned = false;
+function warnHidden(reason: string): void {
+  if (warned) return;
+  warned = true;
+  console.warn("FOUNDING OFFER HIDDEN", { reason, code: foundingCode() });
+}
+
+/**
  * Founding spots left, or null when the offer is off or the count could not be read (the offer is
  * then simply not shown, never guessed).
  *
@@ -24,23 +37,38 @@ export async function foundingSpotsLeft(): Promise<number | null> {
     const discount = Array.isArray(data)
       ? data.find((d) => d.code?.toUpperCase() === foundingCode())
       : null;
-    if (
-      !discount ||
-      discount.status !== "active" ||
-      !discount.enabled_for_checkout ||
-      discount.type !== "flat" ||
-      discount.amount !== "8000" ||
-      discount.currency_code !== "USD" ||
-      discount.recur ||
-      discount.usage_limit !== foundingSpots() ||
-      !Number.isInteger(discount.times_used) ||
-      discount.times_used < 0 ||
-      !Array.isArray(discount.restrict_to) ||
-      discount.restrict_to.length !== 1 ||
-      discount.restrict_to[0] !== accountPassPriceId() ||
-      (discount.expires_at && Date.parse(discount.expires_at) <= Date.now())
-    )
+    if (!discount) {
+      warnHidden("Paddle returned no discount with that code");
       return null;
+    }
+    const problem =
+      discount.status !== "active"
+        ? `status is ${String(discount.status)}`
+        : !discount.enabled_for_checkout
+          ? "not enabled for checkout"
+          : discount.type !== "flat"
+            ? `type is ${String(discount.type)}`
+            : discount.amount !== "8000"
+              ? `amount is ${String(discount.amount)}, expected 8000`
+              : discount.currency_code !== "USD"
+                ? `currency is ${String(discount.currency_code)}, expected USD`
+                : discount.recur
+                  ? "it recurs, expected a one-off"
+                  : discount.usage_limit !== foundingSpots()
+                    ? `usage_limit is ${String(discount.usage_limit)}, NEXT_PUBLIC_FOUNDING_SPOTS is ${String(foundingSpots())}`
+                    : !Number.isInteger(discount.times_used) || discount.times_used < 0
+                      ? `times_used is ${String(discount.times_used)}`
+                      : !Array.isArray(discount.restrict_to) || discount.restrict_to.length !== 1
+                        ? "restrict_to is not exactly one price"
+                        : discount.restrict_to[0] !== accountPassPriceId()
+                          ? "restrict_to names another price than the Account Pass"
+                          : discount.expires_at && Date.parse(discount.expires_at) <= Date.now()
+                            ? `expired at ${String(discount.expires_at)}`
+                            : null;
+    if (problem) {
+      warnHidden(problem);
+      return null;
+    }
     return Math.max(0, discount.usage_limit - discount.times_used);
   } catch {
     return null;

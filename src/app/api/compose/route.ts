@@ -5,19 +5,14 @@ import { composePoa, critiquePoa, renderPoaText, isSeverityGated } from "@/core"
 import type { CaseFileData, PoaDraft } from "@/core";
 import { getApiUser, unauthorizedJsonResponse } from "@/lib/auth";
 import { isLicenseActive, claimCasePass, claimSingleResponse } from "@/lib/license";
+import { recordCaseRound } from "@/lib/caseRounds";
 import { singleUsedMessage } from "@/content/purchases";
 import { serviceUnavailableResponse } from "@/lib/licenseGuard";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { rateLimitCompose, rateLimitDraft, tooManyRequestsResponse } from "@/lib/ratelimit";
 import { recordActivation, deviceErrorResponse, deriveFingerprintFromRequest } from "@/lib/devices";
 import { CaseDataSchema } from "@/lib/caseSchema";
-import {
-  workspaceCanCompose,
-  professionalReviewApplies,
-  responseRound,
-  routeWorkspace,
-} from "@/core/workspace";
-import { hasD6Allegation } from "@/core/violationKinds";
+import { caseNeedsProfessionalReview, workspaceCanCompose, roundFromFacts } from "@/core/workspace";
 import { STORES } from "@/content/stores";
 import { isGeminiConfigured } from "@/lib/llm/gemini";
 import { buildDraftSources, draftResponse } from "@/lib/llm/draftResponse";
@@ -32,9 +27,23 @@ import { RESPONSE_HEADING, type Workspace } from "@/core/workspace";
 
 export const dynamic = "force-dynamic";
 
+const RoundSchema = z.object({
+  sentHere: z.number().int().min(0).max(99),
+  repliesReceived: z.number().int().min(0).max(99),
+});
+
 const ComposeBody = z.object({
   caseData: CaseDataSchema,
-  attemptNumber: z.number().int().min(1).max(99).optional(),
+  // Which of the seller's attempts this is, for the letter's wording only ("attempt 2"). It counts
+  // attempts made before AppealDeck, so it is not the round a One Response covers.
+  attempt: z.number().int().min(1).max(99).default(1),
+  /*
+    The entitlement round's two facts, read from the seller's full workspace before it is trimmed.
+    Required: the trimmed workspace has lost its applied replies, so reading the round from it would
+    let a case that Amazon has already answered count as round one. Built by `composeRequestBody`,
+    which checkout uses too.
+  */
+  round: RoundSchema,
 });
 
 async function handleCompose(req: NextRequest) {
@@ -65,19 +74,15 @@ async function handleCompose(req: NextRequest) {
     return NextResponse.json({ error: first }, { status: 400 });
   }
 
-  const { caseData, attemptNumber = 1 } = parsed.data;
+  const { caseData, attempt, round } = parsed.data;
   /*
     D6, checked here from what was posted and never from a flag the client asserts. A latched case,
     a notice or an unapplied reply that carries a fabricated-documents, fraud or child-safety
     allegation, and any route that comes out `specialist` are refused with the referral wording,
-    whoever calls this route and whatever the client chose to send.
+    whoever calls this route and whatever the client chose to send. `caseNeedsProfessionalReview` is
+    the same predicate checkout refuses on and `planAdvice` stays silent on.
   */
-  if (
-    caseData.workspace &&
-    (professionalReviewApplies(caseData.workspace) ||
-      routeWorkspace(caseData.workspace).protocol === "specialist" ||
-      caseData.workspace.replies.some((r) => !r.applied && hasD6Allegation(r.text)))
-  )
+  if (caseData.workspace && caseNeedsProfessionalReview(caseData.workspace))
     return NextResponse.json(
       { error: STORES.d6Release.why, code: "professional_review" },
       { status: 422 },
@@ -107,14 +112,21 @@ async function handleCompose(req: NextRequest) {
   } catch {
     return serviceUnavailableResponse();
   }
+  /*
+    The round this response would be, from the two facts the browser read off the full workspace
+    before trimming it. Those facts are the seller's to report, and so is a reset workspace, so the
+    server also keeps the highest round it has ever recorded for the case and takes the larger of
+    the two (migration 0025, 26 Oct 2026). Both are seller-reported: a case that reaches round two
+    outside this app is not known until it is prepared here. Checkout reads the same facts through
+    the same function. See `src/lib/caseRounds.ts`.
+  */
+  const clientRound = roundFromFacts(round);
   if (!hasCasePass) {
     /*
       A One Response covers the first response of its case and every revision of it, and nothing
       after: once Amazon has replied, or a response has been recorded as sent here, the next one is
-      the Appeal Pass's. The round is read from the workspace that was posted, the only record of it
-      the server ever sees (the same trust the rest of this route places in it). A seller with no
-      Pass at all is asked about it too, because a One Response is not an Appeal Pass and so does
-      not make `active` true.
+      the Appeal Pass's. A seller with no Pass at all is asked about it too, because a One Response
+      is not an Appeal Pass and so does not make `active` true.
     */
     let single: boolean;
     try {
@@ -130,15 +142,24 @@ async function handleCompose(req: NextRequest) {
         },
         { status: 403 },
       );
-    const round = Math.max(
-      attemptNumber,
-      caseData.workspace ? responseRound(caseData.workspace) : 1,
-    );
-    if (round > 1)
+    // Recording before the check is deliberate: a refused round two must be remembered, or the
+    // seller could reset the case and present it as round one again.
+    let highest: number;
+    try {
+      highest = await recordCaseRound(user.id, caseData.id, clientRound);
+    } catch {
+      return serviceUnavailableResponse();
+    }
+    if (highest > 1)
       return NextResponse.json(
         { error: singleUsedMessage(), code: "single_response_used" },
         { status: 403 },
       );
+  } else {
+    // A Pass covers every round, so this cannot refuse anything. It is recorded so a case whose
+    // Pass is later refunded cannot offer the same round to a One Response as its first, and a
+    // bookkeeping failure is not worth failing a paid response over.
+    await recordCaseRound(user.id, caseData.id, clientRound).catch(() => {});
   }
 
   // The device cap is applied after the Pass check, so a request for a case with no Pass cannot use
@@ -162,7 +183,7 @@ async function handleCompose(req: NextRequest) {
   }
   const data: CaseFileData = caseData;
 
-  const ownDraft = composeDraft(data, attemptNumber);
+  const ownDraft = composeDraft(data, attempt);
 
   /*
     7 Oct 2026, founder decision: the AI writes the Plan of Action's three narrative sections from
@@ -174,7 +195,7 @@ async function handleCompose(req: NextRequest) {
   let draft = ownDraft;
   let ai: AiStatus = { status: "not_applicable" };
   if (data.workspace && data.workspace.protocol === "operational") {
-    const aiRequest = draftRequestFrom(data.workspace, data.kind, attemptNumber);
+    const aiRequest = draftRequestFrom(data.workspace, data.kind, attempt);
     if (aiRequest) {
       if (!isGeminiConfigured()) {
         ai = { status: "fallback", reason: "not_configured" };
@@ -216,7 +237,7 @@ async function handleCompose(req: NextRequest) {
     data.workspace &&
     (data.workspace.protocol === "documents" || data.workspace.protocol === "questionnaire")
   ) {
-    const otherRequest = otherDraftRequestFrom(data.workspace, data.kind, attemptNumber);
+    const otherRequest = otherDraftRequestFrom(data.workspace, data.kind, attempt);
     if (otherRequest) {
       if (!isGeminiConfigured()) {
         ai = { status: "fallback", reason: "not_configured" };
@@ -342,8 +363,8 @@ function withOtherAiTexts(
  * `POST` above, behind `verifyAiDraft`, and the privacy page says so (`legalDisclosures.test.ts`
  * pins it).
  */
-function composeDraft(data: CaseFileData, attemptNumber: number): PoaDraft {
-  return composePoa(data, attemptNumber);
+function composeDraft(data: CaseFileData, attempt: number): PoaDraft {
+  return composePoa(data, attempt);
 }
 
 export const POST = withDevUsage(handleCompose);

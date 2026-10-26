@@ -226,7 +226,19 @@ export class Vault {
       version: VAULT_ENVELOPE_VERSION,
       createdAt: new Date().toISOString(),
     };
-    await this.db.meta.add({ key: "appealdeck-vault" as never, value: meta });
+    try {
+      await this.db.meta.add({ key: "appealdeck-vault" as never, value: meta });
+    } catch (error) {
+      /*
+        26 Oct 2026: a double-submit raced the first write and threw a raw IndexedDB
+        ConstraintError into the UI. The record that won is the vault; adopt it, exactly as the
+        device-key path does. A different passphrase still fails on the normal wrong-passphrase
+        error, so this cannot let a second submit through with a key the vault does not have.
+      */
+      if ((error as Error).name !== "ConstraintError") throw error;
+      await this.unlock(passphrase);
+      return;
+    }
     this.dek = dek;
   }
 
@@ -632,7 +644,10 @@ export class Vault {
       await this.db.records.clear();
       await this.db.meta.clear();
     });
+    // The key mode is gone with the meta record, so the in-memory device key must go too; `destroy`
+    // already did this (F12, 26 Oct 2026). The DEK was cleared here already.
     this.dek = null;
+    this.deviceKey = null;
   }
 
   async exportAll(): Promise<{

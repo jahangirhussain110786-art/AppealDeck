@@ -81,7 +81,40 @@ export async function POST(request: Request) {
   let event;
   try {
     event = EventSchema.parse(JSON.parse(rawBody));
-  } catch {
+  } catch (error) {
+    /*
+      26 Oct 2026: a schema change on Paddle's side used to end here as a bare 400 — provisioning
+      stopped and nothing said so. The shape is parked for the daily ops digest (never the body:
+      it carries the buyer's email address). Best-effort, because parking must not change the
+      response Paddle receives.
+    */
+    const issue =
+      error instanceof z.ZodError
+        ? error.issues
+            .map((i) => `${i.path.join(".") || "event"}: ${i.message}`)
+            .join("; ")
+            .slice(0, 500)
+        : "Body is not JSON";
+    let shape: { event_type?: unknown; event_id?: unknown } = {};
+    try {
+      const parsed: unknown = JSON.parse(rawBody);
+      if (parsed && typeof parsed === "object") shape = parsed as typeof shape;
+    } catch {
+      // Not JSON at all; the issue says so.
+    }
+    await supabaseAdmin
+      .from("malformed_webhook_events")
+      .insert({
+        event_type: typeof shape.event_type === "string" ? shape.event_type.slice(0, 100) : null,
+        event_id: typeof shape.event_id === "string" ? shape.event_id.slice(0, 100) : null,
+        issue,
+        body_bytes: new TextEncoder().encode(rawBody).length,
+      })
+      .then(
+        () => undefined,
+        () => undefined,
+      );
+    console.error("Paddle webhook malformed; parked for the ops digest", { issue });
     return NextResponse.json({ error: "Malformed event" }, { status: 400 });
   }
   try {

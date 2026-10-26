@@ -14,6 +14,7 @@ const singleMock = vi.fn();
 const coverMock = vi.fn();
 const proMock = vi.fn();
 const referralMock = vi.fn();
+const highestRoundMock = vi.fn();
 vi.mock("@/lib/referrals", () => ({
   referralsEnabled: () => process.env.NEXT_PUBLIC_REFERRALS_ENABLED === "true",
   validateReferral: (...args: unknown[]) => referralMock(...args),
@@ -56,8 +57,13 @@ vi.mock("@/lib/license", async (importOriginal) => ({
   fetchProStatus: (...args: unknown[]) => proMock(...args),
 }));
 vi.mock("@/lib/founding", () => ({ foundingSpotsLeft: () => Promise.resolve(null) }));
+vi.mock("@/lib/caseRounds", () => ({
+  fetchHighestRound: (...args: unknown[]) => highestRoundMock(...args),
+}));
 
 import { POST } from "../checkout/intent/route";
+import { newWorkspace } from "@/core/workspace";
+import { checkoutEligibility } from "@/lib/checkoutRequest";
 
 function req(body: unknown, headers: Record<string, string> = {}): NextRequest {
   return new Request("http://localhost:3000/api/checkout/intent", {
@@ -66,7 +72,21 @@ function req(body: unknown, headers: Record<string, string> = {}): NextRequest {
     body: JSON.stringify(body),
   }) as unknown as NextRequest;
 }
-const withCase = { caseId: "c1", kind: "POLICY", consent: true };
+// A case whose confirmed route can be drafted, sent as the browser sends it. Required for the
+// Appeal Pass, One Response and the Account Pass since 26 Oct 2026 (see checkout-intent-gate).
+const caseWorkspace = {
+  ...newWorkspace(),
+  notice: "Please provide the supplier invoice for the affected product.",
+  formInstructions: "Upload the invoice.",
+  confirmed: true,
+  protocol: "documents" as const,
+};
+const withCase = {
+  caseId: "c1",
+  kind: "POLICY",
+  consent: true,
+  eligibility: checkoutEligibility(caseWorkspace),
+};
 const accountLevel = { consent: true };
 const day = 86_400_000;
 const inDays = (n: number) => new Date(Date.now() + n * day).toISOString();
@@ -84,6 +104,8 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PACK_30", "pri_p30");
   vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_PRO_PLAN", "pri_pro");
   insertSpy.mockReset();
+  highestRoundMock.mockReset();
+  highestRoundMock.mockResolvedValue(0);
   referralMock.mockReset();
   referralMock.mockResolvedValue({ id: "code-id", code: "PARTNER25", discountId: "dsc_partner" });
   getApiUserMock.mockReset();
@@ -228,6 +250,38 @@ describe("One Response (23 Oct 2026)", () => {
   it("is not on sale without its price", async () => {
     vi.stubEnv("NEXT_PUBLIC_PADDLE_PRICE_SINGLE_RESPONSE", "");
     expect((await POST(req({ ...withCase, plan: "single" }))).status).toBe(503);
+  });
+
+  // 26 Oct 2026: One Response covers the first response only, so a case already past it must not
+  // be sold one — the licence could not cover the response the seller would prepare next.
+  it("is not sold for a case whose own facts say it is already past its first response", async () => {
+    const res = await POST(
+      req({
+        ...withCase,
+        plan: "single",
+        eligibility: checkoutEligibility({
+          ...caseWorkspace,
+          replies: [{ id: "r1", at: "2026-10-01T00:00:00Z", text: "We need more.", applied: true }],
+        }),
+      }),
+    );
+    expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe("single_round_passed");
+    expect(insertSpy).not.toHaveBeenCalled();
+  });
+
+  it("is not sold when the server has already recorded a later round, however the case looks", async () => {
+    highestRoundMock.mockResolvedValue(2);
+    const res = await POST(req({ ...withCase, plan: "single" }));
+    expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe("single_round_passed");
+    expect(highestRoundMock).toHaveBeenCalledWith("u1", "c1");
+  });
+
+  it("does not open the checkout when the recorded round cannot be read", async () => {
+    highestRoundMock.mockRejectedValue(new Error("down"));
+    expect((await POST(req({ ...withCase, plan: "single" }))).status).toBe(503);
+    expect(insertSpy).not.toHaveBeenCalled();
   });
 });
 

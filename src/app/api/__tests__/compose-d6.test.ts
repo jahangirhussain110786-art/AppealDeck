@@ -37,13 +37,8 @@ vi.mock("@/lib/devices", () => ({
 }));
 
 import { POST } from "../compose/route";
-import {
-  applyWorkspaceReply,
-  composePayloadWorkspace,
-  latchD6,
-  newWorkspace,
-  type Workspace,
-} from "@/core/workspace";
+import { applyWorkspaceReply, latchD6, newWorkspace, type Workspace } from "@/core/workspace";
+import { composeRequestBody } from "@/lib/composeRequest";
 
 function req(body: unknown): NextRequest {
   return new Request("http://localhost:3000/api/compose", {
@@ -82,7 +77,7 @@ describe("3. /api/compose refuses a gated case whatever the client sends", () =>
       professionalReviewRequired: false,
     });
     const res = await POST(
-      req({ caseData: { id: "c", kind: "UNKNOWN", workspace: composePayloadWorkspace(latched) } }),
+      req(composeRequestBody({ id: "c", kind: "UNKNOWN" as const, workspace: latched }, latched)),
     );
     expect(res.status).toBe(422);
     expect((await res.json()).code).toBe("professional_review");
@@ -101,7 +96,9 @@ describe("3. /api/compose refuses a gated case whatever the client sends", () =>
         },
       ],
     };
-    const res = await POST(req({ caseData: { id: "c", kind: "UNKNOWN", workspace: w } }));
+    const res = await POST(
+      req(composeRequestBody({ id: "c", kind: "UNKNOWN" as const, workspace: w }, w)),
+    );
     expect(res.status).toBe(422);
     expect((await res.json()).code).toBe("professional_review");
   });
@@ -112,7 +109,9 @@ describe("3. /api/compose refuses a gated case whatever the client sends", () =>
     const clean = operational(
       "Your account is suspended. Please submit a plan of action describing the root cause.",
     );
-    const res = await POST(req({ caseData: { id: "c", kind: "UNKNOWN", workspace: clean } }));
+    const res = await POST(
+      req(composeRequestBody({ id: "c", kind: "UNKNOWN" as const, workspace: clean }, clean)),
+    );
     expect(res.status).toBe(200);
   });
 });
@@ -140,7 +139,7 @@ describe("4. the plan-faulted override composes on the server", () => {
       confirmed: true,
     };
     const res = await POST(
-      req({ caseData: { id: "c", kind: "UNKNOWN", workspace: composePayloadWorkspace(next) } }),
+      req(composeRequestBody({ id: "c", kind: "UNKNOWN" as const, workspace: next }, next)),
     );
     expect(res.status).toBe(200);
   });

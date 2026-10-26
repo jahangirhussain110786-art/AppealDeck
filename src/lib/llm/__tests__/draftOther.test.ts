@@ -121,6 +121,45 @@ describe("draftOther", () => {
     expect((out as { detail?: string }).detail).toMatch(/question 2/);
   });
 
+  it("gives the first attempt and its retry one deadline (26 Oct 2026)", async () => {
+    const invented = {
+      explanation:
+        "The Test report or compliance certificate is attached. We stopped selling it on 1 Oct 2026 and re-tested on 12 Oct 2026. Sentinel Labs on 3 Sep 2026, UL 62368-1, B0CX9L4TQ2.",
+      answers: [],
+    };
+    const callGemini = vi
+      .fn()
+      .mockResolvedValueOnce(reply(invented))
+      .mockResolvedValueOnce(reply(invented));
+    await draftOther(documents, { callGemini });
+    expect(callGemini).toHaveBeenCalledTimes(2);
+    const first = callGemini.mock.calls[0]![0].deadline as number;
+    const second = callGemini.mock.calls[1]![0].deadline as number;
+    expect(first).toBe(second);
+    expect(first).toBeGreaterThan(0);
+  });
+
+  it("does not start the retry when the shared budget is spent", async () => {
+    vi.useFakeTimers();
+    try {
+      const invented = {
+        explanation:
+          "The Test report or compliance certificate is attached. We stopped selling it on 1 Oct 2026 and re-tested on 12 Oct 2026. Sentinel Labs on 3 Sep 2026, UL 62368-1, B0CX9L4TQ2.",
+        answers: [],
+      };
+      const callGemini = vi.fn(async () => {
+        // The first call used the whole budget and still invented a detail.
+        vi.setSystemTime(Date.now() + 60_000);
+        return reply(invented);
+      });
+      const out = await draftOther(documents, { callGemini });
+      expect(out).toMatchObject({ ok: false, reason: "unavailable" });
+      expect(callGemini).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("treats a wrong number of answers as unavailable, not as a draft", async () => {
     const short = { explanation: "", answers: ["Only one answer."] };
     const out = await draftOther(questionnaire, {
@@ -140,5 +179,23 @@ describe("draftOther", () => {
     const q = buildOtherPrompt(questionnaire);
     expect(q).toContain("QUESTIONS");
     expect(q).toContain("1. What caused the late shipments");
+  });
+});
+
+// 26 Oct 2026: same rule as the Plan of Action prompt — a second attempt is not a refusal.
+describe("how the document and questionnaire prompt introduces the attempt", () => {
+  it("claims no refusal without reply reasons", () => {
+    const prompt = buildOtherPrompt({ ...documents, attempt: 2 });
+    expect(prompt).not.toMatch(/Amazon refused an earlier response/);
+    expect(prompt).toContain("no reply from Amazon is on record");
+  });
+
+  it("says a refusal when the reply produced reasons", () => {
+    const prompt = buildOtherPrompt({
+      ...documents,
+      attempt: 2,
+      replyReasons: ["The invoice does not match the ASIN."],
+    });
+    expect(prompt).toContain("after Amazon refused an earlier response");
   });
 });

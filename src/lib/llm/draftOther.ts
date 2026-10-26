@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { attemptLine } from "./attemptLine";
 import { callGemini, type GeminiCallInput } from "./gemini";
 import { extractJsonObject } from "./extractJson";
 import { policyBriefFor } from "@/core/policyBrief";
@@ -48,6 +49,14 @@ export type OtherDraftOutcome =
       detail?: string;
     };
 
+/**
+ * One budget for the whole response, retry included (26 Oct 2026), for the reason `DRAFT_BUDGET_MS`
+ * gives in `draftResponse`: two full per-call budgets can outlast the 60 s route.
+ */
+const DRAFT_BUDGET_MS = 48_000;
+/** A retry is started only if at least this much of the budget remains for it. */
+const RETRY_RESERVE_MS = 5_000;
+
 const clean = (s: string, max: number) => s.replaceAll('"""', "'''").slice(0, max);
 
 export const OTHER_SYSTEM_PROMPT = [
@@ -90,27 +99,32 @@ export function buildOtherSources(req: OtherDraftRequest): DraftSources {
   const sellerAnswers = [req.explanation, ...req.questions.map((q) => q.answer)]
     .filter((t) => t.trim())
     .join("\n\n");
+  const recordLines = req.records.map(
+    (r) => `${r.label}${r.filename ? ` (${r.filename})` : ""}${r.note ? `: ${r.note}` : ""}`,
+  );
+  const declinedLines = req.declined.map((d) => `${d.label}: ${d.reason}`);
+  const requestedLines = req.requested.map((r) => `${r.label}: ${STATUS_WORDS[r.status]}`);
+  const suppliedRecords = recordLines.join("\n");
+  const knownRecords = [...recordLines, ...declinedLines, ...requestedLines].join("\n");
   const all = [
     req.notice,
     req.formInstructions ?? "",
     ...req.questions.map((q) => q.question),
     sellerAnswers,
-    ...req.records.map(
-      (r) => `${r.label}${r.filename ? ` (${r.filename})` : ""}${r.note ? `: ${r.note}` : ""}`,
-    ),
-    ...req.declined.map((d) => `${d.label}: ${d.reason}`),
-    ...req.requested.map((r) => `${r.label}: ${STATUS_WORDS[r.status]}`),
+    ...recordLines,
+    ...declinedLines,
+    ...requestedLines,
     ...req.issues.map((i) => i.quote),
     ...req.replyReasons,
   ].join("\n\n");
-  return { all, sellerAnswers };
+  return { all, sellerAnswers, suppliedRecords, knownRecords };
 }
 
 export function buildOtherPrompt(req: OtherDraftRequest, feedback?: string): string {
   const lines = [
     policyBriefFor(req.kind),
     "",
-    `Task: write ${req.protocol === "documents" ? "the explanation that accompanies the requested documents" : "the answer to each question on Amazon's form"}. This is attempt ${req.attempt}${req.attempt > 1 ? " (Amazon refused an earlier response; see AMAZON REPLY)" : ""}. The notice is about: ${req.kind.replaceAll("_", " ").toLowerCase()}.${req.dispute ? " The seller contests the finding." : ""}`,
+    `Task: write ${req.protocol === "documents" ? "the explanation that accompanies the requested documents" : "the answer to each question on Amazon's form"}. ${attemptLine(req.attempt, req.replyReasons)} The notice is about: ${req.kind.replaceAll("_", " ").toLowerCase()}.${req.dispute ? " The seller contests the finding." : ""}`,
     "",
     "NOTICE:",
     '"""',
@@ -204,6 +218,7 @@ async function attemptOnce(
   req: OtherDraftRequest,
   deps: OtherDraftDeps,
   feedback?: string,
+  deadline?: number,
 ): Promise<
   | { ok: true; texts: OtherDraftTexts }
   | { ok: false; reason: "busy" | "unavailable" | "not_configured" }
@@ -217,6 +232,7 @@ async function attemptOnce(
     temperature: 0.2,
     maxOutputTokens: 3000,
     responseJsonSchema: OUTPUT_SCHEMA,
+    deadline,
   });
   if (!result.ok)
     return {
@@ -259,7 +275,7 @@ function checkEach(req: OtherDraftRequest, texts: OtherDraftTexts): string | nul
         return `answered question ${i + 1}, which the seller left empty`;
       continue;
     }
-    const each = verifyAiTexts({ all: sources.all, sellerAnswers: own }, [texts.answers[i]!]);
+    const each = verifyAiTexts({ ...sources, sellerAnswers: own }, [texts.answers[i]!]);
     if (each.dropped.length)
       return `left out details the seller gave for question ${i + 1}: ${each.dropped.join(", ")}`;
   }
@@ -270,12 +286,15 @@ export async function draftOther(
   req: OtherDraftRequest,
   deps: OtherDraftDeps = { callGemini },
 ): Promise<OtherDraftOutcome> {
-  const first = await attemptOnce(req, deps);
+  const budgetEnds = Date.now() + DRAFT_BUDGET_MS;
+  const first = await attemptOnce(req, deps, undefined, budgetEnds);
   if (!first.ok) return first;
   const firstFailure = checkEach(req, first.texts);
   if (!firstFailure) return { ok: true, texts: first.texts, retried: false };
+  // Without time for the retry the text is discarded rather than returned unchecked.
+  if (budgetEnds - Date.now() < RETRY_RESERVE_MS) return { ok: false, reason: "unavailable" };
 
-  const second = await attemptOnce(req, deps, firstFailure);
+  const second = await attemptOnce(req, deps, firstFailure, budgetEnds);
   if (!second.ok) return second;
   const secondFailure = checkEach(req, second.texts);
   if (!secondFailure) return { ok: true, texts: second.texts, retried: true, firstFailure };

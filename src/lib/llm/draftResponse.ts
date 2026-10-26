@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { attemptLine } from "./attemptLine";
 import { callGemini, type GeminiCallInput } from "./gemini";
 import { extractJsonObject } from "./extractJson";
 import { policyBriefFor } from "@/core/policyBrief";
@@ -92,6 +93,17 @@ const OUTPUT_SCHEMA = {
   required: ["rootCause", "correctiveActions", "preventiveMeasures"],
 };
 
+/**
+ * One budget for the whole draft, retry included (26 Oct 2026). Each call used to get its own 55 s
+ * task budget, so a slow first attempt plus its retry could hold one request for over 100 s while
+ * `vercel.json` kills the route at 60 s. The first call keeps its 25 s limit; the retry spends what
+ * is left, and is not started if too little is left to finish it. Falling back to the seller's own
+ * wording is always a usable draft.
+ */
+const DRAFT_BUDGET_MS = 48_000;
+/** A retry is started only if at least this much of the budget remains for it. */
+const RETRY_RESERVE_MS = 5_000;
+
 const clean = (s: string, max: number) => s.replaceAll('"""', "'''").slice(0, max);
 
 /** The rules every AI-written response obeys; shared with the other drafters. */
@@ -146,6 +158,8 @@ export function buildDraftSources(req: DraftRequest): DraftSources {
   const declinedLines = req.declined.map((d) => `${d.label}: ${d.reason}`);
   const requestedLines = (req.requested ?? []).map((r) => `${r.label}: ${STATUS_WORDS[r.status]}`);
   const issueLines = (req.issues ?? []).map((i) => i.quote);
+  const suppliedRecords = recordLines.join("\n");
+  const knownRecords = [...recordLines, ...declinedLines, ...requestedLines].join("\n");
   const all = [
     req.notice,
     req.formInstructions ?? "",
@@ -156,14 +170,14 @@ export function buildDraftSources(req: DraftRequest): DraftSources {
     ...issueLines,
     ...req.replyReasons,
   ].join("\n\n");
-  return { all, sellerAnswers };
+  return { all, sellerAnswers, suppliedRecords, knownRecords };
 }
 
 export function buildDraftPrompt(req: DraftRequest, feedback?: string): string {
   const lines = [
     policyBriefFor(req.kind),
     "",
-    `This is attempt ${req.attempt}${req.attempt > 1 ? " (Amazon refused an earlier response; see AMAZON REPLY)" : ""}. The notice is about: ${req.kind.replaceAll("_", " ").toLowerCase()}.`,
+    `${attemptLine(req.attempt, req.replyReasons)} The notice is about: ${req.kind.replaceAll("_", " ").toLowerCase()}.`,
     "",
     "NOTICE:",
     '"""',
@@ -260,6 +274,7 @@ async function attemptOnce(
   req: DraftRequest,
   deps: DraftDeps,
   feedback?: string,
+  deadline?: number,
 ): Promise<
   | { ok: true; sections: DraftSections }
   | { ok: false; reason: "busy" | "unavailable" | "not_configured" }
@@ -274,6 +289,7 @@ async function attemptOnce(
     maxOutputTokens: 2600,
     responseJsonSchema: OUTPUT_SCHEMA,
     thinkingBudget: draftThinkingBudget(),
+    deadline,
   });
   if (!result.ok)
     return {
@@ -312,8 +328,9 @@ export async function draftResponse(
   deps: DraftDeps = { callGemini },
 ): Promise<DraftOutcome> {
   const sources = buildDraftSources(req);
+  const budgetEnds = Date.now() + DRAFT_BUDGET_MS;
 
-  const first = await attemptOnce(req, deps);
+  const first = await attemptOnce(req, deps, undefined, budgetEnds);
   if (!first.ok) return first;
   const firstCheck = verifyAiDraft(sources, first.sections);
   if (firstCheck.ok) {
@@ -326,8 +343,11 @@ export async function draftResponse(
     */
     const filler = templatePhrases(first.sections, sources.sellerAnswers);
     if (filler.length === 0) return { ok: true, sections: first.sections, retried: false };
+    // This draft is faithful; with no budget left for a retry it simply stands.
+    if (budgetEnds - Date.now() < RETRY_RESERVE_MS)
+      return { ok: true, sections: first.sections, retried: false };
     const fillerFailure = `used wording that reads as a template (${filler.map((f) => `"${f}"`).join(", ")}); say the specific thing the seller said instead, or leave the phrase out`;
-    const second = await attemptOnce(req, deps, fillerFailure);
+    const second = await attemptOnce(req, deps, fillerFailure, budgetEnds);
     if (
       second.ok &&
       verifyAiDraft(sources, second.sections).ok &&
@@ -338,8 +358,10 @@ export async function draftResponse(
   }
 
   // One more go, told exactly what was wrong. The same check decides again.
+  // Without time for it the draft is discarded rather than returned unfaithful.
+  if (budgetEnds - Date.now() < RETRY_RESERVE_MS) return { ok: false, reason: "unavailable" };
   const firstFailure = describeCheck(firstCheck);
-  const second = await attemptOnce(req, deps, firstFailure);
+  const second = await attemptOnce(req, deps, firstFailure, budgetEnds);
   if (!second.ok) return second;
   const secondCheck = verifyAiDraft(sources, second.sections);
   if (secondCheck.ok) return { ok: true, sections: second.sections, retried: true, firstFailure };

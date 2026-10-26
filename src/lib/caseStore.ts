@@ -201,6 +201,14 @@ async function writeActivePointer(vault: Vault, caseId: string): Promise<void> {
   clearPendingActiveCase();
 }
 
+async function clearActivePointer(vault: Vault): Promise<void> {
+  await vault.atomic(async () => {
+    const existing = await findMetaRecordId(vault, ACTIVE_CASE_POINTER_NAME);
+    if (existing) await vault.delete(existing);
+  });
+  clearPendingActiveCase();
+}
+
 async function readCaseIndex(vault: Vault): Promise<CaseIndexEntry[]> {
   const id = await findMetaRecordId(vault, CASE_INDEX_NAME);
   if (!id) return [];
@@ -319,7 +327,13 @@ async function resolveActiveCaseId(vault: Vault): Promise<string | null> {
     const hasLog = hasFile ? null : await findRecordId(vault, CASE_LOG_NAME, pointed);
     if (hasFile || hasLog) return pointed;
     const others = (await readCaseIndex(vault)).filter((e) => e.id !== pointed);
-    if (others.length === 0) return pointed;
+    if (others.length === 0) {
+      // Nothing matches and nothing else exists: the pointer is the only thing saying a case is
+      // there, and loadCaseFile would return null while the pointer kept claiming otherwise. Clear
+      // it so the next read is a genuinely fresh vault (F10, 26 Oct 2026).
+      await clearActivePointer(vault);
+      return null;
+    }
     const newest = [...others].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]!;
     await writeActivePointer(vault, newest.id);
     return newest.id;
@@ -404,9 +418,16 @@ export async function saveCaseFile(vault: Vault, caseFile: CaseFile): Promise<vo
       caseId,
       kind: "case",
     });
-    // A real case file is authoritative: it becomes (or confirms) the active case, and its entry
-    // in the index is kept current — regardless of what, if anything, resolved as active before.
-    await writeActivePointer(vault, caseId);
+    /*
+      26 Oct 2026: a save no longer takes the pointer every time. Two tabs on different cases meant
+      the last save won, so a reload or a navigation landed on the other case — and `/pricing` buys
+      for the active case, so the purchase target could move under the seller. A case that did not
+      exist before this save is a create and activates; so does a save of the case the pointer
+      already names, and a vault with no pointer yet. An edit to a different existing case leaves
+      the seller where they are.
+    */
+    const pointed = await readActivePointer(vault);
+    if (!existing || !pointed || pointed === caseId) await writeActivePointer(vault, caseId);
     await upsertCaseIndexEntry(vault, {
       id: caseId,
       kind: caseFile.kind,

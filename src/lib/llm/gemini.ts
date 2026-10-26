@@ -27,12 +27,15 @@ const TASK_BUDGET_MS: Record<string, number> = {
 };
 const RETRY_DELAYS_MS = [1_500, 4_000];
 const MAX_OUTPUT_TOKENS = 512;
+/** A request is not started with less time than this left in the caller's budget. */
+const MIN_REQUEST_MS = 1_000;
 
 /**
- * Call-site task tags. Each tag maps to a free-tier model tuned for that
- * workload. Callers pass `task` instead of a raw model id; the resolver
- * picks the right one. Per-task env overrides let ops swap a model without
- * code changes. The default model covers anything not in the table.
+ * Call-site task tags. Each tag maps to the model measured best for that
+ * workload (production runs the paid tier; the choice is about quality and
+ * latency, not price). Callers pass `task` instead of a raw model id; the
+ * resolver picks the right one. Per-task env overrides let ops swap a model
+ * without code changes. The default model covers anything not in the table.
  */
 // Only the tasks the app actually calls. Three more ("critique-poa", "phrase-engine-output",
 // "triage-router") sat here, never called, and the deployment guide told people to set model
@@ -125,6 +128,13 @@ export type GeminiCallInput = {
    * schema-mode stall of 25 Sep 2026 was with thinking on); a caller that wants reasoning says so.
    */
   thinkingBudget?: number;
+  /**
+   * When the caller's own budget runs out, as epoch milliseconds (26 Oct 2026). A caller that makes
+   * more than one model call in one request — the drafters retry once — sets it once and passes it
+   * to every call, so the retry shares one budget instead of starting a fresh one that can outlast
+   * the route. Every attempt, retry, alternate model and Groq fallback stays inside it.
+   */
+  deadline?: number;
 };
 
 export type GeminiCallResult =
@@ -204,13 +214,17 @@ function isConfigurationError(result: GeminiCallResult): boolean {
 
 export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResult> {
   let fallback: GeminiCallResult | undefined;
+  // A spent budget means no further provider is asked: the answer would arrive after the caller
+  // has already given up, and Groq would reserve spend for a request nobody can use.
+  const timeLeft = () =>
+    input.deadline === undefined || input.deadline - Date.now() >= MIN_REQUEST_MS;
   const tryFallback = async () => {
-    if (!canUseGroq(input)) return undefined;
+    if (!canUseGroq(input) || !timeLeft()) return undefined;
     fallback ??= await callGroq(input);
     return fallback;
   };
   let result = await callGeminiOnce(input, tryFallback);
-  if (!result.ok && (result.reason !== "bad_input" || isConfigurationError(result))) {
+  if (!result.ok && timeLeft() && (result.reason !== "bad_input" || isConfigurationError(result))) {
     result = (await tryFallback()) ?? result;
   }
   if (result.ok && process.env.NODE_ENV !== "production") {
@@ -236,6 +250,18 @@ async function callGeminiOnce(
       message: isPaidTierConfirmed()
         ? "Gemini is not configured. Set GEMINI_API_KEY in the environment to enable cloud calls."
         : "Gemini is switched off in production until GEMINI_PAID_TIER_CONFIRMED=true is set (DEPLOYMENT §6b).",
+    };
+  }
+
+  const timeoutMs = TASK_TIMEOUT_MS[input.task ?? ""] ?? REQUEST_TIMEOUT_MS;
+  // A caller that makes more than one call sets one deadline for all of them; otherwise this call's
+  // task budget starts now.
+  const deadline = input.deadline ?? Date.now() + (TASK_BUDGET_MS[input.task ?? ""] ?? timeoutMs);
+  if (deadline - Date.now() < MIN_REQUEST_MS) {
+    return {
+      ok: false,
+      reason: "timeout",
+      message: "No time remained in the caller's budget for another AI request.",
     };
   }
 
@@ -297,8 +323,6 @@ async function callGeminiOnce(
     try. A 429/5xx is Google saying "not now", so wait and try again a couple of times inside a
     fixed budget. The first request's spend is reserved above; each further request reserves its own.
   */
-  const timeoutMs = TASK_TIMEOUT_MS[input.task ?? ""] ?? REQUEST_TIMEOUT_MS;
-  const deadline = Date.now() + (TASK_BUDGET_MS[input.task ?? ""] ?? timeoutMs);
   let last: GeminiCallResult = {
     ok: false,
     reason: "upstream_error",
@@ -312,7 +336,9 @@ async function callGeminiOnce(
     hasUnlimitedDevUsage() || (await reserveSpend(breakerOptions)).ok;
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     if (attempt > 0 && !(await mayRequestAgain())) break;
-    const outcome = await attemptOnce(url, body, model, Math.min(timeoutMs, deadline - Date.now()));
+    const remaining = deadline - Date.now();
+    if (remaining < MIN_REQUEST_MS) break;
+    const outcome = await attemptOnce(url, body, model, Math.min(timeoutMs, remaining));
     last = outcome.result;
     if (!last.ok && attempt === 0) {
       const configurationError = isConfigurationError(last);
@@ -393,7 +419,12 @@ async function callGeminiOnce(
       },
       generationConfig: plainConfig,
     };
-    const outcome = await attemptOnce(url, fallback, model, deadline - Date.now());
+    const outcome = await attemptOnce(
+      url,
+      fallback,
+      model,
+      Math.min(timeoutMs, deadline - Date.now()),
+    );
     if (outcome.result.ok) return outcome.result;
   }
 

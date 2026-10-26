@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { getBrowserVault } from "@/lib/vault/browser";
 import { loadCaseFile } from "@/lib/caseStore";
+import { checkoutEligibility } from "@/lib/checkoutRequest";
 import { openVaultForVisitor } from "@/lib/vault/visitor";
 import type { Vault } from "@/core/vault/vault";
 import { APP } from "@/content/app";
@@ -78,7 +79,6 @@ export function CheckoutButton({
   vault: sharedVault,
   plan = "case",
 }: {
-  priceId?: string;
   /** What is being bought. Every plan but "case" is on sale only where its price is configured. */
   plan?: PassPlan;
   children: React.ReactNode;
@@ -200,7 +200,15 @@ export function CheckoutButton({
           throw new Error(
             "Start your case before you buy. A Pass, an Account Pass and a document review are each for a case.",
           );
-        body = { caseId: file.id, kind: file.kind, consent, workspace: file.workspace, plan };
+        // Three answers about the case, not the case: the notice, the notes and the draft stay in
+        // the vault. See `checkoutEligibility`.
+        body = {
+          caseId: file.id,
+          kind: file.kind,
+          consent,
+          plan,
+          ...(file.workspace ? { eligibility: checkoutEligibility(file.workspace) } : {}),
+        };
       }
       const referralOn = process.env.NEXT_PUBLIC_REFERRALS_ENABLED === "true";
       if (referralOn && (plan === "case" || plan === "account")) {

@@ -384,15 +384,48 @@ describe("caseStore", () => {
     it("loadCaseLog(vault, caseId) reads a specific case's log regardless of which is active", async () => {
       const caseA = createCaseFile("POLICY");
       await saveCaseFile(v, caseA);
-      await saveCaseLog(v, { state: "DECODED", attemptCount: 1 });
+      await saveCaseLog(v, { state: "DECODED", attemptCount: 1 }, caseA.id);
 
       const caseB = createCaseFile("FUNDS");
       await saveCaseFile(v, caseB);
-      await saveCaseLog(v, { state: "REMEDIATION", attemptCount: 2 });
+      await saveCaseLog(v, { state: "REMEDIATION", attemptCount: 2 }, caseB.id);
 
       expect(await loadCaseLog(v, caseA.id)).toEqual({ state: "DECODED", attemptCount: 1 });
       expect(await loadCaseLog(v, caseB.id)).toEqual({ state: "REMEDIATION", attemptCount: 2 });
       expect(await loadCaseLog(v)).toEqual({ state: "REMEDIATION", attemptCount: 2 });
+    });
+
+    /**
+     * F9 (26 Oct 2026). Every save used to write the active-case pointer. Two tabs on different
+     * cases meant the last save won, so a reload landed on the other case — and `/pricing` buys
+     * for the active case, so the purchase target could move under the seller.
+     */
+    it("a save of another existing case does not move the active case", async () => {
+      const a = createCaseFile("POLICY");
+      const b = createCaseFile("LISTING");
+      await saveCaseFile(v, a);
+      await saveCaseFile(v, b);
+      await setActiveCaseId(v, a.id);
+
+      await saveCaseFile(v, { ...b, rootCause: "edited in the other tab" });
+
+      expect(await getActiveCaseId(v)).toBe(a.id);
+      expect((await loadCaseFile(v))?.id).toBe(a.id);
+      expect((await loadCaseFile(v, b.id))?.rootCause).toBe("edited in the other tab");
+    });
+
+    /** F10 (26 Oct 2026): a dangling pointer was returned whenever the index held nothing else. */
+    it("clears a pointer to a case that no longer exists when no other case is left", async () => {
+      const a = createCaseFile("POLICY");
+      await saveCaseFile(v, a);
+      // Another tab removes the case's records without touching the pointer.
+      for (const r of await v.list({ caseId: a.id })) await v.delete(r.id);
+
+      expect(await getActiveCaseId(v)).toBeNull();
+      // The pointer is gone, not merely ignored: a new case starts from a clean pointer.
+      const b = createCaseFile("LISTING");
+      await saveCaseFile(v, b);
+      expect(await getActiveCaseId(v)).toBe(b.id);
     });
   });
   /**

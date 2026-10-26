@@ -51,6 +51,7 @@ process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS = "pri_test123";
 
 import { POST } from "../checkout/intent/route";
 import { newWorkspace } from "@/core/workspace";
+import { checkoutEligibility } from "@/lib/checkoutRequest";
 
 function makeReq(body: unknown): NextRequest {
   return new Request("http://localhost:3000/api/checkout/intent", {
@@ -59,6 +60,15 @@ function makeReq(body: unknown): NextRequest {
     body: JSON.stringify(body),
   }) as unknown as NextRequest;
 }
+
+/** A case whose confirmed route can be drafted, as the browser sends it with every response plan. */
+const composable = () => ({
+  ...newWorkspace(),
+  notice: "Please provide the supplier invoice for the affected product.",
+  formInstructions: "Upload the invoice.",
+  confirmed: true,
+  protocol: "documents" as const,
+});
 
 beforeEach(() => {
   getApiUserMock.mockReset();
@@ -85,7 +95,14 @@ describe("/api/checkout/intent double-purchase guard", () => {
       plan: "appeal_pass",
       licenseKey: "AD-1",
     });
-    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true }));
+    const res = await POST(
+      makeReq({
+        caseId: "c1",
+        kind: "POLICY",
+        consent: true,
+        eligibility: checkoutEligibility(composable()),
+      }),
+    );
     expect(res.status).toBe(409);
     expect(fetchLicenseMock).toHaveBeenCalledWith("u1", "c1");
     expect(insertMock).not.toHaveBeenCalled();
@@ -97,13 +114,27 @@ describe("/api/checkout/intent double-purchase guard", () => {
       plan: "appeal_pass",
       licenseKey: "AD-1",
     });
-    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true }));
+    const res = await POST(
+      makeReq({
+        caseId: "c1",
+        kind: "POLICY",
+        consent: true,
+        eligibility: checkoutEligibility(composable()),
+      }),
+    );
     expect(res.status).toBe(200);
   });
 
   it("hands back a recent unpaid intent instead of opening a second one", async () => {
     recentIntentMock.mockResolvedValue({ data: { id: "intent-earlier" }, error: null });
-    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true }));
+    const res = await POST(
+      makeReq({
+        caseId: "c1",
+        kind: "POLICY",
+        consent: true,
+        eligibility: checkoutEligibility(composable()),
+      }),
+    );
     expect(res.status).toBe(200);
     expect((await res.json()).intentId).toBe("intent-earlier");
     expect(insertMock).not.toHaveBeenCalled();
@@ -111,7 +142,14 @@ describe("/api/checkout/intent double-purchase guard", () => {
 
   it("does not open a checkout when the licence lookup fails", async () => {
     fetchLicenseMock.mockRejectedValue(new Error("License lookup unavailable"));
-    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true }));
+    const res = await POST(
+      makeReq({
+        caseId: "c1",
+        kind: "POLICY",
+        consent: true,
+        eligibility: checkoutEligibility(composable()),
+      }),
+    );
     expect(res.status).toBe(503);
     expect(insertMock).not.toHaveBeenCalled();
   });
@@ -130,14 +168,19 @@ describe("/api/checkout/intent eligibility gate", () => {
     expect(insertMock).not.toHaveBeenCalled();
   });
 
-  it("allows a checkout intent with no workspace attached (legacy case)", async () => {
-    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true }));
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body).toEqual({ intentId: "intent-1", priceId: "pri_test123" });
+  // 26 Oct 2026: the workspace used to be optional here, which meant omitting it skipped the
+  // composability check entirely — a seller could pay for a case that produces no response. The
+  // browser always sends it (CheckoutButton), so its absence is a refusal, not a legacy allowance.
+  it("refuses a response plan that omits the case facts, for every plan that pays for drafting", async () => {
+    for (const plan of ["case", "single", "account"] as const) {
+      const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true, plan }));
+      expect(res.status, plan).toBe(422);
+      expect((await res.json()).error).toMatch(/needs to confirm a response can be drafted/);
+    }
+    expect(insertMock).not.toHaveBeenCalled();
   });
 
-  it("rejects a workspace whose route cannot be drafted, before creating a checkout intent", async () => {
+  it("rejects a case whose route cannot be drafted, before creating a checkout intent", async () => {
     const w = {
       ...newWorkspace(),
       notice: "Your response remains under review. No additional information is required.",
@@ -145,7 +188,9 @@ describe("/api/checkout/intent eligibility gate", () => {
       confirmed: true,
       protocol: "information" as const,
     };
-    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true, workspace: w }));
+    const res = await POST(
+      makeReq({ caseId: "c1", kind: "POLICY", consent: true, eligibility: checkoutEligibility(w) }),
+    );
     expect(res.status).toBe(422);
     expect(insertMock).not.toHaveBeenCalled();
   });
@@ -165,12 +210,14 @@ describe("/api/checkout/intent eligibility gate", () => {
       confirmed: true,
       protocol: "documents" as const,
     };
-    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true, workspace: w }));
+    const res = await POST(
+      makeReq({ caseId: "c1", kind: "POLICY", consent: true, eligibility: checkoutEligibility(w) }),
+    );
     expect(res.status).toBe(422);
     expect(insertMock).not.toHaveBeenCalled();
   });
 
-  it("allows a workspace whose confirmed route can be drafted", async () => {
+  it("allows a case whose confirmed route can be drafted", async () => {
     const w = {
       ...newWorkspace(),
       notice: "Please provide the supplier invoice for the affected product.",
@@ -178,9 +225,85 @@ describe("/api/checkout/intent eligibility gate", () => {
       confirmed: true,
       protocol: "documents" as const,
     };
-    const res = await POST(makeReq({ caseId: "c1", kind: "POLICY", consent: true, workspace: w }));
+    const res = await POST(
+      makeReq({ caseId: "c1", kind: "POLICY", consent: true, eligibility: checkoutEligibility(w) }),
+    );
     expect(res.status).toBe(200);
     expect(insertMock).toHaveBeenCalledTimes(1);
+  });
+
+  /*
+    26 Oct 2026: D6 is refused before any money moves, with its own reason. Until now the
+    composability check refused these cases under "this case does not currently need a drafted
+    response", which reads as a defect in the case rather than as the one refusal this product
+    makes on purpose. `/api/compose` and `planAdvice` ask the same predicate.
+  */
+  it("refuses a case that needs professional review, with the D6 reason", async () => {
+    const w = {
+      ...composable(),
+      notice: "Your account was deactivated because we found you submitted forged invoices.",
+    };
+    const res = await POST(
+      makeReq({ caseId: "c1", kind: "POLICY", consent: true, eligibility: checkoutEligibility(w) }),
+    );
+    expect(res.status).toBe(422);
+    expect((await res.json()).code).toBe("professional_review");
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  /*
+    26 Oct 2026: an unapplied reply is not part of the response route, so the case still reads as
+    a clean document request — but the seller has already been accused of falsified documents and
+    a drafted response is not what it needs.
+  */
+  it("refuses a clean case whose unapplied reply carries the allegation", async () => {
+    const w = {
+      ...composable(),
+      replies: [
+        {
+          id: "r1",
+          at: "2026-10-01T00:00:00Z",
+          text: "The documents you provided were falsified.",
+          applied: false,
+        },
+      ],
+    };
+    const res = await POST(
+      makeReq({ caseId: "c1", kind: "POLICY", consent: true, eligibility: checkoutEligibility(w) }),
+    );
+    expect(res.status).toBe(422);
+    expect((await res.json()).code).toBe("professional_review");
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("/api/checkout/intent body limits (26 Oct 2026)", () => {
+  it("refuses a body too large to be a checkout", async () => {
+    const res = await POST(
+      makeReq({
+        caseId: "c1",
+        kind: "POLICY",
+        consent: true,
+        plan: "case",
+        note: "x".repeat(9_000),
+      }),
+    );
+    expect(res.status).toBe(413);
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  /*
+    The old shape carried the whole workspace. It is no longer read: a request that sends the case
+    instead of the three facts is refused exactly as one that sends nothing, so nothing is posted
+    that the server could store or log.
+  */
+  it("does not accept case text in place of the three facts", async () => {
+    const res = await POST(
+      makeReq({ caseId: "c1", kind: "POLICY", consent: true, workspace: composable() }),
+    );
+    expect(res.status).toBe(422);
+    expect((await res.json()).error).toMatch(/needs to confirm a response can be drafted/);
+    expect(insertMock).not.toHaveBeenCalled();
   });
 });
 
@@ -189,7 +312,12 @@ describe("/api/checkout/intent region gate (7 Oct 2026)", () => {
     new Request("http://localhost:3000/api/checkout/intent", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-vercel-ip-country": country },
-      body: JSON.stringify({ caseId: "c1", kind: "POLICY", consent: true }),
+      body: JSON.stringify({
+        caseId: "c1",
+        kind: "POLICY",
+        consent: true,
+        eligibility: checkoutEligibility(composable()),
+      }),
     }) as unknown as NextRequest;
 
   it("refuses a buyer in the EU, EEA or UK before creating anything", async () => {

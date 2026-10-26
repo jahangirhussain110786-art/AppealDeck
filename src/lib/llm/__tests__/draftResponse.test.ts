@@ -139,6 +139,43 @@ describe("draftResponse", () => {
     });
   });
 
+  it("gives the first attempt and its retry one deadline (26 Oct 2026)", async () => {
+    const invented = {
+      ...good,
+      correctiveActions: good.correctiveActions + " We audited stock on 5 October.",
+    };
+    const callGemini = vi
+      .fn()
+      .mockResolvedValueOnce(reply(invented))
+      .mockResolvedValueOnce(reply(good));
+    await draftResponse(req, { callGemini });
+    expect(callGemini).toHaveBeenCalledTimes(2);
+    const first = callGemini.mock.calls[0]![0].deadline as number;
+    const second = callGemini.mock.calls[1]![0].deadline as number;
+    expect(first).toBe(second);
+    expect(first).toBeGreaterThan(0);
+  });
+
+  it("does not start the retry when the shared budget is spent", async () => {
+    vi.useFakeTimers();
+    try {
+      const invented = {
+        ...good,
+        correctiveActions: good.correctiveActions + " We audited stock on 5 October.",
+      };
+      const callGemini = vi.fn(async () => {
+        // The first call used the whole budget and still invented a detail.
+        vi.setSystemTime(Date.now() + 60_000);
+        return reply(invented);
+      });
+      const out = await draftResponse(req, { callGemini });
+      expect(out).toMatchObject({ ok: false, reason: "unavailable" });
+      expect(callGemini).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("treats a malformed model answer as unavailable, not as a draft", async () => {
     const callGemini = vi.fn().mockResolvedValue({ ok: true, text: "not json", model: "t" });
     expect(await draftResponse(req, { callGemini })).toMatchObject({
@@ -221,5 +258,34 @@ describe("the prompt", () => {
   it("tells the model never to mention tools or promise outcomes", () => {
     expect(DRAFT_SYSTEM_PROMPT).toMatch(/Do not mention AI/);
     expect(DRAFT_SYSTEM_PROMPT).toMatch(/No promises or predictions/);
+  });
+});
+
+/*
+  26 Oct 2026: the prompt used to read `attempt > 1` as "Amazon refused an earlier response". The
+  count also rises for a response recorded as sent with no reply yet, and for an attempt made
+  before AppealDeck. The model answered a refusal nobody had made.
+*/
+describe("how the prompt introduces the attempt", () => {
+  it("claims no refusal when no reply from Amazon is on record", () => {
+    const prompt = buildDraftPrompt({ ...req, attempt: 2 });
+    expect(prompt).not.toMatch(/Amazon refused an earlier response/);
+    expect(prompt).toContain("no reply from Amazon is on record");
+  });
+
+  it("says a refusal only when the seller's reply produced reasons", () => {
+    const prompt = buildDraftPrompt({
+      ...req,
+      attempt: 2,
+      replyReasons: ["Your Plan of Action does not identify the root cause."],
+    });
+    expect(prompt).toContain("after Amazon refused an earlier response");
+    expect(prompt).toContain("does not identify the root cause");
+  });
+
+  it("mentions no refusal on a first attempt", () => {
+    const prompt = buildDraftPrompt(req);
+    expect(prompt).toContain("This is attempt 1.");
+    expect(prompt).not.toMatch(/Amazon refused an earlier response|no reply from Amazon/);
   });
 });

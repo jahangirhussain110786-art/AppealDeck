@@ -1,9 +1,24 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/safeNext";
+import { APP_URL } from "@/lib/urls";
+
+/**
+ * The origin every redirect is built on. Not the request's own origin: Host is a header the
+ * requester writes, so a proxied request naming another host turned this callback into an open
+ * redirect, and `safeNext` compared `next` against that same spoofed origin so its check agreed
+ * (F8, 26 Oct 2026). Localhost keeps its own origin so local sign-in needs no env var; everything
+ * else lands on the configured host.
+ */
+function callbackOrigin(request: Request): string {
+  const { hostname, origin } = new URL(request.url);
+  if (hostname === "localhost" || hostname === "127.0.0.1") return origin;
+  return APP_URL;
+}
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = callbackOrigin(request);
   const code = searchParams.get("code");
   const type = searchParams.get("type");
   const explicitNext = searchParams.get("next");

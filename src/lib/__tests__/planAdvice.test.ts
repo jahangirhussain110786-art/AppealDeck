@@ -55,6 +55,28 @@ describe("planAdvice", () => {
     expect(planAdvice(null, { upgrade: true })).toBeNull();
   });
 
+  // 26 Oct 2026: the same predicate checkout and compose refuse on. A case that needs professional
+  // help gets no plan recommendation, because no plan is sold for it.
+  it("says nothing for a case that D6 sends to professional help", () => {
+    expect(
+      planAdvice(
+        w("documents", {
+          notice: "We found you submitted forged invoices. Upload your records.",
+        }),
+        { upgrade: true },
+      ),
+    ).toBeNull();
+    expect(
+      planAdvice(
+        w("documents", {
+          notice: "Please provide the supplier invoice.",
+          replies: [{ ...reply, text: "The documents you provided were falsified." }],
+        }),
+        { upgrade: true },
+      ),
+    ).toBeNull();
+  });
+
   it("never predicts an outcome or the number of rounds", () => {
     for (const p of ["documents", "questionnaire", "operational"]) {
       const text = planAdvice(w(p), { upgrade: true })!.text;

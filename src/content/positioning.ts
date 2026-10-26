@@ -67,9 +67,9 @@ export const POSITIONING = {
         label: "Data handling",
       },
       {
-        title: "Only facts you confirm",
-        body: "The response uses your answers and documents, with no ASIN, date or name added that you did not supply.",
-        short: "Nothing is added that you did not supply.",
+        title: "Built from your facts, checked before you send",
+        body: "The response is built from your answers and the records you supply. Automated checks flag unsupported details, and you review the response before submission.",
+        short: "Automated checks flag unsupported details; you review before you send.",
         href: "/how-we-test",
         label: "How we test",
       },

@@ -23,6 +23,17 @@ export interface DraftSources {
   all: string;
   /** Only the seller's own three answers. Their facts must survive into the draft. */
   sellerAnswers: string;
+  /**
+   * Only the records the seller reviewed and can truthfully call attached: their labels, file names
+   * and notes. A document in here may be named and called attached.
+   */
+  suppliedRecords: string;
+  /**
+   * Every record the case knows about, whatever its state: supplied, requested by Amazon, or
+   * declined with a reason. A document in here may be discussed with its true position ("still being
+   * obtained", "could not be obtained"), but not claimed as attached unless it is also supplied.
+   */
+  knownRecords: string;
 }
 
 export interface DraftCheck {
@@ -124,6 +135,27 @@ const INFLATING_WORDS = [
 const wordCount = (t: string) => t.split(/\s+/).filter(Boolean).length;
 
 /**
+ * A record may be named when the case knows about it, but "attached", "enclosed", "uploaded" and the
+ * rest claim it was supplied. That claim is only true for a record the seller reviewed. A record
+ * Amazon asked for and the seller is still obtaining can be discussed; it cannot be called attached
+ * because the notice mentioned it (audit finding, 26 Oct 2026).
+ */
+const ATTACHMENT_CLAIMS =
+  /\b(?:attach(?:ed|es|ing)?|enclos(?:ed|es|ing)?|upload(?:ed|s|ing)?|includ(?:ed|es|ing)?|submitt(?:ed|s|ing)?|provid(?:ed|es|ing)?|sent|send|sending)\b/i;
+
+function claimsAttached(text: string, noun: RegExp): boolean {
+  for (const sentence of text.split(/(?<=[.!?])\s+/)) {
+    if (!noun.test(sentence)) continue;
+    const verb = ATTACHMENT_CLAIMS.exec(sentence);
+    if (!verb) continue;
+    const nounAt = sentence.search(noun);
+    // Close enough to refer to the same thing: "the attached invoice", "the invoice is attached".
+    if (Math.abs(verb.index - nounAt) <= 45) return true;
+  }
+  return false;
+}
+
+/**
  * "14 of 610 orders" rewritten as "14 orders out of 610" is the same fact; the wording lock reports
  * the new number-unit pair "14 order" as added and "610 order" as dropped, because for a one-section
  * reword that pairing is the whole check (9 Oct 2026, found on the first questionnaire draft). For
@@ -172,9 +204,15 @@ export function verifyAiTexts(sources: DraftSources, texts: string[]): DraftChec
     (f) => !isUnitRepairing(f, text),
   );
 
-  const unsupportedEvidence = EVIDENCE_NOUNS.filter(
-    ([, pattern]) => pattern.test(text) && !pattern.test(sources.all),
-  ).map(([label]) => label);
+  const unsupportedEvidence = EVIDENCE_NOUNS.filter(([, pattern]) => {
+    if (!pattern.test(text)) return false;
+    // The notice mentioning a document does not make one exist, and neither does a form instruction.
+    // The case has to know it from the seller's own words or from a record it tracks.
+    if (!pattern.test(sources.sellerAnswers) && !pattern.test(sources.knownRecords)) return true;
+    // Known, but not supplied: it may be discussed, never claimed as attached.
+    if (pattern.test(sources.sellerAnswers) || pattern.test(sources.suppliedRecords)) return false;
+    return claimsAttached(text, pattern);
+  }).map(([label]) => label);
 
   const forbidden = FORBIDDEN.filter(([, pattern]) => pattern.test(text)).map(([label]) => label);
   const lowerSources = sources.all.toLowerCase();

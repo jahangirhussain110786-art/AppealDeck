@@ -263,6 +263,24 @@ export const APP = {
       description: "Purchase an Appeal Pass to prepare your response. You submit it yourself.",
       cta: "View pricing",
     },
+    /*
+      26 Oct 2026: a One Response is not an Appeal Pass, and Dashboard told a seller holding one
+      that they had "No active Appeal Pass". It gets its own row, and no second pass is offered.
+    */
+    single: {
+      heading: "One Response held",
+      covers: "One Response covers the first response of one case, including every revision of it.",
+      cta: "View plans",
+    },
+    /*
+      26 Oct 2026: the licence lookup can fail. "No active Appeal Pass" would then be a statement
+      about the seller's money that this page cannot make, so the row says it could not ask.
+    */
+    unknown: {
+      heading: "Could not check your Pass",
+      body: "Nothing about your purchases has changed. Open Billing to see them, or reload this page in a minute.",
+      cta: "Open Billing",
+    },
     activity: {
       title: "Evidence uploaded",
       empty: "Files you attach will appear here.",

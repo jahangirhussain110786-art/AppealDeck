@@ -1029,6 +1029,39 @@ export function professionalReviewApplies(
 }
 
 /**
+ * Whether this case is one D6 sends to qualified help, read from everything the case holds.
+ *
+ * The difference from `professionalReviewApplies` is the seller's unapplied Amazon replies: they
+ * are held on the device and are not yet part of the request text, so routing does not read them,
+ * but a seller who pastes "the documents you provided were falsified" and buys a Pass for a letter
+ * is in a case that needs qualified help. `/api/compose`, checkout and `planAdvice` all ask this
+ * one question, so the three cannot disagree about which cases are sold a drafted response.
+ */
+export function caseNeedsProfessionalReview(
+  w: Pick<Workspace, "replies"> &
+    Partial<
+      Pick<
+        Workspace,
+        | "notice"
+        | "formInstructions"
+        | "professionalReviewRequired"
+        | "previousRequests"
+        | "d6Latch"
+      >
+    >,
+): boolean {
+  if (
+    professionalReviewApplies({
+      ...w,
+      notice: w.notice ?? "",
+      formInstructions: w.formInstructions ?? "",
+    })
+  )
+    return true;
+  return w.replies.some((r) => !r.applied && hasD6Allegation(r.text));
+}
+
+/**
  * Applies the D6 latch to a workspace about to be saved. `prev` is the workspace as it stood before
  * the change, because the allegation may be in the text the change just removed.
  *
@@ -1378,16 +1411,41 @@ export function totalAttempts(w: Workspace): number {
 }
 
 /**
+ * The two facts the entitlement round is made of, read from the seller's full workspace. They
+ * travel with a request that cannot carry the workspace itself (either because it is trimmed, as
+ * `/api/compose` does, or because it is reduced to eligibility only, as checkout does), so checkout
+ * and drafting answer "which round is this" from the same statement instead of guessing from
+ * whatever part of the case happened to be posted.
+ */
+export interface RoundFacts {
+  /** Responses recorded as sent through AppealDeck. A pre-existing attempt is not one. */
+  sentHere: number;
+  /** Replies from Amazon on the case. One means a response was answered and the next is round two. */
+  repliesReceived: number;
+}
+
+export function roundFacts(w: Pick<Workspace, "submissions" | "replies">): RoundFacts {
+  return {
+    sentHere: w.submissions.filter((s) => s.source !== "prior").length,
+    repliesReceived: w.replies.length,
+  };
+}
+
+/** The round those facts describe. Clamped to the range the server records. */
+export function roundFromFacts(facts: RoundFacts): number {
+  const sent = Math.max(0, Math.trunc(facts.sentHere));
+  const replied = Math.max(0, Math.trunc(facts.repliesReceived));
+  return Math.min(99, Math.max(sent, replied) + 1);
+}
+
+/**
  * Which response this would be through AppealDeck: 1 until the seller records one as sent here, 2
  * after that. An attempt made before the seller found AppealDeck does not count, so a seller on
  * their third try is still preparing their first response with us. This is what a One Response
  * covers: round 1, with every revision of it, and nothing after (`/api/compose` refuses round 2).
  */
 export function responseRound(w: Pick<Workspace, "submissions" | "replies">): number {
-  const sent = w.submissions.filter((s) => s.source !== "prior").length;
-  // A reply from Amazon means a response was answered, whether or not it was recorded as sent here;
-  // a response to it is the next round.
-  return Math.max(sent, w.replies.length) + 1;
+  return roundFromFacts(roundFacts(w));
 }
 
 /** The questions this case's questionnaire asks, response page first. Empty for any other protocol. */

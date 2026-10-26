@@ -181,6 +181,31 @@ describe("Vault", () => {
     expect(await v.list()).toEqual([]);
   });
 
+  /**
+   * F11 (26 Oct 2026): a double-submit raced the first `meta.add` and threw a raw IndexedDB
+   * ConstraintError into the UI. The write that won is the vault; the second submit adopts it.
+   */
+  it("survives two initialisations racing, whichever write wins", async () => {
+    const results = await Promise.allSettled([
+      v.initWithPassphrase("super-secret-pass"),
+      v.initWithPassphrase("super-secret-pass"),
+    ]);
+    expect(results.every((r) => r.status === "fulfilled")).toBe(true);
+    expect(await v.status()).toEqual({ state: "unlocked" });
+    // The adopted vault is a real one: its passphrase works after a lock.
+    await v.lock();
+    await v.unlock("super-secret-pass");
+    expect(await v.status()).toEqual({ state: "unlocked" });
+  });
+
+  /** F12 (26 Oct 2026): `purge` cleared the DEK but left the device key in memory. */
+  it("purge forgets the in-memory device key, like destroy", async () => {
+    await v.initWithDeviceKey();
+    await v.purge();
+    expect((v as unknown as { deviceKey: CryptoKey | null }).deviceKey).toBeNull();
+    expect(await v.status()).toEqual({ state: "uninitialized" });
+  });
+
   it("refuses to add when locked", async () => {
     await v.initWithPassphrase("super-secret-pass");
     await v.lock();

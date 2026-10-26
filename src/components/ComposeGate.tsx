@@ -44,7 +44,6 @@ export function ComposeGate({
   // The gate is shown with a note only when a One Response has covered its one response; the server then
   // offers the credited price (if it exists), so the price shown here must say so too.
   const credited = Boolean(note) && upgradeEnabled();
-  const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_APPEAL_PASS;
 
   const startPolling = useCallback(() => {
     setPhase("activating");
@@ -124,7 +123,6 @@ export function ComposeGate({
           <CheckoutButton
             vault={vault}
             consent={consent}
-            priceId={priceId}
             size="lg"
             className="h-auto min-h-11 whitespace-normal py-3"
             customerEmail={email ?? undefined}

@@ -23,6 +23,8 @@ import {
   MATRIX_SOURCE_NOTE,
   SELLER_SOURCE_NOTE,
   responseRound,
+  roundFacts,
+  roundFromFacts,
   totalAttempts,
   workspaceCanCompose,
   workspaceGaps,
@@ -1363,5 +1365,32 @@ describe("responseRound (23 Oct 2026): which response this would be, through App
       replies: [{ id: "r", at: "2026-10-02T00:00:00Z", text: "t", applied: true }],
     };
     expect(responseRound(w)).toBe(3);
+  });
+
+  /*
+    26 Oct 2026: checkout and drafting read the round from the same two facts, and drafting reads
+    them before the workspace is trimmed. These are the facts a request carries.
+  */
+  it("separates the facts a posted request carries from the attempt number the letter uses", () => {
+    const w = { ...newWorkspace(), submissions: [sent("p", "prior")] };
+    expect(roundFacts(w)).toEqual({ sentHere: 0, repliesReceived: 0 });
+    expect(roundFromFacts(roundFacts(w))).toBe(1);
+    expect(totalAttempts(w) + 1).toBe(2);
+  });
+
+  it("reads an applied or unapplied reply as answered either way", () => {
+    for (const applied of [true, false]) {
+      const w = {
+        ...newWorkspace(),
+        replies: [{ id: "r", at: "2026-10-02T00:00:00Z", text: "t", applied }],
+      };
+      expect(roundFacts(w)).toEqual({ sentHere: 0, repliesReceived: 1 });
+      expect(roundFromFacts(roundFacts(w))).toBe(2);
+    }
+  });
+
+  it("clamps a reported round to the range the server records", () => {
+    expect(roundFromFacts({ sentHere: -3, repliesReceived: -1 })).toBe(1);
+    expect(roundFromFacts({ sentHere: 500, repliesReceived: 0 })).toBe(99);
   });
 });

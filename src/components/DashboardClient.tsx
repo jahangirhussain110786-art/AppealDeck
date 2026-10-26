@@ -83,7 +83,10 @@ interface ReplyAnalysis {
 }
 
 interface DashboardClientProps {
-  license: LicenseSummary;
+  /** `null` means the lookup could not be made, which is not the same as "no Pass". */
+  license: LicenseSummary | null;
+  /** One Responses held on cases, when there is no active Pass. Asked of the server. */
+  singles: number;
   signedIn: boolean;
 }
 
@@ -137,14 +140,40 @@ function buildContext(file: CaseFile, log: CaseLog | null): CaseStateContext {
  * previously fetched, typed, and passed in, then silently discarded (`license: _license`). A
  * seller had no way to see from Dashboard whether their Pass was active without going to Billing.
  */
-function PassStatusRow({
+export function PassStatusRow({
   license,
+  singles,
   hasCase = true,
 }: {
-  license: LicenseSummary;
+  license: LicenseSummary | null;
+  singles: number;
   hasCase?: boolean;
 }) {
+  /*
+    26 Oct 2026: three answers, not two. A failed lookup says so instead of claiming there is no
+    Pass, and a One Response — which is not a Pass and was invisible here — gets its own row.
+  */
+  if (!license)
+    return (
+      <StatusRow
+        tone="plain"
+        title={APP.dashboard.unknown.heading}
+        body={APP.dashboard.unknown.body}
+        href="/billing"
+        cta={APP.dashboard.unknown.cta}
+      />
+    );
   const active = license.status === "active";
+  if (!active && singles > 0)
+    return (
+      <StatusRow
+        tone="plain"
+        title={APP.dashboard.single.heading}
+        body={APP.dashboard.single.covers}
+        href="/pricing"
+        cta={APP.dashboard.single.cta}
+      />
+    );
   return (
     <div
       className={cn(
@@ -184,6 +213,40 @@ function PassStatusRow({
           {APP.dashboard.inactive.cta}
         </Link>
       )}
+    </div>
+  );
+}
+
+/** The neutral row used for the two answers that are not "active" or "none": unknown, and One Response. */
+function StatusRow({
+  tone,
+  title,
+  body,
+  href,
+  cta,
+}: {
+  tone: "plain";
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-sm",
+        tone === "plain" ? "border-border bg-surface-2" : "",
+      )}
+    >
+      <CreditCard className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="font-medium text-foreground">{title}</span>
+      <span className="text-xs text-muted-foreground">{body}</span>
+      <Link
+        href={href}
+        className="-my-3 ml-auto inline-block py-3 text-xs underline underline-offset-4"
+      >
+        {cta}
+      </Link>
     </div>
   );
 }
@@ -253,7 +316,7 @@ function undatedWindows<
   return deadlinesForDisplay(deadlines).filter((d) => !d.dueAt && !d.dueOn);
 }
 
-export function DashboardClient({ license, signedIn }: DashboardClientProps) {
+export function DashboardClient({ license, singles, signedIn }: DashboardClientProps) {
   const vault = useVaultInstance();
   const [caseFile, setCaseFile] = useState<CaseFile | null>(null);
   const [caseLog, setCaseLog] = useState<CaseLog | null>(null);
@@ -708,7 +771,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
           if (!caseFile) {
             return (
               <div className="animate-fade-in space-y-4">
-                <PassStatusRow license={license} hasCase={false} />
+                <PassStatusRow license={license} singles={singles} hasCase={false} />
                 <EmptyState
                   icon={FileText}
                   title={APP.dashboard.caseSummary.noCase.title}
@@ -759,7 +822,7 @@ export function DashboardClient({ license, signedIn }: DashboardClientProps) {
             <div className="animate-fade-in space-y-6">
               {/* AA-40: the clock speaks before anything else on the page. */}
               <ClockBriefCard brief={clockBrief} undated={undatedWindows(caseFile.deadlines)} />
-              <PassStatusRow license={license} />
+              <PassStatusRow license={license} singles={singles} />
               {/* The $25 outcome-report rebate: shown only while it is on and there is a payment to refund. */}
               <OutcomeReportCard />
               {cases.length > 1 && (

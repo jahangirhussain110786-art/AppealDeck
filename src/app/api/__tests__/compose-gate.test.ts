@@ -6,6 +6,7 @@ const isLicenseActiveMock = vi.fn();
 const claimSingleMock = vi.fn();
 const rateLimitComposeMock = vi.fn();
 const recordActivationMock = vi.fn();
+const recordRoundMock = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   getApiUser: () => getApiUserMock(),
@@ -29,6 +30,12 @@ vi.mock("@/lib/supabase/server", () => ({
   supabaseAdmin: null,
 }));
 
+// The server's own high-water mark for a case's response round (migration 0025). The real module
+// needs a database; by default this behaves as a store that has only ever seen the posted round.
+vi.mock("@/lib/caseRounds", () => ({
+  recordCaseRound: (...args: unknown[]) => recordRoundMock(...args),
+}));
+
 vi.mock("@/core", () => ({
   isSeverityGated: (kind: string) => kind === "INAUTHENTIC_DOCUMENTS",
   composePoa: () => ({
@@ -50,8 +57,9 @@ vi.mock("@/lib/devices", () => ({
 }));
 
 import { POST } from "../compose/route";
-import { newWorkspace } from "@/core/workspace";
+import { composeRequestBody } from "@/lib/composeRequest";
 import { documentWorkspace } from "@/core/workspace.fixture";
+import type { Workspace } from "@/core/workspace";
 
 function makeReq(body: unknown): NextRequest {
   return new Request("http://localhost:3000/api/compose", {
@@ -61,6 +69,27 @@ function makeReq(body: unknown): NextRequest {
   }) as unknown as NextRequest;
 }
 
+/**
+ * Every body here is built by `composeRequestBody`, the function the browser calls, so a test can
+ * only pass by agreeing with what the seller's device actually posts — the round facts are read
+ * from the full workspace before it is trimmed, exactly as at `/api/compose` in real use.
+ */
+const postWorkspace = (workspace: Workspace) =>
+  POST(
+    makeReq(composeRequestBody({ id: "test-case", kind: "POLICY" as const, workspace }, workspace)),
+  );
+
+const SENT = {
+  id: "s1",
+  at: "2026-10-01T00:00:00Z",
+  revision: 1,
+  protocol: "documents" as const,
+  text: "x",
+  receipt: "",
+  attachments: [],
+  unresolved: [],
+};
+
 beforeEach(() => {
   getApiUserMock.mockReset();
   isLicenseActiveMock.mockReset();
@@ -68,6 +97,10 @@ beforeEach(() => {
   claimSingleMock.mockResolvedValue(false);
   rateLimitComposeMock.mockReset();
   recordActivationMock.mockReset();
+  recordRoundMock.mockReset();
+  recordRoundMock.mockImplementation((_user: string, _case: string, round: number) =>
+    Promise.resolve(round),
+  );
 });
 
 describe("/api/compose license + auth gates", () => {
@@ -79,7 +112,7 @@ describe("/api/compose license + auth gates", () => {
           id: "case",
           kind: "UNKNOWN",
           workspace: {
-            ...newWorkspace(),
+            ...documentWorkspace(),
             // AA-39: was a related-account notice, which only counted as "forged" because D6's
             // gate had drifted to send every related-account case to "specialist". Once that was
             // narrowed to what D6 actually names, this notice routed to "documents" legitimately
@@ -92,6 +125,7 @@ describe("/api/compose license + auth gates", () => {
             protocol: "documents",
           },
         },
+        round: { sentHere: 0, repliesReceived: 0 },
       }),
     );
     expect(res.status).toBe(422);
@@ -100,7 +134,10 @@ describe("/api/compose license + auth gates", () => {
   it("returns 401 JSON when unauthenticated", async () => {
     getApiUserMock.mockResolvedValue(null);
     const res = await POST(
-      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+      makeReq({
+        caseData: { id: "test-case", kind: "POLICY" },
+        round: { sentHere: 0, repliesReceived: 0 },
+      }),
     );
     expect(res.status).toBe(401);
     const body = await res.json();
@@ -111,7 +148,10 @@ describe("/api/compose license + auth gates", () => {
     getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
     isLicenseActiveMock.mockResolvedValue(false);
     const res = await POST(
-      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+      makeReq({
+        caseData: { id: "test-case", kind: "POLICY" },
+        round: { sentHere: 0, repliesReceived: 0 },
+      }),
     );
     expect(res.status).toBe(403);
     const body = await res.json();
@@ -122,9 +162,21 @@ describe("/api/compose license + auth gates", () => {
     getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
     isLicenseActiveMock.mockResolvedValue(true);
     const res = await POST(
-      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+      makeReq({
+        caseData: { id: "test-case", kind: "POLICY" },
+        round: { sentHere: 0, repliesReceived: 0 },
+      }),
     );
     expect(res.status).toBe(200);
+  });
+
+  // 26 Oct 2026: the round is a required part of the contract. A request that omits it would have
+  // its round guessed from the trimmed workspace, which no longer shows an applied reply.
+  it("refuses a request that does not say which round it is", async () => {
+    getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
+    isLicenseActiveMock.mockResolvedValue(true);
+    const res = await POST(makeReq({ caseData: { id: "test-case", kind: "POLICY" } }));
+    expect(res.status).toBe(400);
   });
 });
 
@@ -133,20 +185,17 @@ describe("/api/compose failure handling (6 Oct 2026)", () => {
     getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
     isLicenseActiveMock.mockRejectedValue(new Error("License lookup unavailable"));
     const res = await POST(
-      makeReq({ caseData: { id: "test-case", kind: "POLICY" }, attemptNumber: 1 }),
+      makeReq({
+        caseData: { id: "test-case", kind: "POLICY" },
+        round: { sentHere: 0, repliesReceived: 0 },
+      }),
     );
     expect(res.status).toBe(503);
   });
 });
 
 describe("/api/compose for a One Response (23 Oct 2026): the first response of one case, and no more", () => {
-  const post = (attemptNumber: number, workspace?: unknown) =>
-    POST(
-      makeReq({
-        caseData: { id: "test-case", kind: "POLICY", ...(workspace ? { workspace } : {}) },
-        attemptNumber,
-      }),
-    );
+  const post = (workspace: Workspace) => postWorkspace(workspace);
 
   beforeEach(() => {
     getApiUserMock.mockResolvedValue({ id: "u1", email: "seller@example.com" });
@@ -155,59 +204,93 @@ describe("/api/compose for a One Response (23 Oct 2026): the first response of o
   });
 
   it("prepares the first response, although the account holds no Appeal Pass", async () => {
-    const res = await post(1);
+    const res = await post(documentWorkspace());
     expect(res.status).toBe(200);
     expect(claimSingleMock).toHaveBeenCalledWith("u1", "test-case");
   });
 
   it("refuses the next response, and says it is the Appeal Pass's", async () => {
-    const res = await post(2);
+    const res = await post({ ...documentWorkspace(), submissions: [SENT] });
     expect(res.status).toBe(403);
     const body = await res.json();
     expect(body.code).toBe("single_response_used");
     expect(body.error).toMatch(/Appeal Pass/);
   });
 
-  it("refuses the next response when the client claims round one but Amazon has replied", async () => {
-    const res = await post(1, {
+  /*
+    26 Oct 2026: an attempt the seller made before AppealDeck is not a round. The letter says
+    "attempt 2" (that is what it is), while the One Response still covers the first response
+    prepared here — the old client derived its `attemptNumber` from every submission, so this
+    seller was refused the plan they had bought.
+  */
+  it("counts a response that predates AppealDeck as attempt two, not round two", async () => {
+    const body = composeRequestBody(
+      {
+        id: "test-case",
+        kind: "POLICY" as const,
+        workspace: documentWorkspace(),
+      },
+      {
+        ...documentWorkspace(),
+        submissions: [{ ...SENT, id: "p1", revision: 0, source: "prior" as const }],
+      },
+    );
+    expect(body.attempt).toBe(2);
+    expect(body.round).toEqual({ sentHere: 0, repliesReceived: 0 });
+    const res = await POST(makeReq(body));
+    expect(res.status).toBe(200);
+  });
+
+  /*
+    26 Oct 2026: a reply the seller has already applied leaves `replies` when the workspace is
+    trimmed for posting, so the trimmed copy cannot say the case has been answered. The fact now
+    travels separately, read before the trim.
+  */
+  it("refuses the next response when Amazon has replied and the seller applied the reply", async () => {
+    const applied = {
       ...documentWorkspace(),
       replies: [{ id: "r1", at: "2026-10-01T00:00:00Z", text: "We need more.", applied: true }],
-    });
+    };
+    const body = composeRequestBody(
+      { id: "test-case", kind: "POLICY" as const, workspace: applied },
+      applied,
+    );
+    expect(body.caseData.workspace?.replies).toEqual([]);
+    const res = await POST(makeReq(body));
     expect(res.status).toBe(403);
     expect((await res.json()).code).toBe("single_response_used");
   });
 
-  it("refuses the next response when one was recorded as sent here, but not one sent before", async () => {
-    const sent = {
-      id: "s1",
-      at: "2026-10-01T00:00:00Z",
-      revision: 1,
-      protocol: "documents" as const,
-      text: "x",
-      receipt: "",
-      attachments: [],
-      unresolved: [],
-    };
-    const second = await post(1, { ...documentWorkspace(), submissions: [sent] });
-    expect(second.status).toBe(403);
-    const prior = await post(1, {
+  // 26 Oct 2026: the workspace is the seller's to reset, so the server keeps its own high-water
+  // mark for the case and refuses when either says the case has moved past its first response.
+  it("refuses round one when the server has already recorded a later round", async () => {
+    recordRoundMock.mockResolvedValue(2);
+    const res = await post(documentWorkspace());
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe("single_response_used");
+  });
+
+  it("records the round it refused, so a reset case cannot present it as round one", async () => {
+    const res = await post({
       ...documentWorkspace(),
-      submissions: [{ ...sent, id: "p1", revision: 0, source: "prior" }],
+      submissions: [SENT, { ...SENT, id: "s2", revision: 2 }],
     });
-    expect(prior.status).toBe(200);
+    expect(res.status).toBe(403);
+    expect(recordRoundMock).toHaveBeenCalledWith("u1", "test-case", 3);
   });
 
   it("does not let a One Response on another case through", async () => {
     claimSingleMock.mockResolvedValue(false);
-    const res = await post(1);
+    const res = await post(documentWorkspace());
     expect(res.status).toBe(403);
     expect((await res.json()).code).toBe("case_pass_required");
   });
 
-  it("does not limit a seller who holds the Appeal Pass for the case", async () => {
+  it("does not limit a seller who holds the Appeal Pass for the case, and still records the round", async () => {
     isLicenseActiveMock.mockResolvedValue(true);
-    const res = await post(7);
+    const res = await post({ ...documentWorkspace(), submissions: [SENT] });
     expect(res.status).toBe(200);
     expect(claimSingleMock).not.toHaveBeenCalled();
+    expect(recordRoundMock).toHaveBeenCalledWith("u1", "test-case", 2);
   });
 });

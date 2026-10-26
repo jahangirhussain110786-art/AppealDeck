@@ -19,7 +19,12 @@ const NOTICE =
 const RECORDS =
   "Records: Sales or performance record (returns-log-september.pdf), note: the log of returns.";
 const sellerAnswers = Object.values(ANSWERS).join("\n\n");
-const sources = { all: [NOTICE, sellerAnswers, RECORDS].join("\n\n"), sellerAnswers };
+const sources = {
+  all: [NOTICE, sellerAnswers, RECORDS].join("\n\n"),
+  sellerAnswers,
+  suppliedRecords: RECORDS,
+  knownRecords: RECORDS,
+};
 
 const faithful: DraftSections = {
   rootCause:
@@ -77,6 +82,61 @@ describe("verifyAiDraft", () => {
     expect(check.unsupportedEvidence).toEqual([]);
   });
 
+  it("does not let the notice create a document the seller never supplied", () => {
+    // 26 Oct 2026 audit finding: the notice's own mention of invoices used to satisfy the check.
+    const noticeOnly = {
+      all: `Submit invoices and a test report for ASIN B09XK3J7QP.\n\n${sellerAnswers}`,
+      sellerAnswers,
+      suppliedRecords: "",
+      knownRecords: "",
+    };
+    const check = verifyAiDraft(noticeOnly, {
+      ...faithful,
+      correctiveActions:
+        faithful.correctiveActions + " The attached invoice and test report confirm the condition.",
+    });
+    expect(check.ok).toBe(false);
+    expect(check.unsupportedEvidence).toEqual(expect.arrayContaining(["invoice", "test report"]));
+  });
+
+  it("lets a requested or declined record be discussed, but not called attached", () => {
+    const requested = {
+      all: [
+        NOTICE,
+        sellerAnswers,
+        "Commercial invoice: could not be obtained (see the seller's reason)",
+      ].join("\n\n"),
+      sellerAnswers,
+      suppliedRecords: RECORDS,
+      knownRecords: "Commercial invoice: could not be obtained (see the seller's reason)",
+    };
+    const honest = verifyAiDraft(requested, {
+      ...faithful,
+      preventiveMeasures:
+        faithful.preventiveMeasures + " The commercial invoice could not be obtained.",
+    });
+    expect(honest.unsupportedEvidence).toEqual([]);
+    const claimed = verifyAiDraft(requested, {
+      ...faithful,
+      preventiveMeasures: faithful.preventiveMeasures + " The commercial invoice is attached.",
+    });
+    expect(claimed.unsupportedEvidence).toContain("invoice");
+  });
+
+  it("allows a supplied record to be called attached", () => {
+    const withInvoice = {
+      all: [NOTICE, sellerAnswers, "Commercial invoice: supplied with the pack."].join("\n\n"),
+      sellerAnswers,
+      suppliedRecords: "Commercial invoice: supplied with the pack.",
+      knownRecords: "Commercial invoice: supplied with the pack.",
+    };
+    const check = verifyAiDraft(withInvoice, {
+      ...faithful,
+      preventiveMeasures: faithful.preventiveMeasures + " The commercial invoice is attached.",
+    });
+    expect(check.unsupportedEvidence).toEqual([]);
+  });
+
   it("rejects a draft that drops a fact the seller gave", () => {
     const check = verifyAiDraft(sources, {
       ...faithful,
@@ -128,6 +188,7 @@ describe("verifyAiDraft", () => {
 
   it("allows a strong word the seller used themselves", () => {
     const withWord = {
+      ...sources,
       all: sources.all + " We run a strict returns process.",
       sellerAnswers: sources.sellerAnswers + " We run a strict returns process.",
     };
@@ -152,6 +213,8 @@ describe("re-pairing a number with a unit the seller already used (9 Oct 2026)",
     all: "our packer was on leave. 14 of 610 orders went late. we check orders every day.",
     sellerAnswers:
       "our packer was on leave. 14 of 610 orders went late. we check orders every day.",
+    suppliedRecords: "",
+    knownRecords: "",
   };
   it("accepts '14 orders out of 610' for '14 of 610 orders'", () => {
     const check = verifyAiTexts(sources, [

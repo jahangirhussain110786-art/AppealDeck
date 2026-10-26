@@ -69,7 +69,10 @@ function body(over: Record<string, unknown> = {}) {
     ...over,
   };
   const workspace = { ...w0, requirements: proposedRequirements(w0, "POLICY") };
-  return { caseData: { id: "case-1", kind: "POLICY", workspace }, attemptNumber: 1 };
+  return {
+    caseData: { id: "case-1", kind: "POLICY", workspace },
+    round: { sentHere: 0, repliesReceived: 0 },
+  };
 }
 const post = (b: unknown) =>
   POST(

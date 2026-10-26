@@ -235,6 +235,65 @@ test("every unsaved field survives leaving the page, not only the first one", as
   await expect(page.getByLabel("What the response page asks for")).toHaveValue(formText);
 });
 
+/**
+ * 26 Oct 2026. "Save each part to keep it" is only honest if leaving cannot discard text whose save
+ * failed. Before this test, a failed write left the words in the form but let the seller start a new
+ * case or switch case over them, and offered no way to try the write again.
+ */
+test("a failed save blocks leaving the case and keeps the text for a retry", async ({ page }) => {
+  // Two full page loads on a dev server; the default limit is the whole walk on a busy machine.
+  test.slow();
+  await configure(page);
+  // Every vault record write throws while armed, the way a full disk or a private-mode quota does.
+  // Dexie turns the thrown error into a rejected transaction, which is the path `commit` handles.
+  await page.evaluate(() => {
+    const state = { fail: false };
+    (window as unknown as { __vaultWriteFailure?: { fail: boolean } }).__vaultWriteFailure = state;
+    const original = IDBObjectStore.prototype.put;
+    (IDBObjectStore.prototype as unknown as { put: (...args: unknown[]) => IDBRequest }).put =
+      function (this: IDBObjectStore, ...args: unknown[]) {
+        if (state.fail && this.name === "records") {
+          throw new DOMException("The quota has been exceeded.", "QuotaExceededError");
+        }
+        return (original as unknown as (...a: unknown[]) => IDBRequest).apply(this, args);
+      };
+  });
+  const setFailure = (fail: boolean) =>
+    page.evaluate((value) => {
+      const state = (window as unknown as { __vaultWriteFailure?: { fail: boolean } })
+        .__vaultWriteFailure;
+      if (state) state.fail = value;
+    }, fail);
+
+  const text = "The invoice was paid on 12 August and the goods were received in full.";
+  await page.getByRole("tab", { name: "Response", exact: true }).click();
+  await page.getByLabel("Your explanation, in your own words").fill(text);
+  await setFailure(true);
+
+  await page.getByRole("button", { name: "New case", exact: true }).click();
+  await page.getByRole("button", { name: "Create separate case" }).click();
+
+  await expect(
+    page.getByText("Not saved. Your text is still here, so save it before leaving this case.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Your explanation, in your own words")).toHaveValue(text);
+
+  // The write succeeds again, and the retry saves the text the failed save was carrying.
+  await setFailure(false);
+  await page.getByRole("button", { name: "Try saving again" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Try saving again" })).toHaveCount(0);
+
+  await page.reload();
+  await page.getByRole("tab", { name: "Response", exact: true }).click();
+  await expect(page.getByLabel("Your explanation, in your own words")).toHaveValue(text);
+  // The refused switch created no second case over the failed save.
+  await page.goto("/dashboard");
+  await expect(page.getByRole("region", { name: "Your cases" }).getByRole("button")).toHaveCount(1);
+});
+
 test("informational updates avoid a purchase flow and replies reopen the request", async ({
   page,
 }) => {

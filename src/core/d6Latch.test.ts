@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyWorkspaceReply,
+  caseNeedsProfessionalReview,
   composePayloadWorkspace,
   composeWorkspace,
   latchD6,
@@ -330,5 +331,50 @@ describe("16. a retraction record answered by a note alone is the seller's state
     const body = draft.sections.find((s) => s.heading === "Supporting records")!.body;
     expect(body).toContain("Seller's statement:");
     expect(body).not.toContain("Rights-owner retraction (statement");
+  });
+});
+
+/*
+  26 Oct 2026: one predicate for "this case needs qualified help", used by `/api/compose`,
+  `/api/checkout/intent` and `planAdvice`. It is `professionalReviewApplies` plus the seller's
+  unapplied replies, which routing does not read because they are not part of the request yet.
+*/
+describe("caseNeedsProfessionalReview: one answer for selling and drafting", () => {
+  const accusing = { id: "r1", at: "2026-10-01T00:00:00.000Z", text: FORGED, applied: false };
+
+  it("counts an unapplied reply that carries the allegation, though the request reads clean", () => {
+    const w = { ...documentWorkspace(), replies: [accusing] };
+    expect(routeWorkspace(w).protocol).toBe("documents");
+    expect(professionalReviewApplies(w)).toBe(false);
+    expect(caseNeedsProfessionalReview(w)).toBe(true);
+  });
+
+  it("still counts the notice, the held latch and the confirmed earlier request", () => {
+    expect(caseNeedsProfessionalReview({ ...documentWorkspace(), notice: FORGED })).toBe(true);
+    expect(
+      caseNeedsProfessionalReview({
+        ...documentWorkspace(),
+        d6Latch: { at: "2026-10-01", quote: FORGED, source: FORGED },
+      }),
+    ).toBe(true);
+    expect(
+      caseNeedsProfessionalReview({
+        ...documentWorkspace(),
+        professionalReviewRequired: true,
+        previousRequests: [
+          {
+            revision: 1,
+            notice: FORGED,
+            formInstructions: "",
+            protocol: "operational",
+            requirements: [],
+          },
+        ],
+      }),
+    ).toBe(true);
+  });
+
+  it("says no to an ordinary case", () => {
+    expect(caseNeedsProfessionalReview(documentWorkspace())).toBe(false);
   });
 });
