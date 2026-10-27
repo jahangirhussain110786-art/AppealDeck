@@ -128,6 +128,8 @@ test("a signed-in seller with a Pass whose AI reading is off gets the device rea
     .first()
     .setInputFiles(`${DOCS}/03-supplier-invoice-t01-authenticity.pdf`);
   // Signed in, the note before the button is the AI's, and says the device reading is the fallback.
+  // The full statement sits behind "Exactly where your file goes"; open it, as a seller would.
+  await documents(page).getByText("Exactly where your file goes").first().click();
   await expect(
     documents(page).getByText(/Without one, the file is read on this device and is not sent/),
   ).toBeVisible();

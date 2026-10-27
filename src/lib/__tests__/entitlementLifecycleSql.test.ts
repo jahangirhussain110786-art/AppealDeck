@@ -7,9 +7,11 @@ import {
   completed,
   createMigratedDb,
   licences,
+  makeVerified,
   newIntent,
   newUser,
   nextCounter,
+  subscriptionEvent,
 } from "./pgHarness";
 
 /**
@@ -130,6 +132,84 @@ describe("a credited upgrade and the purchase behind it", () => {
       [user],
     );
     expect(owed.rows[0]?.refund_owed_at).toBeNull();
+  });
+});
+
+/**
+ * Migration 0027 (27 Oct 2026 audit). A restore must be a lifted block, and an upgrade must not come
+ * back while the purchase it was credited from is still refunded.
+ */
+describe("lifting a refund or chargeback (0027)", () => {
+  async function upgradeRow(user: string) {
+    const r = await db.query<{ status: string; refund_owed_at: string | null }>(
+      `select status, refund_owed_at from licenses where user_id = $1 and plan = 'appeal_pass'`,
+      [user],
+    );
+    return r.rows[0]!;
+  }
+
+  it("does not restore an upgrade whose original is still refunded, and keeps the debt", async () => {
+    const user = await buyReviewAndCredit("a1");
+    await apply(db, adjustment("adj_rev_a1", "txn_rev_a1", "approved", "2026-10-23T10:00:00Z"));
+    await apply(db, event("adj_cb_a1", "txn_up_a1", { action: "chargeback" }));
+    await apply(
+      db,
+      event("adj_cb_a1_back", "txn_up_a1", {
+        action: "chargeback_reverse",
+        original_adjustment_id: "adj_cb_a1",
+      }),
+    );
+    const up = await upgradeRow(user);
+    expect(up.status).toBe("canceled");
+    // Its own payment is live again and the original is still refunded: the buyer is owed it.
+    expect(up.refund_owed_at).not.toBeNull();
+    expect((await licences(db, user)).find((r) => r.plan === "document_review")?.status).toBe(
+      "canceled",
+    );
+  });
+
+  it("restores both when the original's refund is rejected after all", async () => {
+    const user = await buyReviewAndCredit("a1ok");
+    await apply(db, adjustment("adj_rev_a1ok", "txn_rev_a1ok", "approved", "2026-10-23T10:00:00Z"));
+    await apply(
+      db,
+      adjustment(
+        "adj_rev_a1ok",
+        "txn_rev_a1ok",
+        "rejected",
+        "2026-10-23T12:00:00Z",
+        "adjustment.updated",
+      ),
+    );
+    const rows = await licences(db, user);
+    expect(rows.find((r) => r.plan === "document_review")?.status).toBe("active");
+    expect(rows.find((r) => r.plan === "appeal_pass")?.status).toBe("active");
+    expect((await upgradeRow(user)).refund_owed_at).toBeNull();
+  });
+
+  it("does not turn a cancelled Pro plan back on because a refund is only pending", async () => {
+    const pro = await newUser(db);
+    await makeVerified(db, pro);
+    const intent = await newIntent(db, pro, "account", PRICES.extras.pro_plan);
+    await apply(
+      db,
+      completed("txn_pro_a3", PRICES.extras.pro_plan, intent, { subscriptionId: "sub_a3" }),
+    );
+    await apply(db, subscriptionEvent("sub_a3", "canceled", "2026-10-23T09:00:00Z"));
+    const status = async () =>
+      (
+        await db.query<{ status: string }>(
+          `select status from licenses where user_id = $1 and plan = 'pro_plan'`,
+          [pro],
+        )
+      ).rows[0]!.status;
+    expect(await status()).toBe("canceled");
+
+    await apply(
+      db,
+      adjustment("adj_pro_a3", "txn_pro_a3", "pending_approval", "2026-10-23T10:00:00Z"),
+    );
+    expect(await status()).toBe("canceled");
   });
 });
 

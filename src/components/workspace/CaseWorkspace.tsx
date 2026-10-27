@@ -877,6 +877,40 @@ function WorkspaceInner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /*
+    A reload or a closed tab is not a React unmount, so the flush above never ran for it: text typed
+    in the last 900 ms was lost without a word (27 Oct 2026 audit, reproduced). Two things now.
+    The page is hidden before it is unloaded, so the write starts then, giving it the longest
+    chance to finish; and while text is still waiting, the browser's own leave-page prompt gives the
+    seller the choice to stay. Nothing is written in plain text anywhere: the write goes through the
+    same encrypted vault commit as every other save.
+  */
+  useEffect(() => {
+    const startWrite = () => {
+      if (draftPending.current.size > 0) void flushAllDraftKeys();
+    };
+    const onHide = () => {
+      if (document.visibilityState === "hidden") startWrite();
+    };
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (draftPending.current.size === 0) return;
+      startWrite();
+      event.preventDefault();
+      // Older browsers still read this to decide whether to show the prompt.
+      event.returnValue = "";
+    };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", startWrite);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", startWrite);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+    // The refs and the flush are stable across renders; see their definitions.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const changeRequirement = (value: Requirement) => {
     const current = fileRef.current?.workspace;
     /*

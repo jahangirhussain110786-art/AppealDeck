@@ -16,6 +16,7 @@ import { randomBytes } from "node:crypto";
 import { supabaseAdmin } from "./supabase/server";
 import { sendGuestReminderEmail, sendGuestReminderConfirmEmail } from "./guestReminderEmail";
 import { APP } from "@/content/app";
+import { RUN_BUDGET_MS, runBatch } from "./mailBatch";
 import type { ViolationKind } from "@/core/violationKinds";
 
 export const MAX_OPEN_PER_EMAIL = 3;
@@ -115,6 +116,8 @@ type Deps = {
   now?: Date;
   sendConfirm?: typeof sendGuestReminderConfirmEmail;
   sendReminder?: typeof sendGuestReminderEmail;
+  /** Time this run may spend before it stops starting emails; defaults to `RUN_BUDGET_MS`. */
+  budgetMs?: number;
 };
 
 const todayOf = (now: Date) => now.toISOString().slice(0, 10);
@@ -212,7 +215,7 @@ export async function stopGuestReminders(token: string, deps: Deps = {}): Promis
 /** Sends every reminder whose day has come, then deletes rows past their keep date. */
 export async function deliverGuestReminders(
   deps: Deps = {},
-): Promise<{ sent: number; failed: number; purged: true }> {
+): Promise<{ sent: number; failed: number; unreached: number; purged: true }> {
   const store = deps.store ?? supabaseStore();
   const now = deps.now ?? new Date();
   const today = todayOf(now);
@@ -220,27 +223,34 @@ export async function deliverGuestReminders(
   const rows = await store.due(today, staleBefore, 200);
   let sent = 0;
   let failed = 0;
-  for (const row of rows) {
-    // The claim is what decides who sends: skip a row another run took after `due()` returned it.
-    if (!(await store.claim(row.id, now.toISOString(), staleBefore, today))) continue;
-    try {
-      await (deps.sendReminder ?? sendGuestReminderEmail)({
-        to: row.email,
-        token: row.token,
-        label: row.label,
-        dueOn: row.due_on,
-        daysLeft: daysBetween(today, row.due_on),
-        kindLabel: labelForKind(row.kind),
-      });
-      await store.update(row.id, { sent_at: now.toISOString(), claimed_at: null });
-      sent++;
-    } catch {
-      failed++;
-      await store.update(row.id, { attempts: row.attempts + 1, claimed_at: null });
-    }
-  }
+  // 27 Oct 2026 audit: up to 200 emails, one after another, outlast the function's 60 seconds. The
+  // run now sends a few at once and stops starting new ones when its budget is spent; rows it did
+  // not reach are never claimed, so the next run still has them.
+  const { unreached } = await runBatch(
+    rows,
+    async (row) => {
+      // The claim is what decides who sends: skip a row another run took after `due()` returned it.
+      if (!(await store.claim(row.id, now.toISOString(), staleBefore, today))) return;
+      try {
+        await (deps.sendReminder ?? sendGuestReminderEmail)({
+          to: row.email,
+          token: row.token,
+          label: row.label,
+          dueOn: row.due_on,
+          daysLeft: daysBetween(today, row.due_on),
+          kindLabel: labelForKind(row.kind),
+        });
+        await store.update(row.id, { sent_at: now.toISOString(), claimed_at: null });
+        sent++;
+      } catch {
+        failed++;
+        await store.update(row.id, { attempts: row.attempts + 1, claimed_at: null });
+      }
+    },
+    { deadline: Date.now() + (deps.budgetMs ?? RUN_BUDGET_MS) },
+  );
   await store.purge(addDays(today, -KEEP_DAYS_AFTER_DUE));
-  return { sent, failed, purged: true };
+  return { sent, failed, unreached, purged: true };
 }
 
 function labelForKind(kind: string): string {

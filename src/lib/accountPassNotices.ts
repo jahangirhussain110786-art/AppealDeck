@@ -2,6 +2,10 @@ import { supabaseAdmin } from "./supabase/server";
 import { sendAccountPassEndingEmail } from "./email";
 import { APP_URL } from "./urls";
 import { renewalEnabled } from "./plans";
+import { RUN_BUDGET_MS, runBatch } from "./mailBatch";
+
+/** A claim nobody finished for this long is treated as a crashed run and may be taken again. */
+const CLAIM_LEASE_MS = 10 * 60 * 1000;
 
 /**
  * One "your Account Pass ends soon" email per account per end date (22 Oct 2026).
@@ -44,7 +48,7 @@ export function endingSoon(
 
 export async function deliverAccountPassNotices(
   send: typeof sendAccountPassEndingEmail = sendAccountPassEndingEmail,
-): Promise<{ sent: number; skipped: number; failed: number }> {
+): Promise<{ sent: number; skipped: number; failed: number; unreached: number }> {
   if (!supabaseAdmin) throw new Error("Database unavailable");
   const { data, error } = await supabaseAdmin
     .from("licenses")
@@ -53,38 +57,88 @@ export async function deliverAccountPassNotices(
     .eq("status", "active")
     .gt("expires_at", new Date().toISOString());
   if (error) throw new Error("Notice queue unavailable");
+  const db = supabaseAdmin;
   let sent = 0,
     skipped = 0,
     failed = 0;
-  for (const account of endingSoon(data ?? [])) {
-    const expiresOn = account.endsAt.slice(0, 10);
-    const claim = await supabaseAdmin
-      .from("account_pass_notices")
-      .insert({ user_id: account.userId, expires_on: expiresOn });
-    if (claim.error) {
-      // Already told about this end date: the key is (account, end date).
-      if ((claim.error as { code?: string }).code === "23505") skipped++;
-      else failed++;
-      continue;
-    }
-    try {
-      await send({
-        to: account.email,
-        endsOn: account.endsAt,
-        billingUrl: `${APP_URL}/billing`,
-        renewalAvailable: renewalEnabled(),
-        idempotencyKey: `account-pass-ending/${account.userId}/${expiresOn}`,
-      });
-      sent++;
-    } catch {
-      failed++;
-      // Not told after all, so tomorrow's run must try again.
-      await supabaseAdmin
+  const { unreached } = await runBatch(
+    endingSoon(data ?? []),
+    async (account) => {
+      const expiresOn = account.endsAt.slice(0, 10);
+      const claimedAt = new Date().toISOString();
+      const claim = await db
         .from("account_pass_notices")
-        .delete()
-        .eq("user_id", account.userId)
-        .eq("expires_on", expiresOn);
-    }
-  }
-  return { sent, skipped, failed };
+        .insert({ user_id: account.userId, expires_on: expiresOn, sent_at: claimedAt });
+      if (claim.error) {
+        if ((claim.error as { code?: string }).code !== "23505") {
+          failed++;
+          return;
+        }
+        // The (account, end date) row exists. Told already, or being sent right now: leave it. A
+        // claim nobody finished (a crash or timeout between writing the row and the provider
+        // accepting the email) is taken again, or the seller would never hear. 27 Oct 2026 audit.
+        const { data: held } = await db
+          .from("account_pass_notices")
+          .select("delivered_at, sent_at")
+          .eq("user_id", account.userId)
+          .eq("expires_on", expiresOn)
+          .maybeSingle();
+        const claimedBefore = held?.sent_at ? Date.parse(held.sent_at) : NaN;
+        if (
+          !held ||
+          held.delivered_at ||
+          Number.isNaN(claimedBefore) ||
+          Date.now() - claimedBefore < CLAIM_LEASE_MS
+        ) {
+          skipped++;
+          return;
+        }
+        const { data: took } = await db
+          .from("account_pass_notices")
+          .update({ sent_at: claimedAt })
+          .eq("user_id", account.userId)
+          .eq("expires_on", expiresOn)
+          .is("delivered_at", null)
+          .eq("sent_at", held.sent_at)
+          .select("user_id");
+        if (!took || took.length === 0) {
+          // Another run took it first.
+          skipped++;
+          return;
+        }
+      }
+      try {
+        await send({
+          to: account.email,
+          endsOn: account.endsAt,
+          billingUrl: `${APP_URL}/billing`,
+          renewalAvailable: renewalEnabled(),
+          // The same on every attempt for this end date, so a retry cannot mail the seller twice.
+          idempotencyKey: `account-pass-ending/${account.userId}/${expiresOn}`,
+        });
+      } catch {
+        failed++;
+        // Not told after all, so the next run must try again.
+        await db
+          .from("account_pass_notices")
+          .delete()
+          .eq("user_id", account.userId)
+          .eq("expires_on", expiresOn);
+        return;
+      }
+      sent++;
+      // The provider has it. Record that, and retry the record: a missing mark only means the claim
+      // is eventually taken again, and that second send would fall outside the provider's window.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const res = await db
+          .from("account_pass_notices")
+          .update({ delivered_at: new Date().toISOString() })
+          .eq("user_id", account.userId)
+          .eq("expires_on", expiresOn);
+        if (!res.error) break;
+      }
+    },
+    { deadline: Date.now() + RUN_BUDGET_MS },
+  );
+  return { sent, skipped, failed, unreached };
 }

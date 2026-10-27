@@ -62,11 +62,18 @@ test("guest case survives sign-in and remains private after sign-out", async ({ 
 
   // The compose API's own guards, checked from a real signed-in session.
   const malformed = await page.request.post("/api/compose", {
-    data: { caseData: { id: "test-case", kind: "POLICY", actionItems: [null] } },
+    data: {
+      caseData: { id: "test-case", kind: "POLICY", actionItems: [null] },
+      // The request body also requires the round; without it this would fail for that reason alone.
+      round: { sentHere: 0, repliesReceived: 0 },
+    },
   });
   expect(malformed.status()).toBe(400);
   const severe = await page.request.post("/api/compose", {
-    data: { caseData: { id: "test-case", kind: "INAUTHENTIC_DOCUMENTS" } },
+    data: {
+      caseData: { id: "test-case", kind: "INAUTHENTIC_DOCUMENTS" },
+      round: { sentHere: 0, repliesReceived: 0 },
+    },
   });
   expect(severe.status()).toBe(403);
 

@@ -11,12 +11,16 @@ const h = vi.hoisted(() => ({
   sent: [] as string[],
   orderedBy: [] as string[],
   openCount: 0,
+  /** Runs inside the next email send, to stand in for something the seller does meanwhile. */
+  duringSend: null as null | (() => void),
 }));
 
 function builder(table: Row[]) {
   const filters: Array<(r: Row) => boolean> = [];
   let patch: Row | null = null;
   let isCount = false;
+  let cap = Infinity;
+  const orders: Array<{ col: string; asc: boolean; nullsFirst?: boolean }> = [];
   const api: any = {
     select(_c?: string, opts?: { count?: string; head?: boolean }) {
       if (opts?.count) isCount = true;
@@ -52,17 +56,35 @@ function builder(table: Row[]) {
       filters.push((r) => r[f] < v);
       return api;
     },
+    in(f: string, values: any[]) {
+      filters.push((r) => values.includes(r[f]));
+      return api;
+    },
     or(expr: string) {
-      // Only the claim lease filter is used: "claimed_at.is.null,claimed_at.lt.<iso>".
-      const stale = expr.split("claimed_at.lt.")[1]!;
-      filters.push((r) => r.claimed_at == null || r.claimed_at < stale);
+      // Only claimed_at conditions are used: "claimed_at.is.null", "claimed_at.lt.<iso>" and
+      // "claimed_at.eq.<iso>".
+      const parts = expr.split(",");
+      filters.push((r) =>
+        parts.some((part) => {
+          if (part === "claimed_at.is.null") return r.claimed_at == null;
+          if (part.startsWith("claimed_at.lt.")) {
+            return r.claimed_at == null || r.claimed_at < part.slice("claimed_at.lt.".length);
+          }
+          if (part.startsWith("claimed_at.eq.")) {
+            return r.claimed_at === part.slice("claimed_at.eq.".length);
+          }
+          throw new Error(`unsupported filter ${part}`);
+        }),
+      );
       return api;
     },
-    order(col: string) {
+    order(col: string, opts?: { ascending?: boolean; nullsFirst?: boolean }) {
       h.orderedBy.push(col);
+      orders.push({ col, asc: opts?.ascending !== false, nullsFirst: opts?.nullsFirst });
       return api;
     },
-    limit() {
+    limit(n: number) {
+      cap = n;
       return api;
     },
     then(res: any, rej?: any) {
@@ -75,8 +97,24 @@ function builder(table: Row[]) {
         );
       }
       if (isCount) return Promise.resolve({ count: matched.length, error: null }).then(res, rej);
-      const sorted = [...matched].sort((a, b) => a.due_at.localeCompare(b.due_at));
-      return Promise.resolve({ data: sorted, error: null }).then(res, rej);
+      const specs = orders.length ? orders : [{ col: "due_at", asc: true, nullsFirst: undefined }];
+      const sorted = [...matched].sort((a, b) => {
+        for (const { col, asc, nullsFirst } of specs) {
+          const x = a[col] ?? null;
+          const y = b[col] ?? null;
+          if (x === y) continue;
+          // Postgres default: nulls last when ascending, first when descending.
+          const first = nullsFirst ?? !asc;
+          if (x === null) return first ? -1 : 1;
+          if (y === null) return first ? 1 : -1;
+          return (x < y ? -1 : 1) * (asc ? 1 : -1);
+        }
+        return 0;
+      });
+      return Promise.resolve({
+        data: sorted.slice(0, cap).map((r) => ({ ...r })),
+        error: null,
+      }).then(res, rej);
     },
   };
   return api;
@@ -97,6 +135,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 vi.mock("@/lib/email", () => ({
   sendCaseReminderEmail: vi.fn(async (a: { to: string }) => {
+    h.duringSend?.();
     h.sent.push(a.to);
   }),
 }));
@@ -130,6 +169,7 @@ beforeEach(() => {
   h.rows = [];
   h.sent = [];
   h.orderedBy = [];
+  h.duringSend = null;
   h.users = { u1: { email: "a@example.com", email_confirmed_at: "2026-01-01T00:00:00Z" } };
 });
 
@@ -176,6 +216,62 @@ describe("deliverCaseReminders", () => {
     await deliverCaseReminders(NOW);
     expect(h.rows[0]!.claimed_at).toBeNull();
     expect(h.rows[0]!.sent_at).toBeTruthy();
+  });
+});
+
+describe("deliverCaseReminders, 27 Oct 2026 audit", () => {
+  it("does not mark a reminder sent that the seller moved while its old email was going out", async () => {
+    const moved = row({ id: "moved" });
+    h.rows.push(moved);
+    // What upsertCaseReminder does when the seller sets a new date mid-send.
+    h.duringSend = () =>
+      Object.assign(moved, {
+        due_at: "2026-10-20T00:00:00Z",
+        sent_at: null,
+        claimed_at: null,
+        attempts: 0,
+      });
+    expect(await deliverCaseReminders(NOW)).toMatchObject({ sent: 1 });
+    expect(moved.sent_at).toBeNull();
+    expect(moved.due_at).toBe("2026-10-20T00:00:00Z");
+  });
+
+  it("does not put an old failure on a reminder moved while its email failed", async () => {
+    const { sendCaseReminderEmail } = await import("@/lib/email");
+    vi.mocked(sendCaseReminderEmail).mockImplementationOnce(async () => {
+      Object.assign(h.rows[0]!, { due_at: "2026-10-20T00:00:00Z", claimed_at: null, attempts: 0 });
+      throw new Error("provider down");
+    });
+    h.rows.push(row());
+    await deliverCaseReminders(NOW);
+    expect(h.rows[0]!.attempts).toBe(0);
+    expect(h.rows[0]!.last_error ?? null).toBeNull();
+  });
+
+  it("is not starved by two hundred reminders whose address nobody has confirmed", async () => {
+    h.users.stuck = { email: "x@example.com", email_confirmed_at: null };
+    for (let i = 0; i < 200; i++) {
+      h.rows.push(row({ user_id: "stuck", due_at: "2026-09-01T00:00:00Z", id: `stuck${i}` }));
+    }
+    h.rows.push(row({ id: "waiting", due_at: "2026-10-05T00:00:00Z" }));
+    // The first run's batch is all unconfirmed rows, so the confirmed seller waits one run...
+    expect((await deliverCaseReminders(NOW)).sent).toBe(0);
+    // ...but those rows are now stamped and sort behind fresh ones, so the next run reaches her.
+    const tomorrow = new Date(NOW.getTime() + 24 * 3_600_000);
+    expect((await deliverCaseReminders(tomorrow)).sent).toBe(1);
+    expect(h.rows.find((r) => r.id === "waiting")!.sent_at).toBeTruthy();
+  });
+
+  it("stops starting new emails when the time budget is spent, and says how many it left", async () => {
+    for (let i = 0; i < 4; i++) {
+      h.rows.push(row({ user_id: `v${i}` }));
+      h.users[`v${i}`] = { email: `v${i}@example.com`, email_confirmed_at: "2026-01-01T00:00:00Z" };
+    }
+    const r = await deliverCaseReminders(NOW, { budgetMs: -1 });
+    expect(r).toMatchObject({ sent: 0, unreached: 4 });
+    expect(h.sent).toEqual([]);
+    // Left untouched, so the next run takes them first.
+    expect(h.rows.every((x) => x.claimed_at == null && x.sent_at == null)).toBe(true);
   });
 });
 

@@ -10,6 +10,7 @@
 import { supabaseAdmin } from "./supabase/server";
 import { sendCaseReminderEmail } from "./email";
 import { APP } from "@/content/app";
+import { RUN_BUDGET_MS, runBatch } from "./mailBatch";
 import { SITE_URL } from "./urls";
 import type { ViolationKind } from "@/core/violationKinds";
 
@@ -120,22 +121,41 @@ export async function getCaseReminder(
  * Each row is marked sent before its own failure can affect the next one, and a failure increments
  * `attempts` rather than retrying immediately — one seller's bounced address must not stop every
  * other seller's reminder in the same run.
+ *
+ * 27 Oct 2026 audit, three changes:
+ * - A row is written back only while it is still the row this run claimed (same due date, same
+ *   claim). A seller who moves the date while the old email is in flight used to have the new
+ *   reminder marked sent by the old send.
+ * - Rows whose address nobody has confirmed are stamped as looked-at and sorted behind fresh rows, so
+ *   200 of them can no longer fill every day's batch and starve the sellers behind them.
+ * - The run has a time budget and sends five at a time; see `mailBatch.ts`.
  */
-export async function deliverCaseReminders(now = new Date()): Promise<{
+export async function deliverCaseReminders(
+  now = new Date(),
+  options: { budgetMs?: number } = {},
+): Promise<{
   sent: number;
   failed: number;
   skipped: number;
+  /** Due rows this run did not get to; they go first next time. */
+  unreached: number;
 }> {
   if (!supabaseAdmin) throw new Error("Database unavailable");
+  const db = supabaseAdmin;
+  const deadline = Date.now() + (options.budgetMs ?? RUN_BUDGET_MS);
 
+  const claimStamp = now.toISOString();
   const staleBefore = new Date(now.getTime() - CLAIM_LEASE_MS).toISOString();
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await db
     .from("case_reminders")
     .select("id, user_id, case_ref, kind, due_at, attempts")
     .is("sent_at", null)
-    .lte("due_at", now.toISOString())
+    .lte("due_at", claimStamp)
     .lt("attempts", MAX_ATTEMPTS)
     .or(`claimed_at.is.null,claimed_at.lt.${staleBefore}`)
+    // Never-looked-at rows first, then the ones looked at longest ago: a row that cannot be sent
+    // today (an unconfirmed address) goes to the back instead of holding its place every day.
+    .order("claimed_at", { ascending: true, nullsFirst: true })
     .order("due_at", { ascending: true })
     .limit(200);
   if (error) throw new Error("Reminder queue unavailable");
@@ -143,61 +163,76 @@ export async function deliverCaseReminders(now = new Date()): Promise<{
   let sent = 0;
   let failed = 0;
   let skipped = 0;
+  const deferred: string[] = [];
   const perUser = new Map<string, number>();
-  const addresses = new Map<
-    string,
-    { to: string | null; confirmed: boolean; lookupFailed: boolean }
-  >();
+  type Who = { to: string | null; confirmed: boolean; lookupFailed: boolean };
+  const addresses = new Map<string, Promise<Who>>();
+  const lookup = (userId: string): Promise<Who> => {
+    let pending = addresses.get(userId);
+    if (!pending) {
+      pending = db.auth.admin.getUserById(userId).then(({ data: userData, error: userError }) => ({
+        to: userData?.user?.email ?? null,
+        confirmed: Boolean(userData?.user?.email_confirmed_at),
+        lookupFailed: Boolean(userError),
+      }));
+      addresses.set(userId, pending);
+    }
+    return pending;
+  };
 
-  for (const row of data ?? []) {
+  const handle = async (row: {
+    id: string;
+    user_id: string;
+    kind: string;
+    due_at: string;
+    attempts: number;
+  }) => {
+    // Flood guard: a seller with many due cases gets a few emails per run, the rest next run. The
+    // slot is taken before any await, because rows now run side by side.
+    const used = perUser.get(row.user_id) ?? 0;
+    if (used >= MAX_PER_USER_PER_RUN) {
+      skipped++;
+      return;
+    }
+    perUser.set(row.user_id, used + 1);
+    const giveBackSlot = () => perUser.set(row.user_id, (perUser.get(row.user_id) ?? 1) - 1);
+
     let emailSent = false;
     try {
-      // Flood guard: a seller with many due cases gets a few emails per run, the rest next run.
-      if ((perUser.get(row.user_id) ?? 0) >= MAX_PER_USER_PER_RUN) {
-        skipped++;
-        continue;
-      }
-
       // The address is read from auth at send time, never stored alongside the reminder — one
       // fewer copy of a seller's email, and it stays correct if they change it.
-      let who = addresses.get(row.user_id);
-      if (!who) {
-        const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(
-          row.user_id,
-        );
-        who = {
-          to: userData?.user?.email ?? null,
-          confirmed: Boolean(userData?.user?.email_confirmed_at),
-          lookupFailed: Boolean(userError),
-        };
-        addresses.set(row.user_id, who);
-      }
+      const who = await lookup(row.user_id);
       if (who.lookupFailed || !who.to) {
         skipped++;
-        await markFailed(row.id, row.attempts, "No address on file");
-        continue;
+        giveBackSlot();
+        await markFailed(row, claimStamp, "No address on file");
+        return;
       }
-      // An address nobody has confirmed may belong to someone else; never mail it. Left untouched
-      // (not counted as a failed attempt) so the reminder still goes once the seller confirms.
+      // An address nobody has confirmed may belong to someone else; never mail it. Not counted as a
+      // failed attempt, so the reminder still goes once the seller confirms.
       if (!who.confirmed) {
         skipped++;
-        continue;
+        giveBackSlot();
+        deferred.push(row.id);
+        return;
       }
 
-      // Claim before sending: a conditional update only one of two overlapping runs can win.
-      const { data: claimed, error: claimError } = await supabaseAdmin
+      // Claim before sending: a conditional update only one of two overlapping runs can win. It also
+      // names the due date it read, so a row moved since the select is not claimed for its old date.
+      const { data: claimed, error: claimError } = await db
         .from("case_reminders")
-        .update({ claimed_at: now.toISOString() })
+        .update({ claimed_at: claimStamp })
         .eq("id", row.id)
+        .eq("due_at", row.due_at)
         .is("sent_at", null)
         .or(`claimed_at.is.null,claimed_at.lt.${staleBefore}`)
         .select("id");
       if (claimError) throw claimError;
       if (!claimed || claimed.length === 0) {
         skipped++;
-        continue;
+        giveBackSlot();
+        return;
       }
-      perUser.set(row.user_id, (perUser.get(row.user_id) ?? 0) + 1);
 
       await sendCaseReminderEmail({
         to: who.to,
@@ -212,13 +247,17 @@ export async function deliverCaseReminders(now = new Date()): Promise<{
       emailSent = true;
       // The email is out. Recording that is retried, and a failure to record it is never treated as
       // a failed delivery: that would clear the claim and mail the seller the same reminder again
-      // at the next run, which falls outside the provider's duplicate window.
+      // at the next run, which falls outside the provider's duplicate window. Only this run's own
+      // claim is written: if the seller moved the date meanwhile, the row is theirs again and the
+      // new reminder is left pending.
       let updateError: unknown = null;
       for (let tryNo = 0; tryNo < 3; tryNo++) {
-        const res = await supabaseAdmin
+        const res = await db
           .from("case_reminders")
           .update({ sent_at: new Date().toISOString(), last_error: null, claimed_at: null })
-          .eq("id", row.id);
+          .eq("id", row.id)
+          .eq("due_at", row.due_at)
+          .eq("claimed_at", claimStamp);
         updateError = res.error;
         if (!updateError) break;
       }
@@ -227,22 +266,42 @@ export async function deliverCaseReminders(now = new Date()): Promise<{
     } catch {
       if (emailSent) {
         sent++;
-        continue;
+        return;
       }
       failed++;
-      await markFailed(row.id, row.attempts, "Delivery failed; retry pending");
+      await markFailed(row, claimStamp, "Delivery failed; retry pending");
     }
+  };
+
+  const { unreached } = await runBatch(data ?? [], handle, { deadline });
+
+  // Stamp the unconfirmed rows so tomorrow's batch reaches the rows behind them first. Best effort:
+  // if this write fails the only cost is today's ordering.
+  if (deferred.length > 0) {
+    await db
+      .from("case_reminders")
+      .update({ claimed_at: claimStamp })
+      .in("id", deferred)
+      .is("sent_at", null);
   }
 
-  return { sent, failed, skipped };
+  return { sent, failed, skipped, unreached };
 }
 
-async function markFailed(id: string, attempts: number, message: string): Promise<void> {
+/** A failure is recorded only against the row this run claimed, never against a moved one. */
+async function markFailed(
+  row: { id: string; due_at: string; attempts: number },
+  claimStamp: string,
+  message: string,
+): Promise<void> {
   if (!supabaseAdmin) return;
   await supabaseAdmin
     .from("case_reminders")
-    .update({ attempts: attempts + 1, last_error: message, claimed_at: null })
-    .eq("id", id);
+    .update({ attempts: row.attempts + 1, last_error: message, claimed_at: null })
+    .eq("id", row.id)
+    .eq("due_at", row.due_at)
+    // A row that failed before it could be claimed (no address) has no claim of this run to match.
+    .or(`claimed_at.is.null,claimed_at.eq.${claimStamp}`);
 }
 
 /** Falls back to the raw kind rather than throwing, so an unknown value still produces an email. */

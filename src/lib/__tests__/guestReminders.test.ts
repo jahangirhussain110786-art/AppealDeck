@@ -279,6 +279,17 @@ describe("delivering", () => {
     expect((await deliverGuestReminders(onDay(x, "2026-11-07"))).sent).toBe(0);
   });
 
+  // 27 Oct 2026 audit: a run killed by the function limit strands everything behind it. The run stops
+  // starting emails when its budget is spent and leaves the rest unclaimed for the next run.
+  it("stops when its time budget is spent and leaves the row for the next run", async () => {
+    const x = await confirmed();
+    const r = await deliverGuestReminders({ ...onDay(x, "2026-11-07"), budgetMs: -1 });
+    expect(r).toMatchObject({ sent: 0, unreached: 1 });
+    expect(x.sendReminder).not.toHaveBeenCalled();
+    expect(x.m.rows[0]!.claimed_at ?? null).toBeNull();
+    expect((await deliverGuestReminders(onDay(x, "2026-11-07"))).sent).toBe(1);
+  });
+
   it("does not send once the date has passed", async () => {
     const x = await confirmed();
     expect((await deliverGuestReminders(onDay(x, "2026-11-11"))).sent).toBe(0);

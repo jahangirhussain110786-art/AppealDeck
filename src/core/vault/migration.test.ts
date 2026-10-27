@@ -14,6 +14,8 @@ function provider() {
 }
 
 const TARGET = 10_000;
+// Generous on purpose: the correctness checks must get to run on a slow or busy machine.
+const SETUP_TIMEOUT_MS = 600_000;
 
 describe("AA-16: 10k-record migration harness", () => {
   const dbNameV1 = `appealdeck-mig-v1-${Math.random().toString(36).slice(2)}`;
@@ -36,55 +38,67 @@ describe("AA-16: 10k-record migration harness", () => {
     const t1 = Date.now();
     const all = await v1.list();
     expect(all).toHaveLength(TARGET);
-    expect(t1 - t0).toBeLessThan(120_000);
+    // How long building the vault took is a performance figure, not a correctness result (27 Oct 2026
+    // audit): on a loaded machine it ran past a 120 s assertion in setup, so the zero-loss check
+    // below never ran at all. It is printed always and only enforced when asked for, on a quiet
+    // machine: VAULT_PERF_BUDGET=1 npx vitest run src/core/vault/migration.test.ts
+    const seconds = Math.round((t1 - t0) / 1000);
+    console.info(
+      `10k-record vault built in ${seconds}s (budget 120s, enforced only with VAULT_PERF_BUDGET=1)`,
+    );
+    if (process.env.VAULT_PERF_BUDGET === "1") expect(t1 - t0).toBeLessThan(120_000);
     await v1.close();
-  }, 180_000);
+  }, SETUP_TIMEOUT_MS);
 
-  it("migrates a 10k-record vault from v1 to v2 with zero loss and full decrypt", async () => {
-    const p = provider();
-    const v1 = new Vault(p, new VaultDB(dbNameV1));
-    await v1.open();
-    await v1.unlock("migration-test-pass");
-    const before = await v1.list();
-    expect(before).toHaveLength(TARGET);
-    const expectedSample: Array<{ id: string; text: string }> = [];
-    for (let i = 0; i < 25; i += 1) {
-      const sample = before[i * (TARGET / 25)]!;
-      const { text } = await v1.getString(sample.id);
-      expectedSample.push({ id: sample.id, text });
-    }
-    const exported = await v1.exportAll();
-    await v1.close();
+  it(
+    "migrates a 10k-record vault from v1 to v2 with zero loss and full decrypt",
+    async () => {
+      const p = provider();
+      const v1 = new Vault(p, new VaultDB(dbNameV1));
+      await v1.open();
+      await v1.unlock("migration-test-pass");
+      const before = await v1.list();
+      expect(before).toHaveLength(TARGET);
+      const expectedSample: Array<{ id: string; text: string }> = [];
+      for (let i = 0; i < 25; i += 1) {
+        const sample = before[i * (TARGET / 25)]!;
+        const { text } = await v1.getString(sample.id);
+        expectedSample.push({ id: sample.id, text });
+      }
+      const exported = await v1.exportAll();
+      await v1.close();
 
-    const v2 = new Vault(p, new VaultDB(dbNameV2));
-    await v2.open();
-    await v2.initWithPassphrase("fresh-pass-2026");
-    const n = await v2.importAll(exported, {
-      sourcePassphrase: "migration-test-pass",
-      destinationPassphrase: "destination-pass-2026",
-    });
-    expect(n).toBe(TARGET);
+      const v2 = new Vault(p, new VaultDB(dbNameV2));
+      await v2.open();
+      await v2.initWithPassphrase("fresh-pass-2026");
+      const n = await v2.importAll(exported, {
+        sourcePassphrase: "migration-test-pass",
+        destinationPassphrase: "destination-pass-2026",
+      });
+      expect(n).toBe(TARGET);
 
-    await v2.lock();
-    await v2.unlock("destination-pass-2026");
-    const after = await v2.list();
-    expect(after).toHaveLength(TARGET);
-    for (const s of expectedSample) {
-      const { text } = await v2.getString(s.id);
-      expect(text).toBe(s.text);
-    }
-    const midIndex = Math.floor(TARGET / 2);
-    const midSample = after[midIndex]!;
-    const midRecord = await v2.get(midSample.id);
-    const env = midRecord.record.ciphertext as EncryptionEnvelope;
-    expect(env.v).toBe(VAULT_ENVELOPE_VERSION);
-    const dek = (v2 as unknown as { dek: CryptoKey }).dek;
-    const bytes = await decryptBytes(p, dek, env);
-    expect(bytes.byteLength).toBe(midRecord.record.sizeBytes);
-    await encryptBytes(p, dek, bytes);
-    await v2.close();
+      await v2.lock();
+      await v2.unlock("destination-pass-2026");
+      const after = await v2.list();
+      expect(after).toHaveLength(TARGET);
+      for (const s of expectedSample) {
+        const { text } = await v2.getString(s.id);
+        expect(text).toBe(s.text);
+      }
+      const midIndex = Math.floor(TARGET / 2);
+      const midSample = after[midIndex]!;
+      const midRecord = await v2.get(midSample.id);
+      const env = midRecord.record.ciphertext as EncryptionEnvelope;
+      expect(env.v).toBe(VAULT_ENVELOPE_VERSION);
+      const dek = (v2 as unknown as { dek: CryptoKey }).dek;
+      const bytes = await decryptBytes(p, dek, env);
+      expect(bytes.byteLength).toBe(midRecord.record.sizeBytes);
+      await encryptBytes(p, dek, bytes);
+      await v2.close();
 
-    await indexedDB.deleteDatabase(dbNameV1);
-    await indexedDB.deleteDatabase(dbNameV2);
-  }, 180_000);
+      await indexedDB.deleteDatabase(dbNameV1);
+      await indexedDB.deleteDatabase(dbNameV2);
+    },
+    SETUP_TIMEOUT_MS,
+  );
 });

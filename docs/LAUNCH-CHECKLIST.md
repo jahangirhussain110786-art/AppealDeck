@@ -29,6 +29,7 @@ Applied in number order with the Supabase CLI through the session pooler, after 
 - [x] `0023` + `0024` (referral ledger, then expired Account Pass replacement and the linked refund rule).
 - [x] `0025` (case rounds — `/api/compose` calls `record_case_round`) and `0026` (malformed webhook diagnostics).
 - [x] Six functions present; `case_rounds` = 0; `malformed_webhook_events` = 0; `anon` still cannot read `licences`.
+- [ ] **Apply `0027_refund_reversal_fixes`** (27 Oct 2026 audit): a credited upgrade is no longer restored while its original is still refunded, a pending refund no longer reactivates a cancelled Pro plan, and an expiry notice that was claimed but never sent is retried. One transaction, safe to re-run: `supabase db push` (the project is linked) or paste the file in the SQL editor. The app works without it, but those three fixes are not live until it is applied. It adds one column, `account_pass_notices.delivered_at`.
 - [ ] Delete the development fixture if this is the same Supabase project: user `dev@appealdeck.com` **and** `delete from public.licenses where email = 'dev@appealdeck.com';`.
 
 ## 2. Hosting, domain and app configuration (Vercel Pro)

@@ -13,11 +13,15 @@ const tables: Record<string, Result> = {};
 const rpcResult: { value: Result } = { value: { data: null, error: null } };
 const inserted: { table: string; row: unknown }[] = [];
 const deleted: { table: string; filters: Record<string, unknown> }[] = [];
+const updated: { table: string; patch: unknown; filters: Record<string, unknown> }[] = [];
+let tookResult: Result = { data: [{ user_id: "u1" }], error: null };
 let insertError: { code?: string } | null = null;
 
 function chain(table: string): Record<string, unknown> {
   const filters: Record<string, unknown> = {};
-  const done = () => Promise.resolve(tables[table] ?? { data: [], error: null });
+  let wrote = false;
+  const done = () =>
+    Promise.resolve(wrote ? tookResult : (tables[table] ?? { data: [], error: null }));
   const c: Record<string, unknown> = {};
   for (const m of ["select", "in", "gt", "is", "limit", "order"]) c[m] = () => c;
   c.eq = (k: string, v: unknown) => {
@@ -29,6 +33,11 @@ function chain(table: string): Record<string, unknown> {
   c.insert = (row: unknown) => {
     inserted.push({ table, row });
     return Promise.resolve({ error: insertError });
+  };
+  c.update = (patch: unknown) => {
+    updated.push({ table, patch, filters });
+    wrote = true;
+    return c;
   };
   c.delete = () => {
     const d = { table, filters };
@@ -83,6 +92,8 @@ beforeEach(() => {
   rpcResult.value = { data: null, error: null };
   inserted.length = 0;
   deleted.length = 0;
+  updated.length = 0;
+  tookResult = { data: [{ user_id: "u1" }], error: null };
   insertError = null;
   store.clear();
   redisDown = false;
@@ -168,7 +179,7 @@ describe("delivering the ending notices", () => {
     rows();
     const send = vi.fn().mockResolvedValue(undefined);
     const out = await deliverAccountPassNotices(send);
-    expect(out).toEqual({ sent: 1, skipped: 0, failed: 0 });
+    expect(out).toEqual({ sent: 1, skipped: 0, failed: 0, unreached: 0 });
     expect(inserted[0]).toMatchObject({ table: "account_pass_notices" });
     expect(send.mock.calls[0]![0].idempotencyKey).toBe(
       `account-pass-ending/u1/${soon.slice(0, 10)}`,
@@ -179,15 +190,86 @@ describe("delivering the ending notices", () => {
   it("does not send a second time for an end date already told", async () => {
     rows();
     insertError = { code: "23505" };
+    tables.account_pass_notices = {
+      data: { delivered_at: "2026-10-01T00:00:00Z", sent_at: "2026-10-01T00:00:00Z" },
+      error: null,
+    };
     const send = vi.fn();
-    expect(await deliverAccountPassNotices(send)).toEqual({ sent: 0, skipped: 1, failed: 0 });
+    expect(await deliverAccountPassNotices(send)).toEqual({
+      sent: 0,
+      skipped: 1,
+      failed: 0,
+      unreached: 0,
+    });
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("marks the notice delivered once the provider has it", async () => {
+    rows();
+    await deliverAccountPassNotices(vi.fn().mockResolvedValue(undefined));
+    expect(updated).toHaveLength(1);
+    expect(updated[0]).toMatchObject({
+      table: "account_pass_notices",
+      filters: { user_id: "u1", expires_on: soon.slice(0, 10) },
+    });
+    expect(updated[0]!.patch).toHaveProperty("delivered_at");
+  });
+
+  // 27 Oct 2026 audit: a crash between writing the row and the provider accepting the email left a
+  // row that every later run read as "already told", so the seller was never told.
+  it("sends again when an earlier claim was never delivered and has gone stale", async () => {
+    rows();
+    insertError = { code: "23505" };
+    tables.account_pass_notices = {
+      data: { delivered_at: null, sent_at: new Date(Date.now() - 3_600_000).toISOString() },
+      error: null,
+    };
+    const send = vi.fn().mockResolvedValue(undefined);
+    expect(await deliverAccountPassNotices(send)).toEqual({
+      sent: 1,
+      skipped: 0,
+      failed: 0,
+      unreached: 0,
+    });
+    expect(send.mock.calls[0]![0].idempotencyKey).toBe(
+      `account-pass-ending/u1/${soon.slice(0, 10)}`,
+    );
+  });
+
+  it("leaves a claim alone that another run made moments ago and has not finished", async () => {
+    rows();
+    insertError = { code: "23505" };
+    tables.account_pass_notices = {
+      data: { delivered_at: null, sent_at: new Date(Date.now() - 60_000).toISOString() },
+      error: null,
+    };
+    const send = vi.fn();
+    expect(await deliverAccountPassNotices(send)).toMatchObject({ sent: 0, skipped: 1 });
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("does not send when another run took the stale claim first", async () => {
+    rows();
+    insertError = { code: "23505" };
+    tables.account_pass_notices = {
+      data: { delivered_at: null, sent_at: new Date(Date.now() - 3_600_000).toISOString() },
+      error: null,
+    };
+    tookResult = { data: [], error: null };
+    const send = vi.fn();
+    expect(await deliverAccountPassNotices(send)).toMatchObject({ sent: 0, skipped: 1 });
     expect(send).not.toHaveBeenCalled();
   });
 
   it("removes the notice when the email fails, so tomorrow tries again", async () => {
     rows();
     const send = vi.fn().mockRejectedValue(new Error("mail down"));
-    expect(await deliverAccountPassNotices(send)).toEqual({ sent: 0, skipped: 0, failed: 1 });
+    expect(await deliverAccountPassNotices(send)).toEqual({
+      sent: 0,
+      skipped: 0,
+      failed: 1,
+      unreached: 0,
+    });
     expect(deleted).toHaveLength(1);
     expect(deleted[0]).toMatchObject({
       table: "account_pass_notices",
@@ -199,7 +281,12 @@ describe("delivering the ending notices", () => {
     rows();
     insertError = { code: "XX000" };
     const send = vi.fn();
-    expect(await deliverAccountPassNotices(send)).toEqual({ sent: 0, skipped: 0, failed: 1 });
+    expect(await deliverAccountPassNotices(send)).toEqual({
+      sent: 0,
+      skipped: 0,
+      failed: 1,
+      unreached: 0,
+    });
     expect(send).not.toHaveBeenCalled();
   });
 

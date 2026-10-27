@@ -93,3 +93,38 @@ test("confirming covered issues does not discard unfinished response text", asyn
   await page.getByRole("tab", { name: "Response", exact: true }).click();
   await expect(page.getByLabel("Your explanation, in your own words")).toHaveValue(answer);
 });
+
+test("reloading straight after typing warns first and keeps the text", async ({ page }) => {
+  await openQuestionnaire(page);
+  const field = page.getByLabel(question, { exact: true });
+  await field.fill(answer);
+  // Still inside the 900 ms autosave wait. The page is asked to leave the way a browser asks it, and
+  // it must object (that is what puts up the leave-page prompt) and start the write straight away.
+  // Whether a write that is racing a real unload finishes is up to the browser, so the check is made
+  // on a page that stays: the text must reach the vault without waiting for the timer.
+  const objected = await page.evaluate(() => {
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  expect(objected).toBe(true);
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  await page.reload();
+  await page.getByRole("tab", { name: "Response", exact: true }).click();
+  await expect(page.getByLabel(question, { exact: true })).toHaveValue(answer);
+});
+
+test("reloading once everything is saved shows no leave-page prompt", async ({ page }) => {
+  await openQuestionnaire(page);
+  await page.getByLabel(question, { exact: true }).fill(answer);
+  await page.getByRole("button", { name: "Save my answers" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  await page.waitForTimeout(1500);
+  const dialogs: string[] = [];
+  page.on("dialog", (dialog) => {
+    dialogs.push(dialog.type());
+    void dialog.accept();
+  });
+  await page.reload();
+  expect(dialogs).toEqual([]);
+});

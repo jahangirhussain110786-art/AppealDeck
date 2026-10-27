@@ -83,10 +83,20 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
+      # Every spec that signs in. 27 Oct 2026 audit: only three of them ran here, so a green CI could
+      # not vouch for account continuity, backup restore, session refresh or the paid workspace.
       - run: >-
           npx playwright test
           e2e/case-mobile.spec.ts e2e/compose-errors.spec.ts e2e/device-reader.spec.ts
-          --project=chromium --retries=1
+          e2e/integrity.spec.ts e2e/workspace.spec.ts e2e/backup-restore.spec.ts
+          e2e/session-refresh.spec.ts e2e/supporting-surfaces.spec.ts e2e/keyboard-dark.spec.ts
+          --project=chromium --retries=1 --reporter=github,json
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-signed-in.json
+      # Specs skip themselves without credentials; say which ran, and fail if one ran nothing.
+      - name: Report which signed-in specs ran and which skipped
+        if: always()
+        run: node scripts/check-e2e-skips.mjs playwright-signed-in.json
       - name: Upload the Playwright report and traces
         if: always()
         uses: actions/upload-artifact@v4

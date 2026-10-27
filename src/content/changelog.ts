@@ -32,12 +32,20 @@ export const CHANGELOG = {
       "A dated list of what changed in AppealDeck: new features, fixes and wording corrections, newest first.",
   },
   hero: {
-    eyebrow: "Updated 24 Oct 2026",
+    eyebrow: "Updated 27 Oct 2026",
     title: "What changed, and when.",
     accent: "and when.",
     lede: "A dated list of changes to AppealDeck, newest first. We add a line when something a seller can see changes, including fixes and corrections to our own wording.",
   },
   entries: [
+    {
+      date: "27 Oct 2026",
+      items: [
+        "If you reload the page or close the tab within a second of typing in your response, the browser now asks before you leave, and your text starts saving at once.",
+        "Reminder emails go out in steadier batches. Moving a reminder date while an email is being sent no longer marks the new date as already sent, and a long queue of unconfirmed addresses can no longer hold back everyone else.",
+        "A refunded purchase can no longer bring back a discounted upgrade that was paid for with it, and a refund that is only awaiting approval no longer switches a cancelled plan back on.",
+      ],
+    },
     {
       date: "24 Oct 2026",
       items: [
