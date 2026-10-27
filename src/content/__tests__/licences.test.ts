@@ -22,15 +22,22 @@ describe("licences", () => {
   });
 
   it("attributes nothing we do not ship", () => {
+    // The Feather-derived icons travel inside lucide-react (ISC + MIT, named in its own licence).
+    // The three typefaces are bundled by next/font from Google Fonts, not installed from npm.
+    const notAPackage = new Set(["Feather icons", "Lora", "Inter", "Open Sans"]);
     for (const name of LISTED) {
-      // The Feather-derived icons travel inside lucide-react (ISC + MIT, named in its own licence).
-      if (name === "Feather icons") continue;
+      if (notAPackage.has(name)) continue;
       expect(DEPS, `${name} is attributed but is not a dependency`).toContain(name);
     }
   });
 
   it("serves the full text of each licence it names, at the path it links to", () => {
-    const titles = { mit: "MIT License", isc: "ISC License", apache: "Apache License" };
+    const titles = {
+      mit: "MIT License",
+      isc: "ISC License",
+      apache: "Apache License",
+      ofl: "SIL OPEN FONT LICENSE",
+    };
     for (const group of LICENCES.groups) {
       const file = path.join(ROOT, "public", group.href);
       expect(existsSync(file), `${group.href} is missing`).toBe(true);

@@ -12,7 +12,7 @@
  */
 
 export type LicenceGroup = {
-  id: "mit" | "isc" | "apache";
+  id: "mit" | "isc" | "apache" | "ofl";
   name: string;
   href: string;
   packages: { name: string; holder?: string; note?: string }[];
@@ -27,6 +27,8 @@ export const LICENCES = {
   title: "Licences",
   lede: "AppealDeck is built on open-source software. Those licences ask us to keep their notices with the software, so they are here.",
   note: "Each copyright line is as the package states it. The full text of each licence is linked at the top of its list.",
+  marks:
+    "The brand marks in the home page's credits row come from Simple Icons, whose SVG files are released under CC0 1.0. Each mark remains a trademark of its owner and is used there to identify the tool, nothing more.",
   updated: "2026-10-27",
   groups: [
     {
@@ -74,6 +76,16 @@ export const LICENCES = {
         { name: "dexie", holder: "© 2014–2017 David Fahlander" },
         { name: "pdfjs-dist" },
         { name: "tesseract.js" },
+      ],
+    },
+    {
+      id: "ofl",
+      name: "SIL Open Font License 1.1",
+      href: "/licences/ofl.txt",
+      packages: [
+        { name: "Lora", holder: "© 2011 The Lora Project Authors" },
+        { name: "Inter", holder: "© 2020 The Inter Project Authors" },
+        { name: "Open Sans", holder: "© 2020 The Open Sans Project Authors" },
       ],
     },
   ] as LicenceGroup[],

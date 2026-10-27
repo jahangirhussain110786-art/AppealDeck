@@ -1,60 +1,74 @@
 /**
- * The home page's acknowledgment of the tools behind AppealDeck (27 Oct 2026).
+ * The home page's acknowledgment of the tools behind AppealDeck (27 Oct 2026, revised the same day
+ * at the founder's direction).
  *
- * Names only, never logo artwork. A name in our own type is a factual reference a reader can check;
- * an unlicensed logo is a claim the brands' guidelines ask us not to make, and Anthropic, Google,
- * OpenAI and Microsoft all gate their marks behind permission we do not hold. The row is deliberately
- * uniform: a mixed strip of some logos and some words reads as "we only got the small ones cleared".
+ * Each name carries the tool's own glyph where a free, re-usable copy of it exists — the monochrome
+ * marks in `public/credits/`, generated from Simple Icons by `scripts/build-credit-logos.mjs`. Where
+ * the owner asked Simple Icons to remove the mark (OpenAI, Microsoft), the name stands as text in a
+ * typeface that reads like its wordmark. The glyphs are white and single-path so the row is one
+ * consistent strip rather than a collage of different brand guidelines.
  *
- * There is no expanded list anywhere. The founder asked for the acknowledgment and nothing else, so
- * the row is the whole statement; the one place a tool is named in full is the licences page, where
- * the open-source notices make it a legal requirement rather than a description.
+ * The marks remain the trademarks of their owners. They identify the tools this site uses; the
+ * disclaimer under the row says the rest, and nothing here claims a partnership.
  *
  * `SERVICES` must stay reconciled with the provider disclosure in `legal.ts` — a test enforces it, so
  * a service cannot appear in the row while staying unmentioned on the privacy page.
  */
 
+export type CreditFace = "serif" | "grotesque" | "humanist";
+
+export type CreditName = {
+  name: string;
+  /** A monochrome SVG under `public/credits/`, if the brand publishes one we can reuse. */
+  logo?: string;
+  /** A substitute typeface for names without a glyph. */
+  face?: CreditFace;
+};
+
 export const CREDITS = {
   heading: "With thanks to:",
   line: "The tools and technologies behind AppealDeck.",
   disclaimer:
-    "Names identify tools we used. All trademarks belong to their owners; no partnership, sponsorship or endorsement is implied.",
+    "Names and marks identify tools we used; all trademarks belong to their owners. No partnership, sponsorship or endorsement is implied.",
 } as const;
 
-/**
- * The services we run on, by the names the privacy policy uses. Test-only: it keeps the row and the
- * disclosure from drifting apart in either direction.
- */
-export const SERVICES = [
-  "Vercel",
-  "Supabase",
-  "Paddle",
-  "Upstash",
-  "Resend",
-  "Google Gemini",
-  "Groq",
-  "Plausible",
-] as const;
+/** The services we run on, by the names the privacy policy uses. */
+export const SERVICE_NAMES: CreditName[] = [
+  { name: "Vercel", logo: "/credits/vercel.svg" },
+  { name: "Supabase", logo: "/credits/supabase.svg" },
+  { name: "Paddle", logo: "/credits/paddle.svg" },
+  { name: "Upstash", logo: "/credits/upstash.svg" },
+  { name: "Resend", logo: "/credits/resend.svg" },
+  { name: "Google Gemini", logo: "/credits/gemini.svg", face: "grotesque" },
+  { name: "Groq" },
+  { name: "Plausible", logo: "/credits/plausible.svg" },
+];
+
+/** Service names as plain strings, for the reconciliation test. */
+export const SERVICES = SERVICE_NAMES.map((entry) => entry.name);
 
 /**
- * The names in the moving row, in the order they read: the ones used to build it, then the ones it
- * runs on. Long enough that the loop has no gap on a wide screen.
+ * The moving row, in the order it reads: the ones used to build it, then the ones it runs on.
  */
-export const MARQUEE_NAMES = [
-  "Claude",
-  "ChatGPT",
-  "Qoder",
-  "Next.js",
-  "React",
-  "TypeScript",
-  "Tailwind CSS",
-  "Microsoft",
-  "Linux",
-  ...SERVICES,
-] as const;
+export const MARQUEE: CreditName[] = [
+  { name: "Claude", logo: "/credits/claude.svg", face: "serif" },
+  { name: "ChatGPT", face: "grotesque" },
+  { name: "Qoder" },
+  { name: "Next.js", logo: "/credits/nextjs.svg" },
+  { name: "React", logo: "/credits/react.svg" },
+  { name: "TypeScript", logo: "/credits/typescript.svg" },
+  { name: "Tailwind CSS", logo: "/credits/tailwindcss.svg" },
+  { name: "Microsoft", face: "humanist" },
+  { name: "Linux", logo: "/credits/linux.svg" },
+  ...SERVICE_NAMES,
+];
+
+export const MARQUEE_NAMES = MARQUEE.map((entry) => entry.name);
 
 export const CREDITS_LABELS = {
   region: "Tools and technologies used",
   pause: "Pause the moving names",
-  play: "Resume the moving names",
+  play: "Start the moving names",
+  pauseShort: "Pause",
+  playShort: "Play",
 } as const;

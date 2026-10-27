@@ -610,10 +610,12 @@
   );
 }
 @media (prefers-reduced-motion: reduce) {
-  .credits-track {
+  /* The component decides: with the preference set the row stays still until the reader presses play,
+     and that press sets data-motion="on". This is the no-JS guard only. */
+  .credits-window:not([data-motion="on"]) .credits-track {
     animation: none;
   }
-  .credits-window {
+  .credits-window:not([data-motion="on"]) {
     mask-image: none;
     -webkit-mask-image: none;
   }

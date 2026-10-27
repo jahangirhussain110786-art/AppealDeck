@@ -1,19 +1,28 @@
-import { CREDITS, MARQUEE_NAMES } from "@/content/credits";
+import { CREDITS, MARQUEE } from "@/content/credits";
+import { creditGrotesque, creditHumanist, creditSerif } from "@/lib/creditFonts";
+import { cn } from "@/lib/utils";
 import { CreditsMarquee } from "./CreditsMarquee";
 
 /**
- * The acknowledgment band on the home page (27 Oct 2026). Names only — no third-party logo artwork:
- * the brands we use gate their marks behind permission we do not hold, and a strip where some names
- * have logos and others do not reads as an incomplete claim rather than a generous one.
+ * The acknowledgment band on the home page (27 Oct 2026), between the plans and the questions.
  *
- * There is no separate credits page and no expanded list. The row is the whole statement; what each
- * tool does is either obvious from its name or belongs to the privacy policy, which keeps its own
- * account of what the services receive — one home per claim.
+ * Marks and names, nothing else: an expanded list of what each tool does is a description of our
+ * vendors on a marketing page, and the privacy policy already keeps its own account of what the
+ * services receive — one home per claim. The three substitute typefaces are loaded here only, since
+ * nothing else on the site uses them (see `src/lib/creditFonts.ts`).
  */
 export function ThanksBand() {
   return (
-    <section className="stage dark text-foreground" aria-labelledby="thanks-heading">
-      <div className="mx-auto w-full max-w-marketing px-4 pb-20 pt-16 sm:px-8">
+    <section
+      className={cn(
+        "stage dark text-foreground",
+        creditSerif.variable,
+        creditGrotesque.variable,
+        creditHumanist.variable,
+      )}
+      aria-labelledby="thanks-heading"
+    >
+      <div className="mx-auto w-full max-w-marketing px-4 pb-24 pt-20 sm:px-8 sm:pt-24">
         <h2
           id="thanks-heading"
           className="text-sm font-semibold uppercase tracking-[0.16em] text-white/50"
@@ -24,8 +33,8 @@ export function ThanksBand() {
           {CREDITS.line}
         </p>
 
-        <div className="mt-10">
-          <CreditsMarquee names={MARQUEE_NAMES} />
+        <div className="mt-12">
+          <CreditsMarquee names={MARQUEE} />
         </div>
 
         <p className="mt-6 max-w-2xl text-xs leading-relaxed text-muted-foreground">

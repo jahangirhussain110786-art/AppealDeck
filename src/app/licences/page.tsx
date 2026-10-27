@@ -76,6 +76,7 @@ export default function LicencesPage() {
             </ul>
           </section>
         ))}
+        <p className="text-xs leading-relaxed text-muted-foreground">{LICENCES.marks}</p>
       </div>
     </MarketingShell>
   );

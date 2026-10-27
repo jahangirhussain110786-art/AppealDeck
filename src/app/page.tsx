@@ -95,9 +95,9 @@ export default function HomePage() {
       <BandSection />
       <PromiseBand />
       <PlansSection />
+      <ThanksBand />
       <QuestionsSection />
       {FOUNDER_NOTE && <FounderNoteSection note={FOUNDER_NOTE} />}
-      <ThanksBand />
     </MarketingShell>
   );
 }

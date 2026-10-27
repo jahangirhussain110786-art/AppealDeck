@@ -1,23 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import Image from "next/image";
 import { Pause, Play } from "lucide-react";
-import { CREDITS_LABELS } from "@/content/credits";
+import { CREDITS_LABELS, type CreditFace, type CreditName } from "@/content/credits";
 import { shouldDrift } from "@/lib/creditsMotion";
 import { cn } from "@/lib/utils";
 
 /**
- * The moving row of tool names on the home page (27 Oct 2026).
+ * The moving row of tool marks and names on the home page (27 Oct 2026).
  *
  * It follows the announcement ticker's rules (AM-30) rather than inventing new ones: two copies of
  * the list scroll by half their width so the loop has no seam, the second copy is hidden from
  * assistive technology so each name is announced once, and anything moving on its own can be paused
- * (WCAG 2.2.2).
+ * (WCAG 2.2.2). The row is still until it scrolls into view, stops when it leaves or when the tab
+ * goes to the background, and a press of pause survives all of that — motion belongs to attention,
+ * not to page load (06-PREMIUM-UI-UX-SPEC §5).
  *
- * The difference is when it starts. The row is still until it scrolls into view, stops when it
- * leaves or when the tab goes to the background, and a press of pause survives all of that. Motion
- * belongs to attention, not to page load — which is also what keeps it inside the motion rules in
- * 06-PREMIUM-UI-UX-SPEC §5.
+ * Reduced motion is honoured, but it is one row either way. With the preference set the strip sits
+ * still and scrolls sideways so every name stays reachable, and the button starts the drift on
+ * request — motion the reader asked for is not the motion the preference is about.
  */
 
 const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
@@ -32,18 +34,41 @@ function readReducedMotion() {
   return window.matchMedia(REDUCED_QUERY).matches;
 }
 
-// One line, at wordmark size: bigger than body text, heavier, tight tracking. The names carry the
-// row on their own because there is no logo artwork to carry it (see ThanksBand).
-const NAME_CLASS =
-  "flex shrink-0 items-center whitespace-nowrap text-[1.375rem] font-semibold tracking-[-0.025em] text-foreground sm:text-[1.75rem]";
+const FACE: Record<CreditFace, string> = {
+  serif: "[font-family:var(--font-credit-serif)] tracking-[-0.01em]",
+  grotesque: "[font-family:var(--font-credit-grotesque)] tracking-[-0.035em]",
+  humanist: "[font-family:var(--font-credit-humanist)] tracking-[-0.02em]",
+};
 
-function Names({ names, hidden }: { names: readonly string[]; hidden?: boolean }) {
+function Names({ names, hidden }: { names: readonly CreditName[]; hidden?: boolean }) {
   return (
     <ul className="flex items-center" aria-hidden={hidden || undefined}>
-      {names.map((name) => (
-        <li key={name} className={NAME_CLASS}>
-          <span aria-hidden className="mx-7 size-1.5 shrink-0 rounded-full bg-white/25 sm:mx-10" />
-          {name}
+      {names.map((entry) => (
+        <li
+          key={entry.name}
+          className="flex shrink-0 items-center gap-3 whitespace-nowrap sm:gap-4"
+        >
+          <span aria-hidden className="mx-6 size-1.5 shrink-0 rounded-full bg-white/20 sm:mx-9" />
+          {entry.logo && (
+            <Image
+              src={entry.logo}
+              alt=""
+              aria-hidden
+              width={32}
+              height={32}
+              unoptimized
+              loading="eager"
+              className="size-6 shrink-0 opacity-90 sm:size-8"
+            />
+          )}
+          <span
+            className={cn(
+              "text-[1.625rem] font-semibold leading-none tracking-[-0.025em] text-foreground sm:text-[2rem]",
+              entry.face && FACE[entry.face],
+            )}
+          >
+            {entry.name}
+          </span>
         </li>
       ))}
     </ul>
@@ -54,7 +79,7 @@ export function CreditsMarquee({
   names,
   seconds = 110,
 }: {
-  names: readonly string[];
+  names: readonly CreditName[];
   seconds?: number;
 }) {
   const wrap = useRef<HTMLDivElement>(null);
@@ -65,6 +90,7 @@ export function CreditsMarquee({
   const [documentHidden, setDocumentHidden] = useState(false);
   const [paused, setPaused] = useState(false);
   const [held, setHeld] = useState(false); // pointer or focus on the row
+  const [optIn, setOptIn] = useState(false); // the reader asked for motion despite the preference
 
   useEffect(() => {
     const el = wrap.current;
@@ -90,7 +116,13 @@ export function CreditsMarquee({
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
-  const drifting = shouldDrift({ visible, documentHidden, paused: paused || held, reduced });
+  const moving = !reduced || optIn;
+  const drifting = shouldDrift({
+    visible,
+    documentHidden,
+    paused: paused || held,
+    reduced: !moving,
+  });
 
   return (
     <div
@@ -105,20 +137,8 @@ export function CreditsMarquee({
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHeld(false);
       }}
     >
-      {reduced ? (
-        // Reduced motion: the same names, readable at once, nothing moving.
-        <ul className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3 sm:gap-x-10">
-          {names.map((name) => (
-            <li
-              key={name}
-              className="text-[1.375rem] font-semibold tracking-[-0.025em] text-foreground sm:text-[1.75rem]"
-            >
-              {name}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div className="credits-window overflow-hidden">
+      {moving ? (
+        <div className="credits-window overflow-hidden" data-motion="on">
           <div
             className="credits-track flex w-max items-center"
             data-paused={drifting ? undefined : "true"}
@@ -128,29 +148,42 @@ export function CreditsMarquee({
             <Names names={names} hidden />
           </div>
         </div>
-      )}
-
-      {!reduced && (
-        <div className="mt-4 flex justify-end">
-          <button
-            type="button"
-            aria-label={paused ? CREDITS_LABELS.play : CREDITS_LABELS.pause}
-            aria-pressed={paused}
-            onClick={() => setPaused((p) => !p)}
-            className={cn(
-              "grid size-8 place-items-center rounded-md text-white/50 transition-colors",
-              "hover:bg-white/[0.06] hover:text-white/80",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-            )}
-          >
-            {paused ? (
-              <Play className="size-3.5" aria-hidden />
-            ) : (
-              <Pause className="size-3.5" aria-hidden />
-            )}
-          </button>
+      ) : (
+        // Reduced motion: one row, still, scrollable, with the same marks and names.
+        <div className="credits-window overflow-x-auto" data-motion="off">
+          <Names names={names} />
         </div>
       )}
+
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          aria-label={!moving || paused ? CREDITS_LABELS.play : CREDITS_LABELS.pause}
+          aria-pressed={moving ? paused : false}
+          onClick={() => {
+            if (!moving) {
+              setOptIn(true);
+              return;
+            }
+            setPaused((p) => !p);
+          }}
+          className={cn(
+            "inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-white/45 transition-colors",
+            "hover:bg-white/[0.06] hover:text-white/80",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+            "[@media(pointer:coarse)]:h-10",
+          )}
+        >
+          {!moving || paused ? (
+            <Play className="size-3.5" aria-hidden />
+          ) : (
+            <Pause className="size-3.5" aria-hidden />
+          )}
+          <span aria-hidden>
+            {!moving || paused ? CREDITS_LABELS.playShort : CREDITS_LABELS.pauseShort}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
