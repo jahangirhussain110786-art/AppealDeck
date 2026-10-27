@@ -197,7 +197,7 @@ AppealDeck is a web app for suspended Amazon sellers (notice decoder → evidenc
 
 - Do not edit files in `07-REFERENCE/` without asking
 - Do not commit secrets or API keys
-- Do not push to remote unless explicitly asked
+- Commit and push `master` after each completed unit of work without asking (founder instruction, 27 Oct 2026: "commit and push always"). Still never force-push, never amend published commits, and never commit secrets or `.env*` files.
 - Do not run destructive git commands (`push --force`, hard reset, etc.)
 
 ## Sensitive Files
