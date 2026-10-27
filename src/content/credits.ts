@@ -55,10 +55,10 @@ export const SERVICES = SERVICE_NAMES.map((entry) => entry.name);
 export const MARQUEE: CreditName[] = [
   { name: "Next.js", logo: "/credits/nextjs.svg" },
   { name: "React", logo: "/credits/react.svg" },
-  { name: "TypeScript", logo: "/credits/typescript.svg" },
+  { name: "Microsoft", face: "humanist" },
   { name: "ChatGPT", face: "grotesque" },
   { name: "Claude", logo: "/credits/claude.svg", face: "serif" },
-  { name: "Microsoft", face: "humanist" },
+  { name: "TypeScript", logo: "/credits/typescript.svg" },
   { name: "Qoder" },
   { name: "Tailwind CSS", logo: "/credits/tailwindcss.svg" },
   { name: "Linux", logo: "/credits/linux.svg" },
