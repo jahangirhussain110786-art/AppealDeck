@@ -52,6 +52,7 @@ export const SHARED = {
       changelog: "What changed",
       forProfessionals: "For writers and VA teams",
       partners: "Partner program",
+      licences: "Licences",
     },
     neverSubmits: "You submit every appeal yourself in Seller Central. Your login stays with you.",
     independence:

@@ -83,6 +83,7 @@ export const GUIDE = {
     { path: "/terms", mood: "calm", line: "Take your time reading." },
     { path: "/privacy", mood: "calm", line: "Take your time reading." },
     { path: "/refund", mood: "calm", line: "Take your time reading." },
+    { path: "/licences", mood: "calm", line: "The notices behind the software." },
   ] satisfies Route[],
 } as const;
 

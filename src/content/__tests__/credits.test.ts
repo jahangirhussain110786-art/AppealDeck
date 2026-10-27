@@ -1,0 +1,92 @@
+import { readFileSync, readdirSync } from "node:fs";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+import { CREDITS, MARQUEE_NAMES, SERVICES } from "@/content/credits";
+import { shouldDrift } from "@/lib/creditsMotion";
+
+const ROOT = process.cwd();
+const read = (file: string) => readFileSync(path.join(ROOT, file), "utf8");
+
+function filesUnder(dir: string, acc: string[] = []): string[] {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) filesUnder(full, acc);
+    else acc.push(full);
+  }
+  return acc;
+}
+
+describe("credits", () => {
+  it("thanks every service the privacy policy discloses, in the row and nowhere else", () => {
+    const legal = read("src/content/legal.ts");
+    for (const service of SERVICES) {
+      expect(legal, `${service} is credited but not disclosed in legal.ts`).toContain(service);
+      expect(MARQUEE_NAMES, `${service} is disclosed but missing from the row`).toContain(service);
+    }
+  });
+
+  it("keeps the row long enough to loop without a gap", () => {
+    expect(MARQUEE_NAMES.length).toBeGreaterThanOrEqual(12);
+    expect(MARQUEE_NAMES.length).toBeLessThanOrEqual(24);
+    expect(new Set(MARQUEE_NAMES).size).toBe(MARQUEE_NAMES.length);
+  });
+
+  // 27 Oct 2026: the founder asked for the acknowledgment and nothing else. An expanded list with
+  // roles is a description of our vendors on a public page, which is more than thanks and more than
+  // the privacy policy needs (it keeps its own account of what each service receives).
+  it("carries no expanded list or role description", () => {
+    expect(read("src/content/credits.ts")).not.toMatch(/\brole\s*:/);
+    expect(read("src/components/marketing/ThanksBand.tsx")).not.toContain("<details");
+  });
+
+  // The words that turn a credit into a relationship claim. Google's, Anthropic's and OpenAI's
+  // brand rules all single these out, and the site's own footer already denies any affiliation.
+  it("makes no relationship claim", () => {
+    const claim =
+      /\b(partner|partnership|sponsor|sponsorship|endorse|endorsement|affiliate|affiliation|certified|official|co-engineer)/i;
+    expect(claim.test(CREDITS.heading)).toBe(false);
+    expect(claim.test(CREDITS.line)).toBe(false);
+    for (const name of MARQUEE_NAMES) expect(claim.test(name), name).toBe(false);
+  });
+
+  it("denies a relationship once, in the disclaimer", () => {
+    expect(CREDITS.disclaimer).toContain("no partnership, sponsorship or endorsement");
+    expect(CREDITS.heading).toBe("With thanks to:");
+  });
+
+  it("ships no third-party logo artwork", () => {
+    const brand =
+      /(vercel|supabase|gemini|google|claude|anthropic|openai|chatgpt|groq|paddle|upstash|resend|plausible|nextjs|next[.-]js|tailwind|microsoft|linux)/i;
+    const hits = filesUnder(path.join(ROOT, "public")).filter((file) =>
+      brand.test(path.basename(file)),
+    );
+    expect(hits).toEqual([]);
+  });
+
+  it("has the motion exception recorded in the UI spec", () => {
+    const spec = read("Planning/03-PHASE-2-BUILD/06-PREMIUM-UI-UX-SPEC.md");
+    expect(spec).toContain("home-page credits row");
+  });
+});
+
+describe("shouldDrift", () => {
+  const still = { visible: false, documentHidden: false, paused: false, reduced: false };
+  const moving = { visible: true, documentHidden: false, paused: false, reduced: false };
+
+  it("moves only while on screen, in a visible tab, unpaused, with motion allowed", () => {
+    expect(shouldDrift(moving)).toBe(true);
+  });
+
+  it("stays still on every other input", () => {
+    const stops: [string, typeof moving][] = [
+      ["off screen", { ...moving, visible: false }],
+      ["tab in the background", { ...moving, documentHidden: true }],
+      ["the reader pressed pause", { ...moving, paused: true }],
+      ["reduced motion is requested", { ...moving, reduced: true }],
+    ];
+    for (const [label, state] of stops) {
+      expect(shouldDrift(state), label).toBe(false);
+    }
+    expect(shouldDrift(still)).toBe(false);
+  });
+});

@@ -28,6 +28,7 @@ const MARKETING_PATHS = [
   "/privacy",
   "/terms",
   "/refund",
+  "/licences",
   "/faq",
   "/support",
   "/guides",

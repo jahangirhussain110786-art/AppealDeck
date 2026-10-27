@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/urls";
 import { GUIDES } from "@/content/guides";
 import { LEGAL } from "@/content/legal";
+import { LICENCES } from "@/content/licences";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   // Every public page. /support was missing until 24 Sep 2026 (found by a crawl); sitemap.test.ts
@@ -25,6 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/privacy", lastModified: LEGAL.lastUpdated.privacy },
     { path: "/terms", lastModified: LEGAL.lastUpdated.terms },
     { path: "/refund", lastModified: LEGAL.lastUpdated.refund },
+    { path: "/licences", lastModified: LICENCES.updated },
     { path: "/guides" },
     ...GUIDES.map((g) => ({ path: `/guides/${g.slug}`, lastModified: g.lastVerified })),
   ];

@@ -7,6 +7,7 @@ import { HeroTool } from "@/components/marketing/HeroTool";
 import { FeatureSwitcher } from "@/components/marketing/FeatureSwitcher";
 import { DecodePanel } from "@/components/marketing/DecodePanel";
 import { PromiseBand } from "@/components/marketing/PromiseBand";
+import { ThanksBand } from "@/components/marketing/ThanksBand";
 import {
   ChecklistPanel,
   DocumentPanel,
@@ -96,6 +97,7 @@ export default function HomePage() {
       <PlansSection />
       <QuestionsSection />
       {FOUNDER_NOTE && <FounderNoteSection note={FOUNDER_NOTE} />}
+      <ThanksBand />
     </MarketingShell>
   );
 }

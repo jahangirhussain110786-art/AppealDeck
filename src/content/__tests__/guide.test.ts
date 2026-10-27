@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -71,31 +71,20 @@ describe("Dex, the guide in the corner", () => {
   });
 
   it("gives every real page its own line, so only a missing page says it cannot find one", () => {
-    const pages = [
-      "/",
-      "/billing",
-      "/case",
-      "/dashboard",
-      "/forgot-password",
-      "/login",
-      "/reset-password",
-      "/signup",
-      "/vault",
-      "/changelog",
-      "/check-invoice",
-      "/decode",
-      "/faq",
-      "/for-professionals",
-      "/guides",
-      "/guides/some-guide",
-      "/partners",
-      "/how-we-test",
-      "/pricing",
-      "/privacy",
-      "/refund",
-      "/support",
-      "/terms",
-    ];
+    // Read from disk, like the sitemap test: a hand-kept list had already fallen behind, and /licences
+    // shipped saying "I cannot find that page" before it was noticed.
+    const appDir = join(process.cwd(), "src", "app");
+    const pages = readdirSync(appDir, { withFileTypes: true })
+      .filter(
+        (d) =>
+          d.isDirectory() &&
+          !d.name.startsWith("(") &&
+          !d.name.startsWith("_") &&
+          !["api", "dev", "reminder"].includes(d.name) &&
+          existsSync(join(appDir, d.name, "page.tsx")),
+      )
+      .map((d) => `/${d.name}`);
+    pages.push("/", "/guides/some-guide");
     for (const page of pages) expect(guideFor(page), page).not.toEqual(GUIDE.fallback);
   });
 

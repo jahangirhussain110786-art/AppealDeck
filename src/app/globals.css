@@ -573,6 +573,52 @@
   }
 }
 
+/* The home page's credits row (27 Oct 2026). Same mechanics as the ticker: two copies scroll by half
+   their width, so the loop has no seam. The difference is when it runs — the component starts it
+   only when the row is on screen and the tab is visible, and stops it otherwise, so nothing moves
+   behind the reader's back. This is the second and last permitted continuous animation in the
+   product; see 06-PREMIUM-UI-UX-SPEC §5 before adding a third. */
+@keyframes credits-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+.credits-track {
+  animation: credits-drift var(--credits-duration, 110s) linear infinite;
+  will-change: transform;
+}
+.credits-track[data-paused="true"] {
+  animation-play-state: paused;
+}
+.credits-window {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 4rem,
+    black calc(100% - 4rem),
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 4rem,
+    black calc(100% - 4rem),
+    transparent
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  .credits-track {
+    animation: none;
+  }
+  .credits-window {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}
+
 /* ---------------------------------------------------------------------------------------------
    v5 visual system (26 Sep 2026, founder-approved prototype docs/handoffs/2026-09-26-prototype-v5).
    Calibrated against Linear, Mercury, Stripe and Wise: a navy stage with an orange glow and a
