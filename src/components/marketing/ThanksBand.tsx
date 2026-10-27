@@ -1,6 +1,8 @@
 import { CREDITS, MARQUEE } from "@/content/credits";
 import { creditGrotesque, creditHumanist, creditSerif } from "@/lib/creditFonts";
+import { splitAccent } from "@/lib/splitAccent";
 import { cn } from "@/lib/utils";
+import { AccentWord } from "@/components/ui/accent-word";
 import { CreditsMarquee } from "./CreditsMarquee";
 
 /**
@@ -9,9 +11,11 @@ import { CreditsMarquee } from "./CreditsMarquee";
  * Marks and names, nothing else: an expanded list of what each tool does is a description of our
  * vendors on a marketing page, and the privacy policy already keeps its own account of what the
  * services receive — one home per claim. The three substitute typefaces are loaded here only, since
- * nothing else on the site uses them (see `src/lib/creditFonts.ts`).
+ * nothing else on the site uses them (see `src/lib/creditFonts.ts`). The heading follows the site's
+ * pattern: plain "With" beside "thanks to:" in the italic serif accent face.
  */
 export function ThanksBand() {
+  const parts = splitAccent(CREDITS.heading, CREDITS.accent);
   return (
     <section
       className={cn(
@@ -25,9 +29,17 @@ export function ThanksBand() {
       <div className="mx-auto w-full max-w-marketing px-4 pb-24 pt-20 sm:px-8 sm:pt-24">
         <h2
           id="thanks-heading"
-          className="text-sm font-semibold uppercase tracking-[0.16em] text-white/50"
+          className="text-balance text-[clamp(2.1rem,1.4rem+2.4vw,3.4rem)] font-semibold leading-[1.02] tracking-[-0.04em] text-foreground"
         >
-          {CREDITS.heading}
+          {parts ? (
+            <>
+              {parts.pre}
+              <AccentWord className="text-primary">{parts.accent}</AccentWord>
+              {parts.post}
+            </>
+          ) : (
+            CREDITS.heading
+          )}
         </h2>
         <p className="mt-3 max-w-xl text-base leading-relaxed text-muted-foreground">
           {CREDITS.line}

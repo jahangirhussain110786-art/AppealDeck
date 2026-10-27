@@ -27,6 +27,8 @@ export type CreditName = {
 
 export const CREDITS = {
   heading: "With thanks to:",
+  /** The phrase set in the italic serif accent face, like every other heading on the site. */
+  accent: "thanks to:",
   line: "The tools and technologies behind AppealDeck.",
   disclaimer:
     "Names and marks identify tools we used; all trademarks belong to their owners. No partnership, sponsorship or endorsement is implied.",
