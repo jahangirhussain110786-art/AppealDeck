@@ -53,14 +53,14 @@ export const SERVICES = SERVICE_NAMES.map((entry) => entry.name);
  * The moving row, in the order it reads: the ones used to build it, then the ones it runs on.
  */
 export const MARQUEE: CreditName[] = [
-  { name: "Claude", logo: "/credits/claude.svg", face: "serif" },
-  { name: "ChatGPT", face: "grotesque" },
-  { name: "Qoder" },
   { name: "Next.js", logo: "/credits/nextjs.svg" },
   { name: "React", logo: "/credits/react.svg" },
   { name: "TypeScript", logo: "/credits/typescript.svg" },
-  { name: "Tailwind CSS", logo: "/credits/tailwindcss.svg" },
+  { name: "ChatGPT", face: "grotesque" },
+  { name: "Claude", logo: "/credits/claude.svg", face: "serif" },
   { name: "Microsoft", face: "humanist" },
+  { name: "Qoder" },
+  { name: "Tailwind CSS", logo: "/credits/tailwindcss.svg" },
   { name: "Linux", logo: "/credits/linux.svg" },
   ...SERVICE_NAMES,
 ];
