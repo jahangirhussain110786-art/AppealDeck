@@ -26,7 +26,7 @@ export const SUPPORT = {
 
   operator: {
     title: "Who operates AppealDeck",
-    body: "AppealDeck is software, operated by Jhangir Hussain, trading as Hawlton, an individual seller based in Pakistan. It is not affiliated with, endorsed by or sponsored by Amazon.com, Inc. or its affiliates.",
+    body: "AppealDeck is software, operated by Jhangir Hussain, trading as Hawlton, an individual seller based in Pakistan.",
   },
 
   contact: {
@@ -48,7 +48,7 @@ export const SUPPORT = {
       "Any date shown on your case, so a deadline can be taken into account.",
     ],
     caution:
-      "Do not send passwords, one-time codes or payment card details. Nobody here will ever ask you for them.",
+      "For your safety, never send passwords, one-time codes or card details. Nobody here will ever ask you for them.",
   },
 
   limits: {
@@ -56,7 +56,7 @@ export const SUPPORT = {
     body: "These are fixed boundaries, not policies that change under pressure. They keep your account, your case and the decision where they belong.",
     items: [
       "Your Amazon account stays yours. We never sign in, submit or contact Amazon for you; you send every response yourself.",
-      "Amazon decides the result, and no one here estimates it. Our work is to make the record and the response as complete as your facts allow.",
+      "Our work is to make the record and the response as complete as your facts allow.",
       "A document check describes what a document shows. Whether Amazon accepts it stays Amazon's call.",
       "Amazon sets the clock. Work to the date on your notice, and do not wait on a reply here if yours is close.",
       "Preparation, not legal representation. Where a case needs legal judgement, a qualified professional leads, and nothing you send here is legally privileged.",

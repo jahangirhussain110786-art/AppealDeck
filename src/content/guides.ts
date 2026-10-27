@@ -127,7 +127,7 @@ export const GUIDES: Guide[] = [
       ],
       doesNot: [
         "Your Seller Central login stays yours: we never sign in, submit or contact Amazon for you.",
-        "Amazon decides the outcome. We make the record and the response as complete as your facts allow.",
+        "We make the record and the response as complete as your facts allow.",
         "Cases alleging forged documents, fraud or child safety go to a qualified professional, and the workspace says so before you pay.",
       ],
     },
@@ -192,7 +192,7 @@ export const GUIDES: Guide[] = [
       ],
       doesNot: [
         "The root cause and the corrective actions have to be true and yours. We build them only from what you confirm.",
-        "You submit the plan yourself, and Amazon decides the outcome.",
+        "You submit the plan yourself.",
       ],
     },
     cta: "Paste your notice to start a Plan of Action built on what it actually asks.",
@@ -247,7 +247,7 @@ export const GUIDES: Guide[] = [
         "Checks on this device that an ID or proof-of-address photo is large enough, sharp and fully in frame. It does not read the document or compare it with your details, so compare every field with Seller Central yourself.",
       ],
       doesNot: [
-        "Amazon decides whether the documents are accepted. Our part is to list what the notice names and check that a photo is clear.",
+        "Our part is to list what the notice names and check that a photo is clear.",
         "You upload the documents yourself in Seller Central.",
       ],
     },

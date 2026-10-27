@@ -186,7 +186,7 @@ export const PRODUCTS = {
     alreadyUsed: "A credit was already used on this case.",
     noCredit: "You have no case credits left. Buy a pack or wait for your next monthly credits.",
     notVerified: "Case credits are for professionals we have verified.",
-    failed: "That did not work and nothing was spent. Try again in a moment.",
+    failed: "Something went wrong and nothing was spent. Try again in a moment.",
     page: "/for-professionals",
     buyMore: "Buy more credits",
   },
@@ -197,7 +197,7 @@ export const PRODUCTS = {
   rebate: {
     amount: "$25",
     title: "Tell us how your case ended, and get $25 back",
-    body: "Whatever the result, tell us within 120 days of paying and we refund $25 of that payment. We link the report to your account so we know whom to refund. It is not published, and it is separate from the anonymous share.",
+    body: "Whatever the result, tell us within 120 days of paying and we refund $25 of that payment. How the report is kept is in the privacy policy.",
     deadline: "You can report until {date}.",
     resultLabel: "How did it end?",
     results: {

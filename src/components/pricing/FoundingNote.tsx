@@ -41,7 +41,6 @@ export function FoundingNote({ className }: { className?: string }) {
           .
         </span>
       </p>
-      <p className="mt-1 text-xs text-muted-foreground">{f.partnerNote}</p>
     </div>
   );
 }

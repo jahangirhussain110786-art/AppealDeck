@@ -37,7 +37,7 @@ test("an invoice is checked on the device, with nothing sent anywhere", async ({
 test("the page is findable, honest about its limits, and accessible", async ({ page }) => {
   await page.goto("/check-invoice");
   await expect(page.getByText("Where this check stops")).toBeVisible();
-  await expect(page.getByText(/Amazon decides whether the invoice is accepted/i)).toBeVisible();
+  await expect(page.getByText(/Amazon may contact your supplier/i)).toBeVisible();
   await expectNoAxeViolations(page, { tags: WCAG_AA_TAGS });
 
   // Linked from the footer, and listed for search engines.

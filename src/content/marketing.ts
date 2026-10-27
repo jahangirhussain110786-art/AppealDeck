@@ -14,7 +14,6 @@ import {
   reviewListed,
 } from "@/lib/plans";
 import { OPENS_SOON, PRODUCTS } from "./purchases";
-import { SCOPE } from "./scope";
 
 /**
  * The home page tells one story, once, in the order a frightened seller needs it (25 Sep 2026):
@@ -140,7 +139,7 @@ export const HOME = {
     {
       value: "You",
       title: "send every reply",
-      body: "We help you prepare it. You paste it into Amazon, and Amazon decides.",
+      body: "We help you prepare it. You paste it into Amazon yourself.",
     },
   ],
   questions: {
@@ -230,8 +229,7 @@ export const DECODE = {
     "A made-up notice for this demo: its 90 days are its own window. Paste yours to decode it.",
   submitButton: "Decode",
   noticeLikenessTitle: "Before you decode",
-  likenessHint:
-    "This does not yet read like an Amazon notice. Paste the full email, including the subject line.",
+  likenessHint: "Paste the full notice text and we'll read it. Include the subject line.",
   result: {
     // v5 (26 Sep 2026): the result's headline is the answer. The accent is the part a seller acts on.
     headline: {
@@ -319,7 +317,7 @@ export const DECODE = {
     saveNote: "Free. Kept in this browser tab; sign in to keep it after you close the tab.",
     triageTitle: "Do now, and what to avoid",
     howRead: "How we read it",
-    notAdvice: "Read from your notice. Amazon decides.",
+    notAdvice: "Read from your notice.",
     factDue: "Reply due",
     factNoDate: "No date stated",
     // 29 Sep 2026: a notice saying "within 90 days" showed "No date stated" here, so the one fact a
@@ -378,7 +376,7 @@ export const DECODE = {
     errorFallback: "Something went wrong.",
     errorNetwork: "Network error. Try again.",
     errorServer:
-      "The decoder is not available right now. Your notice is fine and is still in the box. Try again in a minute.",
+      "The decoder is taking a short break. Your notice is fine and is still in the box. Try again in a minute.",
     errorSlow:
       "This is taking longer than it should. Your notice is still in the box. Try again, or check your connection.",
     errorHint: "Paste the full Amazon notice and try again.",
@@ -655,8 +653,6 @@ export const PRICING = {
       body: "Get 12 months of account cover at the Appeal Pass price while this offer is available.",
       left: "{left} of {total} left",
       price: "$249 instead of $329",
-      partnerNote:
-        "A partner's code takes the place of the founding offer; the two do not combine. Availability is checked with Paddle and can change before payment.",
     },
   },
   faqTitle: "About paying",
@@ -800,7 +796,7 @@ export const FAQ = {
       q: "Is AppealDeck part of Amazon?",
       a: "AppealDeck is independent software, operated by Jhangir Hussain, trading as Hawlton, in Pakistan.",
       detail:
-        "We are not affiliated with or endorsed by Amazon. Your Seller Central account stays yours: you sign in and submit every response yourself.",
+        "Your Seller Central account stays yours: you sign in and submit every response yourself.",
       link: { label: "About the service", href: "/terms#independence" },
     },
     {
@@ -815,7 +811,7 @@ export const FAQ = {
       q: "Will this get my account reinstated?",
       // G-52: the second sentence says what the buyer does get, with no outcome word in it.
       a: "Amazon decides the outcome and the review time. What you get is the record, the document checks and a response built only from your facts, every round.",
-      detail: `An Appeal Pass pays for the preparation, not the decision. ${SCOPE.outcome}`,
+      detail: "An Appeal Pass pays for the preparation, not the decision.",
     },
     {
       id: "review-time",
@@ -861,7 +857,7 @@ export const FAQ = {
       // drafting flow) and left out the one thing that does reach an AI provider. Now says what
       // the privacy policy says, and legalDisclosures.test.ts holds the two together.
       detail:
-        "The only things sent to an AI provider (named in our privacy policy) are what it needs to write a Plan of Action, a document-request response or questionnaire answers (your notice, your written answers and the names and notes of your records, never the files), a business document you ask us to check, a section of your response you ask us to improve the wording of, and the text of a notice our own rules cannot place (for a second reading you confirm). We keep no copy of what we send; the draft that comes back is held for one day so the same material is not sent twice. Identity, bank and proof-of-address documents are checked on your device and never uploaded.",
+        "Only what each task needs, and never your files for drafting. The privacy policy lists exactly what is sent, and when.",
       link: { label: "How processing works", href: "/privacy#how-we-use" },
     },
     {
@@ -869,7 +865,7 @@ export const FAQ = {
       q: "What does the Appeal Pass add?",
       a: "Response preparation and review for one eligible case, plus encrypted backup support. It also adds an AI reading of your business documents against the notice, when the AI is available.",
       detail:
-        "The pass is $249 once, with no subscription, for one case. It covers every revision of that case — if Amazon replies and you need to prepare another response, that stays part of the same pass, with no extra charge and no time limit. A different case needs its own pass. Start by reviewing your request. Cases needing professional help do not offer self-serve drafting.",
+        "The pass is $249 once, with no subscription, for one case. Every revision of the case is included. A different case needs its own pass. Start by reviewing your request. Cases needing professional help do not offer self-serve drafting.",
     },
     {
       id: "refund",
@@ -895,7 +891,7 @@ export const FAQ = {
         ? `${professionalsEnabled() ? "" : OPENS_SOON.faqLead}Yes, for verified professionals: case credits in packs of ${PRODUCTS.pack10.count} and ${PRODUCTS.pack30.count}, or the Pro plan. The checks are free, and the written response is $249 per case for everyone else.`
         : "Professional pricing is being shaped with the first writers. The checks are free today, and the written response is $249 per case.",
       detail: professionalsListed()
-        ? "Each credit activates one case with an Appeal Pass. We verify professionals by hand first, so a seller cannot buy a professional price for their own case. The page for writers has the prices and how to be verified."
+        ? "Each credit activates one case with an Appeal Pass. The page for writers has the prices, how to be verified and the fine print."
         : "If you handle cases every week, write to us with how you work and what a case should cost you. The page for writers lists what you can use today.",
       link: { label: "For writers and VA teams", href: "/for-professionals" },
     },
@@ -966,7 +962,7 @@ export const FAQ = {
             q: "Do I get money back for telling you how my case ended?",
             a: `Yes. Tell us within 120 days of paying, whatever the result, and we refund ${PRODUCTS.rebate.amount} of that payment.`,
             detail:
-              "We link the report to your account so we know whom to refund; it is not published and it is separate from the anonymous share. Any result counts, including a refusal or no answer yet. It comes back through Paddle, as a refund on your receipt.",
+              "Any result counts, including a refusal or no answer yet. It comes back through Paddle, as a refund on your receipt. How the report is kept is in the privacy policy.",
           },
         ] as const satisfies readonly FaqItem[])
       : []),

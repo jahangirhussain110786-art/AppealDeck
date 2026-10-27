@@ -72,7 +72,6 @@ export const compareGuides: Guide[] = [
       doesNot: [
         "Your Seller Central login stays yours: we never sign in to Seller Central or send anything to Amazon for you.",
         "The root cause stays yours. AppealDeck takes your answers and never chooses one for you.",
-        "Amazon decides every case. We predict no outcome.",
         "A lawyer or consultant leads where a case needs one; AppealDeck prepares the case, and you review and submit it.",
       ],
     },
@@ -126,7 +125,6 @@ export const compareGuides: Guide[] = [
       ],
       doesNot: [
         "Your Seller Central login stays yours: we never sign in to Seller Central or send anything to Amazon.",
-        "Amazon decides every case. AppealDeck scores nothing and predicts nothing.",
         "A lawyer or consultant leads where a case needs one; AppealDeck prepares the case, and you review and submit it.",
       ],
     },

@@ -58,7 +58,7 @@ export const CHECK_INVOICE = {
   limits: {
     title: "Where this check stops",
     items: [
-      "Amazon decides whether the invoice is accepted, and may contact your supplier. The check gives you a clearer file to send.",
+      "Amazon may contact your supplier. The check gives you a clearer file to send.",
       "Genuineness is your supplier's to confirm; the check reads what the document shows.",
       "It reads printed text. A typed or printed copy of a handwritten page gives both you and Amazon a document that can be read.",
     ],

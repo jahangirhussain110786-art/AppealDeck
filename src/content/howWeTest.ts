@@ -32,7 +32,7 @@ export const HOW_WE_TEST = {
     title: "What we test, and what stays with Amazon",
     items: [
       "We test whether the decoder reads a notice the way a person would: what kind of case it is, what Amazon is asking for, the deadline the notice states, the records it names, and whether the message shows signs of a scam.",
-      "What Amazon decides stays with Amazon. Nothing on this page measures how often appeals succeed, and none of it says an appeal will work.",
+      "Nothing on this page measures how often appeals succeed, and none of it says an appeal will work.",
       "Every count below carries its denominator and its date. Where we cannot give one, we say so.",
     ],
   },

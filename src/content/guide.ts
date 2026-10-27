@@ -103,7 +103,7 @@ export const SITUATIONS = {
   "decode.result": { mood: "calm", line: "Start with what Amazon asks for.", motion: "nod" },
   "decode.reply": { mood: "calm", line: "This is Amazon's reply. Read it closely.", motion: "nod" },
   "decode.scam": { mood: "calm", line: "Check this in Account Health first." },
-  "decode.error": { mood: "confused", line: "That did not work. Try again." },
+  "decode.error": { mood: "confused", line: "Something went wrong. Try again." },
   // the case
   "case.new": { mood: "explaining", line: "Paste the notice to begin." },
   "case.confirm": { mood: "explaining", line: "Check how I read it." },

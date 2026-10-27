@@ -191,7 +191,7 @@ export const PROS = {
       cta: PRODUCTS.pro.cta,
     },
     welcome:
-      "Writers, consultants, VA teams and agencies are welcome. Write to us with a link to your public profile and we will verify you.",
+      "Writers, consultants, VA teams and agencies are welcome. Write to us with a link to your public profile and we will verify you by hand, so professional prices go only to professionals.",
     note: "Without credits, each client case is its own Appeal Pass: $249 once, every round included.",
   },
   cost: {
@@ -220,7 +220,7 @@ export const PROS = {
       SCOPE.professional,
       "A case lives on the device it was made on. Hand it to a colleague with an export, and restore it where the work continues.",
       "You write to the person who builds it, normally with a reply within two business days.",
-      "Amazon decides every outcome. The work here is to make the record complete before it does.",
+      "The work here is to make the record complete before the decision.",
     ],
   },
   mailto: `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(WRITERS_SUBJECT)}`,

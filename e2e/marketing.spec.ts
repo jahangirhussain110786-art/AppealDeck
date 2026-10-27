@@ -208,7 +208,9 @@ test.describe("Marketing site (public)", () => {
     // The limits are the point, not the disclaimer: a seller must not wait on a reply here while
     // their own deadline runs out.
     await expect(page.getByText(/Amazon sets the clock/)).toBeVisible();
-    await expect(page.getByText(/passwords, one-time codes or payment card details/)).toBeVisible();
+    await expect(
+      page.getByText(/never send passwords, one-time codes or card details/),
+    ).toBeVisible();
   });
 });
 

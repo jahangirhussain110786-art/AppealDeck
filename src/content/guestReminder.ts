@@ -44,7 +44,7 @@ export const GUEST_REMINDER = {
       done: "Done. No more reminders will be sent to this address.",
     },
     unknown: "This link is not valid or has already been used up. Nothing was changed.",
-    error: "That did not work. Nothing was changed. Try again in a moment.",
+    error: "Something went wrong. Nothing was changed. Try again in a moment.",
     working: "Working…",
     back: "Back to the free decoder",
   },

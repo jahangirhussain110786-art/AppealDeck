@@ -140,7 +140,6 @@ export const planOfActionExamples: Guide = {
     doesNot: [
       "These examples stay on the page. Their details are made up and never reach your draft; your answers come from your own facts.",
       "Your Seller Central login stays yours: you submit, and we never touch your account.",
-      "Amazon decides the outcome. We predict nothing.",
     ],
   },
   cta: "Start from your own notice: paste it and see what Amazon is asking for.",

@@ -555,8 +555,7 @@ export const WORKSPACE = {
     tooShort: "Write a few sentences first. Wording help can only improve what you have written.",
     yours: "Your wording",
     suggested: "Suggested wording",
-    check:
-      "Check every claim against your records. Automated checks can miss invented actions or changes in meaning.",
+    check: "Check it against your records before you use it.",
     use: "Use the suggested wording",
     keep: "Keep mine",
     unchanged: "Your wording is already clear. There is nothing to change.",

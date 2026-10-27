@@ -41,6 +41,7 @@ export const CHANGELOG = {
     {
       date: "27 Oct 2026",
       items: [
+        "Calmer wording on error messages and in the decoder, and shorter guides. The rules for offers, partner codes and professional accounts now sit in the Terms.",
         'The pages now say "AI" instead of naming one company, because the AI provider can change. The privacy policy still names every provider we may use and what each states about keeping requests, and a provider the policy does not name cannot receive anything.',
         "If you reload the page or close the tab within a second of typing in your response, the browser now asks before you leave, and your text starts saving at once.",
         "Reminder emails go out in steadier batches. Moving a reminder date while an email is being sent no longer marks the new date as already sent, and a long queue of unconfirmed addresses can no longer hold back everyone else.",

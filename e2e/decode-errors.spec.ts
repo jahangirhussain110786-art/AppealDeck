@@ -90,7 +90,7 @@ for (const [name, status, body, contentType, expected] of [
     "application/json",
     "Too many requests",
   ],
-  ["an HTML error page", 500, "<html>Internal Server Error</html>", "text/html", "not available"],
+  ["an HTML error page", 500, "<html>Internal Server Error</html>", "text/html", "short break"],
 ] as const) {
   test(`${name} does not tell the seller their notice is not a notice`, async ({ page }) => {
     await page.route("**/api/decode", (route) =>

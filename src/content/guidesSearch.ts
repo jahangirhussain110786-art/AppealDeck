@@ -78,7 +78,6 @@ export const appealDenied: Guide = {
     doesNot: [
       "Your Seller Central login stays yours: we never sign in, submit or contact Amazon for you.",
       "Where the reply gives no reason, Amazon has not told us either. We help you find the gap in your own record.",
-      "Amazon decides the outcome. We predict nothing and promise no result.",
     ],
   },
   cta: "Paste Amazon's reply and see what it is actually asking for.",
@@ -134,7 +133,6 @@ export const inauthenticComplaint: Guide = {
     doesNot: [
       "Whether a supplier is genuine, or a document is real, stays for Amazon to decide. We check what the document shows and mark anything we cannot read as not checked.",
       "Your Seller Central login stays yours: we never sign in, submit or contact Amazon for you.",
-      "Amazon decides whether to accept the documents. We make them easier to review.",
       "A complaint alleging forged documents goes to a qualified professional, and the workspace says so before you rely on it.",
     ],
   },
@@ -189,7 +187,6 @@ export const accountAtRisk: Guide = {
     doesNot: [
       "Your Seller Central login stays yours: we never sign in, submit or contact Amazon for you.",
       "Review removals and disputes stay with Amazon's own routes; we point you to them and keep your dated record.",
-      "Amazon decides the outcome. We predict nothing.",
     ],
   },
   cta: "Paste your account-health warning and see what it asks for.",

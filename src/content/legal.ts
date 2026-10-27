@@ -62,7 +62,7 @@ import {
 export const LEGAL = {
   lastUpdated: {
     privacy: "2026-10-26",
-    terms: "2026-10-23",
+    terms: "2026-10-27",
     refund: "2026-10-26",
   },
   privacy: {
@@ -344,6 +344,20 @@ export const LEGAL = {
         title: "Payment",
         body: [
           "Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders. Your purchase is made under Paddle's Buyer Terms; these Terms govern your use of the software and your licence.",
+        ],
+      },
+      {
+        id: "offers",
+        title: "Offers, codes and professional accounts",
+        body: [
+          // 27 Oct 2026, founder: operating rules that do not change the decision to pay, kept here
+          // rather than repeated on the public pages. Each is stated only where it can apply.
+          "Where an offer is on sale, a partner's code takes the place of the founding offer; the two do not combine. The availability and price of an offer are checked with Paddle at payment and can change before you pay.",
+          ...(professionalsEnabled()
+            ? [
+                "Professional prices, case credits and the Pro plan, are for verified professionals. We verify each professional by hand before professional prices apply, so that a seller cannot buy a professional price for their own case.",
+              ]
+            : []),
         ],
       },
       {

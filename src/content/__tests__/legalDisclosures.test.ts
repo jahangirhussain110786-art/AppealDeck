@@ -13,7 +13,7 @@
 import { describe, expect, it } from "vitest";
 import { LEGAL, consentLabelFor } from "../legal";
 import { WORKSPACE } from "../workspace";
-import { DECODE, FAQ, HOME } from "../marketing";
+import { DECODE, FAQ, HOME, PRICING } from "../marketing";
 
 function text(doc: "privacy" | "terms" | "refund"): string {
   return LEGAL[doc].sections.flatMap((s) => [s.title, ...s.body]).join("\n");
@@ -144,7 +144,7 @@ describe("the rendered Privacy page", () => {
     expect(privacy).toMatch(/written by AI/);
     expect(privacy).toMatch(/your three written answers/);
     expect(privacy).toMatch(/throws it away if it adds a date, number, name, document or action/);
-    expect(privacy).toMatch(/Your files are never sent for this/);
+    expect(text("privacy")).toMatch(/Your files are never sent for this/);
     expect(privacy).toMatch(
       /section listing your supporting records is put together by our server/,
     );
@@ -293,7 +293,7 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
     // refund policy states how a credited upgrade follows a refund of the purchase it was credited
     // against (migration 0024), and privacy names Groq and the 24-hour memory of AI-written text.
     expect(LEGAL.lastUpdated.privacy).toBe("2026-10-26");
-    expect(LEGAL.lastUpdated.terms).toBe("2026-10-23");
+    expect(LEGAL.lastUpdated.terms).toBe("2026-10-27");
     expect(LEGAL.lastUpdated.refund).toBe("2026-10-26");
   });
 
@@ -368,14 +368,29 @@ describe("the FAQ says what the privacy policy says", () => {
     expect(faq).not.toMatch(/AI suggestions|field suggestions|interview drafting/i);
   });
 
-  it("names the same three things as what reaches an AI provider", () => {
+  /**
+   * 27 Oct 2026 (founder): the long list of what reaches an AI provider moved out of the FAQ and
+   * into the privacy policy, which already states it (pinned above). The FAQ keeps one line and the
+   * link, and must not say anything the policy does not.
+   */
+  it("keeps one line about what reaches an AI provider, and points to the policy that lists it", () => {
     const processing = FAQ.items.find((i) => i.id === "processing");
-    const text = `${processing?.a} ${processing?.detail}`;
-    expect(text).toMatch(/write a Plan of Action/);
-    expect(text).toMatch(/never the files/);
-    expect(text).toMatch(/a business document you ask us to check/);
-    expect(text).toMatch(/a section of your response you ask us to improve the wording of/);
-    expect(text).toMatch(/a notice our own rules cannot place/);
+    expect(processing?.detail).toMatch(/never your files for drafting/);
+    expect(processing?.detail).toMatch(/privacy policy lists exactly what is sent/);
+    expect((processing as { link?: { href: string } } | undefined)?.link?.href).toBe(
+      "/privacy#how-we-use",
+    );
+    expect(text("privacy")).toMatch(/Your files are never sent for this/);
+    expect(text("privacy")).toMatch(/a notice the decoder cannot place/i);
+  });
+
+  /** The same move for the operating rules the founder took off the public pages. */
+  it("states the offer and professional rules in the Terms, not on the pricing page", () => {
+    const terms = text("terms");
+    expect(terms).toMatch(
+      /a partner's code takes the place of the founding offer; the two do not combine/i,
+    );
+    expect(JSON.stringify(PRICING)).not.toMatch(/do not combine/);
   });
 });
 
