@@ -422,6 +422,15 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+
+  /* The one exception (27 Oct 2026, founder): the home page's credits row keeps moving even when
+     the OS asks for reduced motion — his Windows animation setting is off, Chrome maps that to this
+     media query, and the strips he benchmarked move anyway because they never read it. The pause
+     button is the off switch; this class outranks the * rule above by specificity. */
+  .credits-track {
+    animation-duration: var(--credits-duration, 110s) !important;
+    animation-iteration-count: infinite !important;
+  }
 }
 
 /* --- Prose styles for legal pages (.prose on a container) --- */
@@ -608,17 +617,6 @@
     black calc(100% - 4rem),
     transparent
   );
-}
-@media (prefers-reduced-motion: reduce) {
-  /* The component decides: with the preference set the row stays still until the reader presses play,
-     and that press sets data-motion="on". This is the no-JS guard only. */
-  .credits-window:not([data-motion="on"]) .credits-track {
-    animation: none;
-  }
-  .credits-window:not([data-motion="on"]) {
-    mask-image: none;
-    -webkit-mask-image: none;
-  }
 }
 
 /* ---------------------------------------------------------------------------------------------

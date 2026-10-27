@@ -81,10 +81,10 @@ describe("credits", () => {
 });
 
 describe("shouldDrift", () => {
-  const still = { visible: false, documentHidden: false, paused: false, reduced: false };
-  const moving = { visible: true, documentHidden: false, paused: false, reduced: false };
+  const still = { visible: false, documentHidden: false, paused: false };
+  const moving = { visible: true, documentHidden: false, paused: false };
 
-  it("moves only while on screen, in a visible tab, unpaused, with motion allowed", () => {
+  it("moves while on screen, in a visible tab, unpaused", () => {
     expect(shouldDrift(moving)).toBe(true);
   });
 
@@ -93,11 +93,20 @@ describe("shouldDrift", () => {
       ["off screen", { ...moving, visible: false }],
       ["tab in the background", { ...moving, documentHidden: true }],
       ["the reader pressed pause", { ...moving, paused: true }],
-      ["reduced motion is requested", { ...moving, reduced: true }],
     ];
     for (const [label, state] of stops) {
       expect(shouldDrift(state), label).toBe(false);
     }
     expect(shouldDrift(still)).toBe(false);
+  });
+
+  // 27 Oct 2026: the founder's Windows reports animations off, which Chrome maps to
+  // prefers-reduced-motion — and every strip he compared us with moves anyway. So the OS animation
+  // setting is not an input to the row; only the pause button stops it. This keeps it that way.
+  it("ignores the OS animation setting — no reduced-motion branch in the component", () => {
+    const component = read("src/components/marketing/CreditsMarquee.tsx");
+    expect(component).not.toContain("prefers-reduced-motion");
+    expect(component).not.toContain("useSyncExternalStore");
+    expect(component).not.toContain("data-motion");
   });
 });
