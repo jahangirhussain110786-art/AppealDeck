@@ -30,8 +30,10 @@ export const CREDITS = {
   /** The phrase set in the italic serif accent face, like every other heading on the site. */
   accent: "thanks to:",
   line: "The tools and technologies behind AppealDeck.",
+  // The no-affiliation sentence lives on /licences, which catalogues the marks; the row keeps the
+  // identification and ownership line only (27 Oct 2026, founder).
   disclaimer:
-    "Names and marks identify tools we used; all trademarks belong to their owners. No partnership, sponsorship or endorsement is implied.",
+    "Names and marks identify tools we used; all trademarks belong to their owners.",
 } as const;
 
 /** The services we run on, by the names the privacy policy uses. */

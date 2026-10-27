@@ -69,9 +69,15 @@ describe("credits", () => {
     for (const name of MARQUEE_NAMES) expect(claim.test(name), name).toBe(false);
   });
 
-  it("denies a relationship once, in the disclaimer", () => {
-    expect(CREDITS.disclaimer).toContain("No partnership, sponsorship or endorsement");
+  it("denies a relationship once, on the page that catalogues the marks", () => {
+    // 27 Oct 2026, founder: the no-affiliation sentence moved off the home row; /licences (a footer
+    // link away, and the page that lists every mark) carries it instead. The row keeps the
+    // ownership line so the marks are never unclaimed next to our name.
+    expect(CREDITS.disclaimer).toContain("all trademarks belong to their owners");
     expect(CREDITS.heading).toBe("With thanks to:");
+    const licences = read("src/content/licences.ts");
+    expect(licences).toContain("does not imply any affiliation, sponsorship or endorsement");
+    expect(CREDITS.disclaimer).not.toContain("partnership");
   });
 
   it("has the motion exception recorded in the UI spec", () => {
