@@ -102,11 +102,20 @@ describe("shouldDrift", () => {
 
   // 27 Oct 2026: the founder's Windows reports animations off, which Chrome maps to
   // prefers-reduced-motion — and every strip he compared us with moves anyway. So the OS animation
-  // setting is not an input to the row; only the pause button stops it. This keeps it that way.
+  // setting is not an input to the row; only the pointer is. This keeps it that way.
   it("ignores the OS animation setting — no reduced-motion branch in the component", () => {
     const component = read("src/components/marketing/CreditsMarquee.tsx");
     expect(component).not.toContain("prefers-reduced-motion");
     expect(component).not.toContain("useSyncExternalStore");
     expect(component).not.toContain("data-motion");
+  });
+
+  // 27 Oct 2026, founder: the pause button is gone. The pointer is the pause — hovering the row (or
+  // tabbing to it) holds it still, moving away continues it. A button must not creep back.
+  it("has no pause button; the pointer holds the row instead", () => {
+    const component = read("src/components/marketing/CreditsMarquee.tsx");
+    expect(component).not.toContain("<button");
+    expect(component).toContain("onMouseEnter");
+    expect(component).toContain("onMouseLeave");
   });
 });

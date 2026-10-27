@@ -67,8 +67,4 @@ export const MARQUEE_NAMES = MARQUEE.map((entry) => entry.name);
 
 export const CREDITS_LABELS = {
   region: "Tools and technologies used",
-  pause: "Pause the moving names",
-  play: "Start the moving names",
-  pauseShort: "Pause",
-  playShort: "Play",
 } as const;

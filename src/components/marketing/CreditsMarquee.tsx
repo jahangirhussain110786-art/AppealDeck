@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Pause, Play } from "lucide-react";
 import { CREDITS_LABELS, type CreditFace, type CreditName } from "@/content/credits";
 import { shouldDrift } from "@/lib/creditsMotion";
 import { cn } from "@/lib/utils";
@@ -10,15 +9,15 @@ import { cn } from "@/lib/utils";
 /**
  * The moving row of tool marks and names on the home page (27 Oct 2026).
  *
- * Two copies of the list scroll by half their width so the loop has no seam, the second copy is
- * hidden from assistive technology so each name is announced once, and anything moving on its own
- * can be paused (WCAG 2.2.2). The row is still until it scrolls into view and stops when it leaves
- * or the tab goes to the background — motion belongs to attention, not to page load
- * (06-PREMIUM-UI-UX-SPEC §5).
+ * Two copies of the list scroll by half their width so the loop has no seam, and the second copy is
+ * hidden from assistive technology so each name is announced once. The row is still until it scrolls
+ * into view and stops when it leaves or the tab goes to the background — motion belongs to
+ * attention, not to page load (06-PREMIUM-UI-UX-SPEC §5).
  *
  * The row moves for every reader regardless of the OS animation setting: on the founder's machine
- * Windows reports animations off, yet every strip he pointed at moves anyway. The pause button is
- * the off switch (27 Oct 2026).
+ * Windows reports animations off, yet every strip he pointed at moves anyway (27 Oct 2026). There is
+ * no pause button — the pointer is the pause: hovering the row (or tabbing to it) holds it still so
+ * a name can be read, and moving away continues the drift.
  */
 
 const FACE: Record<CreditFace, string> = {
@@ -72,7 +71,7 @@ export function CreditsMarquee({
   const wrap = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [documentHidden, setDocumentHidden] = useState(false);
-  const [paused, setPaused] = useState(false);
+  const [held, setHeld] = useState(false); // pointer or keyboard focus on the row
 
   useEffect(() => {
     const el = wrap.current;
@@ -98,10 +97,22 @@ export function CreditsMarquee({
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
-  const drifting = shouldDrift({ visible, documentHidden, paused });
+  const drifting = shouldDrift({ visible, documentHidden, paused: held });
 
   return (
-    <div ref={wrap} role="group" aria-label={CREDITS_LABELS.region} className="relative">
+    <div
+      ref={wrap}
+      role="group"
+      aria-label={CREDITS_LABELS.region}
+      tabIndex={0}
+      className="relative rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+      onMouseEnter={() => setHeld(true)}
+      onMouseLeave={() => setHeld(false)}
+      onFocus={() => setHeld(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHeld(false);
+      }}
+    >
       <div className="credits-window overflow-hidden">
         <div
           className="credits-track flex w-max items-center"
@@ -111,28 +122,6 @@ export function CreditsMarquee({
           <Names names={names} />
           <Names names={names} hidden />
         </div>
-      </div>
-
-      <div className="mt-5 flex justify-end">
-        <button
-          type="button"
-          aria-label={paused ? CREDITS_LABELS.play : CREDITS_LABELS.pause}
-          aria-pressed={paused}
-          onClick={() => setPaused((p) => !p)}
-          className={cn(
-            "inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-white/45 transition-colors",
-            "hover:bg-white/[0.06] hover:text-white/80",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-            "[@media(pointer:coarse)]:h-10",
-          )}
-        >
-          {paused ? (
-            <Play className="size-3.5" aria-hidden />
-          ) : (
-            <Pause className="size-3.5" aria-hidden />
-          )}
-          <span aria-hidden>{paused ? CREDITS_LABELS.playShort : CREDITS_LABELS.pauseShort}</span>
-        </button>
       </div>
     </div>
   );
