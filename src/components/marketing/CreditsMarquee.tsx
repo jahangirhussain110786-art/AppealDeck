@@ -32,24 +32,24 @@ function Names({ names, hidden }: { names: readonly CreditName[]; hidden?: boole
       {names.map((entry) => (
         <li
           key={entry.name}
-          className="flex shrink-0 items-center gap-3 whitespace-nowrap sm:gap-4"
+          className="flex shrink-0 items-center gap-3.5 whitespace-nowrap sm:gap-5"
         >
-          <span aria-hidden className="mx-6 size-1.5 shrink-0 rounded-full bg-white/20 sm:mx-9" />
+          <span aria-hidden className="mx-7 size-2 shrink-0 rounded-full bg-white/20 sm:mx-10" />
           {entry.logo && (
             <Image
               src={entry.logo}
               alt=""
               aria-hidden
-              width={32}
-              height={32}
+              width={40}
+              height={40}
               unoptimized
               loading="eager"
-              className="size-6 shrink-0 opacity-90 sm:size-8"
+              className="size-8 shrink-0 opacity-90 sm:size-10"
             />
           )}
           <span
             className={cn(
-              "text-[1.625rem] font-semibold leading-none tracking-[-0.025em] text-foreground sm:text-[2rem]",
+              "text-[2rem] font-semibold leading-none tracking-[-0.025em] text-foreground sm:text-[2.5rem]",
               entry.face && FACE[entry.face],
             )}
           >

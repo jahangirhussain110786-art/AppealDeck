@@ -28,7 +28,7 @@ export const LICENCES = {
   lede: "AppealDeck is built on open-source software. Those licences ask us to keep their notices with the software, so they are here.",
   note: "Each copyright line is as the package states it. The full text of each licence is linked at the top of its list.",
   marks:
-    "The brand marks in the home page's credits row come from Simple Icons, whose SVG files are released under CC0 1.0. Each mark remains a trademark of its owner and is used there to identify the tool, nothing more.",
+    "The brand marks in the home page's credits row come from Simple Icons, whose SVG files are released under CC0 1.0. Each mark remains a trademark of its owner, is used there only to identify the tool AppealDeck was built with, and does not imply any affiliation, sponsorship or endorsement of AppealDeck. The Tux mark is Larry Ewing's drawing; he asks to be acknowledged, with The GIMP, for its use.",
   updated: "2026-10-27",
   groups: [
     {
