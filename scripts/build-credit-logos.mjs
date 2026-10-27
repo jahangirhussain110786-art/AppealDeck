@@ -13,11 +13,10 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { siClaude, siGooglegemini, siLinux, siNextdotjs, siPaddle, siPlausibleanalytics, siReact, siResend, siSupabase, siTailwindcss, siTypescript, siUpstash, siVercel } from "simple-icons";
+import { siClaude, siLinux, siNextdotjs, siPaddle, siPlausibleanalytics, siReact, siResend, siSupabase, siTailwindcss, siTypescript, siUpstash, siVercel } from "simple-icons";
 
 const ICONS = {
   claude: siClaude,
-  gemini: siGooglegemini,
   linux: siLinux,
   nextjs: siNextdotjs,
   paddle: siPaddle,

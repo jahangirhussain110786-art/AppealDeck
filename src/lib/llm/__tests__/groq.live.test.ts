@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { callGemini } from "../gemini";
+import { callLlm } from "../ai";
 import { classifyNotice } from "../classifyNotice";
 import { draftResponse, type DraftRequest } from "../draftResponse";
 import { runWithDevUsage } from "@/lib/devUsage";
@@ -55,7 +55,7 @@ describe.skipIf(!live)("Groq fallback with synthetic data (live)", () => {
       expect(related).toMatchObject({ ok: true, kind: "RELATED_ACCOUNT" });
       const result = await draftResponse(request);
       expect(result.ok, JSON.stringify(result)).toBe(true);
-      const direct = await callGemini({
+      const direct = await callLlm({
         messages: [{ role: "user", text: "Reply with the single word ready." }],
         maxOutputTokens: 20,
       });

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { callGemini, type GeminiCallInput } from "./gemini";
+import { callLlm, type LlmCallInput } from "./ai";
 import { extractJsonObject } from "./extractJson";
 import { VIOLATION_KINDS, type ViolationKind } from "@/core/violationKinds";
 
@@ -70,15 +70,15 @@ export type ClassifyOutcome =
 const squash = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
 
 export type ClassifyDeps = {
-  callGemini: (input: GeminiCallInput) => ReturnType<typeof callGemini>;
+  callLlm: (input: LlmCallInput) => ReturnType<typeof callLlm>;
 };
 
 export async function classifyNotice(
   notice: string,
-  deps: ClassifyDeps = { callGemini },
+  deps: ClassifyDeps = { callLlm },
 ): Promise<ClassifyOutcome> {
   const text = notice.slice(0, 6000);
-  const result = await deps.callGemini({
+  const result = await deps.callLlm({
     task: "classify-notice",
     messages: [
       { role: "system", text: SYSTEM_PROMPT },

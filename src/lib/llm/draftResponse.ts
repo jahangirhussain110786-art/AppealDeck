@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { attemptLine } from "./attemptLine";
-import { callGemini, type GeminiCallInput } from "./gemini";
+import { callLlm, type LlmCallInput } from "./ai";
 import { extractJsonObject } from "./extractJson";
 import { policyBriefFor } from "@/core/policyBrief";
 import {
@@ -254,7 +254,7 @@ export function buildDraftPrompt(req: DraftRequest, feedback?: string): string {
 }
 
 export type DraftDeps = {
-  callGemini: (input: GeminiCallInput) => ReturnType<typeof callGemini>;
+  callLlm: (input: LlmCallInput) => ReturnType<typeof callLlm>;
 };
 
 /**
@@ -279,7 +279,7 @@ async function attemptOnce(
   | { ok: true; sections: DraftSections }
   | { ok: false; reason: "busy" | "unavailable" | "not_configured" }
 > {
-  const result = await deps.callGemini({
+  const result = await deps.callLlm({
     task: "draft-poa",
     messages: [
       { role: "system", text: DRAFT_SYSTEM_PROMPT },
@@ -325,7 +325,7 @@ function templatePhrases(sections: DraftSections, sellerAnswers: string): string
 
 export async function draftResponse(
   req: DraftRequest,
-  deps: DraftDeps = { callGemini },
+  deps: DraftDeps = { callLlm },
 ): Promise<DraftOutcome> {
   const sources = buildDraftSources(req);
   const budgetEnds = Date.now() + DRAFT_BUDGET_MS;

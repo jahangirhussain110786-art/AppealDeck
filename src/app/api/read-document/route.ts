@@ -39,7 +39,7 @@ import {
   reviewReadsLeft,
   tooManyRequestsResponse,
 } from "@/lib/ratelimit";
-import { callGemini, withGeminiBreaker } from "@/lib/llm/gemini";
+import { callLlm, withAiBreaker } from "@/lib/llm/ai";
 import { extractJsonObject } from "@/lib/llm/extractJson";
 import { VIOLATION_KINDS } from "@/core/violationKinds";
 import {
@@ -407,7 +407,7 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
         ? [...requirement.fields, LICENCE_SCOPE_FIELD]
         : requirement.fields;
 
-  const result = await callGemini({
+  const result = await callLlm({
     task: "read-document",
     messages: [
       { role: "system", text: SYSTEM_PROMPT },
@@ -514,4 +514,4 @@ export async function handleReadDocument(req: NextRequest): Promise<Response> {
   return NextResponse.json({ ok: true, check });
 }
 
-export const POST = withGeminiBreaker(handleReadDocument, "read-document");
+export const POST = withAiBreaker(handleReadDocument, "read-document");

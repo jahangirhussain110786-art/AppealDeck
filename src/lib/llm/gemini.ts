@@ -1,8 +1,19 @@
-import { withBreaker, reserveSpend, type BreakerOptions, type BreakerContext } from "@/lib/breaker";
-import type { NextRequest } from "next/server";
-import { hasUnlimitedDevUsage, withDevUsage } from "@/lib/devUsage";
-import { callGroq, canUseGroq, isGroqConfigured } from "./groq";
+import { reserveSpend, type BreakerOptions } from "@/lib/breaker";
+import { hasUnlimitedDevUsage } from "@/lib/devUsage";
+import {
+  isConfigurationError,
+  MIN_REQUEST_MS,
+  type LlmCallInput,
+  type LlmCallResult,
+  type LlmProvider,
+  type LlmTask,
+  type ProviderContext,
+} from "./types";
 
+/**
+ * The Google Gemini adapter. Everything in this file is Gemini's own: its request shape, its model
+ * names, its quota wording and its retry behaviour. The provider-neutral entry point is `ai.ts`.
+ */
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const DEFAULT_MODEL = "gemini-3.5-flash";
 const REQUEST_TIMEOUT_MS = 8_000;
@@ -27,8 +38,6 @@ const TASK_BUDGET_MS: Record<string, number> = {
 };
 const RETRY_DELAYS_MS = [1_500, 4_000];
 const MAX_OUTPUT_TOKENS = 512;
-/** A request is not started with less time than this left in the caller's budget. */
-const MIN_REQUEST_MS = 1_000;
 
 /**
  * Call-site task tags. Each tag maps to the model measured best for that
@@ -36,12 +45,8 @@ const MIN_REQUEST_MS = 1_000;
  * latency, not price). Callers pass `task` instead of a raw model id; the
  * resolver picks the right one. Per-task env overrides let ops swap a model
  * without code changes. The default model covers anything not in the table.
+ * (`LlmTask` itself lives in `./types`: only the tasks the app actually calls.)
  */
-// Only the tasks the app actually calls. Three more ("critique-poa", "phrase-engine-output",
-// "triage-router") sat here, never called, and the deployment guide told people to set model
-// overrides for them that did nothing; removed 24 Sep 2026.
-export type LlmTask = "improve-wording" | "read-document" | "draft-poa" | "classify-notice";
-
 const TASK_MODELS: Record<LlmTask, string> = {
   // AA-41: reading a scanned invoice is the hardest perception task in the product — a lite model
   // that mis-reads a date or a supplier name produces a confidently wrong finding, which is worse
@@ -91,67 +96,7 @@ export function getGeminiModel(task?: LlmTask): string {
   return process.env.GEMINI_MODEL || DEFAULT_MODEL;
 }
 
-export type GeminiRole = "system" | "user" | "model";
-
-/**
- * AA-41: a document the model should read, sent inline rather than uploaded to a file store.
- *
- * Inline means the bytes exist only for the duration of one request — we never hold a copy, which
- * is the smallest footprint that still lets the model see an invoice. Size is capped by the caller
- * (`/api/read-document`), because base64 inflates by a third and a large scan would otherwise be
- * rejected by the upstream with an unhelpful error.
- */
-export type GeminiInlineDocument = {
-  /** Base64 without the `data:` prefix. */
-  data: string;
-  /** e.g. "application/pdf", "image/jpeg", "image/png". */
-  mimeType: string;
-};
-
-export type GeminiMessage = {
-  role: GeminiRole;
-  text: string;
-  /** Attached to this message as additional parts. Only meaningful on a `user` message. */
-  documents?: GeminiInlineDocument[];
-};
-
-export type GeminiCallInput = {
-  messages: GeminiMessage[];
-  temperature?: number;
-  maxOutputTokens?: number;
-  model?: string;
-  task?: LlmTask;
-  responseJsonSchema?: Record<string, unknown>;
-  responseJson?: boolean;
-  /**
-   * Reasoning tokens the model may spend before answering. JSON-mode calls default to 0 (the
-   * schema-mode stall of 25 Sep 2026 was with thinking on); a caller that wants reasoning says so.
-   */
-  thinkingBudget?: number;
-  /**
-   * When the caller's own budget runs out, as epoch milliseconds (26 Oct 2026). A caller that makes
-   * more than one model call in one request — the drafters retry once — sets it once and passes it
-   * to every call, so the retry shares one budget instead of starting a fresh one that can outlast
-   * the route. Every attempt, retry, alternate model and Groq fallback stays inside it.
-   */
-  deadline?: number;
-};
-
-export type GeminiCallResult =
-  | { ok: true; text: string; model: string; usage?: { inputTokens: number; outputTokens: number } }
-  | {
-      ok: false;
-      reason:
-        | "not_configured"
-        | "spend_cap"
-        | "upstream_error"
-        | "bad_input"
-        | "busy"
-        | "timeout"
-        | "invalid_response";
-      message: string;
-    };
-
+/** This adapter's own daily allowance, counted per request that actually leaves for Google. */
 export const breakerOptions: BreakerOptions = {
   name: "gemini",
   spendCapPerDay: 240,
@@ -161,7 +106,7 @@ export const breakerOptions: BreakerOptions = {
   windowMs: 60_000,
   cooldownMs: 30_000,
   scope: "user",
-  // Counted in `callGemini`, only for a request that has passed sign-in and the Pass check and is
+  // Counted in `callGeminiOnce`, only for a request that has passed sign-in and the Pass check and is
   // about to reach Google. See `reserveSpend`.
   spendCountedAt: "call",
 };
@@ -179,8 +124,9 @@ export function isPaidTierConfirmed(): boolean {
   return process.env.NODE_ENV !== "production" || process.env.GEMINI_PAID_TIER_CONFIRMED === "true";
 }
 
+/** A key is present and, in production, billing has been confirmed. */
 export function isGeminiConfigured(): boolean {
-  return (Boolean(process.env.GEMINI_API_KEY) && isPaidTierConfirmed()) || isGroqConfigured();
+  return Boolean(process.env.GEMINI_API_KEY) && isPaidTierConfirmed();
 }
 
 function getApiKey(): string {
@@ -191,58 +137,18 @@ function getApiKey(): string {
   return k;
 }
 
-/**
- * 25 Sep 2026: every failure used to be silent — the seller saw "not available right now" and the
- * server logged nothing, so a broken key, a spend cap or a timeout looked identical from outside.
- * One line per failure: the task, model, reason and our own message. Never the key, the prompt or
- * the seller's document.
- */
-/**
- * A request refused because of the key or project, not because of what was asked: Google answers an
- * invalid key with HTTP 400 ("API key not valid", API_KEY_INVALID), a revoked or restricted one with
- * 401/403, and a missing model with 404. None of these is the seller's fault, so another provider may
- * answer; a genuinely malformed request (any other 400) still may not.
- */
-function isConfigurationError(result: GeminiCallResult): boolean {
-  return (
-    !result.ok &&
-    result.reason === "bad_input" &&
-    (/^Gemini returned (401|403|404):/.test(result.message) ||
-      /API_KEY_INVALID|API key not valid|API key expired/i.test(result.message))
-  );
-}
-
-export async function callGemini(input: GeminiCallInput): Promise<GeminiCallResult> {
-  let fallback: GeminiCallResult | undefined;
-  // A spent budget means no further provider is asked: the answer would arrive after the caller
-  // has already given up, and Groq would reserve spend for a request nobody can use.
-  const timeLeft = () =>
-    input.deadline === undefined || input.deadline - Date.now() >= MIN_REQUEST_MS;
-  const tryFallback = async () => {
-    if (!canUseGroq(input) || !timeLeft()) return undefined;
-    fallback ??= await callGroq(input);
-    return fallback;
-  };
-  let result = await callGeminiOnce(input, tryFallback);
-  if (!result.ok && timeLeft() && (result.reason !== "bad_input" || isConfigurationError(result))) {
-    result = (await tryFallback()) ?? result;
-  }
-  if (result.ok && process.env.NODE_ENV !== "production") {
-    // Local testing only: which provider answered which task, so a fallback is visible.
-    console.info(`[ai] ${input.task ?? "default"} answered by ${result.model}`);
-  }
-  if (!result.ok) {
-    console.warn(
-      `[gemini] ${input.task ?? "default"} failed: ${result.reason} — ${result.message.replace(/key=[^&\s]+/g, "key=***")}`,
-    );
-  }
-  return result;
-}
+/** The adapter `ai.ts` calls. It may hand a failing first attempt to the next provider at once. */
+export const geminiProvider: LlmProvider = {
+  id: "gemini",
+  isConfigured: isGeminiConfigured,
+  supports: () => true,
+  call: (input, context) => callGeminiOnce(input, context.tryFallback),
+};
 
 async function callGeminiOnce(
-  input: GeminiCallInput,
-  tryFallback: () => Promise<GeminiCallResult | undefined>,
-): Promise<GeminiCallResult> {
+  input: LlmCallInput,
+  tryFallback: ProviderContext["tryFallback"],
+): Promise<LlmCallResult> {
   if (!process.env.GEMINI_API_KEY || !isPaidTierConfirmed()) {
     return {
       ok: false,
@@ -323,7 +229,7 @@ async function callGeminiOnce(
     try. A 429/5xx is Google saying "not now", so wait and try again a couple of times inside a
     fixed budget. The first request's spend is reserved above; each further request reserves its own.
   */
-  let last: GeminiCallResult = {
+  let last: LlmCallResult = {
     ok: false,
     reason: "upstream_error",
     message: "Gemini was not called.",
@@ -428,7 +334,7 @@ async function callGeminiOnce(
     if (outcome.result.ok) return outcome.result;
   }
 
-  if (busy) return { ...(last as Extract<GeminiCallResult, { ok: false }>), reason: "busy" };
+  if (busy) return { ...(last as Extract<LlmCallResult, { ok: false }>), reason: "busy" };
   return last;
 }
 
@@ -443,7 +349,7 @@ async function attemptOnce(
   body: unknown,
   model: string,
   timeoutMs: number,
-): Promise<{ result: GeminiCallResult; retryable: boolean }> {
+): Promise<{ result: LlmCallResult; retryable: boolean }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.max(1_000, timeoutMs));
   try {
@@ -541,19 +447,6 @@ function parseGeminiResponse(data: unknown): Parsed | null {
       }
     : undefined;
   return { text, usage };
-}
-
-export type GeminiRouteHandler = (req: NextRequest, ctx: BreakerContext) => Promise<Response>;
-
-export function withGeminiBreaker(handler: GeminiRouteHandler, task?: LlmTask): GeminiRouteHandler {
-  return withDevUsage(async (req: NextRequest, ctx: BreakerContext) => {
-    if (hasUnlimitedDevUsage()) return handler(req, ctx);
-    const options =
-      task !== "read-document" && isGroqConfigured()
-        ? { ...breakerOptions, name: "ai-text" }
-        : breakerOptions;
-    return withBreaker(options, handler)(req, ctx);
-  });
 }
 
 export const __test = { parseGeminiResponse, breakerOptions, TASK_MODELS, envForTask };

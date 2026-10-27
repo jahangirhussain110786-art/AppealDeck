@@ -12,7 +12,7 @@ export const SURFACES = {
     toServer: "The notice text. A file, only when you ask for a check.",
     server: {
       title: "AppealDeck's server",
-      body: "Reads it to answer. AI text it writes is held for one day, keyed to you; the text sent for AI goes to Google Gemini, or to Groq when Google cannot answer.",
+      body: "Reads it to answer. AI text it writes is held for one day, keyed to you; the text sent for AI goes to an AI provider named in the privacy policy.",
     },
     never: "Never connected",
     amazon: { title: "Your Amazon account", body: "You paste your response in yourself." },
@@ -27,7 +27,7 @@ export const SURFACES = {
     questions: [
       {
         q: "Which AI reads the text?",
-        a: "Google Gemini, on its paid tier, or Groq when Google cannot answer a text-only request. Google states it does not use those requests to improve its products, and keeps logs for up to 55 days only to detect abuse. A draft written for you is held on our server for one day, so unchanged material is not sent twice.",
+        a: "An AI provider, on its paid business terms. The privacy policy names each one we may use and says what that provider states about keeping requests and using them. A draft written for you is held on our server for one day, so unchanged material is not sent twice.",
       },
       {
         q: "What if I clear my browser?",

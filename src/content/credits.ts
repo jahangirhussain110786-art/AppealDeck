@@ -42,8 +42,6 @@ export const SERVICE_NAMES: CreditName[] = [
   { name: "Paddle", logo: "/credits/paddle.svg" },
   { name: "Upstash", logo: "/credits/upstash.svg" },
   { name: "Resend", logo: "/credits/resend.svg" },
-  { name: "Google Gemini", logo: "/credits/gemini.svg", face: "grotesque" },
-  { name: "Groq" },
   { name: "Plausible", logo: "/credits/plausible.svg" },
 ];
 

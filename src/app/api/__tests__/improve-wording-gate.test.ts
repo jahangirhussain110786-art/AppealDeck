@@ -24,9 +24,9 @@ vi.mock("@/lib/ratelimit", () => ({
     new Response(JSON.stringify({ error: "Slow down" }), { status: 429 }),
 }));
 
-vi.mock("@/lib/llm/gemini", () => ({
-  callGemini: (...args: unknown[]) => callGeminiMock(...args),
-  withGeminiBreaker: (h: unknown) => h,
+vi.mock("@/lib/llm/ai", () => ({
+  callLlm: (...args: unknown[]) => callGeminiMock(...args),
+  withAiBreaker: (h: unknown) => h,
 }));
 
 import { handleImproveWording } from "../improve-wording/route";

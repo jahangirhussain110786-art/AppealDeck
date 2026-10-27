@@ -75,10 +75,10 @@ describe("draftOther", () => {
         "The Test report or compliance certificate (sentinel-UL62368-report.pdf) is attached; page 2 shows the pass result for B0CX9L4TQ2, tested by Sentinel Labs on 3 Sep 2026 to UL 62368-1. I could not obtain the Product and label photos because the stock is at the 3PL and I cannot get photos before the deadline. We stopped selling it on 1 Oct 2026 until the review is finished.",
       answers: [],
     };
-    const callGemini = vi.fn().mockResolvedValue(reply(good));
-    const out = await draftOther(documents, { callGemini });
+    const callLlm = vi.fn().mockResolvedValue(reply(good));
+    const out = await draftOther(documents, { callLlm });
     expect(out).toMatchObject({ ok: true, retried: false });
-    expect(callGemini).toHaveBeenCalledTimes(1);
+    expect(callLlm).toHaveBeenCalledTimes(1);
   });
 
   it("refuses an explanation that invents a date, once retried", async () => {
@@ -87,10 +87,10 @@ describe("draftOther", () => {
         "The Test report or compliance certificate is attached. We stopped selling it on 1 Oct 2026 and re-tested on 12 Oct 2026. Sentinel Labs on 3 Sep 2026, UL 62368-1, B0CX9L4TQ2.",
       answers: [],
     };
-    const callGemini = vi.fn().mockResolvedValue(reply(invented));
-    const out = await draftOther(documents, { callGemini });
+    const callLlm = vi.fn().mockResolvedValue(reply(invented));
+    const out = await draftOther(documents, { callLlm });
     expect(out).toMatchObject({ ok: false, reason: "fact_check_failed" });
-    expect(callGemini).toHaveBeenCalledTimes(2);
+    expect(callLlm).toHaveBeenCalledTimes(2);
   });
 
   it("answers a questionnaire one entry per question, and refuses a moved fact", async () => {
@@ -102,7 +102,7 @@ describe("draftOther", () => {
       ],
     };
     const ok = await draftOther(questionnaire, {
-      callGemini: vi.fn().mockResolvedValue(reply(good)),
+      callLlm: vi.fn().mockResolvedValue(reply(good)),
     });
     expect(ok.ok).toBe(true);
     if (ok.ok) expect(ok.texts.answers).toHaveLength(2);
@@ -115,8 +115,8 @@ describe("draftOther", () => {
         "We check unshipped orders at 9am and 4pm.",
       ],
     };
-    const callGemini = vi.fn().mockResolvedValue(reply(moved));
-    const out = await draftOther(questionnaire, { callGemini });
+    const callLlm = vi.fn().mockResolvedValue(reply(moved));
+    const out = await draftOther(questionnaire, { callLlm });
     expect(out).toMatchObject({ ok: false, reason: "fact_check_failed" });
     expect((out as { detail?: string }).detail).toMatch(/question 2/);
   });
@@ -127,14 +127,14 @@ describe("draftOther", () => {
         "The Test report or compliance certificate is attached. We stopped selling it on 1 Oct 2026 and re-tested on 12 Oct 2026. Sentinel Labs on 3 Sep 2026, UL 62368-1, B0CX9L4TQ2.",
       answers: [],
     };
-    const callGemini = vi
+    const callLlm = vi
       .fn()
       .mockResolvedValueOnce(reply(invented))
       .mockResolvedValueOnce(reply(invented));
-    await draftOther(documents, { callGemini });
-    expect(callGemini).toHaveBeenCalledTimes(2);
-    const first = callGemini.mock.calls[0]![0].deadline as number;
-    const second = callGemini.mock.calls[1]![0].deadline as number;
+    await draftOther(documents, { callLlm });
+    expect(callLlm).toHaveBeenCalledTimes(2);
+    const first = callLlm.mock.calls[0]![0].deadline as number;
+    const second = callLlm.mock.calls[1]![0].deadline as number;
     expect(first).toBe(second);
     expect(first).toBeGreaterThan(0);
   });
@@ -147,14 +147,14 @@ describe("draftOther", () => {
           "The Test report or compliance certificate is attached. We stopped selling it on 1 Oct 2026 and re-tested on 12 Oct 2026. Sentinel Labs on 3 Sep 2026, UL 62368-1, B0CX9L4TQ2.",
         answers: [],
       };
-      const callGemini = vi.fn(async () => {
+      const callLlm = vi.fn(async () => {
         // The first call used the whole budget and still invented a detail.
         vi.setSystemTime(Date.now() + 60_000);
         return reply(invented);
       });
-      const out = await draftOther(documents, { callGemini });
+      const out = await draftOther(documents, { callLlm });
       expect(out).toMatchObject({ ok: false, reason: "unavailable" });
-      expect(callGemini).toHaveBeenCalledTimes(1);
+      expect(callLlm).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }
@@ -163,7 +163,7 @@ describe("draftOther", () => {
   it("treats a wrong number of answers as unavailable, not as a draft", async () => {
     const short = { explanation: "", answers: ["Only one answer."] };
     const out = await draftOther(questionnaire, {
-      callGemini: vi.fn().mockResolvedValue(reply(short)),
+      callLlm: vi.fn().mockResolvedValue(reply(short)),
     });
     expect(out).toMatchObject({ ok: false, reason: "unavailable" });
   });

@@ -18,7 +18,7 @@ import { serviceUnavailableResponse } from "@/lib/licenseGuard";
 import { PROVIDER_FAILURE_HEADER } from "@/lib/breaker";
 import { CaseIdSchema } from "@/lib/caseSchema";
 import { rateLimitWording, tooManyRequestsResponse } from "@/lib/ratelimit";
-import { withGeminiBreaker } from "@/lib/llm/gemini";
+import { withAiBreaker } from "@/lib/llm/ai";
 import { VIOLATION_KINDS } from "@/core/violationKinds";
 import {
   improveWording,
@@ -110,4 +110,4 @@ export async function handleImproveWording(
   );
 }
 
-export const POST = withGeminiBreaker((req) => handleImproveWording(req));
+export const POST = withAiBreaker((req) => handleImproveWording(req));

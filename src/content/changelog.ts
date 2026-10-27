@@ -41,6 +41,7 @@ export const CHANGELOG = {
     {
       date: "27 Oct 2026",
       items: [
+        'The pages now say "AI" instead of naming one company, because the AI provider can change. The privacy policy still names every provider we may use and what each states about keeping requests, and a provider the policy does not name cannot receive anything.',
         "If you reload the page or close the tab within a second of typing in your response, the browser now asks before you leave, and your text starts saving at once.",
         "Reminder emails go out in steadier batches. Moving a reminder date while an email is being sent no longer marks the new date as already sent, and a long queue of unconfirmed addresses can no longer hold back everyone else.",
         "A refunded purchase can no longer bring back a discounted upgrade that was paid for with it, and a refund that is only awaiting approval no longer switches a cancelled plan back on.",

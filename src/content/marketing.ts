@@ -220,7 +220,7 @@ export const DECODE = {
   },
   charCounter: "{count} characters",
   privacyNote:
-    "Your notice is sent to AppealDeck to be read, and we keep no copy of it. Only when our own rules cannot place it does it also go to an AI service — Google Gemini, or Groq when Google cannot answer — for a second reading. Nothing is sent to Amazon.",
+    "Your notice is sent to AppealDeck to be read, and we keep no copy of it. Only when our own rules cannot place it does it also go to an AI service, named in our privacy policy, for a second reading. Nothing is sent to Amazon.",
   sampleButton: "Try a sample notice",
   clearButton: "Clear",
   sampleBadge: "Sample notice — not yours",
@@ -861,7 +861,7 @@ export const FAQ = {
       // drafting flow) and left out the one thing that does reach an AI provider. Now says what
       // the privacy policy says, and legalDisclosures.test.ts holds the two together.
       detail:
-        "The only things sent to an AI provider (Google Gemini, or Groq when Gemini cannot answer a text-only request) are what it needs to write a Plan of Action, a document-request response or questionnaire answers (your notice, your written answers and the names and notes of your records, never the files), a business document you ask us to check, a section of your response you ask us to improve the wording of, and the text of a notice our own rules cannot place (for a second reading you confirm). We keep no copy of what we send; the draft that comes back is held for one day so the same material is not sent twice. Identity, bank and proof-of-address documents are checked on your device and never uploaded.",
+        "The only things sent to an AI provider (named in our privacy policy) are what it needs to write a Plan of Action, a document-request response or questionnaire answers (your notice, your written answers and the names and notes of your records, never the files), a business document you ask us to check, a section of your response you ask us to improve the wording of, and the text of a notice our own rules cannot place (for a second reading you confirm). We keep no copy of what we send; the draft that comes back is held for one day so the same material is not sent twice. Identity, bank and proof-of-address documents are checked on your device and never uploaded.",
       link: { label: "How processing works", href: "/privacy#how-we-use" },
     },
     {

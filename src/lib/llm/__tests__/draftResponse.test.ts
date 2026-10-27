@@ -42,10 +42,10 @@ const reply = (obj: unknown) => ({
 
 describe("draftResponse", () => {
   it("returns a faithful draft on the first try", async () => {
-    const callGemini = vi.fn().mockResolvedValue(reply(good));
-    const out = await draftResponse(req, { callGemini });
+    const callLlm = vi.fn().mockResolvedValue(reply(good));
+    const out = await draftResponse(req, { callLlm });
     expect(out).toMatchObject({ ok: true, retried: false });
-    expect(callGemini).toHaveBeenCalledTimes(1);
+    expect(callLlm).toHaveBeenCalledTimes(1);
   });
 
   it("retries once, with the exact complaint, when the first draft invents a detail", async () => {
@@ -53,13 +53,13 @@ describe("draftResponse", () => {
       ...good,
       correctiveActions: good.correctiveActions + " We audited stock on 5 October.",
     };
-    const callGemini = vi
+    const callLlm = vi
       .fn()
       .mockResolvedValueOnce(reply(invented))
       .mockResolvedValueOnce(reply(good));
-    const out = await draftResponse(req, { callGemini });
+    const out = await draftResponse(req, { callLlm });
     expect(out).toMatchObject({ ok: true, retried: true });
-    const retryPrompt = callGemini.mock.calls[1]![0].messages[1].text as string;
+    const retryPrompt = callLlm.mock.calls[1]![0].messages[1].text as string;
     expect(retryPrompt).toContain("rejected because it added details that were not provided");
   });
 
@@ -68,13 +68,13 @@ describe("draftResponse", () => {
       ...good,
       preventiveMeasures: good.preventiveMeasures + " This is to ensure quality going forward.",
     };
-    const callGemini = vi
+    const callLlm = vi
       .fn()
       .mockResolvedValueOnce(reply(templated))
       .mockResolvedValueOnce(reply(good));
-    const out = await draftResponse(req, { callGemini });
+    const out = await draftResponse(req, { callLlm });
     expect(out).toMatchObject({ ok: true, retried: true, sections: good });
-    const retryPrompt = callGemini.mock.calls[1]![0].messages[1].text as string;
+    const retryPrompt = callLlm.mock.calls[1]![0].messages[1].text as string;
     expect(retryPrompt).toContain('"to ensure", "going forward"');
   });
 
@@ -86,13 +86,10 @@ describe("draftResponse", () => {
       reply(templated),
       { ok: false, reason: "busy", message: "x" },
     ]) {
-      const callGemini = vi
-        .fn()
-        .mockResolvedValueOnce(reply(templated))
-        .mockResolvedValueOnce(second);
-      const out = await draftResponse(req, { callGemini });
+      const callLlm = vi.fn().mockResolvedValueOnce(reply(templated)).mockResolvedValueOnce(second);
+      const out = await draftResponse(req, { callLlm });
       expect(out).toMatchObject({ ok: true, retried: false, sections: templated });
-      expect(callGemini).toHaveBeenCalledTimes(2);
+      expect(callLlm).toHaveBeenCalledTimes(2);
     }
   });
 
@@ -108,10 +105,10 @@ describe("draftResponse", () => {
       ...good,
       preventiveMeasures: good.preventiveMeasures + " Going forward this is weekly.",
     };
-    const callGemini = vi.fn().mockResolvedValue(reply(theirs));
-    const out = await draftResponse(own, { callGemini });
+    const callLlm = vi.fn().mockResolvedValue(reply(theirs));
+    const out = await draftResponse(own, { callLlm });
     expect(out).toMatchObject({ ok: true, retried: false });
-    expect(callGemini).toHaveBeenCalledTimes(1);
+    expect(callLlm).toHaveBeenCalledTimes(1);
   });
 
   it("never returns a draft that still invents something after the retry", async () => {
@@ -119,22 +116,22 @@ describe("draftResponse", () => {
       ...good,
       preventiveMeasures: good.preventiveMeasures + " Our auditor Dana Cole reviews it.",
     };
-    const callGemini = vi.fn().mockResolvedValue(reply(invented));
-    const out = await draftResponse(req, { callGemini });
+    const callLlm = vi.fn().mockResolvedValue(reply(invented));
+    const out = await draftResponse(req, { callLlm });
     expect(out.ok).toBe(false);
     expect(out).toMatchObject({ reason: "fact_check_failed" });
-    expect(callGemini).toHaveBeenCalledTimes(2);
+    expect(callLlm).toHaveBeenCalledTimes(2);
   });
 
   it("passes provider trouble through without a retry", async () => {
     const busy = vi.fn().mockResolvedValue({ ok: false, reason: "busy", message: "x" });
-    expect(await draftResponse(req, { callGemini: busy })).toMatchObject({
+    expect(await draftResponse(req, { callLlm: busy })).toMatchObject({
       ok: false,
       reason: "busy",
     });
     expect(busy).toHaveBeenCalledTimes(1);
     const off = vi.fn().mockResolvedValue({ ok: false, reason: "not_configured", message: "x" });
-    expect(await draftResponse(req, { callGemini: off })).toMatchObject({
+    expect(await draftResponse(req, { callLlm: off })).toMatchObject({
       reason: "not_configured",
     });
   });
@@ -144,14 +141,14 @@ describe("draftResponse", () => {
       ...good,
       correctiveActions: good.correctiveActions + " We audited stock on 5 October.",
     };
-    const callGemini = vi
+    const callLlm = vi
       .fn()
       .mockResolvedValueOnce(reply(invented))
       .mockResolvedValueOnce(reply(good));
-    await draftResponse(req, { callGemini });
-    expect(callGemini).toHaveBeenCalledTimes(2);
-    const first = callGemini.mock.calls[0]![0].deadline as number;
-    const second = callGemini.mock.calls[1]![0].deadline as number;
+    await draftResponse(req, { callLlm });
+    expect(callLlm).toHaveBeenCalledTimes(2);
+    const first = callLlm.mock.calls[0]![0].deadline as number;
+    const second = callLlm.mock.calls[1]![0].deadline as number;
     expect(first).toBe(second);
     expect(first).toBeGreaterThan(0);
   });
@@ -163,22 +160,22 @@ describe("draftResponse", () => {
         ...good,
         correctiveActions: good.correctiveActions + " We audited stock on 5 October.",
       };
-      const callGemini = vi.fn(async () => {
+      const callLlm = vi.fn(async () => {
         // The first call used the whole budget and still invented a detail.
         vi.setSystemTime(Date.now() + 60_000);
         return reply(invented);
       });
-      const out = await draftResponse(req, { callGemini });
+      const out = await draftResponse(req, { callLlm });
       expect(out).toMatchObject({ ok: false, reason: "unavailable" });
-      expect(callGemini).toHaveBeenCalledTimes(1);
+      expect(callLlm).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }
   });
 
   it("treats a malformed model answer as unavailable, not as a draft", async () => {
-    const callGemini = vi.fn().mockResolvedValue({ ok: true, text: "not json", model: "t" });
-    expect(await draftResponse(req, { callGemini })).toMatchObject({
+    const callLlm = vi.fn().mockResolvedValue({ ok: true, text: "not json", model: "t" });
+    expect(await draftResponse(req, { callLlm })).toMatchObject({
       ok: false,
       reason: "unavailable",
     });
@@ -187,7 +184,7 @@ describe("draftResponse", () => {
       .mockResolvedValue(
         reply({ rootCause: "x", correctiveActions: "y", preventiveMeasures: "z" }),
       );
-    expect(await draftResponse(req, { callGemini: short })).toMatchObject({
+    expect(await draftResponse(req, { callLlm: short })).toMatchObject({
       ok: false,
       reason: "unavailable",
     });

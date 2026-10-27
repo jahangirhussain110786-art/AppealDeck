@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { callGemini, isGeminiConfigured, withGeminiBreaker } from "../gemini";
+import { callLlm, isAiConfigured, withAiBreaker } from "../ai";
 import { callGroq, isGroqConfigured } from "../groq";
 import { runWithDevUsage } from "@/lib/devUsage";
 import { NextRequest } from "next/server";
@@ -46,7 +46,7 @@ describe("Groq local text fallback", () => {
       .mockResolvedValueOnce(new Response("Provider unavailable", { status }))
       .mockResolvedValueOnce(success());
     vi.stubGlobal("fetch", fetchMock);
-    expect(await callGemini(request)).toMatchObject({
+    expect(await callLlm(request)).toMatchObject({
       ok: true,
       model: "groq:openai/gpt-oss-120b",
     });
@@ -63,7 +63,7 @@ describe("Groq local text fallback", () => {
     budget.reserve.mockImplementation(async (options) => ({ ok: options.name === "groq" }));
     const fetchMock = vi.fn().mockResolvedValue(success());
     vi.stubGlobal("fetch", fetchMock);
-    expect((await callGemini(request)).ok).toBe(true);
+    expect((await callLlm(request)).ok).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(budget.reserve.mock.calls.map(([options]) => options.name)).toEqual(["gemini", "groq"]);
   });
@@ -71,8 +71,8 @@ describe("Groq local text fallback", () => {
   it("works with only a Groq key", async () => {
     vi.stubEnv("GEMINI_API_KEY", "");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(success()));
-    expect(isGeminiConfigured()).toBe(true);
-    expect((await callGemini(request)).ok).toBe(true);
+    expect(isAiConfigured()).toBe(true);
+    expect((await callLlm(request)).ok).toBe(true);
   });
 
   it("keeps successful Gemini calls on Gemini", async () => {
@@ -82,7 +82,7 @@ describe("Groq local text fallback", () => {
         Response.json({ candidates: [{ content: { parts: [{ text: "google answer" }] } }] }),
       );
     vi.stubGlobal("fetch", fetchMock);
-    expect(await callGemini(request)).toMatchObject({ ok: true, text: "google answer" });
+    expect(await callLlm(request)).toMatchObject({ ok: true, text: "google answer" });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -90,10 +90,10 @@ describe("Groq local text fallback", () => {
     vi.stubEnv("GEMINI_API_KEY", "");
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    expect((await callGemini({ ...request, task: "read-document" })).ok).toBe(false);
+    expect((await callLlm({ ...request, task: "read-document" })).ok).toBe(false);
     expect(
       (
-        await callGemini({
+        await callLlm({
           ...request,
           messages: [
             {
@@ -111,7 +111,7 @@ describe("Groq local text fallback", () => {
   it("does not forward an input Google refused", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("Invalid input", { status: 400 }));
     vi.stubGlobal("fetch", fetchMock);
-    expect(await callGemini(request)).toMatchObject({ ok: false, reason: "bad_input" });
+    expect(await callLlm(request)).toMatchObject({ ok: false, reason: "bad_input" });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -124,7 +124,7 @@ describe("Groq local text fallback", () => {
           }),
     );
     vi.stubGlobal("fetch", fetchMock);
-    expect(await callGemini(request)).toMatchObject({
+    expect(await callLlm(request)).toMatchObject({
       ok: true,
       model: "groq:openai/gpt-oss-120b",
     });
@@ -225,8 +225,8 @@ describe("Groq local text fallback", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("GEMINI_API_KEY", "");
     vi.stubGlobal("fetch", vi.fn());
-    expect(isGeminiConfigured()).toBe(false);
-    expect((await callGemini(request)).ok).toBe(false);
+    expect(isAiConfigured()).toBe(false);
+    expect((await callLlm(request)).ok).toBe(false);
     expect(fetch).not.toHaveBeenCalled();
   });
 
@@ -241,7 +241,7 @@ describe("Groq local text fallback", () => {
         .mockResolvedValueOnce(success()),
     );
     const result = await runWithDevUsage({ id: "dev", email: "dev@example.test" }, () =>
-      callGemini(request),
+      callLlm(request),
     );
     expect(result.ok).toBe(true);
     expect(budget.reserve).not.toHaveBeenCalled();
@@ -256,7 +256,7 @@ describe("Groq local text fallback", () => {
     vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
     vi.stubEnv("KV_REST_API_URL", "");
     vi.stubEnv("KV_REST_API_TOKEN", "");
-    expect((await withGeminiBreaker(handler)(req, { fingerprint: "x", now: 0 })).status).toBe(503);
+    expect((await withAiBreaker(handler)(req, { fingerprint: "x", now: 0 })).status).toBe(503);
     expect(handler).not.toHaveBeenCalled();
   });
 });

@@ -10,7 +10,7 @@ import {
 } from "@/core";
 import { findUnreadableIds } from "@/core/entities";
 import { rateLimitDecode, rateLimitDecodeAi, tooManyRequestsResponse } from "@/lib/ratelimit";
-import { isGeminiConfigured } from "@/lib/llm/gemini";
+import { isAiConfigured } from "@/lib/llm/ai";
 import { classifyNotice } from "@/lib/llm/classifyNotice";
 import {
   countReading,
@@ -278,7 +278,7 @@ async function handleDecode(req: NextRequest) {
     assessNoticeAuthenticity(working).signals.length === 0 &&
     !hasD6Allegation(decodeText)
   ) {
-    if (!isGeminiConfigured()) {
+    if (!isAiConfigured()) {
       secondReading = "off";
     } else {
       // R-5: a notice read before is answered from memory, without spending today's allowance.

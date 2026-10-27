@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { callGemini, type GeminiCallInput } from "./gemini";
+import { callLlm, type LlmCallInput } from "./ai";
 import { extractJsonObject } from "./extractJson";
 import { checkWordingLock, MIN_WORDING_CHARS } from "@/core/wordingLock";
 
@@ -86,17 +86,17 @@ export type ImproveWordingResult =
     };
 
 export type ImproveWordingDeps = {
-  callGemini: (input: GeminiCallInput) => ReturnType<typeof callGemini>;
+  callLlm: (input: LlmCallInput) => ReturnType<typeof callLlm>;
 };
 
 export async function improveWording(
   input: { section: WordingSection; text: string; question?: string; violation: string },
-  deps: ImproveWordingDeps = { callGemini },
+  deps: ImproveWordingDeps = { callLlm },
 ): Promise<ImproveWordingResult> {
   const original = input.text.trim();
   if (original.length < MIN_WORDING_CHARS) return { ok: false, reason: "too_short" };
 
-  const result = await deps.callGemini({
+  const result = await deps.callLlm({
     task: "improve-wording",
     messages: [
       { role: "system", text: SYSTEM_PROMPT },

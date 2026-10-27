@@ -11,7 +11,7 @@ import {
   rateLimitDraft,
   rateLimitWording,
 } from "../ratelimit";
-import { withGeminiBreaker } from "../llm/gemini";
+import { withAiBreaker } from "../llm/ai";
 import { NextRequest } from "next/server";
 
 const auth = vi.hoisted(() => ({ user: null as { id: string; email: string } | null }));
@@ -79,7 +79,7 @@ describe("unlimited local dev usage", () => {
       expect(hasUnlimitedDevUsage()).toBe(true);
       return new Response("ok");
     });
-    const response = await withGeminiBreaker(handler)(
+    const response = await withAiBreaker(handler)(
       new NextRequest("http://localhost/api/improve-wording"),
       { fingerprint: "test", now: 0 },
     );

@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { __test, callGemini, isGeminiConfigured, getGeminiModel } from "../gemini";
+import { __test, getGeminiModel } from "../gemini";
+import { callLlm, isAiConfigured } from "../ai";
 
 describe("gemini (no env)", () => {
-  it("isGeminiConfigured returns false when key is unset", () => {
+  it("isAiConfigured returns false when key is unset", () => {
     delete process.env.GEMINI_API_KEY;
-    expect(isGeminiConfigured()).toBe(false);
+    expect(isAiConfigured()).toBe(false);
   });
 
   it("getGeminiModel falls back to default when GEMINI_MODEL is unset", () => {
@@ -55,7 +56,7 @@ describe("parseGeminiResponse", () => {
   });
 });
 
-describe("callGemini request shape", () => {
+describe("callLlm request shape", () => {
   const originalFetch = globalThis.fetch;
   const originalKey = process.env.GEMINI_API_KEY;
   const originalModel = process.env.GEMINI_MODEL;
@@ -82,7 +83,7 @@ describe("callGemini request shape", () => {
   it("uses text/plain when no JSON flag is set", async () => {
     process.env.GEMINI_API_KEY = "test-key";
     const fetchMock = mockFetch([{ content: { parts: [{ text: "ok" }] } }]);
-    await callGemini({ messages: [{ role: "user", text: "hi" }] });
+    await callLlm({ messages: [{ role: "user", text: "hi" }] });
     const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string);
     expect(body.generationConfig.responseMimeType).toBe("text/plain");
     expect(body.generationConfig.responseSchema).toBeUndefined();
@@ -93,7 +94,7 @@ describe("callGemini request shape", () => {
     process.env.GEMINI_API_KEY = "test-key";
     const fetchMock = mockFetch([{ content: { parts: [{ text: '{"a":1}' }] } }]);
     const schema = { type: "object", properties: { a: { type: "number" } } };
-    const result = await callGemini({
+    const result = await callLlm({
       messages: [{ role: "user", text: "hi" }],
       responseJsonSchema: schema,
     });
@@ -107,7 +108,7 @@ describe("callGemini request shape", () => {
   it("uses application/json + thinkingBudget 0 when responseJson is true (no schema)", async () => {
     process.env.GEMINI_API_KEY = "test-key";
     const fetchMock = mockFetch([{ content: { parts: [{ text: "raw" }] } }]);
-    await callGemini({ messages: [{ role: "user", text: "hi" }], responseJson: true });
+    await callLlm({ messages: [{ role: "user", text: "hi" }], responseJson: true });
     const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string);
     expect(body.generationConfig.responseMimeType).toBe("application/json");
     expect(body.generationConfig.responseSchema).toBeUndefined();
@@ -157,7 +158,7 @@ describe("per-task model selection", () => {
     expect(getGeminiModel("read-document")).toBe("gemini-3.5-flash");
   });
 
-  it("explicit model in callGemini wins over the task default", async () => {
+  it("explicit model in callLlm wins over the task default", async () => {
     for (const k of KEYS) {
       savedEnv[k] = process.env[k];
       delete process.env[k];
@@ -168,7 +169,7 @@ describe("per-task model selection", () => {
       json: async () => ({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }),
     }));
     globalThis.fetch = fetchMock as unknown as typeof fetch;
-    const result = await callGemini({
+    const result = await callLlm({
       task: "read-document",
       model: "gemini-3.5-flash-lite",
       messages: [{ role: "user", text: "hi" }],
@@ -190,16 +191,16 @@ describe("the paid-tier switch", () => {
     vi.stubEnv("GEMINI_API_KEY", "test-key");
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("GEMINI_PAID_TIER_CONFIRMED", "");
-    expect(isGeminiConfigured()).toBe(false);
+    expect(isAiConfigured()).toBe(false);
     vi.stubEnv("GEMINI_PAID_TIER_CONFIRMED", "true");
-    expect(isGeminiConfigured()).toBe(true);
+    expect(isAiConfigured()).toBe(true);
   });
 
   it("does not need the confirmation outside production", () => {
     vi.stubEnv("GEMINI_API_KEY", "test-key");
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("GEMINI_PAID_TIER_CONFIRMED", "");
-    expect(isGeminiConfigured()).toBe(true);
+    expect(isAiConfigured()).toBe(true);
   });
 });
 
@@ -208,7 +209,7 @@ describe("the paid-tier switch", () => {
  * first try. A "not now" answer is retried inside the task's budget; if Google stays busy, the
  * result says so, so the seller is told to try again rather than that their document failed.
  */
-describe("callGemini retries Google's 'not now' answers", () => {
+describe("callLlm retries Google's 'not now' answers", () => {
   const originalFetch = globalThis.fetch;
   afterEach(() => {
     globalThis.fetch = originalFetch;
@@ -236,7 +237,7 @@ describe("callGemini retries Google's 'not now' answers", () => {
     vi.useFakeTimers();
     vi.stubEnv("GEMINI_API_KEY", "test-key");
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    const pending = callGemini({ task: "read-document", messages: [{ role: "user", text: "hi" }] });
+    const pending = callLlm({ task: "read-document", messages: [{ role: "user", text: "hi" }] });
     await vi.runAllTimersAsync();
     return pending;
   }
@@ -308,7 +309,7 @@ describe("callGemini retries Google's 'not now' answers", () => {
     vi.useFakeTimers();
     vi.stubEnv("GEMINI_API_KEY", "test-key");
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    const pending = callGemini({
+    const pending = callLlm({
       model: "gemini-chosen",
       messages: [{ role: "user", text: "hi" }],
     });
@@ -352,7 +353,7 @@ describe("callGemini retries Google's 'not now' answers", () => {
       vi.stubEnv("GROQ_API_KEY", "");
       vi.spyOn(console, "warn").mockImplementation(() => {});
       const fetchMock = hangingFetch();
-      const pending = callGemini({
+      const pending = callLlm({
         task: "read-document",
         messages: [{ role: "user", text: "hi" }],
         deadline: Date.now() + 1_500,
@@ -370,7 +371,7 @@ describe("callGemini retries Google's 'not now' answers", () => {
       vi.stubEnv("GROQ_API_KEY", "");
       const fetchMock = vi.fn();
       globalThis.fetch = fetchMock as unknown as typeof fetch;
-      const result = await callGemini({
+      const result = await callLlm({
         messages: [{ role: "user", text: "hi" }],
         deadline: Date.now() - 1,
       });
@@ -388,7 +389,7 @@ describe("callGemini retries Google's 'not now' answers", () => {
     vi.stubEnv("GEMINI_FALLBACK_MODEL", "none");
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const schema = { type: "object", properties: { text: { type: "string" } } };
-    const pending = callGemini({
+    const pending = callLlm({
       task: "read-document",
       messages: [{ role: "user", text: "hi" }],
       responseJsonSchema: schema,

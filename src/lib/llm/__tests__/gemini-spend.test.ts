@@ -7,10 +7,10 @@ vi.mock("@/lib/breaker", async (importOriginal) => {
   return { ...actual, reserveSpend: (...args: unknown[]) => reserveSpendMock(...args) };
 });
 
-import { callGemini } from "../gemini";
+import { callLlm } from "../ai";
 
-/** 6 Oct 2026: one callGemini can send up to five paid requests; each must be counted. */
-describe("callGemini spend accounting", () => {
+/** 6 Oct 2026: one callLlm can send up to five paid requests; each must be counted. */
+describe("callLlm spend accounting", () => {
   const originalFetch = globalThis.fetch;
   const saved = { ...process.env };
 
@@ -36,7 +36,7 @@ describe("callGemini spend accounting", () => {
       text: async () => "high demand",
     }));
     globalThis.fetch = fetchMock as unknown as typeof fetch;
-    const promise = callGemini({ messages: [{ role: "user", text: "hi" }] });
+    const promise = callLlm({ messages: [{ role: "user", text: "hi" }] });
     await vi.runAllTimersAsync();
     await promise;
     expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
@@ -57,7 +57,7 @@ describe("callGemini spend accounting", () => {
       text: async () => "high demand",
     }));
     globalThis.fetch = fetchMock as unknown as typeof fetch;
-    const promise = callGemini({ messages: [{ role: "user", text: "hi" }] });
+    const promise = callLlm({ messages: [{ role: "user", text: "hi" }] });
     await vi.runAllTimersAsync();
     const result = await promise;
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -69,7 +69,7 @@ describe("callGemini spend accounting", () => {
       ok: true,
       json: async () => ({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }),
     })) as unknown as typeof fetch;
-    await callGemini({ messages: [{ role: "user", text: "hi" }] });
+    await callLlm({ messages: [{ role: "user", text: "hi" }] });
     expect(reserveSpendMock).toHaveBeenCalledTimes(1);
   });
 });

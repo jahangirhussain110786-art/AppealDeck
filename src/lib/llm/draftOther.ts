@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { attemptLine } from "./attemptLine";
-import { callGemini, type GeminiCallInput } from "./gemini";
+import { callLlm, type LlmCallInput } from "./ai";
 import { extractJsonObject } from "./extractJson";
 import { policyBriefFor } from "@/core/policyBrief";
 import { describeCheck, verifyAiTexts, type DraftSources } from "@/core/draftVerification";
@@ -211,7 +211,7 @@ export function buildOtherPrompt(req: OtherDraftRequest, feedback?: string): str
 }
 
 export type OtherDraftDeps = {
-  callGemini: (input: GeminiCallInput) => ReturnType<typeof callGemini>;
+  callLlm: (input: LlmCallInput) => ReturnType<typeof callLlm>;
 };
 
 async function attemptOnce(
@@ -223,7 +223,7 @@ async function attemptOnce(
   | { ok: true; texts: OtherDraftTexts }
   | { ok: false; reason: "busy" | "unavailable" | "not_configured" }
 > {
-  const result = await deps.callGemini({
+  const result = await deps.callLlm({
     task: "draft-poa",
     messages: [
       { role: "system", text: OTHER_SYSTEM_PROMPT },
@@ -284,7 +284,7 @@ function checkEach(req: OtherDraftRequest, texts: OtherDraftTexts): string | nul
 
 export async function draftOther(
   req: OtherDraftRequest,
-  deps: OtherDraftDeps = { callGemini },
+  deps: OtherDraftDeps = { callLlm },
 ): Promise<OtherDraftOutcome> {
   const budgetEnds = Date.now() + DRAFT_BUDGET_MS;
   const first = await attemptOnce(req, deps, undefined, budgetEnds);

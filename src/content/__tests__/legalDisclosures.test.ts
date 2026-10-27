@@ -268,13 +268,13 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
 
   it("keeps the lines beside the paste boxes true to the privacy policy (G-51, 12 Oct 2026)", () => {
     // "Not stored" was untrue once a reading is remembered for seven days. The boxes now say what
-    // the policy says: read on the server, no copy of the notice, Gemini only when rules cannot place it.
+    // the policy says: read on the server, no copy of the notice, an AI provider only when rules cannot place it.
     expect(HOME.tool.note).not.toMatch(/not stored/i);
     expect(HOME.tool.note).toMatch(/no copy/i);
     expect(DECODE.privacyNote).toMatch(/keep no copy/i);
     expect(DECODE.privacyNote).toMatch(/only when our own rules cannot place it/i);
     expect(text("privacy")).toMatch(
-      /only when our own rules cannot tell what kind of notice it is, on to Google Gemini/,
+      /only when our own rules cannot tell what kind of notice it is, on to an AI provider/,
     );
   });
 

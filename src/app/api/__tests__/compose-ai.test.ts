@@ -33,7 +33,7 @@ vi.mock("@/lib/ratelimit", () => ({
   tooManyRequestsResponse: () => new Response("rate limited", { status: 429 }),
 }));
 vi.mock("@/lib/supabase/server", () => ({ supabaseAdmin: null }));
-vi.mock("@/lib/llm/gemini", () => ({ isGeminiConfigured: () => configured.on }));
+vi.mock("@/lib/llm/ai", () => ({ isAiConfigured: () => configured.on }));
 vi.mock("@/lib/llm/draftOther", async (importActual) => ({
   ...(await importActual<typeof import("@/lib/llm/draftOther")>()),
   draftOther: () => Promise.resolve({ ok: false, reason: "unavailable" }),

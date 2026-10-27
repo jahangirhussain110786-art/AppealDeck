@@ -10,7 +10,7 @@ import { NextRequest } from "next/server";
 const classifyMock = vi.fn();
 const gate = vi.hoisted(() => ({ configured: true, allowed: true }));
 
-vi.mock("@/lib/llm/gemini", () => ({ isGeminiConfigured: () => gate.configured }));
+vi.mock("@/lib/llm/ai", () => ({ isAiConfigured: () => gate.configured }));
 vi.mock("@/lib/llm/classifyNotice", () => ({
   classifyNotice: (...args: unknown[]) => classifyMock(...args),
 }));

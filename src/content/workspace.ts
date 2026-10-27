@@ -551,7 +551,7 @@ export const WORKSPACE = {
     action: "Improve the wording",
     working: "Suggesting clearer wording…",
     sendsNote:
-      "Sends this section to an AI service (Google Gemini, or Groq when Google cannot answer) for a suggestion. Nothing changes unless you choose it.",
+      "Sends this section to an AI service for a suggestion. Nothing changes unless you choose it.",
     tooShort: "Write a few sentences first. Wording help can only improve what you have written.",
     yours: "Your wording",
     suggested: "Suggested wording",
