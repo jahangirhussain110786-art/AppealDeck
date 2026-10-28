@@ -100,6 +100,20 @@ describe("which providers are asked, and in what order", () => {
     expect(providerOrder()).toEqual(["gemini", "groq"]);
   });
 
+  it("lets one task have its own order and leaves the others on the general one", () => {
+    vi.stubEnv("AI_PROVIDERS", "gemini,groq");
+    vi.stubEnv("AI_PROVIDERS_DRAFT_POA", "anthropic, gemini");
+    expect(providerOrder("draft-poa")).toEqual(["anthropic", "gemini"]);
+    expect(providerOrder("read-document")).toEqual(["gemini", "groq"]);
+    expect(providerOrder()).toEqual(["gemini", "groq"]);
+  });
+
+  it("ignores a task order that names nothing real", () => {
+    vi.stubEnv("AI_PROVIDERS", "gemini");
+    vi.stubEnv("AI_PROVIDERS_READ_DOCUMENT", "nonsense");
+    expect(providerOrder("read-document")).toEqual(["gemini"]);
+  });
+
   it("leaves out a provider that is not configured", () => {
     vi.stubEnv("AI_PROVIDERS", "anthropic,gemini,groq");
     vi.stubEnv("ANTHROPIC_API_KEY", "");

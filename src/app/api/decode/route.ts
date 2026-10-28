@@ -278,7 +278,7 @@ async function handleDecode(req: NextRequest) {
     assessNoticeAuthenticity(working).signals.length === 0 &&
     !hasD6Allegation(decodeText)
   ) {
-    if (!isAiConfigured()) {
+    if (!isAiConfigured("classify-notice")) {
       secondReading = "off";
     } else {
       // R-5: a notice read before is answered from memory, without spending today's allowance.

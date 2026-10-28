@@ -24,6 +24,8 @@ import {
  * Which providers run is deployment configuration, not code:
  *   AI_PROVIDERS=gemini,groq        the order they are asked in (this is the default)
  *   AI_PROVIDERS=anthropic,gemini   Claude first, Gemini when Claude cannot answer
+ *   AI_PROVIDERS_DRAFT_POA=anthropic   one task with its own order (tasks: DRAFT_POA, READ_DOCUMENT,
+ *                                      IMPROVE_WORDING, CLASSIFY_NOTICE)
  * and each provider has its own key and its own switch that says someone has read its data terms
  * (DEPLOYMENT §6b). A provider is skipped when it is not configured or cannot take the request (Groq
  * never receives a document). In production a provider also has to be `listed` in
@@ -49,16 +51,26 @@ const PROVIDERS: Record<ProviderId, LlmProvider> = {
 
 const DEFAULT_ORDER: ProviderId[] = ["gemini", "groq"];
 
-/** The order named in `AI_PROVIDERS`, unknown names and repeats dropped. */
-export function providerOrder(): ProviderId[] {
-  const raw = process.env.AI_PROVIDERS?.trim();
-  if (!raw) return DEFAULT_ORDER;
-  const seen = new Set<ProviderId>();
-  for (const part of raw.split(",")) {
-    const id = part.trim().toLowerCase() as ProviderId;
-    if (id in PROVIDERS) seen.add(id);
-  }
-  return seen.size > 0 ? [...seen] : DEFAULT_ORDER;
+/**
+ * The order named in `AI_PROVIDERS`, unknown names and repeats dropped. A task can have its own
+ * order in `AI_PROVIDERS_<TASK>` (task name upper-cased, dashes to underscores, e.g.
+ * `AI_PROVIDERS_READ_DOCUMENT=gemini`); a task without one uses the general order.
+ */
+export function providerOrder(task?: LlmTask): ProviderId[] {
+  const named = (raw: string | undefined): ProviderId[] => {
+    const seen = new Set<ProviderId>();
+    for (const part of (raw ?? "").split(",")) {
+      const id = part.trim().toLowerCase() as ProviderId;
+      if (id in PROVIDERS) seen.add(id);
+    }
+    return [...seen];
+  };
+  const forTask = task
+    ? named(process.env[`AI_PROVIDERS_${task.toUpperCase().replace(/-/g, "_")}`])
+    : [];
+  if (forTask.length > 0) return forTask;
+  const general = named(process.env.AI_PROVIDERS);
+  return general.length > 0 ? general : DEFAULT_ORDER;
 }
 
 /** In production only a provider the privacy policy names may receive anything. */
@@ -68,15 +80,15 @@ function mayRun(id: ProviderId): boolean {
 
 /** The providers that would be asked for this request, in order. */
 export function providerChain(input: LlmCallInput): LlmProvider[] {
-  return providerOrder()
+  return providerOrder(input.task)
     .filter(mayRun)
     .map((id) => PROVIDERS[id])
     .filter((provider) => provider.isConfigured() && provider.supports(input));
 }
 
 /** Whether any AI provider could answer a text request right now. */
-export function isAiConfigured(): boolean {
-  return providerOrder()
+export function isAiConfigured(task?: LlmTask): boolean {
+  return providerOrder(task)
     .filter(mayRun)
     .some((id) => PROVIDERS[id].isConfigured());
 }
@@ -85,7 +97,7 @@ export async function callLlm(input: LlmCallInput): Promise<LlmCallResult> {
   const chain = providerChain(input);
   // With nothing configured the first provider named is still asked, so the answer is its own
   // "not configured" message (which says which key to set) rather than a generic one.
-  const firstNamed = PROVIDERS[providerOrder()[0] ?? "gemini"];
+  const firstNamed = PROVIDERS[providerOrder(input.task)[0] ?? "gemini"];
   const [primary = firstNamed, ...rest] = chain;
 
   // A spent budget means no further provider is asked: the answer would arrive after the caller

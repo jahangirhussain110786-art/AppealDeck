@@ -197,7 +197,7 @@ async function handleCompose(req: NextRequest) {
   if (data.workspace && data.workspace.protocol === "operational") {
     const aiRequest = draftRequestFrom(data.workspace, data.kind, attempt);
     if (aiRequest) {
-      if (!isAiConfigured()) {
+      if (!isAiConfigured("draft-poa")) {
         ai = { status: "fallback", reason: "not_configured" };
       } else {
         // The same material gets the same draft, without another model call. What comes back from
@@ -239,7 +239,7 @@ async function handleCompose(req: NextRequest) {
   ) {
     const otherRequest = otherDraftRequestFrom(data.workspace, data.kind, attempt);
     if (otherRequest) {
-      if (!isAiConfigured()) {
+      if (!isAiConfigured("draft-poa")) {
         ai = { status: "fallback", reason: "not_configured" };
       } else {
         const cacheKey = otherDraftCacheKey(user.id, otherRequest);
