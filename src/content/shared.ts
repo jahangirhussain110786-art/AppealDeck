@@ -55,8 +55,10 @@ export const SHARED = {
       licences: "Licences",
     },
     neverSubmits: "You submit every appeal yourself in Seller Central. Your login stays with you.",
+    // The trademark attribution lives in the Terms, not here: repeating it beside the independence
+    // line said the same thing twice and made the footer heavier than it needed to be.
     independence:
-      "AppealDeck is software and is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates. Amazon and Seller Central are trademarks of Amazon.com, Inc. or its affiliates.",
+      "AppealDeck is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates.",
     groups: {
       product: "Product",
       guides: "Guides",
