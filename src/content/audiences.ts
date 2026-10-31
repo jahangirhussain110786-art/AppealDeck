@@ -80,7 +80,7 @@ export const PROS = {
     eyebrow: "For appeal writers, consultants and VA teams",
     title: "Check the proof on every client case.",
     accent: "every client case.",
-    lede: "AppealDeck reads each client's documents against what Amazon asked, keeps every round in one place and writes only from facts you confirmed. Your client's Seller Central account stays theirs; we never sign in.",
+    lede: "AppealDeck reads each client's documents against what Amazon asked and keeps every round in one place. Your client's Seller Central account stays theirs; we never sign in.",
     cta: "Write to us about how you work",
     ctaSecondary: "Start with a free decode",
   },
@@ -100,16 +100,8 @@ export const PROS = {
         body: "Paste Amazon's reply and see what it reopened, added or left outstanding. Work you finished is kept, not thrown away.",
       },
       {
-        title: "Facts you confirmed, nothing else",
-        body: "The response is built only from what you confirmed, and the page says so. A model does not rewrite your client's story.",
-      },
-      {
         title: "An upload-ready pack",
         body: "Reviewed files numbered and named by what they answer, with an index a reviewer can read.",
-      },
-      {
-        title: "The client's account stays theirs",
-        body: "AppealDeck never signs in to Seller Central or reads it, so your client's account stays untouched.",
       },
     ],
   },
@@ -196,7 +188,7 @@ export const PROS = {
   },
   cost: {
     title: "What it costs today",
-    body: "Everything above except the written response is free. The written response is the Appeal Pass: $249 once for one case, every round included. Each client case is its own case, so each has its own Pass.",
+    body: "Everything except the written response is free. The response is the Appeal Pass: $249 once for one case, every round included. Each client case has its own Pass.",
     // Said only while there is no professional price on sale; once there is, the prices are on the page.
     open: professionalsListed()
       ? null
@@ -220,7 +212,6 @@ export const PROS = {
       SCOPE.professional,
       "A case lives on the device it was made on. Hand it to a colleague with an export, and restore it where the work continues.",
       "You write to the person who builds it, normally with a reply within two business days.",
-      "The work here is to make the record complete before the decision.",
     ],
   },
   mailto: `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(WRITERS_SUBJECT)}`,

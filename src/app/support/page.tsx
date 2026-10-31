@@ -44,7 +44,7 @@ export default function SupportPage() {
               )}
             </h1>
             <p className="max-w-[34rem] text-lg leading-relaxed text-muted-foreground">
-              {SUPPORT.hero.lede} {SUPPORT.intro}
+              {SUPPORT.hero.lede}
             </p>
             <Button asChild size="lg">
               <a href={`mailto:${SUPPORT_EMAIL}`}>

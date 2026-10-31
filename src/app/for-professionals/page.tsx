@@ -57,7 +57,7 @@ export default function ForProfessionalsPage() {
             >
               {PROS.today.title}
             </h2>
-            <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mt-6 grid gap-4 sm:grid-cols-2">
               {PROS.today.items.map((item) => (
                 <li key={item.title}>
                   <Card className="h-full space-y-2 p-5 sm:p-6">

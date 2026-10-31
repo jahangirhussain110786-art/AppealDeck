@@ -6,7 +6,6 @@ import { MarketingShell } from "@/components/MarketingShell";
 import { HeroTool } from "@/components/marketing/HeroTool";
 import { FeatureSwitcher } from "@/components/marketing/FeatureSwitcher";
 import { DecodePanel } from "@/components/marketing/DecodePanel";
-import { PromiseBand } from "@/components/marketing/PromiseBand";
 import { ThanksBand } from "@/components/marketing/ThanksBand";
 import {
   ChecklistPanel,
@@ -83,8 +82,10 @@ function Accented({
 
 /**
  * v5 (26 Sep 2026, the founder-approved prototype): the tool is the hero, beside a real-looking
- * view of the product; one switched visual carries the features; a navy band carries the facts;
- * each claim is made once. The copy is the SEO-tuned wording from 25 Sep, unchanged.
+ * view of the product; one switched visual carries the features; a navy band carries the account
+ * facts; each claim is made once. 31 Oct 2026: the five-promise band was removed here — it repeated
+ * the band above and moved price and refund promises onto a page that already shows the plans. It
+ * lives on /pricing, where the buyer needs it before the pay button.
  */
 export default function HomePage() {
   return (
@@ -93,7 +94,6 @@ export default function HomePage() {
       <HeroSection />
       <FeaturesSection />
       <BandSection />
-      <PromiseBand />
       <PlansSection />
       <ThanksBand />
       <QuestionsSection />
@@ -131,7 +131,6 @@ function HeroSection() {
             {HOME.hero.subline}
           </p>
           <HeroTool />
-          <p className="text-sm text-muted-foreground">{HOME.hero.reassuranceLine}</p>
         </div>
         <HeroComposition />
       </div>

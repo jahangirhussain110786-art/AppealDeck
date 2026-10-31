@@ -556,7 +556,12 @@ export default function DecodeClient() {
                       {DECODE.textarea.hint}
                     </p>
                     <p className="text-xs text-muted-foreground">{DECODE.textarea.replyDoor}</p>
-                    <p className="text-xs text-muted-foreground">{DECODE.textarea.cannotFind}</p>
+                    <details className="text-xs text-muted-foreground">
+                      <summary className="cursor-pointer select-none">
+                        {DECODE.textarea.cannotFindLabel}
+                      </summary>
+                      <p className="mt-1">{DECODE.textarea.cannotFind}</p>
+                    </details>
                     <div id="notice-hint" className="sr-only" aria-live="polite">
                       {showHint ? likeness.hint : ""}
                     </div>

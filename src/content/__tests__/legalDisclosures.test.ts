@@ -271,7 +271,7 @@ describe("privacy and terms corrections of 6 Oct 2026", () => {
     // the policy says: read on the server, no copy of the notice, an AI provider only when rules cannot place it.
     expect(HOME.tool.note).not.toMatch(/not stored/i);
     expect(HOME.tool.note).toMatch(/no copy/i);
-    expect(DECODE.privacyNote).toMatch(/keep no copy/i);
+    expect(DECODE.privacyNote).toMatch(/no copy is kept/i);
     expect(DECODE.privacyNote).toMatch(/only when our own rules cannot place it/i);
     expect(text("privacy")).toMatch(
       /only when our own rules cannot tell what kind of notice it is, on to an AI provider/,

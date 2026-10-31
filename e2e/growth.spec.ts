@@ -4,16 +4,16 @@ import { expectNoAxeViolations } from "./axe";
 test("pricing offers a next action and a readable refund policy on a phone", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/pricing");
-  const section = page.getByRole("region", { name: "Choose for the work ahead" });
-  await expect(section.getByRole("link", { name: "Decode my notice" })).toHaveAttribute(
+  const plans = page.getByRole("list", { name: "Plans for sellers" });
+  await expect(plans.getByRole("link", { name: "Decode a notice" })).toHaveAttribute(
     "href",
     "/decode",
   );
-  await expect(section.getByRole("link", { name: "Choose the Appeal Pass" })).toHaveAttribute(
+  await expect(plans.getByRole("link", { name: "Get the Appeal Pass" })).toHaveAttribute(
     "href",
     "#purchase",
   );
-  await expect(section.getByRole("link", { name: "Refund terms" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Refund terms" }).first()).toHaveAttribute(
     "href",
     "/refund",
   );

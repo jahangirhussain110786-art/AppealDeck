@@ -51,9 +51,8 @@ export const HOME = {
     headline: "Amazon account suspended? Know what to send back.",
     accent: "what to send back",
     subline:
-      "Paste your deactivation or policy notice. See what Amazon is asking for, the deadline it states and the records to gather. Free, with no sign-up.",
+      "Paste your deactivation or policy notice. See what Amazon is asking for, the deadline it states and the records to gather — free, no sign-up.",
     primaryCta: "Decode my notice — free",
-    reassuranceLine: "You stay signed in to Seller Central, and you decide what gets sent.",
   },
   /**
    * The decoder demo under the hero (26 Sep 2026). The sample notice is decoded by the real engine
@@ -144,8 +143,9 @@ export const HOME = {
   ],
   questions: {
     title: "Questions",
-    // Not "independence": its answer repeats the footer's not-affiliated line word for word.
-    ids: ["outcome", "chatbot", "replies", "start-free", "submit"],
+    // Four questions, one answer each. The independence and submission answers repeat the footer
+    // and the band above, and the full list belongs to /faq.
+    ids: ["start-free", "outcome", "chatbot", "replies"],
   },
   plans: {
     eyebrow: "Pricing",
@@ -201,7 +201,7 @@ export const DECODE = {
   illustrationAlt: "An email from Amazon with the phrase that matters highlighted",
   pageTitle: "What is your Amazon notice asking for?",
   pageDescription:
-    "Paste the full notice. See the response Amazon wants, the deadline it states, the IDs it names and the records to gather.",
+    "Paste the full notice. See what Amazon asks for, the deadline it states and the records to gather.",
   metaTitle: "Amazon suspension notice decoder — free",
   metaDescription:
     "Paste an Amazon deactivation or policy notice. See what it asks for, the deadline it states, the IDs it names and anything that looks fake. Free, no sign-up.",
@@ -209,17 +209,18 @@ export const DECODE = {
   textarea: {
     label: "Your notice",
     placeholder: "Paste the full Amazon notice here…",
-    hint: "Include the subject line and the date at the top. With them, we can count the deadline from the notice's own date.",
+    hint: "Include the subject line and the date at the top. We count the deadline from the notice's own date.",
     // G-70: some sellers have only a banner, or the email never arrived. Says where to look.
+    cannotFindLabel: "Can't find the email?",
     cannotFind:
-      "If the email is missing, look in Seller Central under Account Health and Performance Notifications, and in your spam folder. If all you have is a banner, open it and paste the text it shows.",
+      "Look under Account Health → Performance Notifications in Seller Central, then your spam folder. If you only have a banner, paste its text.",
     // G-01: the free reply reader has no page of its own; this is its door.
     replyDoor:
-      "Already appealed? Paste Amazon's reply here instead. We will say whether it refused, asked for documents or reinstated, and show the sentence that says so.",
+      "Already appealed? Paste Amazon's reply here instead. It says whether Amazon refused, asked for documents or reinstated, quoting the sentence.",
   },
   charCounter: "{count} characters",
   privacyNote:
-    "Your notice is sent to AppealDeck to be read, and we keep no copy of it. Only when our own rules cannot place it does it also go to an AI service, named in our privacy policy, for a second reading. Nothing is sent to Amazon.",
+    "Your notice is read on our server and no copy is kept. Only when our own rules cannot place it does it also go to an AI service named in our privacy policy. Nothing is sent to Amazon.",
   sampleButton: "Try a sample notice",
   clearButton: "Clear",
   sampleBadge: "Sample notice — not yours",
@@ -454,19 +455,19 @@ export const PRICING = {
   limits: [
     {
       title: "Amazon decides.",
-      body: "We make the record, the documents and the wording as complete as your facts allow, so the case is ready for the decision.",
+      body: "We make the record, the documents and the wording as complete as your facts allow.",
     },
     {
       title: "Preparation stays preparation.",
-      body: "It reads, organises and drafts from facts you confirm. Legal judgement belongs to a qualified professional, and the workspace says so on the first screen.",
+      body: "It reads, organises and drafts from facts you confirm. Legal judgement belongs to a qualified professional.",
     },
     {
       title: "Your files stay encrypted on your device.",
-      body: "Make an encrypted backup for a second copy you can restore. Clearing your browser removes the local copy, so keep anything you need.",
+      body: "Make an encrypted backup if you want a second copy; clearing your browser removes the local one.",
     },
     {
       title: "Cases that need a professional.",
-      body: "Fraud, forged documents and child safety call for qualified help. The workspace says so on the free decode, before you pay, and leaves the response to a professional.",
+      body: "Fraud, forged documents and child safety call for qualified help. The free decode says so before you pay.",
     },
   ],
   order: {
@@ -482,11 +483,8 @@ export const PRICING = {
   },
   createAccount: "Create an account",
   checkoutNote:
-    "The free decoder works everywhere. Payment is handled by Paddle, which also sends the tax receipt, and a case that already has its Pass is not charged again. The paid plans are not yet on sale to buyers in the EU, the EEA or the United Kingdom.",
+    "Payment is handled by Paddle, which sends the tax receipt. The paid plans are not yet on sale to buyers in the EU, the EEA or the United Kingdom.",
   subline: "Decoding is free. Pay once, only when you want the full response.",
-  // 6 Oct 2026: the one plain sentence about what costs money, beside the plans and the checkout.
-  freeVersusPass:
-    "Free: understand the notice, gather documents, write your answers. Pay once, only if you want us to prepare the response.",
   price: "$249",
   priceNote: "One-time. One case.",
   included: "Included",
@@ -753,7 +751,7 @@ export const PRICING = {
 export const FOUNDER_NOTE: { name: string; location: string; text: string } | null = {
   name: "Jhangir Hussain",
   location: "Pakistan",
-  text: "I build software, and I am an Amazon seller myself. When I saw how much sellers were being asked to pay to be heard after a suspension, often in a panic and on a deadline, I wanted a calmer way through. So I built one: it reads your notice, shows what Amazon is really asking for, checks the documents you already have, and helps you write a clear, honest answer in your own words. It is case-preparation software, and Amazon alone decides the outcome. Getting your case in order should be within reach.",
+  text: "I build software, and I sell on Amazon. I saw sellers paying heavily to be heard after a suspension, often in a panic and on a deadline, and wanted a calmer way through. So I built one: it reads your notice, shows what Amazon is asking, checks the records you already have, and helps you write a clear answer in your own words. It is case-preparation software, and Amazon decides the outcome.",
 };
 
 export type FaqItem = {
@@ -767,14 +765,14 @@ export type FaqItem = {
 export const FAQ = {
   eyebrow: "Help & answers",
   title: "Questions, answered.",
-  description: "Choose a topic. Get a clear answer. Decide your next step.",
+  description: "What sellers ask before and after they start.",
   items: [
     {
       id: "start-free",
       q: "What can I do for free?",
       a: "Decode the notice, build the record and write your answers — all free. Pay only if you want the response prepared.",
       detail:
-        "Keep the request, files, notes and replies together. Guest work stays in this browser session. Sign in to keep it in your account vault on this device.",
+        "Guest work stays in this browser tab. A free account keeps it in your vault on this device.",
       link: { label: "Try the free decoder", href: "/decode" },
     },
     {
@@ -782,14 +780,12 @@ export const FAQ = {
       q: "How does the decoder work?",
       a: "It turns the notice into a short brief: the issue it raises, the time window it states and the next steps.",
       detail:
-        "Your notice is sent to AppealDeck for analysis. Check the result against your current notice and response page; you can correct the case before confirming it.",
+        "Check the result against your notice; you can correct the case before confirming it.",
     },
     {
       id: "time",
       q: "How long does preparing a case take?",
-      a: "Decoding takes a moment. The rest depends on the facts and records you need to gather.",
-      detail:
-        "Work through one task at a time and save each review. Sign in before leaving a guest session if you want to keep its work in your account vault.",
+      a: "Decoding takes a moment. Gathering the facts and records is the longer part.",
     },
     {
       id: "independence",
@@ -804,7 +800,7 @@ export const FAQ = {
       q: "What should I check in the response?",
       a: "Check every fact, file name and page reference against your original records and the current request.",
       detail:
-        "The workspace uses your saved wording and flags missing information. These checks help you review the response; they do not authenticate documents or verify your claims.",
+        "The workspace flags missing information; it does not authenticate documents or verify your claims.",
     },
     {
       id: "outcome",
@@ -817,42 +813,39 @@ export const FAQ = {
       id: "review-time",
       q: "How long does Amazon take to answer?",
       a: AMAZON_REVIEW_TIME,
-      detail:
-        "The pace is Amazon's to set. While you wait, keep the next reply with this attempt, and set a follow-up date so the case tells you when to look again.",
+      detail: "Set a follow-up date on the case so it reminds you when to look again.",
     },
     {
       id: "deadlines",
       q: "Can I rely on the deadline shown?",
       a: "Confirm the exact date in your current notice and Account Health.",
       detail:
-        "The decoder highlights detected time windows. A window without a verified starting date is not an exact deadline.",
+        "A window is counted from the date on the notice; confirm that date in Account Health.",
     },
     {
       id: "submit",
       q: "Who submits the response?",
       a: "You review and submit through the official channel in the current request.",
-      detail:
-        "Your Seller Central account stays yours: you sign in and submit, and History keeps exactly what you sent with that attempt.",
     },
     {
       id: "replies",
       q: "What if Amazon asks for more information?",
       a: "Add the reply in History, then review it as the next request.",
       detail:
-        "You can open a new revision and recheck the evidence. Your earlier submitted wording and file references stay unchanged, so you can see exactly what you sent last time before you send anything again.",
+        "Earlier submissions stay unchanged, so you can see what you sent before sending again.",
     },
     {
       id: "files",
       q: "Where are my files saved?",
       a: "Original files are encrypted in your vault on this device.",
       detail:
-        "Preparing a workspace response sends case text and file references to AppealDeck, not the originals. A passphrase-protected backup can be uploaded with an Appeal Pass; backup metadata such as file names remains visible.",
+        "A passphrase-protected backup keeps a second copy. Its metadata, such as file names, stays visible.",
       link: { label: "Read about data storage", href: "/privacy#what-we-collect" },
     },
     {
       id: "processing",
       q: "What leaves my browser?",
-      a: "Your notice goes to AppealDeck when you decode it, and preparing a response sends your case text and file references, and your written words go on to the AI that writes the response from them. The files themselves are never sent for that. Nothing is ever sent to Amazon.",
+      a: "Your notice is read on our server. Preparing a response sends your case text and the words you wrote; files are not sent for drafting, and nothing is sent to Amazon.",
       // 24 Sep 2026: named two features deleted on 22 Sep (AI field suggestions, the interview's
       // drafting flow) and left out the one thing that does reach an AI provider. Now says what
       // the privacy policy says, and legalDisclosures.test.ts holds the two together.
@@ -865,22 +858,22 @@ export const FAQ = {
       q: "What does the Appeal Pass add?",
       a: "Response preparation and review for one eligible case, plus encrypted backup support. It also adds an AI reading of your business documents against the notice, when the AI is available.",
       detail:
-        "The pass is $249 once, with no subscription, for one case. Every revision of the case is included. A different case needs its own pass. Start by reviewing your request. Cases needing professional help do not offer self-serve drafting.",
+        "Every revision of its case is included; a different case needs its own Pass. Cases needing professional help do not offer self-serve drafting.",
     },
     {
       id: "refund",
       q: "What is your refund policy?",
       a: "You can request a refund within 14 days of purchase.",
       detail:
-        "Write to the address on the Refund page with your receipt or the email address on your account. Read the full policy and digital-delivery consent before buying.",
+        "Write to the address on the Refund page with your receipt or the email on your account.",
       link: { label: "Read the refund policy", href: "/refund" },
     },
     {
       id: "chatbot",
       q: "Can I use ChatGPT or Claude instead?",
-      a: "A chatbot can draft the letter, and for a first read of a simple notice it may be enough.",
+      a: "A chatbot can draft the letter. For a first read of a simple notice, it may be enough.",
       detail:
-        "A chatbot sees only what you paste. It can miss which invoice Amazon asked about, repeat a round that adds nothing, or fill a gap with a detail you never supplied. AppealDeck reads the notice, checks the documents it can against it, keeps every round in one case, warns you before a round that adds nothing, and builds the response only from facts you confirmed. Your files stay on your device. Use a chatbot for wording if it helps, and check every fact against your own records before you send.",
+        "It sees only what you paste. AppealDeck reads the notice, checks the documents against it and keeps every round in one case.",
       link: { label: "See the comparison", href: "/pricing#versus" },
     },
     {
@@ -891,8 +884,8 @@ export const FAQ = {
         ? `${professionalsEnabled() ? "" : OPENS_SOON.faqLead}Yes, for verified professionals: case credits in packs of ${PRODUCTS.pack10.count} and ${PRODUCTS.pack30.count}, or the Pro plan. The checks are free, and the written response is $249 per case for everyone else.`
         : "Professional pricing is being shaped with the first writers. The checks are free today, and the written response is $249 per case.",
       detail: professionalsListed()
-        ? "Each credit activates one case with an Appeal Pass. The page for writers has the prices, how to be verified and the fine print."
-        : "If you handle cases every week, write to us with how you work and what a case should cost you. The page for writers lists what you can use today.",
+        ? "Each credit activates one case with an Appeal Pass. The page for writers has the prices and the fine print."
+        : "Write to us with how you work and what a case should cost you.",
       link: { label: "For writers and VA teams", href: "/for-professionals" },
     },
     {
@@ -912,7 +905,7 @@ export const FAQ = {
             q: "What is the Account Pass?",
             a: `${accountPassEnabled() ? "" : OPENS_SOON.faqLead}One payment that covers every case on your account for 12 months, instead of one Pass per case.`,
             detail:
-              "It does everything an Appeal Pass does, for as many cases as you have, and it has the same 14-day refund. It ends 12 months after you buy it; a case with no Appeal Pass of its own then needs one to prepare a further response. It is for one seller's business, not for preparing other sellers' cases.",
+              "It covers one seller's business and ends 12 months after you buy it, with the same 14-day refund. It is not for preparing other sellers' cases.",
             link: { label: "See the plans", href: "/pricing#purchase" },
           },
         ] as const satisfies readonly FaqItem[])
@@ -926,7 +919,7 @@ export const FAQ = {
             q: "What is the AI document review?",
             a: `${reviewEnabled() ? "" : OPENS_SOON.faqLead}For ${PRODUCTS.review.price}, the AI reads up to five of one case's documents against what Amazon asked.`,
             detail:
-              "It is for a seller who wants the documents read before paying for the whole Pass. The price comes off the Appeal Pass for the same case, so you pay the difference, not both in full. The free check on your own device stays free either way, and the same 14-day refund applies.",
+              "Its price comes off the Appeal Pass for the same case, so you pay the difference. The same 14-day refund applies.",
             link: { label: "See the plans", href: "/pricing#purchase" },
           },
         ] as const satisfies readonly FaqItem[])
@@ -938,7 +931,7 @@ export const FAQ = {
             q: "Can I renew the Account Pass?",
             a: `Yes. A renewal is ${PRODUCTS.renewal.price} and adds 12 months to the end of your cover.`,
             detail:
-              "You can renew while the Account Pass is running and for a while after it ends. The 12 months start when the last cover ends, so renewing early loses nothing. Renew from the Billing page.",
+              "The 12 months start when the last cover ends, so renewing early loses nothing. Renew from Billing.",
             link: { label: "Open Billing", href: "/billing" },
           },
         ] as const satisfies readonly FaqItem[])
@@ -950,7 +943,7 @@ export const FAQ = {
             q: "How do case credits and the Pro plan work?",
             a: `${professionalsEnabled() ? "" : OPENS_SOON.faqLead}A case credit activates one case with an Appeal Pass. Packs of ${PRODUCTS.pack10.count} cost ${PRODUCTS.pack10.price} and of ${PRODUCTS.pack30.count} cost ${PRODUCTS.pack30.price}; the Pro plan is ${PRODUCTS.pro.price} ${PRODUCTS.pro.per} for ${PRODUCTS.pro.credits} credits.`,
             detail:
-              "Pack credits last 12 months. Pro credits last one more month than the month they arrive. Credits are for verified professionals preparing other sellers' cases; each case still needs its own seller's facts. Cancel the Pro plan any time in Billing.",
+              "Pack credits last 12 months. Credits are for verified professionals preparing other sellers' cases; each case still needs its own seller's facts.",
             link: { label: "For writers and VA teams", href: "/for-professionals" },
           },
         ] as const satisfies readonly FaqItem[])
@@ -962,11 +955,11 @@ export const FAQ = {
             q: "Do I get money back for telling you how my case ended?",
             a: `Yes. Tell us within 120 days of paying, whatever the result, and we refund ${PRODUCTS.rebate.amount} of that payment.`,
             detail:
-              "Any result counts, including a refusal or no answer yet. It comes back through Paddle, as a refund on your receipt. How the report is kept is in the privacy policy.",
+              "Any result counts, including a refusal or no answer yet. It comes back through Paddle as a refund on your receipt.",
           },
         ] as const satisfies readonly FaqItem[])
       : []),
-  ] as const satisfies readonly FaqItem[],
+  ] satisfies readonly FaqItem[],
   cta: {
     title: "Start with the notice in front of you.",
     desc: "See what is being asked before deciding whether you need a pass.",

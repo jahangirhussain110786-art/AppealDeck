@@ -8,7 +8,6 @@ import { FaqAccordion } from "@/components/pricing/FaqAccordion";
 import { PurchaseSection } from "@/components/pricing/PurchaseSection";
 import { PlanCards } from "@/components/pricing/PlanCards";
 import { PlanComparison } from "@/components/pricing/PlanComparison";
-import { PlanFit } from "@/components/pricing/PlanFit";
 import {
   accountPassEnabled,
   reviewEnabled,
@@ -59,13 +58,8 @@ export default function PricingPage() {
         <section className="relative -mt-28 pb-6">
           <PlanCards />
           {reviewListed() && <ReviewTeaser onSale={reviewEnabled()} />}
-          <p className="mx-auto mt-6 max-w-prose text-center text-base font-medium text-foreground">
-            {PRICING.freeVersusPass}
-          </p>
           <p className="mt-3 text-center text-sm text-muted-foreground">{PRICING.checkoutNote}</p>
         </section>
-
-        <PlanFit />
 
         {/* The promises are read before the pay button: each is a mechanism the buyer can check. */}
         <PromiseBand variant="inline" />

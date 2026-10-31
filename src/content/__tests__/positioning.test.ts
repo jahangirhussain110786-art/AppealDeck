@@ -72,7 +72,6 @@ describe("positioning", () => {
     const prominent = [
       HOME.hero.headline,
       HOME.hero.subline,
-      HOME.hero.reassuranceLine,
       PRICING.headline,
       PRICING.subline,
       PRICING.readFirstTitle,

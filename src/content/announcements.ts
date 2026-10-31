@@ -70,10 +70,10 @@ export const ANNOUNCEMENT_BAR = {
       linkLabel: "Read the guide",
     },
     {
-      id: "refund",
-      text: "Changed your mind? Refunds within 14 days, no questions asked.",
-      href: "/refund",
-      linkLabel: "Refund policy",
+      id: "guides",
+      text: "Unsure which notice you have? Each type has a plain-words guide.",
+      href: "/guides",
+      linkLabel: "Browse the guides",
     },
   ] satisfies Announcement[],
 };
