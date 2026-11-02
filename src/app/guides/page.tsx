@@ -5,6 +5,7 @@ import { MarketingShell } from "@/components/MarketingShell";
 import { PageHero } from "@/components/PageHero";
 import { ArrowRight } from "lucide-react";
 import { GUIDES, GUIDES_COMMON } from "@/content/guides";
+import { NOTES_COMMON } from "@/content/notes";
 
 export const metadata: Metadata = pageMetadata({
   title: GUIDES_COMMON.indexMetaTitle,
@@ -50,6 +51,13 @@ export default function GuidesIndexPage() {
             </li>
           ))}
         </ul>
+
+        <p className="mt-8 text-muted-foreground">
+          {NOTES_COMMON.fromGuides}{" "}
+          <Link className="text-link underline underline-offset-4" href="/notes">
+            {NOTES_COMMON.fromGuidesLink}
+          </Link>
+        </p>
       </div>
     </MarketingShell>
   );

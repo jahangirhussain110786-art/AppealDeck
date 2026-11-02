@@ -56,7 +56,11 @@ export function SiteFooter() {
         />
         <FooterGroup
           title={SHARED.footer.groups.guides}
-          links={GUIDES.map((g) => ({ href: `/guides/${g.slug}`, label: g.navLabel }))}
+          links={[
+            { href: "/guides", label: SHARED.nav.guides },
+            { href: "/notes", label: SHARED.nav.notes },
+            ...GUIDES.map((g) => ({ href: `/guides/${g.slug}`, label: g.navLabel })),
+          ]}
         />
         <FooterGroup
           title={SHARED.footer.groups.legal}

@@ -22,4 +22,7 @@ export const SCOPE = {
    */
   guide:
     "This guide is general information, not legal advice, and AppealDeck is not affiliated with Amazon. Amazon decides every appeal, and nothing here predicts how yours will go. Amazon changes its policies; check the date above. These steps describe the US store. Use your own marketplace's Seller Central and addresses.",
+
+  /** The same notice for a note: shorter advice, the same boundary. */
+  note: "These notes are general information, not legal advice, and AppealDeck is not affiliated with Amazon. Amazon decides every appeal, and nothing here predicts how yours will go. Amazon changes its policies; check the date above. These notes describe the US store. Use your own marketplace's Seller Central.",
 } as const;

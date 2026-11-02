@@ -84,7 +84,7 @@ describe("Dex, the guide in the corner", () => {
           existsSync(join(appDir, d.name, "page.tsx")),
       )
       .map((d) => `/${d.name}`);
-    pages.push("/", "/guides/some-guide");
+    pages.push("/", "/guides/some-guide", "/notes/some-note");
     for (const page of pages) expect(guideFor(page), page).not.toEqual(GUIDE.fallback);
   });
 

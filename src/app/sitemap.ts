@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/urls";
 import { GUIDES } from "@/content/guides";
+import { NOTES } from "@/content/notes";
 import { LEGAL } from "@/content/legal";
 import { LICENCES } from "@/content/licences";
 
@@ -29,11 +30,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/licences", lastModified: LICENCES.updated },
     { path: "/guides" },
     ...GUIDES.map((g) => ({ path: `/guides/${g.slug}`, lastModified: g.lastVerified })),
+    { path: "/notes" },
+    ...NOTES.map((n) => ({ path: `/notes/${n.slug}`, lastModified: n.updated })),
   ];
   return routes.map(({ path, lastModified }) => ({
     url: `${SITE_URL}${path}`,
     ...(lastModified ? { lastModified } : {}),
     changeFrequency: "weekly",
-    priority: path === "" || path === "/decode" ? 1 : path.startsWith("/guides/") ? 0.8 : 0.6,
+    priority:
+      path === "" || path === "/decode"
+        ? 1
+        : path.startsWith("/guides/") || path.startsWith("/notes/")
+          ? 0.8
+          : 0.6,
   }));
 }
