@@ -19,6 +19,19 @@ const nextConfig = {
     // refetches from the server instead of reusing a stale prefetch.
     staleTimes: { dynamic: 0 },
   },
+  // 2 Nov 2026: the library was renamed from "guides" to the Playbook before any deployment. The
+  // redirects keep working any link made while it was in review, including the hour the notes
+  // lived on /notes.
+  async redirects() {
+    return [
+      { source: "/notes", destination: "/playbook#notes", permanent: true },
+      { source: "/notes/:slug", destination: "/playbook/notes/:slug", permanent: true },
+      { source: "/guides/notes", destination: "/playbook#notes", permanent: true },
+      { source: "/guides/notes/:slug", destination: "/playbook/notes/:slug", permanent: true },
+      { source: "/guides", destination: "/playbook", permanent: true },
+      { source: "/guides/:slug", destination: "/playbook/:slug", permanent: true },
+    ];
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);

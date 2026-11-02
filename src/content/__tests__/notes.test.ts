@@ -3,12 +3,15 @@ import sitemap from "@/app/sitemap";
 import { GUIDES } from "../guides";
 import { NOTES, NOTES_COMMON, noteBySlug } from "../notes";
 import { SCOPE } from "../scope";
+import { readingMinutes } from "@/lib/readingTime";
 
 describe("notes", () => {
-  it("lists the index and every note in the sitemap", () => {
+  it("lists every note in the sitemap, under the playbook", () => {
     const paths = sitemap().map((e) => new URL(e.url).pathname);
-    expect(paths).toContain("/notes");
-    for (const n of NOTES) expect(paths, n.slug).toContain(`/notes/${n.slug}`);
+    for (const n of NOTES) expect(paths, n.slug).toContain(`/playbook/notes/${n.slug}`);
+    // The old standalone paths are gone; next.config.mjs redirects them to the hub.
+    expect(paths).not.toContain("/notes");
+    for (const n of NOTES) expect(paths).not.toContain(`/notes/${n.slug}`);
   });
 
   it("dates every note with a real calendar day and never dates it backwards", () => {
@@ -48,6 +51,12 @@ describe("notes", () => {
     }
   });
 
+  // The hub prints "N min read" beside each row, so the estimate has to stay short: a note that
+  // reaches guide length has outgrown its format.
+  it("stays a short read on the hub's own estimate", () => {
+    for (const n of NOTES) expect(readingMinutes(n), n.slug).toBeLessThanOrEqual(4);
+  });
+
   it("carries the note scope notice", () => {
     expect(NOTES_COMMON.disclaimer).toBe(SCOPE.note);
     expect(NOTES_COMMON.disclaimer).toMatch(/not legal advice/);
@@ -62,10 +71,8 @@ describe("notes", () => {
     expect(text).not.toMatch(/amazon (detects|rejects|flags)/i);
   });
 
-  it("keeps every public title and description short enough to show whole in search results", () => {
-    const titles = [...NOTES.map((n) => n.metaTitle), NOTES_COMMON.indexMetaTitle];
-    for (const t of titles) expect(t.length + 13, t).toBeLessThanOrEqual(60);
-    const descriptions = [...NOTES.map((n) => n.description), NOTES_COMMON.indexDescription];
-    for (const d of descriptions) expect(d.length, d).toBeLessThanOrEqual(160);
+  it("keeps every note title and description short enough to show whole in search results", () => {
+    for (const n of NOTES) expect(n.metaTitle.length + 13, n.metaTitle).toBeLessThanOrEqual(60);
+    for (const n of NOTES) expect(n.description.length, n.description).toBeLessThanOrEqual(160);
   });
 });

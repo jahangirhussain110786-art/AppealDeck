@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { SHARED } from "@/content/shared";
-import { GUIDES } from "@/content/guides";
+import { GUIDES, GUIDES_COMMON } from "@/content/guides";
 
 function FooterGroup({
   title,
@@ -55,11 +55,11 @@ export function SiteFooter() {
           ]}
         />
         <FooterGroup
-          title={SHARED.footer.groups.guides}
+          title={SHARED.footer.groups.playbook}
           links={[
-            { href: "/guides", label: SHARED.nav.guides },
-            { href: "/notes", label: SHARED.nav.notes },
-            ...GUIDES.map((g) => ({ href: `/guides/${g.slug}`, label: g.navLabel })),
+            { href: "/playbook", label: GUIDES_COMMON.allPages },
+            { href: "/playbook#notes", label: SHARED.nav.notes },
+            ...GUIDES.map((g) => ({ href: `/playbook/${g.slug}`, label: g.navLabel })),
           ]}
         />
         <FooterGroup

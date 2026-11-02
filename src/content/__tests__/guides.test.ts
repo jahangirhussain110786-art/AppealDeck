@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 import sitemap from "@/app/sitemap";
 import { GUIDES, GUIDES_COMMON } from "../guides";
+import { NOTES } from "../notes";
 import { SHARED } from "../shared";
 import { DECODE } from "../marketing";
 
 describe("guides (B-25)", () => {
   it("lists every guide in the sitemap", () => {
     const paths = sitemap().map((e) => new URL(e.url).pathname);
-    for (const g of GUIDES) expect(paths, g.slug).toContain(`/guides/${g.slug}`);
+    for (const g of GUIDES) expect(paths, g.slug).toContain(`/playbook/${g.slug}`);
   });
 
   it("dates every guide with a real calendar day", () => {
@@ -46,8 +47,29 @@ describe("guides (B-25)", () => {
       SHARED.metadata.descriptionPricing,
       SHARED.metadata.descriptionFaq,
       DECODE.metaDescription,
+      GUIDES_COMMON.indexDescription,
     ])
       expect(d.length, d).toBeLessThanOrEqual(160);
+  });
+});
+
+describe("the playbook hub (2 Nov 2026)", () => {
+  it("splits the guides into notice guides and comparisons, then the notes", () => {
+    const notices = GUIDES.filter((g) => !g.compare);
+    const choosing = GUIDES.filter((g) => g.compare);
+    expect(notices.length).toBeGreaterThan(0);
+    expect(choosing.length).toBeGreaterThan(0);
+    expect(notices.length + choosing.length).toBe(GUIDES.length);
+    expect(NOTES.length).toBeGreaterThan(0);
+  });
+
+  it("says in one line where a reader should start, and gives every group a lede", () => {
+    expect(GUIDES_COMMON.indexTitle).toMatch(/playbook/i);
+    expect(GUIDES_COMMON.unsureLink).toMatch(/decoder/i);
+    for (const group of Object.values(GUIDES_COMMON.groups)) {
+      expect(group.title.length).toBeGreaterThan(0);
+      expect(group.lede.length).toBeGreaterThan(20);
+    }
   });
 });
 

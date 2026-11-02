@@ -14,9 +14,9 @@ const PAGES = [
   "/privacy",
   "/terms",
   "/refund",
-  "/guides",
-  "/guides/section-3",
-  "/guides/plan-of-action-examples",
+  "/playbook",
+  "/playbook/section-3",
+  "/playbook/plan-of-action-examples",
 ];
 
 for (const path of PAGES) {

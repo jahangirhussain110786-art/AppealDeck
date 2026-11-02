@@ -27,7 +27,7 @@ export default function DecodePage() {
           {GUIDES.filter((g) => !g.compare).map((g) => (
             <li key={g.slug}>
               <Link
-                href={`/guides/${g.slug}`}
+                href={`/playbook/${g.slug}`}
                 className="inline-flex min-h-8 items-center max-sm:min-h-11 [@media(pointer:coarse)]:min-h-11 text-link underline-offset-4 hover:underline"
               >
                 {g.navLabel}

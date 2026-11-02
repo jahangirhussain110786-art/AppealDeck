@@ -41,20 +41,47 @@ export type Guide = {
 };
 
 export const GUIDES_COMMON = {
-  eyebrow: "Guide",
-  indexTitle: "Guides for sellers answering Amazon",
+  // 2 Nov 2026: the library is the Playbook, not a "guides" section — one index, three groups,
+  // one name that says what the pages are worth. A guide explains one kind of notice, a note is
+  // one habit that applies to any of them; the heading now carries the method, not the format.
+  eyebrow: "Playbook",
+  indexTitle: "The Amazon appeal playbook",
   indexIntro:
-    "Plain explanations of the notices sellers search for most, written for the hour after the email arrives. Each one ends where your notice's own wording starts to matter.",
-  indexMetaTitle: "Amazon seller appeal guides",
+    "What each notice asks, how a response is built, and short notes on keeping a case in order. Every page is dated.",
+  indexMetaTitle: "The Amazon appeal playbook",
   indexDescription:
-    "Plain guides to Section 3 deactivations, denied appeals, authenticity complaints, Plans of Action, verification and IP complaints.",
+    "What each kind of Amazon notice asks, how a response is built, and short notes on keeping a case in order. Free to read.",
+  unsureLead: "Not sure which notice you have?",
+  unsureLink: "Paste it and the decoder names it",
+  groups: {
+    notices: {
+      title: "By notice type",
+      lede: "Each page starts from the notice Amazon sent and ends where its own wording takes over.",
+      unit: "notice",
+    },
+    choosing: {
+      title: "Weighing your options",
+      lede: "How this compares with a chatbot or a paid appeal service.",
+      unit: "comparison",
+    },
+    notes: {
+      title: "Notes",
+      lede: "Short pieces on the habits behind a clear appeal, added as we write them.",
+      unit: "note",
+    },
+  },
+  readingSuffix: "min read",
+  verifiedLabel: "Verified",
+  addedLabel: "Added",
+  hubLink: "The playbook",
+  allPages: "All pages",
   lastVerifiedLabel: "Last verified",
   ctaButton: "Paste your notice — free",
   ctaNote:
     "No account needed to decode. Nothing is sent to Amazon, and your Seller Central account stays yours.",
   appealDeckDoes: "What AppealDeck does here",
   appealDeckDoesNot: "What stays in your hands",
-  related: "Other guides",
+  related: "More from the playbook",
   disclaimer: SCOPE.guide,
 } as const;
 

@@ -83,10 +83,13 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
   // is the real entry point) — it no longer gets a nav slot. Billing moves into the profile menu
   // for a signed-in seller; there's no profile to hide Pricing behind when signed out, so it
   // stays a plain nav item in that state only.
+  // 2 Nov 2026: the Playbook gets a slot. It is the one reading surface a seller may need before
+  // they own anything, and the footer alone buried it.
   const navItems: NavItem[] = [
     { href: "/decode", label: SHARED.nav.decode },
     { href: "/dashboard", label: SHARED.nav.dashboard },
     { href: "/vault", label: SHARED.nav.vault, lock: isSignedOut },
+    { href: "/playbook", label: SHARED.nav.playbook },
     ...(isSignedOut ? [{ href: "/pricing", label: SHARED.nav.pricing }] : []),
   ];
 
@@ -111,7 +114,9 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
         >
           <Logo href="/" />
 
-          <nav className="hidden items-center gap-1 md:flex" aria-label={SHARED.nav.primary}>
+          {/* 2 Nov 2026: the full bar now needs 830px (five links, sign-in and the decode CTA),
+              so it starts at lg and tablets get the menu sheet — otherwise the CTA is clipped. */}
+          <nav className="hidden items-center gap-1 lg:flex" aria-label={SHARED.nav.primary}>
             {navItems.map((item) => (
               <NavPill key={item.href} href={item.href} label={item.label} lock={item.lock} />
             ))}
@@ -142,7 +147,7 @@ export function AppHeader({ mode = "marketing", user, signedIn }: AppHeaderProps
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden"
+                  className="lg:hidden"
                   aria-label={SHARED.nav.openMenu}
                 >
                   <Menu className="h-5 w-5" />

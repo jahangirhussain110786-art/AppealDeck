@@ -38,10 +38,10 @@ test.describe("Marketing + auth surfaces (axe-core, serious + critical)", () => 
   });
 
   for (const path of [
-    "/guides",
-    "/guides/section-3",
-    "/guides/ip-complaint",
-    "/guides/plan-of-action-examples",
+    "/playbook",
+    "/playbook/section-3",
+    "/playbook/ip-complaint",
+    "/playbook/plan-of-action-examples",
   ]) {
     test(`${path} page has no serious or critical a11y violations`, async ({ page }) => {
       await assertNoAxeViolations(page, path);

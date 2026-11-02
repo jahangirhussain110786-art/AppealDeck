@@ -22,7 +22,7 @@ export const SHARED = {
     pricing: "Pricing",
     billing: "Billing",
     faq: "FAQ",
-    guides: "Guides",
+    playbook: "Playbook",
     notes: "Notes",
     signIn: "Sign in",
     decodeCta: "Decode a notice",
@@ -62,7 +62,7 @@ export const SHARED = {
       "AppealDeck is not affiliated with, endorsed by, or sponsored by Amazon.com, Inc. or its affiliates.",
     groups: {
       product: "Product",
-      guides: "Guides & notes",
+      playbook: "Playbook",
       legal: "Legal",
     },
     category: POSITIONING.category,

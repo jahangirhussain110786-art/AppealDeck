@@ -66,7 +66,7 @@ export const SUPPORT = {
         body: "What we read, and what we never keep",
       },
       { href: "/refund", title: "Paying and refunds", body: "One price per case, 14-day refund" },
-      { href: "/guides", title: "Guides", body: "Notice types, explained in plain words" },
+      { href: "/playbook", title: "Playbook", body: "What each notice asks, in plain words" },
     ],
   },
   elsewhere: {

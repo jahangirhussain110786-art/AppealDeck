@@ -6,9 +6,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_URL } from "@/lib/urls";
-import { GUIDES } from "@/content/guides";
+import { formatDay } from "@/lib/formatDay";
+import { GUIDES, GUIDES_COMMON } from "@/content/guides";
 import { NOTES, NOTES_COMMON, type Note } from "@/content/notes";
-import { formatDay } from "./format";
 
 /** One note. Content lives in `src/content/notes.ts`; this only lays it out. */
 export function NoteView({ note }: { note: Note }) {
@@ -23,7 +23,7 @@ export function NoteView({ note }: { note: Note }) {
       description: note.description,
       datePublished: note.published,
       dateModified: note.updated,
-      mainEntityOfPage: `${SITE_URL}/notes/${note.slug}`,
+      mainEntityOfPage: `${SITE_URL}/playbook/notes/${note.slug}`,
       image: `${SITE_URL}/brand/og-1200x630.png`,
       inLanguage: "en",
       author: { "@type": "Organization", name: "AppealDeck", url: SITE_URL },
@@ -39,7 +39,12 @@ export function NoteView({ note }: { note: Note }) {
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "AppealDeck", item: SITE_URL },
-        { "@type": "ListItem", position: 2, name: NOTES_COMMON.eyebrow, item: `${SITE_URL}/notes` },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: GUIDES_COMMON.eyebrow,
+          item: `${SITE_URL}/playbook`,
+        },
         { "@type": "ListItem", position: 3, name: note.navLabel },
       ],
     },
@@ -51,8 +56,8 @@ export function NoteView({ note }: { note: Note }) {
       hero={
         <PageHero
           eyebrow={
-            <Link href="/notes" className="hover:underline">
-              {NOTES_COMMON.eyebrow}
+            <Link href="/playbook" className="hover:underline">
+              {GUIDES_COMMON.eyebrow}
             </Link>
           }
           title={note.title}
@@ -122,7 +127,7 @@ export function NoteView({ note }: { note: Note }) {
                     <li key={n.slug}>
                       <Link
                         className="text-link underline underline-offset-4"
-                        href={`/notes/${n.slug}`}
+                        href={`/playbook/notes/${n.slug}`}
                       >
                         {n.title}
                       </Link>
@@ -141,7 +146,7 @@ export function NoteView({ note }: { note: Note }) {
                     <li key={g.slug}>
                       <Link
                         className="text-link underline underline-offset-4"
-                        href={`/guides/${g.slug}`}
+                        href={`/playbook/${g.slug}`}
                       >
                         {g.title}
                       </Link>
@@ -151,14 +156,8 @@ export function NoteView({ note }: { note: Note }) {
               </div>
             )}
             <p className="mt-6 text-sm">
-              <Link className="text-link underline underline-offset-4" href="/notes">
-                {NOTES_COMMON.allNotes}
-              </Link>
-              <span aria-hidden className="px-2 text-muted-foreground">
-                ·
-              </span>
-              <Link className="text-link underline underline-offset-4" href="/guides">
-                {NOTES_COMMON.allGuides}
+              <Link className="text-link underline underline-offset-4" href="/playbook">
+                {GUIDES_COMMON.hubLink}
               </Link>
             </p>
           </nav>

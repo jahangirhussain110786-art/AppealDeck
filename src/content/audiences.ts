@@ -335,7 +335,7 @@ export const PARTNERS = {
     items: [
       { label: "The notice decoder", href: "/decode" },
       { label: "The free invoice check", href: "/check-invoice" },
-      { label: "The guides", href: "/guides" },
+      { label: "The playbook", href: "/playbook" },
     ],
   },
   mailto: `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(PARTNER_SUBJECT)}`,

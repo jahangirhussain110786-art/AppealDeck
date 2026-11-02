@@ -65,7 +65,7 @@ describe("Dex, the guide in the corner", () => {
   it("matches the longest path, treats the home page as exact, and falls back politely", () => {
     expect(guideFor("/")?.line).toMatch(/Paste a notice/);
     expect(guideFor("/decode")?.mood).toBe("explaining");
-    expect(guideFor("/guides/some-guide")?.line).toBe(guideFor("/guides")?.line);
+    expect(guideFor("/playbook/some-guide")?.line).toBe(guideFor("/playbook")?.line);
     expect(guideFor("/an-unknown-page")).toEqual(GUIDE.fallback);
     expect(guideFor(null)?.line).toMatch(/Paste a notice/);
   });
@@ -84,7 +84,7 @@ describe("Dex, the guide in the corner", () => {
           existsSync(join(appDir, d.name, "page.tsx")),
       )
       .map((d) => `/${d.name}`);
-    pages.push("/", "/guides/some-guide", "/notes/some-note");
+    pages.push("/", "/playbook/some-guide", "/playbook/notes/some-note");
     for (const page of pages) expect(guideFor(page), page).not.toEqual(GUIDE.fallback);
   });
 

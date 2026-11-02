@@ -6,15 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_URL } from "@/lib/urls";
+import { formatDay } from "@/lib/formatDay";
 import { GUIDES, GUIDES_COMMON, type Guide } from "@/content/guides";
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** "2026-09-25" -> "25 Sep 2026" with no Date, so no timezone can move it a day. */
-function formatDay(isoDay: string): string {
-  const [y, m, d] = isoDay.split("-").map(Number);
-  return `${d} ${MONTHS[(m ?? 1) - 1]} ${y}`;
-}
 
 /** One guide page. Content lives in `src/content/guides.ts`; this only lays it out. */
 export function GuideView({ guide }: { guide: Guide }) {
@@ -26,7 +19,7 @@ export function GuideView({ guide }: { guide: Guide }) {
       headline: guide.title,
       description: guide.description,
       dateModified: guide.lastVerified,
-      mainEntityOfPage: `${SITE_URL}/guides/${guide.slug}`,
+      mainEntityOfPage: `${SITE_URL}/playbook/${guide.slug}`,
       image: `${SITE_URL}/brand/og-1200x630.png`,
       inLanguage: "en",
       author: { "@type": "Organization", name: "AppealDeck", url: SITE_URL },
@@ -42,7 +35,12 @@ export function GuideView({ guide }: { guide: Guide }) {
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "AppealDeck", item: SITE_URL },
-        { "@type": "ListItem", position: 2, name: "Guides", item: `${SITE_URL}/guides` },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: GUIDES_COMMON.eyebrow,
+          item: `${SITE_URL}/playbook`,
+        },
         { "@type": "ListItem", position: 3, name: guide.navLabel },
       ],
     },
@@ -53,7 +51,7 @@ export function GuideView({ guide }: { guide: Guide }) {
       hero={
         <PageHero
           eyebrow={
-            <Link href="/guides" className="hover:underline">
+            <Link href="/playbook" className="hover:underline">
               {GUIDES_COMMON.eyebrow}
             </Link>
           }
@@ -153,13 +151,18 @@ export function GuideView({ guide }: { guide: Guide }) {
                 <li key={g.slug}>
                   <Link
                     className="text-link underline underline-offset-4"
-                    href={`/guides/${g.slug}`}
+                    href={`/playbook/${g.slug}`}
                   >
                     {g.title}
                   </Link>
                 </li>
               ))}
             </ul>
+            <p className="mt-4 text-sm">
+              <Link className="text-link underline underline-offset-4" href="/playbook">
+                {GUIDES_COMMON.hubLink}
+              </Link>
+            </p>
           </nav>
 
           <p className="text-xs leading-relaxed text-muted-foreground">

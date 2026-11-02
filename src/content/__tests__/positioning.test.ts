@@ -20,7 +20,7 @@ const ROUTES = new Set([
   "/support",
   "/how-we-test",
   "/faq",
-  "/guides",
+  "/playbook",
   "/check-invoice",
   "/for-professionals",
   "/partners",

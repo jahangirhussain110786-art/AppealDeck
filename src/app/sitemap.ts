@@ -28,20 +28,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/terms", lastModified: LEGAL.lastUpdated.terms },
     { path: "/refund", lastModified: LEGAL.lastUpdated.refund },
     { path: "/licences", lastModified: LICENCES.updated },
-    { path: "/guides" },
-    ...GUIDES.map((g) => ({ path: `/guides/${g.slug}`, lastModified: g.lastVerified })),
-    { path: "/notes" },
-    ...NOTES.map((n) => ({ path: `/notes/${n.slug}`, lastModified: n.updated })),
+    { path: "/playbook" },
+    ...GUIDES.map((g) => ({ path: `/playbook/${g.slug}`, lastModified: g.lastVerified })),
+    ...NOTES.map((n) => ({ path: `/playbook/notes/${n.slug}`, lastModified: n.updated })),
   ];
   return routes.map(({ path, lastModified }) => ({
     url: `${SITE_URL}${path}`,
     ...(lastModified ? { lastModified } : {}),
     changeFrequency: "weekly",
-    priority:
-      path === "" || path === "/decode"
-        ? 1
-        : path.startsWith("/guides/") || path.startsWith("/notes/")
-          ? 0.8
-          : 0.6,
+    priority: path === "" || path === "/decode" ? 1 : path.startsWith("/playbook/") ? 0.8 : 0.6,
   }));
 }

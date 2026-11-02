@@ -1,7 +1,7 @@
 import { SCOPE } from "./scope";
 
 /**
- * Notes (2 Nov 2026): short, practical pieces that sit beside the guides.
+ * Notes (2 Nov 2026): short, practical pieces in the guides hub.
  *
  * The guides explain a kind of notice. A note covers one habit that applies whatever the notice
  * says, and stays short enough to read in the minute a seller actually has. Notes are dated and
@@ -35,13 +35,6 @@ export type Note = {
 };
 
 export const NOTES_COMMON = {
-  eyebrow: "Notes",
-  indexTitle: "Short notes for the work before an appeal",
-  indexIntro:
-    "One habit per note, for the part of an appeal that no policy page covers: saving the notice, answering what Amazon asked, and keeping the trail. Free to read, no account.",
-  indexMetaTitle: "Working notes for Amazon sellers",
-  indexDescription:
-    "Short notes on the parts of an appeal no policy page covers: saving the notice, answering a questionnaire and keeping the trail.",
   publishedLabel: "Published",
   updatedLabel: "Updated",
   takeawayLabel: "In short",
@@ -52,13 +45,6 @@ export const NOTES_COMMON = {
   relatedLabel: "More reading",
   relatedNotesLabel: "Other notes",
   relatedGuidesLabel: "Guides on each kind of notice",
-  allNotes: "All notes",
-  allGuides: "All guides",
-  /** Shown at the foot of the index so a reader knows where the longer explanations live. */
-  guidesLead: "Each kind of notice has a longer guide.",
-  /** Shown at the foot of the guides index, pointing the other way. */
-  fromGuides: "Short, practical notes on keeping a case in order live in Notes.",
-  fromGuidesLink: "Read the notes",
   disclaimer: SCOPE.note,
 } as const;
 

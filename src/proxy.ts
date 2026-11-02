@@ -31,7 +31,7 @@ const MARKETING_PATHS = [
   "/licences",
   "/faq",
   "/support",
-  "/guides",
+  "/playbook",
   "/how-we-test",
   "/for-professionals",
   "/partners",
@@ -40,7 +40,7 @@ const MARKETING_PATHS = [
   "/check-invoice",
 ];
 
-/** True for a marketing page and its subpaths (`/guides/...`), including the home page. */
+/** True for a marketing page and its subpaths (`/playbook/...`), including the home page. */
 function isMarketingPath(pathname: string): boolean {
   return MARKETING_PATHS.some((p) => p === pathname || (p !== "/" && pathname.startsWith(`${p}/`)));
 }
