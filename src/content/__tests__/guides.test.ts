@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import sitemap from "@/app/sitemap";
+import { anchorId } from "@/app/playbook/anchor";
 import { GUIDES, GUIDES_COMMON } from "../guides";
 import { NOTES } from "../notes";
 import { SHARED } from "../shared";
@@ -50,6 +51,18 @@ describe("guides (B-25)", () => {
       GUIDES_COMMON.indexDescription,
     ])
       expect(d.length, d).toBeLessThanOrEqual(160);
+  });
+});
+
+describe("the reading pages (3 Nov 2026)", () => {
+  // Every section is a link in the contents rail. Two headings that slug to the same anchor make the
+  // second link jump to the first section, and an empty anchor makes the link go nowhere.
+  it("gives every section a unique anchor, so a contents link lands on its own section", () => {
+    for (const page of [...GUIDES, ...NOTES]) {
+      const ids = page.sections.map((s) => anchorId(s.heading));
+      expect(new Set(ids).size, page.slug).toBe(ids.length);
+      for (const id of ids) expect(id.length, `${page.slug}: ${id}`).toBeGreaterThan(0);
+    }
   });
 });
 

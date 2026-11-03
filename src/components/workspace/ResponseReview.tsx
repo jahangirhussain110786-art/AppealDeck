@@ -495,7 +495,7 @@ ${text}`
                   nobody, so composer.ts's UNATTESTED_CLAIMS rule had never fired on a real case.
                   Amazon treats a corrective-action claim it later finds untrue far more harshly
                   than an incomplete appeal, which is why the seller confirms it themselves and why
-                  the copy says plainly that we cannot check it.
+                  the copy asks them to.
                 */}
                 <label className="flex min-h-11 cursor-pointer items-start gap-3 py-2 text-sm">
                   <input

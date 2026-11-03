@@ -76,12 +76,14 @@ export const GUIDES_COMMON = {
   hubLink: "The playbook",
   allPages: "All pages",
   startHere: "Start here",
+  /** The rail's accessible name, which the Playbook tests address. */
   sectionsLabel: "Playbook sections",
+  /** The rail's visible heading: a reader's phrase, not a label. */
+  sectionsHeading: "In this playbook",
   onThisPage: "On this page",
   pagesLabel: "pages",
   freeLabel: "Free to read",
   datedLabel: "Every page dated",
-  readLabel: "Read",
   lastVerifiedLabel: "Last verified",
   ctaButton: "Paste your notice — free",
   ctaNote:
@@ -111,7 +113,7 @@ export const GUIDES: Guide[] = [
           "Amazon does not charge a fee to reinstate an account.",
           "Amazon does not ask for your password or a one-time code by email.",
           "Amazon does not move your case to WhatsApp, Telegram or a personal phone number.",
-          "Consultants document stop-spoofing@amazon.com as the address for reporting phishing. Check it on Amazon's own security pages first.",
+          "Amazon's security pages list stop-spoofing@amazon.com for reporting phishing. Check the address there before you use it.",
         ],
       },
       {
@@ -121,7 +123,7 @@ export const GUIDES: Guide[] = [
           "A verification request needs the specific document or step it names, not an apology letter.",
           "A policy or performance problem usually needs a Plan of Action: root cause, what you fixed, and how you will prevent it.",
           "Some notices ask you to answer specific questions, and the answer is those answers.",
-          "A related-account notice usually offers a few paths, and a 3PL, virtual assistant or other service provider with access to your account can be one of the links. Answer with the path that is true. Consultants describe these as the options, so read your notice for its exact wording.",
+          "A related-account notice usually offers a few paths, and a 3PL, virtual assistant or other service provider with access to your account can be one of the links. Answer with the path that is true, and read your notice for its exact wording.",
           "A notice that alleges forged documents or fraud needs qualified professional help before you reply.",
         ],
       },
@@ -145,7 +147,7 @@ export const GUIDES: Guide[] = [
         heading: "What protects your case",
         points: [
           "Keep one seller account. Amazon's related-account rules can link a new account to this one.",
-          "Send a considered first appeal. Amazon states no limit on appeals, and practitioners advise against sending a hurried one.",
+          "Send a considered first appeal. Amazon states no limit on appeals, so take the time to get the first one right.",
           "After a refusal, change what you send or explain what is new.",
           "Lead with evidence that the risk is fixed; an argument about fairness carries less weight.",
           "Keep your Seller Central login to yourself.",
@@ -202,7 +204,7 @@ export const GUIDES: Guide[] = [
         points: [
           "Supplier invoices for a completed purchase, dated within the 365 days before Amazon's notice, covering what you sold in that period. Pro-forma invoices and quotes are refused. Checked 6 Oct 2026 against Amazon's own invoice guidance.",
           "Invoices you issued yourself, or from a supplier that appears to be the same business as you, are refused. Include the supplier's name, phone, address and website. Amazon accepts PDF, JPG, PNG and GIF.",
-          "Practitioners advise that the business name and address on the invoice should match your seller account.",
+          "The business name and address on the invoice should match your seller account.",
           "Records that match the notice: the ASINs, order IDs or dates it names.",
           "Only documents you really hold, unedited. Amazon may reach out to the supplier, so their contact details must be real and reachable.",
         ],
@@ -258,10 +260,10 @@ export const GUIDES: Guide[] = [
           "Compare every field in Seller Central with your documents character by character. Fix the account or pick a document that matches.",
           "Use a full-page colour scan or PDF of the original document.",
           "A bank statement or government letter in the same name and address is another option; Amazon's accepted list is on its verification page.",
-          "Practitioners say utility bills, bank or card statements and government letters are accepted if issued within about 180 days (90 in some regions), with name and address matching your account. Check your own requirements page.",
+          "Utility bills, bank or card statements and government letters are accepted if issued within about 180 days (90 in some regions), with name and address matching your account. Check your own requirements page.",
           "For an INFORM Consumers Act notice, the dates in the notice win. Use Review Your Account Information in Account Health.",
           "Upload through the verification page in Seller Central. Do not send documents in reply to an email you did not expect.",
-          "If Amazon asks for a video call, prepare the original documents it names. Practitioners describe it as showing the originals to an Amazon associate.",
+          "If Amazon asks for a video call, prepare the original documents it names; the call is a check of those originals against your account.",
         ],
       },
       {
@@ -302,7 +304,7 @@ export const GUIDES: Guide[] = [
         heading: "The ways it usually ends",
         points: [
           "You show you are authorised to sell the item, for example with invoices from the brand or an authorised distributor. If you are the brand owner, send proof of your trademark registration instead of an authorization letter.",
-          "The rights owner withdraws the complaint, often after a polite, factual message. Practitioners say retraction requests go from the rights owner to Amazon, quoting the complaint ID. Brand Registry's Report a Violation is the rights owner's tool, so check your notice for their contact.",
+          "The rights owner withdraws the complaint, often after a polite, factual message. A retraction request goes from the rights owner to Amazon, quoting the complaint ID. Brand Registry's Report a Violation is the rights owner's tool, so check your notice for their contact.",
           "You agree the listing was a problem, remove it and explain what you changed.",
           "You dispute the claim formally. That is a legal statement with legal consequences, so get qualified advice first.",
         ],

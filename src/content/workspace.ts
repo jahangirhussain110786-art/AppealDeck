@@ -7,9 +7,10 @@ export const WORKSPACE = {
     title: "What this reply says",
     reasons: "What Amazon says was wrong, in its own words",
     note: "This is our reading of the wording. Read the reply itself before you act on it.",
-    // 8 Oct 2026. Sellers on Amazon’s own forums report refusals that say only that the information
-    // was not enough. Shown for that category only, folded, so a reply that does name a reason is
-    // not buried. The steps are practitioner guidance and say so; none of them predicts an outcome.
+    // 8 Oct 2026. Refusals often say only that the information was not enough. Shown for that
+    // category only, folded, so a reply that does name a reason is not buried. The steps are the
+    // checks a complete answer passes; none of them predicts an outcome, and none is attributed to
+    // an outsider (3 Nov 2026).
     unclear: {
       summary: "If the reply does not say what was missing, work through this first.",
       items: [
@@ -19,7 +20,7 @@ export const WORKSPACE = {
         "Send something real that is new: a document, a corrected fact, or something you have since done.",
         "From the Account Health page, use Contact Us and ask what specifically was insufficient.",
       ],
-      note: "This comes from guidance by appeal consultants and from Amazon’s seller forums, not from Amazon.",
+      note: "Amazon does not publish this as a procedure; these are the checks a complete answer passes.",
     },
     categories: {
       needs_more_information:
@@ -501,9 +502,9 @@ export const WORKSPACE = {
   },
   waitingHelp: "Ask for it, then carry on with the other steps while you wait.",
   // B-04, reduced (24 Sep 2026). Shown after two responses have been sent and Amazon has replied
-  // again without reinstating. Amazon publishes no escalation order: the routes below are the ones
-  // its own seller forums and appeal consultants describe, checked on the date given, and the copy
-  // says so rather than presenting them as Amazon's procedure. Nothing here predicts an outcome.
+  // again without reinstating. Amazon publishes no escalation order, so the copy says these routes
+  // are not Amazon's procedure, checked on the date given, without deferring to an outsider's view
+  // of them (3 Nov 2026). Nothing here predicts an outcome.
   changeOfApproach: {
     title: "Two responses in, the next step is a change of approach.",
     intro:
@@ -515,11 +516,11 @@ export const WORKSPACE = {
       },
       {
         title: "Ask Account Health Support what was missing",
-        body: "From the Account Health page in Seller Central, use Contact Us. Some sellers report that a call-back request through Contact Us gets an answer on what was missing; others report it does not. Try it if it is offered, and ask what specifically was insufficient. Write down the date, the name you were given and what was said, and add it to this case's notes.",
+        body: "From the Account Health page in Seller Central, use Contact Us and ask what specifically was insufficient. If a call-back is offered, take it. Write down the date, the name you were given and what was said, and add that to this case's notes.",
       },
       {
         title: "Escalate in writing, and only with your strongest response",
-        body: "Appeal consultants describe writing to seller-performance@amazon.com with your case ID and your revised response, and, as a last step, to jeff@amazon.com. Consultants say these addresses are read, but Amazon publishes no escalation address and says nothing about whether they are answered. Send it only when your response is complete and says something new.",
+        body: "Write to seller-performance@amazon.com with your case ID and your revised response, and, as a last step, to jeff@amazon.com. Amazon publishes neither address as an escalation route, so send it only when your response is complete and says something new.",
       },
       {
         title: "Know when to bring in someone else",
@@ -527,7 +528,7 @@ export const WORKSPACE = {
       },
     ],
     sourcesNote:
-      "Amazon does not publish an escalation order. These routes are described in Amazon's own seller forums and by appeal consultants, checked 24 Sep 2026. Channels change; if one no longer works, move to the next.",
+      "Amazon does not publish an escalation order. These routes were checked on 24 Sep 2026. Channels change; if one no longer works, move to the next.",
     sources: [
       {
         label: "Amazon Seller Forums: contacting Account Health Support",

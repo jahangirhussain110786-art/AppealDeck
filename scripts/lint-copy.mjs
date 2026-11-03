@@ -84,6 +84,22 @@ const HEDGE_PATTERNS = [
 ];
 const HEDGE_HOME = /^src\/content\/(?:legal|scope)\.ts$/;
 
+/**
+ * Self-undermining copy (3 Nov 2026). A sentence that argues our own case down — "we cannot check
+ * their figures", "Amazon has made no public statement that..." — reads to a buyer as doubt about the
+ * product, and the founder had exactly that pair removed from the playbook. A real limit is stated as
+ * what the tool does ("we check what the document shows"), never as an apology for what it does not.
+ * The legal documents keep their own careful wording, so they share the hedge exemption.
+ */
+const SELF_UNDERMINING = [
+  /\bwe cannot (?:check|verify|confirm)\b/i,
+  /\bamazon has made no public statement\b/i,
+  /\bthat is their view\b/i,
+  /\bpractitioners? (?:say|advise|report|describe)\b/i,
+  /\bconsultants? (?:say|advise|report|describe)\b/i,
+  /\bsome sellers report\b/i,
+];
+
 const BANNED_NUMBERS = [/\d+\s?%/i, /win\s*rate/i, /success\s*rate/i, /\d+\s*(hours?|hrs)\b/i];
 // banned punctuation — exclamation marks in copy (content modules only). A letter, digit or
 // closing bracket followed by "!" and then a quote, whitespace, "." or ",".
@@ -203,6 +219,13 @@ function main() {
   for (const f of files) {
     if (HEDGE_HOME.test(relPosix(f))) continue;
     const hits = scanFile(f, HEDGE_PATTERNS, allow, {});
+    if (hits.length) errors += hits.length;
+  }
+
+  console.error("lint-copy: self-undermining copy");
+  for (const f of files) {
+    if (HEDGE_HOME.test(relPosix(f))) continue;
+    const hits = scanFile(f, SELF_UNDERMINING, allow, {});
     if (hits.length) errors += hits.length;
   }
 

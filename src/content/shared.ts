@@ -9,7 +9,7 @@ import { POSITIONING } from "./positioning";
  * statement changes, this line changes with it, in this one place.
  */
 export const AMAZON_REVIEW_TIME =
-  "Amazon has said appeals usually take 3 to 7 business days and can take longer, and it does not promise a time frame (an Amazon representative on Seller Forums, read 10 Oct 2026). Sellers report anything from days to months. Not a promise.";
+  "Amazon has said appeals usually take 3 to 7 business days and can take longer, and it does not promise a time frame (an Amazon representative on Seller Forums, read 10 Oct 2026).";
 
 export const SHARED = {
   brand: { name: "AppealDeck" },

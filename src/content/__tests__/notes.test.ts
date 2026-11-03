@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import sitemap from "@/app/sitemap";
 import { GUIDES } from "../guides";
@@ -12,6 +14,19 @@ describe("notes", () => {
     // The old standalone paths are gone; next.config.mjs redirects them to the hub.
     expect(paths).not.toContain("/notes");
     for (const n of NOTES) expect(paths).not.toContain(`/notes/${n.slug}`);
+  });
+
+  // Found on 3 Nov 2026: the route lives under /playbook/notes but its canonical still pointed at
+  // /notes/<slug>, which only redirects. A canonical that names a redirect is a search-engine bug,
+  // and nothing in the suite could see it. This reads the route file, since a metadata call needs
+  // Next's request context.
+  it("points each note's canonical at the URL that actually serves the page", () => {
+    const route = readFileSync(
+      join(process.cwd(), "src", "app", "playbook", "notes", "[slug]", "page.tsx"),
+      "utf8",
+    );
+    expect(route).toMatch(/canonical:\s*`\/playbook\/notes\/\$\{note\.slug\}`/);
+    expect(route).not.toMatch(/canonical:\s*`\/notes\//);
   });
 
   it("dates every note with a real calendar day and never dates it backwards", () => {

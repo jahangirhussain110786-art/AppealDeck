@@ -64,9 +64,10 @@ const INAUTHENTIC: EvidenceRequirement[] = [
       "issue date (within 365 days)",
       "line items mappable to the ASIN(s)",
       "invoiced quantity consistent with units sold of each cited ASIN in the 365 days before the notice",
-      // Practitioner detail (Riverbend Consulting, ecommerceChris; Amazon's own staff post does not
-      // say it), so it is hedged where it is shown: the invoice's buyer details are compared with the
-      // seller account, and "ABC Co." against "ABC Company LLC" is a named cause of rejection.
+      // Checked against practitioner write-ups (Riverbend Consulting, ecommerceChris) because Amazon's
+      // own staff post does not say it. Stated directly, not hedged: the invoice's buyer details are
+      // compared with the seller account, and "ABC Co." against "ABC Company LLC" is a named cause of
+      // rejection (3 Nov 2026 wording pass).
       BUYER_FIELD,
     ],
     freshnessDays: 365,
@@ -77,11 +78,11 @@ const INAUTHENTIC: EvidenceRequirement[] = [
       "invoices you issued yourself, or a supplier that appears to be the same entity as the buyer",
       "order-confirmation screenshots",
       "self-created spreadsheets",
-      "consultants report that retail receipts, screenshots and spreadsheets are usually refused",
+      "retail receipts, screenshots and spreadsheets, which are usually refused",
       "edited or annotated PDFs",
     ],
     whyAmazonWantsIt:
-      "Amazon may contact your supplier to check the invoice, so the supplier's contact details must be real and reachable. A genuine invoice for a completed purchase is the main proof that your inventory is authentic and your supply chain is real. Practitioners advise that your business name and address on the invoice should match your seller account. An invoice rarely prints an ASIN. A line is tied to your product by an identifier that is also on your listing: the model number, the UPC or EAN, or the exact product name. If your notice asks for the invoice from the manufacturer or distributor your supplier bought from, or for a letter from the brand, that is a separate document: ask your supplier for it early. Sellers and consultants report that invoices are commonly refused when they are retail receipts showing a store name, handwritten, edited or annotated PDFs, for a very small quantity, from a supplier that is the same as the buyer, or with no product identifier on any line.",
+      "Amazon may contact your supplier to check the invoice, so the supplier's contact details must be real and reachable. A genuine invoice for a completed purchase is the main proof that your inventory is authentic and your supply chain is real. Your business name and address on the invoice should match your seller account. An invoice rarely prints an ASIN. A line is tied to your product by an identifier that is also on your listing: the model number, the UPC or EAN, or the exact product name. If your notice asks for the invoice from the manufacturer or distributor your supplier bought from, or for a letter from the brand, that is a separate document: ask your supplier for it early. Invoices are commonly refused when they are retail receipts showing a store name, handwritten, edited or annotated PDFs, for a very small quantity, from a supplier that is the same as the buyer, or with no product identifier on any line.",
   },
   {
     kind: "brand_authorization",

@@ -133,12 +133,12 @@ export const APP = {
       stale:
         "Your notice or business details have changed since this check, so what it compared may be out of date. Check again to compare with what your case says now.",
       localNote:
-        "Checked on this device. The picture was never uploaded and we did not read what the document says.",
+        "Checked on this device. The picture was never uploaded, and this check covers its quality, not what it says.",
       localTitle: "How the picture looks",
       recheck: "Check again",
-      // G-34: says what the check did and what it cannot know, in one place.
+      // G-34: says what the check did and where the decision sits, in one place.
       noVerdict:
-        "This describes your document only: what it shows, its dates and any quantities. We cannot know whether Amazon trusts whoever issued it, and whether Amazon accepts it is their decision.",
+        "This describes your document only: what it shows, its dates and any quantities. Whether the issuer is genuine, and whether Amazon accepts the document, are Amazon's call.",
       failed: "Could not check that document",
       comparedWith: "Compared with:",
       // Shown before the button is pressed, so a seller knows where the file goes before it goes

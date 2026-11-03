@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { List, ChevronDown } from "lucide-react";
 
@@ -20,6 +20,9 @@ export function SectionToc({
   heading: string;
 }) {
   const [activeId, setActiveId] = useState<string | null>(sections[0]?.id ?? null);
+  // On a phone the rail is a disclosure; a link that leaves it open covers the section it jumped to.
+  const disclosure = useRef<HTMLDetailsElement>(null);
+  const closeDisclosure = () => disclosure.current?.removeAttribute("open");
 
   useEffect(() => {
     const elements = sections
@@ -49,6 +52,7 @@ export function SectionToc({
           <li key={s.id}>
             <a
               href={`#${s.id}`}
+              onClick={closeDisclosure}
               aria-current={active ? "location" : undefined}
               className={cn(
                 "flex min-h-10 items-start gap-2 rounded-md px-3 py-2 text-sm transition-colors",
@@ -70,7 +74,10 @@ export function SectionToc({
 
   return (
     <nav className="lg:sticky lg:top-20" aria-label={label}>
-      <details className="group rounded-xl border border-border/80 bg-card p-4 lg:hidden">
+      <details
+        ref={disclosure}
+        className="group rounded-xl border border-border/80 bg-card p-4 lg:hidden"
+      >
         <summary className="flex min-h-6 cursor-pointer list-none items-center gap-2 text-sm font-medium [&::-webkit-details-marker]:hidden">
           <List className="size-4 text-primary" aria-hidden /> {heading}
           <ChevronDown className="ml-auto size-4 group-open:rotate-180" aria-hidden />

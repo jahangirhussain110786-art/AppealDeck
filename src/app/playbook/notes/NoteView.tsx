@@ -78,8 +78,9 @@ export function NoteView({ note }: { note: Note }) {
         }
       />
       <JsonLd data={jsonLd} />
-      <ArticleBody sections={note.sections}>
-        <div className="space-y-12">
+      <ArticleBody
+        sections={note.sections}
+        lead={
           <aside className="rounded-[var(--radius-xl)] bg-primary/5 p-6 ring-1 ring-inset ring-primary/15 sm:p-7">
             <p className="font-mono text-[0.68rem] uppercase tracking-[0.18em] text-primary-ink">
               {NOTES_COMMON.takeawayLabel}
@@ -88,7 +89,9 @@ export function NoteView({ note }: { note: Note }) {
               {note.takeaway}
             </p>
           </aside>
-
+        }
+      >
+        <div className="space-y-12">
           <div className="flex flex-col gap-4 rounded-[20px] bg-card p-6 shadow-card ring-1 ring-inset ring-border sm:flex-row sm:items-center sm:justify-between sm:p-7">
             <div className="max-w-[44ch]">
               <p className="text-[0.95rem] leading-relaxed text-foreground">

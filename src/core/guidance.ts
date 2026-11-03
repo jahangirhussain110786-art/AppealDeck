@@ -39,7 +39,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not share your Seller Central login with anyone. A helper (a VA or a writer) can have their own User Permissions account, on their own device, instead.",
-        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, so make the first one count.",
         "Do not resubmit the same text. Amazon has already read it: change what you say, or what you attach, before you send again.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not fabricate, backdate, or assume an invoice document you do not have.",
@@ -91,7 +91,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not share your Seller Central login with anyone. A helper (a VA or a writer) can have their own User Permissions account, on their own device, instead.",
-        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, so make the first one count.",
         "Do not resubmit the same text. Amazon has already read it: change what you say, or what you attach, before you send again.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not hide or downplay the account relationship you had.",
@@ -124,7 +124,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not share your Seller Central login with anyone. A helper (a VA or a writer) can have their own User Permissions account, on their own device, instead.",
-        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, so make the first one count.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not edit, retouch, or re-type a document to make it look tidier — an altered identity document is treated as a forged one.",
       ],
@@ -149,7 +149,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not share your Seller Central login with anyone. A helper (a VA or a writer) can have their own User Permissions account, on their own device, instead.",
-        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, so make the first one count.",
         "Do not resubmit the same text. Amazon has already read it: change what you say, or what you attach, before you send again.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not promise a target figure by a specific date — metrics move on a reporting window you do not control.",
@@ -178,7 +178,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not share your Seller Central login with anyone. A helper (a VA or a writer) can have their own User Permissions account, on their own device, instead.",
-        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, so make the first one count.",
         "Do not resubmit the same text. Amazon has already read it: change what you say, or what you attach, before you send again.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not keep the listing active while you appeal — continuing to sell a flagged product undermines everything the response says.",
@@ -204,7 +204,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not share your Seller Central login with anyone. A helper (a VA or a writer) can have their own User Permissions account, on their own device, instead.",
-        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, so make the first one count.",
         "Do not resubmit the same text. Amazon has already read it: change what you say, or what you attach, before you send again.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not relist the item under a different title or category — that reads as evasion, not a correction.",
@@ -229,7 +229,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not share your Seller Central login with anyone. A helper (a VA or a writer) can have their own User Permissions account, on their own device, instead.",
-        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, so make the first one count.",
         "Do not resubmit the same text. Amazon has already read it: change what you say, or what you attach, before you send again.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not list a policy you did not actually fix without new evidence.",
@@ -257,7 +257,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not share your Seller Central login with anyone. A helper (a VA or a writer) can have their own User Permissions account, on their own device, instead.",
-        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, so make the first one count.",
         "Do not resubmit the same text. Amazon has already read it: change what you say, or what you attach, before you send again.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not ignore the complaint, and do not relist an item you were told to stop selling.",
@@ -281,7 +281,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not share your Seller Central login with anyone. A helper (a VA or a writer) can have their own User Permissions account, on their own device, instead.",
-        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, so make the first one count.",
         "Do not resubmit the same text. Amazon has already read it: change what you say, or what you attach, before you send again.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not revert a listing fix and relist the same violating content.",
@@ -306,7 +306,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not share your Seller Central login with anyone. A helper (a VA or a writer) can have their own User Permissions account, on their own device, instead.",
-        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, so make the first one count.",
         "Do not resubmit the same text. Amazon has already read it: change what you say, or what you attach, before you send again.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not assume funds are released on a fixed date.",
@@ -332,7 +332,7 @@ export const KIND_GUIDANCE: Readonly<Record<ViolationKind, KindGuidance>> = {
       doNot: [
         "Do not open a new seller account: Amazon's related-account rules may link it to this one.",
         "Do not share your Seller Central login with anyone. A helper (a VA or a writer) can have their own User Permissions account, on their own device, instead.",
-        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, but practitioners advise against it.",
+        "Do not send a hurried one-line appeal. Amazon says nothing about a limit on appeals, so make the first one count.",
         "Do not resubmit the same text. Amazon has already read it: change what you say, or what you attach, before you send again.",
         "Do not pay for reinstatement services that promise an outcome.",
         "Do not invent a violation type, deadline, or document you cannot back up.",

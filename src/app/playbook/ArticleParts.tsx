@@ -4,14 +4,7 @@ import { ArrowUpRight, Quote } from "lucide-react";
 import { SectionToc } from "@/components/SectionToc";
 import { cn } from "@/lib/utils";
 import { GUIDES_COMMON } from "@/content/guides";
-
-/** A heading's anchor. Headings are unique within a page, so the slug is too. */
-export function anchorId(heading: string): string {
-  return heading
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
+import { anchorId } from "./anchor";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -29,9 +22,12 @@ export type ArticleSection = {
  */
 export function ArticleBody({
   sections,
+  lead,
   children,
 }: {
   sections: ArticleSection[];
+  /** A short panel before the paper, such as a note's one line to remember. */
+  lead?: ReactNode;
   children: ReactNode;
 }) {
   const toc = sections.map((s) => ({ id: anchorId(s.heading), title: s.heading }));
@@ -53,6 +49,7 @@ export function ArticleBody({
         )}
 
         <div className="min-w-0 space-y-12">
+          {lead}
           <div className="rounded-[20px] bg-card px-6 shadow-card ring-1 ring-inset ring-border sm:px-10">
             {sections.map((s, i) => (
               <section

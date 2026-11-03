@@ -7,9 +7,11 @@ import type { Guide } from "./guides";
  * Rules, because a comparison is where a claim most easily goes wrong:
  * - Nothing about a competitor is stated that was not read on its own site on the date shown, and each
  *   statement is attributed ("its site says"), so it ages visibly instead of becoming false quietly.
- * - No win rate, no outcome, no "Amazon detects AI". Consultants' views are labelled as theirs; no
- *   Amazon statement exists on AI-written appeals and the page says so.
+ * - No win rate, no outcome, and no claim about how Amazon treats AI-written appeals either way. The
+ *   page says what a chat cannot do on its own, from the notice and the case file.
  * - Where the other option is enough, the page says so. A buyer who is told that believes the rest.
+ * - A limit of ours is stated as what the tool does, never as an apology for it. "We cannot check
+ *   their figures" argued our own case down and was removed on 3 Nov 2026; do not bring it back.
  * - Every AppealDeck statement must match `docs/CURRENT-STATE.md`.
  * Re-read the competitor's site and update `lastVerified` before changing a sentence about it.
  */
@@ -47,7 +49,7 @@ export const compareGuides: Guide[] = [
       },
       {
         heading: "What makes an appeal weak",
-        body: "Consultants who sell appeal services say the usual reasons appeals are refused are the wrong root cause, template phrases, missing evidence, and a different story each time. That is their view, from firms that sell the alternative, and we cannot check their figures. Amazon has made no public statement that AI-written appeals are rejected as such. The clearest risk is a smooth letter that is wrong in a detail, or that answers a different question from the one the notice asked.",
+        body: "Appeals are refused most often for the same four reasons: a root cause that does not name what failed, template phrasing, evidence that is missing or does not match, and a different story in each round. A chatbot can write around all four and still be wrong. The clearest risk is a smooth letter that is wrong in a detail, or that answers a different question from the one the notice asked, and only a check against the notice and the records catches it.",
       },
       {
         heading: "How to get the best from a chatbot",

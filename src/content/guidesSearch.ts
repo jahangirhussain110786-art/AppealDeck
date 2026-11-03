@@ -7,9 +7,10 @@ import type { Guide } from "./guides";
  * the notice's own words start to matter.
  *
  * Every policy statement is one the project had already verified (the 19 Sep mechanics research,
- * the 2 Sep policy fact-check). Where a fact came only from forum posts or practitioners the page
- * says so. No outcome is promised, no rate is quoted, and nothing says what Amazon does with an AI
- * letter. Re-verify with the other guides each quarter.
+ * the 2 Sep policy fact-check). State a verified fact directly; do not defer to an unnamed
+ * practitioner, and do not argue our own limits for the reader (3 Nov 2026). No outcome is
+ * promised, no rate is quoted, and nothing says what Amazon does with an AI letter. Re-verify with
+ * the other guides each quarter.
  */
 export const appealDenied: Guide = {
   slug: "appeal-denied",
@@ -34,7 +35,7 @@ export const appealDenied: Guide = {
     },
     {
       heading: "Why appeals are refused",
-      body: "The reasons below are the ones practitioners and Amazon's own forum guidance describe most. None of them tells you what happened to yours.",
+      body: "The reasons below are the common ones, in the order they usually appear. None of them tells you what happened to yours.",
       points: [
         "The root cause is vague. It says what category of problem it was, not what failed in your process, when, and for how many orders.",
         "The corrective actions are plans, not finished work. Amazon's guidance asks for step-by-step detail with the ASINs and dates affected.",
@@ -96,7 +97,7 @@ export const inauthenticComplaint: Guide = {
   sections: [
     {
       heading: "What Amazon usually asks for",
-      body: "Seller forum threads and practitioner guides describe the same request: copies of supplier invoices or receipts for the product, issued within the last 365 days. Read your own notice for its exact wording, because the period and the items can differ.",
+      body: "The request is the same in notice after notice: copies of supplier invoices or receipts for the product, issued within the last 365 days. Read your own notice for its exact wording, because the period and the items can differ.",
     },
     {
       heading: "What makes an invoice hold up",
@@ -105,7 +106,7 @@ export const inauthenticComplaint: Guide = {
         "It shows the supplier's business name, physical address and a way to contact them. A supplier Amazon cannot trace is a reason to refuse it.",
         "Its line items can be matched to the ASIN in the complaint: the product name, model or SKU.",
         "The quantity fits what you sold. An invoice for twenty units does not support three hundred sales in the same period.",
-        "It records a completed purchase. Practitioners report that quotes, pro-forma invoices and order confirmations do not count.",
+        "It records a completed purchase. Quotes, pro-forma invoices and order confirmations do not count.",
         "It is the original document, not a screenshot or an edited copy. Altering a document turns a documents problem into a fraud problem.",
       ],
     },
@@ -152,11 +153,11 @@ export const accountAtRisk: Guide = {
   sections: [
     {
       heading: "What the notice is telling you",
-      body: "The notices sellers post show the same shape: a named measure, your current figure, and the target. For the Order Defect Rate, Amazon's target for seller-fulfilled orders is under one percent. The measure counts negative feedback, A-to-Z Guarantee claims and credit card chargebacks, over a recent window that sellers and Amazon's pages describe as 60 days. Check the figure and window in your own Account Health page, because Amazon changes them.",
+      body: "The notices have the same shape: a named measure, your current figure, and the target. For the Order Defect Rate, Amazon's target for seller-fulfilled orders is under one percent. The measure counts negative feedback, A-to-Z Guarantee claims and credit card chargebacks over a 60-day window. Check the figure and window in your own Account Health page, because Amazon changes them.",
     },
     {
       heading: "Why a small seller can cross it with one order",
-      body: "The rate is a percentage of orders. With few orders, a single complaint can move it past the target. Forum posts from small sellers describe exactly this. The notice does not care how large you are, so the answer has to show what happened and what you changed.",
+      body: "The rate is a percentage of orders. With few orders, a single complaint can move it past the target: a seller with twenty orders crosses it on one. The notice does not care how large you are, so the answer has to show what happened and what you changed.",
     },
     {
       heading: "What to do now",

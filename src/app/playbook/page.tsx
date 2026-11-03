@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { pageMetadata } from "@/content/pageMetadata";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, CalendarDays } from "lucide-react";
+import { JsonLd } from "@/components/JsonLd";
 import { MarketingShell } from "@/components/MarketingShell";
 import { SectionToc } from "@/components/SectionToc";
+import { SITE_URL } from "@/lib/urls";
 import { GUIDES, GUIDES_COMMON } from "@/content/guides";
 import { NOTES, NOTES_COMMON } from "@/content/notes";
 import { readingMinutes } from "@/lib/readingTime";
@@ -115,9 +117,53 @@ export default function PlaybookIndexPage() {
     { id: "choosing", title: GUIDES_COMMON.groups.choosing.title },
     { id: "notes", title: GUIDES_COMMON.groups.notes.title },
   ];
+  const pages = [
+    ...noticeGuides.map((g) => ({
+      path: `/playbook/${g.slug}`,
+      title: g.title,
+      date: g.lastVerified,
+    })),
+    ...choosing.map((g) => ({ path: `/playbook/${g.slug}`, title: g.title, date: g.lastVerified })),
+    ...NOTES.map((n) => ({ path: `/playbook/notes/${n.slug}`, title: n.title, date: n.updated })),
+  ];
+  const revised = pages
+    .map((p) => p.date)
+    .sort()
+    .at(-1);
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: GUIDES_COMMON.indexTitle,
+      description: GUIDES_COMMON.indexDescription,
+      url: `${SITE_URL}/playbook`,
+      dateModified: revised,
+      inLanguage: "en",
+      isPartOf: { "@type": "WebSite", name: "AppealDeck", url: SITE_URL },
+      mainEntity: {
+        "@type": "ItemList",
+        numberOfItems: pages.length,
+        itemListElement: pages.map((p, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: p.title,
+          url: `${SITE_URL}${p.path}`,
+        })),
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "AppealDeck", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: GUIDES_COMMON.eyebrow },
+      ],
+    },
+  ];
 
   return (
     <MarketingShell bleed>
+      <JsonLd data={jsonLd} />
       <LibraryHero
         eyebrow={GUIDES_COMMON.eyebrow}
         title={GUIDES_COMMON.indexTitle}
@@ -143,19 +189,23 @@ export default function PlaybookIndexPage() {
             aria-labelledby="start-here-heading"
             className="relative -mt-16 scroll-mt-24"
           >
-            <Link
-              href={`/playbook/${lead.slug}`}
-              className="group grid gap-5 rounded-[20px] bg-card p-6 shadow-card ring-1 ring-inset ring-border transition-colors duration-150 hover:bg-surface-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-8"
-            >
+            {/* The link is the heading, stretched over the card: its name is the page title rather
+                than every word in the card, and the whole card still clicks. */}
+            <article className="group relative grid gap-5 rounded-[20px] bg-card p-6 shadow-card ring-1 ring-inset ring-border transition-colors duration-150 hover:bg-surface-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-8">
               <span className="min-w-0">
                 <span className="font-mono text-[0.68rem] uppercase tracking-[0.18em] text-primary-ink">
                   {GUIDES_COMMON.startHere}
                 </span>
                 <h2
                   id="start-here-heading"
-                  className="mt-2 max-w-[46ch] text-balance text-[1.25rem] font-semibold leading-snug tracking-[-0.025em] text-foreground group-hover:underline group-hover:decoration-primary/40 group-hover:underline-offset-4"
+                  className="mt-2 max-w-[46ch] text-balance text-[1.25rem] font-semibold leading-snug tracking-[-0.025em] text-foreground"
                 >
-                  {lead.title}
+                  <Link
+                    href={`/playbook/${lead.slug}`}
+                    className="after:absolute after:inset-0 after:rounded-[20px] group-hover:underline group-hover:decoration-primary/40 group-hover:underline-offset-4"
+                  >
+                    {lead.title}
+                  </Link>
                 </h2>
                 <span className="mt-2 block max-w-[62ch] text-[0.9375rem] leading-7 text-muted-foreground">
                   {lead.description}
@@ -177,14 +227,14 @@ export default function PlaybookIndexPage() {
               >
                 <ArrowRight className="size-4" />
               </span>
-            </Link>
+            </article>
           </section>
         )}
 
         <div className="mt-10 grid items-start gap-6 pb-16 lg:grid-cols-[14rem_minmax(0,1fr)]">
           <SectionToc
             label={GUIDES_COMMON.sectionsLabel}
-            heading={GUIDES_COMMON.sectionsLabel}
+            heading={GUIDES_COMMON.sectionsHeading}
             sections={contents}
           />
 

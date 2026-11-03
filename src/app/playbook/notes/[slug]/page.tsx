@@ -20,7 +20,7 @@ export async function generateMetadata({
   return pageMetadata({
     title: note.metaTitle,
     description: note.description,
-    canonical: `/notes/${note.slug}`,
+    canonical: `/playbook/notes/${note.slug}`,
     type: "article",
   });
 }
