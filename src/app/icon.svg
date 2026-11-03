@@ -1,1 +1,17 @@
-<svg role="img" aria-labelledby="t" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><title id="t">AppealDeck</title><rect width="32" height="32" rx="8" fill="#18212F"/><rect x="14" y="5.5" width="12" height="15" rx="2.6" fill="#FFFFFF" fill-opacity="0.38"/><rect x="10.5" y="8" width="12.5" height="15.5" rx="2.6" fill="#FFFFFF" fill-opacity="0.66"/><rect x="6.5" y="10.5" width="13.5" height="16.5" rx="2.8" fill="#FFFFFF"/><path d="M9.9 19.4l2.8 2.8 5.3-5.8" fill="none" stroke="#FB850E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg role="img" aria-labelledby="t" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <title id="t">AppealDeck</title>
+  <style>
+    /* The tab bar supplies the background, so the mark has none of its own: navy cards on a light
+       tab, white cards on a dark one. Default is light, which is also the safe fallback for a
+       renderer that does not evaluate the media query. */
+    .deck-card { fill: #18212f; }
+    .deck-check { stroke: #fb850e; }
+    @media (prefers-color-scheme: dark) {
+      .deck-card { fill: #ffffff; }
+    }
+  </style>
+  <rect x="13.05" y="1.42" width="16.56" height="20.7" rx="3.6" class="deck-card" fill-opacity="0.34"/>
+  <rect x="8.22" y="4.87" width="17.25" height="21.39" rx="3.6" class="deck-card" fill-opacity="0.62"/>
+  <rect x="2.7" y="8.31" width="18.63" height="22.77" rx="3.9" class="deck-card"/>
+  <path d="M7.39 20.6l3.86 3.86 7.31-8" fill="none" class="deck-check" stroke-width="3.45" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
