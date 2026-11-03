@@ -1,19 +1,21 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
-import { PageHero } from "@/components/PageHero";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_URL } from "@/lib/urls";
 import { formatDay } from "@/lib/formatDay";
+import { readingMinutes } from "@/lib/readingTime";
 import { GUIDES, GUIDES_COMMON } from "@/content/guides";
 import { NOTES, NOTES_COMMON, type Note } from "@/content/notes";
+import { ArticleBody, RelatedGrid } from "../ArticleParts";
+import { LibraryHero } from "../LibraryHero";
 
 /** One note. Content lives in `src/content/notes.ts`; this only lays it out. */
 export function NoteView({ note }: { note: Note }) {
   const relatedNotes = NOTES.filter((n) => note.relatedNotes?.includes(n.slug));
   const relatedGuides = GUIDES.filter((g) => note.relatedGuides?.includes(g.slug));
+  const revised = note.updated !== note.published;
 
   const jsonLd = [
     {
@@ -51,112 +53,88 @@ export function NoteView({ note }: { note: Note }) {
   ];
 
   return (
-    <MarketingShell
-      className="max-w-app"
-      hero={
-        <PageHero
-          eyebrow={
-            <Link href="/playbook" className="hover:underline">
-              {GUIDES_COMMON.eyebrow}
-            </Link>
-          }
-          title={note.title}
-          intro={note.intro}
-        >
-          <p className="mt-4 text-sm tabular-nums text-muted-foreground">
-            {NOTES_COMMON.publishedLabel}{" "}
-            <time dateTime={note.published}>{formatDay(note.published)}</time>
-            {note.updated !== note.published && (
-              <>
-                {" · "}
-                {NOTES_COMMON.updatedLabel}{" "}
-                <time dateTime={note.updated}>{formatDay(note.updated)}</time>
-              </>
-            )}
+    <MarketingShell bleed>
+      <LibraryHero
+        eyebrow={
+          <Link href="/playbook" className="text-primary hover:underline">
+            {GUIDES_COMMON.eyebrow}
+          </Link>
+        }
+        title={note.title}
+        intro={note.intro}
+        meta={
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm tabular-nums text-muted-foreground">
+            <span>
+              {readingMinutes(note)} {GUIDES_COMMON.readingSuffix}
+            </span>
+            <span aria-hidden>·</span>
+            <span>
+              {revised ? NOTES_COMMON.updatedLabel : NOTES_COMMON.publishedLabel}{" "}
+              <time dateTime={revised ? note.updated : note.published}>
+                {formatDay(revised ? note.updated : note.published)}
+              </time>
+            </span>
           </p>
-        </PageHero>
-      }
-    >
+        }
+      />
       <JsonLd data={jsonLd} />
-      <article className="py-12 sm:py-16">
-        <div className="space-y-8">
-          {note.sections.map((s) => (
-            <section key={s.heading}>
-              <h2 className="tracking-[-0.03em] text-2xl font-semibold text-foreground">
-                {s.heading}
-              </h2>
-              {s.body && (
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-              )}
-              {s.points && (
-                <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-muted-foreground">
-                  {s.points.map((p) => (
-                    <li key={p}>{p}</li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ))}
-
-          <aside className="border-l-2 border-primary pl-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <ArticleBody sections={note.sections}>
+        <div className="space-y-12">
+          <aside className="rounded-[var(--radius-xl)] bg-primary/5 p-6 ring-1 ring-inset ring-primary/15 sm:p-7">
+            <p className="font-mono text-[0.68rem] uppercase tracking-[0.18em] text-primary-ink">
               {NOTES_COMMON.takeawayLabel}
             </p>
-            <p className="mt-1 text-lg text-foreground">{note.takeaway}</p>
+            <p className="mt-2 text-balance text-xl leading-snug tracking-[-0.02em] text-foreground">
+              {note.takeaway}
+            </p>
           </aside>
 
-          <Card className="p-5 sm:p-6">
-            <p className="text-sm text-foreground">{NOTES_COMMON.ctaLead}</p>
-            <Button asChild className="mt-3">
+          <div className="flex flex-col gap-4 rounded-[20px] bg-card p-6 shadow-card ring-1 ring-inset ring-border sm:flex-row sm:items-center sm:justify-between sm:p-7">
+            <div className="max-w-[44ch]">
+              <p className="text-[0.95rem] leading-relaxed text-foreground">
+                {NOTES_COMMON.ctaLead}
+              </p>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                {NOTES_COMMON.ctaNote}
+              </p>
+            </div>
+            <Button asChild className="shrink-0">
               <Link href="/decode">
                 {NOTES_COMMON.ctaButton}
                 <ArrowRight aria-hidden className="ml-1 size-4" />
               </Link>
             </Button>
-            <p className="mt-2 text-xs text-muted-foreground">{NOTES_COMMON.ctaNote}</p>
-          </Card>
+          </div>
 
-          <nav aria-label={NOTES_COMMON.relatedLabel}>
+          <nav aria-label={NOTES_COMMON.relatedLabel} className="space-y-10">
             {relatedNotes.length > 0 && (
-              <div>
-                <h2 className="tracking-[-0.03em] text-2xl font-semibold text-foreground">
-                  {NOTES_COMMON.relatedNotesLabel}
-                </h2>
-                <ul className="mt-3 space-y-2 text-sm">
-                  {relatedNotes.map((n) => (
-                    <li key={n.slug}>
-                      <Link
-                        className="text-link underline underline-offset-4"
-                        href={`/playbook/notes/${n.slug}`}
-                      >
-                        {n.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <RelatedGrid
+                heading={NOTES_COMMON.relatedNotesLabel}
+                items={relatedNotes.map((n) => ({
+                  slug: n.slug,
+                  href: `/playbook/notes/${n.slug}`,
+                  title: n.title,
+                  minutes: readingMinutes(n),
+                }))}
+              />
             )}
             {relatedGuides.length > 0 && (
-              <div className={relatedNotes.length > 0 ? "mt-6" : undefined}>
-                <h2 className="tracking-[-0.03em] text-2xl font-semibold text-foreground">
-                  {NOTES_COMMON.relatedGuidesLabel}
-                </h2>
-                <ul className="mt-3 space-y-2 text-sm">
-                  {relatedGuides.map((g) => (
-                    <li key={g.slug}>
-                      <Link
-                        className="text-link underline underline-offset-4"
-                        href={`/playbook/${g.slug}`}
-                      >
-                        {g.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <RelatedGrid
+                heading={NOTES_COMMON.relatedGuidesLabel}
+                items={relatedGuides.map((g) => ({
+                  slug: g.slug,
+                  href: `/playbook/${g.slug}`,
+                  title: g.title,
+                  minutes: readingMinutes(g),
+                }))}
+              />
             )}
-            <p className="mt-6 text-sm">
-              <Link className="text-link underline underline-offset-4" href="/playbook">
+            <p className="text-sm">
+              <Link
+                className="inline-flex items-center gap-1.5 text-link underline underline-offset-4"
+                href="/playbook"
+              >
+                <ArrowLeft aria-hidden className="size-4" />
                 {GUIDES_COMMON.hubLink}
               </Link>
             </p>
@@ -164,7 +142,7 @@ export function NoteView({ note }: { note: Note }) {
 
           <p className="text-xs leading-relaxed text-muted-foreground">{NOTES_COMMON.disclaimer}</p>
         </div>
-      </article>
+      </ArticleBody>
     </MarketingShell>
   );
 }

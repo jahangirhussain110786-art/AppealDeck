@@ -75,6 +75,13 @@ export const GUIDES_COMMON = {
   addedLabel: "Added",
   hubLink: "The playbook",
   allPages: "All pages",
+  startHere: "Start here",
+  sectionsLabel: "Playbook sections",
+  onThisPage: "On this page",
+  pagesLabel: "pages",
+  freeLabel: "Free to read",
+  datedLabel: "Every page dated",
+  readLabel: "Read",
   lastVerifiedLabel: "Last verified",
   ctaButton: "Paste your notice — free",
   ctaNote:

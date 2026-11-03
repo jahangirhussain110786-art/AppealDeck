@@ -29,8 +29,30 @@ test("the playbook groups the library and opens a note", async ({ page }) => {
   await expect(notes.getByText("Added").first()).toBeVisible();
   await expect(notices.getByText("Guide", { exact: true })).toHaveCount(0);
 
+  // The opening card names the one page to start with, and the contents rail points into the groups.
+  await expect(page.locator("#start-here").getByRole("link")).toHaveAttribute(
+    "href",
+    "/playbook/section-3",
+  );
+  const rail = page.getByRole("navigation", { name: "Playbook sections" });
+  await expect(rail.getByRole("link", { name: /Notes/ })).toHaveAttribute("href", "#notes");
+
   await notes.getByRole("link", { name: /Keep the notice exactly as it arrived/ }).click();
   await expect(page).toHaveURL(/\/playbook\/notes\/keep-the-notice-as-it-arrived$/);
+});
+
+test("a guide lists its sections beside the text and links to them", async ({ page }) => {
+  await page.goto("/playbook/section-3");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/Section 3/);
+  await expect(page.getByText(/min read/).first()).toBeVisible();
+  await expect(page.getByText(/Last verified/)).toBeVisible();
+
+  const toc = page.getByRole("navigation", { name: "On this page" });
+  await expect(toc.getByRole("link", { name: /What to do now/ })).toHaveAttribute(
+    "href",
+    "#what-to-do-now",
+  );
+  await expect(page.locator("#what-to-do-now")).toBeVisible();
 });
 
 test("a note is dated, says one thing to remember, and keeps the boundary", async ({ page }) => {

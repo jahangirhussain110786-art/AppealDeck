@@ -1,17 +1,18 @@
 import Link from "next/link";
-import { ArrowRight, Check, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
-import { PageHero } from "@/components/PageHero";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_URL } from "@/lib/urls";
 import { formatDay } from "@/lib/formatDay";
+import { readingMinutes } from "@/lib/readingTime";
 import { GUIDES, GUIDES_COMMON, type Guide } from "@/content/guides";
+import { ArticleBody, RelatedGrid } from "./ArticleParts";
+import { LibraryHero } from "./LibraryHero";
 
 /** One guide page. Content lives in `src/content/guides.ts`; this only lays it out. */
 export function GuideView({ guide }: { guide: Guide }) {
-  const others = GUIDES.filter((g) => g.slug !== guide.slug);
+  const others = GUIDES.filter((g) => g.slug !== guide.slug).slice(0, 3);
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -46,130 +47,104 @@ export function GuideView({ guide }: { guide: Guide }) {
     },
   ];
   return (
-    <MarketingShell
-      className="max-w-app"
-      hero={
-        <PageHero
-          eyebrow={
-            <Link href="/playbook" className="hover:underline">
-              {GUIDES_COMMON.eyebrow}
-            </Link>
-          }
-          title={guide.title}
-          intro={guide.intro}
-        >
-          <p className="mt-4 text-sm tabular-nums text-muted-foreground">
-            {GUIDES_COMMON.lastVerifiedLabel}{" "}
-            <time dateTime={guide.lastVerified}>{formatDay(guide.lastVerified)}</time>
+    <MarketingShell bleed>
+      <LibraryHero
+        eyebrow={
+          <Link href="/playbook" className="text-primary hover:underline">
+            {GUIDES_COMMON.eyebrow}
+          </Link>
+        }
+        title={guide.title}
+        intro={guide.intro}
+        meta={
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm tabular-nums text-muted-foreground">
+            <span>
+              {readingMinutes(guide)} {GUIDES_COMMON.readingSuffix}
+            </span>
+            <span aria-hidden>·</span>
+            <span>
+              {GUIDES_COMMON.lastVerifiedLabel}{" "}
+              <time dateTime={guide.lastVerified}>{formatDay(guide.lastVerified)}</time>
+            </span>
           </p>
-        </PageHero>
-      }
-    >
+        }
+      />
       <JsonLd data={jsonLd} />
-      <article className="py-12 sm:py-16">
-        <div className="space-y-8">
-          {guide.sections.map((s) => (
-            <section key={s.heading}>
-              <h2 className="tracking-[-0.03em] text-2xl font-semibold text-foreground">
-                {s.heading}
+      <ArticleBody sections={guide.sections}>
+        <div className="space-y-12">
+          <section className="overflow-hidden rounded-[20px] bg-card shadow-card ring-1 ring-inset ring-border">
+            <div className="p-6 sm:p-7">
+              <h2 className="text-balance text-xl font-semibold tracking-[-0.03em] text-foreground sm:text-2xl">
+                {guide.appealDeck.heading}
               </h2>
-              {s.body && (
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-              )}
-              {s.example && (
-                <figure className="mt-4 rounded-xl border border-border bg-surface-1 p-5 sm:p-6">
-                  <figcaption className="mb-3 inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                    {s.example.label}
-                  </figcaption>
-                  <div className="space-y-3 text-sm leading-relaxed text-foreground">
-                    {s.example.paragraphs.map((p) => (
-                      <p key={p}>{p}</p>
+              <div className="mt-5 grid gap-6 sm:grid-cols-2 sm:gap-8">
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">
+                    {GUIDES_COMMON.appealDeckDoes}
+                  </h3>
+                  <ul className="mt-3 space-y-2.5 text-sm leading-relaxed text-muted-foreground">
+                    {guide.appealDeck.does.map((d) => (
+                      <li key={d} className="flex gap-2.5">
+                        <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
+                        <span>{d}</span>
+                      </li>
                     ))}
-                  </div>
-                </figure>
-              )}
-              {s.points && (
-                <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-muted-foreground">
-                  {s.points.map((p) => (
-                    <li key={p}>{p}</li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ))}
-
-          <Card className="p-5 sm:p-6">
-            <h2 className="tracking-[-0.03em] text-2xl font-semibold text-foreground">
-              {guide.appealDeck.heading}
-            </h2>
-            <div className="mt-4 grid gap-5 sm:grid-cols-2">
-              <div>
-                <h3 className="text-sm font-medium text-foreground">
-                  {GUIDES_COMMON.appealDeckDoes}
-                </h3>
-                <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
-                  {guide.appealDeck.does.map((d) => (
-                    <li key={d} className="flex gap-2">
-                      <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
-                      <span>{d}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-foreground">
-                  {GUIDES_COMMON.appealDeckDoesNot}
-                </h3>
-                <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
-                  {guide.appealDeck.doesNot.map((d) => (
-                    <li key={d} className="flex gap-2">
-                      <X aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                      <span>{d}</span>
-                    </li>
-                  ))}
-                </ul>
+                  </ul>
+                </div>
+                <div className="sm:border-l sm:border-border/60 sm:pl-8">
+                  <h3 className="text-sm font-medium text-foreground">
+                    {GUIDES_COMMON.appealDeckDoesNot}
+                  </h3>
+                  <ul className="mt-3 space-y-2.5 text-sm leading-relaxed text-muted-foreground">
+                    {guide.appealDeck.doesNot.map((d) => (
+                      <li key={d} className="flex gap-2.5">
+                        <X aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                        <span>{d}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
-            <div className="mt-6 border-t border-border/60 pt-5">
+            <div className="border-t border-border/60 bg-surface-2/60 px-6 py-5 sm:px-7">
               <p className="text-sm text-foreground">{guide.cta}</p>
-              <Button asChild className="mt-3">
-                <Link href="/decode">
-                  {GUIDES_COMMON.ctaButton}
-                  <ArrowRight aria-hidden className="ml-1 size-4" />
-                </Link>
-              </Button>
-              <p className="mt-2 text-xs text-muted-foreground">{GUIDES_COMMON.ctaNote}</p>
-            </div>
-          </Card>
-
-          <nav aria-label={GUIDES_COMMON.related}>
-            <h2 className="tracking-[-0.03em] text-2xl font-semibold text-foreground">
-              {GUIDES_COMMON.related}
-            </h2>
-            <ul className="mt-3 space-y-2 text-sm">
-              {others.map((g) => (
-                <li key={g.slug}>
-                  <Link
-                    className="text-link underline underline-offset-4"
-                    href={`/playbook/${g.slug}`}
-                  >
-                    {g.title}
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <Button asChild>
+                  <Link href="/decode">
+                    {GUIDES_COMMON.ctaButton}
+                    <ArrowRight aria-hidden className="ml-1 size-4" />
                   </Link>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-sm">
-              <Link className="text-link underline underline-offset-4" href="/playbook">
-                {GUIDES_COMMON.hubLink}
-              </Link>
-            </p>
-          </nav>
+                </Button>
+                <p className="text-xs text-muted-foreground">{GUIDES_COMMON.ctaNote}</p>
+              </div>
+            </div>
+          </section>
+
+          <RelatedGrid
+            heading={GUIDES_COMMON.related}
+            items={others.map((g) => ({
+              slug: g.slug,
+              href: `/playbook/${g.slug}`,
+              title: g.title,
+              minutes: readingMinutes(g),
+            }))}
+          />
+
+          <p className="text-sm">
+            <Link
+              className="inline-flex items-center gap-1.5 text-link underline underline-offset-4"
+              href="/playbook"
+            >
+              <ArrowLeft aria-hidden className="size-4" />
+              {GUIDES_COMMON.hubLink}
+            </Link>
+          </p>
 
           <p className="text-xs leading-relaxed text-muted-foreground">
             {GUIDES_COMMON.disclaimer}
           </p>
         </div>
-      </article>
+      </ArticleBody>
     </MarketingShell>
   );
 }

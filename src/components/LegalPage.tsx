@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { FileText, RotateCcw, ShieldCheck, CalendarDays, ArrowUpRight, Plus } from "lucide-react";
 import { MarketingShell } from "@/components/MarketingShell";
-import { LegalToc } from "@/components/LegalToc";
+import { SectionToc } from "@/components/SectionToc";
 import { DataFlow } from "@/components/DataFlow";
 import { AccentWord } from "@/components/ui/accent-word";
 import { splitAccent } from "@/lib/splitAccent";
@@ -145,7 +145,11 @@ function LegalBody({ doc }: { doc: LegalDoc }) {
         ))}
       </nav>
       <div className="grid items-start gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
-        <LegalToc sections={sections.map((s) => ({ id: s.id, title: s.title }))} />
+        <SectionToc
+          label="On-page"
+          heading={SHARED.tocHeading}
+          sections={sections.map((s) => ({ id: s.id, title: s.title }))}
+        />
         {/* One sheet of paper with a hairline between sections, not a box per section. */}
         <div className="min-w-0 rounded-[20px] bg-card px-6 shadow-card ring-1 ring-inset ring-border sm:px-10">
           {sections.map((s, index) => (

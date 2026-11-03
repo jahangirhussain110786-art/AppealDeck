@@ -2,10 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { SHARED } from "@/content/shared";
 import { List, ChevronDown } from "lucide-react";
 
-export function LegalToc({ sections }: { sections: { id: string; title: string }[] }) {
+/**
+ * The contents rail beside a long page (legal documents and the playbook). It marks the section
+ * you are reading, and folds into a disclosure on a phone so the text still comes first.
+ */
+export function SectionToc({
+  sections,
+  label,
+  heading,
+}: {
+  sections: { id: string; title: string }[];
+  /** The accessible name of the navigation. */
+  label: string;
+  /** The visible heading above the list. */
+  heading: string;
+}) {
   const [activeId, setActiveId] = useState<string | null>(sections[0]?.id ?? null);
 
   useEffect(() => {
@@ -54,11 +67,12 @@ export function LegalToc({ sections }: { sections: { id: string; title: string }
       })}
     </ul>
   );
+
   return (
-    <nav className="lg:sticky lg:top-20" aria-label="On-page">
+    <nav className="lg:sticky lg:top-20" aria-label={label}>
       <details className="group rounded-xl border border-border/80 bg-card p-4 lg:hidden">
         <summary className="flex min-h-6 cursor-pointer list-none items-center gap-2 text-sm font-medium [&::-webkit-details-marker]:hidden">
-          <List className="size-4 text-primary" aria-hidden /> {SHARED.tocHeading}
+          <List className="size-4 text-primary" aria-hidden /> {heading}
           <ChevronDown className="ml-auto size-4 group-open:rotate-180" aria-hidden />
         </summary>
         <div className="mt-3">{links}</div>
@@ -66,7 +80,7 @@ export function LegalToc({ sections }: { sections: { id: string; title: string }
       <div className="hidden space-y-3 rounded-xl border border-border/80 bg-card p-3 lg:block">
         <p className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground">
           <List className="size-4" aria-hidden />
-          {SHARED.tocHeading}
+          {heading}
         </p>
         {links}
       </div>
