@@ -2,6 +2,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { SHARED } from "@/content/shared";
 
+// Same drawing as src/app/icon.svg, no plate: fill-foreground follows the theme in scope, so the
+// navy sidebar and the light header share one mark. The iOS tile and OG image keep their plate.
 export function LogoMark({ size = 28, className }: { size?: number; className?: string }) {
   return (
     <svg
@@ -11,22 +13,28 @@ export function LogoMark({ size = 28, className }: { size?: number; className?: 
       aria-hidden="true"
       className={cn("shrink-0", className)}
     >
-      <rect width="32" height="32" rx="8" className="fill-brand" />
-      <rect x="14" y="5.5" width="12" height="15" rx="2.6" className="fill-white opacity-[0.38]" />
       <rect
-        x="10.5"
-        y="8"
-        width="12.5"
-        height="15.5"
-        rx="2.6"
-        className="fill-white opacity-[0.66]"
+        x="13.05"
+        y="1.42"
+        width="16.56"
+        height="20.7"
+        rx="3.6"
+        className="fill-foreground opacity-[0.34]"
       />
-      <rect x="6.5" y="10.5" width="13.5" height="16.5" rx="2.8" className="fill-white" />
+      <rect
+        x="8.22"
+        y="4.87"
+        width="17.25"
+        height="21.39"
+        rx="3.6"
+        className="fill-foreground opacity-[0.62]"
+      />
+      <rect x="2.7" y="8.31" width="18.63" height="22.77" rx="3.9" className="fill-foreground" />
       <path
-        d="M9.9 19.4l2.8 2.8 5.3-5.8"
+        d="M7.39 20.6l3.86 3.86 7.31-8"
         fill="none"
         className="stroke-primary"
-        strokeWidth="2.5"
+        strokeWidth="3.45"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -35,6 +43,7 @@ export function LogoMark({ size = 28, className }: { size?: number; className?: 
 }
 
 export function Logo({ href = "/", size = "md" }: { href?: string; size?: "sm" | "md" | "lg" }) {
+  // Unplated cards span nearly the whole box, so 28 now reads where the old plated mark needed 30.
   const px = size === "lg" ? 36 : size === "sm" ? 24 : 28;
   return (
     <Link
