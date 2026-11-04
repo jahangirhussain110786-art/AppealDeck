@@ -4,7 +4,7 @@ import { SHARED } from "@/content/shared";
 
 // Same drawing as src/app/icon.svg, no plate: fill-foreground follows the theme in scope, so the
 // navy sidebar and the light header share one mark. The iOS tile and OG image keep their plate.
-export function LogoMark({ size = 28, className }: { size?: number; className?: string }) {
+export function LogoMark({ size = 24, className }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -43,13 +43,14 @@ export function LogoMark({ size = 28, className }: { size?: number; className?: 
 }
 
 export function Logo({ href = "/", size = "md" }: { href?: string; size?: "sm" | "md" | "lg" }) {
-  // Unplated cards span nearly the whole box, so 28 now reads where the old plated mark needed 30.
-  const px = size === "lg" ? 36 : size === "sm" ? 24 : 28;
+  // Unplated cards span about 70% of the box, so these boxes reproduce the old plate's card size:
+  // 20 → 14px, 24 → 17px, 30 → 21px. The mark no longer dominates the wordmark at header size.
+  const px = size === "lg" ? 30 : size === "sm" ? 20 : 24;
   return (
     <Link
       href={href}
       aria-label={SHARED.brand.name}
-      className="inline-flex items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="inline-flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <LogoMark size={px} />
       <span
