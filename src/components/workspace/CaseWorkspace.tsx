@@ -1708,22 +1708,25 @@ function WorkspaceInner({
         )}
       </AppBarSlot>
       <AppBarSlot target="actions">
-        <p
-          role="status"
-          className="flex max-w-[40vw] items-center gap-1.5 text-[0.8125rem] leading-tight text-muted-foreground sm:max-w-none"
-        >
-          {dirtyKeys.size === 0 && !busy && saved && !saveFailed && (
-            <Check className="size-3.5 text-success" aria-hidden />
+        <p role="status" className="flex max-w-[40vw] items-center sm:max-w-none">
+          {/* A saved case is a state, not a passing remark, so it gets the badge language the rest
+              of the app uses instead of a bare tick beside grey text. */}
+          {dirtyKeys.size === 0 && !busy && saved && !saveFailed ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-success/25 bg-success/10 px-2 py-1 text-xs font-medium leading-none text-success">
+              <Check className="size-3.5" aria-hidden />
+              {C.saved}
+            </span>
+          ) : (
+            <span className="text-[0.8125rem] leading-tight text-muted-foreground">
+              {saveFailed && !busy
+                ? saveFailed
+                : dirtyKeys.size > 0
+                  ? C.saving
+                  : busy
+                    ? C.working
+                    : C.saveEach}
+            </span>
           )}
-          {saveFailed && !busy
-            ? saveFailed
-            : dirtyKeys.size > 0
-              ? C.saving
-              : busy
-                ? C.working
-                : saved
-                  ? C.saved
-                  : C.saveEach}
         </p>
         {saveFailed && !busy && !unsavedCopy && (
           <Button size="sm" variant="outline" onClick={() => void retryFailedSave()}>
@@ -2103,7 +2106,7 @@ function WorkspaceInner({
                     }
                     actions={
                       <>
-                        <Button onClick={() => setTab(nextTab)}>
+                        <Button className="group" onClick={() => setTab(nextTab)}>
                           {replyPending
                             ? C.replyPending.cta
                             : awaiting
@@ -2115,7 +2118,10 @@ function WorkspaceInner({
                                   : next || !w.requirementsConfirmed
                                     ? C.overview.toDocuments
                                     : C.overview.toResponse}
-                          <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+                          <ArrowRight
+                            className="transition-transform duration-150 group-hover:translate-x-0.5 group-focus-visible:translate-x-0.5"
+                            aria-hidden
+                          />
                         </Button>
                         <Button variant="outline" onClick={() => setReviewRequest(true)}>
                           {C.reviewNotice}

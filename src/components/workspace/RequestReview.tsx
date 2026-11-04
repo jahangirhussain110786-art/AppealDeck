@@ -364,6 +364,7 @@ export function RequestReview({
         <div className="space-y-2">
           <div className="flex flex-wrap gap-3">
             <Button
+              className="group"
               disabled={busy || tooShort}
               aria-describedby={tooShort ? "workspace-confirm-why" : undefined}
               onClick={() =>
@@ -376,7 +377,10 @@ export function RequestReview({
               }
             >
               {C.confirmRoute}
-              <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+              <ArrowRight
+                className="transition-transform duration-150 group-hover:translate-x-0.5 group-focus-visible:translate-x-0.5"
+                aria-hidden
+              />
             </Button>
             <Button
               variant="outline"

@@ -305,8 +305,13 @@
   mark.hl-clear {
     color: inherit;
   }
+  /* One rendered weight, not one nominal one (4 Nov 2026). Lucide draws in a 24-unit box, so the
+     old 1.5 unit stroke became a 1px hairline on the 14-16px icons the app actually uses, and left
+     arrows, chevrons and ticks looking thin beside semibold text. Non-scaling keeps the line at
+     1.5px on screen whether the icon renders at 14px or 24px. */
   .lucide {
     stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
   }
   .marketing-surface {
     background-image: radial-gradient(

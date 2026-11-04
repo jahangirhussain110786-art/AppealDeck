@@ -43,7 +43,7 @@
 ### 1.1 Simplicity budget (binding) — and what makes screens loved
 
 - **Budget per screen:** one primary action, at most one secondary; ≤ 3 cards above the fold; ≤ 7 navigation items; no modal for information (inline or Accordion instead — Dialog only for confirms and the sample POA); details behind "why?"/Accordion, never in the first paint. Every element must answer "what does the seller do next?" or be removed.
-- **What screen-lovers notice, and why they stay:** a real type scale with consistent rhythm; optical alignment on a 4 px grid; one icon family at one stroke width (lucide, 1.5 px, 16/20 px); surface tiers and tinted shadows instead of borders everywhere; feedback within 100 ms on every interaction they cause; skeletons shaped like the content they replace; empty states that look designed, not forgotten; dark and light modes each tuned, not inverted; a hero that *is* the product. Delight is craft in these details — never confetti, effects, or clever copy.
+- **What screen-lovers notice, and why they stay:** a real type scale with consistent rhythm; optical alignment on a 4 px grid; one icon family at one rendered stroke width (lucide, 1.5 px on screen at 14/16/20/24 px — the icon scales, the line does not); surface tiers and tinted shadows instead of borders everywhere; feedback within 100 ms on every interaction they cause; skeletons shaped like the content they replace; empty states that look designed, not forgotten; dark and light modes each tuned, not inverted; a hero that *is* the product. Delight is craft in these details — never confetti, effects, or clever copy.
 - **The test:** a stressed seller on a phone at 2 a.m. sees one obvious next step and nothing that competes with it.
 
 ---

@@ -32,15 +32,21 @@ export function StepNav({
       {/* Stacked full width on a phone, Back on the left and Next on the right from there up. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         {back && (
-          <Button variant="outline" className="w-full sm:w-auto" onClick={back.onClick}>
-            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+          <Button variant="outline" className="group w-full sm:w-auto" onClick={back.onClick}>
+            <ArrowLeft
+              className="transition-transform duration-150 group-hover:-translate-x-0.5 group-focus-visible:-translate-x-0.5"
+              aria-hidden
+            />
             {back.label}
           </Button>
         )}
         {next && (
-          <Button className="w-full sm:ml-auto sm:w-auto" onClick={next.onClick}>
+          <Button className="group w-full sm:ml-auto sm:w-auto" onClick={next.onClick}>
             {next.label}
-            <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+            <ArrowRight
+              className="transition-transform duration-150 group-hover:translate-x-0.5 group-focus-visible:translate-x-0.5"
+              aria-hidden
+            />
           </Button>
         )}
       </div>

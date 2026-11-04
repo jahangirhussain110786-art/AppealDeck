@@ -608,10 +608,13 @@ ${text}`
               )}
               {!signedIn ? (
                 <div className="space-y-2">
-                  <Button asChild className="h-auto min-h-11 max-w-full whitespace-normal">
+                  <Button asChild className="group h-auto min-h-11 max-w-full whitespace-normal">
                     <Link href={signInHref}>
                       {F.signIn}
-                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+                      <ArrowRight
+                        className="transition-transform duration-150 group-hover:translate-x-0.5 group-focus-visible:translate-x-0.5"
+                        aria-hidden
+                      />
                     </Link>
                   </Button>
                   <p className="text-sm text-muted-foreground">{F.guestPrice}</p>
