@@ -97,7 +97,7 @@ export function AppSidebar({
         data-no-print
       >
         <Link href="/" aria-label={SHARED.brand.name} className="shrink-0 px-1 sm:px-2">
-          <LogoMark size={24} />
+          <LogoMark size={28} />
         </Link>
         <nav
           aria-label={SHARED.nav.primary}

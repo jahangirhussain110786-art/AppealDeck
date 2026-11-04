@@ -121,15 +121,15 @@ export function DevUiGallery() {
         <Card>
           <CardContent className="flex flex-wrap items-center gap-6 pt-5">
             <div className="flex flex-col items-center gap-2">
-              <LogoMark size={20} />
+              <LogoMark size={24} />
               <span className="text-xs text-muted-foreground">sm mark</span>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <LogoMark size={24} />
+              <LogoMark size={28} />
               <span className="text-xs text-muted-foreground">md mark</span>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <LogoMark size={30} />
+              <LogoMark size={34} />
               <span className="text-xs text-muted-foreground">lg mark</span>
             </div>
             <Separator orientation="vertical" className="h-10" />
