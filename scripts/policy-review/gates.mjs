@@ -60,10 +60,37 @@ function isStringArray(value) {
 }
 
 /**
- * @param {unknown} proposal parsed model answer
- * @param {{ reportText: string, reportUrls: string[] }} context what the model was allowed to see
+ * True when the only thing that moved is wording that appeared on a page, with nothing removed and
+ * no feed item or new article to explain it. A rebuilt layout, a changed wrapper and a genuine new
+ * paragraph all look like this, so it cannot be called "ready" on the model's confidence alone: the
+ * first practical run (4 Nov 2026) proposed a fee change with 0.95 confidence from exactly this
+ * shape, and that confidence was not something the report could support.
  */
-export function validateProposal(proposal, { reportText, reportUrls }) {
+export function isAdditionOnly(report) {
+  const sources = report?.sources ?? [];
+  const feedOrLinkChange = sources.some(
+    (source) =>
+      (source.newItems?.length ?? 0) > 0 ||
+      (source.editedItems?.length ?? 0) > 0 ||
+      (source.newLinks?.length ?? 0) > 0,
+  );
+  if (feedOrLinkChange) return false;
+  const textChanges = sources.filter(
+    (source) => (source.addedLines?.length ?? 0) > 0 || (source.removedLines?.length ?? 0) > 0,
+  );
+  return (
+    textChanges.length > 0 &&
+    textChanges.every(
+      (source) => (source.addedLines?.length ?? 0) > 0 && (source.removedLines?.length ?? 0) === 0,
+    )
+  );
+}
+
+/**
+ * @param {unknown} proposal parsed model answer
+ * @param {{ reportText: string, reportUrls: string[], report?: object }} context what the model was allowed to see
+ */
+export function validateProposal(proposal, { reportText, reportUrls, report }) {
   const errors = [];
   const warnings = [];
 
@@ -139,10 +166,27 @@ export function validateProposal(proposal, { reportText, reportUrls }) {
     warnings.push("no next_check was given; a person still has to know what to verify");
   }
 
+  // "Not relevant" is the answer that ends the day, so it has to carry its reason. A bare "no" is
+  // accepted for shape but flagged: the founder reads these, and a run of one-word dismissals is
+  // how a drifted model goes unnoticed until a real change is skipped.
+  if (answer.relevant !== true && whatChanged.length < 20) {
+    warnings.push(
+      "the answer called this not relevant without saying why; check the report by eye before closing it",
+    );
+  }
+
   if (errors.length) return { ok: false, status: "invalid", errors, warnings };
 
   if (answer.relevant !== true) {
     return { ok: true, status: "not-relevant", errors, warnings };
+  }
+
+  if (isAdditionOnly(report)) {
+    warnings.push(
+      "the report shows text that appeared with nothing removed: a rebuilt page reads the same " +
+        "way, so open the source and confirm the wording really is new",
+    );
+    return { ok: true, status: "needs-review", errors, warnings };
   }
 
   return {

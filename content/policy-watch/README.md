@@ -75,7 +75,11 @@ The gates in `scripts/policy-review/gates.mjs` are real and run on every answer:
 - every currency amount or percentage in the proposal must appear in the report — a remembered fee
   is the most damaging thing a model can add;
 - the areas it may name are fixed (`policy_brief`, `playbook`, `fees`, `api`, `none`);
-- confidence below 0.8 is marked **needs a careful read**, not ready.
+- confidence below 0.8 is marked **needs a careful read**, not ready;
+- wording that **appeared** on a page with nothing removed, and no feed item or new article to
+  explain it, is never "ready" — a rebuilt page produces exactly that report. The first practical
+  run on 4 Nov 2026 is why this rule exists: the model read a rebuilt fee table as a fee change and
+  called it 0.95, and nothing in the report could support that number.
 
 What no gate can check is whether a faithful paraphrase is _right_. A sentence can quote the
 report correctly and still draw the wrong conclusion, and in this product a wrong sentence costs a
@@ -113,7 +117,7 @@ npm run policy:watch
 npm run policy:review
 ```
 
-Tests: `npx vitest run scripts/policy-watch/core.test.mjs scripts/policy-review/gates.test.mjs`.
+Tests: `npx vitest run scripts/policy-watch scripts/policy-review`.
 
 ## 7. The AI key is its own
 
@@ -124,10 +128,12 @@ Tests: `npx vitest run scripts/policy-watch/core.test.mjs scripts/policy-review/
 - its spend and its quota cannot affect a seller preparing an appeal;
 - it can be pointed at any provider by changing `POLICY_AI_PROVIDER` and `POLICY_AI_MODEL`.
 
-Supported: `gemini` (default), `groq`, `openai`, `openrouter`, `cerebras`, `mistral`, `anthropic`,
-and `custom` with `POLICY_AI_BASE_URL`. Model names change faster than code, so
-`POLICY_AI_MODEL` is required rather than guessed. Free tiers are enough: one call on the days
-something changed, zero on the days nothing did.
+Supported: `groq` (default), `gemini`, `openai`, `openrouter`, `cerebras`, `mistral`, `anthropic`,
+and `custom` with `POLICY_AI_BASE_URL`. The default is Groq's `openai/gpt-oss-120b`, the model the
+app's own Groq path uses, chosen by the founder on 4 Nov 2026; that model name is pinned in
+`scripts/policy-review/provider.mjs`, and every other provider needs `POLICY_AI_MODEL` set, because
+model names change faster than code. Free tiers are enough: one call on the days something changed,
+zero on the days nothing did.
 
 Without the key the watch still works end to end — it fetches, compares, reports and notifies. Only
 the proposal is skipped, and the run says so.

@@ -310,13 +310,15 @@ Optional repository **secrets** (Settings → Secrets and variables → Actions)
 
 | Secret | What it does | Without it |
 | --- | --- | --- |
-| `POLICY_AI_API_KEY` | The review model, on its own key — never the app's `GEMINI_API_KEY` | The watch still runs; no proposal is written and the log says so |
+| `POLICY_AI_API_KEY` | The review model's key | The watch still runs; no proposal is written and the log says so |
 | `RESEND_API_KEY` | Also emails the report, not only the GitHub issue | The issue is the notification |
 | `POLICY_ALERT_EMAIL` | Where that email goes (`OPS_ALERT_EMAIL` is the fallback) | No email |
 
-Optional repository **variables** (same screen, "Variables" tab): `POLICY_AI_PROVIDER` (`gemini` default, or `groq`, `openai`, `openrouter`, `cerebras`, `mistral`, `anthropic`, `custom`), `POLICY_AI_MODEL` (**required** when a key is set), `POLICY_AI_BASE_URL` (only for `custom`).
+Optional repository **variables** (same screen, "Variables" tab): `POLICY_AI_PROVIDER` (`groq` default, or `gemini`, `openai`, `openrouter`, `cerebras`, `mistral`, `anthropic`, `custom`), `POLICY_AI_MODEL` (**required** for any provider except the default, where `openai/gpt-oss-120b` is pinned), `POLICY_AI_BASE_URL` (only for `custom`).
 
-**Why this key is not in the privacy policy:** the job sends Amazon's public pages, never a seller's notice, document or case. It is outside `src/content/aiProviders.ts` on purpose, and it cannot receive seller text because no code path passes it any.
+**Which key (4 Nov 2026):** the job runs on **Groq's `openai/gpt-oss-120b`** — the same model the app's own Groq path defaults to — at one request a day. The founder asked for the existing Groq key to be used, so the key you already hold in `.env.local` as `GROQ_API_KEY` is the one to paste into `POLICY_AI_API_KEY`. Using the app's key here is safe while the job makes one request a day; if the two ever need separate quotas, give the job its own key and change nothing else.
+
+**Why this key is not in the privacy policy:** the job sends Amazon's public pages, never a seller's notice, document or case. It is outside `src/content/aiProviders.ts` on purpose, it cannot receive seller text because no code path passes it any, and it does not run from the site.
 
 **What it does not watch:** every Seller Central policy article, the Business Solutions Agreement, account health and Seller Central news sit behind a login — an unauthenticated fetch returns the 171 KB sign-in shell. The watch covers Amazon's public announcements and says so in every report.
 

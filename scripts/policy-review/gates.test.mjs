@@ -99,6 +99,67 @@ describe("proposal gates", () => {
     expect(verdict.status).toBe("not-relevant");
   });
 
+  it("flags a not-relevant answer that does not say why", () => {
+    const verdict = validateProposal(
+      { ...valid, relevant: false, category: "corporate", areas: ["none"], what_changed: "No." },
+      context,
+    );
+    expect(verdict.ok).toBe(true);
+    expect(verdict.status).toBe("not-relevant");
+    expect(verdict.warnings.join(" ")).toContain("without saying why");
+  });
+
+  it("will not call a page's newly appearing wording ready, however confident the answer is", () => {
+    const report = {
+      sources: [
+        {
+          id: "sell-pricing",
+          status: "changed",
+          addedLines: ["Referral fees vary by product category."],
+          removedLines: [],
+          newItems: [],
+          newLinks: [],
+          editedItems: [],
+        },
+      ],
+    };
+    const verdict = validateProposal(valid, { ...context, report });
+    expect(verdict.status).toBe("needs-review");
+    expect(verdict.warnings.join(" ")).toContain("rebuilt page");
+  });
+
+  it("still says ready when the page shows what the wording replaced", () => {
+    const report = {
+      sources: [
+        {
+          status: "changed",
+          addedLines: ["15% for the portion of the total sales price up to $300.00"],
+          removedLines: ["12% for the portion of the total sales price up to $300.00"],
+          newItems: [],
+          newLinks: [],
+          editedItems: [],
+        },
+      ],
+    };
+    expect(validateProposal(valid, { ...context, report }).status).toBe("ready");
+  });
+
+  it("still says ready when a feed item explains the wording", () => {
+    const report = {
+      sources: [
+        {
+          status: "changed",
+          addedLines: ["Referral fees vary by product category."],
+          removedLines: [],
+          newItems: [{ title: "Fee change", link: "https://sell.amazon.com/x" }],
+          newLinks: [],
+          editedItems: [],
+        },
+      ],
+    };
+    expect(validateProposal(valid, { ...context, report }).status).toBe("ready");
+  });
+
   it("rejects a relevant answer that names no area", () => {
     const verdict = validateProposal({ ...valid, areas: [] }, context);
     expect(verdict.errors.join(" ")).toContain("at least one area");

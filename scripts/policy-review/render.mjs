@@ -48,7 +48,22 @@ export function renderProposal({ report, answer, verdict, model }) {
     lines.push("Today's differences do not change a rule a seller follows.");
     if (answer?.what_changed)
       lines.push("", `Why it was classified this way: ${answer.what_changed}`);
-    lines.push("", "## Checks", "", ...verdict.warnings.map((warning) => `- warning: ${warning}`));
+    lines.push("", "## Checks", "");
+    for (const warning of verdict.warnings) lines.push(`- warning: ${warning}`);
+    // The checks ran whether or not there is anything to apply; saying so is the difference between
+    // an empty heading and a reader knowing the answer was tested rather than merely short.
+    if (!verdict.warnings.length) {
+      lines.push(
+        "- No check failed: the answer is a valid object of the required shape, and every citation " +
+          "it did give is in today's report. There is nothing to apply, so nothing was written to " +
+          "`src/`.",
+      );
+    }
+    lines.push("", "---", "");
+    lines.push(
+      "Written by `scripts/policy-review.mjs`. A day is only recorded as a proposal when the answer " +
+        "says a seller-facing rule changed; this day was not, so it stayed a report.",
+    );
     return lines.join("\n");
   }
 

@@ -6,19 +6,20 @@ describe("provider configuration", () => {
     expect(providerConfig({})).toBeNull();
   });
 
-  it("requires a model name rather than guessing one", () => {
-    const config = providerConfig({ POLICY_AI_API_KEY: "k" });
-    expect(config.error).toContain("POLICY_AI_MODEL");
+  it("requires a model name for any provider other than the pinned default", () => {
+    expect(providerConfig({ POLICY_AI_API_KEY: "k", POLICY_AI_PROVIDER: "openai" }).error).toContain(
+      "POLICY_AI_MODEL",
+    );
   });
 
-  it("defaults to gemini and accepts an explicit provider", () => {
-    expect(providerConfig({ POLICY_AI_API_KEY: "k", POLICY_AI_MODEL: "m" })).toMatchObject({
-      provider: "gemini",
-      model: "m",
+  it("defaults to the founder's Groq model and accepts an explicit provider", () => {
+    expect(providerConfig({ POLICY_AI_API_KEY: "k" })).toMatchObject({
+      provider: "groq",
+      model: "openai/gpt-oss-120b",
     });
     expect(
-      providerConfig({ POLICY_AI_API_KEY: "k", POLICY_AI_MODEL: "m", POLICY_AI_PROVIDER: "Groq" }),
-    ).toMatchObject({ provider: "groq" });
+      providerConfig({ POLICY_AI_API_KEY: "k", POLICY_AI_MODEL: "m", POLICY_AI_PROVIDER: "Gemini" }),
+    ).toMatchObject({ provider: "gemini", model: "m" });
   });
 
   it("needs a base URL only for a custom provider", () => {

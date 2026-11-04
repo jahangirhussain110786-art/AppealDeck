@@ -23,6 +23,13 @@
 #   POLICY_AI_API_KEY   its own key for this job (any provider; see .env.example)
 #   POLICY_AI_PROVIDER  gemini | groq | openai | openrouter | cerebras | mistral | anthropic | custom
 #   POLICY_AI_MODEL     the model name for that key
+#
+# Defaults (set 4 Nov 2026, founder's instruction to run this job on the existing Groq key): with
+# neither variable set the reviewer calls Groq's `openai/gpt-oss-120b`, the same model the app's own
+# Groq path defaults to, one request a day. The defaults live in `scripts/policy-review/provider.mjs`
+# so a local run behaves exactly as the workflow does.
+# The job uses the same key as the app only because one request a day is nothing against the daily
+# allowance; if that stops being true, give the job its own key — nothing else has to change.
 #   RESEND_API_KEY      optional; without it the GitHub issue is the notification
 #   POLICY_ALERT_EMAIL  optional; the address the Resend email goes to
 

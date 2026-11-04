@@ -111,6 +111,7 @@ async function main() {
   const verdict = validateProposal(answer, {
     reportText: `${reportMarkdown}\n${JSON.stringify(report)}`,
     reportUrls: urls,
+    report,
   });
   const body = renderProposal({
     report,

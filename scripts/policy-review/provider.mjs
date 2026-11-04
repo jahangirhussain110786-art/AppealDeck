@@ -8,12 +8,17 @@
  * affect a seller preparing an appeal, and it can run on a free tier without changing a promise.
  *
  * Configuration (all optional except the key):
- *   POLICY_AI_API_KEY   its own key, not the app's GEMINI_API_KEY
- *   POLICY_AI_PROVIDER  gemini (default) | groq | openai | openrouter | cerebras | mistral |
+ *   POLICY_AI_API_KEY   a key for this job; its own, not the app's GEMINI_API_KEY
+ *   POLICY_AI_PROVIDER  groq (default) | gemini | openai | openrouter | cerebras | mistral |
  *                       anthropic | custom
- *   POLICY_AI_MODEL     the model name; required, because model names change faster than code
+ *   POLICY_AI_MODEL     the model name; a default is pinned for Groq because that was the founder's
+ *                       choice on 4 Nov 2026, and required for every other provider
  *   POLICY_AI_BASE_URL  required only for custom
  */
+
+/** The job's default, set by the founder on 4 Nov 2026: the Groq model the app already uses. */
+export const DEFAULT_PROVIDER = "groq";
+export const DEFAULT_MODEL = "openai/gpt-oss-120b";
 
 const OPENAI_COMPATIBLE = {
   groq: "https://api.groq.com/openai/v1",
@@ -26,10 +31,13 @@ const OPENAI_COMPATIBLE = {
 export function providerConfig(env = process.env) {
   const key = (env.POLICY_AI_API_KEY ?? "").trim();
   if (!key) return null;
-  const provider = (env.POLICY_AI_PROVIDER ?? "gemini").trim().toLowerCase();
-  const model = (env.POLICY_AI_MODEL ?? "").trim();
+  const provider = (env.POLICY_AI_PROVIDER || "").trim().toLowerCase() || DEFAULT_PROVIDER;
+  let model = (env.POLICY_AI_MODEL || "").trim();
   if (!model) {
-    return { error: "POLICY_AI_MODEL is not set; name the model this key may call." };
+    if (provider !== DEFAULT_PROVIDER) {
+      return { error: "POLICY_AI_MODEL is not set; name the model this key may call." };
+    }
+    model = DEFAULT_MODEL;
   }
   if (provider === "custom" && !env.POLICY_AI_BASE_URL) {
     return { error: "POLICY_AI_PROVIDER=custom needs POLICY_AI_BASE_URL." };
