@@ -4,7 +4,7 @@ import { SHARED } from "@/content/shared";
 
 // Same drawing as src/app/icon.svg, no plate: fill-foreground follows the theme in scope, so the
 // navy sidebar and the light header share one mark. The iOS tile and OG image keep their plate.
-export function LogoMark({ size = 28, className }: { size?: number; className?: string }) {
+export function LogoMark({ size = 18, className }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -43,10 +43,11 @@ export function LogoMark({ size = 28, className }: { size?: number; className?: 
 }
 
 export function Logo({ href = "/", size = "md" }: { href?: string; size?: "sm" | "md" | "lg" }) {
-  // The mark's cards are one narrow shape against a bold ten-letter name, so matching them on ink
-  // height still reads as a small icon (24 was visibly short beside the name). Set so the mark
-  // measures about 1.5x the wordmark's ink, the usual lockup proportion: 28 beside 17px, 34 beside 20px.
-  const px = size === "lg" ? 34 : size === "sm" ? 26 : 28;
+  // Sized to the name, measured: the wordmark's ink is 17px at 17px type (13 ascent + 4 descent)
+  // and the mark's outer silhouette is 0.927 of its box, so 18 gives 16.7px against 17px — equal
+  // height, with the front card at 12.8px against the caps' 12.3px. Larger sizes (24, 28) put the
+  // mark visibly above the name.
+  const px = size === "lg" ? 21 : size === "sm" ? 17 : 18;
   return (
     <Link
       href={href}
