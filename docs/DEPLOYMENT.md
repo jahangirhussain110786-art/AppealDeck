@@ -300,6 +300,26 @@ The site says "AI"; the privacy policy names the companies, from one list. Which
 
 A provider that is not `listed` cannot run in production even with a key and its switch on: text can never go to a company the policy does not name.
 
+## 6e. The policy watch (4 Nov 2026) — GitHub Actions, not Vercel
+
+A daily job in `.github/workflows/policy-watch.yml` fetches five public Amazon pages/feeds, reports what changed, and asks a separate AI key to draft a proposal. Full scope, limits and the reason for the one remaining click: [`content/policy-watch/README.md`](../content/policy-watch/README.md).
+
+**Nothing is required for it to run.** The schedule, the issue and its notification email are free; the watch works with no secrets at all, because it opens a GitHub issue and assigns it to you.
+
+Optional repository **secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | What it does | Without it |
+| --- | --- | --- |
+| `POLICY_AI_API_KEY` | The review model, on its own key — never the app's `GEMINI_API_KEY` | The watch still runs; no proposal is written and the log says so |
+| `RESEND_API_KEY` | Also emails the report, not only the GitHub issue | The issue is the notification |
+| `POLICY_ALERT_EMAIL` | Where that email goes (`OPS_ALERT_EMAIL` is the fallback) | No email |
+
+Optional repository **variables** (same screen, "Variables" tab): `POLICY_AI_PROVIDER` (`gemini` default, or `groq`, `openai`, `openrouter`, `cerebras`, `mistral`, `anthropic`, `custom`), `POLICY_AI_MODEL` (**required** when a key is set), `POLICY_AI_BASE_URL` (only for `custom`).
+
+**Why this key is not in the privacy policy:** the job sends Amazon's public pages, never a seller's notice, document or case. It is outside `src/content/aiProviders.ts` on purpose, and it cannot receive seller text because no code path passes it any.
+
+**What it does not watch:** every Seller Central policy article, the Business Solutions Agreement, account health and Seller Central news sit behind a login — an unauthenticated fetch returns the 171 KB sign-in shell. The watch covers Amazon's public announcements and says so in every report.
+
 ## 7. Deploy
 
 ```bash

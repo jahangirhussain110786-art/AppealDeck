@@ -41,7 +41,9 @@
     "refactor:up": "node scripts/mcp-bridge-up.mjs --name refactor --port 3118 --package @myuon/refactor-mcp",
     "refactor:down": "node scripts/mcp-bridge-down.mjs --name refactor --port 3118",
     "mem0:up": "node scripts/mcp-bridge-up.mjs --name mem0 --port 3119 --package @mem0/mcp-server --env MEM0_API_KEY",
-    "mem0:down": "node scripts/mcp-bridge-down.mjs --name mem0 --port 3119"
+    "mem0:down": "node scripts/mcp-bridge-down.mjs --name mem0 --port 3119",
+    "policy:watch": "node scripts/policy-watch.mjs",
+    "policy:review": "node scripts/policy-review.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.11",

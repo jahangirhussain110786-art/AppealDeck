@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "note": "Every source here was fetched without a login on 4 Nov 2026 and returned readable content. Amazon's Seller Central help pages (sellercentral.amazon.com/help/...) do NOT qualify: unauthenticated they return the 171 KB sign-in shell, so a watcher would hash a login page and report silence forever. Do not add them. The `expect` field is the guard: when it stops appearing, the run reports the source as unreadable instead of unchanged.",
+  "timeoutMs": 30000,
+  "sources": [
+    {
+      "id": "sp-api-changelog",
+      "label": "Selling Partner API changelog",
+      "url": "https://developer-docs.amazon.com/sp-api/changelog.rss",
+      "kind": "feed",
+      "tier": "immediate",
+      "expect": "Selling Partner API",
+      "minItems": 3,
+      "why": "Amazon's own dated release notes. Listing attribute rules, order and fulfilment changes, and new policy-driven fields appear here before most sellers hear about them."
+    },
+    {
+      "id": "seller-announcements",
+      "label": "Amazon news for small business",
+      "url": "https://www.aboutamazon.com/news/small-business/feed",
+      "kind": "feed",
+      "tier": "immediate",
+      "expect": "small business",
+      "minItems": 3,
+      "why": "Seller-facing announcements published by Amazon itself. Roughly a dozen a year, so an item is worth reading."
+    },
+    {
+      "id": "policy-news",
+      "label": "Amazon policy news and views",
+      "url": "https://www.aboutamazon.com/news/policy-news-views/feed",
+      "kind": "feed",
+      "tier": "digest",
+      "expect": "policy",
+      "minItems": 3,
+      "why": "Corporate policy positions, mostly not seller rules. Kept at digest tier so it never interrupts; the review step decides whether an item matters to sellers."
+    },
+    {
+      "id": "sell-pricing",
+      "label": "Sell on Amazon pricing and fees",
+      "url": "https://sell.amazon.com/pricing",
+      "kind": "text",
+      "tier": "immediate",
+      "expect": "referral fee",
+      "why": "The public fee page. A change here is material to every seller's numbers, and it is the kind of change Amazon does not always announce."
+    },
+    {
+      "id": "sell-blog",
+      "label": "Amazon Selling Partner blog",
+      "url": "https://sell.amazon.com/blog",
+      "kind": "links",
+      "tier": "digest",
+      "include": "/blog/[^/?#]+$",
+      "expect": "Selling Partner Blog",
+      "why": "New seller-facing posts. Link-set comparison means layout churn cannot fake an update."
+    }
+  ]
+}

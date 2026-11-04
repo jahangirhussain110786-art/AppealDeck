@@ -70,6 +70,12 @@ Applied in number order with the Supabase CLI through the session pooler, after 
 - [ ] GitHub secrets `SUPABASE_DB_URL` and `BACKUP_PASSPHRASE`; run the Backup action green; do one restore drill (`DEPLOYMENT.md` §6a). Supabase's paid backups cover `auth.users`; this dump covers the paid rows.
 - [ ] Uptime monitor on `/api/health`.
 
+## 6b. The policy watch (optional; costs nothing and needs no account)
+
+- [ ] Run the **Policy watch** workflow once by hand (Actions → Policy watch → Run workflow) and confirm it opens an issue assigned to you, so the GitHub notification email reaches you. If that email is off in your GitHub settings, turn on "Issues" notifications.
+- [ ] Optional: set `POLICY_AI_API_KEY` (its own key, any provider) and `POLICY_AI_MODEL` so a proposal is drafted when something changes; `RESEND_API_KEY` + `POLICY_ALERT_EMAIL` to also get an email. See `DEPLOYMENT.md` §6e.
+- [ ] Read `content/policy-watch/README.md` §2–§3 once: it does **not** watch Seller Central's logged-in policy pages, and it says why.
+
 ## 7. Test, then open the doors
 
 - [ ] Run the 18 post-deploy checks in `DEPLOYMENT.md` §9 (check 17 is the guest reminder, 18 the EU/EEA/UK block). One Response and its credited upgrade are **not** day one: they run when those prices are switched on.

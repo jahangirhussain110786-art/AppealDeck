@@ -1,0 +1,176 @@
+/**
+ * The report the founder reads (4 Nov 2026). One file per day that something moved, in Markdown for
+ * the repository and in plain text for the email, from the same object, so the two cannot drift.
+ *
+ * Rules the wording follows, because this report is a claim about the outside world:
+ * - A line says what was fetched and what differed. It never says what the change means; that is the
+ *   review step's job and it is labelled as a proposal.
+ * - An unreadable source is never omitted and never softened. Silence from a broken source is the
+ *   one failure that would let the watch rot unnoticed.
+ * - The Playbook's own re-check age is printed even when nothing changed, so "no news" cannot hide
+ *   a brief that has gone stale.
+ */
+
+const STATUS_LABEL = {
+  changed: "changed",
+  unchanged: "unchanged",
+  "first-seen": "first check",
+  unreadable: "UNREADABLE",
+};
+
+function bulletItem(item) {
+  const date = item.date ? ` — ${item.date}` : "";
+  const title = item.link ? `[${item.title}](${item.link})` : item.title;
+  return `- ${title}${date}`;
+}
+
+function sourceBlock(source) {
+  const heading = `### ${source.label} (${STATUS_LABEL[source.status] ?? source.status})`;
+  const lines = [heading, ""];
+
+  if (source.status === "unreadable") {
+    lines.push(`Could not be read today: ${source.reason}. The stored snapshot was kept.`);
+    lines.push(`Source: ${source.url}`);
+    return lines.join("\n");
+  }
+
+  if (source.newItems?.length) {
+    lines.push(`${source.newItems.length} new item(s):`, "");
+    lines.push(...source.newItems.map(bulletItem));
+  }
+  if (source.editedItems?.length) {
+    lines.push("", "An existing item changed its title:", "");
+    lines.push(...source.editedItems.map(bulletItem));
+  }
+  if (source.addedLines?.length) {
+    lines.push(`${source.addedLines.length} line(s) added:`, "");
+    lines.push(...source.addedLines.map((line) => `+ ${line}`));
+  }
+  if (source.removedLines?.length) {
+    lines.push("", `${source.removedLines.length} line(s) removed:`, "");
+    lines.push(...source.removedLines.map((line) => `- ${line}`));
+  }
+  if (source.newLinks?.length) {
+    lines.push(`${source.newLinks.length} new link(s):`, "");
+    lines.push(...source.newLinks.map((link) => `- ${link}`));
+  }
+  if (source.droppedLinks?.length) {
+    lines.push(
+      "",
+      `${source.droppedLinks.length} link(s) left the first page (not a deletion):`,
+      "",
+      ...source.droppedLinks.slice(0, 10).map((link) => `- ${link}`),
+    );
+  }
+  lines.push("", `Source: ${source.url}`);
+  return lines.join("\n");
+}
+
+export function reportTitle(report) {
+  return `Policy watch — ${report.day}`;
+}
+
+export function reportSubject(report) {
+  const changed = report.sources.filter((s) => s.status === "changed");
+  const unreadable = report.sources.filter((s) => s.status === "unreadable");
+  if (unreadable.length) {
+    return `Policy watch: ${unreadable.length} source(s) unreadable, ${changed.length} changed`;
+  }
+  return `Amazon policy watch: ${changed.length} source(s) changed (${changed
+    .map((s) => s.label)
+    .join(", ")})`;
+}
+
+export function renderReportMarkdown(report) {
+  const total = report.sources.length;
+  const changed = report.sources.filter((s) => s.status === "changed");
+  const unreadable = report.sources.filter((s) => s.status === "unreadable");
+  const lines = [
+    `# ${reportTitle(report)}`,
+    "",
+    `Checked ${total} public Amazon source(s) on ${report.generatedAt}. ` +
+      `${changed.length} changed, ${unreadable.length} could not be read.`,
+    "",
+    "This file records what differed. It does not say what the difference means: that is the " +
+      "proposal in `content/policy-watch/proposals/`, and it is labelled a proposal because a " +
+      "person has not yet agreed with it.",
+    "",
+  ];
+
+  for (const source of report.sources) lines.push(sourceBlock(source), "");
+
+  if (report.policyBrief) {
+    const brief = report.policyBrief;
+    lines.push("## Playbook re-check", "");
+    if (brief.missing) {
+      lines.push("`src/core/policyBrief.ts` could not be read, so its age is unknown.");
+    } else {
+      const state = brief.overdue ? "OVERDUE" : "within its limit";
+      lines.push(
+        `The policy brief the drafts follow was last checked on ${brief.checkedOn}: ` +
+          `${brief.ageDays} day(s) old, ${state} (limit ${brief.maxAgeDays}).`,
+      );
+    }
+    if (report.playbook) {
+      const book = report.playbook;
+      if (book.missing) {
+        lines.push("", "The Playbook's own check dates could not be read.");
+      } else {
+        const state = book.overdue ? "OVERDUE" : "within their limit";
+        lines.push(
+          "",
+          `${book.pages} Playbook page(s) carry a verification date; the oldest is ${book.oldest}: ` +
+            `${book.ageDays} day(s) old, ${state} (limit ${book.maxAgeDays}).`,
+        );
+      }
+    }
+    lines.push("");
+  }
+
+  lines.push("---", "", "Generated by `scripts/policy-watch.mjs`. Nothing was published.");
+  return lines.join("\n");
+}
+
+export function renderReportText(report) {
+  const changed = report.sources.filter((s) => s.status === "changed");
+  const unreadable = report.sources.filter((s) => s.status === "unreadable");
+  const lines = [
+    reportTitle(report),
+    "",
+    `${report.sources.length} sources checked: ${changed.length} changed, ${unreadable.length} unreadable.`,
+    "",
+  ];
+
+  for (const source of changed) {
+    lines.push(`* ${source.label}`);
+    for (const item of source.newItems ?? []) {
+      lines.push(`    new: ${item.title}${item.date ? ` (${item.date})` : ""}`);
+      if (item.link) lines.push(`         ${item.link}`);
+    }
+    for (const line of (source.addedLines ?? []).slice(0, 5)) lines.push(`    + ${line}`);
+    for (const line of (source.removedLines ?? []).slice(0, 5)) lines.push(`    - ${line}`);
+    for (const link of (source.newLinks ?? []).slice(0, 5)) lines.push(`    new: ${link}`);
+    lines.push(`    ${source.url}`, "");
+  }
+
+  for (const source of unreadable) {
+    lines.push(`! ${source.label} could not be read: ${source.reason}`);
+    lines.push(`    ${source.url}`);
+  }
+
+  if (report.policyBrief && !report.policyBrief.missing && report.policyBrief.overdue) {
+    lines.push(
+      "",
+      `! The policy brief is ${report.policyBrief.ageDays} days old (limit ${report.policyBrief.maxAgeDays}).`,
+    );
+  }
+  if (report.playbook && !report.playbook.missing && report.playbook.overdue) {
+    lines.push(
+      "",
+      `! The oldest Playbook page was verified ${report.playbook.ageDays} days ago (limit ${report.playbook.maxAgeDays}).`,
+    );
+  }
+
+  lines.push("", "Nothing was published. Review the proposal before changing any copy.");
+  return lines.join("\n");
+}

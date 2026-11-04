@@ -1,0 +1,109 @@
+# The daily Amazon policy watch (4 Nov 2026).
+#
+# Why it runs here rather than on the site: the app is not deployed yet, and this needs no server.
+# A GitHub-hosted runner is free for this repository (public, so Actions minutes are not metered),
+# the schedule is GitHub's own, and the issue it opens uses the token the workflow already has.
+# Nothing in the notification path costs money: creating the issue, and assigning it to the
+# repository owner, is what sends GitHub's notification email.
+#
+# What happens in one run:
+#   1. Five public Amazon pages/feeds are fetched once each. A source that cannot be read is
+#      reported as unreadable, never as unchanged.
+#   2. If something moved, the report and the new baseline are committed to master. The baseline
+#      has to be stored somewhere the next run can see, and a committed file is the only place that
+#      cannot silently disappear the way a cache can.
+#   3. An issue is opened (and assigned, which emails the owner) and, if a Resend key is set, an
+#      email is sent too.
+#   4. The AI review runs only when a source actually changed. It writes a proposal; the proposal
+#      becomes a pull request. **Nothing auto-merges.** Applying a proposal is one click, and that
+#      click is the only part a machine cannot honestly take yet: see
+#      content/policy-watch/README.md.
+#
+# Secrets this uses, all optional except the first:
+#   POLICY_AI_API_KEY   its own key for this job (any provider; see .env.example)
+#   POLICY_AI_PROVIDER  gemini | groq | openai | openrouter | cerebras | mistral | anthropic | custom
+#   POLICY_AI_MODEL     the model name for that key
+#   RESEND_API_KEY      optional; without it the GitHub issue is the notification
+#   POLICY_ALERT_EMAIL  optional; the address the Resend email goes to
+
+name: Policy watch
+
+on:
+  schedule:
+    # 06:07 UTC daily. Off the hour on purpose: GitHub's scheduler is busiest exactly on it.
+    - cron: "7 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: policy-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check Amazon's public pages
+        id: watch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POLICY_ALERT_EMAIL: ${{ secrets.POLICY_ALERT_EMAIL }}
+          OPS_ALERT_EMAIL: ${{ secrets.OPS_ALERT_EMAIL }}
+        run: node scripts/policy-watch.mjs
+
+      - name: Record the report and the new baseline
+        if: steps.watch.outputs.changed == 'true'
+        run: |
+          git config user.name "AppealDeck policy watch"
+          git config user.email "policy-watch@appealdeck.com"
+          git add content/policy-watch/baseline.json content/policy-watch/reports
+          if git diff --cached --quiet; then
+            echo "Nothing new to record."
+            exit 0
+          fi
+          git commit -m "Policy watch: record Amazon changes (${{ steps.watch.outputs.report }})"
+          # The founder may have committed since this run started; rebase rather than force.
+          git pull --rebase --autostash
+          git push
+
+      - name: Review the change with the policy model
+        id: review
+        if: steps.watch.outputs.changes != '0' && steps.watch.outputs.report != ''
+        env:
+          POLICY_AI_API_KEY: ${{ secrets.POLICY_AI_API_KEY }}
+          POLICY_AI_PROVIDER: ${{ vars.POLICY_AI_PROVIDER }}
+          POLICY_AI_MODEL: ${{ vars.POLICY_AI_MODEL }}
+          POLICY_AI_BASE_URL: ${{ vars.POLICY_AI_BASE_URL }}
+        run: node scripts/policy-review.mjs
+
+      - name: Open the proposal as a pull request
+        if: steps.review.outputs.status == 'ready' || steps.review.outputs.status == 'needs-review'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROPOSAL: ${{ steps.review.outputs.proposal }}
+        run: |
+          day=$(basename "$PROPOSAL" .md)
+          branch="policy-review/${day}-${{ github.run_id }}"
+          git checkout -b "$branch"
+          git add content/policy-watch/proposals
+          git commit -m "Policy proposal: ${day} (confidence ${{ steps.review.outputs.confidence }})"
+          git push -u origin "$branch"
+          gh pr create \
+            --title "${{ steps.review.outputs.title }}" \
+            --body-file "$PROPOSAL" \
+            --head "$branch" \
+            --base master

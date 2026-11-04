@@ -11,7 +11,7 @@ export default defineConfig({
     jsx: "automatic",
   },
   test: {
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    include: ["src/**/*.{test,spec}.{ts,tsx}", "scripts/**/*.test.mjs"],
     exclude: [
       "node_modules/**",
       ".next/**",
