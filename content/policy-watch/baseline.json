@@ -3,8 +3,14 @@
   "sources": {
     "sp-api-changelog": {
       "kind": "feed",
-      "fetchedAt": "2026-11-04T06:40:41.193Z",
+      "fetchedAt": "2026-11-05T14:32:17.610Z",
       "items": [
+        {
+          "id": "fd240f20-e9af-30b1-9cb6-7960ef2869a8",
+          "title": "November 4, 2026 SP-API Release",
+          "link": "https://developer-docs.amazon/sp-api/changelog/november-4-2026-sp-api-release",
+          "date": "Wed, 04 Nov 2026 16:55:52 GMT"
+        },
         {
           "id": "c07a8861-3bae-3f6f-b2b0-4474660475ff",
           "title": "Industry Vertical Pricing Audience Values Available in EU, JP, and CA Amazon Stores",
@@ -58,18 +64,12 @@
           "title": "SP-API Updates: Simplified Authorization for Service Providers, External Fulfillment Sandbox Changes, and Multi-Invoice Support Changes for the Brazil Amazon Store",
           "link": "https://developer-docs.amazon/sp-api/changelog/sp-api-updates-simplified-authorization-for-service-providers-external-fulfillment-sandbox-changes-and-multi-invoice-support-changes-for-brazil",
           "date": "Wed, 19 Aug 2026 17:34:58 GMT"
-        },
-        {
-          "id": "18ea1d5d-5aa9-3752-8645-11d96a3c7f50",
-          "title": "SP-API Updates: Solution Provider Portal Agreement and Policy Updates, BR Store ShipperTrackingNumber Validation, and Listings Attribute and Enumeration Values Changes",
-          "link": "https://developer-docs.amazon/sp-api/changelog/sp-api-updates-solution-provider-portal-agreement-and-policy-updates-br-store-shippertrackingnumber-validation-and-listings-attribute-and-enumeration-values-changes",
-          "date": "Wed, 12 Aug 2026 19:00:46 GMT"
         }
       ]
     },
     "seller-announcements": {
       "kind": "feed",
-      "fetchedAt": "2026-11-04T06:40:41.193Z",
+      "fetchedAt": "2026-11-05T14:32:17.610Z",
       "items": [
         {
           "id": "https://www.aboutamazon.com/news/small-business/amazon-seller-central-multichannel-selling-tools",
@@ -135,7 +135,7 @@
     },
     "policy-news": {
       "kind": "feed",
-      "fetchedAt": "2026-11-04T06:40:41.193Z",
+      "fetchedAt": "2026-11-05T14:32:17.610Z",
       "items": [
         {
           "id": "https://www.aboutamazon.com/news/policy-news-views/amazon-pro-bono-report-2026",
@@ -201,7 +201,7 @@
     },
     "sell-pricing": {
       "kind": "text",
-      "fetchedAt": "2026-11-04T06:40:41.193Z",
+      "fetchedAt": "2026-11-05T14:32:17.610Z",
       "hash": "sha256:fd525ce4eb09ed4dbf16db38cfdab11787c13a9b00fae8d7b8d9ed3a01cb762c",
       "lines": [
         "How much does it cost to sell on Amazon? | Sell on Amazon",
@@ -450,7 +450,7 @@
     },
     "sell-blog": {
       "kind": "links",
-      "fetchedAt": "2026-11-04T06:40:41.193Z",
+      "fetchedAt": "2026-11-05T14:32:17.610Z",
       "links": [
         "https://sell.amazon.com/blog/amazon-product-listings",
         "https://sell.amazon.com/blog/amazon-pricing-strategies",
