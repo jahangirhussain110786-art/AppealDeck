@@ -263,9 +263,13 @@ function PlansSection() {
 function FounderNoteSection({ note }: { note: NonNullable<typeof FOUNDER_NOTE> }) {
   return (
     <section className={cn(WRAP, "pb-20")}>
-      <blockquote className="border-l-2 border-border pl-6">
-        <p className="text-lg italic text-foreground">{note.text}</p>
-        <footer className="mt-3 text-sm text-muted-foreground">
+      <blockquote className="max-w-[52rem] border-l-2 border-border pl-6">
+        <div className="space-y-4 text-lg italic leading-relaxed text-foreground">
+          {note.text.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+        </div>
+        <footer className="mt-4 text-sm text-muted-foreground">
           — {note.name}, {note.location}
         </footer>
       </blockquote>

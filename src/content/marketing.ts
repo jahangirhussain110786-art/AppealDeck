@@ -747,11 +747,15 @@ export const PRICING = {
   },
 } as const;
 
-/** The founder's own note on the home page (12 Oct 2026, written at his direction from his account of why he built it). It claims no credential, no price comparison and no result. */
-export const FOUNDER_NOTE: { name: string; location: string; text: string } | null = {
+/** The founder's own note on the home page (rewritten in his words, 5 Nov 2026). It claims no credential, no figure and no result; the decision stays with Amazon. */
+export const FOUNDER_NOTE: { name: string; location: string; text: string[] } | null = {
   name: "Jhangir Hussain",
   location: "Pakistan",
-  text: "I build software, and I sell on Amazon. I saw sellers paying heavily to be heard after a suspension, often in a panic and on a deadline, and wanted a calmer way through. So I built one: it reads your notice, shows what Amazon is asking, checks the records you already have, and helps you write a clear answer in your own words. It is case-preparation software, and Amazon decides the outcome.",
+  text: [
+    "Most Amazon sellers face account suspension with panic, short deadlines, and thousand-dollar consulting bills. We built a calmer, smarter way through.",
+    "AppealDeck is the first case-preparation software designed to strip the anxiety out of Amazon suspensions. Instead of paying heavy, reactive fees to a consultant, our software puts the power back in your hands by systematically analyzing your notice, mapping out exactly what Amazon requires, and matching it against your existing records.",
+    "We don't rely on templates or make false promises — we guide you to write a clear, factual appeal in your own voice. While Amazon always decides the final outcome, AppealDeck ensures you submit the absolute strongest case possible, without the panic.",
+  ],
 };
 
 export type FaqItem = {
