@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Account background plan</title>
+<style>
+  :root { --bg:#fafaf7; --ink:#1b2230; --muted:#5a6475; --line:#e3e1da; --ok:#1f7a4d; --gap:#b4531a; --no:#8a2b2b; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#121722; --ink:#e8ebf1; --muted:#9aa3b2; --line:#2a3242; --ok:#5cc28f; --gap:#f0965c; --no:#e58b8b; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui, sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.6rem; margin:0 0 4px; } h2 { font-size:1.15rem; margin:28px 0 8px; }
+  p.sub { color:var(--muted); margin:0 0 20px; }
+  table { width:100%; border-collapse:collapse; font-size:.95rem; }
+  td, th { text-align:left; vertical-align:top; padding:8px 6px; border-bottom:1px solid var(--line); }
+  .ok { color:var(--ok); font-weight:600; } .gap { color:var(--gap); font-weight:600; } .no { color:var(--no); font-weight:600; }
+  li { margin:6px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Account background: what the research says, what to build</h1>
+<p class="sub">6 Nov 2026 · five research threads · checked against the code · nothing built yet<br>
+Everything in one file: <code>docs/handoffs/2026-11-06-account-history-master.md</code></p>
+
+<h2>New from Amazon's own policy file</h2>
+<ul>
+  <li>Amazon's Account Health policy (read directly from Amazon's PDF, March 2025 copy) confirms: repeats of the same policy cost more each time, and a few repeats in 180 days can close an account even with a good rating.</li>
+  <li><b>Admitting matters:</b> if a seller admits a violation and the appeal succeeds, it can still count towards that repeat limit. If the seller disputes it and Amazon agrees it was an error, it does not. The tool should say this plainly beside "accept / dispute".</li>
+  <li>The Account Health page marks repeats with "Repeat", so the tool can ask a precise question.</li>
+  <li>A critical violation gives 3 days to fix before deactivation.</li>
+</ul>
+
+<h2>ChatGPT's review, checked</h2>
+<ul>
+  <li>It is right: the tool knows the case well but not the account's past, and it is <b>not</b> trained on accepted and rejected appeals. We must never say it is.</li>
+  <li>Added to the plan: an "I don't know" answer on every question; a timeline linking each earlier letter to its documents and Amazon's reply; a check when a new document contradicts an earlier promise (ask, never accuse); tests that prove different histories change the help.</li>
+</ul>
+
+<h2>The short answer</h2>
+<ul>
+  <li>You were right. The same letter can open one account and not another, because Amazon reads the account's past, not only the letter.</li>
+  <li>Four parts of the past have a real source: <b>repeats of the same problem</b>, <b>earlier refused appeals</b>, <b>documents Amazon doubted before</b>, and <b>other linked accounts</b> (which can also keep the money held).</li>
+  <li>Account age, total sales and the tone of old messages have <b>no source</b> as reasons. We should not ask about them.</li>
+  <li>History must change <b>what we ask, what we check and what the letter says</b>. Never a chance or a score.</li>
+</ul>
+
+<h2>Why one account opens and the other does not</h2>
+<table>
+<tr><th>Reason</th><th>What the sources say</th></tr>
+<tr><td>Same problem again</td><td>Amazon raises the penalty each time the same policy is broken. A few repeats in 180 days can close an account even with a good health rating. (Amazon's own wording, via copies)</td></tr>
+<tr><td>Earlier refused appeals</td><td>Near-copy letters lead to more refusals. Escalating too early can leave a "final word" note, then Amazon stops replying. (appeal writers)</td></tr>
+<tr><td>A document Amazon doubted</td><td>"Could not be verified" can be fixed. "Forged" means that file can never be sent again; the way back is a new supplier and an acknowledgment. Retyping or converting a file can count as editing. (appeal writers, forums)</td></tr>
+<tr><td>Another linked account</td><td>The closed linked account usually has to be reopened first. Amazon's agreement lets it keep money for good over "any other account you have operated". Shared bank or tax number counts more than Wi-Fi. (Amazon's agreement, forums, writers)</td></tr>
+</table>
+
+<h2>What appeal firms ask (the ones that publish it)</h2>
+<ul>
+  <li>Almost all: the full notice, every earlier appeal with Amazon's replies, the documents for that kind of case, and the seller's own account of what happened and what changed.</li>
+  <li>Some: a short timeline, Account Health screenshots, written procedures, and for linked cases, other accounts and who had access (VAs, agencies).</li>
+  <li>None publish questions on account age, sales volume or health rating. None serious ask for the Seller Central login.</li>
+</ul>
+
+<h2>Today vs missing</h2>
+<table>
+<tr><th>Item</th><th>Today</th></tr>
+<tr><td>Earlier appeals and Amazon's replies</td><td class="ok">Built</td></tr>
+<tr><td>Linked-account case, held money</td><td class="ok">Built</td></tr>
+<tr><td>Invoice checks (date, supplier, quantity vs units sold)</td><td class="ok">Built</td></tr>
+<tr><td>Invoice window length (some notices say 180 days)</td><td class="gap">Partly: fixed at 365</td></tr>
+<tr><td>Earlier warnings for the same problem</td><td class="gap">Missing</td></tr>
+<tr><td>Other accounts and who has access</td><td class="gap">Missing</td></tr>
+<tr><td>"Has Amazon seen this document, and what did it say?"</td><td class="gap">Missing</td></tr>
+<tr><td>New account or relisting during review</td><td class="gap">Missing</td></tr>
+<tr><td>Warning against edited or converted documents</td><td class="gap">Missing</td></tr>
+<tr><td>Escalation routes already used</td><td class="gap">Missing</td></tr>
+<tr><td>Account age, total sales, tone of old messages</td><td class="no">Should not build</td></tr>
+</table>
+
+<h2>Suggested order</h2>
+<ol>
+  <li><b>First:</b> an optional "About this account" card beside "Earlier attempts" (five questions: same-problem warnings, other accounts, who has access, new account or relisting during review, changes with dates). Plus one question per document: "Has Amazon seen this, and what did it say?". A document called forged cannot be sent again.</li>
+  <li><b>Second:</b> take the invoice window length from the notice; show Amazon's units-sold figure beside the seller's; check the supplier can be reached; warn on every upload not to edit or retype a document.</li>
+  <li><b>Third:</b> record escalation routes used; spot "previously warned" and "repeat" wording in the notice; explain what an acknowledgment tick admits; build a dated timeline from what the case already holds.</li>
+  <li><b>Never:</b> a score or chance; questions about account age, total sales or old message tone.</li>
+</ol>
+
+<h2>One caution</h2>
+<p>Amazon's help pages need a Seller Central login, so most of Amazon's wording here came from copies on forums. Before any of it goes on the site, someone signed in should check it on Amazon's own page.</p>
+</main>
+</body>
+</html>
