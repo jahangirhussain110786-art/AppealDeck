@@ -78,7 +78,6 @@ export function SiteFooter() {
       <div className="border-t border-white/[0.08]">
         <div className="mx-auto flex max-w-marketing flex-col gap-2 px-4 py-6 text-xs leading-relaxed text-muted-foreground sm:px-6 md:flex-row md:items-start md:justify-between md:gap-8">
           <div className="max-w-3xl space-y-1.5">
-            <p>{SHARED.footer.neverSubmits}</p>
             <p>{SHARED.footer.independence}</p>
           </div>
           <div className="flex shrink-0 flex-col gap-1.5 md:items-end">

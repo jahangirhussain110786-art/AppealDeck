@@ -51,7 +51,7 @@ export const HOME = {
     headline: "Amazon account suspended? Know what to send back.",
     accent: "what to send back",
     subline:
-      "Paste your deactivation or policy notice. See what Amazon is asking for, the deadline it states and the records to gather — free, no sign-up.",
+      "Paste your deactivation or policy notice. See what Amazon is asking for — free, no sign-up.",
     primaryCta: "Decode my notice — free",
   },
   /**
@@ -774,7 +774,7 @@ export const FAQ = {
     {
       id: "start-free",
       q: "What can I do for free?",
-      a: "Decode the notice, build the record and write your answers — all free. Pay only if you want the response prepared.",
+      a: "Decode the notice, build the record and write your answers — all free. Pay only if you want the response prepared by us.",
       detail:
         "Guest work stays in this browser tab. A free account keeps it in your vault on this device.",
       link: { label: "Try the free decoder", href: "/decode" },
@@ -811,7 +811,6 @@ export const FAQ = {
       q: "Will this get my account reinstated?",
       // G-52: the second sentence says what the buyer does get, with no outcome word in it.
       a: "Amazon decides the outcome and the review time. What you get is the record, the document checks and a response built only from your facts, every round.",
-      detail: "An Appeal Pass pays for the preparation, not the decision.",
     },
     {
       id: "review-time",

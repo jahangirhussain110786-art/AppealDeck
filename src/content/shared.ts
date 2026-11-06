@@ -58,7 +58,6 @@ export const SHARED = {
       partners: "Partner program",
       licences: "Licences",
     },
-    neverSubmits: "You submit every appeal yourself in Seller Central. Your login stays with you.",
     // The trademark attribution lives in the Terms, not here: repeating it beside the independence
     // line said the same thing twice and made the footer heavier than it needed to be.
     independence:
