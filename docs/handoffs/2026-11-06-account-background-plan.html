@@ -19,74 +19,36 @@
 </head>
 <body>
 <main>
-<h1>Account background: what the research says, what to build</h1>
-<p class="sub">6 Nov 2026 · five research threads · checked against the code · nothing built yet<br>
-Everything in one file: <code>docs/handoffs/2026-11-06-account-history-master.md</code></p>
-
-<h2>New from Amazon's own policy file</h2>
+<h1>Account history: reviewed direction</h1>
+<p class="sub">6 Nov 2026 · independent research and code review · documentation updated · product unbuilt</p>
+<p>The direction is useful, but the original plan needed corrections. History can change the evidence and response route; no dataset shows how much it explains different outcomes.</p>
+<p><a href="2026-11-06-account-history-master.md">Read the corrected master and source register</a>. The original report and five research notes are historical supporting material.</p>
+<h2>Corrections that matter</h2>
 <ul>
-  <li>Amazon's Account Health policy (read directly from Amazon's PDF, March 2025 copy) confirms: repeats of the same policy cost more each time, and a few repeats in 180 days can close an account even with a good rating.</li>
-  <li><b>Admitting matters:</b> if a seller admits a violation and the appeal succeeds, it can still count towards that repeat limit. If the seller disputes it and Amazon agrees it was an error, it does not. The tool should say this plainly beside "accept / dispute".</li>
-  <li>The Account Health page marks repeats with "Repeat", so the tool can ask a precise question.</li>
-  <li>A critical violation gives 3 days to fix before deactivation.</li>
+<li><b>Document allegation:</b> preserve the original and Amazon's exact words. Flag it for review and respect the professional-review boundary. Do not permanently blacklist evidence needed for a supported dispute.</li>
+<li><b>Admission:</b> Amazon's PDF says a violation <em>may</em> still count after a successful appeal. Choosing “dispute” here does not change Amazon's record.</li>
+<li><b>Deadlines:</b> the three-day AHR process has scope and exceptions. Use the applicable notice and date; never start a universal clock from “critical”.</li>
+<li><b>Invoices:</b> distinguish issue-date eligibility from sales coverage. Match each cited product and include inventory where required; pooled invoice totals do not prove coverage.</li>
+<li><b>Background:</b> a yes answer does not automatically belong in the letter. Ask relevant questions, preserve unknowns, and let the seller review inclusions.</li>
+<li><b>Privacy:</b> new history fields would not automatically stay local. Explicit server/model payload controls must be designed and tested.</li>
 </ul>
-
-<h2>ChatGPT's review, checked</h2>
+<h2>Stronger Amazon sources found</h2>
 <ul>
-  <li>It is right: the tool knows the case well but not the account's past, and it is <b>not</b> trained on accepted and rejected appeals. We must never say it is.</li>
-  <li>Added to the plan: an "I don't know" answer on every question; a timeline linking each earlier letter to its documents and Amazon's reply; a check when a new document contradicts an earlier promise (ask, never accuse); tests that prove different histories change the help.</li>
+<li><a href="https://sellercentral.amazon.com/seller-forums/discussions/t/f0cdac0c-08c4-402f-a4ce-9308193a7f66">Staff multiple-account guidance</a>: prior approval no longer required under stated legitimate-need/good-standing conditions; verify marketplace terms.</li>
+<li><a href="https://sellercentral.amazon.com/seller-forums/discussions/t/11731d72-4ea8-4aed-86af-b671e27afda9">Seller Challenge announcement</a>: eligible AHA listing reviews, three per 180 days, failed challenges replenish after six months; 48 hours is an aim.</li>
+<li><a href="https://sellercentral.amazon.com/seller-forums/discussions/t/03a73ea8-64dc-45fb-b0e3-67571459c364">Funds update</a>: 60-day wait before requesting review; no automatic payout or deadline to apply within 60 days.</li>
 </ul>
-
-<h2>The short answer</h2>
-<ul>
-  <li>You were right. The same letter can open one account and not another, because Amazon reads the account's past, not only the letter.</li>
-  <li>Four parts of the past have a real source: <b>repeats of the same problem</b>, <b>earlier refused appeals</b>, <b>documents Amazon doubted before</b>, and <b>other linked accounts</b> (which can also keep the money held).</li>
-  <li>Account age, total sales and the tone of old messages have <b>no source</b> as reasons. We should not ask about them.</li>
-  <li>History must change <b>what we ask, what we check and what the letter says</b>. Never a chance or a score.</li>
-</ul>
-
-<h2>Why one account opens and the other does not</h2>
-<table>
-<tr><th>Reason</th><th>What the sources say</th></tr>
-<tr><td>Same problem again</td><td>Amazon raises the penalty each time the same policy is broken. A few repeats in 180 days can close an account even with a good health rating. (Amazon's own wording, via copies)</td></tr>
-<tr><td>Earlier refused appeals</td><td>Near-copy letters lead to more refusals. Escalating too early can leave a "final word" note, then Amazon stops replying. (appeal writers)</td></tr>
-<tr><td>A document Amazon doubted</td><td>"Could not be verified" can be fixed. "Forged" means that file can never be sent again; the way back is a new supplier and an acknowledgment. Retyping or converting a file can count as editing. (appeal writers, forums)</td></tr>
-<tr><td>Another linked account</td><td>The closed linked account usually has to be reopened first. Amazon's agreement lets it keep money for good over "any other account you have operated". Shared bank or tax number counts more than Wi-Fi. (Amazon's agreement, forums, writers)</td></tr>
-</table>
-
-<h2>What appeal firms ask (the ones that publish it)</h2>
-<ul>
-  <li>Almost all: the full notice, every earlier appeal with Amazon's replies, the documents for that kind of case, and the seller's own account of what happened and what changed.</li>
-  <li>Some: a short timeline, Account Health screenshots, written procedures, and for linked cases, other accounts and who had access (VAs, agencies).</li>
-  <li>None publish questions on account age, sales volume or health rating. None serious ask for the Seller Central login.</li>
-</ul>
-
-<h2>Today vs missing</h2>
-<table>
-<tr><th>Item</th><th>Today</th></tr>
-<tr><td>Earlier appeals and Amazon's replies</td><td class="ok">Built</td></tr>
-<tr><td>Linked-account case, held money</td><td class="ok">Built</td></tr>
-<tr><td>Invoice checks (date, supplier, quantity vs units sold)</td><td class="ok">Built</td></tr>
-<tr><td>Invoice window length (some notices say 180 days)</td><td class="gap">Partly: fixed at 365</td></tr>
-<tr><td>Earlier warnings for the same problem</td><td class="gap">Missing</td></tr>
-<tr><td>Other accounts and who has access</td><td class="gap">Missing</td></tr>
-<tr><td>"Has Amazon seen this document, and what did it say?"</td><td class="gap">Missing</td></tr>
-<tr><td>New account or relisting during review</td><td class="gap">Missing</td></tr>
-<tr><td>Warning against edited or converted documents</td><td class="gap">Missing</td></tr>
-<tr><td>Escalation routes already used</td><td class="gap">Missing</td></tr>
-<tr><td>Account age, total sales, tone of old messages</td><td class="no">Should not build</td></tr>
-</table>
-
-<h2>Suggested order</h2>
+<h2>Recommended order</h2>
 <ol>
-  <li><b>First:</b> an optional "About this account" card beside "Earlier attempts" (five questions: same-problem warnings, other accounts, who has access, new account or relisting during review, changes with dates). Plus one question per document: "Has Amazon seen this, and what did it say?". A document called forged cannot be sent again.</li>
-  <li><b>Second:</b> take the invoice window length from the notice; show Amazon's units-sold figure beside the seller's; check the supplier can be reached; warn on every upload not to edit or retype a document.</li>
-  <li><b>Third:</b> record escalation routes used; spot "previously warned" and "repeat" wording in the notice; explain what an acknowledgment tick admits; build a dated timeline from what the case already holds.</li>
-  <li><b>Never:</b> a score or chance; questions about account age, total sales or old message tone.</li>
+<li>Define sourced, scoped rules and evidence requirements.</li>
+<li>Connect existing submissions, attachments and replies; improve product-level invoice coverage.</li>
+<li>Add targeted repeat, document and account-history questions. Branch owned versus disputed related accounts immediately.</li>
+<li>Add cautious consistency checks and evaluate complete case journeys, including mistaken allegations and legitimate repeat submissions.</li>
 </ol>
-
-<h2>One caution</h2>
-<p>Amazon's help pages need a Seller Central login, so most of Amazon's wording here came from copies on forums. Before any of it goes on the site, someone signed in should check it on Amazon's own page.</p>
+<p>Keep history improvements ahead of further writing embellishments. The entire questionnaire is not established as a launch prerequisite. R-18 still awaits the founder's implementation selection.</p>
+<h2>What remains uncertain</h2>
+<p>Current target-market policy and acknowledgment flows need live verification. The AHR PDF is a Japan-hosted 2025 copy; invoice help text was retrieved through indexing, while direct opening returned the login shell. Practitioner experience, staff posts and policy text are different evidence types.</p>
+<p>AppealDeck's inspected code has no outcome-training pipeline. Underlying model pretraining and live outcome counts were not verified. No success probability, automatic admission or guaranteed reinstatement is justified.</p>
 </main>
 </body>
 </html>

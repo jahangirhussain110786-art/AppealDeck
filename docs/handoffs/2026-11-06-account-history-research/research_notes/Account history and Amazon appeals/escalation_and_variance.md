@@ -1,3 +1,5 @@
+> **Historical research, superseded for decisions on 6 Nov 2026.** Read the [reviewed master](../../../2026-11-06-account-history-master.md) before using these conclusions. It corrects evidence labels, document-dispute safeguards, policy interpretation, priorities and acceptance tests. This original is retained for provenance.
+
 # Escalation paths after a refused Amazon appeal, and why identical-looking cases end differently
 
 Researched 6 Nov 2026. Tags: [V] official source (URL) · [P] practitioner (name + URL) · [U] forum post or unverified claim. [V*] means official text cited from the source's known content but **not re-fetched this session**; check it before quoting. No success-rate percentages appear anywhere in these notes, because none were found from a source worth repeating.

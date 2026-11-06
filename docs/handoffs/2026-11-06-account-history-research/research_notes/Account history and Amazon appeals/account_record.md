@@ -1,3 +1,5 @@
+> **Historical research, superseded for decisions on 6 Nov 2026.** Read the [reviewed master](../../../2026-11-06-account-history-master.md) before using these conclusions. It corrects evidence labels, document-dispute safeguards, policy interpretation, priorities and acceptance tests. This original is retained for provenance.
+
 # How an Amazon seller account's own record affects an appeal
 
 Research date: 6 Nov 2026. Tags: **[V]** = Amazon's own wording, from an Amazon page or a verbatim repost of an Amazon help page (the repost is named); **[P]** = practitioner experience (named); **[U]** = unverified forum anecdote or unattributed third-party summary.

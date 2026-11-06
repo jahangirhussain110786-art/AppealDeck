@@ -1,3 +1,5 @@
+> **Historical research, superseded for decisions on 6 Nov 2026.** Read the [reviewed master](../../../2026-11-06-account-history-master.md) before using these conclusions. It corrects evidence labels, document-dispute safeguards, policy interpretation, priorities and acceptance tests. This original is retained for provenance.
+
 # Related / linked seller accounts and held funds, as they affect reinstatement
 
 Researched 6 Nov 2026. Tags: **[V]** official Amazon text (URL given), **[P]** practitioner (name + URL), **[U]** forum anecdote or unverified. No success rates appear here. None were found from a reliable source, and the task forbids them.

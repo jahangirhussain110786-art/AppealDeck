@@ -1,3 +1,5 @@
+> **Historical research, superseded for decisions on 6 Nov 2026.** Read the [reviewed master](../../../2026-11-06-account-history-master.md) before using these conclusions. It corrects evidence labels, document-dispute safeguards, policy interpretation, priorities and acceptance tests. This original is retained for provenance.
+
 # What appeal firms, consultants and attorneys ask a seller before writing a POA (intake practice)
 
 Researched 6 Nov 2026. Tags: [V] read on the firm's own published page (URL given); [P] practitioner statement in an article, podcast or interview; [U] unverified (forum anecdote, search snippet only, or a page that could not be opened). Secondary summaries from a fetch tool were read for each [V] page; quotes are short phrases only. No success rates are reported, and none should be taken from these pages: several are marketing.
