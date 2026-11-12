@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-11-12T15:03:39.007Z",
+  "day": "2026-11-12",
+  "sources": [
+    {
+      "id": "sp-api-changelog",
+      "label": "Selling Partner API changelog",
+      "url": "https://developer-docs.amazon.com/sp-api/changelog.rss",
+      "tier": "immediate",
+      "status": "changed",
+      "newItems": [
+        {
+          "id": "16691367-5684-32ef-9631-78be3c26114f",
+          "title": "November Updates to Listing Attribute Usage and Enumeration Values",
+          "link": "https://developer-docs.amazon/sp-api/changelog/november-updates-to-listing-attribute-usage-and-enumeration-values",
+          "date": "Wed, 11 Nov 2026 21:20:20 GMT"
+        }
+      ],
+      "editedItems": [],
+      "addedLines": [],
+      "removedLines": [],
+      "newLinks": [],
+      "droppedLinks": []
+    },
+    {
+      "id": "seller-announcements",
+      "label": "Amazon news for small business",
+      "url": "https://www.aboutamazon.com/news/small-business/feed",
+      "tier": "immediate",
+      "status": "unchanged",
+      "newItems": [],
+      "editedItems": [],
+      "addedLines": [],
+      "removedLines": [],
+      "newLinks": [],
+      "droppedLinks": []
+    },
+    {
+      "id": "policy-news",
+      "label": "Amazon policy news and views",
+      "url": "https://www.aboutamazon.com/news/policy-news-views/feed",
+      "tier": "digest",
+      "status": "unchanged",
+      "newItems": [],
+      "editedItems": [],
+      "addedLines": [],
+      "removedLines": [],
+      "newLinks": [],
+      "droppedLinks": []
+    },
+    {
+      "id": "sell-pricing",
+      "label": "Sell on Amazon pricing and fees",
+      "url": "https://sell.amazon.com/pricing",
+      "tier": "immediate",
+      "status": "unchanged",
+      "newItems": [],
+      "editedItems": [],
+      "addedLines": [],
+      "removedLines": [],
+      "newLinks": [],
+      "droppedLinks": []
+    },
+    {
+      "id": "sell-blog",
+      "label": "Amazon Selling Partner blog",
+      "url": "https://sell.amazon.com/blog",
+      "tier": "digest",
+      "status": "unchanged",
+      "newItems": [],
+      "editedItems": [],
+      "addedLines": [],
+      "removedLines": [],
+      "newLinks": [],
+      "droppedLinks": []
+    }
+  ],
+  "policyBrief": {
+    "checkedOn": "2026-10-07",
+    "ageDays": 36,
+    "maxAgeDays": 90,
+    "overdue": false
+  },
+  "playbook": {
+    "oldest": "2026-10-06",
+    "pages": 4,
+    "ageDays": 37,
+    "maxAgeDays": 90,
+    "overdue": false
+  }
+}
