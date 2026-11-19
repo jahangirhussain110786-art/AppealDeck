@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-11-19T15:39:08.824Z",
+  "day": "2026-11-19",
+  "sources": [
+    {
+      "id": "sp-api-changelog",
+      "label": "Selling Partner API changelog",
+      "url": "https://developer-docs.amazon.com/sp-api/changelog.rss",
+      "tier": "immediate",
+      "status": "changed",
+      "newItems": [
+        {
+          "id": "b3c86261-37a6-3e53-b332-3a579a30d168",
+          "title": "November 18, 2026 SP-API Release",
+          "link": "https://developer-docs.amazon/sp-api/changelog/november-2026-sp-api-release",
+          "date": "Wed, 18 Nov 2026 19:49:58 GMT"
+        }
+      ],
+      "editedItems": [],
+      "addedLines": [],
+      "removedLines": [],
+      "newLinks": [],
+      "droppedLinks": []
+    },
+    {
+      "id": "seller-announcements",
+      "label": "Amazon news for small business",
+      "url": "https://www.aboutamazon.com/news/small-business/feed",
+      "tier": "immediate",
+      "status": "unchanged",
+      "newItems": [],
+      "editedItems": [],
+      "addedLines": [],
+      "removedLines": [],
+      "newLinks": [],
+      "droppedLinks": []
+    },
+    {
+      "id": "policy-news",
+      "label": "Amazon policy news and views",
+      "url": "https://www.aboutamazon.com/news/policy-news-views/feed",
+      "tier": "digest",
+      "status": "unchanged",
+      "newItems": [],
+      "editedItems": [],
+      "addedLines": [],
+      "removedLines": [],
+      "newLinks": [],
+      "droppedLinks": []
+    },
+    {
+      "id": "sell-pricing",
+      "label": "Sell on Amazon pricing and fees",
+      "url": "https://sell.amazon.com/pricing",
+      "tier": "immediate",
+      "status": "unchanged",
+      "newItems": [],
+      "editedItems": [],
+      "addedLines": [],
+      "removedLines": [],
+      "newLinks": [],
+      "droppedLinks": []
+    },
+    {
+      "id": "sell-blog",
+      "label": "Amazon Selling Partner blog",
+      "url": "https://sell.amazon.com/blog",
+      "tier": "digest",
+      "status": "unchanged",
+      "newItems": [],
+      "editedItems": [],
+      "addedLines": [],
+      "removedLines": [],
+      "newLinks": [],
+      "droppedLinks": []
+    }
+  ],
+  "policyBrief": {
+    "checkedOn": "2026-10-07",
+    "ageDays": 43,
+    "maxAgeDays": 90,
+    "overdue": false
+  },
+  "playbook": {
+    "oldest": "2026-10-06",
+    "pages": 4,
+    "ageDays": 44,
+    "maxAgeDays": 90,
+    "overdue": false
+  }
+}
