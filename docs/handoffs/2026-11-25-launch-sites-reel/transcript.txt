@@ -1,0 +1,8 @@
+Speech transcript of reel.mp4 (machine transcription, Hindi, faster-whisper "small", 25 Nov 2026).
+The machine missed most of the middle (12 s to 36 s, where the five sites are read out); the caption in
+reel.info.json and README.md has the full list. Nothing in the speech adds to the caption.
+
+[0.0-5.0]   "You launched an app and nobody is using it? Don't post everywhere. Put it in these 5 places first."
+[5.0-12.1]  "Number one: Reddit's r/SideProject. Builders here really try apps and tell you straight what is wrong."
+[12.1-36.7] (sites 2 to 5, mostly not captured; ends:) "...you won't get buried on the first day, and you get a backlink too."
+[36.7-40.4] "I've made a list of links for all five. Comment LAUNCH and I'll DM it."
