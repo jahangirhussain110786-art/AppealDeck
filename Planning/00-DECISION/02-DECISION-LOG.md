@@ -4,6 +4,8 @@
 
 **Precedence rule for conflicting sources:** the Synthesis Brief and this playbook override all older documents → `The Second Opinion.md` overrides everything before it → newer documents override older ones. The Ai-chat transcript is banned as a source of numbers entirely.
 
+**9 November 2026 approval update:** the founder approved C01–C16 in the [premium case service implementation plan](../../docs/handoffs/2026-11-09-premium-case-service-implementation-plan.md) as future design decisions. These amend older conflicting local-only, history/context and measurement directions for the future service. **Implementation is explicitly on hold. C09 is deferred until a few sellers; C12 retains sales tracking and adds the service-quality scorecard.** Preserve the historical D1–D10 entries below; use the dated approval and plan for the current future direction. No parked item is released by this approval.
+
 ---
 
 ## 1. Chronology — Round 0 → Round 5
@@ -79,3 +81,14 @@ Each row is a decision that appears in an older document and was later overturne
 - [ ] No task anywhere in the playbook implements a row from the superseded table (§3) — spot-checked when each phase folder is written and at each gate review.
 - [ ] Every new decision and every gate exception since project start appears here with a date and rationale (checked at the weekly decision review).
 - [ ] A newcomer can read §1–§3 in fifteen minutes and correctly answer: which document wins on payments, on build order, on refunds, and on competition claims.
+
+
+## 9 Nov 2026 — Approved future case service decisions C01–C16
+
+The founder approved every C01–C16 direction in the [implementation plan](../../docs/handoffs/2026-11-09-premium-case-service-implementation-plan.md), Section 3, while explicitly saying not to implement now. The plan's approval section and [reasoning-ledger entry](../../docs/DECISIONS.md) record the scope and timing. These approved directions supersede older conflicting instructions for the future service; they do not imply that current behaviour has changed.
+
+- C01–C08: approved within their stated scope, including C04's staged reassessment rather than indiscriminate sensitive-file processing.
+- C09: approved but deferred until a few sellers. No integration work, developer onboarding or spend now. No exact seller-count threshold was set; confirm later readiness and verify actual access/cost requirements then. Existing manual intake remains sufficient for the first expanded service; no scraping/injection or automatic submission is authorized.
+- C10–C16: approved within their stated scope and conditions. C12 preserves sales tracking and adds service-quality, reliability, effort/completion, satisfaction and observed-outcome measures; detailed targets remain implementation-planning work.
+- Existing parked items still need their individual exact release instructions. General approval of C01–C16 does not release them.
+- **Execution status:** implementation explicitly on hold; no code, migration, seller-data transfer, new live privacy permission, deployment or activation performed under this approval. Do not request the same sixteen general design approvals again when implementation is later commissioned; settle remaining concrete operational/technical details then.

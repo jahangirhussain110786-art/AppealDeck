@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wording proposals, 28 Oct 2026</title>
+<style>
+  :root { --ink:#14213d; --mute:#5b6577; --line:#dde2ea; --bg:#fafaf7; --card:#fff; --orange:#c2570c; --ok:#14683a; --bad:#a32525; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,Segoe UI,Roboto,sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:16px; }
+  h1 { font-size:1.5rem; margin:.5rem 0; }
+  h2 { font-size:1.15rem; margin:2rem 0 .5rem; padding-top:.5rem; border-top:2px solid var(--ink); }
+  .intro, .rules { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin:12px 0; }
+  .intro ul, .rules ul { margin:.3rem 0 0 1.1rem; padding:0; }
+  .item { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin:12px 0; }
+  .item.ok { border-color:var(--ok); } .item.no { border-color:var(--bad); } .item.ed { border-color:var(--orange); }
+  .id { font-weight:700; color:var(--orange); } .where { color:var(--mute); font-size:.85rem; }
+  .cur { background:#f1f3f7; border-radius:6px; padding:8px 10px; margin:.5rem 0; }
+  .label { font-size:.75rem; color:var(--mute); text-transform:none; display:block; }
+  label.opt { display:block; border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin:6px 0; cursor:pointer; }
+  label.opt input { margin-right:8px; }
+  label.opt.picked { background:#fff6ee; border-color:var(--orange); }
+  .tag { font-size:.7rem; background:var(--orange); color:#fff; border-radius:4px; padding:1px 6px; margin-left:6px; }
+  .why { color:var(--mute); font-size:.88rem; margin:.4rem 0; }
+  textarea { width:100%; min-height:90px; font:inherit; padding:8px; border:1px solid var(--line); border-radius:8px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  button { font:inherit; padding:8px 14px; border-radius:999px; border:1px solid var(--ink); background:#fff; cursor:pointer; }
+  button.primary { background:var(--ink); color:#fff; }
+  button.sel { background:var(--ink); color:#fff; }
+  .bar { position:sticky; bottom:0; background:var(--bg); padding:10px 0; border-top:1px solid var(--line); display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  #out { width:100%; min-height:120px; margin-top:8px; font:13px/1.4 ui-monospace,Consolas,monospace; }
+</style>
+</head>
+<body>
+<main>
+<h1>Wording proposals</h1>
+<p class="where">28 Oct 2026. Nothing here is live. Nothing in <code>src/</code> has changed.</p>
+
+<div class="intro">
+  <strong>How to use this</strong>
+  <ul>
+    <li>Each line shows what the site says now, then two options. My pick is marked.</li>
+    <li>Choose an option, press <b>Edit</b> to change its words, or press <b>Keep current</b> to reject.</li>
+    <li>At the bottom, press <b>Copy my decisions</b> and paste the result into chat. Only what you approved is applied.</li>
+    <li>Your choices are kept in this browser, so you can close the page and come back.</li>
+  </ul>
+</div>
+
+<div class="rules">
+  <strong>The rules I wrote these under</strong>
+  <ul>
+    <li><b>No "leading", "most trusted" or "#1".</b> We cannot prove them, and the FTC's DoNotPay order turns on proof, not sincerity. Our own banned list and D6 say the same. Trust comes from showing how the product works, which is what each line below does.</li>
+    <li>Every claim stays true of the product as built today. Where a line is tighter than the old one, I say what it dropped.</li>
+    <li>The four points that must stay near the price are untouched: Amazon decides, software and not legal advice, some cases are not sold, files are on the device.</li>
+    <li>Lines you approved yesterday (the short break, the passwords line, and the others in commit 3660728) are left alone.</li>
+    <li>Not covered yet: guides, the writers and partners pages, legal pages, the case workspace, sign-in pages and emails. Say which next.</li>
+  </ul>
+</div>
+
+<div id="items"></div>
+
+<div class="bar">
+  <button class="primary" id="copy">Copy my decisions</button>
+  <button id="clear">Clear all</button>
+  <span id="count" class="where"></span>
+</div>
+<textarea id="out" readonly placeholder="Your decisions appear here after you press Copy."></textarea>
+</main>
+
+<script>
+const SECTIONS = [
+{ title: "Home page", items: [
+ { id:"H1", where:"Hero headline", cur:"Amazon account suspended? Know what to send back.",
+   opts:["Suspended on Amazon? Start with what the notice actually asks.","Know exactly what Amazon is asking before you answer it."], pick:1,
+   why:"Option B is the one promise the product keeps on every notice. The current line is also good, and it matches what sellers search." },
+ { id:"H2", where:"Hero sub-line", cur:"Paste your deactivation or policy notice. See what Amazon is asking for, the deadline it states and the records to gather. Free, with no sign-up.",
+   opts:["Paste the notice and get a plain-words brief: what Amazon wants, the date it states, and the documents to prepare. Free, no account.","Paste your notice. In a moment you see what Amazon is asking for, the deadline it states and the records to gather. Free, no sign-up."], pick:0,
+   why:"A brief is a thing a seller can picture. Option B only adds 'in a moment'." },
+ { id:"H3", where:"Hero buttons (two places)", cur:"Decode my notice — free",
+   opts:["Decode my notice","Read my notice — free"], pick:0,
+   why:"The hero already has a 'Free' badge. Dropping the dash makes the button read as a plain verb and object." },
+ { id:"H4", where:"Hero reassurance line", cur:"You stay signed in to Seller Central, and you decide what gets sent.",
+   opts:["We never sign in to your Amazon account. You send every reply yourself.","Your Seller Central login never leaves you. Nothing goes to Amazon unless you send it."], pick:0,
+   why:"'You stay signed in' is a little unclear. Option A says the fact directly." },
+ { id:"H5", where:"Paste box note", cur:"Your login stays with you. We read the notice on our server and keep no copy.",
+   opts:["We read the notice on our server and keep no copy. No Amazon login needed.","We keep no copy of the notice. It is read on our server, and nothing goes to Amazon."], pick:0,
+   why:"We never ask for a login here, so 'Your login stays with you' raises a question the page then has to answer." },
+ { id:"H6", where:"Feature section title", cur:"Everything a case needs, in one place.",
+   opts:["From the first notice to the last reply, one case.","One case file for every round with Amazon."], pick:0,
+   why:"Names the whole journey, which is what separates us from a one-time letter." },
+ { id:"H7a", where:"Feature 1 body", cur:"The phrases that decide your reply, marked in Amazon's own words.",
+   opts:["See which sentences decide your reply, marked in Amazon's own words.","Your notice with the deciding phrases marked, in Amazon's own words."], pick:0, why:"Starts with what the seller does." },
+ { id:"H7b", where:"Feature 2 body", cur:"One checklist, built from the notice, including records it does not name.",
+   opts:["A checklist built from the notice, plus the records cases like yours usually need.","One checklist from the notice, with the records it leaves unsaid."], pick:0, why:"Says why the extra records are there." },
+ { id:"H7c", where:"Feature 3 body", cur:"Invoices read against the notice: dates, ASINs, your business name.",
+   opts:["We read each invoice against the notice, comparing dates, ASINs and your business name.","Each invoice checked against the notice for dates, ASINs and your business name."], pick:0, why:"A full sentence, with the action stated." },
+ { id:"H7d", where:"Feature 4 body", cur:"Paste Amazon's reply. See what changed. Your finished work stays.",
+   opts:["Paste Amazon's reply, see what it changes, and keep the work you already finished.","Paste Amazon's reply. Your finished work stays, and what changed is shown."], pick:0, why:"Smoother, same facts." },
+ { id:"H8", where:"Navy band, third fact", cur:"1  encrypted copy of your files, kept on your device",
+   opts:["On your device  ·  your files stay encrypted in your browser","Yours  ·  files stay encrypted on your device"], pick:0,
+   why:"'1' is a number that does not mean anything to a reader. The body text underneath is unchanged and still says a file leaves only for a check you ask for." },
+ { id:"H9a", where:"One Response card, first line", cur:"One response, prepared from your confirmed facts, with every revision included",
+   opts:["One response, built from your confirmed facts, revisions included","One response from your confirmed facts, with every revision"], pick:0, why:"Shorter. This card is marked 'Opens soon'." },
+ { id:"H9b", where:"Appeal Pass card, documents line", cur:"Your business documents read against the notice by AI when it is available, and on your device when it is not",
+   opts:["Documents checked against the notice: by AI when it is available, on your device otherwise","Your documents checked against the notice, by AI or on your device"], pick:0, why:"Same two paths, in half the length." },
+ { id:"H9c", where:"Appeal Pass card, wording-help line", cur:"Wording help, when available, checked so dates, numbers and names stay as you wrote them",
+   opts:["Optional wording help, checked so your dates, numbers and names are kept","Optional wording help that keeps the dates, numbers and names you wrote"], pick:0,
+   why:"I avoided 'never changes': the check is automatic and strong, but it is not a proof, and an earlier version of this claim was cut back for that reason." },
+ { id:"H10", where:"New line under the hero (an addition)", cur:"(nothing today)",
+   opts:["Read from your notice's own words · No Amazon login · Free decoder · Refund within 14 days","Free to decode · We never sign in to Amazon · You send every reply · 14-day refund"], pick:0,
+   why:"A one-line proof strip. Each item is a mechanism you can check. Skip it if you want the hero left bare." },
+]},
+{ title: "Decode page", items: [
+ { id:"D1", where:"Page title", cur:"What is your Amazon notice asking for?",
+   opts:["Find out what your Amazon notice really asks","What does your Amazon notice ask you to do?"], pick:0, why:"The current title is already good. Option A is the more direct one." },
+ { id:"D2", where:"Paste box hint", cur:"Include the subject line and the date at the top. With them, we can count the deadline from the notice's own date.",
+   opts:["Paste everything from the subject line down. The date at the top lets us count the deadline from the notice itself.","Include the subject line and the date. They let us count the deadline from the notice's own date."], pick:0, why:"Gives the instruction first, the reason second." },
+ { id:"D3", where:"Privacy note under the box", cur:"Your notice is sent to AppealDeck to be read, and we keep no copy of it. Only when our own rules cannot place it does it also go to an AI service, named in our privacy policy, for a second reading. Nothing is sent to Amazon.",
+   opts:["We read your notice on our server and keep no copy. If our own rules cannot place it, it also goes to an AI service named in our privacy policy, for a second reading. Nothing goes to Amazon.","Your notice is read on our server and not kept. Only if our rules cannot place it does an AI service, named in our privacy policy, take a second look. Nothing goes to Amazon."], pick:0, why:"Same facts, simpler order. The privacy policy still names every provider." },
+ { id:"D4", where:"Save card, note", cur:"Free. Kept in this browser tab; sign in to keep it after you close the tab.",
+   opts:["Free. It stays in this browser tab; sign in to keep it after you close it.","Free. Sign in if you want it kept after this tab closes."], pick:1, why:"B says the one thing the seller has to do." },
+]},
+{ title: "Pricing page", items: [
+ { id:"P1", where:"Currency note", cur:"Same price everywhere. Written for Amazon US; English notices.",
+   opts:["One price worldwide. Built for Amazon US accounts and English-language notices.","The same price in every country. For Amazon US and notices in English."], pick:0, why:"The old line read like a fragment." },
+ { id:"P2", where:"Plan comparison, lead", cur:"Free takes you from the notice to a clear plan of the proof. A paid plan prepares the response from facts you confirmed, checks it, and keeps every round together.",
+   opts:["Free takes you from the notice to a clear list of the proof you need. A paid plan then prepares the response from your confirmed facts, checks it, and keeps every round together.","Free covers understanding the notice and gathering proof. A paid plan prepares and checks the response from your confirmed facts, and keeps every round together."], pick:1, why:"B is shorter and drops 'plan of the proof', which is hard to parse." },
+ { id:"P3", where:"'Before you pay' point 1", cur:"Amazon decides.  —  We make the record, the documents and the wording as complete as your facts allow, so the case is ready for the decision.",
+   opts:["Amazon makes the decision.  —  Our part is a complete record, documents and wording built from your facts, so the case is ready when Amazon reviews it.","Amazon decides.  —  We make your record, documents and wording as complete as your facts allow, so the case is ready for review."], pick:1, why:"Keeps the short 'Amazon decides.', which is easy to repeat." },
+ { id:"P4", where:"'Before you pay' point 2", cur:"Preparation stays preparation.  —  It reads, organises and drafts from facts you confirm. Legal judgement belongs to a qualified professional, and the workspace says so on the first screen.",
+   opts:["We prepare. A professional advises.  —  The software reads, organises and drafts from facts you confirm. Legal judgement belongs to a qualified professional, and the workspace says so on the first screen.","Software, not legal advice.  —  It reads, organises and drafts from facts you confirm. For legal judgement, see a qualified professional. The workspace says so on its first screen."], pick:0, why:"The old title is awkward. This point must stay at the point of sale, so I only changed the wording." },
+ { id:"P5", where:"'Before you pay' point 3", cur:"Your files stay encrypted on your device.  —  Make an encrypted backup for a second copy you can restore. Clearing your browser removes the local copy, so keep anything you need.",
+   opts:["Your files stay encrypted on your device.  —  Clearing your browser removes the local copy. An encrypted backup gives you a second one you can restore.","Your files stay encrypted on your device.  —  Clearing your browser deletes the local copy, so make an encrypted backup you can restore."], pick:0, why:"Leads with the risk, then the fix." },
+ { id:"P6", where:"'Before you pay' point 4", cur:"Cases that need a professional.  —  Fraud, forged documents and child safety call for qualified help. The workspace says so on the free decode, before you pay, and leaves the response to a professional.",
+   opts:["Cases that need a professional.  —  Fraud, forged documents and child-safety cases need qualified help. The free decode says so before you pay, and we leave the response to a professional.","Some cases are not sold.  —  Fraud, forged documents and child-safety cases need qualified help. The free decode tells you before you pay, and we do not draft those responses."], pick:1, why:"B says plainly that we do not sell these. That is a confident line and it is true." },
+ { id:"P7", where:"Free versus Pass sentence", cur:"Free: understand the notice, gather documents, write your answers. Pay once, only if you want us to prepare the response.",
+   opts:["Free covers understanding the notice, gathering documents and writing your answers. You pay once, only if you want us to prepare the response.","Understanding the notice, gathering documents and writing your answers are free. Preparing the response is the one paid step."], pick:1, why:"B names the single paid step." },
+ { id:"P8", where:"Going-rates strip title", cur:"Compare the kind of help",
+   opts:["What other help costs","How the price compares"], pick:0, why:"Says what the strip shows." },
+ { id:"P9", where:"Note under the checkout", cur:"The free decoder works everywhere. Payment is handled by Paddle, which also sends the tax receipt, and a case that already has its Pass is not charged again. The paid plans are not yet on sale to buyers in the EU, the EEA or the United Kingdom.",
+   opts:["The free decoder works everywhere. Paddle handles payment and sends the tax receipt, and a case that already has its Pass is never charged twice. Paid plans are not yet on sale in the EU, the EEA or the United Kingdom.","Paddle handles payment and sends the tax receipt. A case that already has its Pass is not charged again. Paid plans are not yet on sale in the EU, the EEA or the United Kingdom; the free decoder works everywhere."], pick:0, why:"Shorter sentences. The three facts are the same." },
+]},
+{ title: "FAQ", items: [
+ { id:"F1", where:"FAQ title and description", cur:"Questions, answered.  /  Choose a topic. Get a clear answer. Decide your next step.",
+   opts:["Straight answers.  /  Pick a topic for a plain answer. More detail sits underneath.","Questions sellers ask first.  /  Choose a topic. The short answer comes first, the detail underneath."], pick:1, why:"'Questions, answered' says nothing. B says what the page is." },
+ { id:"F2", where:"How does the decoder work? (answer)", cur:"It turns the notice into a short brief: the issue it raises, the time window it states and the next steps.",
+   opts:["It reads the notice and gives you a short brief: the issue, the time window the notice states, and what to do next.","It turns your notice into a short brief of the issue, the stated time window and your next steps."], pick:0, why:"Starts with what it does." },
+ { id:"F3", where:"Is AppealDeck part of Amazon? (answer)", cur:"AppealDeck is independent software, operated by Jhangir Hussain, trading as Hawlton, in Pakistan.",
+   opts:["No. AppealDeck is independent software, not part of Amazon. It is run by Jhangir Hussain, trading as Hawlton, in Pakistan.","AppealDeck is independent software, not part of Amazon. Jhangir Hussain runs it, trading as Hawlton, in Pakistan."], pick:0, why:"Answers the question first. Naming who runs it is a trust signal, so it stays." },
+ { id:"F4", where:"Will this get my account reinstated? (answer)", cur:"Amazon decides the outcome and the review time. What you get is the record, the document checks and a response built only from your facts, every round.",
+   opts:["Nobody can promise that, and we do not. Amazon decides the outcome and the timing. What you get is a complete record, document checks and a response built only from your facts, every round.","No one can promise that. Amazon decides the outcome and the timing. We prepare the record, check the documents and build the response only from your facts, every round."], pick:1, why:"Confidence about the limit is what a seller trusts. B is shorter." },
+ { id:"F5", where:"Can I rely on the deadline shown? (answer)", cur:"Confirm the exact date in your current notice and Account Health.",
+   opts:["Use it as a guide, then confirm the exact date in your current notice and Account Health.","Check it. The exact date is in your current notice and in Account Health."], pick:0, why:"Today's answer is an instruction without a yes or no." },
+ { id:"F6", where:"Where are my files saved? (answer)", cur:"Original files are encrypted in your vault on this device.",
+   opts:["Your files are encrypted on this device. The originals are not sent anywhere for drafting.","Your files stay encrypted on this device, in your vault."], pick:0, why:"I wrote 'for drafting' on purpose: a file does leave for a check you ask for, and the detail line says so." },
+ { id:"F7", where:"What leaves my browser? (answer)", cur:"Your notice goes to AppealDeck when you decode it, and preparing a response sends your case text and file references, and your written words go on to the AI that writes the response from them. The files themselves are never sent for that. Nothing is ever sent to Amazon.",
+   opts:["Your notice goes to AppealDeck when you decode it. Preparing a response sends your case text and file references, and your written words go on to the AI that drafts from them. Your files are not sent for that, and nothing is sent to Amazon.","When you decode, your notice goes to AppealDeck. When you prepare a response, your case text and file references go to us, and your written words go on to the AI that drafts the response. Files are not sent for that. Nothing goes to Amazon."], pick:0, why:"The old answer was one run-on sentence. Same facts, three sentences." },
+ { id:"F8", where:"What does the Appeal Pass add? (answer)", cur:"Response preparation and review for one eligible case, plus encrypted backup support. It also adds an AI reading of your business documents against the notice, when the AI is available.",
+   opts:["Response preparation and review for one eligible case, an encrypted backup you can restore, and an AI reading of your business documents against the notice when AI is available.","For one eligible case: the prepared response with review, an encrypted backup you can restore, and an AI reading of your documents when AI is available."], pick:0, why:"'Backup support' was vague." },
+ { id:"F9", where:"Can I use ChatGPT or Claude instead? (detail)", cur:"A chatbot sees only what you paste. It can miss which invoice Amazon asked about, repeat a round that adds nothing, or fill a gap with a detail you never supplied. AppealDeck reads the notice, checks the documents it can against it, keeps every round in one case, warns you before a round that adds nothing, and builds the response only from facts you confirmed. Your files stay on your device. Use a chatbot for wording if it helps, and check every fact against your own records before you send.",
+   opts:["A chatbot sees only what you paste. It can miss which invoice Amazon asked about, repeat a round that adds nothing, or fill a gap with a detail you never gave it. AppealDeck reads the notice, checks your documents against it, keeps every round in one case, warns you before a round that adds nothing, and builds the response only from facts you confirmed. Use a chatbot for wording if it helps, and check every fact against your records before you send.","A chatbot sees only what you paste, so it can miss which invoice Amazon asked about or fill a gap with a detail you never gave it. AppealDeck reads the notice, checks your documents against it, keeps every round together and builds the response only from facts you confirmed. Use a chatbot for wording if it helps, and check every fact before you send."], pick:1, why:"The current answer is one of the longest on the site. B keeps the three reasons that matter. A keeps all of them." },
+ { id:"F10", where:"Closing prompt", cur:"Start with the notice in front of you.  /  See what is being asked before deciding whether you need a pass.",
+   opts:["Start with the notice in front of you.  /  See what is being asked first. Decide about a Pass afterwards.","Start with the notice in front of you.  /  It is free, and it tells you what you actually need before you pay for anything."], pick:1, why:"B says why waiting to pay is safe." },
+]},
+{ title: "Footer, header, announcements", items: [
+ { id:"S1", where:"Footer, line above the independence notice", cur:"You submit every appeal yourself in Seller Central. Your login stays with you.",
+   opts:["We never sign in to your account. You submit every appeal yourself in Seller Central.","Your Seller Central login stays with you, and you submit every appeal yourself."], pick:0, why:"Matches H4, so the site says one thing in one way." },
+ { id:"S2", where:"'Clear support. You stay in control.' heading", cur:"Clear support. You stay in control.  (columns: Inside your workspace / In your hands)",
+   opts:["Where our work ends and yours begins.","What we do. What you do."], pick:0, why:"The current heading sounds like a slogan. A says how the work is divided." },
+ { id:"S3", where:"Announcement bar, price", cur:"One Appeal Pass covers every revision. $249 once, no subscription.",
+   opts:["One price per case: $249 once, every revision included, no subscription.","$249 once per case. Every revision is included, and there is no subscription."], pick:0, why:"Leads with the price." },
+ { id:"S4", where:"Announcement bar, refund", cur:"Changed your mind? Refunds within 14 days, no questions asked.",
+   opts:["Not what you expected? Full refund within 14 days, no questions asked.","Refund within 14 days of purchase, no reason needed."], pick:0, why:"'Full' is already the wording on the Refund page." },
+]},
+{ title: "Founder note (home page)", items: [
+ { id:"N1", where:"Founder note. These are your words, so edit freely.", cur:"I build software, and I am an Amazon seller myself. When I saw how much sellers were being asked to pay to be heard after a suspension, often in a panic and on a deadline, I wanted a calmer way through. So I built one: it reads your notice, shows what Amazon is really asking for, checks the documents you already have, and helps you write a clear, honest answer in your own words. It is case-preparation software, and Amazon alone decides the outcome. Getting your case in order should be within reach.",
+   opts:["I build software, and I sell on Amazon myself. I saw sellers in a panic, on a deadline, being asked to pay a lot just to be heard after a suspension. I wanted a calmer way through, so I built one. AppealDeck reads your notice, shows what Amazon is really asking for, checks the documents you already have, and helps you write a clear, honest answer in your own words. It is case-preparation software, and Amazon alone decides the outcome.","I am an Amazon seller and I build software. After a suspension, sellers are often asked to pay a lot just to be heard, in a panic and against a deadline. I wanted a calmer way through, so I built AppealDeck. It reads your notice, shows what Amazon is really asking for, checks the documents you already have, and helps you write an honest answer in your own words. Amazon alone decides the outcome."], pick:0, why:"Shorter, with the closing line cut. I did not invent any fact." },
+]},
+];
+
+const KEY = "wording-2026-10-28";
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const all = SECTIONS.flatMap(s => s.items);
+
+function render() {
+  const root = document.getElementById("items");
+  root.innerHTML = "";
+  SECTIONS.forEach(sec => {
+    const h = document.createElement("h2"); h.textContent = sec.title; root.appendChild(h);
+    sec.items.forEach(it => {
+      const st = state[it.id] || {};
+      const d = document.createElement("div");
+      d.className = "item " + (st.mode === "keep" ? "no" : st.mode === "edit" ? "ed" : st.mode === "opt" ? "ok" : "");
+      let html = `<div><span class="id">${it.id}</span> <span class="where">${esc(it.where)}</span></div>`;
+      html += `<div class="cur"><span class="label">Now</span>${esc(it.cur)}</div>`;
+      it.opts.forEach((o, i) => {
+        const picked = st.mode === "opt" && st.opt === i;
+        html += `<label class="opt ${picked ? "picked" : ""}"><input type="radio" name="${it.id}" data-id="${it.id}" data-i="${i}" ${picked ? "checked" : ""}><b>${"AB"[i]}</b>${i === it.pick ? '<span class="tag">my pick</span>' : ""}<br>${esc(o)}</label>`;
+      });
+      html += `<div class="why">${esc(it.why)}</div>`;
+      if (st.mode === "edit") html += `<textarea data-edit="${it.id}">${esc(st.text || "")}</textarea>`;
+      html += `<div class="row"><button data-edit-btn="${it.id}" class="${st.mode === "edit" ? "sel" : ""}">Edit</button><button data-keep="${it.id}" class="${st.mode === "keep" ? "sel" : ""}">Keep current</button><button data-reset="${it.id}">Undo</button></div>`;
+      d.innerHTML = html;
+      root.appendChild(d);
+    });
+  });
+  const n = Object.keys(state).length;
+  document.getElementById("count").textContent = n + " of " + all.length + " decided";
+}
+
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.matches("input[type=radio]")) { state[t.dataset.id] = { mode: "opt", opt: +t.dataset.i }; save(); render(); }
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.edit) { state[t.dataset.edit] = { mode: "edit", text: t.value }; save(); }
+});
+document.addEventListener("click", e => {
+  const t = e.target;
+  const it = id => all.find(x => x.id === id);
+  if (t.dataset.editBtn) {
+    const x = it(t.dataset.editBtn), st = state[x.id] || {};
+    const base = st.mode === "opt" ? x.opts[st.opt] : st.mode === "edit" ? st.text : x.opts[x.pick];
+    state[x.id] = { mode: "edit", text: base }; save(); render();
+  }
+  if (t.dataset.keep) { state[t.dataset.keep] = { mode: "keep" }; save(); render(); }
+  if (t.dataset.reset) { delete state[t.dataset.reset]; save(); render(); }
+});
+document.getElementById("clear").onclick = () => { if (confirm("Clear every decision?")) { state = {}; save(); render(); } };
+document.getElementById("copy").onclick = () => {
+  const lines = ["Wording decisions, 28 Oct 2026", ""];
+  all.forEach(x => {
+    const st = state[x.id];
+    if (!st) { lines.push(x.id + ": undecided"); return; }
+    if (st.mode === "keep") lines.push(x.id + ": KEEP CURRENT");
+    else if (st.mode === "opt") lines.push(x.id + ": APPROVE " + "AB"[st.opt] + " -> " + x.opts[st.opt]);
+    else lines.push(x.id + ": APPROVE EDITED -> " + (st.text || "").replace(/\n/g, " "));
+  });
+  const out = document.getElementById("out");
+  out.value = lines.join("\n");
+  out.select();
+  try { navigator.clipboard.writeText(out.value); } catch (e) {}
+};
+render();
+</script>
+</body>
+</html>

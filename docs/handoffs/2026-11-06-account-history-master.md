@@ -1,5 +1,7 @@
 # Account history and background: master file (6 Nov 2026)
 
+> **Approval update, 9 Nov 2026:** the founder approved C01–C16 in the broader [premium case service implementation plan](2026-11-09-premium-case-service-implementation-plan.md). Those approved directions govern future implementation where they extend or replace this earlier research plan. C09 remains deferred until a few sellers; C12 retains sales tracking and adds service-quality measures. Implementation is explicitly on hold; the 6 Nov code/research snapshot below remains historical evidence, not a claim that the approved changes are built.
+
 > **Reviewed and corrected independently on 6 Nov 2026. This is the current decision document; the original report and five research notes are historical supporting material.** Documentation updated at the founder's request; product implementation is still unapproved and unbuilt.
 
 > **One file for everything on this topic.** It holds the founder's question, the five research threads, ChatGPT's review (checked against the code), Amazon's own policy wording read directly from Amazon's PDF, the tool-today-vs-findings table, and the plan. **Nothing in `src/` has been built for it.** Register row: R-18 in `docs/PARKED-ITEMS.md`.
